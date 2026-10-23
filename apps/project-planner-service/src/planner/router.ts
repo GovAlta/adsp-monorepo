@@ -26,9 +26,14 @@ import {
 } from './blueprint';
 import { buildComponents, catalogServices, driftMessage, unmappedServices } from './components';
 import {
+  allUserEvidence,
+  applyAnswerToFactors,
+  areSimilarQuestions,
   assessConfidence,
+  capFactors,
   computeConfidence,
   DISCOVERY_THRESHOLD,
+  isQuestionCovered,
   normalizeFactors,
   ruleAssess,
   ruleDiscoveryReply,
@@ -240,12 +245,18 @@ const withoutRejectedComponents = (state: SolutionState): SolutionState =>
   state.blueprint?.components
     ? {
         ...state,
-        blueprint: { ...state.blueprint, components: state.blueprint.components.filter((c) => c.review !== 'rejected') },
+        blueprint: {
+          ...state.blueprint,
+          components: state.blueprint.components.filter((c) => c.review !== 'rejected'),
+        },
       }
     : state;
 
 // Regenerating renumbers the components, so a review follows its component by service and name.
-const withPreviousReviews = (components: BlueprintComponent[], previous: BlueprintComponent[] = []): BlueprintComponent[] =>
+const withPreviousReviews = (
+  components: BlueprintComponent[],
+  previous: BlueprintComponent[] = [],
+): BlueprintComponent[] =>
   components.map((component) => {
     const review = previous.find((p) => p.service === component.service && p.name === component.name)?.review;
     return review ? { ...component, review } : component;
@@ -272,14 +283,6 @@ const dedupeConcepts = (existing: BusinessConcept[], incoming: BusinessConcept[]
     return true;
   });
 };
-
-function refreshConfidence(state: SolutionState): void {
-  if (state.discovery) {
-    const factors = ruleAssess(userEvidence(state.problemStatement, state.discovery.messages));
-    state.discovery = { ...state.discovery, factors, confidence: computeConfidence(factors) };
-  }
-  state.confidence = assessConfidence(state);
-}
 
 interface AiFallbackWording {
   notConfigured: string;
@@ -350,10 +353,41 @@ export function createPlannerRouter({
     }
   }
 
+  async function refreshConfidence(req: Request, state: SolutionState, mode?: AnalysisMode): Promise<void> {
+    if (state.discovery) {
+      const requestedMode: AnalysisMode = mode || (llm ? 'ai' : 'rules');
+      const evidence = allUserEvidence(state);
+      const { result: aiFactors, warning } = await tryAi(
+        requestedMode,
+        async (llm) => {
+          const patterns = await getPatterns(req, patternRepository);
+          const recent = [...(state.discovery?.messages || []), ...(state.conversation || [])].map(
+            ({ role, content }) => ({ role, content }),
+          );
+          const discovered = await llm.discover(state.problemStatement, recent, patterns);
+          return normalizeFactors(discovered.factors, evidence);
+        },
+        ruleFallbackWording('scoring', 'rule-based scoring'),
+      );
+      const rawFactors = aiFactors ?? ruleAssess(evidence);
+      const hasOpenQuestions = state.questions.some((q) => q.status === 'open');
+      const factors = capFactors(rawFactors, hasOpenQuestions);
+      const confidence = computeConfidence(factors);
+      // The warning reflects this attempt only, so switching to rules mode clears a stale AI failure note.
+      state.discovery = { ...state.discovery, factors, confidence, ready: confidence >= DISCOVERY_THRESHOLD, warning };
+    }
+    state.confidence = assessConfidence(state);
+  }
+
   async function runAnalysis(
     req: Request,
     solution: Solution,
-    { text, mode, message }: { text: string; mode?: AnalysisMode; message?: string },
+    {
+      text,
+      mode,
+      message,
+      skipConfidenceRefresh,
+    }: { text: string; mode?: AnalysisMode; message?: string; skipConfidenceRefresh?: boolean },
   ): Promise<Solution> {
     const patterns = await getPatterns(req, patternRepository);
     const requestedMode: AnalysisMode = mode || (llm ? 'ai' : 'rules');
@@ -385,19 +419,18 @@ export function createPlannerRouter({
     const { warning } = ai;
     let result = ai.result;
 
-    // Rule-based mode has no conversational ability, so the message is folded into the problem statement.
-    const ruleText = message ? `${text}\n${message}` : text;
-    const matchText = solution.state.discovery
-      ? `${ruleText}\n${userEvidence('', solution.state.discovery.messages)}`
-      : ruleText;
+    const matchText = message ? `${text}\n${message}` : text;
+    const fullMatchText = solution.state.discovery
+      ? `${matchText}\n${userEvidence('', solution.state.discovery.messages)}`
+      : matchText;
     if (!result) {
-      const matches = matchPatterns(matchText, patterns);
+      const matches = matchPatterns(fullMatchText, patterns);
       const hypotheses = buildHypotheses(matches, patterns);
       result = {
         mode: 'rules',
         matches,
         hypotheses,
-        concepts: extractConcepts(matchText, solution.state.concepts),
+        concepts: extractConcepts(fullMatchText, solution.state.concepts),
         questionTexts: hypotheses
           .filter((h) => h.confidence !== 'high')
           .flatMap((h) => patterns.find((p) => p.id === h.patternId)?.clarifyingQuestions || []),
@@ -405,15 +438,38 @@ export function createPlannerRouter({
       };
     }
 
+    const evidenceSoFar = [
+      fullMatchText,
+      ...solution.state.questions.filter((q) => q.answer).map((q) => q.answer as string),
+    ].join('\n');
+    const answeredQuestionTexts = solution.state.questions
+      .filter((q) => q.status === 'answered')
+      .map((q) => q.question);
+    const isRedundant = (text: string) =>
+      isQuestionCovered(text, evidenceSoFar) ||
+      answeredQuestionTexts.some((answered) => areSimilarQuestions(text, answered));
     const existingQuestions = new Set(solution.state.questions.map((q) => q.question));
-    const newQuestions = result.questionTexts
-      .filter((q, i, all) => !existingQuestions.has(q) && all.indexOf(q) === i)
-      .map((question) => ({
-        id: randomUUID(),
-        question,
-        raisedBy: result.mode === 'ai' ? 'ai' : 'planner',
-        status: 'open' as const,
-      }));
+    const retainedQuestions = solution.state.questions.filter((q) => q.status !== 'open' || !isRedundant(q.question));
+    const retainedOpenTexts = retainedQuestions.filter((q) => q.status === 'open').map((q) => q.question);
+
+    const newQuestionTexts: string[] = [];
+    for (const text of result.questionTexts) {
+      if (existingQuestions.has(text) || isRedundant(text)) {
+        continue;
+      }
+      const isDuplicate =
+        retainedOpenTexts.some((kept) => areSimilarQuestions(text, kept)) ||
+        newQuestionTexts.some((kept) => areSimilarQuestions(text, kept));
+      if (!isDuplicate) {
+        newQuestionTexts.push(text);
+      }
+    }
+    const newQuestions = newQuestionTexts.map((question) => ({
+      id: randomUUID(),
+      question,
+      raisedBy: result.mode === 'ai' ? 'ai' : 'planner',
+      status: 'open' as const,
+    }));
 
     const conversation = [...(solution.state.conversation || [])];
     if (message) {
@@ -425,21 +481,24 @@ export function createPlannerRouter({
       });
     }
 
-    const problemStatement = result.mode === 'rules' ? ruleText : text;
     const state: SolutionState = {
       ...solution.state,
-      problemStatement,
+      problemStatement: message ? solution.state.problemStatement : text,
       problemStatementUpdatedOn:
-        problemStatement === solution.state.problemStatement ? solution.state.problemStatementUpdatedOn : now,
+        !message && text !== solution.state.problemStatement ? now : solution.state.problemStatementUpdatedOn,
       concepts: [...solution.state.concepts, ...result.concepts],
       patternMatches: result.matches,
       hypotheses: result.hypotheses,
-      questions: [...solution.state.questions, ...newQuestions],
+      questions: [...retainedQuestions, ...newQuestions],
       conversation,
       analysis: { mode: result.mode, model: result.model, warning, analyzedOn: now },
     };
     state.nextSteps = buildNextSteps(state);
-    refreshConfidence(state);
+    if (skipConfidenceRefresh) {
+      state.confidence = assessConfidence(state);
+    } else {
+      await refreshConfidence(req, state, requestedMode);
+    }
     return persist(
       req,
       { ...solution, status: solution.status === 'draft' ? 'analyzed' : solution.status, state },
@@ -676,7 +735,7 @@ export function createPlannerRouter({
         };
         if (problemStatement !== undefined && problemStatement !== solution.state.problemStatement) {
           state.problemStatementUpdatedOn = new Date().toISOString();
-          refreshConfidence(state);
+          await refreshConfidence(req, state);
         }
         res.send(
           await persist(
@@ -782,10 +841,7 @@ export function createPlannerRouter({
         const mode: AnalysisMode = aiDiscovery ? 'ai' : 'rules';
 
         const confidence = computeConfidence(factors);
-        const ready =
-          confidence >= DISCOVERY_THRESHOLD ||
-          req.body.force === true ||
-          (!req.body.restart && solution.state.discovery?.ready === true);
+        const ready = confidence >= DISCOVERY_THRESHOLD || req.body.force === true;
         let reply = aiDiscovery?.reply || ruleDiscoveryReply(factors, confidence, ready);
         if (req.body.force === true && confidence < DISCOVERY_THRESHOLD) {
           reply = `${reply}\n\nProceeding with a proposed solution at ${confidence}% confidence, as you asked. Expect more open questions and assumptions.`;
@@ -812,7 +868,7 @@ export function createPlannerRouter({
         };
         res.send(
           ready
-            ? await runAnalysis(req, withDiscovery, { text: problem, mode: requestedMode })
+            ? await runAnalysis(req, withDiscovery, { text: problem, mode: requestedMode, skipConfidenceRefresh: true })
             : await persist(req, withDiscovery, 'discovery'),
         );
       } catch (err) {
@@ -857,15 +913,34 @@ export function createPlannerRouter({
           throw new NotFoundError('question', req.params.questionId);
         }
         const answer: string = req.body.answer.trim();
-        const questions = solution.state.questions.map((q) =>
-          q.id === existing.id
-            ? answer
-              ? { ...q, status: 'answered' as const, answer }
-              : { id: q.id, question: q.question, raisedBy: q.raisedBy, status: 'open' as const }
-            : q,
-        );
+        const questions = solution.state.questions
+          .map((q) =>
+            q.id === existing.id
+              ? answer
+                ? { ...q, status: 'answered' as const, answer }
+                : { id: q.id, question: q.question, raisedBy: q.raisedBy, status: 'open' as const }
+              : q,
+          )
+          .filter(
+            (q) =>
+              !answer ||
+              q.id === existing.id ||
+              q.status !== 'open' ||
+              !areSimilarQuestions(q.question, existing.question),
+          );
         const state = { ...solution.state, questions };
         state.nextSteps = buildNextSteps(state);
+        if (state.discovery && answer) {
+          const evidence = allUserEvidence(state);
+          const hasOpenQuestions = questions.some((q) => q.status === 'open');
+          const factors = capFactors(
+            applyAnswerToFactors(state.discovery.factors, existing.question, answer, evidence),
+            hasOpenQuestions,
+          );
+          const confidence = computeConfidence(factors);
+          state.discovery = { ...state.discovery, factors, confidence, ready: confidence >= DISCOVERY_THRESHOLD };
+        }
+        state.confidence = assessConfidence(state);
         res.send(await persist(req, { ...solution, state }, 'answer'));
       } catch (err) {
         next(err);

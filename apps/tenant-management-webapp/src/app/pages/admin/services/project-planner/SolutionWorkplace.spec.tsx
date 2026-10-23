@@ -1,23 +1,56 @@
 import React from 'react';
-import { act, fireEvent, render, waitFor } from '@testing-library/react';
-import { SolutionWorkplace } from './SolutionWorkplace';
+import { fireEvent, render, waitFor } from '@testing-library/react';
+import { SolutionWorkplace, getGuidedStep } from './SolutionWorkplace';
 import { usePlannerApi } from './api';
 import { expectNoA11yViolations } from './testing/axe';
 import { createMockApi, MockPlannerApi } from './testing/createMockApi';
 import { download } from './utils';
-import { ChatSummary, Solution, SpecialistDefinition } from './model';
+import { Solution, SolutionBlueprint, SpecialistDefinition } from './model';
 
 jest.mock('./api', () => ({ usePlannerApi: jest.fn() }));
 jest.mock('./utils', () => ({ ...jest.requireActual('./utils'), download: jest.fn() }));
 
-const goa = (container: HTMLElement, testId: string) => container.querySelector(`[testid="${testId}"]`) as Element;
+const goa = (container: HTMLElement, testId: string) =>
+  container.querySelector(`[testid="${testId}"], [data-testid="${testId}"]`) as Element;
 const click = (container: HTMLElement, testId: string) => fireEvent(goa(container, testId), new CustomEvent('_click'));
 const type = (container: HTMLElement, testId: string, value: string) =>
   fireEvent(goa(container, testId), new CustomEvent('_change', { detail: { name: 'x', value } }));
 
-const baseSolution = (state: Partial<Solution['state']> = {}, name = 'Permit intake'): Solution => ({
+const blueprint: SolutionBlueprint = {
+  generatedOn: '2026-03-01T10:00:00.000Z',
+  mode: 'ai',
+  overview: {
+    title: 'Permit intake plan',
+    summary: 'Applicants submit permit applications for staff review.',
+    objectives: [],
+    scope: [],
+    outOfScope: [],
+    stakeholders: [],
+    successMeasures: [],
+    risks: [],
+  },
+  architecture: { summary: '', layers: [], integrations: [], security: [], diagram: '' },
+  serviceMapping: [
+    {
+      order: 1,
+      service: 'form-service',
+      displayName: 'Form service',
+      role: 'Collect applications',
+      reason: 'Applicants need a form.',
+      dependsOn: [],
+      capabilities: [],
+    },
+  ],
+  notCoveredByAdsp: [],
+  specialistNotes: [],
+  workflows: [],
+  dataGovernance: { dataEntities: [], accessControl: [], retention: [], privacy: [], audit: [], compliance: [] },
+  delivery: { phases: [], nonFunctional: [], openQuestions: [] },
+};
+
+const baseSolution = (state: Partial<Solution['state']> = {}): Solution => ({
   id: 'solution-1',
-  name,
+  name: 'Permit intake',
   scenario: 'new',
   status: 'draft',
   createdByName: 'Pat',
@@ -25,7 +58,7 @@ const baseSolution = (state: Partial<Solution['state']> = {}, name = 'Permit int
   version: '1.0',
   versionHistory: [],
   state: {
-    problemStatement: 'Applicants submit permits.',
+    problemStatement: 'Applicants submit permits for staff review.',
     concepts: [],
     decisions: [],
     questions: [],
@@ -39,74 +72,27 @@ const baseSolution = (state: Partial<Solution['state']> = {}, name = 'Permit int
 const analyzed = (extra: Partial<Solution['state']> = {}): Solution =>
   baseSolution({
     analysis: { mode: 'ai', analyzedOn: '2026-03-01T10:00:00.000Z' },
-    concepts: [{ id: 'c1', type: 'actor', name: 'applicant', source: 'extracted' }],
-    questions: [
-      { id: 'q1', question: 'Is review needed?', raisedBy: 'planner', status: 'open' },
-      { id: 'q2', question: 'Is a fee collected?', raisedBy: 'planner', status: 'answered', answer: 'No' },
-    ],
-    patternMatches: [
-      {
-        patternId: 'p1',
-        patternName: 'Permitting',
-        score: 9,
-        level: 'high',
-        matchedLanguage: [],
-        matchedSignals: [],
-        explanation: 'Looks like permitting.',
-      },
-      {
-        patternId: 'p2',
-        patternName: 'Case management',
-        score: 4,
-        level: 'medium',
-        matchedLanguage: [],
-        matchedSignals: [],
-        explanation: 'Could be cases.',
-      },
-    ],
+    confidence: { score: 70, threshold: 50, factors: [{ id: 'users', label: 'Users', score: 70 }] },
     hypotheses: [
       {
         id: 'h1',
-        title: 'Permitting solution',
+        title: 'Permit solution',
         patternId: 'p1',
         confidence: 'high',
-        rationale: 'A permitting problem.',
-        recommendations: [
-          { service: 'file-service', reason: 'Documents.', order: 2 },
-          { service: 'form-service', reason: 'Intake.', order: 1 },
-        ],
-        assumptions: ['Applicants sign in'],
-        unknowns: ['Retention'],
-      },
-      {
-        id: 'h2',
-        title: 'Alternative approach',
-        patternId: 'p2',
-        confidence: 'low',
-        rationale: 'Another way.',
-        recommendations: [{ service: 'task-service', reason: 'Tasks.', order: 1 }],
+        rationale: 'Permit workflow.',
+        recommendations: [{ service: 'form-service', reason: 'Collect applications.', order: 1 }],
         assumptions: [],
         unknowns: [],
       },
     ],
-    nextSteps: [{ title: 'Define forms', service: 'form-service', reason: 'Start intake.' }],
-    conversation: [
-      { role: 'user', content: 'Add detail', at: '2026-03-01T10:00:00.000Z' },
-      { role: 'assistant', content: 'Noted', at: '2026-03-01T10:00:00.000Z' },
+    questions: [
+      { id: 'q1', question: 'Who reviews applications?', raisedBy: 'planner', status: 'inferred', answer: 'Staff' },
     ],
-    confidence: { score: 70, threshold: 50, factors: [{ id: 'f', label: 'Actors', score: 70 }] },
     ...extra,
   });
 
-const readyDiscovery = {
-  messages: [{ role: 'assistant' as const, content: 'Who are the users?', at: '2026-03-01T10:00:00.000Z' }],
-  confidence: 70,
-  threshold: 50,
-  factors: [],
-  ready: true,
-  mode: 'ai' as const,
-  updatedOn: '2026-03-01T10:00:00.000Z',
-};
+const withPlan = (extra: Partial<Solution['state']> = {}): Solution =>
+  baseSolution({ ...analyzed(extra).state, blueprint, ...extra });
 
 const specialists = [
   {
@@ -119,461 +105,487 @@ const specialists = [
     risks: [],
     workspacePath: '',
   },
-  {
-    service: 'file-service',
-    displayName: 'File service',
-    purpose: 'Files',
-    order: 2,
-    questions: [],
-    dependsOn: [],
-    risks: [],
-    workspacePath: '',
-  },
 ] as SpecialistDefinition[];
-
-const chat = (id: string, service: string): ChatSummary => ({
-  id,
-  service,
-  title: id,
-  createdOn: '2026-03-01T10:00:00.000Z',
-  updatedOn: '2026-03-01T10:00:00.000Z',
-  messageCount: 2,
-});
 
 describe('SolutionWorkplace', () => {
   let api: MockPlannerApi;
-  const onBack = jest.fn();
-
-  const setup = async (solution: Solution = analyzed({ discovery: readyDiscovery }), overrides = {}) => {
+  const setup = async (solution: Solution = withPlan(), overrides = {}) => {
     api = createMockApi({
       getSolution: jest.fn().mockResolvedValue(solution),
-      getAnalysisOptions: jest.fn().mockResolvedValue({ modes: ['ai', 'rules'], defaultMode: 'ai' }),
       listSpecialists: jest.fn().mockResolvedValue(specialists),
-      listChats: jest
-        .fn()
-        .mockResolvedValue([chat('c1', 'form-service'), chat('c2', 'form-service'), chat('c3', 'form-service')]),
+      listChats: jest.fn().mockResolvedValue([]),
+      getAnalysisOptions: jest.fn().mockResolvedValue({ modes: ['ai', 'rules'], defaultMode: 'ai' }),
       ...overrides,
     });
     (usePlannerApi as jest.Mock).mockReturnValue(api);
-    const result = render(<SolutionWorkplace solutionId="solution-1" onBack={onBack} />);
-    await waitFor(() => expect(result.container.querySelector('[data-testid="solution-workplace"]')).not.toBeNull());
-    await waitFor(() => expect(api.listChats).toHaveBeenCalled());
-    return result;
+    const view = render(<SolutionWorkplace solutionId="solution-1" />);
+    await waitFor(() => expect(view.container.querySelector('[data-testid="solution-workplace"]')).not.toBeNull());
+    await waitFor(() => expect(api.listSpecialists).toHaveBeenCalled());
+    return view;
   };
 
   beforeEach(() => {
     jest.clearAllMocks();
-    localStorage.clear();
   });
 
-  it('shows a progress indicator while loading', () => {
-    (usePlannerApi as jest.Mock).mockReturnValue(
-      createMockApi({ getSolution: jest.fn().mockReturnValue(new Promise(() => undefined)) }),
-    );
-    const { container } = render(<SolutionWorkplace solutionId="solution-1" />);
-
-    expect(container.querySelector('goa-circular-progress')).not.toBeNull();
+  it('opens new, in-progress, and planned solutions at the correct step', () => {
+    expect(getGuidedStep(baseSolution())).toBe(1);
+    expect(getGuidedStep(analyzed({ confidence: { score: 20, threshold: 50, factors: [] } }))).toBe(2);
+    expect(getGuidedStep(analyzed())).toBe(3);
+    expect(getGuidedStep(withPlan())).toBe(3);
   });
 
-  it('returns to the list when the solution cannot be loaded', async () => {
-    (usePlannerApi as jest.Mock).mockReturnValue(
-      createMockApi({ getSolution: jest.fn().mockRejectedValue(new Error('missing')) }),
+  it('shows an existing solution as one continuous guided page', async () => {
+    const planned = withPlan();
+    planned.state.blueprint = {
+      ...blueprint,
+      notCoveredByAdsp: [
+        { requirement: 'Payment processing', reason: 'Not provided by ADSP.', suggestedApproach: 'Use a gateway.' },
+      ],
+    };
+    const { container } = await setup(planned);
+    expect(container.querySelector('nav[aria-label="Solution sections"]')).toBeNull();
+    expect(container.querySelector('#guided-stepper')).toBeNull();
+    expect(container.textContent).toContain(
+      'Refine the analysis by answering optional questions, asking a question, adding more details, or correcting gaps.',
     );
-    render(<SolutionWorkplace solutionId="solution-1" onBack={onBack} />);
+    expect(container.querySelector('[testid="problem-continue"]')?.textContent).toContain('Save & analyze');
+    expect(container.textContent).not.toContain('At a glance');
+    expect(container.querySelector('[testid="plan-summary"]')).toBeNull();
+    expect(container.querySelector('[testid="blueprint-not-covered"]')).not.toBeNull();
+    expect(container.querySelector('[testid="project-blueprint"]')).not.toBeNull();
+    expect(container.querySelector('[testid="project-blueprint"]')?.tagName.toLowerCase()).toBe('goa-container');
+    expect(goa(container, 'project-blueprint-generate').textContent).toContain('Regenerate blueprint');
+    expect(container.querySelector('[heading="Proposal"]')).not.toBeNull();
+    expect(container.querySelector('[heading="Hypotheses"]')).toBeNull();
+    expect(container.querySelector('[data-testid="refine-chat"]')).toBeNull();
+    expect(container.textContent).toContain(
+      'Refine the analysis by answering optional questions, asking a question, adding more details, or correcting gaps.',
+    );
+    expect(container.querySelector('[testid="optional-experts"]')).not.toBeNull();
+    expect(container.querySelector('[testid="specialist-service-form-service"]')).not.toBeNull();
+    expect(container.querySelector('[data-testid="selected-specialist-chat"]')).not.toBeNull();
+    expect(goa(container, 'inferred-answers').getAttribute('heading')).toBe('Review details used in this plan (1)');
+    expect(container.textContent).not.toContain('Answers the planner understood');
+    expect(container.querySelector('[testid="analysis-mode-ai"]')).not.toBeNull();
+    expect(container.querySelector('[testid="analysis-mode-rules"]')).not.toBeNull();
+    expect(goa(container, 'analysis-mode-badge').getAttribute('content')).toContain(
+      new Date(planned.state.analysis!.analyzedOn).toLocaleString(),
+    );
+    expect(
+      goa(container, 'analysis-mode-badge').compareDocumentPosition(goa(container, 'problem-continue')) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    for (const [step, heading] of [
+      ['guided-step-1', 'Problem statement'],
+      ['guided-step-2', 'Discovery conversation'],
+      ['guided-step-3', 'Proposed solution'],
+    ]) {
+      const toggle = goa(container, `${step}-toggle`);
+      expect(toggle.getAttribute('aria-expanded')).toBe('true');
+      expect(toggle.textContent).toContain(heading);
+      expect(toggle.closest('h2')).not.toBeNull();
+      expect((toggle.closest('h2') as HTMLElement).style.fontWeight).toBe('800');
+      expect(container.querySelector(`#${step}-content`)).not.toBeNull();
+    }
+    expect(goa(container, 'guided-step-2').querySelectorAll('goa-textarea[testid="discovery-input"]')).toHaveLength(1);
+    expect(goa(container, 'guided-step-2').querySelector('[testid="refine-input"]')).toBeNull();
+    expect(goa(container, 'guided-step-2').querySelector('[testid="optional-experts"]')).not.toBeNull();
+    expect(goa(container, 'project-blueprint-generate').closest('[role="group]')).toBe(
+      goa(container, 'refresh-specialist-consultations').closest('[role="group]'),
+    );
+    expect(container.querySelector('[testid="advanced-plan-options"]')).toBeNull();
+    expect(goa(container, 'download-json')).not.toBeNull();
+    expect(container.querySelectorAll('[testid="discovery-response"]')).toHaveLength(1);
+    expect(container.textContent).not.toContain('Refine by conversation');
+    expect(goa(container, 'optional-experts').getAttribute('heading')).toContain(
+      'Chat/Consult with Specialist (optional',
+    );
+    expect(container.textContent).not.toContain('5. Consult a specialist');
 
+    fireEvent.click(goa(container, 'guided-step-2-toggle'));
+    expect(goa(container, 'guided-step-2-toggle').getAttribute('aria-expanded')).toBe('false');
+    expect(container.querySelector('#guided-step-2-content')).toBeNull();
+    fireEvent.click(goa(container, 'guided-step-2-toggle'));
+    expect(goa(container, 'guided-step-2-toggle').getAttribute('aria-expanded')).toBe('true');
+    expect(container.querySelector('#guided-step-2-content')).not.toBeNull();
+  });
+
+  it('keeps the blueprint action available after automatic generation', async () => {
+    const ready = analyzed();
+    const { container } = await setup(ready, { blueprint: jest.fn().mockResolvedValue(withPlan()) });
+
+    expect(goa(container, 'project-blueprint-generate').textContent).toContain('Regenerate blueprint');
+    expect(container.querySelector('[testid="blueprint-generate"]')).toBeNull();
+  });
+
+  it('regenerates the blueprint with fresh specialist consultations from the adjacent action', async () => {
+    const planned = withPlan();
+    const { container } = await setup(planned, { blueprint: jest.fn().mockResolvedValue(planned) });
+
+    click(container, 'refresh-specialist-consultations');
+
+    await waitFor(() =>
+      expect(api.blueprint).toHaveBeenCalledWith('solution-1', { mode: 'ai', refreshConsultations: true }),
+    );
+  });
+
+  it('lists all specialists in the optional section, not only recommendations', async () => {
+    const otherSpecialist = {
+      service: 'status-service',
+      displayName: 'Status service',
+      purpose: 'Track status updates',
+      order: 2,
+      questions: [],
+      dependsOn: [],
+      risks: [],
+      workspacePath: '',
+    } as SpecialistDefinition;
+    const { container } = await setup(withPlan(), {
+      listSpecialists: jest.fn().mockResolvedValue([...specialists, otherSpecialist]),
+    });
+
+    expect(goa(container, 'optional-experts-count').getAttribute('content')).toBe('2 specialists');
+    expect(container.querySelector('[testid="specialist-service-form-service"]')).not.toBeNull();
+    expect(container.querySelector('[testid="specialist-service-status-service"]')).not.toBeNull();
+    expect(container.querySelector('[testid="optional-experts"]')?.hasAttribute('open')).toBe(false);
+  });
+
+  it('refreshes the saved solution plan with Save & analyze', async () => {
+    const planned = withPlan();
+    const { container } = await setup(planned, {
+      analyze: jest.fn().mockResolvedValue(planned),
+      blueprint: jest.fn().mockResolvedValue(planned),
+    });
+
+    click(container, 'problem-continue');
+
+    await waitFor(() => expect(api.analyze).toHaveBeenCalledWith('solution-1', { mode: 'ai' }));
+    await waitFor(() => expect(api.blueprint).toHaveBeenCalledWith('solution-1', { mode: 'ai' }));
+  });
+
+  it('shows one Save & analyze action for a new solution and keeps discovery in place', async () => {
+    const newSolution = baseSolution({ problemStatement: '' });
+    const analyzedSolution = analyzed({
+      confidence: { score: 40, threshold: 50, factors: [] },
+    });
+    const discovered = {
+      ...analyzedSolution,
+      state: {
+        ...analyzedSolution.state,
+        discovery: {
+          messages: [{ role: 'assistant' as const, content: 'Who reviews applications?', at: '2026-03-01T10:01:00Z' }],
+          confidence: 40,
+          threshold: 50,
+          factors: [],
+          ready: false,
+          mode: 'ai' as const,
+          updatedOn: '2026-03-01T10:01:00Z',
+        },
+      },
+    };
+    const { container } = await setup(newSolution, {
+      updateSolution: jest.fn().mockResolvedValue(newSolution),
+      analyze: jest.fn().mockResolvedValue(analyzedSolution),
+      discovery: jest.fn().mockResolvedValue(discovered),
+    });
+
+    expect(goa(container, 'guided-step-1-toggle').textContent).toContain('Problem statement');
+    expect(goa(container, 'guided-step-2-toggle').textContent).toContain('Discovery conversation');
+    expect(goa(container, 'problem-continue').textContent).toContain('Save & analyze');
+    expect(container.querySelectorAll('[testid="problem-continue"]')).toHaveLength(1);
+    expect(container.textContent).toContain('Save and analyze the problem to start discovery');
+    expect(container.querySelector('[testid="step-disabled-3"]')).not.toBeNull();
+    expect(container.querySelector('[data-testid="discovery-panel"]')).toBeNull();
+    expect(container.querySelector('[testid="analysis-mode-ai"]')).not.toBeNull();
+    type(container, 'problem-input', 'New permit workflow.');
+    click(container, 'problem-continue');
+    await waitFor(() => expect(api.discovery).toHaveBeenCalledWith('solution-1', { mode: 'ai', restart: true }));
+    expect(container.querySelector('[data-testid="discovery-panel"]')).not.toBeNull();
+    expect(container.textContent).toContain('Who reviews applications?');
+  });
+
+  it('uses the selected analysis mode and generates the blueprint once when confidence meets the threshold', async () => {
+    const rulesAnalysis = { mode: 'rules' as const, analyzedOn: '2026-03-01T10:00:00.000Z' };
+    const analyzedSolution = analyzed({ analysis: rulesAnalysis });
+    const planned = withPlan({ analysis: rulesAnalysis, blueprint: { ...blueprint, mode: 'rules' } });
+    const { container } = await setup(baseSolution(), {
+      updateSolution: jest.fn().mockResolvedValue(baseSolution()),
+      analyze: jest.fn().mockResolvedValue(analyzedSolution),
+      blueprint: jest.fn().mockResolvedValue(planned),
+    });
+    type(container, 'problem-input', 'Detailed permit workflow.');
+    click(container, 'problem-continue');
+
+    await waitFor(() => expect(api.blueprint).toHaveBeenCalledTimes(1));
+    expect(api.analyze).toHaveBeenCalledWith('solution-1', { mode: 'ai' });
+    expect(api.blueprint).toHaveBeenCalledWith('solution-1', { mode: 'rules' });
+    expect(api.discovery).not.toHaveBeenCalled();
+    expect(goa(container, 'analysis-mode-rules').getAttribute('type')).toBe('primary');
+    expect(goa(container, 'analysis-mode-badge').getAttribute('content')).toContain('Last run: Rule-based analysis');
+    expect(container.querySelector('[data-testid="discovery-panel"]')).not.toBeNull();
+    expect(container.textContent).toContain(
+      'Refine the analysis by answering optional questions, asking a question, adding more details, or correcting gaps.',
+    );
+    expect(container.querySelectorAll('goa-textarea[testid="discovery-input"]')).toHaveLength(1);
+    expect(container.querySelector('[data-testid="confidence-bar"]')).not.toBeNull();
+    expect(
+      container
+        .querySelector('[data-testid="confidence-bar"]')
+        ?.compareDocumentPosition(goa(container, 'guided-step-1')) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
+
+  it('automatically asks one batch of questions when confidence is below the threshold', async () => {
+    const lowConfidence = analyzed({
+      confidence: { score: 40, threshold: 50, factors: [{ id: 'users', label: 'Users', score: 40 }] },
+    });
+    const discovered = {
+      ...lowConfidence,
+      state: {
+        ...lowConfidence.state,
+        discovery: {
+          messages: [{ role: 'assistant' as const, content: 'Who uses the service?', at: '2026-03-01T10:01:00Z' }],
+          confidence: 40,
+          threshold: 50,
+          factors: [],
+          ready: false,
+          mode: 'ai' as const,
+          updatedOn: '2026-03-01T10:01:00Z',
+        },
+      },
+    };
+    const { container } = await setup(baseSolution(), {
+      updateSolution: jest.fn().mockResolvedValue(baseSolution()),
+      analyze: jest.fn().mockResolvedValue(lowConfidence),
+      discovery: jest.fn().mockResolvedValue(discovered),
+    });
+    click(container, 'problem-continue');
+
+    await waitFor(() => expect(api.discovery).toHaveBeenCalledWith('solution-1', { mode: 'ai', restart: true }));
+    expect(container.textContent).toContain('Who uses the service?');
+  });
+
+  it('shows remaining questions as optional, without a skip-to-plan action', async () => {
+    const lowConfidence = analyzed({
+      confidence: { score: 40, threshold: 50, factors: [] },
+      questions: [{ id: 'q1', question: 'Who reviews applications?', raisedBy: 'planner', status: 'open' }],
+      discovery: {
+        messages: [],
+        confidence: 40,
+        threshold: 50,
+        factors: [],
+        ready: false,
+        mode: 'ai',
+        updatedOn: '2026-03-01T10:00:00Z',
+      },
+    });
+    const { container } = await setup(lowConfidence);
+    expect(goa(container, 'discovery-force')).toBeNull();
+    expect(goa(container, 'discovery-questions').getAttribute('heading')).toBe('Questions');
+    expect(container.querySelectorAll('goa-textarea[testid="discovery-input"]')).toHaveLength(1);
+    expect(container.querySelector('[data-testid="discovery-panel"]')).not.toBeNull();
+    expect(container.textContent).not.toContain('Questions are complete');
+  });
+
+  it('keeps the plan visible, marks it out of date, and directs users to Save & analyze', async () => {
+    const { container } = await setup();
+    type(container, 'problem-input', 'Changed permit workflow.');
+
+    expect(container.querySelector('[testid="problem-plan-out-of-date"]')).not.toBeNull();
+    expect(goa(container, 'problem-back-to-questions')).not.toBeNull();
+    expect(container.querySelector('[testid="update-plan"]')).toBeNull();
+    expect(container.querySelector('[testid="plan-out-of-date"]')?.textContent).toContain('Save & analyze above');
+  });
+
+  it('refreshes an existing blueprint when Save & analyze is used', async () => {
+    const analyzedSolution = analyzed();
+    const refreshedPlan = withPlan();
+    const { container } = await setup(withPlan(), {
+      updateSolution: jest.fn().mockResolvedValue(baseSolution({ problemStatement: 'Updated permit process.' })),
+      analyze: jest.fn().mockResolvedValue(analyzedSolution),
+      blueprint: jest.fn().mockResolvedValue(refreshedPlan),
+    });
+    type(container, 'problem-input', 'Updated permit process.');
+    click(container, 'problem-continue');
+
+    await waitFor(() => expect(api.blueprint).toHaveBeenCalledWith('solution-1', { mode: 'ai' }));
+    expect(api.analyze).toHaveBeenCalledWith('solution-1', { mode: 'ai' });
+  });
+
+  it('saves an edited inferred answer and marks the plan out of date', async () => {
+    const changed = withPlan({
+      questions: [
+        {
+          id: 'q1',
+          question: 'Who reviews applications?',
+          raisedBy: 'planner',
+          status: 'answered',
+          answer: 'Managers',
+        },
+      ],
+    });
+    const { container } = await setup(undefined, {
+      answerQuestion: jest.fn().mockResolvedValue(changed),
+    });
+    expect(container.querySelector('[testid="save-plan-answer-q1"]')).toBeNull();
+    type(container, 'plan-answer-q1', 'Managers');
+    expect(goa(container, 'save-plan-answer-q1')).not.toBeNull();
+    click(container, 'save-plan-answer-q1');
+
+    await waitFor(() => expect(api.answerQuestion).toHaveBeenCalledWith('solution-1', 'q1', 'Managers'));
+    expect(container.querySelector('[testid="plan-out-of-date"]')).not.toBeNull();
+  });
+
+  it('shows three understood answers initially and allows expanding the list', async () => {
+    const questions = Array.from({ length: 5 }, (_, index) => ({
+      id: `q${index + 1}`,
+      question: `Question ${index + 1}?`,
+      raisedBy: 'planner',
+      status: 'answered' as const,
+      answer: `Answer ${index + 1}`,
+    }));
+    const { container } = await setup(withPlan({ questions }));
+    expect(goa(container, 'plan-answer-q3')).not.toBeNull();
+    expect(container.querySelector('[testid="plan-answer-q4"]')).toBeNull();
+    click(container, 'toggle-more-answers');
+    expect(goa(container, 'plan-answer-q4')).not.toBeNull();
+  });
+
+  it('keeps unanswered questions out of the plan answer review', async () => {
+    const { container } = await setup(
+      withPlan({
+        questions: [
+          { id: 'q1', question: 'Inferred detail?', raisedBy: 'planner', status: 'inferred', answer: 'Yes' },
+          { id: 'q2', question: 'Confirmed detail?', raisedBy: 'planner', status: 'answered', answer: 'Also yes' },
+          { id: 'q3', question: 'Unanswered follow-up?', raisedBy: 'planner', status: 'open' },
+        ],
+      }),
+    );
+
+    expect(goa(container, 'inferred-answers').getAttribute('heading')).toBe('Review details used in this plan (2)');
+    expect(container.querySelector('[testid="plan-answer-q1"]')).not.toBeNull();
+    expect(container.querySelector('[testid="plan-answer-q2"]')).not.toBeNull();
+    expect(container.querySelector('[testid="plan-answer-q3"]')).toBeNull();
+  });
+
+  it('accepts an inferred answer without changing its content', async () => {
+    const changed = withPlan({
+      questions: [
+        { id: 'q1', question: 'Who reviews applications?', raisedBy: 'planner', status: 'answered', answer: 'Staff' },
+      ],
+    });
+    const { container } = await setup(undefined, {
+      answerQuestion: jest.fn().mockResolvedValue(changed),
+    });
+    click(container, 'accept-plan-answer-q1');
+
+    await waitFor(() => expect(api.answerQuestion).toHaveBeenCalledWith('solution-1', 'q1', 'Staff'));
+  });
+
+  it('downloads JSON and the markdown report', async () => {
+    const { container } = await setup(undefined, {
+      exportSolution: jest.fn().mockResolvedValue({ id: 'solution-1' }),
+    });
+
+    click(container, 'download-json');
+    await waitFor(() =>
+      expect(download).toHaveBeenCalledWith(
+        'planner-permit-intake.json',
+        JSON.stringify({ id: 'solution-1' }, null, 2),
+        'application/json',
+      ),
+    );
+
+    click(container, 'download-report');
+    await waitFor(() =>
+      expect(download).toHaveBeenCalledWith(
+        'planner-permit-intake.md',
+        expect.stringContaining('# Permit intake'),
+        'text/markdown',
+      ),
+    );
+  });
+
+  it.each(['download-json', 'download-report'])(
+    'takes the new version from the %s export but keeps the saved state, which still has rejected components',
+    async (button) => {
+      const solution = analyzed({ discovery: readyDiscovery });
+      const exported = { ...solution, version: '1.1', state: { ...solution.state, patternMatches: [] } };
+      const { container } = await setup(solution, { exportSolution: jest.fn().mockResolvedValue(exported) });
+
+      click(container, button);
+
+      await waitFor(() => expect(goa(container, 'solution-version').getAttribute('content')).toBe('v1.1'));
+      expect(container.textContent).toContain('Looks like permitting.');
+    },
+  );
+
+  it('confirms before deleting then goes back', async () => {
+    const { container } = await setup(undefined, { deleteSolution: jest.fn().mockResolvedValue(undefined) });
+
+    click(container, 'delete-solution');
+    expect(goa(container, 'delete-solution-modal').getAttribute('open')).toBe('true');
+    click(container, 'delete-cancel');
+    expect(goa(container, 'delete-solution-modal').getAttribute('open')).not.toBe('true');
+    expect(api.deleteSolution).not.toHaveBeenCalled();
+
+    click(container, 'delete-solution');
+    click(container, 'delete-confirm');
+
+    await waitFor(() => expect(api.deleteSolution).toHaveBeenCalledWith('solution-1'));
     await waitFor(() => expect(onBack).toHaveBeenCalled());
   });
 
-  it('defaults to the workplace tabs with AI analysis', async () => {
-    const { container, getByTestId } = await setup();
+  it('stays on the page when deleting fails', async () => {
+    const { container } = await setup(undefined, { deleteSolution: jest.fn().mockRejectedValue(new Error('x')) });
 
-    expect(getByTestId('solution-title').textContent).toBe('Permit intake');
-    expect(goa(container, 'focus-workplace').getAttribute('type')).toBe('primary');
-    expect(goa(container, 'analysis-mode-ai').getAttribute('type')).toBe('primary');
-    const tabs = Array.from(container.querySelectorAll('[data-testid^="tab-"][data-testid$="-tab-btn"]')).map(
-      (b) => b.textContent,
-    );
-    expect(tabs).toEqual(['Problem & Analysis', 'Conversation', 'Proposal', 'Blueprint']);
-    expect(container.querySelector('[role="progressbar"]')).not.toBeNull();
+    click(container, 'delete-solution');
+    click(container, 'delete-confirm');
+
+    await waitFor(() => expect(api.deleteSolution).toHaveBeenCalled());
+    expect(onBack).not.toHaveBeenCalled();
+  });
+  it('exports Markdown and JSON through the existing export API', async () => {
+    const { container } = await setup(undefined, { exportSolution: jest.fn().mockResolvedValue(withPlan()) });
+    click(container, 'download-report');
+    await waitFor(() => expect(api.exportSolution).toHaveBeenCalledTimes(1));
+    click(container, 'download-json');
+    await waitFor(() => expect(api.exportSolution).toHaveBeenCalledTimes(2));
+    expect(download).toHaveBeenCalledTimes(2);
   });
 
-  it('uses rule-based analysis when AI is unavailable', async () => {
-    const { container } = await setup(undefined, {
-      getAnalysisOptions: jest.fn().mockResolvedValue({ modes: ['rules'], defaultMode: 'rules' }),
+  it('automatically generates a missing blueprint once for an existing ready solution', async () => {
+    await setup(analyzed(), { blueprint: jest.fn().mockResolvedValue(withPlan()) });
+    await waitFor(() => expect(api.blueprint).toHaveBeenCalledTimes(1));
+  });
+
+  it('shows a busy overlay and blocks the header and problem statement while discovery is working', async () => {
+    const planned = withPlan();
+    let resolveChat: (value: Solution) => void = () => undefined;
+    const chatPromise = new Promise<Solution>((resolve) => {
+      resolveChat = resolve;
     });
+    const { container } = await setup(planned, { chat: jest.fn().mockReturnValue(chatPromise) });
 
-    expect(goa(container, 'analysis-mode-rules').getAttribute('type')).toBe('primary');
-    expect(goa(container, 'analysis-mode-ai').getAttribute('disabled')).toBe('true');
+    expect(container.querySelector('[data-testid="workplace-busy-overlay"]')).toBeNull();
+    expect(goa(container, 'download-json').getAttribute('disabled')).toBeNull();
+
+    type(container, 'discovery-input', 'Add more detail about the renewal process.');
+    click(container, 'discovery-send');
+
+    await waitFor(() => expect(container.querySelector('[data-testid="workplace-busy-overlay"]')).not.toBeNull());
+    expect(goa(container, 'download-json').getAttribute('disabled')).toBe('true');
+    expect(goa(container, 'delete-solution').getAttribute('disabled')).toBe('true');
+    expect(goa(container, 'problem-continue').getAttribute('disabled')).toBe('true');
+
+    resolveChat(planned);
+    await waitFor(() => expect(container.querySelector('[data-testid="workplace-busy-overlay"]')).toBeNull());
+    expect(goa(container, 'download-json').getAttribute('disabled')).toBeNull();
   });
 
-  it('falls back to defaults when options, specialists and chats fail', async () => {
-    const { container } = await setup(undefined, {
-      getAnalysisOptions: jest.fn().mockRejectedValue(new Error('x')),
-      listSpecialists: jest.fn().mockRejectedValue(new Error('x')),
-      listChats: jest.fn().mockRejectedValue(new Error('x')),
-    });
-
-    expect(goa(container, 'analysis-mode-rules').getAttribute('type')).toBe('primary');
-    expect(container.querySelector('[data-testid="rail-no-specialists"]')?.textContent).toContain(
-      'No specialists available',
-    );
-  });
-
-  it('switches analysis mode', async () => {
+  it('passes accessibility checks', async () => {
     const { container } = await setup();
-
-    click(container, 'analysis-mode-rules');
-
-    expect(goa(container, 'analysis-mode-rules').getAttribute('type')).toBe('primary');
-  });
-
-  describe('Problem & analysis tab', () => {
-    it('shows the pattern matches below the problem statement', async () => {
-      const { container } = await setup();
-
-      expect(container.textContent).toContain('Looks like permitting.');
-      expect(container.querySelector('[testid="pattern-matches-table"]')).not.toBeNull();
-    });
-
-    it('saves and analyzes the problem statement with the analysis mode', async () => {
-      const updated = analyzed({ discovery: readyDiscovery, problemStatement: 'New text' });
-      const { container } = await setup(undefined, {
-        updateSolution: jest.fn().mockResolvedValue(updated),
-        analyze: jest.fn().mockResolvedValue(updated),
-      });
-
-      type(container, 'problem-input', 'New text');
-      click(container, 'problem-analyze');
-
-      await waitFor(() => expect(api.analyze).toHaveBeenCalledWith('solution-1', { mode: 'ai' }));
-      expect(api.updateSolution).toHaveBeenCalledWith('solution-1', { problemStatement: 'New text' });
-    });
-
-    it('saves the problem statement without analyzing', async () => {
-      const { container } = await setup(undefined, {
-        updateSolution: jest.fn().mockResolvedValue(analyzed({ discovery: readyDiscovery })),
-      });
-
-      expect(goa(container, 'problem-save').getAttribute('disabled')).toBe('true');
-      type(container, 'problem-input', 'Edited');
-      click(container, 'problem-save');
-
-      await waitFor(() =>
-        expect(api.updateSolution).toHaveBeenCalledWith('solution-1', { problemStatement: 'Edited' }),
-      );
-      expect(api.analyze).not.toHaveBeenCalled();
-    });
-
-    it('shows busy state and resets it after an error', async () => {
-      let reject: (e: Error) => void;
-      const { container } = await setup(undefined, {
-        updateSolution: jest.fn().mockReturnValue(new Promise((_, r) => (reject = r))),
-      });
-
-      click(container, 'problem-analyze');
-      await waitFor(() => expect(container.querySelector('goa-circular-progress')).not.toBeNull());
-      expect(goa(container, 'problem-analyze').getAttribute('disabled')).toBe('true');
-      await act(async () => reject(new Error('boom')));
-
-      await waitFor(() => expect(container.querySelector('goa-circular-progress')).toBeNull());
-      expect(goa(container, 'problem-analyze').getAttribute('disabled')).toBeNull();
-    });
-  });
-
-  const openTab = (container: HTMLElement, testId: string) =>
-    fireEvent.click(container.querySelector(`[data-testid="${testId}-tab-btn"]`) as Element);
-
-  describe('Conversation tab', () => {
-    it('sends a refine message once confidence is already at the threshold', async () => {
-      const updated = analyzed({ discovery: readyDiscovery });
-      const { container } = await setup(undefined, { chat: jest.fn().mockResolvedValue(updated) });
-      openTab(container, 'tab-conversation');
-
-      expect(container.querySelector('[data-testid="discovery-panel"]')).toBeNull();
-      expect(goa(container, 'refine-send').getAttribute('disabled')).toBe('true');
-      type(container, 'refine-input', '  More detail ');
-      click(container, 'refine-send');
-
-      await waitFor(() => expect(api.chat).toHaveBeenCalledWith('solution-1', 'More detail', 'ai'));
-      await waitFor(() => expect(goa(container, 'refine-input').getAttribute('value')).toBe(''));
-      expect(goa(container, 'refine-conversation')).not.toBeNull();
-      expect(goa(container, 'refine-message-0').getAttribute('heading')).toBe('You');
-      expect(goa(container, 'refine-message-0').getAttribute('type')).toBe('important');
-      expect(goa(container, 'refine-message-1').getAttribute('heading')).toBe('Planner');
-      expect(goa(container, 'refine-message-1').getAttribute('type')).toBe('information');
-    });
-
-    it('does not wrap the conversation in a panel when there are no refine messages yet', async () => {
-      const { container } = await setup(analyzed({ discovery: readyDiscovery, conversation: [] }));
-      openTab(container, 'tab-conversation');
-
-      expect(container.querySelector('[data-testid="refine-empty"]')).not.toBeNull();
-      expect(container.querySelector('goa-accordion[testid="refine-conversation"]')).toBeNull();
-    });
-
-    it('shows the discovery conversation when confidence is below the threshold', async () => {
-      const { container } = await setup(baseSolution());
-      openTab(container, 'tab-conversation');
-
-      expect(container.querySelector('[data-testid="refine-chat"]')).toBeNull();
-      expect(container.querySelector('[data-testid="discovery-panel"]')).not.toBeNull();
-      expect(goa(container, 'discovery-start')).not.toBeNull();
-    });
-
-    it('hides the concepts, questions and next steps sections until an analysis exists', async () => {
-      const { container } = await setup(baseSolution());
-      openTab(container, 'tab-conversation');
-
-      expect(container.querySelector('[testid="section-concepts"]')).toBeNull();
-    });
-
-    it('shows concepts, questions and next steps once analyzed', async () => {
-      const { container } = await setup();
-      openTab(container, 'tab-conversation');
-
-      expect(container.querySelector('[testid="concepts-table"]')).not.toBeNull();
-      expect(container.querySelector('[data-testid="questions-pane"]')).not.toBeNull();
-      expect(container.textContent).toContain('Define forms');
-    });
-
-    it('shows empty states for an analysis without results', async () => {
-      const { container } = await setup(
-        baseSolution({
-          analysis: { mode: 'rules', warning: 'Fell back', analyzedOn: '2026-03-01T10:00:00.000Z' },
-          confidence: { score: 60, threshold: 50, factors: [] },
-        }),
-      );
-      openTab(container, 'tab-conversation');
-
-      expect(container.textContent).toContain('No concepts yet.');
-      expect(container.textContent).toContain('Run an analysis to get next steps.');
-    });
-
-    it('answers a question and refines the analysis', async () => {
-      const updated = analyzed();
-      const { container } = await setup(undefined, {
-        answerQuestion: jest.fn().mockResolvedValue(updated),
-        analyze: jest.fn().mockResolvedValue(updated),
-      });
-      openTab(container, 'tab-conversation');
-
-      expect(container.textContent).not.toContain('Answer to:');
-      type(container, 'answer-q1', 'Yes, by staff');
-      click(container, 'save-answer-q1');
-      await waitFor(() => expect(api.answerQuestion).toHaveBeenCalledWith('solution-1', 'q1', 'Yes, by staff'));
-      expect(goa(container, 'save-answer-q2').textContent).toBe('Update answer');
-
-      click(container, 'save-answer-q2');
-      await waitFor(() => expect(api.answerQuestion).toHaveBeenCalledWith('solution-1', 'q2', 'No'));
-
-      click(container, 'refine-analysis');
-      await waitFor(() => expect(api.analyze).toHaveBeenCalledWith('solution-1', { mode: 'ai' }));
-    });
-  });
-
-  describe('Proposed solutions tab', () => {
-    it('shows hypotheses for an analyzed solution', async () => {
-      const { container } = await setup();
-      openTab(container, 'tab-hypotheses');
-
-      expect(goa(container, 'hypothesis-h1').hasAttribute('open')).toBe(true);
-      expect(container.textContent).toContain('1. form-service');
-    });
-
-    it('shows an empty state for an analysis without hypotheses', async () => {
-      const { container } = await setup(
-        baseSolution({ analysis: { mode: 'rules', warning: 'Fell back', analyzedOn: '2026-03-01T10:00:00.000Z' } }),
-      );
-      openTab(container, 'tab-hypotheses');
-
-      expect(container.textContent).toContain('Run an analysis to see solution hypotheses.');
-    });
-  });
-
-  describe('Blueprint tab', () => {
-    it('shows the blueprint for an analyzed solution', async () => {
-      const { container } = await setup();
-      openTab(container, 'tab-blueprint');
-
-      expect(container.textContent).toContain('Generate blueprint');
-    });
-  });
-
-  describe('Specialists rail', () => {
-    it('shows specialist counts and opens a specialist chat', async () => {
-      const { container } = await setup();
-
-      expect(goa(container, 'focus-specialist-form-service').textContent).toBe('Form (3)');
-      expect(goa(container, 'focus-specialist-form-service').querySelector('strong')).toBeNull();
-      expect(goa(container, 'focus-specialist-file-service').textContent).toBe('File');
-
-      click(container, 'focus-specialist-file-service');
-
-      await waitFor(() =>
-        expect(container.querySelector('[data-testid="chat-heading"]')?.textContent).toContain('File service'),
-      );
-      expect(api.listChats).toHaveBeenCalledWith({ service: 'file-service', solutionId: 'solution-1' });
-      expect(goa(container, 'focus-specialist-file-service').getAttribute('type')).toBe('primary');
-    });
-
-    it('refreshes counts when chats change', async () => {
-      const { container } = await setup(undefined, {
-        specialistChat: jest.fn().mockResolvedValue({
-          chatId: 'c9',
-          service: 'file-service',
-          mode: 'ai',
-          reply: 'Hi',
-          suggestions: [],
-          samples: [],
-          followUps: [],
-        }),
-      });
-      click(container, 'focus-specialist-file-service');
-      await waitFor(() => expect(container.querySelector('[data-testid="chat-heading"]')).not.toBeNull());
-      const before = api.listChats.mock.calls.length;
-
-      type(container, 'chat-input', 'Hello');
-      await waitFor(() => expect(goa(container, 'chat-send').getAttribute('disabled')).toBeNull());
-      click(container, 'chat-send');
-
-      await waitFor(() => expect(api.specialistChat).toHaveBeenCalled());
-      await waitFor(() => expect(api.listChats.mock.calls.length).toBeGreaterThan(before + 1));
-    });
-
-    it('returns to the workplace tabs', async () => {
-      const { container } = await setup();
-
-      click(container, 'focus-specialist-file-service');
-      await waitFor(() => expect(container.querySelector('[data-testid="chat-heading"]')).not.toBeNull());
-      click(container, 'focus-workplace');
-
-      expect(container.querySelector('[data-testid="tab-problem-tab-btn"]')).not.toBeNull();
-    });
-  });
-
-  it('has no accessibility violations', async () => {
-    const { container } = await setup();
-
     await expectNoA11yViolations(container);
-  });
-
-  describe('header', () => {
-    it('renames the solution', async () => {
-      const { container, getByTestId } = await setup(undefined, {
-        updateSolution: jest.fn().mockResolvedValue(baseSolution({}, 'Renamed')),
-      });
-
-      click(container, 'rename-solution');
-      expect(goa(container, 'rename-save').getAttribute('disabled')).toBeNull();
-      type(container, 'rename-input', '   ');
-      expect(goa(container, 'rename-save').getAttribute('disabled')).toBe('true');
-      type(container, 'rename-input', ' Renamed ');
-      click(container, 'rename-save');
-
-      await waitFor(() => expect(getByTestId('solution-title').textContent).toBe('Renamed'));
-      expect(api.updateSolution).toHaveBeenCalledWith('solution-1', { name: 'Renamed' });
-    });
-
-    it('cancels a rename', async () => {
-      const { container, getByTestId } = await setup();
-
-      click(container, 'rename-solution');
-      click(container, 'rename-cancel');
-
-      expect(getByTestId('solution-title').textContent).toBe('Permit intake');
-    });
-
-    it('keeps the rename form open when saving fails', async () => {
-      const { container } = await setup(undefined, { updateSolution: jest.fn().mockRejectedValue(new Error('x')) });
-
-      click(container, 'rename-solution');
-      click(container, 'rename-save');
-
-      await waitFor(() => expect(api.updateSolution).toHaveBeenCalled());
-      await waitFor(() => expect(goa(container, 'rename-save').getAttribute('disabled')).toBeNull());
-      expect(goa(container, 'rename-input')).not.toBeNull();
-    });
-
-    it('downloads JSON and the markdown report', async () => {
-      const { container } = await setup(undefined, {
-        exportSolution: jest.fn().mockResolvedValue({ id: 'solution-1' }),
-      });
-
-      click(container, 'download-json');
-      await waitFor(() =>
-        expect(download).toHaveBeenCalledWith(
-          'planner-permit-intake.json',
-          JSON.stringify({ id: 'solution-1' }, null, 2),
-          'application/json',
-        ),
-      );
-
-      click(container, 'download-report');
-      await waitFor(() =>
-        expect(download).toHaveBeenCalledWith(
-          'planner-permit-intake.md',
-          expect.stringContaining('# Permit intake'),
-          'text/markdown',
-        ),
-      );
-    });
-
-    it.each(['download-json', 'download-report'])(
-      'takes the new version from the %s export but keeps the saved state, which still has rejected components',
-      async (button) => {
-        const solution = analyzed({ discovery: readyDiscovery });
-        const exported = { ...solution, version: '1.1', state: { ...solution.state, patternMatches: [] } };
-        const { container } = await setup(solution, { exportSolution: jest.fn().mockResolvedValue(exported) });
-
-        click(container, button);
-
-        await waitFor(() => expect(goa(container, 'solution-version').getAttribute('content')).toBe('v1.1'));
-        expect(container.textContent).toContain('Looks like permitting.');
-      },
-    );
-
-    it('confirms before deleting then goes back', async () => {
-      const { container } = await setup(undefined, { deleteSolution: jest.fn().mockResolvedValue(undefined) });
-
-      click(container, 'delete-solution');
-      expect(goa(container, 'delete-solution-modal').getAttribute('open')).toBe('true');
-      click(container, 'delete-cancel');
-      expect(goa(container, 'delete-solution-modal').getAttribute('open')).not.toBe('true');
-      expect(api.deleteSolution).not.toHaveBeenCalled();
-
-      click(container, 'delete-solution');
-      click(container, 'delete-confirm');
-
-      await waitFor(() => expect(api.deleteSolution).toHaveBeenCalledWith('solution-1'));
-      await waitFor(() => expect(onBack).toHaveBeenCalled());
-    });
-
-    it('stays on the page when deleting fails', async () => {
-      const { container } = await setup(undefined, { deleteSolution: jest.fn().mockRejectedValue(new Error('x')) });
-
-      click(container, 'delete-solution');
-      click(container, 'delete-confirm');
-
-      await waitFor(() => expect(api.deleteSolution).toHaveBeenCalled());
-      expect(onBack).not.toHaveBeenCalled();
-    });
-
-    it('navigates back', async () => {
-      const { container } = await setup();
-
-      click(container, 'back-to-solutions');
-
-      expect(onBack).toHaveBeenCalled();
-    });
-
-    it('omits the back button when no handler is supplied', async () => {
-      (usePlannerApi as jest.Mock).mockReturnValue(
-        createMockApi({ getSolution: jest.fn().mockResolvedValue(baseSolution()) }),
-      );
-      const { container } = render(<SolutionWorkplace solutionId="solution-1" />);
-      await waitFor(() => expect(goa(container, 'delete-solution')).not.toBeNull());
-
-      expect(goa(container, 'back-to-solutions')).toBeNull();
-    });
   });
 });

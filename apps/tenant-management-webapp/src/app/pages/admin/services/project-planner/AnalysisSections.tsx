@@ -29,7 +29,7 @@ const List: FunctionComponent<{ items: React.ReactNode[]; empty?: string }> = ({
 const HypothesisView: FunctionComponent<{ hypothesis: Hypothesis; open: boolean }> = ({ hypothesis: h, open }) => (
   <GoabAccordion
     heading={h.title}
-    secondaryText={`${h.confidence} confidence`}
+    headingContent={<GoabBadge type={levelType[h.confidence]} content={`${h.confidence} confidence`} />}
     open={open}
     headingSize="small"
     testId={`hypothesis-${h.id}`}

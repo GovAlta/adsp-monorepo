@@ -1,74 +1,62 @@
-import React, { FunctionComponent, useEffect, useState } from 'react';
-import { GoabButton, GoabCallout, GoabCircularProgress, GoabFormItem, GoabTextArea } from '@abgov/react-components';
-import { AnalysisModeToggle } from './ModeLayoutToggle';
-import { AnalysisMode } from './model';
-import { fmtDate } from './utils';
-import { PaneProps } from './workplaceTypes';
+import React, { FunctionComponent } from 'react';
+import { GoabButton, GoabFormItem, GoabTextArea } from '@abgov/react-components';
 
-interface ProblemStatementProps extends PaneProps {
-  title: string;
-  analysisModes: AnalysisMode[];
-  onAnalysisModeChange: (mode: AnalysisMode) => void;
+// Matches the project-planner-service's problemStatement length validation.
+export const PROBLEM_STATEMENT_MAX_LENGTH = 20000;
+
+interface ProblemStatementProps {
+  value: string;
+  busy: boolean;
+  continueLabel?: string;
+  showContinue?: boolean;
+  onChange: (value: string) => void;
+  onContinue: () => void;
 }
 
 export const ProblemStatement: FunctionComponent<ProblemStatementProps> = ({
-  solution,
-  api,
-  mode,
+  value,
   busy,
-  run,
-  onSolutionChange,
-  title,
-  analysisModes,
-  onAnalysisModeChange,
+  continueLabel = 'Continue',
+  showContinue = true,
+  onChange,
+  onContinue,
 }) => {
-  const saved = solution.state.problemStatement || '';
-  const [draft, setDraft] = useState(saved);
-  const analysis = solution.state.analysis;
-
-  useEffect(() => setDraft(saved), [saved]);
-
-  const save = () =>
-    run(async () => onSolutionChange(await api.updateSolution(solution.id, { problemStatement: draft })));
-  const analyze = () =>
-    run(async () => {
-      await api.updateSolution(solution.id, { problemStatement: draft });
-      onSolutionChange(await api.analyze(solution.id, { mode }));
-    });
-
+  const overLimit = value.length > PROBLEM_STATEMENT_MAX_LENGTH;
   return (
     <div data-testid="problem-statement">
-      <h2>{title}</h2>
-      <GoabFormItem label="Problem statement" maxWidth="100%" mb="m">
+      <GoabFormItem
+        label="Describe the problem"
+        maxWidth="100%"
+        mb="m"
+        error={
+          overLimit
+            ? `Problem statement is too long; shorten it to ${PROBLEM_STATEMENT_MAX_LENGTH.toLocaleString()} characters or fewer.`
+            : undefined
+        }
+      >
         <GoabTextArea
           name="problemStatement"
-          value={draft}
+          value={value}
           rows={5}
           width="100%"
           maxWidth="100%"
           testId="problem-input"
           disabled={busy}
-          onChange={(detail) => setDraft(detail.value)}
+          countBy="character"
+          maxCount={PROBLEM_STATEMENT_MAX_LENGTH}
+          placeholder="Describe who uses the service, the steps they take, the decisions made, and any documents or notifications involved."
+          onChange={(detail) => onChange(detail.value)}
         />
       </GoabFormItem>
-      <AnalysisModeToggle mode={mode} modes={analysisModes} onChange={onAnalysisModeChange} />
-      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', margin: '1rem 0' }}>
-        <GoabButton type="secondary" testId="problem-save" disabled={busy || draft === saved} onClick={save}>
-          Save
-        </GoabButton>
-        <GoabButton type="primary" testId="problem-analyze" disabled={busy || !draft.trim()} onClick={analyze}>
-          {busy ? 'Working…' : 'Save & analyze'}
-        </GoabButton>
-      </div>
-      {busy && <GoabCircularProgress visible size="small" message="Asking the model — this can take up to a minute" />}
-      {analysis && (
-        <GoabCallout
-          type={analysis.warning ? 'important' : 'success'}
-          heading={analysis.mode === 'ai' ? 'AI analysis' : 'Rule-based analysis'}
-          testId="analysis-info"
+      {showContinue && (
+        <GoabButton
+          type="primary"
+          testId="problem-continue"
+          disabled={busy || !value.trim() || overLimit}
+          onClick={onContinue}
         >
-          {analysis.warning || `Completed ${fmtDate(analysis.analyzedOn)}`}
-        </GoabCallout>
+          {continueLabel}
+        </GoabButton>
       )}
     </div>
   );

@@ -95,11 +95,7 @@ const Message: FunctionComponent<MessageProps> = ({ message, specialistName, dis
   }
 
   return (
-    <GoabCallout
-      type="information"
-      heading={`${specialistName}${message.mode === 'rules' ? ' (rule-based)' : ''}`}
-      testId="chat-assistant-message"
-    >
+    <GoabCallout type="information" heading={specialistName} testId="chat-assistant-message">
       <Text>{message.content}</Text>
       {message.warning && <p>{message.warning}</p>}
       {message.consult && (
@@ -159,6 +155,7 @@ interface SpecialistChatProps {
   solution?: Solution;
   api: PlannerApi;
   mode: AnalysisMode;
+  context?: { label: string; description: string };
   onChatsChanged?: () => void;
 }
 
@@ -168,6 +165,7 @@ export const SpecialistChat: FunctionComponent<SpecialistChatProps> = ({
   solution,
   api,
   mode,
+  context,
   onChatsChanged,
 }) => {
   const [chats, setChats] = useState<ChatSummary[]>([]);
@@ -304,7 +302,12 @@ export const SpecialistChat: FunctionComponent<SpecialistChatProps> = ({
 
   return (
     <section aria-label={`Chat with ${displayName}`}>
-      <h2 data-testid="chat-heading">Specialist chat: {displayName}</h2>
+      <h3 data-testid="chat-heading">{displayName}</h3>
+      {context && (
+        <p data-testid="chat-context">
+          <strong>{context.label}:</strong> {context.description}
+        </p>
+      )}
 
       {solution && (
         <GoabButton size="compact" type="secondary" disabled={busy} mb="m" testId="chat-consult" onClick={runConsult}>
