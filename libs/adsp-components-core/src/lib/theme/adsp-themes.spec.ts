@@ -56,7 +56,7 @@ describe('AdspThemes.standard', () => {
     const componentNames = Object.keys(AdspThemes.standard.components);
 
     // Assert
-    expect(componentNames).toEqual(['badge', 'button', 'card']);
+    expect(componentNames).toEqual(['badge', 'button', 'card', 'conversation']);
   });
 
   test('rejects modification by a consuming application', () => {
