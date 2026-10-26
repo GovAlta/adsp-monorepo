@@ -60,7 +60,6 @@ import {
   SolutionState,
   SpecialistChat,
   SpecialistNote,
-  SpecialistProgress,
   SpecialistStatus,
   StoredChatMessage,
 } from './types';
@@ -381,6 +380,22 @@ export function createPlannerRouter({
     state.confidence = assessConfidence(state);
   }
 
+  function applySpecialistExchangeToState(state: SolutionState, topic: string, guidance: string): SolutionState {
+    if (!state.discovery || !guidance.trim()) {
+      return state;
+    }
+    const evidence = allUserEvidence(state);
+    const hasOpenQuestions = state.questions.some((q) => q.status === 'open');
+    const factors = capFactors(
+      applyAnswerToFactors(state.discovery.factors, topic, guidance, evidence),
+      hasOpenQuestions,
+    );
+    const confidence = computeConfidence(factors);
+    const discovery = { ...state.discovery, factors, confidence, ready: confidence >= DISCOVERY_THRESHOLD };
+    const withDiscovery = { ...state, discovery };
+    return { ...withDiscovery, confidence: assessConfidence(withDiscovery) };
+  }
+
   async function runAnalysis(
     req: Request,
     solution: Solution,
@@ -661,7 +676,7 @@ export function createPlannerRouter({
       body('name').isString().isLength({ min: 1, max: 200 }),
       body('description').optional({ nullable: true }).isString(),
       body('scenario').optional().isIn(['new', 'prototype', 'existing-app', 'reconfigure']),
-      body('problemStatement').optional().isString().isLength({ max: 20000 }),
+      body('problemStatement').optional().isString().isLength({ max: 100000 }),
     ),
     async (req, res, next) => {
       try {
@@ -709,7 +724,7 @@ export function createPlannerRouter({
       body('name').optional().isString().isLength({ min: 1, max: 200 }),
       body('description').optional({ nullable: true }).isString(),
       body('status').optional().isIn(SOLUTION_STATUSES),
-      body('problemStatement').optional().isString().isLength({ max: 20000 }),
+      body('problemStatement').optional().isString().isLength({ max: 100000 }),
       body('concepts').optional().isArray(),
       body('concepts.*.type')
         .optional()
@@ -1058,13 +1073,13 @@ export function createPlannerRouter({
     async (req, res, next) => {
       try {
         const solution = loaded(req);
-        const { result, specialists } = await runConsult(req, solution, req.params.service, {
+        const { result, state } = await runConsult(req, solution, req.params.service, {
           question: req.body.question,
           proposal: req.body.proposal,
           mode: req.body.mode,
         });
-        await persist(req, { ...solution, state: { ...solution.state, specialists } }, 'consult');
-        res.send(result);
+        const saved = await persist(req, { ...solution, state }, 'consult');
+        res.send({ ...result, solution: saved });
       } catch (err) {
         next(err);
       }
@@ -1077,7 +1092,7 @@ export function createPlannerRouter({
     solution: Solution,
     service: string,
     { question, proposal, mode }: { question?: string; proposal?: string; mode?: AnalysisMode },
-  ): Promise<{ result: ConsultResult; specialists: SpecialistProgress[] }> {
+  ): Promise<{ result: ConsultResult; state: SolutionState }> {
     const baseResult = consultSpecialist(solution.state, service);
     if (!baseResult) {
       throw new NotFoundError('specialist', service);
@@ -1119,7 +1134,17 @@ export function createPlannerRouter({
         consult: { ...result },
       },
     ]);
-    return { result, specialists };
+    const guidance = [
+      result.advice,
+      result.reason,
+      ...(result.supports || []),
+      ...(result.constraints || []),
+      ...(result.risks || []),
+    ]
+      .filter(Boolean)
+      .join('\n');
+    const state = applySpecialistExchangeToState({ ...solution.state, specialists }, asked, guidance);
+    return { result, state };
   }
 
   router.post(
@@ -1143,7 +1168,6 @@ export function createPlannerRouter({
 
         // Reuse each saved consultation; consult only the recommended services that have none (or all when refreshing).
         const notes: SpecialistNote[] = [];
-        let specialists = solution.state.specialists;
         let working = solution;
         for (const { service } of recommendedServices(solution.state)) {
           const chat = chats.find((c) => c.service === service);
@@ -1155,9 +1179,8 @@ export function createPlannerRouter({
             notes.push(toSpecialistNote(storedConsult(saved), 'saved-consultation', highlights, saved.at));
             continue;
           }
-          const { result, specialists: updated } = await runConsult(req, working, service, { mode: requestedMode });
-          specialists = updated;
-          working = { ...working, state: { ...working.state, specialists } };
+          const { result, state: updatedState } = await runConsult(req, working, service, { mode: requestedMode });
+          working = { ...working, state: updatedState };
           notes.push(toSpecialistNote(result, result.advice ? 'ai' : 'rules', highlights, new Date().toISOString()));
         }
 
@@ -1208,9 +1231,7 @@ export function createPlannerRouter({
           generated?.notCoveredByAdsp,
           components,
         );
-        res.send(
-          await persist(req, { ...solution, state: { ...solution.state, specialists, blueprint } }, 'blueprint'),
-        );
+        res.send(await persist(req, { ...solution, state: { ...working.state, blueprint } }, 'blueprint'));
       } catch (err) {
         next(err);
       }
@@ -1391,7 +1412,8 @@ export function createPlannerRouter({
         }
 
         const solutionId: string = chat?.solutionId || req.body.solutionId;
-        const state = solutionId ? (await loadSolution(solutionRepository, req, solutionId)).state : undefined;
+        const solution = solutionId ? await loadSolution(solutionRepository, req, solutionId) : undefined;
+        const state = solution?.state;
 
         const history: SpecialistChatMessage[] = [
           ...(chat?.messages || []).map(({ role, content }) => ({ role, content })),
@@ -1410,6 +1432,7 @@ export function createPlannerRouter({
         const replyMode: AnalysisMode = aiReply ? 'ai' : 'rules';
         const reply: Omit<SpecialistReply, 'model'> & { model?: string } =
           aiReply || ruleBasedSpecialistReply(specialist, intent);
+        let updatedSolution: Solution | undefined;
 
         const at = new Date().toISOString();
         const saved = await recordExchange(req, chat, { service: specialist.service, solutionId, title: message }, [
@@ -1428,7 +1451,23 @@ export function createPlannerRouter({
             followUps: reply.followUps,
           },
         ]);
-        res.send({ chatId: saved.id, service: specialist.service, mode: replyMode, warning, ...reply });
+        if (solution && state) {
+          const guidance = [reply.reply, ...(reply.suggestions || []), ...(reply.followUps || [])]
+            .filter(Boolean)
+            .join('\n');
+          const updatedState = applySpecialistExchangeToState(state, message, guidance);
+          if (updatedState !== state) {
+            updatedSolution = await persist(req, { ...solution, state: updatedState }, 'specialist-chat');
+          }
+        }
+        res.send({
+          chatId: saved.id,
+          service: specialist.service,
+          mode: replyMode,
+          warning,
+          ...reply,
+          solution: updatedSolution,
+        });
       } catch (err) {
         next(err);
       }

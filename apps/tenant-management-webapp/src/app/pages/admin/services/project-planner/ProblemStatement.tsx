@@ -42,7 +42,6 @@ export const ProblemStatement: FunctionComponent<ProblemStatementProps> = ({
           maxWidth="100%"
           testId="problem-input"
           disabled={busy}
-          countBy="character"
           maxCount={PROBLEM_STATEMENT_MAX_LENGTH}
           placeholder="Describe who uses the service, the steps they take, the decisions made, and any documents or notifications involved."
           onChange={(detail) => onChange(detail.value)}

@@ -157,6 +157,7 @@ interface SpecialistChatProps {
   mode: AnalysisMode;
   context?: { label: string; description: string };
   onChatsChanged?: () => void;
+  onSolutionChange?: (solution: Solution) => void;
 }
 
 export const SpecialistChat: FunctionComponent<SpecialistChatProps> = ({
@@ -167,6 +168,7 @@ export const SpecialistChat: FunctionComponent<SpecialistChatProps> = ({
   mode,
   context,
   onChatsChanged,
+  onSolutionChange,
 }) => {
   const [chats, setChats] = useState<ChatSummary[]>([]);
   const [chatId, setChatId] = useState<string>();
@@ -249,6 +251,9 @@ export const SpecialistChat: FunctionComponent<SpecialistChatProps> = ({
           followUps: res.followUps,
         },
       ]);
+      if (res.solution) {
+        onSolutionChange?.(res.solution);
+      }
       await refreshChats();
     });
   };
@@ -275,6 +280,9 @@ export const SpecialistChat: FunctionComponent<SpecialistChatProps> = ({
           },
         },
       ]);
+      if (result.solution) {
+        onSolutionChange?.(result.solution);
+      }
       await refreshChats();
     });
 

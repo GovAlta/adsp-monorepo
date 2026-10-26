@@ -157,7 +157,7 @@ export const DiscoveryPanel: FunctionComponent<DiscoveryPanelProps> = ({
     return () => {
       active = false;
     };
-  }, [api, solution.id]);
+  }, [api, solution.id, solution.updatedOn]);
 
   useEffect(() => {
     onBusyChange?.(busy);
@@ -490,7 +490,7 @@ export const DiscoveryPanel: FunctionComponent<DiscoveryPanelProps> = ({
           {specialists.length ? (
             <ExpertLayout data-testid="service-expert-layout">
               <ExpertList role="group" aria-label="Available service experts">
-                <h4 style={{ margin: 0 }}>Specialists</h4>
+                <h3 style={{ margin: 0 }}>Specialists</h3>
                 {specialists.map((specialist) => {
                   const label = `${serviceName(specialist.service, specialists)}${
                     chatCounts[specialist.service] ? ` (${chatCounts[specialist.service]})` : ''
@@ -529,6 +529,7 @@ export const DiscoveryPanel: FunctionComponent<DiscoveryPanelProps> = ({
                           : activeSpecialist.purpose,
                     }}
                     onChatsChanged={refreshChatCounts}
+                    onSolutionChange={onSolutionChange}
                   />
                 </SpecialistChatPanel>
               )}

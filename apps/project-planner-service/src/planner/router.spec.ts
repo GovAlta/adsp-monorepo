@@ -1363,6 +1363,39 @@ describe('planner router routes', () => {
       expect(res.status).toBe(404);
     });
 
+    it('bumps the relevant discovery factor when the consult question mentions it', async () => {
+      const stored = solutionOwnedBy('owner-1');
+      stored.state.discovery = {
+        messages: [],
+        confidence: 50,
+        threshold: DISCOVERY_THRESHOLD,
+        factors: DISCOVERY_FACTORS.map((f) => ({ id: f.id, label: f.label, score: f.id === 'constraints' ? 50 : 90 })),
+        ready: false,
+        mode: 'ai',
+        updatedOn: '2026-01-01T00:00:00.000Z',
+      };
+      repository.get.mockResolvedValueOnce(stored);
+
+      await request(buildApp(owner))
+        .post(`/planner/v1/solutions/${SOLUTION_ID}/consult/form-service`)
+        .send({ question: 'Does this meet FOIP privacy and security compliance requirements?' });
+
+      const saved = repository.save.mock.calls[0][0];
+      const constraints = saved.state.discovery.factors.find((f: { id: string }) => f.id === 'constraints');
+      expect(constraints.score).toBeGreaterThan(50);
+    });
+
+    it('does not touch discovery when it has not started', async () => {
+      repository.get.mockResolvedValueOnce(solutionOwnedBy('owner-1'));
+
+      await request(buildApp(owner))
+        .post(`/planner/v1/solutions/${SOLUTION_ID}/consult/form-service`)
+        .send({ question: 'Does this meet FOIP privacy requirements?' });
+
+      const saved = repository.save.mock.calls[0][0];
+      expect(saved.state.discovery).toBeUndefined();
+    });
+
     describe('chat recording', () => {
       const consultWith = (body: object = {}, user: User = owner) =>
         request(buildApp(user)).post(`/planner/v1/solutions/${SOLUTION_ID}/consult/form-service`).send(body);
@@ -1413,7 +1446,8 @@ describe('planner router routes', () => {
           expect.objectContaining({ role: 'user', content: 'Consult on this solution', intent: 'consult' }),
           expect.objectContaining({ role: 'assistant', content: res.body.reason, intent: 'consult', mode: 'rules' }),
         ]);
-        expect(JSON.parse(JSON.stringify(savedChat().messages[1].consult))).toEqual(res.body);
+        const { solution: _solution, ...resultOnly } = res.body;
+        expect(JSON.parse(JSON.stringify(savedChat().messages[1].consult))).toEqual(resultOnly);
       });
 
       it('appends the proposal to the user message', async () => {
@@ -1690,7 +1724,12 @@ describe('planner router routes', () => {
 
     it('does not trigger a full re-score when a question other than the last one is answered', async () => {
       storedWith({ process: 20 }, [
-        { id: OTHER_QUESTION_ID, question: 'Who approves grants above the delegated limit?', raisedBy: 'ai', status: 'open' },
+        {
+          id: OTHER_QUESTION_ID,
+          question: 'Who approves grants above the delegated limit?',
+          raisedBy: 'ai',
+          status: 'open',
+        },
       ]);
       const llm = {
         model: 'GOA-Default',
@@ -3956,6 +3995,43 @@ describe('planner router routes', () => {
           await chat(buildApp(owner, true, llm), { message: userMessage, solutionId: SOLUTION_ID });
 
           expect(savedChat().solutionId).toBe(SOLUTION_ID);
+        });
+
+        it('folds the specialist reply into discovery confidence when the solution has started discovery', async () => {
+          const stored = solutionOwnedBy('owner-1');
+          stored.state.discovery = {
+            messages: [],
+            confidence: 50,
+            threshold: DISCOVERY_THRESHOLD,
+            factors: DISCOVERY_FACTORS.map((f) => ({
+              id: f.id,
+              label: f.label,
+              score: f.id === 'constraints' ? 50 : 90,
+            })),
+            ready: false,
+            mode: 'ai',
+            updatedOn: '2026-01-01T00:00:00.000Z',
+          };
+          repository.get.mockResolvedValueOnce(stored);
+          llm.converse.mockResolvedValueOnce({
+            ...specialistReply,
+            reply: 'Make sure FOIP privacy and security compliance requirements are met for personal information.',
+          });
+
+          await chat(buildApp(owner, true, llm), { message: userMessage, solutionId: SOLUTION_ID });
+
+          const saved = repository.save.mock.calls[0][0];
+          const constraints = saved.state.discovery.factors.find((f: { id: string }) => f.id === 'constraints');
+          expect(constraints.score).toBeGreaterThan(50);
+        });
+
+        it('does not persist the solution when discovery has not started', async () => {
+          repository.get.mockResolvedValueOnce(solutionOwnedBy('owner-1'));
+          llm.converse.mockResolvedValueOnce(specialistReply);
+
+          await chat(buildApp(owner, true, llm), { message: userMessage, solutionId: SOLUTION_ID });
+
+          expect(repository.save).not.toHaveBeenCalled();
         });
 
         it('returns 500 when saving the chat fails', async () => {

@@ -94,6 +94,18 @@ const analyzed = (extra: Partial<Solution['state']> = {}): Solution =>
 const withPlan = (extra: Partial<Solution['state']> = {}): Solution =>
   baseSolution({ ...analyzed(extra).state, blueprint, ...extra });
 
+const readyDiscovery: NonNullable<Solution['state']['discovery']> = {
+  messages: [
+    { role: 'assistant', content: 'Looks like permitting. Ready to propose a plan.', at: '2026-03-01T10:02:00.000Z' },
+  ],
+  confidence: 70,
+  threshold: 50,
+  factors: [],
+  ready: true,
+  mode: 'ai',
+  updatedOn: '2026-03-01T10:02:00.000Z',
+};
+
 const specialists = [
   {
     service: 'form-service',
@@ -109,6 +121,7 @@ const specialists = [
 
 describe('SolutionWorkplace', () => {
   let api: MockPlannerApi;
+  const onBack = jest.fn();
   const setup = async (solution: Solution = withPlan(), overrides = {}) => {
     api = createMockApi({
       getSolution: jest.fn().mockResolvedValue(solution),
@@ -118,7 +131,7 @@ describe('SolutionWorkplace', () => {
       ...overrides,
     });
     (usePlannerApi as jest.Mock).mockReturnValue(api);
-    const view = render(<SolutionWorkplace solutionId="solution-1" />);
+    const view = render(<SolutionWorkplace solutionId="solution-1" onBack={onBack} />);
     await waitFor(() => expect(view.container.querySelector('[data-testid="solution-workplace"]')).not.toBeNull());
     await waitFor(() => expect(api.listSpecialists).toHaveBeenCalled());
     return view;
@@ -165,7 +178,6 @@ describe('SolutionWorkplace', () => {
     expect(container.querySelector('[testid="optional-experts"]')).not.toBeNull();
     expect(container.querySelector('[testid="specialist-service-form-service"]')).not.toBeNull();
     expect(container.querySelector('[data-testid="selected-specialist-chat"]')).not.toBeNull();
-    expect(goa(container, 'inferred-answers').getAttribute('heading')).toBe('Review details used in this plan (1)');
     expect(container.textContent).not.toContain('Answers the planner understood');
     expect(container.querySelector('[testid="analysis-mode-ai"]')).not.toBeNull();
     expect(container.querySelector('[testid="analysis-mode-rules"]')).not.toBeNull();
@@ -185,7 +197,7 @@ describe('SolutionWorkplace', () => {
       expect(toggle.getAttribute('aria-expanded')).toBe('true');
       expect(toggle.textContent).toContain(heading);
       expect(toggle.closest('h2')).not.toBeNull();
-      expect((toggle.closest('h2') as HTMLElement).style.fontWeight).toBe('800');
+      expect((toggle.closest('h2') as HTMLElement).style.fontWeight).toBe('600');
       expect(container.querySelector(`#${step}-content`)).not.toBeNull();
     }
     expect(goa(container, 'guided-step-2').querySelectorAll('goa-textarea[testid="discovery-input"]')).toHaveLength(1);
@@ -196,11 +208,8 @@ describe('SolutionWorkplace', () => {
     );
     expect(container.querySelector('[testid="advanced-plan-options"]')).toBeNull();
     expect(goa(container, 'download-json')).not.toBeNull();
-    expect(container.querySelectorAll('[testid="discovery-response"]')).toHaveLength(1);
     expect(container.textContent).not.toContain('Refine by conversation');
-    expect(goa(container, 'optional-experts').getAttribute('heading')).toContain(
-      'Chat/Consult with Specialist (optional',
-    );
+    expect(goa(container, 'optional-experts').getAttribute('heading')).toContain('Chat/Consult with Specialist');
     expect(container.textContent).not.toContain('5. Consult a specialist');
 
     fireEvent.click(goa(container, 'guided-step-2-toggle'));
@@ -245,7 +254,6 @@ describe('SolutionWorkplace', () => {
       listSpecialists: jest.fn().mockResolvedValue([...specialists, otherSpecialist]),
     });
 
-    expect(goa(container, 'optional-experts-count').getAttribute('content')).toBe('2 specialists');
     expect(container.querySelector('[testid="specialist-service-form-service"]')).not.toBeNull();
     expect(container.querySelector('[testid="specialist-service-status-service"]')).not.toBeNull();
     expect(container.querySelector('[testid="optional-experts"]')?.hasAttribute('open')).toBe(false);
@@ -446,76 +454,6 @@ describe('SolutionWorkplace', () => {
     expect(api.analyze).toHaveBeenCalledWith('solution-1', { mode: 'ai' });
   });
 
-  it('saves an edited inferred answer and marks the plan out of date', async () => {
-    const changed = withPlan({
-      questions: [
-        {
-          id: 'q1',
-          question: 'Who reviews applications?',
-          raisedBy: 'planner',
-          status: 'answered',
-          answer: 'Managers',
-        },
-      ],
-    });
-    const { container } = await setup(undefined, {
-      answerQuestion: jest.fn().mockResolvedValue(changed),
-    });
-    expect(container.querySelector('[testid="save-plan-answer-q1"]')).toBeNull();
-    type(container, 'plan-answer-q1', 'Managers');
-    expect(goa(container, 'save-plan-answer-q1')).not.toBeNull();
-    click(container, 'save-plan-answer-q1');
-
-    await waitFor(() => expect(api.answerQuestion).toHaveBeenCalledWith('solution-1', 'q1', 'Managers'));
-    expect(container.querySelector('[testid="plan-out-of-date"]')).not.toBeNull();
-  });
-
-  it('shows three understood answers initially and allows expanding the list', async () => {
-    const questions = Array.from({ length: 5 }, (_, index) => ({
-      id: `q${index + 1}`,
-      question: `Question ${index + 1}?`,
-      raisedBy: 'planner',
-      status: 'answered' as const,
-      answer: `Answer ${index + 1}`,
-    }));
-    const { container } = await setup(withPlan({ questions }));
-    expect(goa(container, 'plan-answer-q3')).not.toBeNull();
-    expect(container.querySelector('[testid="plan-answer-q4"]')).toBeNull();
-    click(container, 'toggle-more-answers');
-    expect(goa(container, 'plan-answer-q4')).not.toBeNull();
-  });
-
-  it('keeps unanswered questions out of the plan answer review', async () => {
-    const { container } = await setup(
-      withPlan({
-        questions: [
-          { id: 'q1', question: 'Inferred detail?', raisedBy: 'planner', status: 'inferred', answer: 'Yes' },
-          { id: 'q2', question: 'Confirmed detail?', raisedBy: 'planner', status: 'answered', answer: 'Also yes' },
-          { id: 'q3', question: 'Unanswered follow-up?', raisedBy: 'planner', status: 'open' },
-        ],
-      }),
-    );
-
-    expect(goa(container, 'inferred-answers').getAttribute('heading')).toBe('Review details used in this plan (2)');
-    expect(container.querySelector('[testid="plan-answer-q1"]')).not.toBeNull();
-    expect(container.querySelector('[testid="plan-answer-q2"]')).not.toBeNull();
-    expect(container.querySelector('[testid="plan-answer-q3"]')).toBeNull();
-  });
-
-  it('accepts an inferred answer without changing its content', async () => {
-    const changed = withPlan({
-      questions: [
-        { id: 'q1', question: 'Who reviews applications?', raisedBy: 'planner', status: 'answered', answer: 'Staff' },
-      ],
-    });
-    const { container } = await setup(undefined, {
-      answerQuestion: jest.fn().mockResolvedValue(changed),
-    });
-    click(container, 'accept-plan-answer-q1');
-
-    await waitFor(() => expect(api.answerQuestion).toHaveBeenCalledWith('solution-1', 'q1', 'Staff'));
-  });
-
   it('downloads JSON and the markdown report', async () => {
     const { container } = await setup(undefined, {
       exportSolution: jest.fn().mockResolvedValue({ id: 'solution-1' }),
@@ -545,7 +483,10 @@ describe('SolutionWorkplace', () => {
     async (button) => {
       const solution = analyzed({ discovery: readyDiscovery });
       const exported = { ...solution, version: '1.1', state: { ...solution.state, patternMatches: [] } };
-      const { container } = await setup(solution, { exportSolution: jest.fn().mockResolvedValue(exported) });
+      const { container } = await setup(solution, {
+        exportSolution: jest.fn().mockResolvedValue(exported),
+        blueprint: jest.fn().mockResolvedValue({ ...solution, state: { ...solution.state, blueprint } }),
+      });
 
       click(container, button);
 

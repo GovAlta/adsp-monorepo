@@ -367,6 +367,7 @@ export interface SpecialistChatResponse {
   validation?: SpecialistValidation;
   followUps: string[];
   model?: string;
+  solution?: Solution;
 }
 
 export interface PatternInput {

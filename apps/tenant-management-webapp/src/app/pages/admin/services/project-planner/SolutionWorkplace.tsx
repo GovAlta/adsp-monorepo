@@ -6,9 +6,7 @@ import {
   GoabCircularProgress,
   GoabContainer,
   GoabDetails,
-  GoabFormItem,
   GoabIcon,
-  GoabTextArea,
 } from '@abgov/react-components';
 import { Concepts, Hypotheses, NextSteps, PatternMatches } from './AnalysisSections';
 import { usePlannerApi } from './api';
@@ -19,7 +17,7 @@ import { AnalysisModeToggle } from './ModeLayoutToggle';
 import ProblemStatement, { PROBLEM_STATEMENT_MAX_LENGTH } from './ProblemStatement';
 import ProgressStepper from './ProgressStepper';
 import SolutionHeader from './SolutionHeader';
-import { AnalysisMode, OpenQuestion, Solution, SpecialistDefinition } from './model';
+import { AnalysisMode, Solution, SpecialistDefinition } from './model';
 import { useBusy } from './useBusy';
 
 const STEPPER_WIDTH_PX = 32;
@@ -109,13 +107,10 @@ export const SolutionWorkplace: FunctionComponent<SolutionWorkplaceProps> = ({
   const api = usePlannerApi();
   const [solution, setSolution] = useState<Solution>();
   const [problemDraft, setProblemDraft] = useState('');
-  const [answerDrafts, setAnswerDrafts] = useState<Record<string, string>>({});
-  const [answersChangedAfterPlan, setAnswersChangedAfterPlan] = useState(false);
   const [specialists, setSpecialists] = useState<SpecialistDefinition[]>([]);
   const [mode, setMode] = useState<AnalysisMode>('ai');
   const [analysisModes, setAnalysisModes] = useState<AnalysisMode[]>(['ai', 'rules']);
   const [analysisOptionsError, setAnalysisOptionsError] = useState(false);
-  const [showAllAnswers, setShowAllAnswers] = useState(false);
   const [blueprintGenerationFailed, setBlueprintGenerationFailed] = useState(false);
   const [busy, runBusy] = useBusy();
   const [headerBusy, setHeaderBusy] = useState(false);
@@ -337,14 +332,9 @@ export const SolutionWorkplace: FunctionComponent<SolutionWorkplaceProps> = ({
   };
   const problemChanged = problemDraft !== solution.state.problemStatement;
   const problemTooLong = problemDraft.length > PROBLEM_STATEMENT_MAX_LENGTH;
-  const answerChanged = solution.state.questions.some(
-    (question) => answerDrafts[question.id] !== undefined && answerDrafts[question.id] !== (question.answer || ''),
-  );
   const planOutOfDate =
     !!blueprint &&
     (problemChanged ||
-      answerChanged ||
-      answersChangedAfterPlan ||
       mode !== blueprint.mode ||
       !!solution.blueprintOutOfDate ||
       (!!analysis && new Date(analysis.analyzedOn) > new Date(blueprint.generatedOn)));
@@ -374,26 +364,10 @@ export const SolutionWorkplace: FunctionComponent<SolutionWorkplaceProps> = ({
       updateSolution(updated);
     });
 
-  const saveAnswer = (question: OpenQuestion, accept: boolean) =>
-    run(async () => {
-      const answer = accept ? question.answer || '' : (answerDrafts[question.id] ?? question.answer ?? '');
-      updateSolution(await api.answerQuestion(solution.id, question.id, answer));
-      setAnswersChangedAfterPlan(true);
-      setAnswerDrafts((drafts) => {
-        const { [question.id]: _removed, ...rest } = drafts;
-        return rest;
-      });
-    });
-
   const refreshSpecialists = () =>
     run(async () => {
       updateSolution(await api.blueprint(solution.id, { mode, refreshConsultations: true }));
     });
-
-  const answerQuestions = solution.state.questions.filter(
-    (question) => question.status === 'inferred' || question.status === 'answered',
-  );
-  const visibleAnswerQuestions = answerQuestions.slice(0, showAllAnswers ? undefined : 3);
 
   return (
     <div ref={contentRef} data-testid="solution-workplace" style={{ position: 'relative' }}>
@@ -600,81 +574,6 @@ export const SolutionWorkplace: FunctionComponent<SolutionWorkplaceProps> = ({
                       onBusyChange={setBlueprintBusy}
                     />
                   </GoabContainer>
-                  {answerQuestions.length > 0 && (
-                    <GoabDetails
-                      heading={`Review details used in this plan (${answerQuestions.length})`}
-                      maxWidth="100%"
-                      mt="m"
-                      testId="inferred-answers"
-                    >
-                      <>
-                        {visibleAnswerQuestions.map((question) => {
-                          const answer = answerDrafts[question.id] ?? question.answer ?? '';
-                          const inferred = String(question.status) === 'inferred';
-                          const edited = answerDrafts[question.id] !== undefined && answer !== (question.answer || '');
-                          return (
-                            <GoabContainer key={question.id} type="non-interactive" accent="thin" mb="s">
-                              <GoabFormItem label={question.question}>
-                                <GoabTextArea
-                                  name={`answer-${question.id}`}
-                                  value={answer}
-                                  rows={2}
-                                  width="100%"
-                                  ariaLabel={question.question}
-                                  testId={`plan-answer-${question.id}`}
-                                  disabled={anyBusy}
-                                  placeholder="Add or correct this answer"
-                                  onChange={(detail) =>
-                                    setAnswerDrafts((drafts) => ({ ...drafts, [question.id]: detail.value }))
-                                  }
-                                />
-                              </GoabFormItem>
-                              <p>
-                                {edited
-                                  ? 'Your changes are not saved yet.'
-                                  : inferred
-                                    ? 'Inferred from your description'
-                                    : question.status === 'answered'
-                                      ? 'Your answer'
-                                      : 'Needs an answer'}
-                              </p>
-                              {edited ? (
-                                <GoabButton
-                                  type="secondary"
-                                  size="compact"
-                                  testId={`save-plan-answer-${question.id}`}
-                                  disabled={anyBusy}
-                                  onClick={() => saveAnswer(question, false)}
-                                >
-                                  Save
-                                </GoabButton>
-                              ) : inferred && question.answer ? (
-                                <GoabButton
-                                  type="tertiary"
-                                  size="compact"
-                                  testId={`accept-plan-answer-${question.id}`}
-                                  disabled={anyBusy}
-                                  onClick={() => saveAnswer(question, true)}
-                                >
-                                  Accept answer
-                                </GoabButton>
-                              ) : null}
-                            </GoabContainer>
-                          );
-                        })}
-                        {answerQuestions.length > 3 && (
-                          <GoabButton
-                            type="tertiary"
-                            size="compact"
-                            testId="toggle-more-answers"
-                            onClick={() => setShowAllAnswers((show) => !show)}
-                          >
-                            {showAllAnswers ? 'Show fewer' : `Show more (${answerQuestions.length - 3})`}
-                          </GoabButton>
-                        )}
-                      </>
-                    </GoabDetails>
-                  )}
                 </>
               ) : step === 3 ? (
                 <GoabContainer accent="thin" mb="m" testId="project-blueprint">
