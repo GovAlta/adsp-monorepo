@@ -14,7 +14,7 @@ import BlueprintViewer from './BlueprintViewer';
 import ConfidenceBar from './ConfidenceBar';
 import DiscoveryPanel from './DiscoveryPanel';
 import { AnalysisModeToggle } from './ModeLayoutToggle';
-import ProblemStatement, { PROBLEM_STATEMENT_MAX_LENGTH } from './ProblemStatement';
+import ProblemStatement from './ProblemStatement';
 import ProgressStepper from './ProgressStepper';
 import SolutionHeader from './SolutionHeader';
 import { AnalysisMode, Solution, SpecialistDefinition } from './model';
@@ -331,7 +331,6 @@ export const SolutionWorkplace: FunctionComponent<SolutionWorkplaceProps> = ({
     stepRefs[id].current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
   const problemChanged = problemDraft !== solution.state.problemStatement;
-  const problemTooLong = problemDraft.length > PROBLEM_STATEMENT_MAX_LENGTH;
   const planOutOfDate =
     !!blueprint &&
     (problemChanged ||
@@ -448,7 +447,7 @@ export const SolutionWorkplace: FunctionComponent<SolutionWorkplaceProps> = ({
                 type="primary"
                 size="compact"
                 testId="problem-continue"
-                disabled={anyBusy || !problemDraft.trim() || problemTooLong}
+                disabled={anyBusy || !problemDraft.trim()}
                 onClick={handleContinue}
                 mt="s"
               >
@@ -478,7 +477,7 @@ export const SolutionWorkplace: FunctionComponent<SolutionWorkplaceProps> = ({
                   <GoabButton
                     type="tertiary"
                     testId="problem-back-to-questions"
-                    disabled={anyBusy || problemTooLong}
+                    disabled={anyBusy}
                     onClick={backToQuestions}
                     ml="s"
                   >

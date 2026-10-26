@@ -676,7 +676,7 @@ export function createPlannerRouter({
       body('name').isString().isLength({ min: 1, max: 200 }),
       body('description').optional({ nullable: true }).isString(),
       body('scenario').optional().isIn(['new', 'prototype', 'existing-app', 'reconfigure']),
-      body('problemStatement').optional().isString().isLength({ max: 100000 }),
+      body('problemStatement').optional().isString(),
     ),
     async (req, res, next) => {
       try {
@@ -724,7 +724,7 @@ export function createPlannerRouter({
       body('name').optional().isString().isLength({ min: 1, max: 200 }),
       body('description').optional({ nullable: true }).isString(),
       body('status').optional().isIn(SOLUTION_STATUSES),
-      body('problemStatement').optional().isString().isLength({ max: 100000 }),
+      body('problemStatement').optional().isString(),
       body('concepts').optional().isArray(),
       body('concepts.*.type')
         .optional()
