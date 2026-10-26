@@ -213,6 +213,12 @@ export const FormSupportPane = styled(FormSupportPaneComponent)`
       box-sizing: border-box;
     }
 
+    .supportContent[data-tab='comments'] .comments {
+      /* The feedback badge is fixed to the viewport's right edge. Reserve its width in the
+         conversation so right-aligned messages and bylines remain fully visible beside it. */
+      padding-right: calc(var(--goa-space-l) + var(--goa-space-2xl));
+    }
+
     .supportContent > * {
       height: 100%;
     }
