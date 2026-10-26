@@ -3,8 +3,6 @@ export interface AdspCalendarTheme {
   todayBackground: string;
   eventBackground: string;
   eventTextColor: string;
-  recurringEventBackground: string;
-  recurringEventTextColor: string;
   holidayBackground: string;
   buttonBackground: string;
   buttonTextColor: string;
@@ -19,8 +17,6 @@ export const defaultCalendarTheme: AdspCalendarTheme = {
   todayBackground: 'var(--adsp-color-surface-card)',
   eventBackground: 'var(--adsp-color-interactive-default)',
   eventTextColor: 'var(--adsp-color-text-light)',
-  recurringEventBackground: 'var(--adsp-color-interactive-default)',
-  recurringEventTextColor: 'var(--adsp-color-text-light)',
   holidayBackground: 'var(--adsp-color-status-important)',
   buttonBackground: 'var(--adsp-color-interactive-default)',
   buttonTextColor: 'var(--adsp-color-text-light)',

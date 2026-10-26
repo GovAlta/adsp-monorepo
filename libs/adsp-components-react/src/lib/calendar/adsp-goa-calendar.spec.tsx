@@ -32,23 +32,6 @@ const createClient = (getCalendarRange: ICalendarClient['getCalendarRange'] = je
   getCalendarRange,
 });
 
-const monthStart = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-01`;
-
-const recurringEvents: CalendarEvents = {
-  events: [
-    {
-      id: 2,
-      name: 'Weekly standup',
-      start: new Date(`${monthStart}T15:00:00Z`),
-      end: null,
-      isAllDay: false,
-      isPublic: true,
-      recurrence: { frequency: 'weekly', interval: 1, end: { until: '2099-12-31' } },
-    },
-  ],
-  holidays: [],
-};
-
 // The GoA button wrapper listens for the web component's custom `_click` event rather than a DOM click.
 const clickGoabButton = (label: string) => fireEvent(screen.getByText(label), new CustomEvent('_click'));
 
@@ -134,17 +117,6 @@ describe('AdspGoACalendar', () => {
         screen.getByTestId('goa-calendar').style.getPropertyValue('--adsp-components-calendar-event-background'),
       ).toBe('#6a1b9a'),
     );
-  });
-
-  test('displays recurring events', async () => {
-    // Arrange
-    const client = createClient(jest.fn().mockResolvedValue(recurringEvents));
-
-    // Act
-    render(<AdspGoACalendar client={client} calendar="my-cal" />);
-
-    // Assert
-    await waitFor(() => expect(screen.getAllByText('Weekly standup').length).toBeGreaterThan(0));
   });
 
   test('renders without events when the calendar has no events or holidays', async () => {

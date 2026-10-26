@@ -164,18 +164,3 @@
   color: var(--adsp-components-calendar-today-text-color);
   font-weight: var(--adsp-components-calendar-today-font-weight);
 }
-
-/* Recurring events carry this class from the calendar's event mapper; --fc-event-* drive the theme's event colors. */
-.adsp-calendar .fc-event.adsp-calendar-recurring-event.weekly {
-  --fc-event-color: var(--adsp-components-calendar-recurring-event-background);
-  --fc-event-contrast-color: var(--adsp-components-calendar-recurring-event-text-color);
-  background-color: var(--adsp-components-calendar-recurring-event-background);
-  border-color: var(--adsp-components-calendar-recurring-event-background);
-  color: var(--adsp-components-calendar-recurring-event-text-color);
-}
-
-.adsp-calendar .adsp-calendar-recurring-event.weekly {
-  background-color: var(--adsp-components-calendar-recurring-event-background);
-  border-left: 4px solid var(--adsp-components-calendar-recurring-event-background);
-  font-weight: bold;
-}

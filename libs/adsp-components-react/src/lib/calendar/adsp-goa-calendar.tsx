@@ -5,26 +5,16 @@ import FullCalendar from '@fullcalendar/react';
 import type { CalendarRef, EventInput } from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/react/daygrid';
 import timeGridPlugin from '@fullcalendar/react/timegrid';
-import rrulePlugin from '@fullcalendar/rrule';
 import listPlugin from '@fullcalendar/react/list';
 import classicThemePlugin from '@fullcalendar/react/themes/classic';
 import '@fullcalendar/react/skeleton.css';
 import '@fullcalendar/react/themes/classic/theme.css';
 import { GoabButton } from '@abgov/react-components';
-import type { CalendarEvent, CalendarEvents, DateRange } from '@abgov/adsp-components-core';
+import type { DateRange } from '@abgov/adsp-components-core';
 import { useAdspThemeStyle } from '../theme/adsp-theme-provider';
 import { useCalendarEvents } from './useCalendarEvents';
 import { AdspGoACalendarProps, FULL_CALENDAR_VIEW, VIEW_BUTTON_LABEL } from './types';
-import { mapRecurrenceEvent } from './mapper';
 import { getDefaultDateRange } from './calendarUtils';
-
-const getRecurrenceEvents = (calendarEvents: CalendarEvents | null): CalendarEvent[] => {
-  const recurrenceEvents = calendarEvents?.events.filter((event) => !!event.recurrence) ?? [];
-
-  //The way recurrent events are stored in the calendar service is one record per recurrent event,
-  //but FullCalendar only requires one object
-  return [recurrenceEvents[0]];
-};
 
 export const AdspGoACalendar = ({
   client,
@@ -66,7 +56,7 @@ export const AdspGoACalendar = ({
       return [];
     }
 
-    //non reocurring events
+    //The service expands recurring events into occurrences that share an id, so the occurrence start keeps ids unique.  Exclude recurrence events
     const eventInputs: EventInput[] = calendarEvents.events
       .filter((y) => !y.recurrence)
       .map((event) => ({
@@ -78,10 +68,6 @@ export const AdspGoACalendar = ({
         editable: true,
       }));
 
-    const reocurrenceEventInputs: EventInput[] = getRecurrenceEvents(calendarEvents)
-      .filter((ev) => ev !== undefined)
-      .flatMap((ev) => mapRecurrenceEvent(ev) ?? []);
-
     // Holidays display as non-editable background events, identified by day since they have no numeric id.
     const holidayInputs: EventInput[] = calendarEvents.holidays.map((holiday) => ({
       id: `holiday-${holiday.day}`,
@@ -92,7 +78,7 @@ export const AdspGoACalendar = ({
       editable: false,
     }));
 
-    return [...eventInputs, ...holidayInputs, ...reocurrenceEventInputs];
+    return [...eventInputs, ...holidayInputs];
   }, [calendarEvents]);
 
   // The names used in headerToolbar must match keys here, or FullCalendar falls back to its own button rendering.
@@ -138,7 +124,7 @@ export const AdspGoACalendar = ({
     <div className="adsp-calendar" style={themeStyle} data-testid={testId}>
       <FullCalendar
         ref={calendarRef}
-        plugins={[dayGridPlugin, timeGridPlugin, listPlugin, classicThemePlugin, rrulePlugin]}
+        plugins={[dayGridPlugin, timeGridPlugin, listPlugin, classicThemePlugin]}
         initialView={FULL_CALENDAR_VIEW[defaultView]}
         initialDate={initialDateRange?.start}
         headerToolbar={{
