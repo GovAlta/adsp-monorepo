@@ -1,4 +1,4 @@
-import { CalendarEvent, CalendarHoliday, DateRange, EventRecurrence } from './types';
+import { CalendarEvent, CalendarHoliday, DateRange, RecurrenceEvent } from './types';
 
 const TIME_ZONE = 'America/Edmonton';
 
@@ -13,7 +13,7 @@ export interface CalendarServiceEvent {
   recordId?: string;
   context?: Record<string, unknown>;
   recurrenceId?: string;
-  recurrence?: EventRecurrence;
+  recurrence?: RecurrenceEvent;
 }
 
 export interface CalendarServiceDate {
@@ -106,6 +106,12 @@ export function isEventInRange(event: CalendarEvent, range: DateRange): boolean 
   const end = event.end?.getTime();
   const rangeStart = range.start?.getTime() ?? -Infinity;
   const rangeEnd = range.end?.getTime() ?? Infinity;
+
+  // A series started before the range still has occurrences in it unless it has already ended.
+  if (event.recurrence) {
+    const until = event.recurrence.end?.until ? new Date(event.recurrence.end.until).getTime() : Infinity;
+    return start < rangeEnd && !(until < rangeStart);
+  }
 
   return end == null || end <= start ? start >= rangeStart && start < rangeEnd : start < rangeEnd && end > rangeStart;
 }

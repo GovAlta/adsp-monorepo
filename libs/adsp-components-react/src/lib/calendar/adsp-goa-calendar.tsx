@@ -5,69 +5,25 @@ import FullCalendar from '@fullcalendar/react';
 import type { CalendarRef, EventInput } from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/react/daygrid';
 import timeGridPlugin from '@fullcalendar/react/timegrid';
+import rrulePlugin from '@fullcalendar/rrule';
 import listPlugin from '@fullcalendar/react/list';
 import classicThemePlugin from '@fullcalendar/react/themes/classic';
 import '@fullcalendar/react/skeleton.css';
 import '@fullcalendar/react/themes/classic/theme.css';
 import { GoabButton } from '@abgov/react-components';
-import type {
-  AdspComponentThemeOverrides,
-  CalendarView,
-  DateRange,
-  ICalendarClient,
-} from '@abgov/adsp-components-core';
+import type { CalendarEvent, CalendarEvents, DateRange } from '@abgov/adsp-components-core';
 import { useAdspThemeStyle } from '../theme/adsp-theme-provider';
 import { useCalendarEvents } from './useCalendarEvents';
+import { AdspGoACalendarProps, FULL_CALENDAR_VIEW, VIEW_BUTTON_LABEL } from './types';
+import { mapRecurrenceEvent } from './mapper';
+import { getDefaultDateRange } from './calendarUtils';
 
-// Maps the public, framework-independent CalendarView to FullCalendar's own view names.
-const FULL_CALENDAR_VIEW: Record<CalendarView, string> = {
-  month: 'dayGridMonth',
-  week: 'timeGridWeek',
-  day: 'timeGridDay',
-  list: 'listWeek',
-};
+const getRecurrenceEvents = (calendarEvents: CalendarEvents | null): CalendarEvent[] => {
+  const recurrenceEvents = calendarEvents?.events.filter((event) => !!event.recurrence) ?? [];
 
-const VIEW_BUTTON_LABEL: Record<string, string> = {
-  dayGridMonth: 'Month',
-  timeGridWeek: 'Week',
-  timeGridDay: 'Day',
-  listWeek: 'List',
-};
-
-// Views a calendar component can display; kept framework-independent so React, Angular and Vue adapters share it.
-//export type CalendarView = 'month' | 'week' | 'day' | 'list';
-export interface AdspGoACalendarProps {
-  /** Loads events and holidays for the calendar; create it once or memoize it so it's stable across renders. */
-  client: ICalendarClient;
-
-  /**
-   * The calendar name
-   */
-  calendar: string;
-
-  /**
-   * The default view we want to display
-   */
-  defaultView?: CalendarView;
-
-  themeOverrides?: AdspComponentThemeOverrides<'calendar'>;
-
-  /** The date range to load events for initially, and the date the calendar opens on; defaults to the past 365 days. */
-  initialDateRange?: DateRange;
-
-  /**
-   * The test id for calendar component
-   */
-  testId?: string;
-}
-
-const DEFAULT_RANGE_DAYS = 365;
-
-const getDefaultDateRange = (): DateRange => {
-  const end = new Date();
-  const start = new Date(end);
-  start.setDate(start.getDate() - DEFAULT_RANGE_DAYS);
-  return { start, end };
+  //The way recurrent events are stored in the calendar service is one record per recurrent event,
+  //but FullCalendar only requires one object
+  return [recurrenceEvents[0]];
 };
 
 export const AdspGoACalendar = ({
@@ -112,26 +68,20 @@ export const AdspGoACalendar = ({
 
     //non reocurring events
     const eventInputs: EventInput[] = calendarEvents.events
-      //  .filter((y) => !y.recurrence)
+      .filter((y) => !y.recurrence)
       .map((event) => ({
         id: `event-${event.id}`,
         title: event.name,
         start: event.start,
         end: event.end ?? undefined,
         allDay: event.isAllDay,
-        editable: false,
+        editable: true,
       }));
 
-    const reocurrenceEventInputs: EventInput[] = calendarEvents.events
-      .filter((y) => y.recurrence)
-      .map((event) => ({
-        id: `event-${event.id}`,
-        title: event.name,
-        start: event.start,
-        end: event.end ?? undefined,
-        allDay: event.isAllDay,
-        editable: false,
-      }));
+    const reocurrenceEventInputs: EventInput[] = getRecurrenceEvents(calendarEvents)
+      .filter((ev) => ev !== undefined)
+      .flatMap((ev) => mapRecurrenceEvent(ev) ?? []);
+
     // Holidays display as non-editable background events, identified by day since they have no numeric id.
     const holidayInputs: EventInput[] = calendarEvents.holidays.map((holiday) => ({
       id: `holiday-${holiday.day}`,
@@ -142,10 +92,11 @@ export const AdspGoACalendar = ({
       editable: false,
     }));
 
-    return [...eventInputs, ...holidayInputs];
+    const result = [...eventInputs, ...holidayInputs, ...reocurrenceEventInputs];
+
+    return result;
   }, [calendarEvents]);
 
-  console.log('events', events);
   // The names used in headerToolbar must match keys here, or FullCalendar falls back to its own button rendering.
   const toolbarElements = useMemo(() => {
     const getApi = () => calendarRef.current?.getApi();
@@ -189,7 +140,7 @@ export const AdspGoACalendar = ({
     <div className="adsp-calendar" style={themeStyle} data-testid={testId}>
       <FullCalendar
         ref={calendarRef}
-        plugins={[dayGridPlugin, timeGridPlugin, listPlugin, classicThemePlugin]}
+        plugins={[dayGridPlugin, timeGridPlugin, listPlugin, classicThemePlugin, rrulePlugin]}
         initialView={FULL_CALENDAR_VIEW[defaultView]}
         initialDate={initialDateRange?.start}
         headerToolbar={{

@@ -155,8 +155,27 @@
   font-weight: var(--adsp-components-calendar-today-font-weight);
 }
 
-/* Week and day view column headers have no day-number element, so emphasize the header text instead. */
-.adsp-calendar [role='columnheadettr'][aria-current='date'] {
-  color: var(--adsp-components-calendar-today-background-color);
+/* Week and day view column headers have no separate day-number element, so highlight the whole header label. */
+.adsp-calendar [role='columnheader'][aria-current='date'] > [aria-hidden='true'] {
+  align-self: center;
+  padding: var(--goa-space-3xs) var(--goa-space-xs);
+  border-radius: var(--goa-space-m);
+  background: var(--adsp-components-calendar-today-background-color);
+  color: var(--adsp-components-calendar-today-text-color);
   font-weight: var(--adsp-components-calendar-today-font-weight);
+}
+
+/* Recurring events carry this class from the calendar's event mapper; --fc-event-* drive the theme's event colors. */
+.adsp-calendar .fc-event.adsp-calendar-recurring-event.weekly {
+  --fc-event-color: var(--adsp-components-calendar-recurring-event-background);
+  --fc-event-contrast-color: var(--adsp-components-calendar-recurring-event-text-color);
+  background-color: var(--adsp-components-calendar-recurring-event-background);
+  border-color: var(--adsp-components-calendar-recurring-event-background);
+  color: var(--adsp-components-calendar-recurring-event-text-color);
+}
+
+.adsp-calendar .adsp-calendar-recurring-event.weekly {
+  background-color: var(--adsp-components-calendar-recurring-event-background);
+  border-left: 4px solid var(--adsp-components-calendar-recurring-event-background);
+  font-weight: bold;
 }

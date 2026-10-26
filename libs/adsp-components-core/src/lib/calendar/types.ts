@@ -10,17 +10,47 @@ export type CalendarView = 'month' | 'week' | 'day' | 'list';
 export type RecurrenceFrequency = 'daily' | 'weekly' | 'monthly' | 'yearly';
 export type RecurrenceDay = 'MO' | 'TU' | 'WE' | 'TH' | 'FR' | 'SA' | 'SU';
 
-export interface EventRecurrence {
+export interface RecurrenceEvent {
   frequency: RecurrenceFrequency;
   interval?: number;
   daysOfWeek?: RecurrenceDay[];
   end?: { until?: string; count?: number };
 }
 
+export interface MapRecurrenceEventRRule {
+  freq?: RecurrenceFrequency;
+  interval?: number;
+  byweekday?: RecurrenceDay[] | string | string[];
+  bysetpos?: number;
+  dtstart?: string;
+  until?: string;
+}
+
+export interface MapRecurrenceEvent {
+  /** The text that is displayed on the calendar */
+  title: string;
+
+  /** The start date */
+  start?: string;
+
+  /** The reocurring event object that is used by FullCalendar */
+  rrule: MapRecurrenceEventRRule;
+  duration?: string | undefined;
+
+  /**Determines if the the event is editable */
+  editable?: boolean;
+
+  /** The CSS class name we applying for reocurring events */
+  className?: string;
+}
+
 export interface CalendarEvent {
   /** For an occurrence of a recurring event, the id of the recurring event. */
   id: number;
+
+  /**The name of the calendar to display on a cell */
   name: string;
+  /** The description of the calendar */
   description?: string;
   start: Date;
   /** Null for events with no end; treated as a point in time. */
@@ -31,7 +61,7 @@ export interface CalendarEvent {
   context?: Record<string, unknown>;
   /** Original start of an occurrence of a recurring event; unique per occurrence together with id. */
   recurrenceId?: Date;
-  recurrence?: EventRecurrence;
+  recurrence?: RecurrenceEvent;
 }
 
 export interface CalendarHoliday {

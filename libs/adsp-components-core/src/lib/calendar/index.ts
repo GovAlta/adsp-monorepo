@@ -7,7 +7,9 @@ export type {
   CalendarEvents,
   CalendarHoliday,
   DateRange,
-  EventRecurrence,
+  RecurrenceEvent,
   RecurrenceDay,
   RecurrenceFrequency,
+  MapRecurrenceEvent,
+  MapRecurrenceEventRRule,
 } from './types';
