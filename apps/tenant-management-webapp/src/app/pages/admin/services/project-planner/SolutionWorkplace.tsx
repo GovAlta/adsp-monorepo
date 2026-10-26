@@ -50,11 +50,12 @@ export const getGuidedStep = (solution: Solution): 1 | 2 | 3 => {
 interface GuidedStepProps {
   heading: string;
   testId: string;
+  expanded: boolean;
+  onToggle: () => void;
   children: React.ReactNode;
 }
 
-const GuidedStep: FunctionComponent<GuidedStepProps> = ({ heading, testId, children }) => {
-  const [expanded, setExpanded] = useState(true);
+const GuidedStep: FunctionComponent<GuidedStepProps> = ({ heading, testId, expanded, onToggle, children }) => {
   const headingId = `${testId}-heading`;
   const panelId = `${testId}-content`;
 
@@ -69,7 +70,7 @@ const GuidedStep: FunctionComponent<GuidedStepProps> = ({ heading, testId, child
             type="button"
             aria-expanded={expanded}
             aria-controls={panelId}
-            onClick={() => setExpanded((open) => !open)}
+            onClick={onToggle}
             style={{
               alignItems: 'center',
               background: 'none',
@@ -123,6 +124,8 @@ export const SolutionWorkplace: FunctionComponent<SolutionWorkplaceProps> = ({
   const onBackRef = useRef(onBack);
   onBackRef.current = onBack;
   const [activeStep, setActiveStep] = useState<1 | 2 | 3>(1);
+  const [expandedSteps, setExpandedSteps] = useState<Record<1 | 2 | 3, boolean>>({ 1: true, 2: true, 3: true });
+  const pendingScrollStep = useRef<1 | 2 | 3>();
   const [stepperLeft, setStepperLeft] = useState<number>();
   const [stepperTop, setStepperTop] = useState<number>();
   const [stepperHeight, setStepperHeight] = useState<number>();
@@ -132,6 +135,7 @@ export const SolutionWorkplace: FunctionComponent<SolutionWorkplaceProps> = ({
   const step1Ref = useRef<HTMLLIElement>(null);
   const step2Ref = useRef<HTMLLIElement>(null);
   const step3Ref = useRef<HTMLLIElement>(null);
+  const stepRefs = { 1: step1Ref, 2: step2Ref, 3: step3Ref } as const;
 
   const updateSolution = useCallback(
     (updated: Solution) => {
@@ -245,6 +249,16 @@ export const SolutionWorkplace: FunctionComponent<SolutionWorkplaceProps> = ({
   }, [solutionLoaded]);
 
   useEffect(() => {
+    const id = pendingScrollStep.current;
+    if (!id || !expandedSteps[id]) {
+      return;
+    }
+    pendingScrollStep.current = undefined;
+    const refs = { 1: step1Ref, 2: step2Ref, 3: step3Ref } as const;
+    refs[id].current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, [expandedSteps, step1Ref, step2Ref, step3Ref]);
+
+  useEffect(() => {
     const header = document.querySelector('[data-testid="app-fixed-header"]');
     if (!header) {
       return;
@@ -293,21 +307,23 @@ export const SolutionWorkplace: FunctionComponent<SolutionWorkplaceProps> = ({
       [2, step2Ref.current],
       [3, step3Ref.current],
     ];
-    const visibleRatios = new Map<1 | 2 | 3, number>();
+    // Absolute visible pixels (not intersectionRatio) and fine-grained thresholds, since sections vary hugely in height.
+    const visiblePixels = new Map<1 | 2 | 3, number>();
+    const thresholds = Array.from({ length: 21 }, (_, i) => i / 20);
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
           const id = sections.find(([, element]) => element === entry.target)?.[0];
           if (id) {
-            visibleRatios.set(id, entry.intersectionRatio);
+            visiblePixels.set(id, entry.intersectionRect.height);
           }
         });
-        const [mostVisible] = [...visibleRatios.entries()].sort((a, b) => b[1] - a[1]);
+        const [mostVisible] = [...visiblePixels.entries()].sort((a, b) => b[1] - a[1]);
         if (mostVisible && mostVisible[1] > 0) {
           setActiveStep(mostVisible[0]);
         }
       },
-      { rootMargin: '0px 0px -70% 0px', threshold: [0, 0.25, 0.5, 0.75, 1] },
+      { rootMargin: '0px 0px -70% 0px', threshold: thresholds },
     );
     sections.forEach(([, element]) => element && observer.observe(element));
     return () => observer.disconnect();
@@ -326,10 +342,15 @@ export const SolutionWorkplace: FunctionComponent<SolutionWorkplaceProps> = ({
     { id: 2 as const, label: 'Discovery conversation', complete: step >= 3 },
     { id: 3 as const, label: 'Proposed solution', complete: !!blueprint },
   ];
-  const stepRefs = { 1: step1Ref, 2: step2Ref, 3: step3Ref } as const;
   const scrollToStep = (id: 1 | 2 | 3) => {
+    if (!expandedSteps[id]) {
+      pendingScrollStep.current = id;
+      setExpandedSteps((expanded) => ({ ...expanded, [id]: true }));
+      return;
+    }
     stepRefs[id].current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
+  const toggleStep = (id: 1 | 2 | 3) => setExpandedSteps((expanded) => ({ ...expanded, [id]: !expanded[id] }));
   const problemChanged = problemDraft !== solution.state.problemStatement;
   const planOutOfDate =
     !!blueprint &&
@@ -413,7 +434,12 @@ export const SolutionWorkplace: FunctionComponent<SolutionWorkplaceProps> = ({
       {analysis && <ConfidenceBar confidence={solution.state.confidence} analyzing={busy} />}
       <ol aria-label="Project planning steps" style={{ listStyle: 'none', paddingLeft: 0, margin: 0 }}>
         <li ref={step1Ref} style={{ scrollMarginTop: headerOffset }}>
-          <GuidedStep heading="1. Problem statement" testId="guided-step-1">
+          <GuidedStep
+            heading="1. Problem statement"
+            testId="guided-step-1"
+            expanded={expandedSteps[1]}
+            onToggle={() => toggleStep(1)}
+          >
             <section aria-label="Problem statement">
               <ProblemStatement
                 value={problemDraft}
@@ -489,7 +515,12 @@ export const SolutionWorkplace: FunctionComponent<SolutionWorkplaceProps> = ({
           </GuidedStep>
         </li>
         <li ref={step2Ref} style={{ scrollMarginTop: headerOffset }}>
-          <GuidedStep heading="2. Discovery conversation" testId="guided-step-2">
+          <GuidedStep
+            heading="2. Discovery conversation"
+            testId="guided-step-2"
+            expanded={expandedSteps[2]}
+            onToggle={() => toggleStep(2)}
+          >
             <section aria-label="Discovery conversation">
               {!analysis ? (
                 <p>
@@ -513,6 +544,8 @@ export const SolutionWorkplace: FunctionComponent<SolutionWorkplaceProps> = ({
           <GuidedStep
             heading={`3. Proposed solution${blueprint ? '' : step !== 3 ? ' (after discovery)' : ''}`}
             testId="guided-step-3"
+            expanded={expandedSteps[3]}
+            onToggle={() => toggleStep(3)}
           >
             <section aria-label="Proposed solution">
               {blueprint ? (

@@ -45,6 +45,15 @@ describe('ProgressStepper', () => {
     expect(onSelect).toHaveBeenCalledWith(3);
   });
 
+  it('renders the active step as a larger circle than the others', () => {
+    const { getByTestId } = render(<ProgressStepper steps={steps} activeId={2} onSelect={jest.fn()} />);
+
+    const activeCircle = getByTestId('progress-step-2').querySelector('span') as HTMLElement;
+    const inactiveCircle = getByTestId('progress-step-3').querySelector('span') as HTMLElement;
+    expect(activeCircle.style.width).toBe('40px');
+    expect(inactiveCircle.style.width).toBe('32px');
+  });
+
   it('has no accessibility violations', async () => {
     const { container } = render(<ProgressStepper steps={steps} activeId={1} onSelect={jest.fn()} />);
 

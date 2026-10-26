@@ -12,24 +12,28 @@ interface ProgressStepperProps {
   onSelect: (id: 1 | 2 | 3) => void;
 }
 
-const circleStyle = (reached: boolean, active: boolean): React.CSSProperties => ({
-  alignItems: 'center',
-  background: reached ? 'var(--goa-color-interactive-default)' : 'var(--goa-color-greyscale-white)',
-  border: `var(--goa-border-width-m, 2px) solid ${
-    reached ? 'var(--goa-color-interactive-default)' : 'var(--goa-color-greyscale-400)'
-  }`,
-  borderRadius: '50%',
-  color: reached ? 'var(--goa-color-greyscale-white)' : 'var(--goa-color-text-secondary)',
-  display: 'flex',
-  flexShrink: 0,
-  fontSize: 'var(--goa-font-size-3)',
-  fontWeight: 'var(--goa-font-weight-bold, 700)',
-  height: 32,
-  justifyContent: 'center',
-  outline: active ? 'var(--goa-border-width-m, 2px) solid var(--goa-color-interactive-default)' : 'none',
-  outlineOffset: 2,
-  width: 32,
-});
+const circleStyle = (reached: boolean, active: boolean): React.CSSProperties => {
+  const size = active ? 40 : 32;
+  return {
+    alignItems: 'center',
+    background: reached ? 'var(--goa-color-interactive-default)' : 'var(--goa-color-greyscale-white)',
+    border: `var(--goa-border-width-m, 2px) solid ${
+      reached ? 'var(--goa-color-interactive-default)' : 'var(--goa-color-greyscale-400)'
+    }`,
+    borderRadius: '50%',
+    color: reached ? 'var(--goa-color-greyscale-white)' : 'var(--goa-color-text-secondary)',
+    display: 'flex',
+    flexShrink: 0,
+    fontSize: 'var(--goa-font-size-3)',
+    fontWeight: 'var(--goa-font-weight-bold, 700)',
+    height: size,
+    justifyContent: 'center',
+    outline: active ? '3px solid var(--goa-color-interactive-default)' : 'none',
+    outlineOffset: 3,
+    transition: 'height 0.15s ease, width 0.15s ease',
+    width: size,
+  };
+};
 
 export const ProgressStepper: FunctionComponent<ProgressStepperProps> = ({ steps, activeId, onSelect }) => (
   <nav
