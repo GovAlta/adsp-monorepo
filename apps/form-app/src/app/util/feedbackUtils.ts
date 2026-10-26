@@ -1,7 +1,5 @@
 import { useEffect } from 'react';
 
-const FEEDBACK_BADGE_SELECTOR = '.adsp-fb-badge';
-
 /**
  * Handles the feedback link click event.
  */
@@ -27,19 +25,4 @@ export const useFeedbackLinkHandler = () => {
       }
     }
   }, []);
-};
-
-export const useHideFeedbackBadge = (hide: boolean) => {
-  useEffect(() => {
-    if (!hide) {
-      return;
-    }
-
-    const badges = document.querySelectorAll<HTMLElement>(FEEDBACK_BADGE_SELECTOR);
-    badges.forEach((badge) => badge.setAttribute('data-show', 'false'));
-
-    return () => {
-      badges.forEach((badge) => badge.setAttribute('data-show', 'true'));
-    };
-  }, [hide]);
 };
