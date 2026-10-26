@@ -8,9 +8,9 @@ paths:
         Requires `audit-reader`. Any reader in the tenant may read any namespace; ownership is not required for reads.
         Filters combine; paginate with `top` and `after`.
 
-        Responses include `actor.name` and `actor.email` as recorded by the writer. Redaction of actor identity is
-        applied only where a response is explicitly serialized as redacted; these listings return them to
-        `audit-reader` callers. `retentionUntil` is fixed when the event is written.
+        Responses include `actor.name` and `actor.email` as recorded by the writer, and `audit-reader` callers
+        receive them. Name and email are omitted from aggregate and export responses unless the caller has
+        `audit-admin`; no such endpoint exists yet. `retentionUntil` is fixed when the event is written.
       parameters:
         - in: path
           name: namespace
