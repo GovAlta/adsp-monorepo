@@ -105,8 +105,17 @@ diff --git a/node_modules/@abgov/web-components/index.js b/node_modules/@abgov/w
    return {
      c() {
 -      e = C("div"), o = C("div"), o.innerHTML = '<goa-icon type="cloud-upload" size="large" class="svelte-5u7pbl"></goa-icon> <div>Drag and drop files here</div> <em class="or-text svelte-5u7pbl">or</em> <div class="browse-files svelte-5u7pbl">Browse files</div>', i = Y(), s && s.c(), n = Y(), r = C("input"), f(o, "class", "instructions svelte-5u7pbl"), f(r, "data-testid", "input"), f(r, "tabindex", "0"), f(r, "type", "file"), f(
-+      e = C("div"), o = C("div"), o.innerHTML = '<goa-icon type="cloud-upload" size="large" aria-hidden="true" class="svelte-5u7pbl"></goa-icon> <div>Drag and drop files here</div> <em class="or-text svelte-5u7pbl">or</em> <div class="browse-files svelte-5u7pbl">Browse files</div>', i = Y(), s && s.c(), n = Y(), r = C("input"), f(o, "class", "instructions svelte-5u7pbl"), f(r, "data-testid", "input"), f(r, "tabindex", "0"), f(r, "type", "file"), f(
++      e = C("div"), o = C("div"), o.innerHTML = '<goa-icon type="cloud-upload" size="large" aria-hidden="true" class="svelte-5u7pbl"></goa-icon> <div>Drag and drop files here</div> <em class="or-text svelte-5u7pbl">or</em> <div class="browse-files svelte-5u7pbl">Browse files</div>', i = Y(), s && s.c(), n = Y(), r = C("input"), f(o, "class", "instructions svelte-5u7pbl"), f(r, "data-testid", "input"), f(r, "tabindex", "0"), f(r, "type", "file"), f(r, "aria-label", "Upload file"), f(
          r,
+         "accept",
+         /*accept*/
+@@ -15833,7 +15833,7 @@
+         /*version*/
+         t[4]
+       ), f(e, "class", "button svelte-5u7pbl"), f(l, "data-testid", a = /*testid*/
+-      t[3] || "input"), f(l, "tabindex", "-1"), f(l, "type", "file"), f(
++      t[3] || "input"), f(l, "tabindex", "-1"), f(l, "type", "file"), f(l, "aria-label", "Upload file"), f(
+         l,
          "accept",
          /*accept*/
 @@ -16257,7 +16257,7 @@
