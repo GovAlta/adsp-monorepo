@@ -1,14 +1,12 @@
 import { CalendarEvent, MapRecurrenceEvent } from '@abgov/adsp-components-core';
-import { hasTimePart, toDuration, toLocalDateTime } from './calendarUtils';
+import { hasTimePart, toLocalDateTime } from './calendarUtils';
 import { END_OF_DAY_TIME } from './types';
 
 export const mapRecurrentWeeklyEvent = (event: CalendarEvent): MapRecurrenceEvent => {
   return {
     title: event.name || event.description || event.recurrenceId?.toDateString() || 'Reocurring weekly event',
     editable: true,
-    duration:
-      toDuration(event.start, event.recurrence?.end?.until ? new Date(event.recurrence.end.until) : undefined) ??
-      undefined,
+    duration: undefined,
     rrule: {
       freq: event.recurrence?.frequency,
       interval: event.recurrence?.interval,
@@ -24,9 +22,7 @@ export const mapRecurrentMonthlyEvent = (event: CalendarEvent): MapRecurrenceEve
   return {
     title: event.name || event.description || event.recurrenceId?.toDateString() || 'Reocurring monthly event',
     editable: true,
-    duration:
-      toDuration(event.start, event.recurrence?.end?.until ? new Date(event.recurrence.end.until) : undefined) ??
-      undefined,
+    duration: undefined,
     rrule: {
       freq: event.recurrence?.frequency,
       interval: event.recurrence?.interval,
@@ -42,9 +38,7 @@ export const mapRecurrentMonthlyEvent = (event: CalendarEvent): MapRecurrenceEve
 export const mapRecurrentYearlyEvent = (event: CalendarEvent): MapRecurrenceEvent => {
   return {
     title: event.name || event.description || event.recurrenceId?.toDateString() || 'Reocurring yearly event',
-    duration:
-      toDuration(event.start, event.recurrence?.end?.until ? new Date(event.recurrence.end.until) : undefined) ??
-      undefined,
+    duration: undefined,
     rrule: {
       freq: event.recurrence?.frequency,
       dtstart: toLocalDateTime(event.start),
@@ -56,7 +50,7 @@ export const mapRecurrentYearlyEvent = (event: CalendarEvent): MapRecurrenceEven
   };
 };
 
-// Entry point for mapping recurring events
+// Main entry point for mapping reocurring events
 export const mapRecurrenceEvent = (event: CalendarEvent): MapRecurrenceEvent | null => {
   if (event.recurrence?.frequency === 'weekly') return mapRecurrentWeeklyEvent(event);
   if (event.recurrence?.frequency === 'monthly') return mapRecurrentMonthlyEvent(event);

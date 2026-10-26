@@ -15,7 +15,6 @@ export const VIEW_BUTTON_LABEL: Record<string, string> = {
   listWeek: 'List',
 };
 
-//Views a calendar component can display; kept framework-independent so React, Angular and Vue adapters share it.
 export interface AdspGoACalendarProps {
   /** Loads events and holidays for the calendar; create it once or memoize it so it's stable across renders. */
   client: ICalendarClient;

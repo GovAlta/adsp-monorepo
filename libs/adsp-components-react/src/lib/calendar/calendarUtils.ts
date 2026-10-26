@@ -49,12 +49,3 @@ export const getDefaultDateRange = (): DateRange => {
   start.setDate(start.getDate() - DEFAULT_RANGE_DAYS);
   return { start, end };
 };
-
-export const toDuration = (start: Date, end?: Date | null): string | undefined => {
-  if (!end) return undefined;
-  const totalSeconds = Math.max(0, Math.round((end.getTime() - start.getTime()) / 1000));
-  const hh = String(Math.floor(totalSeconds / 3600)).padStart(2, '0');
-  const mm = String(Math.floor((totalSeconds % 3600) / 60)).padStart(2, '0');
-  const ss = String(totalSeconds % 60).padStart(2, '0');
-  return `${hh}:${mm}:${ss}`;
-};

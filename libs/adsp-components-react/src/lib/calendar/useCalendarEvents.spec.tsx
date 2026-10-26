@@ -23,7 +23,7 @@ const createClient = (getCalendarRange: ICalendarClient['getCalendarRange']): IC
 });
 
 describe('useCalendarEvents', () => {
-  test('is loading until the events are retrieved', async () => {
+  test('is loading with no events or error until the events are retrieved', async () => {
     // Arrange
     const client = createClient(jest.fn().mockResolvedValue(calendarEvents));
 
@@ -33,6 +33,17 @@ describe('useCalendarEvents', () => {
     // Assert
     expect(result.current).toEqual({ calendarEvents: null, loading: true, error: null });
     await waitFor(() => expect(result.current.loading).toBe(false));
+  });
+
+  test('returns the events once they are retrieved', async () => {
+    // Arrange
+    const client = createClient(jest.fn().mockResolvedValue(calendarEvents));
+
+    // Act
+    const { result } = renderHook(() => useCalendarEvents(client, 'my-cal', range));
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    // Assert
     expect(result.current).toEqual({ calendarEvents, loading: false, error: null });
   });
 
@@ -90,7 +101,25 @@ describe('useCalendarEvents', () => {
     expect(getCalendarRange).toHaveBeenCalledTimes(1);
   });
 
-  test('reloads and clears a previous error when the range changes', async () => {
+  test('reloads events when the range changes', async () => {
+    // Arrange
+    const nextRange = { start: range.end, end: new Date('2026-07-01T06:00:00Z') };
+    const getCalendarRange = jest.fn().mockResolvedValue(calendarEvents);
+    const client = createClient(getCalendarRange);
+    const { result, rerender } = renderHook(({ r }) => useCalendarEvents(client, 'my-cal', r), {
+      initialProps: { r: range },
+    });
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    // Act
+    rerender({ r: nextRange });
+
+    // Assert
+    await waitFor(() => expect(getCalendarRange).toHaveBeenLastCalledWith('my-cal', nextRange));
+    expect(getCalendarRange).toHaveBeenCalledTimes(2);
+  });
+
+  test('clears a previous error when the range changes', async () => {
     // Arrange
     const getCalendarRange = jest
       .fn()
@@ -106,9 +135,7 @@ describe('useCalendarEvents', () => {
     rerender({ r: { start: range.end, end: new Date('2026-07-01T06:00:00Z') } });
 
     // Assert
-    await waitFor(() => expect(result.current.calendarEvents).toEqual(calendarEvents));
-    expect(result.current.error).toBeNull();
-    expect(getCalendarRange).toHaveBeenCalledTimes(2);
+    await waitFor(() => expect(result.current.error).toBeNull());
   });
 
   test('ignores a response that arrives after the range changed', async () => {
@@ -154,6 +181,105 @@ describe('useCalendarEvents', () => {
     // Assert
     await Promise.resolve();
     expect(result.current.error).toBeNull();
-    expect(result.current.calendarEvents).toEqual(calendarEvents);
+  });
+
+  test('does not request events when there is no client', () => {
+    // Arrange
+    const client = null as unknown as ICalendarClient;
+
+    // Act
+    const { result } = renderHook(() => useCalendarEvents(client, 'my-cal', range));
+
+    // Assert
+    expect(result.current).toEqual({ calendarEvents: null, loading: true, error: null });
+  });
+
+  test('does not request events while the range is undefined', () => {
+    // Arrange
+    const getCalendarRange = jest.fn().mockResolvedValue(calendarEvents);
+    const client = createClient(getCalendarRange);
+
+    // Act
+    renderHook(() => useCalendarEvents(client, 'my-cal', undefined));
+
+    // Assert
+    expect(getCalendarRange).not.toHaveBeenCalled();
+  });
+
+  test('requests events once the range becomes defined', async () => {
+    // Arrange
+    const getCalendarRange = jest.fn().mockResolvedValue(calendarEvents);
+    const client = createClient(getCalendarRange);
+    const { result, rerender } = renderHook(({ r }) => useCalendarEvents(client, 'my-cal', r), {
+      initialProps: { r: undefined as typeof range | undefined },
+    });
+
+    // Act
+    rerender({ r: range });
+
+    // Assert
+    await waitFor(() => expect(result.current.calendarEvents).toEqual(calendarEvents));
+    expect(getCalendarRange).toHaveBeenCalledWith('my-cal', range);
+  });
+
+  test('requests an open-ended range when only the start is provided', async () => {
+    // Arrange
+    const getCalendarRange = jest.fn().mockResolvedValue(calendarEvents);
+    const client = createClient(getCalendarRange);
+
+    // Act
+    const { result } = renderHook(() => useCalendarEvents(client, 'my-cal', { start: range.start }));
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    // Assert
+    expect(getCalendarRange).toHaveBeenCalledWith('my-cal', { start: range.start, end: undefined });
+  });
+
+  test('requests an open-ended range when only the end is provided', async () => {
+    // Arrange
+    const getCalendarRange = jest.fn().mockResolvedValue(calendarEvents);
+    const client = createClient(getCalendarRange);
+
+    // Act
+    const { result } = renderHook(() => useCalendarEvents(client, 'my-cal', { end: range.end }));
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    // Assert
+    expect(getCalendarRange).toHaveBeenCalledWith('my-cal', { start: undefined, end: range.end });
+  });
+
+  test('reloads events when the calendar changes', async () => {
+    // Arrange
+    const getCalendarRange = jest.fn().mockResolvedValue(calendarEvents);
+    const client = createClient(getCalendarRange);
+    const { result, rerender } = renderHook(({ calendar }) => useCalendarEvents(client, calendar, range), {
+      initialProps: { calendar: 'my-cal' },
+    });
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    // Act
+    rerender({ calendar: 'other-cal' });
+
+    // Assert
+    await waitFor(() => expect(getCalendarRange).toHaveBeenLastCalledWith('other-cal', range));
+    expect(getCalendarRange).toHaveBeenCalledTimes(2);
+  });
+
+  test('clears previous events when a later request fails', async () => {
+    // Arrange
+    const failure = new Error('Request failed');
+    const getCalendarRange = jest.fn().mockResolvedValueOnce(calendarEvents).mockRejectedValue(failure);
+    const client = createClient(getCalendarRange);
+    const { result, rerender } = renderHook(({ r }) => useCalendarEvents(client, 'my-cal', r), {
+      initialProps: { r: range },
+    });
+    await waitFor(() => expect(result.current.calendarEvents).toEqual(calendarEvents));
+
+    // Act
+    rerender({ r: { start: range.end, end: new Date('2026-07-01T06:00:00Z') } });
+
+    // Assert
+    await waitFor(() => expect(result.current.error).toBe(failure));
+    expect(result.current.calendarEvents).toBeNull();
   });
 });

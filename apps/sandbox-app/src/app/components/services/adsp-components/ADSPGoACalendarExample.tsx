@@ -10,8 +10,8 @@ import {
   GoabInput,
   GoabText,
 } from '@abgov/react-components';
-import { AdspGoACalendar } from '@abgov/adsp-components-react';
-import { CalendarClient, DateRange } from '@abgov/adsp-components-core';
+import { AdspGoACalendar, AdspThemeProvider } from '@abgov/adsp-components-react';
+import { AdspThemes, CalendarClient, DateRange } from '@abgov/adsp-components-core';
 import { useDispatch, useSelector } from 'react-redux';
 import {
   AppDispatch,
@@ -154,13 +154,15 @@ export const ADSPGoACalendarExample = ({ tenantName }: ADSPGoACalendarExamplePro
         </Card>
         <GoabSpacer vSpacing="m"></GoabSpacer>
         {client && loadRequest && (
-          <AdspGoACalendar
-            key={loadRequest.id}
-            client={client}
-            calendar={loadRequest.calendar}
-            initialDateRange={loadRequest.range}
-            testId="goa-calendar"
-          />
+          <AdspThemeProvider theme={AdspThemes.standard}>
+            <AdspGoACalendar
+              key={loadRequest.id}
+              client={client}
+              calendar={loadRequest.calendar}
+              initialDateRange={loadRequest.range}
+              testId="goa-calendar"
+            />
+          </AdspThemeProvider>
         )}
       </GoabContainer>
     </ServiceContainer>

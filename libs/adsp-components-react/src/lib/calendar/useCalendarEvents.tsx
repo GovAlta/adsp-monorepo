@@ -7,8 +7,8 @@ export interface UseCalendarEventsResult {
   error: Error | null;
 }
 
-// The client must be stable across renders (create it once or memoize it), otherwise events reload on every render.
-// Nothing is fetched while range is undefined.
+// The client must be stable across renders (create it once or memoize it),
+// otherwise events reload on every render. Nothing is fetched while range is undefined.
 export function useCalendarEvents(
   client: ICalendarClient,
   calendar: string,

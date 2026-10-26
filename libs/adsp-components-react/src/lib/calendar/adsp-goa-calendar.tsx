@@ -92,9 +92,7 @@ export const AdspGoACalendar = ({
       editable: false,
     }));
 
-    const result = [...eventInputs, ...holidayInputs, ...reocurrenceEventInputs];
-
-    return result;
+    return [...eventInputs, ...holidayInputs, ...reocurrenceEventInputs];
   }, [calendarEvents]);
 
   // The names used in headerToolbar must match keys here, or FullCalendar falls back to its own button rendering.
