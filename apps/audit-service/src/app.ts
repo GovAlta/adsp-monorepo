@@ -36,6 +36,7 @@ import { PostgresRetentionRepository } from './postgres/retention';
 const logger = createLogger('audit-service', environment.LOG_LEVEL);
 
 export interface AuditApplication extends express.Application {
+  beginShutdown: () => void;
   drain: () => Promise<void>;
   shutdown: () => Promise<void>;
 }
@@ -126,7 +127,7 @@ export const initializeApp = async (): Promise<AuditApplication> => {
     { logger },
   );
   const swagger = JSON.parse(await promisify(readFile)(`${__dirname}/swagger.json`, 'utf8'));
-  const { knex, isConnected } = await createDatabase({ logger, ...environment });
+  const { knex, isConnected, close: closeDatabase } = await createDatabase({ logger, ...environment });
   const failedEventRepository = new PostgresFailedEventRepository(knex, logger);
   const meter = meterProvider?.getMeter('audit-service');
   const auditMetrics = createAuditMetrics(meter, failedEventRepository, logger);
@@ -134,6 +135,21 @@ export const initializeApp = async (): Promise<AuditApplication> => {
   const buffer = new AuditWriteBuffer(repository, logger, {}, meter, auditMetrics);
   const catalogs = new CatalogService(configurationService, logger);
   const retention = new RetentionService(configurationService, logger, retentionBounds);
+  let stopping = false;
+
+  // Probes deliberately bypass platform dependencies and authentication.
+  app.get('/health/live', (_req, res) => {
+    res.status(200).end();
+  });
+  app.get('/health/ready', async (_req, res) => {
+    if (stopping || !buffer.canAcceptWrites) {
+      res.status(503).end();
+      return;
+    }
+    const connected = await isConnected();
+    // A previous failed write must not keep a recovered pod permanently out of service.
+    res.status(connected && !stopping && buffer.canAcceptWrites ? 200 : 503).end();
+  });
 
   passport.use('core', coreStrategy);
   passport.use('tenant', tenantStrategy);
@@ -185,7 +201,7 @@ export const initializeApp = async (): Promise<AuditApplication> => {
   app.get('/health', async (_req, res) => {
     const platform = await healthCheck();
     const db = await isConnected();
-    const ready = db && buffer.isReady;
+    const ready = db && !stopping && buffer.canAcceptWrites;
     res.status(ready ? 200 : 503).json({ ...platform, db, ready, selfAuditFailures: auditor.failureCount });
   });
 
@@ -197,6 +213,8 @@ export const initializeApp = async (): Promise<AuditApplication> => {
       _links: {
         self: { href: new URL(req.originalUrl, rootUrl).href },
         health: { href: new URL('/health', rootUrl).href },
+        live: { href: new URL('/health/live', rootUrl).href },
+        ready: { href: new URL('/health/ready', rootUrl).href },
         api: { href: new URL('/audit/v1', rootUrl).href },
         docs: { href: new URL('/swagger/docs/v1', rootUrl).href },
       },
@@ -218,11 +236,15 @@ export const initializeApp = async (): Promise<AuditApplication> => {
     : undefined;
 
   let shutdown: Promise<void>;
+  const beginShutdown = () => {
+    stopping = true;
+  };
   const drain = async () => {
-    await retentionJob?.stop();
-    await buffer.close();
+    beginShutdown();
+    await Promise.all([retentionJob?.stop(), buffer.close()]);
   };
   return Object.assign(app, {
+    beginShutdown,
     drain,
     shutdown: () => {
       shutdown ??= (async () => {
@@ -230,7 +252,7 @@ export const initializeApp = async (): Promise<AuditApplication> => {
           await drain();
         } finally {
           try {
-            await knex.destroy();
+            await closeDatabase();
           } finally {
             await shutdownTelemetry();
           }

@@ -12,7 +12,8 @@ items:
       KEYCLOAK_ROOT_URL: https://access.adsp-dev.gov.ab.ca
       DIRECTORY_URL: https://directory-service.adsp-dev.gov.ab.ca
       LOG_LEVEL: debug
-      RETENTION_ENABLED: 'true'
+      # Only the separate audit-service-job Deployment enables scheduled retention.
+      RETENTION_ENABLED: 'false'
       RETENTION_SCHEDULE: '0 2 * * *'
       RETENTION_BATCH_SIZE: '1000'
       RETENTION_MAX_BATCHES: '10'
