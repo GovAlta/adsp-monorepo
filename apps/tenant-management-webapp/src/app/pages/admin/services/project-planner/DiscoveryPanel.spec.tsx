@@ -120,7 +120,9 @@ describe('DiscoveryPanel', () => {
     expect(conversationHistory?.getAttribute('heading')).toBe('Conversation history (1)');
     expect(conversationHistory?.hasAttribute('open')).toBe(false);
     expect(conversationHistory?.querySelector('[testid="discovery-message-0"]')).not.toBeNull();
-    expect(conversationHistory?.contains(container.querySelector('goa-textarea[testid="discovery-input"]'))).toBe(false);
+    expect(conversationHistory?.contains(container.querySelector('goa-textarea[testid="discovery-input"]'))).toBe(
+      false,
+    );
     expect(container.querySelector('goa-form-item')?.getAttribute('label')).toBe('Additional details');
     expect(container.querySelector('goa-textarea[testid="discovery-input"]')?.getAttribute('arialabel')).toBe(
       'Additional details',
@@ -202,6 +204,32 @@ describe('DiscoveryPanel', () => {
     expect(container.querySelector('[data-testid="discovery-question-summary-q2"]')).toBeNull();
     expect(container.querySelector('[testid="discovery-question-toggle-q2"]')?.textContent).toBe('Show answer');
     expect(container.querySelector('[testid="discovery-question-edit-q2"]')?.textContent).toBe('Edit');
+  });
+
+  it('wraps answered questions in a collapsed details section, separate from open questions', () => {
+    const { container } = render(
+      <DiscoveryPanel
+        solution={solution(discovery(), [
+          { id: 'q1', question: 'Who reviews applications?', raisedBy: 'planner', status: 'open' },
+          {
+            id: 'q2',
+            question: 'What documents are required?',
+            raisedBy: 'planner',
+            status: 'answered',
+            answer: 'A photo ID and proof of address.',
+          },
+        ])}
+        api={createMockApi()}
+        mode="ai"
+        onSolutionChange={jest.fn()}
+      />,
+    );
+
+    const answered = container.querySelector('[testid="discovery-answered-questions"]');
+    expect(answered?.getAttribute('heading')).toBe('Answered questions (1)');
+    expect(answered?.hasAttribute('open')).toBe(false);
+    expect(answered?.querySelector('[data-testid="discovery-question-q2"]')).not.toBeNull();
+    expect(answered?.querySelector('[data-testid="discovery-question-q1"]')).toBeNull();
   });
 
   it('answers an open question independently through its own Save action', async () => {
@@ -550,14 +578,10 @@ describe('DiscoveryPanel', () => {
     );
 
     await waitFor(() =>
-      expect(container.querySelector('[testid="specialist-service-form-service"]')?.textContent).toContain(
-        'Form (2)',
-      ),
+      expect(container.querySelector('[testid="specialist-service-form-service"]')?.textContent).toContain('Form (2)'),
     );
     expect(container.querySelector('[testid="specialist-service-file-service"]')?.textContent).toBe('File (1)');
-    expect(container.querySelector('[testid="optional-experts-count"]')?.getAttribute('content')).toBe(
-      '2 specialists',
-    );
+    expect(container.querySelector('[testid="optional-experts-count"]')?.getAttribute('content')).toBe('2 specialists');
   });
 
   it('restarts discovery', async () => {

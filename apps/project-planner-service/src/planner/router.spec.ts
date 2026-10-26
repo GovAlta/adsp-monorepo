@@ -1665,6 +1665,49 @@ describe('planner router routes', () => {
       expect(res.body.state.discovery.factors.find((f: { id: string }) => f.id === 'process').score).toBe(100);
     });
 
+    it('replaces the incremental bump with a full AI re-score once the last open question closes, when an llm is configured', async () => {
+      storedWith({ process: 20 });
+      const llm = {
+        model: 'GOA-Default',
+        analyze: jest.fn(),
+        discover: jest.fn().mockResolvedValue({
+          reply: 'Understood.',
+          factors: DISCOVERY_FACTORS.map((f) => ({ id: f.id, score: 100 })),
+          model: 'GOA-Default',
+        }),
+        blueprint: jest.fn(),
+        consult: jest.fn(),
+        converse: jest.fn(),
+      };
+
+      const res = await request(buildApp(owner, true, llm))
+        .put(`/planner/v1/solutions/${SOLUTION_ID}/questions/${QUESTION_ID}`)
+        .send({ answer: 'Each renewal is reviewed and approved before moving to the next stage.' });
+
+      expect(llm.discover).toHaveBeenCalled();
+      expect(res.body.state.discovery.factors.every((f: { score: number }) => f.score === 100)).toBe(true);
+    });
+
+    it('does not trigger a full re-score when a question other than the last one is answered', async () => {
+      storedWith({ process: 20 }, [
+        { id: OTHER_QUESTION_ID, question: 'Who approves grants above the delegated limit?', raisedBy: 'ai', status: 'open' },
+      ]);
+      const llm = {
+        model: 'GOA-Default',
+        analyze: jest.fn(),
+        discover: jest.fn(),
+        blueprint: jest.fn(),
+        consult: jest.fn(),
+        converse: jest.fn(),
+      };
+
+      await request(buildApp(owner, true, llm))
+        .put(`/planner/v1/solutions/${SOLUTION_ID}/questions/${QUESTION_ID}`)
+        .send({ answer: 'Each renewal is reviewed and approved before moving to the next stage.' });
+
+      expect(llm.discover).not.toHaveBeenCalled();
+    });
+
     it('prunes a differently-worded duplicate open question once a similar one is answered (regression)', async () => {
       const stored = solutionOwnedBy('owner-1');
       stored.state.questions = [
@@ -2133,6 +2176,7 @@ describe('planner router routes', () => {
         },
       ],
       questions: ['Who approves grants above the delegated limit?'],
+      resolvedQuestionIds: [],
       reply: 'Grant applications look like a case management problem.',
       model: MODEL,
     };
@@ -2238,6 +2282,7 @@ describe('planner router routes', () => {
           answers: [],
           conversation: [],
           message,
+          openQuestions: [],
         });
       });
 
@@ -2268,7 +2313,7 @@ describe('planner router routes', () => {
         expect(res.body.state.problemStatement).toBe(aiText);
       });
 
-      it('removes an open question once the reply already covers its topic', async () => {
+      it('keeps an open question open when the reply merely overlaps its wording without the llm resolving it', async () => {
         const stored = solutionOwnedBy('owner-1');
         stored.state.problemStatement = aiText;
         stored.state.questions = [
@@ -2286,7 +2331,7 @@ describe('planner router routes', () => {
           res.body.state.questions.some(
             (q: { question: string }) => q.question === 'Are reminders needed, and through which channels?',
           ),
-        ).toBe(false);
+        ).toBe(true);
       });
 
       it('keeps an open question whose topic is unrelated to the reply', async () => {
@@ -2305,6 +2350,82 @@ describe('planner router routes', () => {
             (q: { question: string }) => q.question === 'Are reminders needed, and through which channels?',
           ),
         ).toBe(true);
+      });
+
+      it('merges a later open question that duplicates an earlier one, even without the llm resolving either', async () => {
+        const stored = solutionOwnedBy('owner-1');
+        stored.state.problemStatement = aiText;
+        stored.state.questions = [
+          {
+            id: 'q-1',
+            question: 'Is the grant payment triggered automatically by the system or does it require manual approval?',
+            raisedBy: 'ai',
+            status: 'open',
+          },
+          {
+            id: 'q-2',
+            question:
+              'Who is responsible for triggering the grant payment in the financial system—automatic or manual?',
+            raisedBy: 'ai',
+            status: 'open',
+          },
+        ];
+        repository.get.mockResolvedValueOnce(stored);
+        llm.analyze.mockResolvedValueOnce(aiAnalysis);
+
+        const res = await chat(buildApp(owner, true, llm));
+
+        const ids = res.body.state.questions.map((q: { id: string }) => q.id);
+        expect(ids).toContain('q-1');
+        expect(ids).not.toContain('q-2');
+      });
+
+      it('passes open questions to the llm so it can resolve them from a reply', async () => {
+        const stored = solutionOwnedBy('owner-1');
+        stored.state.problemStatement = aiText;
+        stored.state.questions = [
+          { id: 'q-1', question: 'Are reminders needed, and through which channels?', raisedBy: 'ai', status: 'open' },
+          { id: 'q-2', question: 'Can users reschedule or cancel, and until when?', raisedBy: 'ai', status: 'open' },
+        ];
+        repository.get.mockResolvedValueOnce(stored);
+        llm.analyze.mockResolvedValueOnce(aiAnalysis);
+
+        await chat(buildApp(owner, true, llm));
+
+        expect(llm.analyze.mock.calls[0][3].openQuestions).toEqual([
+          { id: 'q-1', question: 'Are reminders needed, and through which channels?' },
+          { id: 'q-2', question: 'Can users reschedule or cancel, and until when?' },
+        ]);
+      });
+
+      it('resolves open questions the llm reports as answered, even when the reply text does not closely match them', async () => {
+        const stored = solutionOwnedBy('owner-1');
+        stored.state.problemStatement = aiText;
+        stored.state.questions = [
+          { id: 'q-1', question: 'Are reminders needed, and through which channels?', raisedBy: 'ai', status: 'open' },
+          { id: 'q-2', question: 'Can users reschedule or cancel, and until when?', raisedBy: 'ai', status: 'open' },
+        ];
+        repository.get.mockResolvedValueOnce(stored);
+        llm.analyze.mockResolvedValueOnce({ ...aiAnalysis, resolvedQuestionIds: ['q-1', 'q-2'] });
+
+        const res = await chat(buildApp(owner, true, llm), {
+          message: 'Users can reschedule when they get a phone reminder',
+        });
+
+        const resolved = res.body.state.questions.filter((q: { id: string }) => ['q-1', 'q-2'].includes(q.id));
+        expect(resolved).toEqual([
+          expect.objectContaining({ id: 'q-1', status: 'answered' }),
+          expect.objectContaining({ id: 'q-2', status: 'answered' }),
+        ]);
+      });
+
+      it('ignores a resolvedQuestionId that does not match an open question', async () => {
+        llm.analyze.mockResolvedValueOnce({ ...aiAnalysis, resolvedQuestionIds: ['not-a-real-id'] });
+
+        const res = await chat(buildApp(owner, true, llm));
+
+        expect(res.status).toBe(200);
+        expect(res.body.state.questions.some((q: { id: string }) => q.id === 'not-a-real-id')).toBe(false);
       });
 
       it('sends a solution-updated event with the chat operation', async () => {
@@ -2717,7 +2838,7 @@ describe('planner router routes', () => {
           aiText,
           expect.arrayContaining([expect.objectContaining({ id: 'case-management' })]),
           [],
-          { answers: [], conversation: [], message: undefined },
+          { answers: [], conversation: [], message: undefined, openQuestions: [] },
         );
       });
 
@@ -2737,6 +2858,7 @@ describe('planner router routes', () => {
           answers: [{ question: 'Who approves?', answer: 'The director' }],
           conversation: [{ role: 'user', content: 'Earlier message' }],
           message: undefined,
+          openQuestions: [{ id: 'q-2', question: 'How many users?' }],
         });
       });
 

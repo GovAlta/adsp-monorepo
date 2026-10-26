@@ -65,7 +65,7 @@ export const ConfidenceBar: FunctionComponent<ConfidenceBarProps> = ({ confidenc
       data-testid="confidence-bar"
       style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}
     >
-      <div style={{ flex: 1, minWidth: 220 }}>
+      <div style={{ flex: 1, minWidth: 320, maxWidth: 560 }}>
         <GoabDetails heading="How well the planner understands your request" testId="confidence-breakdown" mt="none">
           <div
             role="list"
@@ -81,7 +81,9 @@ export const ConfidenceBar: FunctionComponent<ConfidenceBarProps> = ({ confidenc
           >
             {factors.map((factor) => (
               <div role="listitem" key={factor.id} style={{ display: 'contents' }}>
-                <span data-testid={`confidence-factor-${factor.id}`}>{factor.label}</span>
+                <span data-testid={`confidence-factor-${factor.id}`} style={{ fontWeight: 600 }}>
+                  {factor.label}
+                </span>
                 <Bar
                   score={factor.score}
                   color={factor.score >= threshold ? SUCCESS_COLOR : WARNING_COLOR}
@@ -90,6 +92,14 @@ export const ConfidenceBar: FunctionComponent<ConfidenceBarProps> = ({ confidenc
                   testId={`confidence-factor-bar-${factor.id}`}
                 />
                 <span>{factor.score}%</span>
+                {factor.note && (
+                  <span
+                    data-testid={`confidence-factor-note-${factor.id}`}
+                    style={{ gridColumn: '1 / -1', fontSize: '85%', color: '#666', marginTop: '-2px' }}
+                  >
+                    {factor.note}
+                  </span>
+                )}
               </div>
             ))}
           </div>

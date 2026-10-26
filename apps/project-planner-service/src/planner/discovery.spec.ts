@@ -5,6 +5,7 @@ import {
   assessConfidence,
   capFactors,
   computeConfidence,
+  dedupeOpenQuestions,
   DISCOVERY_FACTORS,
   DISCOVERY_THRESHOLD,
   isQuestionCovered,
@@ -419,5 +420,51 @@ describe('areSimilarQuestions', () => {
 
   it('is never similar when either question has fewer than two distinctive words', () => {
     expect(areSimilarQuestions('Is it urgent?', 'Is it urgent and time sensitive right now?')).toBe(false);
+  });
+});
+
+describe('dedupeOpenQuestions', () => {
+  const grantA = {
+    id: 'q-1',
+    question: 'Is the grant payment triggered automatically by the system or does it require manual approval?',
+    status: 'open',
+  };
+  const grantB = {
+    id: 'q-2',
+    question: 'Who is responsible for triggering the grant payment in the financial system—automatic or manual?',
+    status: 'open',
+  };
+  const unrelated = {
+    id: 'q-3',
+    question: 'Who needs to be notified when an application is approved?',
+    status: 'open',
+  };
+
+  it('drops a later open question that duplicates an earlier open one, keeping the earlier phrasing', () => {
+    const result = dedupeOpenQuestions([grantA, grantB, unrelated]);
+
+    expect(result).toEqual([grantA, unrelated]);
+  });
+
+  it('drops an open question that duplicates an already-answered question', () => {
+    const answered = { ...grantA, status: 'answered', answer: 'Automatic.' };
+
+    const result = dedupeOpenQuestions([answered, grantB, unrelated]);
+
+    expect(result).toEqual([answered, unrelated]);
+  });
+
+  it('keeps unrelated open questions untouched', () => {
+    const result = dedupeOpenQuestions([grantA, unrelated]);
+
+    expect(result).toEqual([grantA, unrelated]);
+  });
+
+  it('never drops non-open questions', () => {
+    const inferred = { ...unrelated, status: 'inferred' };
+
+    const result = dedupeOpenQuestions([inferred, inferred]);
+
+    expect(result).toEqual([inferred, inferred]);
   });
 });

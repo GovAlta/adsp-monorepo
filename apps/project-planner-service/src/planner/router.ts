@@ -32,6 +32,7 @@ import {
   assessConfidence,
   capFactors,
   computeConfidence,
+  dedupeOpenQuestions,
   DISCOVERY_THRESHOLD,
   isQuestionCovered,
   normalizeFactors,
@@ -269,6 +270,7 @@ interface AnalysisResult {
   hypotheses: Hypothesis[];
   concepts: BusinessConcept[];
   questionTexts: string[];
+  resolvedQuestionIds: string[];
   reply: string;
 }
 
@@ -403,6 +405,9 @@ export function createPlannerRouter({
             ({ role, content }) => ({ role, content }),
           ),
           message,
+          openQuestions: solution.state.questions
+            .filter((q) => q.status === 'open')
+            .map((q) => ({ id: q.id, question: q.question })),
         });
         return {
           mode: 'ai',
@@ -411,6 +416,7 @@ export function createPlannerRouter({
           hypotheses: analysis.hypotheses,
           concepts: dedupeConcepts(solution.state.concepts, analysis.concepts),
           questionTexts: analysis.questions,
+          resolvedQuestionIds: analysis.resolvedQuestionIds,
           reply: analysis.reply,
         };
       },
@@ -434,22 +440,29 @@ export function createPlannerRouter({
         questionTexts: hypotheses
           .filter((h) => h.confidence !== 'high')
           .flatMap((h) => patterns.find((p) => p.id === h.patternId)?.clarifyingQuestions || []),
+        resolvedQuestionIds: [],
         reply: 'Rule-based analysis refreshed using your message. Switch to AI analysis for conversational answers.',
       };
     }
 
+    const resolvedIds = new Set(result.resolvedQuestionIds);
+    const resolutionAnswer = message || text;
+    const questionsAfterResolution = solution.state.questions.map((q) =>
+      q.status === 'open' && resolvedIds.has(q.id)
+        ? { ...q, status: 'answered' as const, answer: resolutionAnswer }
+        : q,
+    );
+    const retainedQuestions = dedupeOpenQuestions(questionsAfterResolution);
+
     const evidenceSoFar = [
       fullMatchText,
-      ...solution.state.questions.filter((q) => q.answer).map((q) => q.answer as string),
+      ...retainedQuestions.filter((q) => q.answer).map((q) => q.answer as string),
     ].join('\n');
-    const answeredQuestionTexts = solution.state.questions
-      .filter((q) => q.status === 'answered')
-      .map((q) => q.question);
+    const answeredQuestionTexts = retainedQuestions.filter((q) => q.status === 'answered').map((q) => q.question);
     const isRedundant = (text: string) =>
       isQuestionCovered(text, evidenceSoFar) ||
       answeredQuestionTexts.some((answered) => areSimilarQuestions(text, answered));
-    const existingQuestions = new Set(solution.state.questions.map((q) => q.question));
-    const retainedQuestions = solution.state.questions.filter((q) => q.status !== 'open' || !isRedundant(q.question));
+    const existingQuestions = new Set(retainedQuestions.map((q) => q.question));
     const retainedOpenTexts = retainedQuestions.filter((q) => q.status === 'open').map((q) => q.question);
 
     const newQuestionTexts: string[] = [];
@@ -913,26 +926,20 @@ export function createPlannerRouter({
           throw new NotFoundError('question', req.params.questionId);
         }
         const answer: string = req.body.answer.trim();
-        const questions = solution.state.questions
-          .map((q) =>
-            q.id === existing.id
-              ? answer
-                ? { ...q, status: 'answered' as const, answer }
-                : { id: q.id, question: q.question, raisedBy: q.raisedBy, status: 'open' as const }
-              : q,
-          )
-          .filter(
-            (q) =>
-              !answer ||
-              q.id === existing.id ||
-              q.status !== 'open' ||
-              !areSimilarQuestions(q.question, existing.question),
-          );
+        const updatedQuestions = solution.state.questions.map((q) =>
+          q.id === existing.id
+            ? answer
+              ? { ...q, status: 'answered' as const, answer }
+              : { id: q.id, question: q.question, raisedBy: q.raisedBy, status: 'open' as const }
+            : q,
+        );
+        const questions = answer ? dedupeOpenQuestions(updatedQuestions) : updatedQuestions;
         const state = { ...solution.state, questions };
         state.nextSteps = buildNextSteps(state);
+        const hadOpenQuestions = solution.state.questions.some((q) => q.status === 'open');
+        const hasOpenQuestions = questions.some((q) => q.status === 'open');
         if (state.discovery && answer) {
           const evidence = allUserEvidence(state);
-          const hasOpenQuestions = questions.some((q) => q.status === 'open');
           const factors = capFactors(
             applyAnswerToFactors(state.discovery.factors, existing.question, answer, evidence),
             hasOpenQuestions,
@@ -940,7 +947,11 @@ export function createPlannerRouter({
           const confidence = computeConfidence(factors);
           state.discovery = { ...state.discovery, factors, confidence, ready: confidence >= DISCOVERY_THRESHOLD };
         }
-        state.confidence = assessConfidence(state);
+        if (llm && answer && hadOpenQuestions && !hasOpenQuestions) {
+          await refreshConfidence(req, state, state.analysis?.mode);
+        } else {
+          state.confidence = assessConfidence(state);
+        }
         res.send(await persist(req, { ...solution, state }, 'answer'));
       } catch (err) {
         next(err);

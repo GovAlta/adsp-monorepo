@@ -218,3 +218,17 @@ export function areSimilarQuestions(a: string, b: string): boolean {
   const shared = [...wordsA].filter((word) => wordsB.has(word)).length;
   return shared / Math.min(wordsA.size, wordsB.size) >= 0.5;
 }
+
+export function dedupeOpenQuestions<T extends { question: string; status: string }>(questions: T[]): T[] {
+  const canonicalTexts = questions.filter((q) => q.status !== 'open').map((q) => q.question);
+  return questions.filter((q) => {
+    if (q.status !== 'open') {
+      return true;
+    }
+    if (canonicalTexts.some((kept) => areSimilarQuestions(q.question, kept))) {
+      return false;
+    }
+    canonicalTexts.push(q.question);
+    return true;
+  });
+}
