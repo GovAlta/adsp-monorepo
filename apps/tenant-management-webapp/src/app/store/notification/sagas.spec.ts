@@ -1,4 +1,5 @@
 import { expectSaga } from 'redux-saga-test-plan';
+import { END } from 'redux-saga';
 import axios from 'axios';
 import { getAccessToken } from '@store/tenant/sagas';
 import {
@@ -8,6 +9,7 @@ import {
   updateContactInformation,
   updateEmailInformation,
   updateNotificationType,
+  watchNotificationSagas,
 } from './sagas';
 import {
   DELETE_NOTIFICATION_TYPE,
@@ -17,8 +19,20 @@ import {
   UPDATE_CONTACT_INFORMATION,
   UPDATE_EMAIL_INFORMATION,
   UPDATE_NOTIFICATION_TYPE,
+  FetchNotificationConfigurationService,
+  UpdateNotificationTypeService,
+  DeleteNotificationTypeService,
 } from './actions';
-import { NotificationItem } from './models';
+import { NOTIFICATION_INIT, NotificationItem } from './models';
+import notificationReducer from './reducers';
+
+function deferred<T>() {
+  let resolve: (value: T) => void;
+  const promise = new Promise<T>((complete) => {
+    resolve = complete;
+  });
+  return { promise, resolve: resolve! };
+}
 
 const notificationServiceUrl = 'http://notification-service';
 const headers = { headers: { Authorization: 'Bearer mock-token' } };
@@ -41,7 +55,7 @@ const coreType: NotificationItem = {
 
 const storeState = (notificationTypes: Record<string, NotificationItem> = {}) => ({
   config: { serviceUrls: { notificationServiceUrl } },
-  notification: { core: { [coreType.id]: coreType }, notificationTypes },
+  notification: { ...NOTIFICATION_INIT, core: { [coreType.id]: coreType }, notificationTypes },
 });
 
 // Runs the saga with axios stubbed, and returns the axios calls made and the actions put.
@@ -75,6 +89,66 @@ const runSaga = async (saga, action, state = storeState(), responses: Record<str
 };
 
 describe('notification sagas', () => {
+  describe('overlapping configuration refreshes', () => {
+    const eventType = { ...tenantType, events: coreType.events };
+
+    it.each([
+      ['create a type', [], [tenantType], UpdateNotificationTypeService({ ...tenantType })],
+      [
+        'rename a type',
+        [tenantType],
+        [{ ...tenantType, name: 'Updated tenant type' }],
+        UpdateNotificationTypeService({ ...tenantType, name: 'Updated tenant type' }),
+      ],
+      ['add an event', [tenantType], [eventType], UpdateNotificationTypeService({ ...eventType })],
+      ['delete an event', [eventType], [tenantType], UpdateNotificationTypeService({ ...tenantType })],
+      ['delete a type', [tenantType], [], DeleteNotificationTypeService({ ...tenantType })],
+    ])('keeps the saved configuration when an older read finishes after %s', async (_, oldTypes, newTypes, action) => {
+      const oldRead = deferred<{ data: NotificationItem[] }>();
+      const readStarted = deferred<void>();
+      const refreshed = deferred<void>();
+      let typesReads = 0;
+      const initialState = storeState(Object.fromEntries(oldTypes.map((type) => [type.id, type])));
+      const saga = expectSaga(watchNotificationSagas)
+        .withReducer((state = initialState, dispatched) => {
+          const nextState = { ...state, notification: notificationReducer(state.notification, dispatched) };
+          if (dispatched.type === FETCH_NOTIFICATION_CONFIGURATION_SUCCEEDED) {
+            refreshed.resolve();
+          }
+          return nextState;
+        }, initialState)
+        .provide({
+          call(effect, next) {
+            if (effect.fn === getAccessToken) return 'mock-token';
+            if (effect.fn === axios.get && effect.args[0].endsWith('/types?source=tenant')) {
+              typesReads += 1;
+              if (typesReads === 1) {
+                readStarted.resolve();
+                return oldRead.promise;
+              }
+              return { data: newTypes };
+            }
+            if (effect.fn === axios.get) return { data: {} };
+            if ([axios.post, axios.patch, axios.delete].includes(effect.fn)) return { data: {} };
+            return next();
+          },
+        })
+        .dispatch(FetchNotificationConfigurationService());
+
+      const execution = saga.run(false);
+      await readStarted.promise;
+      saga.dispatch(action);
+      await refreshed.promise;
+      oldRead.resolve({ data: oldTypes });
+      saga.dispatch(END);
+      const { storeState: finalState } = await execution;
+
+      expect(finalState.notification.notificationTypes).toEqual(
+        Object.fromEntries(newTypes.map((type) => [type.id, { ...type, sortedChannels: ['email'] }]))
+      );
+    });
+  });
+
   describe('fetchNotificationTypes', () => {
     it('fetches tenant types and contact from the notification service', async () => {
       const { calls, actions } = await runSaga(fetchNotificationTypes, undefined, storeState(), {

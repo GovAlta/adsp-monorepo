@@ -443,7 +443,7 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
                         })}
                         {!isInReview && (
                           <td style={{ alignContent: 'baseLine', paddingTop: '18px' }}>
-                            <div aria-hidden="true">
+                            <div>
                               <GoabIconButton
                                 icon="trash"
                                 title="trash button"
