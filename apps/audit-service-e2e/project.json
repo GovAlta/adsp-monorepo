@@ -1,0 +1,25 @@
+{
+  "name": "audit-service-e2e",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/audit-service-e2e/src",
+  "projectType": "application",
+  "tags": [],
+  "implicitDependencies": ["audit-service"],
+  "targets": {
+    "e2e": {
+      "executor": "@nx/cypress:cypress",
+      "options": {
+        "cypressConfig": "apps/audit-service-e2e/cypress.json",
+        "devServerTarget": "audit-service:serve:development",
+        "testingType": "e2e"
+      },
+      "configurations": {
+        "production": { "devServerTarget": "audit-service:serve:production" },
+        "ci": { "devServerTarget": "audit-service:serve-static" }
+      }
+    },
+    "lint": {
+      "inputs": ["default","^default","!{projectRoot}/Dockerfile","{workspaceRoot}/eslint.config.mjs","{workspaceRoot}/tools/eslint-rules/**/*"]
+    }
+  }
+}
