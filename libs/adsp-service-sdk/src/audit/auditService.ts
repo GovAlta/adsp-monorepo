@@ -26,6 +26,8 @@ export interface AuditClientOptions {
   batchIntervalMs?: number;
   /** Events held across queued, in-flight and retrying batches; further records fail with `buffer_full`. */
   maxBufferedEvents?: number;
+  /** Serialized bytes held across queued, in-flight and retrying batches; further records fail with `buffer_full`. */
+  maxBufferedBytes?: number;
   /** Delay before each retry; its length is the number of retries. */
   retryDelaysMs?: number[];
   /** Upper bound on a delay requested by the service's `Retry-After` header. */
@@ -37,7 +39,9 @@ export interface AuditClientOptions {
 const DEFAULT_OPTIONS: Required<AuditClientOptions> = {
   batchSize: 100,
   batchIntervalMs: 500,
-  maxBufferedEvents: 10000,
+  // Bounds memory if the audit service is unavailable: events can be up to ~33 KB (16 KiB metadata and change set).
+  maxBufferedEvents: 1000,
+  maxBufferedBytes: 8 * 1024 * 1024,
   retryDelaysMs: [200, 1000, 3000, 5000],
   maxRetryAfterMs: 30000,
   requestTimeoutMs: 10000,
@@ -70,6 +74,8 @@ interface WriteEventsResponse {
 
 interface PendingEvent {
   event: AuditEventPayload;
+  /** Serialized size in bytes. */
+  size: number;
   settle: (outcome: AuditRecordOutcome) => void;
 }
 
@@ -149,6 +155,7 @@ export class AuditServiceImpl implements AuditService {
   private readonly queues = new Map<string, TenantQueue>();
   private readonly sending = new Set<Promise<void>>();
   private buffered = 0;
+  private bufferedBytes = 0;
   private dropped = 0;
 
   constructor(
@@ -192,19 +199,28 @@ export class AuditServiceImpl implements AuditService {
     }
 
     let event: AuditEventPayload;
+    let size: number;
     try {
       event = this.toPayload(action, details, eventId);
+      // Serializing here also fails unserializable details (e.g. circular metadata) for this event only.
+      size = Buffer.byteLength(JSON.stringify(event));
     } catch (err) {
       return Promise.resolve(this.fail(eventId, 'invalid_event', describeError(err)));
     }
 
-    if (this.buffered >= this.options.maxBufferedEvents) {
+    const { maxBufferedEvents, maxBufferedBytes } = this.options;
+    if (this.buffered >= maxBufferedEvents || this.bufferedBytes + size > maxBufferedBytes) {
       return Promise.resolve(
-        this.fail(eventId, 'buffer_full', `Audit buffer is full at ${this.options.maxBufferedEvents} events.`),
+        this.fail(
+          eventId,
+          'buffer_full',
+          `Audit buffer is full (${this.buffered} of ${maxBufferedEvents} events, ` +
+            `${this.bufferedBytes} + ${size} of ${maxBufferedBytes} bytes).`,
+        ),
       );
     }
 
-    return new Promise((settle) => this.enqueue(this.isCore ? details.tenantId : undefined, { event, settle }));
+    return new Promise((settle) => this.enqueue(this.isCore ? details.tenantId : undefined, { event, size, settle }));
   }
 
   async query(
@@ -267,6 +283,7 @@ export class AuditServiceImpl implements AuditService {
 
     queue.events.push(pending);
     this.buffered++;
+    this.bufferedBytes += pending.size;
 
     if (queue.events.length >= this.options.batchSize) {
       this.dispatch(key);
@@ -307,6 +324,7 @@ export class AuditServiceImpl implements AuditService {
       outcomes = batch.map(({ event }) => ({ status: 'failed', eventId: event.eventId, reason, error }));
     } finally {
       this.buffered -= batch.length;
+      this.bufferedBytes -= batch.reduce((total, { size }) => total + size, 0);
     }
 
     outcomes.forEach((outcome, index) => {

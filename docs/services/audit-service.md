@@ -218,8 +218,9 @@ const { results, page } = await auditService.query({ resourceType: 'case', resou
   `failed` (not delivered, with a `reason`). Awaiting it is optional; it does not affect batching.
 - **Retries**: network errors, timeouts, 429, 502, 503 and 504 are retried with the same `eventId`
   after 200 ms, 1 s, 3 s and 5 s, honouring `Retry-After` up to 30 s. Other errors are not retried.
-- **Buffer**: up to 10,000 events can be queued, in flight or retrying. New events beyond that
-  fail immediately with `buffer_full`; the buffer is in memory and is lost if the process exits.
+- **Buffer**: up to 1,000 events or 8 MB (serialized) can be queued, in flight or retrying. New
+  events beyond either limit fail immediately with `buffer_full`; the buffer is in memory and is
+  lost if the process exits.
 - **Dropped events**: every `rejected` or `failed` outcome increments the
   `audit.client.dropped_events` OpenTelemetry counter (`audit_client_dropped_events_total` in
   Prometheus) with a `reason` attribute, and `auditService.droppedEventCount`.

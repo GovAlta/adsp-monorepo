@@ -370,6 +370,34 @@ describe('AuditServiceImpl', () => {
       await expect(service.record(action, details)).resolves.toMatchObject({ status: 'failed' });
     });
 
+    it('fails new events that would exceed the byte limit', async () => {
+      axiosMock.post.mockResolvedValue(accept(1));
+      const service = create(false, { maxBufferedBytes: 1024 });
+
+      const small = service.record(action, details);
+      const large = await service.record(action, { ...details, metadata: { text: 'x'.repeat(1024) } });
+
+      expect(large).toMatchObject({ status: 'failed', reason: 'buffer_full' });
+      await expect(small).resolves.toMatchObject({ status: 'recorded' });
+      await expect(service.record(action, details)).resolves.toMatchObject({ status: 'recorded' });
+    });
+
+    it('fails an unserializable event without affecting its batch', async () => {
+      axiosMock.post.mockResolvedValue(accept(1));
+      const metadata: Record<string, unknown> = {};
+      metadata.self = metadata;
+      const service = create();
+
+      const outcomes = await Promise.all([
+        service.record(action, details),
+        service.record(action, { ...details, metadata }),
+      ]);
+
+      expect(outcomes.map(({ status }) => status)).toEqual(['recorded', 'failed']);
+      expect(outcomes[1]).toMatchObject({ reason: 'invalid_event' });
+      expect(sentEvents()).toHaveLength(1);
+    });
+
     it('exports the dropped-event metric by reason', async () => {
       const exporter = new InMemoryMetricExporter(AggregationTemporality.CUMULATIVE);
       const reader = new PeriodicExportingMetricReader({ exporter, exportIntervalMillis: 60000 });
