@@ -55,11 +55,12 @@ export const ADSPGoACalendarExample = ({ tenantName }: ADSPGoACalendarExamplePro
     }
   }, [dispatch, calendarServiceUrl, tenantName]);
 
-  //Set default one year
+  // The calendar opens on the range start, so start at the current month and load one year ahead.
   const [dateRange, setDateRange] = useState<DateRange>(() => {
-    const end = new Date();
-    const start = new Date(end);
-    start.setDate(start.getDate() - 365);
+    const now = new Date();
+    const start = new Date(now.getFullYear(), now.getMonth(), 1);
+    const end = new Date(start);
+    end.setDate(end.getDate() + 365);
     return { start, end };
   });
 
