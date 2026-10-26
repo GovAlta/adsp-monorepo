@@ -53,6 +53,13 @@ const SERVICES: ServiceInfo[] = [
     url: '/agent',
   },
   {
+    id: 'AuditService',
+    name: 'Audit service',
+    show: true,
+    description: 'Audit event and action catalog services',
+    url: '/audit',
+  },
+  {
     id: 'CacheService',
     name: 'Cache service',
     show: true,
