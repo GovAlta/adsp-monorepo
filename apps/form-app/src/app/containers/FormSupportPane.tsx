@@ -12,6 +12,7 @@ import {
   selectedTopicSelector,
   showMessagesSelector,
 } from '../state';
+import { useHideFeedbackBadge } from '../util/feedbackUtils';
 import CommentsViewer from './CommentsViewer';
 import { FormAgentChat } from './FormAgentChat';
 
@@ -52,6 +53,7 @@ const FormSupportPaneComponent: FunctionComponent<FormSupportPaneProps> = ({ cla
 
   // The pane is opened from the Messages control in the app header, so its visibility is shared state.
   const showSupportPane = useSelector(showMessagesSelector);
+  useHideFeedbackBadge(showSupportPane);
   const [supportTab, setSupportTab] = useState<'comments' | 'agent'>('agent');
   const [agentConnected, setAgentConnected] = useState(false);
 
@@ -211,12 +213,6 @@ export const FormSupportPane = styled(FormSupportPaneComponent)`
       padding-left: var(--goa-space-l);
       padding-right: var(--goa-space-l);
       box-sizing: border-box;
-    }
-
-    .supportContent[data-tab='comments'] .comments {
-      /* The feedback badge is fixed to the viewport's right edge. Reserve its width in the
-         conversation so right-aligned messages and bylines remain fully visible beside it. */
-      padding-right: calc(var(--goa-space-l) + var(--goa-space-2xl));
     }
 
     .supportContent > * {
