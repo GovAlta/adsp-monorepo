@@ -97,6 +97,36 @@ describe('named audit catalog registration', () => {
     expect(http.patch.mock.calls[0][1]).toMatchObject({ operation: 'UPDATE', update: { application: 'case-service' } });
   });
 
+  it('replaces the action catalog from auditActions', async () => {
+    await registrar.register({
+      serviceId: adspId`urn:ads:case-team:case-service`,
+      displayName: 'Case service',
+      description: 'Application catalog registration',
+      auditActions: [action],
+    });
+
+    expect(http.patch).toHaveBeenCalledWith(
+      'https://configuration.example.test/configuration/v2/configuration/audit-service/actions-case-service',
+      {
+        operation: 'REPLACE',
+        configuration: { kind: 'actionCatalog', application: 'case-service', actions: auditDefinitions([action]) },
+      },
+      expect.any(Object),
+    );
+  });
+
+  it('rejects duplicate auditActions without registering them', async () => {
+    await expect(
+      registrar.register({
+        serviceId: adspId`urn:ads:case-team:case-service`,
+        displayName: 'Case service',
+        description: 'Application catalog registration',
+        auditActions: [action, action],
+      }),
+    ).rejects.toThrow('Duplicate');
+    expect(http.patch).not.toHaveBeenCalled();
+  });
+
   it('registers useNamespace schemas under audit-service rather than platform:audit-service', async () => {
     await registrar.register({
       serviceId: adspId`urn:ads:platform:audit-service`,

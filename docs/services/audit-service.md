@@ -118,9 +118,14 @@ current period or a TimescaleDB chunk boundary.
 
 ### Registering through the SDK
 
-`auditDefinitions()` turns application constants into a map keyed by action name and rejects
-duplicate names at startup. Category and severity types and configuration validation use the
-SDK's shared constants; custom retention class names remain supported.
+`auditDefinitions()` turns application constants (a map or an array) into a map keyed by action
+name and rejects duplicate names at startup. Category and severity types and configuration
+validation use the SDK's shared constants; custom retention class names remain supported.
+
+The simplest option is `auditActions` on `initializeService` or `initializePlatform`. The SDK
+replaces the `actions-<serviceId.service>` catalog with these actions. Duplicate or invalid names
+fail initialization. Registration itself is asynchronous; `auditService` holds writes until it has
+settled, so the first events are not rejected as unknown actions.
 
 ```typescript
 import {
@@ -129,7 +134,7 @@ import {
   AuditCategories,
   AuditSeverities,
   BuiltInRetentionClasses,
-  auditDefinitions,
+  initializeService,
 } from '@abgov/adsp-service-sdk';
 
 const serviceId = adspId`urn:ads:case-team:case-service`;
@@ -142,6 +147,17 @@ const ACTIONS = {
     retentionClass: BuiltInRetentionClasses.Compliance,
   },
 } satisfies Record<string, AuditAction>;
+
+const { auditService } = await initializeService(
+  { serviceId, displayName: 'Case service', description: 'Case management', auditActions: ACTIONS },
+  { logger },
+);
+```
+
+Alternatively, register the catalog explicitly as a named configuration document:
+
+```typescript
+import { auditDefinitions } from '@abgov/adsp-service-sdk';
 
 // Include this entry in initializeService's serviceConfigurations.
 const serviceConfigurations = [
@@ -174,6 +190,43 @@ those deployments. Only trusted administrators/deployment accounts should have w
 
 If an active revision is set, changing latest alone may not publish the change. Create and activate
 revisions through the normal Configuration Service workflow, with a configuration-admin account.
+
+### Recording and querying through the SDK
+
+`initializeService` and `initializePlatform` return `auditService`, which writes to the calling
+service's namespace (`serviceId.service`):
+
+```typescript
+const outcome = await auditService.record(ACTIONS.UPDATE_CASE, {
+  actor: { id: user.id, type: 'user' },
+  resource: { type: 'case', id: caseId },
+  metadata: { reason },
+  changeSet: { before, after }, // Dropped unless the action sets captureChangeSet.
+});
+
+if (outcome.status !== 'recorded') {
+  logger.warn(`Audit event ${outcome.eventId} was not recorded: ${outcome.reason}`);
+}
+
+const { results, page } = await auditService.query({ resourceType: 'case', resourceId: caseId }, { top: 50 });
+```
+
+- **Batching**: events are sent in batches of up to **100** events, or after **500 ms**,
+  whichever comes first. Core services must pass `tenantId`; events are batched per tenant.
+- **Outcomes**: `record()` never rejects. It resolves `recorded` (accepted or an idempotent
+  duplicate), `rejected` (the service rejected the event, with its `code` and `reason`), or
+  `failed` (not delivered, with a `reason`). Awaiting it is optional; it does not affect batching.
+- **Retries**: network errors, timeouts, 429, 502, 503 and 504 are retried with the same `eventId`
+  after 200 ms, 1 s, 3 s and 5 s, honouring `Retry-After` up to 30 s. Other errors are not retried.
+- **Buffer**: up to 10,000 events can be queued, in flight or retrying. New events beyond that
+  fail immediately with `buffer_full`; the buffer is in memory and is lost if the process exits.
+- **Dropped events**: every `rejected` or `failed` outcome increments the
+  `audit.client.dropped_events` OpenTelemetry counter (`audit_client_dropped_events_total` in
+  Prometheus) with a `reason` attribute, and `auditService.droppedEventCount`.
+- **Shutdown**: call `await auditService.flush()` before exiting (for example, on `SIGTERM`). It
+  sends buffered events and waits for in-flight batches, including retries.
+- **Queries**: `query()` reads the service's namespace with the service token by default. Pass
+  `namespace`, `tenantId` (Core) or a user `token` in options; failures reject.
 
 ## Loading and cache behavior
 

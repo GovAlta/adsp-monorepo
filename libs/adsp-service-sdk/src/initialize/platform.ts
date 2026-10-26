@@ -7,6 +7,7 @@ import { BatchSpanProcessor, TraceIdRatioBasedSampler } from '@opentelemetry/sdk
 import { registerTelemetryShutdown } from './telemetryShutdown';
 import { defaultResource, resourceFromAttributes } from '@opentelemetry/resources';
 import { createRealmStrategy, createTenantStrategy, createTokenProvider } from '../access';
+import { auditDefinitions, createAuditService } from '../audit';
 import { createConfigurationHandler, createConfigurationService } from '../configuration';
 import { createDirectory } from '../directory';
 import { createEventService } from '../event';
@@ -56,9 +57,14 @@ export async function initializePlatform(
   const tokenProvider = createTokenProvider({ logger, serviceId, clientSecret, accessServiceUrl, realm });
   const directory = service?.directory || createDirectory({ logger, directoryUrl });
 
+  // Invalid or duplicate audit action names fail initialization rather than only the asynchronous registration.
+  if (registration.auditActions) {
+    auditDefinitions(registration.auditActions);
+  }
+
   // Initialization is not dependent on registration, so registration completes asynchronously.
   const registrar = createServiceRegistrar({ logger, directory, tokenProvider });
-  registrar
+  const registered = registrar
     .register({ ...registration, serviceId })
     .catch((err) => logger.warn(`Error encountered during service registration. ${err}`));
 
@@ -191,6 +197,20 @@ export async function initializePlatform(
     undefined,
     meterProvider,
   );
+
+  const auditService =
+    service?.auditService ||
+    createAuditService({
+      isCore: realm === 'core',
+      logger,
+      serviceId,
+      directory,
+      tokenProvider,
+      // Only wait on registration that includes the action catalog.
+      ready: registration.auditActions ? registered : undefined,
+      meterProvider,
+    });
+
   const healthCheck = createHealthCheck(
     logger,
     accessServiceUrl,
@@ -252,6 +272,7 @@ export async function initializePlatform(
     configurationService,
     configurationHandler,
     eventService,
+    auditService,
     directory,
     healthCheck,
     clearCached,

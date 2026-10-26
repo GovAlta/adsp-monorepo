@@ -60,3 +60,26 @@ const UPDATE_CASE: AuditAction = {
 string literals and serialized catalog values remain compatible. `retentionClass` remains a
 string: applications may use custom class names such as `case-history` when a corresponding
 retention period is configured. Built-in class constants specify names, not retention periods.
+
+## Audit service client
+
+Register actions with `auditActions` and record events with the returned `auditService`:
+
+```typescript
+const { auditService } = await initializeService(
+  { serviceId, displayName: 'Case service', description: 'Case management', auditActions: [UPDATE_CASE] },
+  { logger },
+);
+
+const outcome = await auditService.record(UPDATE_CASE, { actor: { id: user.id, type: 'user' } });
+// outcome.status: 'recorded' | 'rejected' | 'failed'; record() never rejects.
+
+process.on('SIGTERM', async () => {
+  await auditService.flush();
+  process.exit(0);
+});
+```
+
+Events are batched (100 events or 500 ms), retried on transient failures, and counted in the
+`audit.client.dropped_events` metric when not recorded. See the
+[Audit service documentation](https://govalta.github.io/adsp-monorepo/services/audit-service.html).
