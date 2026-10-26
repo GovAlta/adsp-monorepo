@@ -3,15 +3,15 @@ import type { Logger } from 'winston';
 import type { EnrichedEvent, EventOutcome, EventSubmitter } from '../types';
 import { EVENT_OUTCOME_STATUS, EVENT_OUTCOME_CODE } from '../types';
 import { DurableEventWriter, PARK_TIMEOUT_MS } from './durable-writer';
-import { AuditEventStore, AuditStorageUnavailableError } from './store';
+import { AuditBatchTooLargeError, AuditEventStore, AuditStorageUnavailableError } from './store';
 import type { AuditMetrics } from '../metrics';
 
 export const WRITE_BATCH_SIZE = 200;
 export const WRITE_BATCH_WINDOW_MS = 200;
-export const MAX_BUFFERED_EVENTS = 5000;
-export const MAX_BUFFERED_BYTES = 32 * 1024 * 1024;
+export const MAX_BUFFERED_EVENTS = 1000;
+export const MAX_BUFFERED_BYTES = 8 * 1024 * 1024;
 export const SHUTDOWN_TIMEOUT_MS = 25000;
-const TERMINATION_GRACE_MS = 30000;
+const MAX_FLUSH_TIMEOUT_MS = 30000;
 const BUFFER_STATE = {
   ACCEPTING: 'accepting',
   DRAINING: 'draining',
@@ -96,16 +96,24 @@ export class AuditWriteBuffer implements EventSubmitter {
   }
 
   get isReady(): boolean {
-    return this.state === BUFFER_STATE.ACCEPTING && this.writer.isAvailable && !this.writer.hasUnfinishedCancellation;
+    return this.canAcceptWrites && this.writer.isAvailable;
+  }
+
+  get canAcceptWrites(): boolean {
+    return this.state === BUFFER_STATE.ACCEPTING && !this.writer.hasUnfinishedCancellation;
   }
 
   async submit(events: EnrichedEvent[]): Promise<Map<string, EventOutcome>> {
-    if (this.state !== BUFFER_STATE.ACCEPTING || this.writer.hasUnfinishedCancellation) {
+    if (!this.canAcceptWrites) {
       this.refuse('Audit storage is draining or has an unfinished cancelled write.');
     }
-    if (this.depth + events.length > this.options.maxEvents) this.refuse('Audit buffer is at capacity.');
+    if (events.length > this.options.maxEvents) {
+      this.rejectOversizedBatch('Audit batch exceeds the buffer event limit. Split the batch into smaller requests.');
+    }
     if (!events.length) return new Map();
     const bytes = this.measureSubmission(events);
+    if (this.depth + events.length > this.options.maxEvents) this.refuse('Audit buffer is at capacity.');
+    if (this.bufferedBytes + bytes > this.options.maxBytes) this.refuse('Audit buffer byte capacity is exhausted.');
     return new Promise((resolve, reject) => {
       const submission: Submission = {
         events: [...events],
@@ -163,12 +171,13 @@ export class AuditWriteBuffer implements EventSubmitter {
       maxEvents > MAX_BUFFERED_EVENTS ||
       !Number.isSafeInteger(maxBytes) ||
       maxBytes < 1 ||
+      maxBytes > MAX_BUFFERED_BYTES ||
       !Number.isSafeInteger(shutdownTimeoutMs) ||
       shutdownTimeoutMs <= PARK_TIMEOUT_MS ||
-      shutdownTimeoutMs >= TERMINATION_GRACE_MS
+      shutdownTimeoutMs >= MAX_FLUSH_TIMEOUT_MS
     ) {
       throw new Error(
-        'Invalid audit buffer limits; shutdown must reserve parking time within the 30-second grace period.',
+        'Invalid audit buffer limits; flush must reserve parking time and finish within its 30-second budget.',
       );
     }
   }
@@ -183,10 +192,14 @@ export class AuditWriteBuffer implements EventSubmitter {
         }
         ids.add(event.id);
         bytes += Buffer.byteLength(JSON.stringify(event), 'utf8');
-        if (this.bufferedBytes + bytes > this.options.maxBytes) this.refuse('Audit buffer byte capacity is exhausted.');
+        if (bytes > this.options.maxBytes) {
+          this.rejectOversizedBatch(
+            'Audit batch exceeds the buffer byte limit. Split the batch into smaller requests.',
+          );
+        }
       }
     } catch (error) {
-      if (error instanceof AuditStorageUnavailableError) throw error;
+      if (error instanceof AuditStorageUnavailableError || error instanceof AuditBatchTooLargeError) throw error;
       this.refuse('Audit submission could not be measured safely.');
     }
     return bytes;
@@ -195,6 +208,11 @@ export class AuditWriteBuffer implements EventSubmitter {
   private refuse(message: string): never {
     this.logger.warn(message, { context: 'AuditWrite' });
     throw new AuditStorageUnavailableError(message);
+  }
+
+  private rejectOversizedBatch(message: string): never {
+    this.logger.warn(message, { context: 'AuditWrite' });
+    throw new AuditBatchTooLargeError(message);
   }
 
   private reserve(submission: Submission, direction: 1 | -1): void {

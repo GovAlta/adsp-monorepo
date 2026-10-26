@@ -24,7 +24,6 @@ const makeState = (overrides: Partial<SolutionState> = {}): SolutionState => ({
   patternMatches: [],
   hypotheses: [],
   specialists: [],
-  artifacts: [],
   nextSteps: [],
   ...overrides,
 });

@@ -266,8 +266,9 @@ export function* fetchNotificationMetrics(): SagaIterator {
 }
 
 export function* watchNotificationSagas(): Generator {
-  yield takeEvery(FETCH_NOTIFICATION_CONFIGURATION, fetchNotificationTypes);
-  yield takeEvery(FETCH_CORE_NOTIFICATION_TYPES, fetchCoreNotificationTypes);
+  // Only the newest refresh may publish results; an older read can finish after a save's refresh.
+  yield takeLatest(FETCH_NOTIFICATION_CONFIGURATION, fetchNotificationTypes);
+  yield takeLatest(FETCH_CORE_NOTIFICATION_TYPES, fetchCoreNotificationTypes);
   yield takeEvery(DELETE_NOTIFICATION_TYPE, deleteNotificationTypes);
   yield takeEvery(UPDATE_NOTIFICATION_TYPE, updateNotificationType);
   yield takeEvery(UPDATE_CONTACT_INFORMATION, updateContactInformation);

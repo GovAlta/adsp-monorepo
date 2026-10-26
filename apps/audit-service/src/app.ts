@@ -12,7 +12,6 @@ import { environment } from './environments/environment';
 import {
   AuditServiceRoles,
   CatalogService,
-  configurationSchema,
   createAuditConfigurationConverter,
   combineAuditConfiguration,
   createAuditRouter,
@@ -23,19 +22,28 @@ import {
   createAuditMetrics,
   FailedEventService,
   ReplayEventPreparer,
+  AUDIT_SERVICE_NAMESPACE,
 } from './audit';
 import { AuditWriteBuffer } from './audit/buffer';
 import { REPLAY_ACTION, REPLAY_DEFINITION } from './audit/actions';
+import { SELF_AUDIT_DEFINITIONS } from './audit/model';
+import { SelfAuditor } from './audit/utils/self-audit';
 import { createDatabase, PostgresEventRepository, PostgresFailedEventRepository } from './postgres';
+import { createConfigurationSchema } from './audit/configuration';
+import { RETENTION_ACTION, RETENTION_DEFINITION, RetentionJob, scheduleRetentionJob } from './audit/jobs/retention';
+import { PostgresRetentionRepository } from './postgres/retention';
 
 const logger = createLogger('audit-service', environment.LOG_LEVEL);
 
 export interface AuditApplication extends express.Application {
+  beginShutdown: () => void;
   drain: () => Promise<void>;
   shutdown: () => Promise<void>;
 }
 
 export const initializeApp = async (): Promise<AuditApplication> => {
+  const retentionBounds = { minDays: environment.RETENTION_MIN_DAYS, maxDays: environment.RETENTION_MAX_DAYS };
+  const configurationSchema = createConfigurationSchema(retentionBounds);
   const app = express();
 
   app.use(compression());
@@ -91,12 +99,16 @@ export const initializeApp = async (): Promise<AuditApplication> => {
           serviceId,
           configuration: [
             {
-              name: `actions-${serviceId.service}`,
+              name: `actions-${AUDIT_SERVICE_NAMESPACE}`,
               operation: 'REPLACE',
               configuration: {
                 kind: 'actionCatalog',
-                application: serviceId.service,
-                actions: auditDefinitions({ REPLAY: { name: REPLAY_ACTION, ...REPLAY_DEFINITION } }),
+                application: AUDIT_SERVICE_NAMESPACE,
+                actions: {
+                  ...SELF_AUDIT_DEFINITIONS,
+                  ...auditDefinitions({ REPLAY: { name: REPLAY_ACTION, ...REPLAY_DEFINITION } }),
+                  [RETENTION_ACTION]: RETENTION_DEFINITION,
+                },
               },
             },
           ],
@@ -115,14 +127,29 @@ export const initializeApp = async (): Promise<AuditApplication> => {
     { logger },
   );
   const swagger = JSON.parse(await promisify(readFile)(`${__dirname}/swagger.json`, 'utf8'));
-  const { knex, isConnected } = await createDatabase({ logger, ...environment });
+  const { knex, isConnected, close: closeDatabase } = await createDatabase({ logger, ...environment });
   const failedEventRepository = new PostgresFailedEventRepository(knex, logger);
   const meter = meterProvider?.getMeter('audit-service');
   const auditMetrics = createAuditMetrics(meter, failedEventRepository, logger);
   const repository = new PostgresEventRepository(knex, logger);
   const buffer = new AuditWriteBuffer(repository, logger, {}, meter, auditMetrics);
   const catalogs = new CatalogService(configurationService, logger);
-  const retention = new RetentionService(configurationService, logger);
+  const retention = new RetentionService(configurationService, logger, retentionBounds);
+  let stopping = false;
+
+  // Probes deliberately bypass platform dependencies and authentication.
+  app.get('/health/live', (_req, res) => {
+    res.status(200).end();
+  });
+  app.get('/health/ready', async (_req, res) => {
+    if (stopping || !buffer.canAcceptWrites) {
+      res.status(503).end();
+      return;
+    }
+    const connected = await isConnected();
+    // A previous failed write must not keep a recovered pod permanently out of service.
+    res.status(connected && !stopping && buffer.canAcceptWrites ? 200 : 503).end();
+  });
 
   passport.use('core', coreStrategy);
   passport.use('tenant', tenantStrategy);
@@ -147,6 +174,7 @@ export const initializeApp = async (): Promise<AuditApplication> => {
     assertTenantContext,
     tenantHandler,
   );
+  const auditor = new SelfAuditor({ serviceId, catalogs, retention, submitter: buffer, logger });
   app.use(
     '/audit/v1',
     createAuditRouter({
@@ -155,6 +183,8 @@ export const initializeApp = async (): Promise<AuditApplication> => {
       submitter: buffer,
       reader: repository,
       logger,
+      serviceId,
+      auditor,
       failedEvents: new FailedEventService(
         failedEventRepository,
         serviceId.toString(),
@@ -171,8 +201,8 @@ export const initializeApp = async (): Promise<AuditApplication> => {
   app.get('/health', async (_req, res) => {
     const platform = await healthCheck();
     const db = await isConnected();
-    const ready = db && buffer.isReady;
-    res.status(ready ? 200 : 503).json({ ...platform, db, ready });
+    const ready = db && !stopping && buffer.canAcceptWrites;
+    res.status(ready ? 200 : 503).json({ ...platform, db, ready, selfAuditFailures: auditor.failureCount });
   });
 
   app.get('/', async (req, res) => {
@@ -183,6 +213,8 @@ export const initializeApp = async (): Promise<AuditApplication> => {
       _links: {
         self: { href: new URL(req.originalUrl, rootUrl).href },
         health: { href: new URL('/health', rootUrl).href },
+        live: { href: new URL('/health/live', rootUrl).href },
+        ready: { href: new URL('/health/ready', rootUrl).href },
         api: { href: new URL('/audit/v1', rootUrl).href },
         docs: { href: new URL('/swagger/docs/v1', rootUrl).href },
       },
@@ -192,16 +224,35 @@ export const initializeApp = async (): Promise<AuditApplication> => {
   const errorHandler = createErrorHandler(logger);
   app.use(errorHandler);
 
+  const retentionJob = environment.RETENTION_ENABLED
+    ? scheduleRetentionJob(
+        new RetentionJob(new PostgresRetentionRepository(knex), catalogs, retention, serviceId, logger, {
+          batchSize: environment.RETENTION_BATCH_SIZE,
+          maxBatches: environment.RETENTION_MAX_BATCHES,
+        }),
+        environment.RETENTION_SCHEDULE,
+        logger,
+      )
+    : undefined;
+
   let shutdown: Promise<void>;
+  const beginShutdown = () => {
+    stopping = true;
+  };
+  const drain = async () => {
+    beginShutdown();
+    await Promise.all([retentionJob?.stop(), buffer.close()]);
+  };
   return Object.assign(app, {
-    drain: () => buffer.close(),
+    beginShutdown,
+    drain,
     shutdown: () => {
       shutdown ??= (async () => {
         try {
-          await buffer.close();
+          await drain();
         } finally {
           try {
-            await knex.destroy();
+            await closeDatabase();
           } finally {
             await shutdownTelemetry();
           }

@@ -62,7 +62,6 @@ export interface SolutionState {
   patternMatches?: PatternMatch[];
   hypotheses: Hypothesis[];
   specialists: SpecialistProgress[];
-  artifacts?: SolutionArtifact[];
   nextSteps: NextStep[];
   analysis?: AnalysisInfo;
   conversation?: ConversationMessage[];
@@ -96,6 +95,12 @@ export interface SolutionVersionEntry {
   changedSections: string[];
 }
 
+export interface NotCoveredItem {
+  requirement: string;
+  reason: string;
+  suggestedApproach: string;
+}
+
 export interface BusinessPattern {
   id: string;
   source?: PatternSource;
@@ -109,6 +114,7 @@ export interface BusinessPattern {
   clarifyingQuestions: string[];
   assumptions?: string[];
   knownUnknowns?: string[];
+  unsupportedCapabilities?: NotCoveredItem[];
 }
 
 export interface ConsultResult {
@@ -150,14 +156,6 @@ export interface PatternMatch {
   matchedLanguage: string[];
   matchedSignals: string[];
   explanation: string;
-}
-
-export interface SolutionArtifact {
-  id: string;
-  service: string;
-  name: string;
-  urn?: string;
-  createdOn: string;
 }
 
 export interface ConversationMessage {
@@ -233,6 +231,21 @@ export interface BlueprintWorkflow {
   steps: string[];
 }
 
+export type ComponentReview = 'not-reviewed' | 'approved' | 'rejected';
+
+export interface BlueprintComponent {
+  order: number;
+  service: string;
+  type: string;
+  name: string;
+  purpose: string;
+  dependsOn: string[];
+  openDecisions: string[];
+  target: 'adsp' | 'keycloak' | 'openshift';
+  setup: { where: string; docs: string; schemaKey?: string; how: string };
+  review?: ComponentReview;
+}
+
 export interface SolutionBlueprint {
   generatedOn: string;
   mode: AnalysisMode;
@@ -256,6 +269,7 @@ export interface SolutionBlueprint {
     diagram: string;
   };
   serviceMapping: BlueprintServiceRole[];
+  notCoveredByAdsp?: NotCoveredItem[];
   specialistNotes: SpecialistNote[];
   workflows: BlueprintWorkflow[];
   dataGovernance: {
@@ -271,6 +285,8 @@ export interface SolutionBlueprint {
     nonFunctional: string[];
     openQuestions: string[];
   };
+  // Absent on blueprints generated before components were added.
+  components?: BlueprintComponent[];
 }
 
 export interface SpecialistDefinition {

@@ -36,7 +36,6 @@ describe('planner events', () => {
       patternMatches: [],
       hypotheses: [],
       specialists: [],
-      artifacts: [],
       nextSteps: [],
     },
   };

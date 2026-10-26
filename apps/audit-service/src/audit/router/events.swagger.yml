@@ -4,13 +4,20 @@ paths:
       tags:
         - Audit events
       summary: List events in a namespace for the caller's tenant, newest first.
-      description: Requires audit-reader. Filters combine; paginate with top and after.
+      description: |
+        Requires `audit-reader`. Any reader in the tenant may read any namespace; ownership is not required for reads.
+        Filters combine; paginate with `top` and `after`.
+
+        Responses include `actor.name` and `actor.email` as recorded by the writer, and `audit-reader` callers
+        receive them. Name and email are omitted from aggregate and export responses unless the caller has
+        `audit-admin`; no such endpoint exists yet. `retentionUntil` is fixed when the event is written.
       parameters:
         - in: path
           name: namespace
           required: true
           schema:
             type: string
+        - $ref: '#/components/parameters/TenantId'
         - $ref: '#/components/parameters/Top'
         - $ref: '#/components/parameters/After'
         - $ref: '#/components/parameters/Actor'
@@ -26,29 +33,48 @@ paths:
         '200':
           $ref: '#/components/responses/AuditEventPage'
         '400':
-          description: Invalid namespace or query parameter.
+          description: Invalid namespace or query parameter. Fix the request.
         '401':
-          description: Authentication required.
+          description: Missing or invalid bearer token.
         '403':
-          description: Missing audit-reader.
+          description: Missing `audit-reader` role, or a tenant caller attempting to select another tenant.
         '503':
-          description: Audit event storage is not configured or unavailable.
+          description: Audit event storage is not configured or unavailable. Retry.
     post:
       tags:
         - Audit events
       summary: Validate and submit a batch of audit events.
       description: |
-        Requires audit-writer, including for Core callers. The verified token's azp must
-        be a service URN. Non-Core callers may write only the URN's service namespace and
-        their own tenant. Core callers with the role may select another namespace and
-        must provide tenantId. Grant the writer role only to authorized service accounts;
-        the platform Core check does not distinguish service accounts from human users.
+        **A `202` does not mean every event was stored.** The body reports a per-event outcome:
+        `accepted`, `duplicates` and `rejected`. Always inspect `rejected`; rejected events are
+        not stored and are never retried by the service, so the caller must correct and resend them.
+
+        **Role:** requires `audit-writer`, including for Core callers.
+
+        **Namespace ownership:** the verified token's `azp` must be a service URN. A non-Core caller may
+        write only to the namespace equal to that service's name, and only for its own tenant; any other
+        namespace returns `403`. Core service accounts with `audit-writer` are exempt from the namespace
+        check, may select any namespace, and must provide `tenantId`. Grant the writer role only to
+        authorized service accounts; the platform Core check does not distinguish service accounts from human users.
+
+        **Limits:** 1 to 500 events per request; `metadata` and `changeSet` are each limited to 16 KiB.
+        `eventId` must be a UUID. `occurredAt` must be no more than 7 days in the past and no more than
+        5 minutes in the future.
+
+        **Server-set fields:** `tenantId`, `writtenBy`, `namespace`, `receivedAt`, `category`, `severity`
+        and `retentionClass` are set by the service from the verified token, the path, the clock and the
+        registered action. If supplied in an event they are ignored.
 
         Malformed envelopes fail the request; invalid events are rejected individually.
         Metadata and changeSet each have a 16 KiB UTF-8 JSON limit, including JSON syntax.
         The complete request body is limited to 20 MiB. Server-owned row fields are
         always derived from the verified caller, path, clock and resolved action/policy;
         additional event fields are not copied into trusted row columns.
+
+        Each pod buffers at most 1,000 events and 8 MiB of serialized enriched events,
+        including retained original input. A batch that cannot fit in an empty buffer
+        returns 413 without storing any events; split it into smaller requests.
+        Temporary buffer pressure returns 503 with Retry-After instead.
 
         Configuration uses the SDK's existing error handling: HTTP and conversion
         failures can resolve to null. Such failures cannot reliably be distinguished
@@ -72,10 +98,9 @@ paths:
             pattern: '^[a-z0-9]+(?:-[a-z0-9]+)*$'
         - in: query
           name: tenantId
-          description: Tenant URN; required for Core writers. Tenant callers cannot select a different tenant.
+          description: Tenant URN, for example urn:ads:platform:tenant-service:v2:/tenants/case-team. Required for Core writers; leave empty as a tenant caller, who cannot select a different tenant.
           schema:
             type: string
-          example: urn:ads:platform:tenant-service:v2:/tenants/case-team
       requestBody:
         required: true
         content:
@@ -93,7 +118,10 @@ paths:
                     $ref: '#/components/schemas/AuditEventInput'
       responses:
         '202':
-          description: Every input is accepted, duplicate, or rejected; accepted + duplicates + rejected.length equals the input count.
+          description: |
+            The request was processed, **not** necessarily stored in full. Every input is accepted, a duplicate,
+            or rejected; accepted + duplicates + rejected.length equals the input count. Check `rejected`:
+            rejected events are not stored and are not resent. Correct them and submit again.
           content:
             application/json:
               schema:
@@ -107,15 +135,18 @@ paths:
                     code: unknown_action
                     reason: "Action 'case.remove.failed' is not registered."
         '400':
-          description: Malformed JSON/envelope, invalid namespace or tenant ID, or missing Core tenant context.
+          description: Malformed JSON or envelope (for example no events or more than 500), invalid namespace or tenant ID, or missing Core tenant context. Fix the request; do not retry unchanged.
         '401':
-          description: Missing or invalid bearer token.
+          description: Missing or invalid bearer token. Obtain a valid token and retry.
         '403':
-          description: Missing audit-writer, invalid client service URN, or forbidden namespace/tenant.
+          description: |
+            Either the caller lacks the `audit-writer` role (have it granted to the service account), or the
+            namespace is not the caller's: a non-Core caller can write only to its own service's namespace and
+            tenant. A token whose `azp` is not a service URN is also refused.
         '413':
-          description: Request body exceeds 20 MiB.
+          description: Request body exceeds 20 MiB, or the enriched batch exceeds the 8 MiB buffer capacity. Split the batch; retrying it unchanged will not help.
         '503':
-          description: Configuration, retention policy or durable storage is unavailable; retry without re-registering actions.
+          description: Configuration, retention policy or durable storage is unavailable, or the buffer is temporarily full; retry without re-registering actions.
           headers:
             Retry-After:
               description: Minimum suggested retry delay in seconds.
@@ -127,8 +158,11 @@ paths:
       tags:
         - Audit events
       summary: List events across every namespace in the caller's tenant, newest first.
-      description: Requires audit-reader. Returns only the caller's tenant's events; accepts the same filters as the namespace listing.
+      description: |
+        Requires `audit-reader`. Returns only the resolved tenant's events and accepts the same filters as the
+        namespace listing. Actor `name` and `email` are included as recorded.
       parameters:
+        - $ref: '#/components/parameters/TenantId'
         - $ref: '#/components/parameters/Top'
         - $ref: '#/components/parameters/After'
         - $ref: '#/components/parameters/Actor'
@@ -144,25 +178,28 @@ paths:
         '200':
           $ref: '#/components/responses/AuditEventPage'
         '400':
-          description: Invalid query parameter.
+          description: Invalid query parameter. Fix the request.
         '401':
-          description: Authentication required.
+          description: Missing or invalid bearer token.
         '403':
-          description: Missing audit-reader.
+          description: Missing `audit-reader` role, or a tenant caller attempting to select another tenant.
         '503':
-          description: Audit event storage is not configured or unavailable.
+          description: Audit event storage is not configured or unavailable. Retry.
   /audit/v1/{namespace}/events/{id}:
     get:
       tags:
         - Audit events
       summary: Read one event by its service-generated id.
-      description: Requires audit-reader. An id belonging to another tenant returns 404.
+      description: |
+        Requires `audit-reader`. An id belonging to another tenant returns 404. Actor `name` and `email`
+        are included as recorded.
       parameters:
         - in: path
           name: namespace
           required: true
           schema:
             type: string
+        - $ref: '#/components/parameters/TenantId'
         - in: path
           name: id
           required: true
@@ -177,15 +214,23 @@ paths:
               schema:
                 $ref: '#/components/schemas/AuditEvent'
         '400':
-          description: Invalid namespace or id.
+          description: Invalid namespace or id. Fix the request.
+        '401':
+          description: Missing or invalid bearer token.
         '403':
-          description: Missing audit-reader.
+          description: Missing `audit-reader` role, or a tenant caller attempting to select another tenant.
         '404':
-          description: Event not found in the caller's tenant.
+          description: Event not found in the caller's tenant and namespace.
         '503':
-          description: Audit event storage is unavailable.
+          description: Audit event storage is unavailable. Retry.
 components:
   parameters:
+    TenantId:
+      in: query
+      name: tenantId
+      description: Tenant URN, for example urn:ads:platform:tenant-service:v2:/tenants/case-team. Available to Core service accounts only, and required for them. Leave empty as a tenant caller; supplying any other tenant returns 403.
+      schema:
+        type: string
     Top:
       in: query
       name: top
@@ -193,7 +238,7 @@ components:
     After:
       in: query
       name: after
-      description: Opaque cursor from page.next of the previous response.
+      description: Opaque keyset cursor from page.next of the previous response. Stable while new events arrive.
       schema: { type: string }
     Actor:
       in: query
@@ -294,6 +339,7 @@ components:
         retentionUntil: { type: string, format: date-time }
     AuditEventInput:
       type: object
+      description: One event to write. Server-set fields (tenantId, writtenBy, namespace, receivedAt, category, severity, retentionClass) are ignored if supplied.
       required: [eventId, occurredAt, action, status, actor]
       properties:
         eventId:
@@ -401,7 +447,7 @@ components:
               index:
                 type: integer
                 minimum: 0
-                description: Zero-based index in the original request; results are sorted by index.
+                description: Zero-based index in the original request; results are sorted by index. Use it, and eventId when present, to identify which event the entry concerns.
               eventId:
                 type: string
                 description: Caller-provided event identifier when available.

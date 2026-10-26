@@ -9,7 +9,7 @@ import { config as loadEnv } from 'dotenv';
 import { adspId } from '@abgov/adsp-service-sdk';
 import type { EventService, User } from '@abgov/adsp-service-sdk';
 import { createErrorHandler, createLogger } from '@core-services/core-common';
-import { createLlmFromEnv, PlannerServiceRoles } from './planner';
+import { createLlmFromEnv, driftMessage, PlannerServiceRoles, registeredServices, unmappedServices } from './planner';
 import { createPlannerRouter } from './planner/router';
 import { createRepositories } from './postgres';
 
@@ -37,6 +37,12 @@ const devUser = {
 } as unknown as User;
 
 const startLocal = async () => {
+  // No live ADSP catalog locally, so check the component map against the monorepo apps instead.
+  const unmapped = unmappedServices(registeredServices(path.resolve(process.cwd(), 'apps')));
+  if (unmapped.length > 0) {
+    logger.warn(driftMessage(unmapped));
+  }
+
   const repositories = await createRepositories({
     logger,
     DB_HOST: process.env.DB_HOST || 'localhost',

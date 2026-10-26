@@ -68,11 +68,20 @@ describe('PostgresFailedEventRepository', () => {
     jest.restoreAllMocks();
   });
 
-  it('filters pages by tenant and orders deterministically before applying limit and offset', async () => {
-    await repository.list(tenantId, 10, 20);
+  it('filters pages by tenant and orders deterministically before applying limit', async () => {
+    await repository.list(tenantId, 10);
     expect(queries()[0]).toMatchObject({
-      sql: expect.stringContaining('where "tenant_id" = $1 order by "failed_at" desc, "id" desc limit $2 offset $3'),
-      bindings: [tenantId, 10, 20],
+      sql: expect.stringContaining('where "tenant_id" = $1 order by "failed_at" desc, "id" desc limit $2'),
+      bindings: [tenantId, 10],
+    });
+  });
+
+  it('resumes strictly after the cursor row', async () => {
+    const after = { failedAt: new Date('2026-10-01T00:00:00Z'), id: '54862935-e55b-4bc4-8cd0-9e64b193bbd2' };
+    await repository.list(tenantId, 10, after);
+    expect(queries()[0]).toMatchObject({
+      sql: expect.stringContaining('(failed_at, id) < ($2, $3) order by "failed_at" desc, "id" desc limit $4'),
+      bindings: [tenantId, after.failedAt, after.id, 10],
     });
   });
 

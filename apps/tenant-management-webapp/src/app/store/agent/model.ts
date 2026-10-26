@@ -67,3 +67,25 @@ export interface AgentState {
     saving: boolean;
   };
 }
+
+export type AccessDiscoveryStatus = 'available' | 'unavailable' | 'not-found' | 'unreachable';
+
+export interface AccessEnvironmentSummary {
+  id: string;
+  label: string;
+  host: string;
+  readOnly: boolean;
+}
+
+export type AccessRealmKind = 'tenant' | 'core';
+
+/** Access Service environment and realm the signed-in user may inspect, as returned by agent-service. */
+export interface AccessScope {
+  status: 'available' | 'unavailable';
+  reason?: string;
+  message: string;
+  missingRoles?: string[];
+  environment?: AccessEnvironmentSummary;
+  realm?: { id: string; kind: AccessRealmKind };
+  readOnly?: boolean;
+}

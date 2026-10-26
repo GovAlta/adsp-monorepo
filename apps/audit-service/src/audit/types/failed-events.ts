@@ -1,4 +1,12 @@
-import { AuditEvent, EnrichedEvent } from './events';
+import { AUDIT_SERVICE_NAMESPACE, AuditEvent, EnrichedEvent } from './events';
+
+export const FAILED_EVENT_STATUS = {
+  OPEN: 'open',
+  REPLAYED: 'replayed',
+  DISCARDED: 'discarded',
+} as const;
+
+export type FailedEventStatus = (typeof FAILED_EVENT_STATUS)[keyof typeof FAILED_EVENT_STATUS];
 
 export interface FailedAuditEvent {
   id: string;
@@ -9,12 +17,12 @@ export interface FailedAuditEvent {
   error: string;
   attempts: number;
   failed_at: Date;
-  status: 'open' | 'replayed' | 'discarded';
+  status: FailedEventStatus;
   replayed_as: string | null;
 }
 
 export interface ReplayAuditRecord {
-  namespace: 'audit-service';
+  namespace: typeof AUDIT_SERVICE_NAMESPACE;
   writtenBy: string;
   event: AuditEvent;
 }
@@ -28,9 +36,15 @@ export interface FailedEventReplayTransaction {
   insertReplayAudit(event: EnrichedEvent): Promise<void>;
 }
 
+export interface FailedEventCursor {
+  failedAt: Date;
+  id: string;
+}
+
 export interface FailedEventRepository {
   // Tenant-filtered, ordered by failed_at DESC, id DESC, including all three statuses.
-  list(tenantId: string, top: number, skip: number): Promise<FailedAuditEvent[]>;
+  // `after` is the last row of the previous page; only strictly older rows are returned.
+  list(tenantId: string, top: number, after?: FailedEventCursor): Promise<FailedAuditEvent[]>;
   // Privileged aggregate across tenants; no event data leaves the repository.
   countOpen(): Promise<number>;
   // Resolve only after commit. Lock the failed row and roll back ALL writes on any failure,

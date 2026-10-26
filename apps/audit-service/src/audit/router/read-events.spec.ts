@@ -1,4 +1,4 @@
-import { adspId, User } from '@abgov/adsp-service-sdk';
+import { adspId, AuditCategories, User } from '@abgov/adsp-service-sdk';
 import { createErrorHandler } from '@core-services/core-common';
 import * as express from 'express';
 import * as request from 'supertest';
@@ -8,6 +8,7 @@ import { AuditServiceRoles } from '../roles';
 import { EventReader, StoredEvent } from '../types';
 import { createAuditRouter } from './index';
 import { serializeEvent } from './read-events';
+import { decodeEventCursor, encodeEventCursor } from '../utils/event-cursor';
 
 const logger = createLogger({ transports: [new transports.Console({ silent: true })] });
 const tenantA = adspId`urn:ads:platform:tenant-service:v2:/tenants/case-team`;
@@ -107,19 +108,19 @@ describe('read events', () => {
     expect(res.body.results).toHaveLength(1);
     expect(res.body.results[0]).not.toHaveProperty('tenant_id');
     expect(res.body.page.size).toBe(1);
-    expect(Buffer.from(res.body.page.next, 'base64').toString()).toBe('1');
+    expect(decodeEventCursor(res.body.page.next)).toEqual({ occurredAt: stored.occurred_at, id: stored.id });
     expect(reader.find).toHaveBeenCalledWith(
       expect.objectContaining({ tenantId: tenantA.toString(), namespace: 'case-service' }),
       1,
-      0,
+      undefined,
     );
   });
 
   it('applies after cursor and omits next on a short page', async () => {
-    const after = Buffer.from('20').toString('base64');
+    const after = encodeEventCursor(stored);
     const res = await request(createApp()).get(`/audit/v1/case-service/events?top=5&after=${after}`);
     expect(res.status).toBe(200);
-    expect(reader.find).toHaveBeenCalledWith(expect.anything(), 5, 20);
+    expect(reader.find).toHaveBeenCalledWith(expect.anything(), 5, { occurredAt: stored.occurred_at, id: stored.id });
     expect(res.body.page.next).toBeUndefined();
   });
 
@@ -143,7 +144,7 @@ describe('read events', () => {
         occurredTo: new Date('2026-10-02T00:00:00Z'),
       },
       10,
-      0,
+      undefined,
     );
   });
 
@@ -152,6 +153,13 @@ describe('read events', () => {
     expect(res.status).toBe(200);
     expect(reader.find.mock.calls[0][0].namespace).toBeUndefined();
     expect(reader.find.mock.calls[0][0].tenantId).toBe(tenantA.toString());
+  });
+
+  it.each(Object.values(AuditCategories))('accepts SDK category %s as a history filter', async (category) => {
+    const res = await request(createApp()).get(`/audit/v1/events?category=${category}`);
+
+    expect(res.status).toBe(200);
+    expect(reader.find).toHaveBeenCalledWith(expect.objectContaining({ category }), 10, undefined);
   });
 
   it.each([

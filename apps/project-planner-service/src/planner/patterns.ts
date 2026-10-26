@@ -98,6 +98,25 @@ const CASE_MANAGEMENT: BusinessPattern = {
     'Security, privacy, and retention requirements are domain-specific and should be validated during discovery.',
     'Not all case management solutions require every feature listed in this pattern.',
   ],
+  unsupportedCapabilities: [
+    {
+      requirement: 'Fee or payment processing',
+      reason: 'No ADSP service accepts or reconciles payments.',
+      suggestedApproach:
+        'Integrate a third-party payment gateway and record the outcome as a case note or value-service record.',
+      keywords: ['fee', 'filing fee', 'application fee'],
+      category: 'payment-collection',
+      feeType: 'application',
+      recordType: 'case',
+    },
+    {
+      requirement: 'External identity or background-check verification',
+      reason: 'No ADSP service verifies identity against an external registry or conducts background checks.',
+      suggestedApproach:
+        'Integrate the relevant external verification service and store the result as supporting evidence.',
+      keywords: ['background check', 'background-check', 'criminal record', 'verify identity', 'identity verification'],
+    },
+  ],
 };
 
 const GRANT_APPLICATIONS: BusinessPattern = {
@@ -132,7 +151,12 @@ const GRANT_APPLICATIONS: BusinessPattern = {
     sig('Reviewer scoring or adjudication against criteria', 'reviewer scoring', 'adjudication', 'scoring rubric'),
     sig('Approval of funding amounts', 'approval of funding', 'award', 'funding decision'),
     sig('Intake windows or program intakes with deadlines', 'intake window', 'application deadline', 'funding round'),
-    sig('Monitoring or reporting on funded projects', 'monitoring of funded projects', 'progress report', 'final report'),
+    sig(
+      'Monitoring or reporting on funded projects',
+      'monitoring of funded projects',
+      'progress report',
+      'final report',
+    ),
   ],
   weakSignals: [
     sig('Applicants upload documents', 'upload', 'attachment'),
@@ -169,6 +193,15 @@ const GRANT_APPLICATIONS: BusinessPattern = {
     'Whether payments are processed in this solution or in an external financial system.',
     'Whether reviews are conducted by a committee or individually.',
     'Retention, privacy, and audit requirements for applicant data.',
+  ],
+  unsupportedCapabilities: [
+    {
+      requirement: 'Payment disbursement to recipients',
+      reason: 'No ADSP service issues or tracks fund transfers to recipients.',
+      suggestedApproach:
+        'Integrate with the government financial/payment system and record the disbursement reference in value-service.',
+      keywords: ['payment', 'pay', 'disburse', 'disbursement', 'fund transfer'],
+    },
   ],
 };
 
@@ -304,6 +337,26 @@ const REGISTRATION_ENROLLMENT: BusinessPattern = {
     'Privacy requirements for registrant data.',
     'Whether bulk or delegated registration is needed.',
   ],
+  unsupportedCapabilities: [
+    {
+      requirement: 'Registration or renewal fee payment',
+      reason: 'No ADSP service accepts or reconciles payments.',
+      suggestedApproach:
+        'Integrate a third-party payment gateway and record the paid status as a registry field in value-service.',
+      keywords: ['fee', 'filing fee', 'application fee'],
+      category: 'payment-collection',
+      feeType: 'renewal',
+      recordType: 'registration',
+    },
+    {
+      requirement: 'Verification against an external authoritative registry',
+      reason:
+        'No ADSP service verifies status against an external registry, such as a corporate or professional licensing body.',
+      suggestedApproach:
+        "Integrate the external registry's API and surface the verification result to staff during review.",
+      keywords: ['duplicate', 'external registry', 'licensing body', 'corporate registry'],
+    },
+  ],
 };
 
 const INSPECTION_COMPLIANCE: BusinessPattern = {
@@ -375,7 +428,8 @@ const INSPECTION_COMPLIANCE: BusinessPattern = {
 const COMPLAINT_INTAKE: BusinessPattern = {
   id: 'complaint-intake',
   name: 'Complaint / concern intake',
-  description: 'To receive a complaint or concern, triage it, assign it for investigation, and respond to the complainant.',
+  description:
+    'To receive a complaint or concern, triage it, assign it for investigation, and respond to the complainant.',
   domainLanguage: [
     'complaint',
     'concern',
@@ -614,6 +668,24 @@ const APPOINTMENT_BOOKING: BusinessPattern = {
     'Peak load and overbooking policy.',
     'Whether virtual meeting links need to be generated.',
     'Whether payment is taken at booking.',
+  ],
+  unsupportedCapabilities: [
+    {
+      requirement: 'Advance payment at time of booking',
+      reason: 'No ADSP service accepts or reconciles payments.',
+      suggestedApproach:
+        'Integrate a third-party payment gateway and record the paid status against the calendar-service event.',
+      keywords: ['advance payment', 'pay at booking', 'booking fee', 'booking deposit', 'deposit at booking'],
+      category: 'payment-collection',
+      feeType: 'booking',
+      recordType: 'booking',
+    },
+    {
+      requirement: 'Virtual meeting link generation',
+      reason: 'No ADSP service creates or manages video-conferencing links.',
+      suggestedApproach: 'Integrate a meeting provider API and attach the generated link to the calendar event.',
+      keywords: ['virtual meeting', 'video call', 'video conference', 'zoom', 'teams link'],
+    },
   ],
 };
 
@@ -1011,7 +1083,12 @@ const PUBLIC_REPORTING: BusinessPattern = {
   ],
   strongSignals: [
     sig('Recurring reporting by external entities', 'recurring report', 'quarterly report', 'annual report'),
-    sig('Collecting data from municipalities, operators, or agencies', 'data collection', 'reporting entity', 'municipalities'),
+    sig(
+      'Collecting data from municipalities, operators, or agencies',
+      'data collection',
+      'reporting entity',
+      'municipalities',
+    ),
     sig('Due dates and reporting periods', 'reporting period', 'submission period', 'due date'),
     sig('Aggregating submitted data', 'aggregate', 'roll up'),
   ],

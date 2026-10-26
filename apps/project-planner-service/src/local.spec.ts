@@ -4,10 +4,11 @@ const mockApp = { use: jest.fn(), get: jest.fn(), listen: jest.fn() };
 const mockExpress = Object.assign(jest.fn(), { json: jest.fn() });
 const mockCors = jest.fn();
 const mockLoadEnv = jest.fn();
-const mockLogger = { info: jest.fn(), error: jest.fn(), debug: jest.fn() };
+const mockLogger = { info: jest.fn(), warn: jest.fn(), error: jest.fn(), debug: jest.fn() };
 const mockCreateLogger = jest.fn();
 const mockCreateErrorHandler = jest.fn();
 const mockCreateLlmFromEnv = jest.fn();
+const mockRegisteredServices = jest.fn();
 const mockCreatePlannerRouter = jest.fn();
 const mockCreateRepositories = jest.fn();
 
@@ -22,6 +23,7 @@ jest.mock('@core-services/core-common', () => ({
 jest.mock('./planner', () => ({
   ...jest.requireActual('./planner'),
   createLlmFromEnv: mockCreateLlmFromEnv,
+  registeredServices: mockRegisteredServices,
 }));
 jest.mock('./planner/router', () => ({ createPlannerRouter: mockCreatePlannerRouter }));
 jest.mock('./postgres', () => ({ createRepositories: mockCreateRepositories }));
@@ -57,6 +59,7 @@ describe('local', () => {
     mockCreateLlmFromEnv.mockReturnValue(llm);
     mockCreatePlannerRouter.mockReturnValue('planner-router');
     mockCreateRepositories.mockResolvedValue(repositories);
+    mockRegisteredServices.mockReturnValue([]);
   });
 
   afterEach(() => {
@@ -230,6 +233,30 @@ describe('local', () => {
       const { next } = await runMiddleware();
 
       expect(next).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('ADSP component map drift', () => {
+    it('checks the services registered in the monorepo apps', async () => {
+      await startLocal();
+
+      expect(mockRegisteredServices).toHaveBeenCalledWith(expect.stringMatching(/[\\/]apps$/));
+    });
+
+    it('warns about registered services missing from the component map', async () => {
+      mockRegisteredServices.mockReturnValue(['form-service', 'sharepoint-service']);
+
+      await startLocal();
+
+      expect(mockLogger.warn).toHaveBeenCalledWith(expect.stringContaining('ADSP component map is out of date: sharepoint-service.'));
+    });
+
+    it('does not warn when every registered service is mapped', async () => {
+      mockRegisteredServices.mockReturnValue(['form-service']);
+
+      await startLocal();
+
+      expect(mockLogger.warn).not.toHaveBeenCalled();
     });
   });
 

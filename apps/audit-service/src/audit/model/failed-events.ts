@@ -1,9 +1,16 @@
 import { User } from '@abgov/adsp-service-sdk';
-import { decodeAfter, encodeNext, InvalidOperationError, NotFoundError, Results } from '@core-services/core-common';
+import { InvalidOperationError, NotFoundError, Results } from '@core-services/core-common';
 import { randomUUID } from 'crypto';
 import { CONFLICT, SERVICE_UNAVAILABLE } from 'http-status-codes';
 import { AuditMetrics } from '../metrics';
-import { FailedAuditEvent, FailedEventRepository, ReplayAuditRecord } from '../types';
+import {
+  AUDIT_SERVICE_NAMESPACE,
+  FAILED_EVENT_STATUS,
+  FailedAuditEvent,
+  FailedEventRepository,
+  ReplayAuditRecord,
+} from '../types';
+import { decodeKeysetCursor, encodeKeysetCursor } from '../utils/keyset-cursor';
 import { ReplayEventPreparer } from './replay-events';
 import { REPLAY_ACTION } from '../actions';
 
@@ -25,14 +32,27 @@ export class FailedEventService {
   }
 
   async list(tenantId: string, top: number, after?: string): Promise<Results<FailedAuditEvent>> {
-    const skip = decodeAfter(after);
-    const results = await this.requireRepository().list(tenantId, top, skip);
+    const cursor = after ? decodeKeysetCursor(after) : null;
+    if (after && !cursor) throw new InvalidOperationError('after is not a valid cursor.');
+    const results = await this.requireRepository().list(
+      tenantId,
+      top,
+      cursor ? { failedAt: cursor.timestamp, id: cursor.id } : undefined,
+    );
     if (results.length > top || results.some((event) => event.tenant_id !== tenantId)) {
       throw new InvalidOperationError('Failed-event storage returned an invalid tenant page.', {
         statusCode: SERVICE_UNAVAILABLE,
       });
     }
-    return { results, page: { after, size: results.length, next: encodeNext(results.length, top, skip) } };
+    const last = results[results.length - 1];
+    return {
+      results,
+      page: {
+        after,
+        size: results.length,
+        next: results.length === top ? encodeKeysetCursor(last.failed_at, last.id) : undefined,
+      },
+    };
   }
 
   async replay(tenantId: string, id: string, administrator: User): Promise<FailedAuditEvent> {
@@ -42,7 +62,7 @@ export class FailedEventService {
       return await repository.withReplayTransaction(tenantId, async (transaction) => {
         const failed = await transaction.getForUpdate(id);
         if (!failed || failed.tenant_id !== tenantId) throw new NotFoundError('failed audit event', id);
-        if (failed.status !== 'open') {
+        if (failed.status !== FAILED_EVENT_STATUS.OPEN) {
           throw new InvalidOperationError('Only open failed events can be replayed.', { statusCode: CONFLICT });
         }
         const event = await this.preparer.prepare(failed, this.writtenBy);
@@ -55,7 +75,7 @@ export class FailedEventService {
           tenantId,
         );
         await transaction.insertReplayAudit(replayAudit);
-        return { ...failed, status: 'replayed', replayed_as: replayedAs };
+        return { ...failed, status: FAILED_EVENT_STATUS.REPLAYED, replayed_as: replayedAs };
       });
     } catch (err) {
       if (saving) this.metrics.recordWriteFailure('replay');
@@ -65,7 +85,7 @@ export class FailedEventService {
 
   private replayRecord(id: string, replayedAs: string, administrator: User): ReplayAuditRecord {
     return {
-      namespace: 'audit-service',
+      namespace: AUDIT_SERVICE_NAMESPACE,
       writtenBy: this.writtenBy,
       event: {
         eventId: randomUUID(),

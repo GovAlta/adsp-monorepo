@@ -271,7 +271,7 @@ if (connection) {
     await database.destroy();
     database = knex({ client: 'pg', connection, pool: { min: 0, max: 5 } });
     repository = new PostgresFailedEventRepository(database, logger);
-    expect((await repository.list(tenantId, 10, 0))[0]).toMatchObject({
+    expect((await repository.list(tenantId, 10))[0]).toMatchObject({
       status: 'replayed',
       replayed_as: replayed.replayed_as,
     });

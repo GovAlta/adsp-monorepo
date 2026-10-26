@@ -10,7 +10,6 @@ const emptyState = (): SolutionState => ({
   patternMatches: [],
   hypotheses: [],
   specialists: [],
-  artifacts: [],
   nextSteps: [],
 });
 

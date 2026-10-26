@@ -12,6 +12,7 @@ const METHODS: (keyof PlannerApi)[] = [
   'getAnalysisOptions',
   'chat',
   'answerQuestion',
+  'reviewComponent',
   'discovery',
   'blueprint',
   'consult',

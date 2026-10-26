@@ -518,6 +518,20 @@ describe('SolutionWorkplace', () => {
       );
     });
 
+    it.each(['download-json', 'download-report'])(
+      'takes the new version from the %s export but keeps the saved state, which still has rejected components',
+      async (button) => {
+        const solution = analyzed({ discovery: readyDiscovery });
+        const exported = { ...solution, version: '1.1', state: { ...solution.state, patternMatches: [] } };
+        const { container } = await setup(solution, { exportSolution: jest.fn().mockResolvedValue(exported) });
+
+        click(container, button);
+
+        await waitFor(() => expect(goa(container, 'solution-version').getAttribute('content')).toBe('v1.1'));
+        expect(container.textContent).toContain('Looks like permitting.');
+      },
+    );
+
     it('confirms before deleting then goes back', async () => {
       const { container } = await setup(undefined, { deleteSolution: jest.fn().mockResolvedValue(undefined) });
 

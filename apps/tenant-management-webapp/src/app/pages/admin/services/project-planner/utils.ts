@@ -1,4 +1,4 @@
-import { SpecialistChat, Solution } from './model';
+import { ComponentReview, SpecialistChat, Solution } from './model';
 
 export const fmtDate = (date: string | Date): string => new Date(date).toLocaleString();
 
@@ -20,6 +20,29 @@ export function download(filename: string, content: string, type: string): void 
 const bulletLines = (title: string, items?: string[]): string[] =>
   items?.length ? ['', `**${title}**`, '', ...items.map((item) => `- ${item}`)] : [];
 
+const sentence = (text: string): string => {
+  const trimmed = text.trim();
+  return trimmed && !trimmed.endsWith('.') ? `${trimmed}.` : trimmed;
+};
+
+// Indents past the item number so two-digit items keep their details and the list keeps counting.
+const detailBullet = (order: number): string => `${' '.repeat(`${order}. `.length)}- `;
+
+export const REVIEW_LABELS: Record<ComponentReview, string> = {
+  'not-reviewed': 'Not reviewed',
+  approved: 'Approved',
+  rejected: 'Rejected',
+};
+
+const COMPONENT_INSTRUCTIONS = [
+  "_Work through these components in order with the user. Rejected components have been removed from this list. Do not create anything without the user's approval._",
+  '',
+  '- **Approved:** check whether it already exists in the tenant; if it does, move on. If you can create it (ADSP configuration), walk the user through creating it one step at a time and get their approval before each step. If you cannot (Keycloak, OpenShift, or anything you lack permission for), walk the user through doing it themselves, one step or command at a time, and wait for them to confirm each step before the next.',
+  '- **Not reviewed:** before you start, list these by number and ask the user which are needed. Set up the needed ones the same way as approved components and skip the rest.',
+  '- **Dependencies:** if a component depends on one that is not reviewed, ask about that one first. If a dependency is not in this list, the user rejected it; raise it with them before continuing.',
+  '- For every component you set up, walk the user through the Where and How steps and ask them to decide every open decision.',
+];
+
 export function chatToMarkdown(chat: SpecialistChat): string {
   const out = [
     `## ${chat.title}`,
@@ -33,14 +56,14 @@ export function chatToMarkdown(chat: SpecialistChat): string {
         ? `### You (${fmtDate(m.at)})`
         : `### ${chat.service} (${fmtDate(m.at)}${m.mode === 'rules' ? ', rule-based' : ''})`,
       '',
-      m.content
+      m.content,
     );
     if (m.consult) {
       out.push(
         `Fit: ${m.consult.fit}`,
         ...bulletLines('Can support', m.consult.supports),
         ...bulletLines('Constraints', m.consult.constraints),
-        ...bulletLines('Risks', m.consult.risks)
+        ...bulletLines('Risks', m.consult.risks),
       );
     }
     if (m.validation) {
@@ -72,8 +95,8 @@ export function solutionToMarkdown(solution: Solution): string {
     ...(solution.initial
       ? ['Initial version.']
       : changedSections.length
-      ? changedSections.map((s) => `- ${s}`)
-      : ['No changes since the previous version.']),
+        ? changedSections.map((s) => `- ${s}`)
+        : ['No changes since the previous version.']),
     '',
     ...(solution.blueprintOutOfDate ? ['> **Blueprint may be out of date. Regenerate it.**', ''] : []),
     '## Problem statement',
@@ -84,7 +107,7 @@ export function solutionToMarkdown(solution: Solution): string {
   if (st.analysis) {
     lines.push(
       `_Analysis: ${st.analysis.mode === 'ai' ? 'AI' : 'rule-based'}${st.analysis.warning ? ` — ${st.analysis.warning}` : ''}_`,
-      ''
+      '',
     );
   }
   if (st.confidence) {
@@ -92,7 +115,7 @@ export function solutionToMarkdown(solution: Solution): string {
       `## Confidence: ${st.confidence.score}% (threshold ${st.confidence.threshold}%)`,
       '',
       ...st.confidence.factors.map((f) => `- ${f.label}: ${f.score}%${f.note ? ` — ${f.note}` : ''}`),
-      ''
+      '',
     );
   }
   if (st.discovery?.messages?.length) {
@@ -100,18 +123,25 @@ export function solutionToMarkdown(solution: Solution): string {
       '## Discovery conversation',
       '',
       ...st.discovery.messages.map(
-        (m) => `- **${m.role === 'user' ? 'You' : 'Planner'}:** ${m.content.replace(/\n+/g, ' ')}`
+        (m) => `- **${m.role === 'user' ? 'You' : 'Planner'}:** ${m.content.replace(/\n+/g, ' ')}`,
       ),
-      ''
+      '',
     );
   }
   lines.push('## Pattern matches', '');
   (st.patternMatches || []).forEach((m) =>
-    lines.push(`- **${m.patternName}** — ${m.level} (score ${m.score}). ${m.explanation}`)
+    lines.push(`- **${m.patternName}** — ${m.level} (score ${m.score}). ${m.explanation}`),
   );
   lines.push('', '## Hypotheses', '');
   st.hypotheses.forEach((h) => {
-    lines.push(`### ${h.title} (${h.confidence} confidence)`, '', h.rationale, '', '**Recommended services (in order)**', '');
+    lines.push(
+      `### ${h.title} (${h.confidence} confidence)`,
+      '',
+      h.rationale,
+      '',
+      '**Recommended services (in order)**',
+      '',
+    );
     [...h.recommendations]
       .sort((a, b) => a.order - b.order)
       .forEach((r) => lines.push(`${r.order}. **${r.service}** — ${r.reason}`));
@@ -122,7 +152,9 @@ export function solutionToMarkdown(solution: Solution): string {
   lines.push('## Concepts', '');
   st.concepts.forEach((c) => lines.push(`- ${c.type}: ${c.name}`));
   lines.push('', '## Questions and answers', '');
-  st.questions.forEach((q) => lines.push(`- **${q.question}** (${q.status})${q.answer ? `\n  - Answer: ${q.answer}` : ''}`));
+  st.questions.forEach((q) =>
+    lines.push(`- **${q.question}** (${q.status})${q.answer ? `\n  - Answer: ${q.answer}` : ''}`),
+  );
   lines.push('', '## Next steps', '');
   st.nextSteps.forEach((n) => lines.push(`- **${n.title}** — ${n.reason}`));
   if (st.conversation?.length) {
@@ -143,7 +175,7 @@ export function solutionToMarkdown(solution: Solution): string {
       '',
       `## 1. ${bp.overview.title}`,
       '',
-      bp.overview.summary
+      bp.overview.summary,
     );
     bullets('Objectives', bp.overview.objectives);
     bullets('Scope', bp.overview.scope);
@@ -161,7 +193,7 @@ export function solutionToMarkdown(solution: Solution): string {
       '',
       '```',
       bp.architecture.diagram,
-      '```'
+      '```',
     );
     bullets('Integrations', bp.architecture.integrations);
     bullets('Security', bp.architecture.security);
@@ -169,12 +201,39 @@ export function solutionToMarkdown(solution: Solution): string {
       '',
       '## 3. ADSP service mapping',
       '',
-      ...bp.serviceMapping.map(
-        (s) =>
-          `${s.order}. **${s.service}** — ${s.role}. _Why:_ ${s.reason}${s.dependsOn.length ? ` _Depends on:_ ${s.dependsOn.join(', ')}` : ''}`
-      )
+      ...bp.serviceMapping.flatMap((s) => [
+        `${s.order}. **${s.service}** — ${sentence(s.role)} _Why:_ ${s.reason}${s.dependsOn.length ? ` _Depends on:_ ${s.dependsOn.join(', ')}` : ''}`,
+        ...s.capabilities.map((c) => `${detailBullet(s.order)}${c}`),
+      ]),
     );
-    lines.push('', '## 4. Specialist consultation notes');
+    if (bp.notCoveredByAdsp !== undefined) {
+      lines.push('', '## 4. Not covered by ADSP', '');
+      if (bp.notCoveredByAdsp.length === 0) {
+        lines.push('_All requirements map to ADSP services._');
+      } else {
+        bp.notCoveredByAdsp.forEach((n) =>
+          lines.push(`- **${n.requirement}** — ${n.reason} _Suggested approach:_ ${n.suggestedApproach}`),
+        );
+      }
+    }
+    lines.push(
+      '',
+      '## 5. Components to set up',
+      '',
+      ...COMPONENT_INSTRUCTIONS,
+      '',
+      ...(bp.components ?? []).filter((c) => c.review !== 'rejected').flatMap((c) => {
+        const detail = detailBullet(c.order);
+        return [
+          `${c.order}. **${c.name}** (${c.type}, ${c.service}): ${REVIEW_LABELS[c.review ?? 'not-reviewed']}. ${c.purpose}${c.dependsOn.length ? ` _Depends on:_ ${c.dependsOn.join(', ')}` : ''}`,
+          `${detail}Where: ${c.setup.where}`,
+          `${detail}How: ${c.setup.how}`,
+          `${detail}Docs: ${c.setup.docs}`,
+          ...c.openDecisions.map((d) => `${detail}Open decision: ${d}`),
+        ];
+      }),
+    );
+    lines.push('', '## 6. Specialist consultation notes');
     bp.specialistNotes.forEach((n) => {
       lines.push('', `### ${n.displayName} (${n.fit}, ${n.source})`, '', n.summary);
       bullets('Can support', n.supports);
@@ -184,17 +243,17 @@ export function solutionToMarkdown(solution: Solution): string {
       if (n.validation) bullets(`Validation: ${n.validation.verdict}`, n.validation.findings);
       bullets('From saved chats', n.chatHighlights);
     });
-    lines.push('', '## 5. Core workflows');
+    lines.push('', '## 7. Core workflows');
     bp.workflows.forEach((w) =>
       lines.push(
         '',
         `### ${w.name}`,
         '',
         ...(w.actors.length ? [`Actors: ${w.actors.join(', ')}`, ''] : []),
-        ...w.steps.map((s, i) => `${i + 1}. ${s}`)
-      )
+        ...w.steps.map((s, i) => `${i + 1}. ${s}`),
+      ),
     );
-    lines.push('', '## 6. Data & governance');
+    lines.push('', '## 8. Data & governance');
     const g = bp.dataGovernance;
     bullets('Data entities', g.dataEntities);
     bullets('Access control', g.accessControl);
@@ -202,7 +261,7 @@ export function solutionToMarkdown(solution: Solution): string {
     bullets('Privacy', g.privacy);
     bullets('Audit', g.audit);
     bullets('Compliance', g.compliance);
-    lines.push('', '## 7. Delivery plan & other considerations');
+    lines.push('', '## 9. Delivery plan & other considerations');
     bp.delivery.phases.forEach((p) => bullets(p.name, p.items));
     bullets('Non-functional requirements', bp.delivery.nonFunctional);
     bullets('Open questions', bp.delivery.openQuestions);

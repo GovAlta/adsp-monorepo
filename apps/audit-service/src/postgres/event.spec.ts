@@ -73,6 +73,7 @@ describe('PostgresEventRepository', () => {
   });
 
   afterEach(async () => {
+    jest.useRealTimers();
     await database.destroy();
     jest.restoreAllMocks();
   });
@@ -254,12 +255,12 @@ describe('PostgresEventRepository', () => {
         occurredTo: event.received_at,
       },
       10,
-      20,
+      { occurredAt: event.occurred_at, id: event.id },
     );
 
     expect(result).toEqual([event]);
     expect(execute.mock.calls[0][1]).toMatchObject({
-      sql: 'select * from "audit_events" where "tenant_id" = $1 and "namespace" = $2 and "actor_id" = $3 and "resource_type" = $4 and "resource_id" = $5 and "action" = $6 and "status" = $7 and "category" = $8 and scope_ids @> $9::text[] and "occurred_at" >= $10 and "occurred_at" <= $11 order by "occurred_at" desc, "id" desc limit $12 offset $13',
+      sql: 'select * from "audit_events" where "tenant_id" = $1 and "namespace" = $2 and "actor_id" = $3 and "resource_type" = $4 and "resource_id" = $5 and "action" = $6 and "status" = $7 and "category" = $8 and scope_ids @> $9::text[] and "occurred_at" >= $10 and "occurred_at" <= $11 and (occurred_at, id) < ($12, $13) order by "occurred_at" desc, "id" desc limit $14',
       bindings: [
         event.tenant_id,
         event.namespace,
@@ -272,18 +273,21 @@ describe('PostgresEventRepository', () => {
         ['office:edmonton'],
         event.occurred_at,
         event.received_at,
+        event.occurred_at,
+        event.id,
         10,
-        20,
       ],
     });
   });
 
   it('keeps tenant isolation when listing across all namespaces', async () => {
-    await repository.find({ tenantId: event.tenant_id }, 10, 0);
+    await repository.find({ tenantId: event.tenant_id }, 10);
 
     expect(execute.mock.calls[0][1]).toMatchObject({
       sql: 'select * from "audit_events" where "tenant_id" = $1 order by "occurred_at" desc, "id" desc limit $2',
       bindings: [event.tenant_id, 10],
+      timeout: 60_000,
+      cancelOnTimeout: true,
     });
   });
 
@@ -296,7 +300,33 @@ describe('PostgresEventRepository', () => {
     expect(execute.mock.calls[0][1]).toMatchObject({
       sql: 'select * from "audit_events" where "tenant_id" = $1 and "namespace" = $2 and "id" = $3 limit $4',
       bindings: [event.tenant_id, event.namespace, event.id, 1],
+      timeout: 60_000,
+      cancelOnTimeout: true,
     });
+  });
+
+  it('allows a cross-namespace history query to complete after 30 seconds', async () => {
+    jest.useFakeTimers();
+    rows.mockImplementationOnce(() => new Promise((resolve) => setTimeout(() => resolve([event]), 31_000)));
+
+    const result = repository.find({ tenantId: event.tenant_id }, 10);
+    await jest.advanceTimersByTimeAsync(31_000);
+
+    await expect(result).resolves.toEqual([event]);
+  });
+
+  it('cancels a history query that exceeds its separate 60-second budget', async () => {
+    jest.useFakeTimers();
+    rows.mockImplementationOnce(() => new Promise(() => undefined));
+    const cancel = jest.spyOn(database.client, 'cancelQuery').mockResolvedValue(undefined);
+    const result = expect(repository.find({ tenantId: event.tenant_id }, 10)).rejects.toBeInstanceOf(
+      AuditStorageUnavailableError,
+    );
+
+    await jest.advanceTimersByTimeAsync(60_000);
+    await result;
+
+    expect(cancel).toHaveBeenCalledTimes(1);
   });
 
   it('returns null for an event outside the requested scope or absent from storage', async () => {
@@ -309,7 +339,7 @@ describe('PostgresEventRepository', () => {
 
     const result =
       method === 'find'
-        ? repository.find({ tenantId: event.tenant_id }, 10, 0)
+        ? repository.find({ tenantId: event.tenant_id }, 10)
         : repository.get(event.tenant_id, event.namespace, event.id);
 
     await expect(result).rejects.toBeInstanceOf(AuditStorageUnavailableError);

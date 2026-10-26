@@ -82,7 +82,16 @@ export const EventLog: FunctionComponent = () => {
     // The total is unchanged, so only the first page at the new size is needed.
     dispatch(getEventLogPage(1, size, pageCriteria));
   };
-  const hasSelectedEvent = Boolean(searchCriteria?.namespace || searchCriteria?.name);
+  const hasFilters = [
+    searchCriteria.namespace,
+    searchCriteria.name,
+    searchCriteria.timestampMin,
+    searchCriteria.timestampMax,
+    searchCriteria.correlationId,
+    searchCriteria.applications,
+    searchCriteria.url,
+    Object.keys(searchCriteria.context ?? {}).length,
+  ].some(Boolean);
   const hasEntries = Boolean(entries?.length);
   const closeExportModal = () => {
     setExportOpen(false);
@@ -94,7 +103,7 @@ export const EventLog: FunctionComponent = () => {
     closeExportModal();
   };
   const onExport = async () => {
-    if (!hasReaderRole || !hasSelectedEvent || !hasEntries || !valueServiceApiUrl || !token) {
+    if (!hasReaderRole || !hasFilters || !hasEntries || !valueServiceApiUrl || !token) {
       return;
     }
     const controller = new AbortController();
@@ -103,7 +112,7 @@ export const EventLog: FunctionComponent = () => {
     setExportOpen(true);
     setExportRowCount(0);
     try {
-      const fileName = [searchCriteria.namespace, searchCriteria.name].filter(Boolean).join('-');
+      const fileName = [searchCriteria.namespace, searchCriteria.name].filter(Boolean).join('-') || 'event-log';
       const count = await exportEventLogEntries(valueServiceApiUrl, token, fileName, pageCriteria, controller.signal);
       setExportRowCount(count);
     } catch (error) {
@@ -137,7 +146,7 @@ export const EventLog: FunctionComponent = () => {
                     <GoabButton
                       size="compact"
                       type="tertiary"
-                      disabled={isExporting || !hasSelectedEvent || !hasEntries}
+                      disabled={isExporting || !hasFilters || !hasEntries}
                       onClick={onExport}
                       testId="export-event-log-csv"
                     >
