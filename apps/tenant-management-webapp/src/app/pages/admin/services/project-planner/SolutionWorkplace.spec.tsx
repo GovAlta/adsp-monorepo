@@ -366,7 +366,7 @@ describe('SolutionWorkplace', () => {
     expect(container.textContent).toContain('Who uses the service?');
   });
 
-  it('shows remaining questions as optional, without a skip-to-plan action', async () => {
+  it('shows remaining questions as optional and allows skipping to a plan', async () => {
     const lowConfidence = analyzed({
       confidence: { score: 40, threshold: 50, factors: [] },
       questions: [{ id: 'q1', question: 'Who reviews applications?', raisedBy: 'planner', status: 'open' }],
@@ -381,11 +381,44 @@ describe('SolutionWorkplace', () => {
       },
     });
     const { container } = await setup(lowConfidence);
-    expect(goa(container, 'discovery-force')).toBeNull();
+    expect(goa(container, 'discovery-force').textContent).toBe('Skip and show me a plan');
     expect(goa(container, 'discovery-questions').getAttribute('heading')).toBe('Questions');
     expect(container.querySelectorAll('goa-textarea[testid="discovery-input"]')).toHaveLength(1);
     expect(container.querySelector('[data-testid="discovery-panel"]')).not.toBeNull();
     expect(container.textContent).not.toContain('Questions are complete');
+  });
+
+  it('generates a blueprint when the user skips low-confidence discovery', async () => {
+    const lowConfidence = analyzed({
+      confidence: { score: 40, threshold: 50, factors: [] },
+      discovery: {
+        messages: [{ role: 'assistant', content: 'Who uses the service?', at: '2026-03-01T10:01:00Z' }],
+        confidence: 40,
+        threshold: 50,
+        factors: [],
+        ready: false,
+        mode: 'ai',
+        updatedOn: '2026-03-01T10:01:00Z',
+      },
+    });
+    const forced = {
+      ...lowConfidence,
+      state: {
+        ...lowConfidence.state,
+        discovery: { ...lowConfidence.state.discovery!, ready: true, updatedOn: '2026-03-01T10:02:00Z' },
+      },
+    };
+    const planned = withPlan();
+    const { container } = await setup(lowConfidence, {
+      discovery: jest.fn().mockResolvedValue(forced),
+      blueprint: jest.fn().mockResolvedValue(planned),
+    });
+
+    click(container, 'discovery-force');
+
+    await waitFor(() => expect(api.discovery).toHaveBeenCalledWith('solution-1', { mode: 'ai', force: true }));
+    await waitFor(() => expect(api.blueprint).toHaveBeenCalledWith('solution-1', { mode: 'ai' }));
+    expect(container.querySelector('[testid="plan-ready"]')).not.toBeNull();
   });
 
   it('keeps the plan visible, marks it out of date, and directs users to Save & analyze', async () => {

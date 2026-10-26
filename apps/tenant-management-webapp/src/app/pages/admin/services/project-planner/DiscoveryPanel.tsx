@@ -5,6 +5,7 @@ import {
   GoabButton,
   GoabCallout,
   GoabCircularProgress,
+  GoabDetails,
   GoabFormItem,
   GoabTextArea,
 } from '@abgov/react-components';
@@ -103,7 +104,7 @@ export const DiscoveryPanel: FunctionComponent<DiscoveryPanelProps> = ({
   const [busy, run] = useBusy();
   const blocked = busy || disabled;
   const discovery = solution.state.discovery;
-  const ready = !!discovery?.ready;
+  const canSkipDiscovery = !!discovery && !discovery.ready && discovery.confidence < discovery.threshold;
   const message = draft.trim();
   const allQuestions = solution.state.questions;
   const openQuestions = allQuestions.filter((question) => question.status === 'open');
@@ -124,6 +125,7 @@ export const DiscoveryPanel: FunctionComponent<DiscoveryPanelProps> = ({
       recommendations.some((recommendation) => recommendation.service === specialist.service),
     ) ||
     specialists[0];
+  const specialistsWithChatsCount = specialists.filter((specialist) => chatCounts[specialist.service] > 0).length;
 
   useEffect(() => {
     let active = true;
@@ -206,7 +208,7 @@ export const DiscoveryPanel: FunctionComponent<DiscoveryPanelProps> = ({
         testId="discovery-questions"
       >
         <p>
-          Answer a question directly below it, or use &quot;Anything else?&quot; further down for free-form details.
+          Answer a question directly below it, or use &quot;Additional details&quot; further down for free-form details.
         </p>
         {allQuestions.length > 0 ? (
           <>
@@ -346,29 +348,36 @@ export const DiscoveryPanel: FunctionComponent<DiscoveryPanelProps> = ({
         testId="discovery-conversation"
       >
         {messages.length > 0 ? (
-          <section aria-label="Conversation with the planner">
-            {messages.map((m, i) => (
-              <GoabCallout
-                key={`${m.at}-${i}`}
-                type={m.role === 'user' ? 'important' : 'information'}
-                heading={m.role === 'user' ? 'You' : 'Planner'}
-                testId={`discovery-message-${i}`}
-                mb="s"
-              >
-                <div style={{ whiteSpace: 'pre-wrap' }}>{m.content}</div>
-              </GoabCallout>
-            ))}
-          </section>
+          <div style={{ marginLeft: '-15px' }}>
+            <GoabDetails
+              heading={`Conversation history (${messages.length})`}
+              open={false}
+              testId="discovery-conversation-history"
+            >
+              <section aria-label="Conversation with the planner">
+                {messages.map((m, i) => (
+                  <GoabCallout
+                    key={`${m.at}-${i}`}
+                    type={m.role === 'user' ? 'important' : 'information'}
+                    heading={m.role === 'user' ? 'You' : 'Planner'}
+                    testId={`discovery-message-${i}`}
+                    mb="s"
+                  >
+                    <div style={{ whiteSpace: 'pre-wrap' }}>{m.content}</div>
+                  </GoabCallout>
+                ))}
+              </section>
+            </GoabDetails>
+          </div>
         ) : (
           <p>No messages yet.</p>
         )}
         {busy && (
           <GoabCircularProgress visible size="small" message="Asking the model — this can take up to a minute" />
         )}
-        {ready && <p data-testid="discovery-ready">Your answers are enough to prepare a plan.</p>}
         <div style={{ display: 'grid', gap: '1rem', marginTop: '1rem' }}>
           <GoabFormItem
-            label="Anything else?"
+            label="Additional details"
             helpText="You can answer any of the open questions here too — just say which one you mean."
           >
             <GoabTextArea
@@ -378,7 +387,7 @@ export const DiscoveryPanel: FunctionComponent<DiscoveryPanelProps> = ({
               width="100%"
               maxWidth="100%"
               testId="discovery-input"
-              ariaLabel="Anything else?"
+              ariaLabel="Additional details"
               disabled={blocked}
               placeholder="Add details, ask a question, or correct anything the planner got wrong."
               onChange={(detail) => setDraft(detail.value)}
@@ -407,13 +416,29 @@ export const DiscoveryPanel: FunctionComponent<DiscoveryPanelProps> = ({
             >
               Start over
             </GoabButton>
+            {canSkipDiscovery && (
+              <GoabButton
+                type="secondary"
+                size="compact"
+                testId="discovery-force"
+                disabled={blocked}
+                onClick={() => send({ force: true })}
+              >
+                Skip and show me a plan
+              </GoabButton>
+            )}
           </div>
         </div>
       </GoabAccordion>
       <div style={{ marginTop: '1.5rem' }}>
         <GoabAccordion
           heading="Chat/Consult with Specialist"
-          headingContent={countBadge(specialists.length, 'specialist', 'optional-experts-count')}
+          headingContent={
+            <span style={{ display: specialistsWithChatsCount > 0 ? undefined : 'none' }}>
+              {specialistsWithChatsCount > 0 &&
+                countBadge(specialistsWithChatsCount, 'specialist', 'optional-experts-count')}
+            </span>
+          }
           open={false}
           testId="optional-experts"
         >
@@ -428,6 +453,10 @@ export const DiscoveryPanel: FunctionComponent<DiscoveryPanelProps> = ({
               <ExpertList role="group" aria-label="Available service experts">
                 <h4 style={{ margin: 0 }}>Specialists</h4>
                 {specialists.map((specialist) => {
+                  const label = `${serviceName(specialist.service, specialists)}${
+                    chatCounts[specialist.service] ? ` (${chatCounts[specialist.service]})` : ''
+                  }`;
+
                   return (
                     <GoabButton
                       key={specialist.service}
@@ -437,8 +466,7 @@ export const DiscoveryPanel: FunctionComponent<DiscoveryPanelProps> = ({
                       testId={`specialist-service-${specialist.service}`}
                       onClick={() => setSelectedSpecialistService(specialist.service)}
                     >
-                      {serviceName(specialist.service, specialists)}
-                      {chatCounts[specialist.service] ? ` (${chatCounts[specialist.service]})` : ''}
+                      {label}
                     </GoabButton>
                   );
                 })}

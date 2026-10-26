@@ -2,7 +2,7 @@ import React, { FunctionComponent } from 'react';
 import { GoabButton, GoabFormItem, GoabTextArea } from '@abgov/react-components';
 
 // Matches the project-planner-service's problemStatement length validation.
-export const PROBLEM_STATEMENT_MAX_LENGTH = 20000;
+export const PROBLEM_STATEMENT_MAX_LENGTH = 100000;
 
 interface ProblemStatementProps {
   value: string;
