@@ -219,6 +219,18 @@ describe('CalendarClient', () => {
       ).toEqual([1, 2]);
     });
 
+    it('includes recurring events that started before the range unless the series has ended', async () => {
+      const recurrence = (until?: string) => ({ recurrence: { frequency: 'weekly', end: { until } } });
+      expect(
+        await getIds([
+          serviceEvent(1, '2026-04-01T10:00:00Z', null, recurrence()),
+          serviceEvent(2, '2026-04-01T10:00:00Z', null, recurrence('2026-06-30')),
+          serviceEvent(3, '2026-04-01T10:00:00Z', null, recurrence('2026-04-30')),
+          serviceEvent(4, '2026-06-02T10:00:00Z', null, recurrence()),
+        ]),
+      ).toEqual([1, 2]);
+    });
+
     it('retrieves only the events within the range from the service in a single request', async () => {
       const fetchFn = mockFetch((url) =>
         url.pathname.endsWith('/events')

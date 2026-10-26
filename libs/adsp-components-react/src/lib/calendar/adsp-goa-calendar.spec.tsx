@@ -43,7 +43,7 @@ const recurringEvents: CalendarEvents = {
       end: null,
       isAllDay: false,
       isPublic: true,
-      recurrence: { frequency: 'daily', interval: 1, end: { until: '2099-12-31' } },
+      recurrence: { frequency: 'weekly', interval: 1, end: { until: '2099-12-31' } },
     },
   ],
   holidays: [],

@@ -16,16 +16,16 @@ export interface AdspCalendarTheme {
 
 export const defaultCalendarTheme: AdspCalendarTheme = {
   borderColor: 'var(--adsp-color-border-default)',
-  todayBackground: 'var(--adsp-color-status-light)',
+  todayBackground: 'var(--adsp-color-surface-card)',
   eventBackground: 'var(--adsp-color-interactive-default)',
   eventTextColor: 'var(--adsp-color-text-light)',
-  recurringEventBackground: 'var(--goa-color-interactive-default)',
+  recurringEventBackground: 'var(--adsp-color-interactive-default)',
   recurringEventTextColor: 'var(--adsp-color-text-light)',
   holidayBackground: 'var(--adsp-color-status-important)',
   buttonBackground: 'var(--adsp-color-interactive-default)',
   buttonTextColor: 'var(--adsp-color-text-light)',
   buttonHoverBackground: 'var(--adsp-color-interactive-hover)',
-  todayBackgroundColor: 'var(--goa-color-interactive-focus)',
+  todayBackgroundColor: 'var(--adsp-color-interactive-focus)',
   todayTextColor: 'var(--adsp-color-text-light)',
   todayFontWeight: 'var(--adsp-typography-heading-l-font-weight)',
 };
