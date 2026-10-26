@@ -185,7 +185,7 @@ export const SpecialistChat: FunctionComponent<SpecialistChatProps> = ({
 
   const loadChats = useCallback(async () => {
     try {
-      setChats(await api.listChats({ service, solutionId }));
+      setChats((await api.listChats({ service, solutionId })) || []);
     } catch {
       setChats([]);
     }
