@@ -20,7 +20,7 @@ export interface OpenQuestion {
   id: string;
   question: string;
   raisedBy: string;
-  status: 'open' | 'answered';
+  status: 'open' | 'answered' | 'inferred';
   answer?: string;
 }
 
@@ -367,6 +367,7 @@ export interface SpecialistChatResponse {
   validation?: SpecialistValidation;
   followUps: string[];
   model?: string;
+  solution?: Solution;
 }
 
 export interface PatternInput {

@@ -6,6 +6,7 @@ type Confidence = SolutionConfidence;
 
 interface ConfidenceBarProps {
   confidence?: Confidence;
+  analyzing?: boolean;
 }
 
 const SUCCESS_COLOR = '#006f4c';
@@ -47,11 +48,11 @@ const Bar: FunctionComponent<{
   </div>
 );
 
-export const ConfidenceBar: FunctionComponent<ConfidenceBarProps> = ({ confidence }) => {
+export const ConfidenceBar: FunctionComponent<ConfidenceBarProps> = ({ confidence, analyzing }) => {
   if (!confidence) {
     return (
       <p data-testid="confidence-empty" style={{ margin: 0 }}>
-        Confidence: not assessed yet — analyze the problem to see how well it is understood.
+        The planner will show how well it understands the request after you continue.
       </p>
     );
   }
@@ -60,52 +61,72 @@ export const ConfidenceBar: FunctionComponent<ConfidenceBarProps> = ({ confidenc
   const sufficient = score >= threshold;
 
   return (
-    <div data-testid="confidence-bar">
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-        <strong>Confidence: {score}%</strong>
+    <div
+      data-testid="confidence-bar"
+      style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}
+    >
+      <div style={{ flex: 1, minWidth: 320, maxWidth: 560 }}>
+        <GoabDetails heading="How well the planner understands your request" testId="confidence-breakdown" mt="none">
+          <div
+            role="list"
+            style={{
+              listStyle: 'none',
+              padding: 0,
+              margin: 0,
+              display: 'grid',
+              gridTemplateColumns: 'minmax(140px, 220px) minmax(120px, 1fr) 3rem',
+              gap: '4px 12px',
+              alignItems: 'center',
+            }}
+          >
+            {factors.map((factor) => (
+              <div role="listitem" key={factor.id} style={{ display: 'contents' }}>
+                <span data-testid={`confidence-factor-${factor.id}`} style={{ fontWeight: 600 }}>
+                  {factor.label}
+                </span>
+                <Bar
+                  score={factor.score}
+                  color={factor.score >= threshold ? SUCCESS_COLOR : WARNING_COLOR}
+                  height={6}
+                  label={factor.label}
+                  testId={`confidence-factor-bar-${factor.id}`}
+                />
+                <span>{factor.score}%</span>
+                {factor.note && (
+                  <span
+                    data-testid={`confidence-factor-note-${factor.id}`}
+                    style={{ gridColumn: '1 / -1', fontSize: '85%', color: '#666', marginTop: '-2px' }}
+                  >
+                    {factor.note}
+                  </span>
+                )}
+              </div>
+            ))}
+          </div>
+        </GoabDetails>
+      </div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
+        <strong>Confidence: {analyzing ? 'Analyzing…' : `${score}%`}</strong>
         <Bar
           score={score}
           threshold={threshold}
           color={sufficient ? SUCCESS_COLOR : WARNING_COLOR}
-          height={14}
+          height={10}
           label="Confidence"
           testId="confidence-progress"
         />
         <GoabBadge
-          type={sufficient ? 'success' : 'important'}
+          type={analyzing ? 'information' : sufficient ? 'success' : 'important'}
           testId="confidence-badge"
-          content={sufficient ? 'Sufficient to propose a solution' : `Below ${threshold}% — more detail needed`}
+          content={
+            analyzing
+              ? 'Analyzing…'
+              : sufficient
+                ? 'Enough detail to prepare a plan'
+                : 'More detail may help improve this plan'
+          }
         />
       </div>
-      <GoabDetails heading="Confidence breakdown" testId="confidence-breakdown" mt="m">
-        <div
-          role="list"
-          style={{
-            listStyle: 'none',
-            padding: 0,
-            margin: 0,
-            display: 'grid',
-            gridTemplateColumns: 'minmax(140px, 220px) minmax(120px, 1fr) 3rem minmax(0, 2fr)',
-            gap: '8px 12px',
-            alignItems: 'center',
-          }}
-        >
-          {factors.map((factor) => (
-            <div role="listitem" key={factor.id} style={{ display: 'contents' }}>
-              <span data-testid={`confidence-factor-${factor.id}`}>{factor.label}</span>
-              <Bar
-                score={factor.score}
-                color={factor.score >= threshold ? SUCCESS_COLOR : WARNING_COLOR}
-                height={8}
-                label={factor.label}
-                testId={`confidence-factor-bar-${factor.id}`}
-              />
-              <span>{factor.score}%</span>
-              <span>{factor.note || ''}</span>
-            </div>
-          ))}
-        </div>
-      </GoabDetails>
     </div>
   );
 };
