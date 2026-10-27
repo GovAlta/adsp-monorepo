@@ -341,9 +341,11 @@ If durable storage is unavailable, valid submissions return **503 with Retry-Aft
 returning 404 when it does not exist in that tenant and namespace.
 All three require `audit-reader` and tenant context. Core readers can select a tenant with `tenantId`.
 
-Lists accept `actor`, `resourceType`, `resourceId`, `action`, `status`, `category`, `scope`,
-`occurredFrom` and `occurredTo`. Filters combine with AND; time bounds are inclusive, and `scope`
-matches an element of `scopeIds`. Results are ordered by `occurred_at DESC, id DESC`, with `top`
+Lists accept `actor`, `resourceType`, `resourceId`, `action`, `status`, `category`, `severity`, `scope`,
+`correlationId`, `sessionId`, `occurredFrom` and `occurredTo`. The design's names `actorId`, `scopeId`, `from`
+and `to` are accepted as aliases; if both spellings are sent, the original name wins. Filters combine with AND; time bounds are inclusive, and `scope`
+matches an element of `scopeIds`. `severity` and `sessionId` have no dedicated
+index; combine them with other filters on large tenants. Free-text search is not supported. Results are ordered by `occurred_at DESC, id DESC`, with `top`
 and an opaque `after` keyset cursor (the last event's `occurred_at` and `id`, returned as `page.next`)
 controlling pagination. Paging is stable while new events arrive, including the events recorded by
 the reads themselves.
