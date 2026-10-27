@@ -17,33 +17,6 @@ export interface RecurrenceEvent {
   end?: { until?: string; count?: number };
 }
 
-export interface MapRecurrenceEventRRule {
-  freq?: RecurrenceFrequency;
-  interval?: number;
-  byweekday?: RecurrenceDay[] | string | string[];
-  bysetpos?: number;
-  dtstart?: string;
-  until?: string;
-}
-
-export interface MapRecurrenceEvent {
-  /** The text that is displayed on the calendar */
-  title: string;
-
-  /** The start date */
-  start?: string;
-
-  /** The reocurring event object that is used by FullCalendar */
-  rrule: MapRecurrenceEventRRule;
-  duration?: string | undefined;
-
-  /**Determines if the the event is editable */
-  editable?: boolean;
-
-  /** The CSS class name we applying for reocurring events */
-  className?: string;
-}
-
 export interface CalendarEvent {
   /** For an occurrence of a recurring event, the id of the recurring event. */
   id: number;
