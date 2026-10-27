@@ -26,9 +26,15 @@ import {
 } from './blueprint';
 import { buildComponents, catalogServices, driftMessage, unmappedServices } from './components';
 import {
+  allUserEvidence,
+  applyAnswerToFactors,
+  areSimilarQuestions,
   assessConfidence,
+  capFactors,
   computeConfidence,
+  dedupeOpenQuestions,
   DISCOVERY_THRESHOLD,
+  isQuestionCovered,
   normalizeFactors,
   ruleAssess,
   ruleDiscoveryReply,
@@ -54,7 +60,6 @@ import {
   SolutionState,
   SpecialistChat,
   SpecialistNote,
-  SpecialistProgress,
   SpecialistStatus,
   StoredChatMessage,
 } from './types';
@@ -240,12 +245,18 @@ const withoutRejectedComponents = (state: SolutionState): SolutionState =>
   state.blueprint?.components
     ? {
         ...state,
-        blueprint: { ...state.blueprint, components: state.blueprint.components.filter((c) => c.review !== 'rejected') },
+        blueprint: {
+          ...state.blueprint,
+          components: state.blueprint.components.filter((c) => c.review !== 'rejected'),
+        },
       }
     : state;
 
 // Regenerating renumbers the components, so a review follows its component by service and name.
-const withPreviousReviews = (components: BlueprintComponent[], previous: BlueprintComponent[] = []): BlueprintComponent[] =>
+const withPreviousReviews = (
+  components: BlueprintComponent[],
+  previous: BlueprintComponent[] = [],
+): BlueprintComponent[] =>
   components.map((component) => {
     const review = previous.find((p) => p.service === component.service && p.name === component.name)?.review;
     return review ? { ...component, review } : component;
@@ -258,6 +269,7 @@ interface AnalysisResult {
   hypotheses: Hypothesis[];
   concepts: BusinessConcept[];
   questionTexts: string[];
+  resolvedQuestionIds: string[];
   reply: string;
 }
 
@@ -272,14 +284,6 @@ const dedupeConcepts = (existing: BusinessConcept[], incoming: BusinessConcept[]
     return true;
   });
 };
-
-function refreshConfidence(state: SolutionState): void {
-  if (state.discovery) {
-    const factors = ruleAssess(userEvidence(state.problemStatement, state.discovery.messages));
-    state.discovery = { ...state.discovery, factors, confidence: computeConfidence(factors) };
-  }
-  state.confidence = assessConfidence(state);
-}
 
 interface AiFallbackWording {
   notConfigured: string;
@@ -350,10 +354,57 @@ export function createPlannerRouter({
     }
   }
 
+  async function refreshConfidence(req: Request, state: SolutionState, mode?: AnalysisMode): Promise<void> {
+    if (state.discovery) {
+      const requestedMode: AnalysisMode = mode || (llm ? 'ai' : 'rules');
+      const evidence = allUserEvidence(state);
+      const { result: aiFactors, warning } = await tryAi(
+        requestedMode,
+        async (llm) => {
+          const patterns = await getPatterns(req, patternRepository);
+          const recent = [...(state.discovery?.messages || []), ...(state.conversation || [])].map(
+            ({ role, content }) => ({ role, content }),
+          );
+          const discovered = await llm.discover(state.problemStatement, recent, patterns);
+          return normalizeFactors(discovered.factors, evidence);
+        },
+        ruleFallbackWording('scoring', 'rule-based scoring'),
+      );
+      const rawFactors = aiFactors ?? ruleAssess(evidence);
+      const hasOpenQuestions = state.questions.some((q) => q.status === 'open');
+      const factors = capFactors(rawFactors, hasOpenQuestions);
+      const confidence = computeConfidence(factors);
+      // The warning reflects this attempt only, so switching to rules mode clears a stale AI failure note.
+      state.discovery = { ...state.discovery, factors, confidence, ready: confidence >= DISCOVERY_THRESHOLD, warning };
+    }
+    state.confidence = assessConfidence(state);
+  }
+
+  function applySpecialistExchangeToState(state: SolutionState, topic: string, guidance: string): SolutionState {
+    if (!state.discovery || !guidance.trim()) {
+      return state;
+    }
+    const evidence = allUserEvidence(state);
+    const hasOpenQuestions = state.questions.some((q) => q.status === 'open');
+    const factors = capFactors(
+      applyAnswerToFactors(state.discovery.factors, topic, guidance, evidence),
+      hasOpenQuestions,
+    );
+    const confidence = computeConfidence(factors);
+    const discovery = { ...state.discovery, factors, confidence, ready: confidence >= DISCOVERY_THRESHOLD };
+    const withDiscovery = { ...state, discovery };
+    return { ...withDiscovery, confidence: assessConfidence(withDiscovery) };
+  }
+
   async function runAnalysis(
     req: Request,
     solution: Solution,
-    { text, mode, message }: { text: string; mode?: AnalysisMode; message?: string },
+    {
+      text,
+      mode,
+      message,
+      skipConfidenceRefresh,
+    }: { text: string; mode?: AnalysisMode; message?: string; skipConfidenceRefresh?: boolean },
   ): Promise<Solution> {
     const patterns = await getPatterns(req, patternRepository);
     const requestedMode: AnalysisMode = mode || (llm ? 'ai' : 'rules');
@@ -369,6 +420,9 @@ export function createPlannerRouter({
             ({ role, content }) => ({ role, content }),
           ),
           message,
+          openQuestions: solution.state.questions
+            .filter((q) => q.status === 'open')
+            .map((q) => ({ id: q.id, question: q.question })),
         });
         return {
           mode: 'ai',
@@ -377,6 +431,7 @@ export function createPlannerRouter({
           hypotheses: analysis.hypotheses,
           concepts: dedupeConcepts(solution.state.concepts, analysis.concepts),
           questionTexts: analysis.questions,
+          resolvedQuestionIds: analysis.resolvedQuestionIds,
           reply: analysis.reply,
         };
       },
@@ -385,35 +440,64 @@ export function createPlannerRouter({
     const { warning } = ai;
     let result = ai.result;
 
-    // Rule-based mode has no conversational ability, so the message is folded into the problem statement.
-    const ruleText = message ? `${text}\n${message}` : text;
-    const matchText = solution.state.discovery
-      ? `${ruleText}\n${userEvidence('', solution.state.discovery.messages)}`
-      : ruleText;
+    const matchText = message ? `${text}\n${message}` : text;
+    const fullMatchText = solution.state.discovery
+      ? `${matchText}\n${userEvidence('', solution.state.discovery.messages)}`
+      : matchText;
     if (!result) {
-      const matches = matchPatterns(matchText, patterns);
+      const matches = matchPatterns(fullMatchText, patterns);
       const hypotheses = buildHypotheses(matches, patterns);
       result = {
         mode: 'rules',
         matches,
         hypotheses,
-        concepts: extractConcepts(matchText, solution.state.concepts),
+        concepts: extractConcepts(fullMatchText, solution.state.concepts),
         questionTexts: hypotheses
           .filter((h) => h.confidence !== 'high')
           .flatMap((h) => patterns.find((p) => p.id === h.patternId)?.clarifyingQuestions || []),
+        resolvedQuestionIds: [],
         reply: 'Rule-based analysis refreshed using your message. Switch to AI analysis for conversational answers.',
       };
     }
 
-    const existingQuestions = new Set(solution.state.questions.map((q) => q.question));
-    const newQuestions = result.questionTexts
-      .filter((q, i, all) => !existingQuestions.has(q) && all.indexOf(q) === i)
-      .map((question) => ({
-        id: randomUUID(),
-        question,
-        raisedBy: result.mode === 'ai' ? 'ai' : 'planner',
-        status: 'open' as const,
-      }));
+    const resolvedIds = new Set(result.resolvedQuestionIds);
+    const resolutionAnswer = message || text;
+    const questionsAfterResolution = solution.state.questions.map((q) =>
+      q.status === 'open' && resolvedIds.has(q.id)
+        ? { ...q, status: 'answered' as const, answer: resolutionAnswer }
+        : q,
+    );
+    const retainedQuestions = dedupeOpenQuestions(questionsAfterResolution);
+
+    const evidenceSoFar = [
+      fullMatchText,
+      ...retainedQuestions.filter((q) => q.answer).map((q) => q.answer as string),
+    ].join('\n');
+    const answeredQuestionTexts = retainedQuestions.filter((q) => q.status === 'answered').map((q) => q.question);
+    const isRedundant = (text: string) =>
+      isQuestionCovered(text, evidenceSoFar) ||
+      answeredQuestionTexts.some((answered) => areSimilarQuestions(text, answered));
+    const existingQuestions = new Set(retainedQuestions.map((q) => q.question));
+    const retainedOpenTexts = retainedQuestions.filter((q) => q.status === 'open').map((q) => q.question);
+
+    const newQuestionTexts: string[] = [];
+    for (const text of result.questionTexts) {
+      if (existingQuestions.has(text) || isRedundant(text)) {
+        continue;
+      }
+      const isDuplicate =
+        retainedOpenTexts.some((kept) => areSimilarQuestions(text, kept)) ||
+        newQuestionTexts.some((kept) => areSimilarQuestions(text, kept));
+      if (!isDuplicate) {
+        newQuestionTexts.push(text);
+      }
+    }
+    const newQuestions = newQuestionTexts.map((question) => ({
+      id: randomUUID(),
+      question,
+      raisedBy: result.mode === 'ai' ? 'ai' : 'planner',
+      status: 'open' as const,
+    }));
 
     const conversation = [...(solution.state.conversation || [])];
     if (message) {
@@ -425,21 +509,24 @@ export function createPlannerRouter({
       });
     }
 
-    const problemStatement = result.mode === 'rules' ? ruleText : text;
     const state: SolutionState = {
       ...solution.state,
-      problemStatement,
+      problemStatement: message ? solution.state.problemStatement : text,
       problemStatementUpdatedOn:
-        problemStatement === solution.state.problemStatement ? solution.state.problemStatementUpdatedOn : now,
+        !message && text !== solution.state.problemStatement ? now : solution.state.problemStatementUpdatedOn,
       concepts: [...solution.state.concepts, ...result.concepts],
       patternMatches: result.matches,
       hypotheses: result.hypotheses,
-      questions: [...solution.state.questions, ...newQuestions],
+      questions: [...retainedQuestions, ...newQuestions],
       conversation,
       analysis: { mode: result.mode, model: result.model, warning, analyzedOn: now },
     };
     state.nextSteps = buildNextSteps(state);
-    refreshConfidence(state);
+    if (skipConfidenceRefresh) {
+      state.confidence = assessConfidence(state);
+    } else {
+      await refreshConfidence(req, state, requestedMode);
+    }
     return persist(
       req,
       { ...solution, status: solution.status === 'draft' ? 'analyzed' : solution.status, state },
@@ -589,7 +676,7 @@ export function createPlannerRouter({
       body('name').isString().isLength({ min: 1, max: 200 }),
       body('description').optional({ nullable: true }).isString(),
       body('scenario').optional().isIn(['new', 'prototype', 'existing-app', 'reconfigure']),
-      body('problemStatement').optional().isString().isLength({ max: 20000 }),
+      body('problemStatement').optional().isString(),
     ),
     async (req, res, next) => {
       try {
@@ -637,7 +724,7 @@ export function createPlannerRouter({
       body('name').optional().isString().isLength({ min: 1, max: 200 }),
       body('description').optional({ nullable: true }).isString(),
       body('status').optional().isIn(SOLUTION_STATUSES),
-      body('problemStatement').optional().isString().isLength({ max: 20000 }),
+      body('problemStatement').optional().isString(),
       body('concepts').optional().isArray(),
       body('concepts.*.type')
         .optional()
@@ -676,7 +763,7 @@ export function createPlannerRouter({
         };
         if (problemStatement !== undefined && problemStatement !== solution.state.problemStatement) {
           state.problemStatementUpdatedOn = new Date().toISOString();
-          refreshConfidence(state);
+          await refreshConfidence(req, state);
         }
         res.send(
           await persist(
@@ -782,10 +869,7 @@ export function createPlannerRouter({
         const mode: AnalysisMode = aiDiscovery ? 'ai' : 'rules';
 
         const confidence = computeConfidence(factors);
-        const ready =
-          confidence >= DISCOVERY_THRESHOLD ||
-          req.body.force === true ||
-          (!req.body.restart && solution.state.discovery?.ready === true);
+        const ready = confidence >= DISCOVERY_THRESHOLD || req.body.force === true;
         let reply = aiDiscovery?.reply || ruleDiscoveryReply(factors, confidence, ready);
         if (req.body.force === true && confidence < DISCOVERY_THRESHOLD) {
           reply = `${reply}\n\nProceeding with a proposed solution at ${confidence}% confidence, as you asked. Expect more open questions and assumptions.`;
@@ -812,7 +896,7 @@ export function createPlannerRouter({
         };
         res.send(
           ready
-            ? await runAnalysis(req, withDiscovery, { text: problem, mode: requestedMode })
+            ? await runAnalysis(req, withDiscovery, { text: problem, mode: requestedMode, skipConfidenceRefresh: true })
             : await persist(req, withDiscovery, 'discovery'),
         );
       } catch (err) {
@@ -857,15 +941,32 @@ export function createPlannerRouter({
           throw new NotFoundError('question', req.params.questionId);
         }
         const answer: string = req.body.answer.trim();
-        const questions = solution.state.questions.map((q) =>
+        const updatedQuestions = solution.state.questions.map((q) =>
           q.id === existing.id
             ? answer
               ? { ...q, status: 'answered' as const, answer }
               : { id: q.id, question: q.question, raisedBy: q.raisedBy, status: 'open' as const }
             : q,
         );
+        const questions = answer ? dedupeOpenQuestions(updatedQuestions) : updatedQuestions;
         const state = { ...solution.state, questions };
         state.nextSteps = buildNextSteps(state);
+        const hadOpenQuestions = solution.state.questions.some((q) => q.status === 'open');
+        const hasOpenQuestions = questions.some((q) => q.status === 'open');
+        if (state.discovery && answer) {
+          const evidence = allUserEvidence(state);
+          const factors = capFactors(
+            applyAnswerToFactors(state.discovery.factors, existing.question, answer, evidence),
+            hasOpenQuestions,
+          );
+          const confidence = computeConfidence(factors);
+          state.discovery = { ...state.discovery, factors, confidence, ready: confidence >= DISCOVERY_THRESHOLD };
+        }
+        if (llm && answer && hadOpenQuestions && !hasOpenQuestions) {
+          await refreshConfidence(req, state, state.analysis?.mode);
+        } else {
+          state.confidence = assessConfidence(state);
+        }
         res.send(await persist(req, { ...solution, state }, 'answer'));
       } catch (err) {
         next(err);
@@ -972,13 +1073,13 @@ export function createPlannerRouter({
     async (req, res, next) => {
       try {
         const solution = loaded(req);
-        const { result, specialists } = await runConsult(req, solution, req.params.service, {
+        const { result, state } = await runConsult(req, solution, req.params.service, {
           question: req.body.question,
           proposal: req.body.proposal,
           mode: req.body.mode,
         });
-        await persist(req, { ...solution, state: { ...solution.state, specialists } }, 'consult');
-        res.send(result);
+        const saved = await persist(req, { ...solution, state }, 'consult');
+        res.send({ ...result, solution: saved });
       } catch (err) {
         next(err);
       }
@@ -991,7 +1092,7 @@ export function createPlannerRouter({
     solution: Solution,
     service: string,
     { question, proposal, mode }: { question?: string; proposal?: string; mode?: AnalysisMode },
-  ): Promise<{ result: ConsultResult; specialists: SpecialistProgress[] }> {
+  ): Promise<{ result: ConsultResult; state: SolutionState }> {
     const baseResult = consultSpecialist(solution.state, service);
     if (!baseResult) {
       throw new NotFoundError('specialist', service);
@@ -1033,7 +1134,17 @@ export function createPlannerRouter({
         consult: { ...result },
       },
     ]);
-    return { result, specialists };
+    const guidance = [
+      result.advice,
+      result.reason,
+      ...(result.supports || []),
+      ...(result.constraints || []),
+      ...(result.risks || []),
+    ]
+      .filter(Boolean)
+      .join('\n');
+    const state = applySpecialistExchangeToState({ ...solution.state, specialists }, asked, guidance);
+    return { result, state };
   }
 
   router.post(
@@ -1057,7 +1168,6 @@ export function createPlannerRouter({
 
         // Reuse each saved consultation; consult only the recommended services that have none (or all when refreshing).
         const notes: SpecialistNote[] = [];
-        let specialists = solution.state.specialists;
         let working = solution;
         for (const { service } of recommendedServices(solution.state)) {
           const chat = chats.find((c) => c.service === service);
@@ -1069,9 +1179,8 @@ export function createPlannerRouter({
             notes.push(toSpecialistNote(storedConsult(saved), 'saved-consultation', highlights, saved.at));
             continue;
           }
-          const { result, specialists: updated } = await runConsult(req, working, service, { mode: requestedMode });
-          specialists = updated;
-          working = { ...working, state: { ...working.state, specialists } };
+          const { result, state: updatedState } = await runConsult(req, working, service, { mode: requestedMode });
+          working = { ...working, state: updatedState };
           notes.push(toSpecialistNote(result, result.advice ? 'ai' : 'rules', highlights, new Date().toISOString()));
         }
 
@@ -1122,9 +1231,7 @@ export function createPlannerRouter({
           generated?.notCoveredByAdsp,
           components,
         );
-        res.send(
-          await persist(req, { ...solution, state: { ...solution.state, specialists, blueprint } }, 'blueprint'),
-        );
+        res.send(await persist(req, { ...solution, state: { ...working.state, blueprint } }, 'blueprint'));
       } catch (err) {
         next(err);
       }
@@ -1305,7 +1412,8 @@ export function createPlannerRouter({
         }
 
         const solutionId: string = chat?.solutionId || req.body.solutionId;
-        const state = solutionId ? (await loadSolution(solutionRepository, req, solutionId)).state : undefined;
+        const solution = solutionId ? await loadSolution(solutionRepository, req, solutionId) : undefined;
+        const state = solution?.state;
 
         const history: SpecialistChatMessage[] = [
           ...(chat?.messages || []).map(({ role, content }) => ({ role, content })),
@@ -1324,6 +1432,7 @@ export function createPlannerRouter({
         const replyMode: AnalysisMode = aiReply ? 'ai' : 'rules';
         const reply: Omit<SpecialistReply, 'model'> & { model?: string } =
           aiReply || ruleBasedSpecialistReply(specialist, intent);
+        let updatedSolution: Solution | undefined;
 
         const at = new Date().toISOString();
         const saved = await recordExchange(req, chat, { service: specialist.service, solutionId, title: message }, [
@@ -1342,7 +1451,23 @@ export function createPlannerRouter({
             followUps: reply.followUps,
           },
         ]);
-        res.send({ chatId: saved.id, service: specialist.service, mode: replyMode, warning, ...reply });
+        if (solution && state) {
+          const guidance = [reply.reply, ...(reply.suggestions || []), ...(reply.followUps || [])]
+            .filter(Boolean)
+            .join('\n');
+          const updatedState = applySpecialistExchangeToState(state, message, guidance);
+          if (updatedState !== state) {
+            updatedSolution = await persist(req, { ...solution, state: updatedState }, 'specialist-chat');
+          }
+        }
+        res.send({
+          chatId: saved.id,
+          service: specialist.service,
+          mode: replyMode,
+          warning,
+          ...reply,
+          solution: updatedSolution,
+        });
       } catch (err) {
         next(err);
       }

@@ -16,7 +16,24 @@ export {
 export { AssertCoreRole, AssertRole, isAllowedUser, UnauthorizedUserError, hasRequiredRole, authorize } from './access';
 export type { TokenProvider, User } from './access';
 export { auditDefinitions, AuditCategories, AuditSeverities, BuiltInRetentionClasses } from './audit';
-export type { AuditAction, AuditActionDefinition, AuditCategory, AuditSeverity } from './audit';
+export type {
+  AuditAction,
+  AuditActionDefinition,
+  AuditActor,
+  AuditActorType,
+  AuditCategory,
+  AuditChangeSet,
+  AuditDropReason,
+  AuditEventCriteria,
+  AuditEventRecord,
+  AuditEventStatus,
+  AuditQueryOptions,
+  AuditRecordDetails,
+  AuditRecordOutcome,
+  AuditResource,
+  AuditService,
+  AuditSeverity,
+} from './audit';
 export type { GoAErrorExtra } from './utils';
 export type { ServiceDirectory } from './directory';
 export type { Tenant, TenantService } from './tenant';
@@ -30,6 +47,7 @@ export type {
 } from './event';
 export type { FileType, FileTypeRules } from './file';
 export { SecurityClassifications } from './common';
+export type { Results } from './common';
 export type { EventCriteria, StreamEvent, Stream } from './push';
 export { Channel } from './notification';
 export type { Template, NotificationType, NotificationTypeEvent } from './notification';

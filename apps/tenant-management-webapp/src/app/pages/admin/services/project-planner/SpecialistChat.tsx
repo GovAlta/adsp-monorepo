@@ -95,11 +95,7 @@ const Message: FunctionComponent<MessageProps> = ({ message, specialistName, dis
   }
 
   return (
-    <GoabCallout
-      type="information"
-      heading={`${specialistName}${message.mode === 'rules' ? ' (rule-based)' : ''}`}
-      testId="chat-assistant-message"
-    >
+    <GoabCallout type="information" heading={specialistName} testId="chat-assistant-message">
       <Text>{message.content}</Text>
       {message.warning && <p>{message.warning}</p>}
       {message.consult && (
@@ -159,7 +155,9 @@ interface SpecialistChatProps {
   solution?: Solution;
   api: PlannerApi;
   mode: AnalysisMode;
+  context?: { label: string; description: string };
   onChatsChanged?: () => void;
+  onSolutionChange?: (solution: Solution) => void;
 }
 
 export const SpecialistChat: FunctionComponent<SpecialistChatProps> = ({
@@ -168,7 +166,9 @@ export const SpecialistChat: FunctionComponent<SpecialistChatProps> = ({
   solution,
   api,
   mode,
+  context,
   onChatsChanged,
+  onSolutionChange,
 }) => {
   const [chats, setChats] = useState<ChatSummary[]>([]);
   const [chatId, setChatId] = useState<string>();
@@ -185,7 +185,7 @@ export const SpecialistChat: FunctionComponent<SpecialistChatProps> = ({
 
   const loadChats = useCallback(async () => {
     try {
-      setChats(await api.listChats({ service, solutionId }));
+      setChats((await api.listChats({ service, solutionId })) || []);
     } catch {
       setChats([]);
     }
@@ -251,6 +251,9 @@ export const SpecialistChat: FunctionComponent<SpecialistChatProps> = ({
           followUps: res.followUps,
         },
       ]);
+      if (res.solution) {
+        onSolutionChange?.(res.solution);
+      }
       await refreshChats();
     });
   };
@@ -277,6 +280,9 @@ export const SpecialistChat: FunctionComponent<SpecialistChatProps> = ({
           },
         },
       ]);
+      if (result.solution) {
+        onSolutionChange?.(result.solution);
+      }
       await refreshChats();
     });
 
@@ -304,7 +310,12 @@ export const SpecialistChat: FunctionComponent<SpecialistChatProps> = ({
 
   return (
     <section aria-label={`Chat with ${displayName}`}>
-      <h2 data-testid="chat-heading">Specialist chat: {displayName}</h2>
+      <h3 data-testid="chat-heading">{displayName}</h3>
+      {context && (
+        <p data-testid="chat-context">
+          <strong>{context.label}:</strong> {context.description}
+        </p>
+      )}
 
       {solution && (
         <GoabButton size="compact" type="secondary" disabled={busy} mb="m" testId="chat-consult" onClick={runConsult}>

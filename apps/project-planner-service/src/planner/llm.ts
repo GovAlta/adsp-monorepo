@@ -32,6 +32,7 @@ export interface AnalysisContext {
   answers: { question: string; answer: string }[];
   conversation: { role: 'user' | 'assistant'; content: string }[];
   message?: string;
+  openQuestions?: { id: string; question: string }[];
 }
 
 export interface LlmAnalysis {
@@ -39,6 +40,7 @@ export interface LlmAnalysis {
   matches: PatternMatch[];
   hypotheses: Hypothesis[];
   questions: string[];
+  resolvedQuestionIds: string[];
   // Plain-language reply to the user's latest message or a summary of what changed.
   reply: string;
   model: string;
@@ -278,6 +280,9 @@ export class MaasLlm implements PlannerLlm {
       context?.answers.length
         ? `The user has already answered these questions (treat the answers as facts and do not ask them again):\n${context.answers.map((a) => `Q: ${a.question}\nA: ${a.answer}`).join('\n')}`
         : '',
+      context?.openQuestions?.length
+        ? `These questions are still open (ids shown). Check the business problem, conversation and latest message against each one: if it is now answered, put its id in "resolvedQuestionIds". Do not propose a new question that duplicates or rephrases one that is still open and unresolved.\n${context.openQuestions.map((q) => `${q.id}: ${q.question}`).join('\n')}`
+        : '',
       context?.conversation.length
         ? `Conversation so far:\n${context.conversation
             .slice(-12)
@@ -295,9 +300,10 @@ export class MaasLlm implements PlannerLlm {
   "matches": [{"patternId": "<pattern id>", "score": 0-10, "level": "high|medium|low", "explanation": "why it fits, plain language"}],
   "hypotheses": [{"title": "...", "patternId": "<pattern id or empty>", "confidence": "high|medium|low", "rationale": "plain-language explanation of the approach and why", "recommendations": [{"service": "<service name>", "reason": "why this service", "order": 1}], "assumptions": ["..."], "unknowns": ["..."]}],
   "questions": ["clarifying question to ask the user"],
+  "resolvedQuestionIds": ["<id from the open questions list above that the conversation now answers>"],
   "reply": "2-4 plain-language sentences: answer the user's latest message if any, otherwise summarize what you understood and what changed"
 }
-Give up to 6 matches ordered best first, up to 3 hypotheses, 5-12 concepts and up to 6 questions (only questions that are still unanswered). Recommendation order is the suggested implementation order starting at 1.`,
+Give up to 6 matches ordered best first, up to 3 hypotheses, 5-12 concepts and up to 6 questions (only questions that are still unanswered and not already covered by an open question above). Recommendation order is the suggested implementation order starting at 1.`,
     ]
       .filter(Boolean)
       .join('\n\n');
@@ -377,6 +383,7 @@ Give up to 6 matches ordered best first, up to 3 hypotheses, 5-12 concepts and u
       matches,
       hypotheses,
       questions: asStrings(json.questions, 6),
+      resolvedQuestionIds: asStrings(json.resolvedQuestionIds, 20),
       reply: asString(json.reply, 2000),
       model: this.config.model,
     };
