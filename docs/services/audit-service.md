@@ -356,6 +356,17 @@ Database read failures return 503 rather than an empty result or a false 404.
 See the [submission contract](https://github.com/GovAlta/adsp-monorepo/blob/main/apps/audit-service/README.md#submission-contract-osp-707--osp-708)
 for the boundary with OSP-708.
 
+## Examples and administration UI
+
+- **Sandbox** (`apps/sandbox-app`, Audit page): tabs to browse events, view the action catalog,
+  write an event, and list failed events against a live tenant.
+- **Tenant management webapp** (Admin > Services > Audit, `audit` feature flag): Overview, Logs,
+  Catalogs and Retention tabs. Logs filters by namespace, action, actor, resource, scope,
+  status, category, severity, correlation and session IDs, and time range, shows formatted event details, and exports the
+  current search to CSV. Export is client-side: it pages through the read API and is capped at
+  the 10,000 most recent matching events. Actor name and email are included only for `audit-admin`
+  users (design §1.5). Each page is itself a recorded read.
+
 ## Write buffer
 
 The router submits enriched events through
