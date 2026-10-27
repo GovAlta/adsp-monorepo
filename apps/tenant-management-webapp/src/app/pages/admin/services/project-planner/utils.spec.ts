@@ -296,6 +296,13 @@ describe('utils', () => {
       expect(md).toContain('| Officer \\| lead | Reviews and approves | _Open_ |\n');
     });
 
+    it('keeps a role on one table row when a backslash comes before a pipe', () => {
+      const roles = [{ actor: 'a\\|b', appRole: '', productType: '' as const }];
+      const md = solutionToMarkdown(solution({ blueprint: { ...blueprint, overview: { ...blueprint.overview, roles } } }));
+
+      expect(md).toContain('| a\\\\\\|b | _Open_ | _Open_ |\n');
+    });
+
     it('indents service capabilities under two-digit numbers so the list keeps its numbering', () => {
       const md = solutionToMarkdown(
         solution({ blueprint: { ...blueprint, serviceMapping: [{ ...blueprint.serviceMapping[0], order: 10 }] } }),

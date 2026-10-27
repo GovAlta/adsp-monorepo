@@ -26,8 +26,9 @@ const sentence = (text: string): string => {
   return trimmed && !trimmed.endsWith('.') ? `${trimmed}.` : trimmed;
 };
 
-// Keeps AI text on one table row: escapes pipes and folds line breaks.
-const tableCell = (text: string): string => text.replace(/\|/g, '\\|').replace(/\s*\n\s*/g, ' ');
+// Keeps AI text on one table row: escapes backslashes and pipes, and folds line breaks.
+const tableCell = (text: string): string =>
+  text.replace(/\\/g, '\\\\').replace(/\|/g, '\\|').replace(/\s*\n\s*/g, ' ');
 
 // Indents past the item number so two-digit items keep their details and the list keeps counting.
 const detailBullet = (order: number): string => `${' '.repeat(`${order}. `.length)}- `;
