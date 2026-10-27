@@ -61,6 +61,7 @@ import { watchServiceMetricsSagas } from './metrics/sagas';
 import { watchServiceReportsSagas } from './serviceReports/sagas';
 import { watchScriptSagas } from './script/sagas';
 import { watchValueSagas } from './value/sagas';
+import { watchAuditSagas } from './audit/sagas';
 import { watchDirectorySagas } from './directory/sagas';
 import { watchSharepointSagas } from './sharePoint/sagas';
 import { watchTokenHandlerSagas } from './tokenHandler/sagas';
@@ -127,6 +128,8 @@ export function* watchSagas() {
     watchScriptSagas(),
     //Value
     watchValueSagas(),
+    //Audit
+    watchAuditSagas(),
     //Directory
     watchDirectorySagas(),
     //Cache
