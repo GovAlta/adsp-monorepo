@@ -3,30 +3,30 @@ import { createAdspTheme, AdspThemeOverrides } from './create-adsp-theme';
 
 const { standard } = AdspThemes;
 
-const greenPrimaryButtons: AdspThemeOverrides = {
-  components: { button: { primary: { background: '#00703c' } } },
+const greenCalendarEvents: AdspThemeOverrides = {
+  components: { calendar: { eventBackground: '#00703c' } },
 };
 
 describe('createAdspTheme', () => {
   test('applies an overridden component token', () => {
     // Act
-    const theme = createAdspTheme(standard, greenPrimaryButtons);
+    const theme = createAdspTheme(standard, greenCalendarEvents);
 
     // Assert
-    expect(theme.components.button.primary.background).toBe('#00703c');
+    expect(theme.components.calendar.eventBackground).toBe('#00703c');
   });
 
   test('keeps the tokens that are not overridden', () => {
     // Act
-    const theme = createAdspTheme(standard, greenPrimaryButtons);
+    const theme = createAdspTheme(standard, greenCalendarEvents);
 
     // Assert
-    expect(theme.components.button.primary.textColor).toBe(standard.components.button.primary.textColor);
+    expect(theme.components.calendar.eventTextColor).toBe(standard.components.calendar.eventTextColor);
   });
 
   test('keeps the base theme name when the overrides give none', () => {
     // Act
-    const theme = createAdspTheme(standard, greenPrimaryButtons);
+    const theme = createAdspTheme(standard, greenCalendarEvents);
 
     // Assert
     expect(theme.name).toBe('standard');
@@ -34,18 +34,18 @@ describe('createAdspTheme', () => {
 
   test('uses the name given in the overrides', () => {
     // Act
-    const theme = createAdspTheme(standard, { ...greenPrimaryButtons, name: 'green-buttons' });
+    const theme = createAdspTheme(standard, { ...greenCalendarEvents, name: 'green-calendar-events' });
 
     // Assert
-    expect(theme.name).toBe('green-buttons');
+    expect(theme.name).toBe('green-calendar-events');
   });
 
   test('leaves the base theme unchanged', () => {
     // Act
-    createAdspTheme(standard, greenPrimaryButtons);
+    createAdspTheme(standard, greenCalendarEvents);
 
     // Assert
-    expect(standard.components.button.primary.background).toBe('var(--adsp-color-interactive-default)');
+    expect(standard.components.calendar.eventBackground).toBe('var(--adsp-color-interactive-default)');
   });
 
   test('ignores overrides that are undefined', () => {
@@ -58,9 +58,9 @@ describe('createAdspTheme', () => {
 
   test('returns a frozen theme', () => {
     // Act
-    const theme = createAdspTheme(standard, greenPrimaryButtons);
+    const theme = createAdspTheme(standard, greenCalendarEvents);
 
     // Assert
-    expect(Object.isFrozen(theme.components.button.primary)).toBe(true);
+    expect(Object.isFrozen(theme.components.calendar)).toBe(true);
   });
 });

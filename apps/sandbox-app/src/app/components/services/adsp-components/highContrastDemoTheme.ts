@@ -1,6 +1,6 @@
 import { AdspThemes, createAdspTheme } from '@abgov/adsp-components-core';
 
-// Theme-level customization: high-contrast colours, square corners and yellow primary buttons.
+// Theme-level customization: high-contrast colours, square corners and yellow calendar events.
 export const highContrastDemoTheme = createAdspTheme(AdspThemes.standard, {
   name: 'high-contrast-demo',
   color: {
@@ -11,15 +11,9 @@ export const highContrastDemoTheme = createAdspTheme(AdspThemes.standard, {
   },
   borderRadius: { s: '0', m: '0' },
   components: {
-    button: {
-      primary: {
-        background: '#ffd600',
-        borderColor: '#ffd600',
-        textColor: '#000000',
-        hoverBackground: '#ffea61',
-        hoverBorderColor: '#ffea61',
-        hoverTextColor: '#000000',
-      },
+    calendar: {
+      eventBackground: '#ffd600',
+      eventTextColor: '#000000',
     },
   },
 });

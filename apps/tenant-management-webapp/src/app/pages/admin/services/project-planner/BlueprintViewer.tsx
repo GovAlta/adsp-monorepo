@@ -1,4 +1,4 @@
-import React, { FunctionComponent, ReactNode } from 'react';
+import React, { FunctionComponent, ReactNode, useEffect } from 'react';
 import {
   GoabAccordion,
   GoabBadge,
@@ -22,6 +22,8 @@ interface BlueprintViewerProps {
   busy?: boolean;
   onSolutionChange: (solution: Solution) => void;
   allOpen?: boolean;
+  showControls?: boolean;
+  onBusyChange?: (busy: boolean) => void;
 }
 
 const SubList: FunctionComponent<{ title: string; items?: string[] }> = ({ title, items }) =>
@@ -49,10 +51,16 @@ export const BlueprintViewer: FunctionComponent<BlueprintViewerProps> = ({
   busy,
   onSolutionChange,
   allOpen = false,
+  showControls = true,
+  onBusyChange,
 }) => {
   const [running, run] = useBusy();
   const { blueprint, analysis, hypotheses } = solution.state;
   const working = running || !!busy;
+
+  useEffect(() => {
+    onBusyChange?.(running);
+  }, [running, onBusyChange]);
 
   const generate = (refreshConsultations: boolean) =>
     run(async () => onSolutionChange(await api.blueprint(solution.id, { mode, refreshConsultations })));
@@ -133,10 +141,8 @@ export const BlueprintViewer: FunctionComponent<BlueprintViewerProps> = ({
 
   return (
     <div data-testid="blueprint-viewer">
-      {controls}
-      <p data-testid="blueprint-generated">
-        Generated {formatDate(blueprint.generatedOn)} · {blueprint.mode === 'ai' ? 'AI' : 'rule-based'}
-      </p>
+      {showControls && controls}
+      <p data-testid="blueprint-generated">Plan created {formatDate(blueprint.generatedOn)}</p>
       {blueprint.warning && (
         <GoabCallout type="important" heading="Note" mt="m" testId="blueprint-warning">
           {blueprint.warning}
@@ -144,7 +150,8 @@ export const BlueprintViewer: FunctionComponent<BlueprintViewerProps> = ({
       )}
       {stale && (
         <GoabCallout type="important" heading="Out of date" mt="m" testId="blueprint-stale">
-          The solution was re-analyzed after this blueprint was generated. Regenerate it to include the latest answers.
+          The problem description or answers changed after this plan was created. Update the plan to include the latest
+          information.
         </GoabCallout>
       )}
 
@@ -188,7 +195,12 @@ export const BlueprintViewer: FunctionComponent<BlueprintViewerProps> = ({
               ))}
             </tbody>
           </GoabTable>
-          <pre aria-label="Architecture diagram" tabIndex={0} style={{ overflow: 'auto', fontSize: '0.8rem' }}>
+          <pre
+            role="img"
+            aria-label="Architecture diagram"
+            tabIndex={0}
+            style={{ overflow: 'auto', fontSize: '0.8rem' }}
+          >
             {a.diagram}
           </pre>
           <SubList title="Integrations" items={a.integrations} />

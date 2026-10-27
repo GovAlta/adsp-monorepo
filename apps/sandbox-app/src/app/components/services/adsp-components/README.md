@@ -26,25 +26,23 @@ Sign in, then open **Services → ADSP components → Theming**, or go to `/<ten
 
 ## What the page shows
 
-| Section                                | What to look for                                                                                   |
-| -------------------------------------- | -------------------------------------------------------------------------------------------------- |
-| 1. Theme level                         | Switching the radio restyles every ADSP component inside `AdspThemeProvider`                      |
-| 2. Section level                       | A nested provider with `overrides` turns primary buttons green in that section only. It still follows the selected theme |
-| 3. Component level                     | The same showcase as section 1, with `themeOverrides` on four components: the card is highlighted, Approved is square, Approve is purple and Request changes is pill-shaped. Everything else matches section 1 |
-| 4. Precedence                          | Four buttons set the same token (primary background) at different levels. Component beats section, section beats theme, and a component that overrides only `borderRadius` keeps the section's background. Switching theme changes only the Theme button. The table lists each value and why it wins |
-| No provider                            | The last card stays on `AdspThemes.standard`, the default when there is no provider                |
-| GoA components on the page             | The container, text and radios don't change: the theme only reaches ADSP components                |
-| Buttons                                | Hover, focus and disabled states come from the stylesheet, which inline styles couldn't do          |
-| Application setup, Customization levels | The imports, the provider, and a snippet for each customization level                            |
-| CSS custom properties                  | The exact `--adsp-*` values the selected theme produces                                            |
+| Section               | What to look for                                                                                                                                      |
+| --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1. Theme level        | Switching the radio selects a whole theme; the CSS custom properties list below follows it                                                            |
+| 2. Section level      | A nested `AdspThemeProvider` with `overrides` changes part of the theme for its subtree only                                                          |
+| 3. Component level    | `themeOverrides` on one component instance                                                                                                            |
+| 4. Precedence         | Component beats section, section beats theme. The table shows the calendar event background at each level; switching theme changes only the Theme row |
+| No provider           | Components outside a provider use `AdspThemes.standard`                                                                                               |
+| Application setup     | The imports and the provider                                                                                                                          |
+| CSS custom properties | The exact `--adsp-*` values the selected theme produces                                                                                               |
 
 ## Files
 
-| File                          | Purpose                                                                                           |
-| ----------------------------- | ------------------------------------------------------------------------------------------------- |
-| `AdspThemingExample.tsx`      | The demo page                                                                                     |
-| `AdspThemingExample.spec.tsx` | Covers all three customization levels, the default with no provider, and that GoA elements are unaffected |
-| `highContrastDemoTheme.ts`    | A theme-level customization built with `createAdspTheme`, used to show theme switching            |
+| File                          | Purpose                                                                                |
+| ----------------------------- | -------------------------------------------------------------------------------------- |
+| `AdspThemingExample.tsx`      | The demo page                                                                          |
+| `AdspThemingExample.spec.tsx` | Covers theme switching, the precedence table, and that GoA elements are unaffected     |
+| `highContrastDemoTheme.ts`    | A theme-level customization built with `createAdspTheme`, used to show theme switching |
 
 The ADSP stylesheet is loaded once, in `src/app/app.tsx`, next to the GoA stylesheets. The landing page that links here is `../AdspComponentsMain.tsx`.
 

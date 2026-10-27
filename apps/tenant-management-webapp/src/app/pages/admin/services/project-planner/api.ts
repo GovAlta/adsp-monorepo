@@ -40,7 +40,7 @@ export interface PlannerApi {
   reviewComponent: (id: string, order: number, review: ComponentReview) => Promise<Solution>;
   discovery: (id: string, options?: DiscoveryOptions) => Promise<Solution>;
   blueprint: (id: string, options?: BlueprintOptions) => Promise<Solution>;
-  consult: (id: string, service: string, options?: ConsultOptions) => Promise<ConsultResult>;
+  consult: (id: string, service: string, options?: ConsultOptions) => Promise<ConsultResult & { solution?: Solution }>;
   exportSolution: (id: string) => Promise<unknown>;
   listSpecialists: () => Promise<SpecialistDefinition[]>;
   specialistChat: (service: string, request: SpecialistChatRequest) => Promise<SpecialistChatResponse>;
@@ -111,11 +111,10 @@ export function usePlannerApi(): PlannerApi {
       discovery: (id, options = {}) => request<Solution>('post', `/solutions/${id}/discovery`, options),
       blueprint: (id, options = {}) => request<Solution>('post', `/solutions/${id}/blueprint`, options),
       consult: (id, service, options) =>
-        request<ConsultResult>('post', `/solutions/${id}/consult/${service}`, options),
+        request<ConsultResult & { solution?: Solution }>('post', `/solutions/${id}/consult/${service}`, options),
       exportSolution: (id) => request<unknown>('get', `/solutions/${id}/export`),
       listSpecialists: async () => (await request<{ results: SpecialistDefinition[] }>('get', '/specialists')).results,
-      specialistChat: (service, body) =>
-        request<SpecialistChatResponse>('post', `/specialists/${service}/chat`, body),
+      specialistChat: (service, body) => request<SpecialistChatResponse>('post', `/specialists/${service}/chat`, body),
       listChats: async (criteria) =>
         (await request<{ results: ChatSummary[] }>('get', `/specialists/chats${chatQuery(criteria)}`)).results,
       getChat: (id) => request<SpecialistChat>('get', `/specialists/chats/${id}`),

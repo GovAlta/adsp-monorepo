@@ -227,6 +227,35 @@ describe('MaasLlm', () => {
         expect(userPrompt()).toContain('message-2-end');
       });
 
+      it('includes open questions with their ids and asks the model to resolve them', async () => {
+        await analyzeWith({}, [], {
+          answers: [],
+          conversation: [],
+          openQuestions: [{ id: 'q-1', question: 'Who approves large grants?' }],
+        });
+
+        expect(userPrompt()).toContain('q-1: Who approves large grants?');
+        expect(userPrompt()).toContain('resolvedQuestionIds');
+      });
+
+      it('omits the open questions section when there are none', async () => {
+        await analyzeWith({}, [], { answers: [], conversation: [], openQuestions: [] });
+
+        expect(userPrompt()).not.toContain('still open');
+      });
+
+      it('parses resolvedQuestionIds from the response', async () => {
+        const result = await analyzeWith({ resolvedQuestionIds: ['q-1', 'q-2'] });
+
+        expect(result.resolvedQuestionIds).toEqual(['q-1', 'q-2']);
+      });
+
+      it('defaults resolvedQuestionIds to an empty array when missing', async () => {
+        const result = await analyzeWith();
+
+        expect(result.resolvedQuestionIds).toEqual([]);
+      });
+
       it.each([
         ['the context is empty', { answers: [], conversation: [] }],
         ['no context is provided', undefined],
@@ -697,6 +726,32 @@ describe('MaasLlm', () => {
       ]);
     });
 
+    it('keeps named roles and clears a product type that is not a GoA product type', async () => {
+      const roles = [
+        { actor: 'Grant officer', appRole: 'Reviews applications', productType: 'workspace' },
+        { actor: 'Applicant', appRole: 'Applies', productType: 'mobile-app' },
+        { actor: '', appRole: 'Nobody', productType: 'workspace' },
+      ];
+      post.mockResolvedValueOnce(completion(JSON.stringify({ ...blueprintJson, overview: { ...blueprintJson.overview, roles } })));
+
+      const { core } = await buildLlm().blueprint(state(), [note]);
+
+      expect(core.overview?.roles).toEqual([
+        { actor: 'Grant officer', appRole: 'Reviews applications', productType: 'workspace' },
+        { actor: 'Applicant', appRole: 'Applies', productType: '' },
+      ]);
+    });
+
+    it('defines both GoA product types in the prompt', async () => {
+      post.mockResolvedValueOnce(completion(JSON.stringify(blueprintJson)));
+
+      await buildLlm().blueprint(state(), [note]);
+
+      const prompt = (post.mock.calls[0][1].messages as { content: string }[]).map((m) => m.content).join('\n');
+      expect(prompt).toContain('public-form: For citizen-facing services where users apply for a benefit');
+      expect(prompt).toContain('workspace: for productivity-focused services that service delivery staff use as a daily tool');
+    });
+
     it('drops workflows without steps', async () => {
       post.mockResolvedValueOnce(completion(JSON.stringify(blueprintJson)));
 
@@ -762,7 +817,12 @@ describe('MaasLlm', () => {
           JSON.stringify({
             ...blueprintJson,
             notCoveredByAdsp: [
-              { requirement: 'Deposit intake', reason: 'No ADSP service accepts payments.', suggestedApproach: 'x', category: 'payment-collection' },
+              {
+                requirement: 'Deposit intake',
+                reason: 'No ADSP service accepts payments.',
+                suggestedApproach: 'x',
+                category: 'payment-collection',
+              },
             ],
           }),
         ),
@@ -803,7 +863,9 @@ describe('MaasLlm', () => {
 
       await buildLlm().blueprint(state(), [note], ['sharepoint-service']);
 
-      expect(userPrompt()).toMatch(/"components": \[[\s\S]*Components may use: [^\n]*form-service[^\n]*sharepoint-service/);
+      expect(userPrompt()).toMatch(
+        /"components": \[[\s\S]*Components may use: [^\n]*form-service[^\n]*sharepoint-service/,
+      );
     });
 
     it('asks the model to keep the service and name of the current ADSP components so their reviews carry over', async () => {
@@ -815,7 +877,9 @@ describe('MaasLlm', () => {
 
       await buildLlm().blueprint({ ...state(), blueprint: { components } as SolutionState['blueprint'] }, [note]);
 
-      expect(userPrompt()).toMatch(/Current components[^\n]*keep the exact service and name[^\n]*:\n- form-service: Grant application/);
+      expect(userPrompt()).toMatch(
+        /Current components[^\n]*keep the exact service and name[^\n]*:\n- form-service: Grant application/,
+      );
       expect(userPrompt()).not.toContain('grant-officer');
     });
 

@@ -260,6 +260,7 @@ export function buildRuleBlueprint(state: SolutionState, pattern?: BusinessPatte
         ...(hypothesis?.unknowns || []),
         ...services.flatMap((s) => getSpecialist(s.service)?.risks.slice(0, 1) || []),
       ]),
+      roles: actors.map((actor) => ({ actor, appRole: '', productType: '' })),
     },
     architecture: {
       summary: serviceList.length
