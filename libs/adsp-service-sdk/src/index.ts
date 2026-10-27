@@ -23,7 +23,6 @@ export type {
   AuditActorType,
   AuditCategory,
   AuditChangeSet,
-  AuditClientOptions,
   AuditDropReason,
   AuditEventCriteria,
   AuditEventRecord,
