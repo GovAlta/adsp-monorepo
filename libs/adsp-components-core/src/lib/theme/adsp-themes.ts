@@ -1,9 +1,6 @@
 import { AdspTheme } from './adsp-theme';
 import { deepFreeze } from './deep-freeze';
-import { defaultBadgeTheme } from '../components/badge';
-import { defaultButtonTheme } from '../components/button';
 import { defaultCalendarTheme } from '../components/calendar';
-import { defaultCardTheme } from '../components/card';
 
 // Values reference GoA design token custom properties so the theme tracks the design system, dark theme included.
 const standard: AdspTheme = {
@@ -126,10 +123,7 @@ const standard: AdspTheme = {
   },
   // Component tokens alias the base --adsp-* roles, so changing a base role restyles every component using it.
   components: {
-    badge: defaultBadgeTheme,
-    button: defaultButtonTheme,
     calendar: defaultCalendarTheme,
-    card: defaultCardTheme,
   },
 };
 
