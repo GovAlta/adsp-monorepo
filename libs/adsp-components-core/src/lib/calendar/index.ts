@@ -10,6 +10,4 @@ export type {
   RecurrenceEvent,
   RecurrenceDay,
   RecurrenceFrequency,
-  MapRecurrenceEvent,
-  MapRecurrenceEventRRule,
 } from './types';
