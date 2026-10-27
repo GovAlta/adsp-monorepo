@@ -1,4 +1,4 @@
-import { AuditCategories, isAllowedUser, UnauthorizedUserError } from '@abgov/adsp-service-sdk';
+import { AuditCategories, AuditSeverities, isAllowedUser, UnauthorizedUserError } from '@abgov/adsp-service-sdk';
 import { createValidationHandler, InvalidOperationError, NotFoundError, Results } from '@core-services/core-common';
 import { RequestHandler } from 'express';
 import { query, param } from 'express-validator';
@@ -16,6 +16,7 @@ const MAX_TOP = 5000;
 // Typed against the domain union so an invalid status fails to compile.
 const EVENT_STATUSES: AuditEvent['status'][] = ['success', 'failure', 'blocked', 'error'];
 const EVENT_CATEGORIES = Object.values(AuditCategories);
+const EVENT_SEVERITIES = Object.values(AuditSeverities);
 
 export interface SerializeOptions {
   // Ordinary reads do not redact; redaction exists for responses that must hide identity from non-admins.
@@ -89,20 +90,31 @@ function toDate(value: unknown): Date | undefined {
   return text ? new Date(text) : undefined;
 }
 
+// The design names these filters actorId, scopeId, from and to; the original names remain supported.
+// When both spellings are supplied, the original name wins.
+const QUERY_ALIASES = { actor: 'actorId', scope: 'scopeId', occurredFrom: 'from', occurredTo: 'to' } as const;
+
+function queryValue(q: Parameters<RequestHandler>[0]['query'], name: keyof typeof QUERY_ALIASES): unknown {
+  return q?.[name] ?? q?.[QUERY_ALIASES[name]];
+}
+
 function toCriteria(req: Parameters<RequestHandler>[0], tenantId: string): EventCriteria {
   const q = req.query;
   return {
     tenantId,
     namespace: req.params.namespace,
-    actor: str(q.actor),
+    actor: str(queryValue(q, 'actor')),
     resourceType: str(q.resourceType),
     resourceId: str(q.resourceId),
     action: str(q.action),
     status: str(q.status) as EventCriteria['status'],
     category: str(q.category) as EventCriteria['category'],
-    scope: str(q.scope),
-    occurredFrom: toDate(q.occurredFrom),
-    occurredTo: toDate(q.occurredTo),
+    severity: str(q.severity) as EventCriteria['severity'],
+    correlationId: str(q.correlationId),
+    sessionId: str(q.sessionId),
+    scope: str(queryValue(q, 'scope')),
+    occurredFrom: toDate(queryValue(q, 'occurredFrom')),
+    occurredTo: toDate(queryValue(q, 'occurredTo')),
   };
 }
 
@@ -201,8 +213,12 @@ const SCALAR_PARAMS = [
   'scope',
   'status',
   'category',
+  'severity',
+  'correlationId',
+  'sessionId',
   'occurredFrom',
   'occurredTo',
+  ...Object.values(QUERY_ALIASES),
 ];
 
 export const validateEventQuery = createValidationHandler(
@@ -213,22 +229,25 @@ export const validateEventQuery = createValidationHandler(
     .withMessage('must be a single value'),
   query('top').optional().isInt({ min: 1, max: MAX_TOP }),
   query('after').optional().custom(isValidCursor).withMessage('after is not a valid cursor'),
-  query(['actor', 'resourceType', 'resourceId', 'action', 'scope'])
+  query(['actor', 'actorId', 'resourceType', 'resourceId', 'action', 'scope', 'scopeId'])
     .optional()
     .isString()
     .isLength({ min: 1, max: 256 }),
   query('status').optional().isIn(EVENT_STATUSES),
   query('category').optional().isIn(EVENT_CATEGORIES),
-  query(['occurredFrom', 'occurredTo'])
+  query('severity').optional().isIn(EVENT_SEVERITIES),
+  // Matches the 128 character limit applied when events are written.
+  query(['correlationId', 'sessionId']).optional().isString().isLength({ min: 1, max: 128 }),
+  query(['occurredFrom', 'occurredTo', 'from', 'to'])
     .optional()
     .custom((value) => parseIsoDate(value) !== undefined)
     .withMessage('must be a valid ISO 8601 date'),
-  query('occurredTo')
+  query(['occurredTo', 'to'])
     .optional()
     .custom((value: string, { req }) => {
-      const from = parseIsoDate(req.query?.occurredFrom);
+      const from = parseIsoDate(queryValue(req.query, 'occurredFrom'));
       const to = parseIsoDate(value);
       return !from || !to || from <= to;
     })
-    .withMessage('occurredTo must not be before occurredFrom'),
+    .withMessage('the end of the time range must not be before its start'),
 );

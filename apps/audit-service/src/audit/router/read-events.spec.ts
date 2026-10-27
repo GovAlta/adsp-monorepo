@@ -1,4 +1,4 @@
-import { adspId, AuditCategories, User } from '@abgov/adsp-service-sdk';
+import { adspId, AuditCategories, AuditSeverities, User } from '@abgov/adsp-service-sdk';
 import { createErrorHandler } from '@core-services/core-common';
 import * as express from 'express';
 import * as request from 'supertest';
@@ -162,8 +162,63 @@ describe('read events', () => {
     expect(reader.find).toHaveBeenCalledWith(expect.objectContaining({ category }), 10, undefined);
   });
 
+  it.each(Object.values(AuditSeverities))('accepts SDK severity %s as a history filter', async (severity) => {
+    const res = await request(createApp()).get(`/audit/v1/events?severity=${severity}`);
+
+    expect(res.status).toBe(200);
+    expect(reader.find).toHaveBeenCalledWith(expect.objectContaining({ severity }), 10, undefined);
+  });
+
+  it('filters by correlation and session', async () => {
+    const res = await request(createApp()).get('/audit/v1/events?correlationId=trace-1&sessionId=session-1');
+
+    expect(res.status).toBe(200);
+    expect(reader.find).toHaveBeenCalledWith(
+      expect.objectContaining({ correlationId: 'trace-1', sessionId: 'session-1' }),
+      10,
+      undefined,
+    );
+  });
+
+  it('accepts the design names actorId, scopeId, from and to', async () => {
+    const res = await request(createApp()).get(
+      '/audit/v1/events?actorId=user-1&scopeId=s-1&from=2026-10-01T00:00:00Z&to=2026-10-02T00:00:00Z',
+    );
+
+    expect(res.status).toBe(200);
+    expect(reader.find).toHaveBeenCalledWith(
+      expect.objectContaining({
+        actor: 'user-1',
+        scope: 's-1',
+        occurredFrom: new Date('2026-10-01T00:00:00Z'),
+        occurredTo: new Date('2026-10-02T00:00:00Z'),
+      }),
+      10,
+      undefined,
+    );
+  });
+
+  it('prefers the original name when both spellings are supplied', async () => {
+    const res = await request(createApp()).get('/audit/v1/events?actor=user-1&actorId=user-2');
+
+    expect(res.status).toBe(200);
+    expect(reader.find).toHaveBeenCalledWith(expect.objectContaining({ actor: 'user-1' }), 10, undefined);
+  });
+
   it.each([
     'top=0',
+    'actorId[]=user-1',
+    'scopeId=',
+    'from=yesterday',
+    'to[]=2026-10-01T00:00:00Z',
+    'from=2026-10-02T00:00:00Z&to=2026-10-01T00:00:00Z',
+    'occurredFrom=2026-10-02T00:00:00Z&to=2026-10-01T00:00:00Z',
+    'severity=bogus',
+    'severity[]=info',
+    `correlationId=${'c'.repeat(129)}`,
+    `sessionId=${'s'.repeat(129)}`,
+    'correlationId[]=a',
+    'sessionId=',
     'top=5001',
     'after=abc',
     'status=bogus',

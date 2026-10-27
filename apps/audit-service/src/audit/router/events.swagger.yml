@@ -18,6 +18,10 @@ paths:
           schema:
             type: string
         - $ref: '#/components/parameters/TenantId'
+        - $ref: '#/components/parameters/ActorId'
+        - $ref: '#/components/parameters/ScopeId'
+        - $ref: '#/components/parameters/From'
+        - $ref: '#/components/parameters/To'
         - $ref: '#/components/parameters/Top'
         - $ref: '#/components/parameters/After'
         - $ref: '#/components/parameters/Actor'
@@ -26,6 +30,9 @@ paths:
         - $ref: '#/components/parameters/Action'
         - $ref: '#/components/parameters/Status'
         - $ref: '#/components/parameters/Category'
+        - $ref: '#/components/parameters/Severity'
+        - $ref: '#/components/parameters/CorrelationId'
+        - $ref: '#/components/parameters/SessionId'
         - $ref: '#/components/parameters/Scope'
         - $ref: '#/components/parameters/OccurredFrom'
         - $ref: '#/components/parameters/OccurredTo'
@@ -163,6 +170,10 @@ paths:
         namespace listing. Actor `name` and `email` are included as recorded.
       parameters:
         - $ref: '#/components/parameters/TenantId'
+        - $ref: '#/components/parameters/ActorId'
+        - $ref: '#/components/parameters/ScopeId'
+        - $ref: '#/components/parameters/From'
+        - $ref: '#/components/parameters/To'
         - $ref: '#/components/parameters/Top'
         - $ref: '#/components/parameters/After'
         - $ref: '#/components/parameters/Actor'
@@ -171,6 +182,9 @@ paths:
         - $ref: '#/components/parameters/Action'
         - $ref: '#/components/parameters/Status'
         - $ref: '#/components/parameters/Category'
+        - $ref: '#/components/parameters/Severity'
+        - $ref: '#/components/parameters/CorrelationId'
+        - $ref: '#/components/parameters/SessionId'
         - $ref: '#/components/parameters/Scope'
         - $ref: '#/components/parameters/OccurredFrom'
         - $ref: '#/components/parameters/OccurredTo'
@@ -265,6 +279,18 @@ components:
       in: query
       name: category
       schema: { type: string, enum: [administrative, runtime, security, data-access] }
+    Severity:
+      in: query
+      name: severity
+      schema: { type: string, enum: [info, warning, critical] }
+    CorrelationId:
+      in: query
+      name: correlationId
+      schema: { type: string, minLength: 1, maxLength: 128 }
+    SessionId:
+      in: query
+      name: sessionId
+      schema: { type: string, minLength: 1, maxLength: 128 }
     Scope:
       in: query
       name: scope
@@ -277,6 +303,26 @@ components:
     OccurredTo:
       in: query
       name: occurredTo
+      schema: { type: string, format: date-time }
+    ActorId:
+      in: query
+      name: actorId
+      description: Alias of `actor`, as named in the design. `actor` wins if both are supplied.
+      schema: { type: string }
+    ScopeId:
+      in: query
+      name: scopeId
+      description: Alias of `scope`, as named in the design. `scope` wins if both are supplied.
+      schema: { type: string }
+    From:
+      in: query
+      name: from
+      description: Alias of `occurredFrom`, as named in the design. `occurredFrom` wins if both are supplied.
+      schema: { type: string, format: date-time }
+    To:
+      in: query
+      name: to
+      description: Alias of `occurredTo`, as named in the design. `occurredTo` wins if both are supplied.
       schema: { type: string, format: date-time }
   responses:
     AuditEventPage:
