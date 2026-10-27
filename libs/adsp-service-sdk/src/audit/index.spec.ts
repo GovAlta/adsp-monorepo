@@ -58,6 +58,13 @@ describe('auditDefinitions', () => {
     expect(auditDefinitions({})).toEqual({});
   });
 
+  it('accepts an array of actions', () => {
+    const { name, ...definition } = action;
+
+    expect(auditDefinitions([action])).toEqual({ [name]: definition });
+    expect(() => auditDefinitions([action, action])).toThrow('Duplicate');
+  });
+
   it('accepts shared constants without changing the catalog payload', () => {
     const definition: AuditAction = {
       ...action,

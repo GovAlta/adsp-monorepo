@@ -34,7 +34,7 @@ export class CalendarClient implements ICalendarClient {
     this.pageSize = pageSize ?? DEFAULT_PAGE_SIZE;
   }
 
-  async getCalendarEvents(calendar: string, range: DateRange): Promise<CalendarEvents> {
+  async getCalendarRange(calendar: string, range: DateRange): Promise<CalendarEvents> {
     const [events, holidays] = await Promise.all([this.getEvents(calendar, range), this.getHolidays(range)]);
     return { events, holidays };
   }
@@ -74,7 +74,8 @@ export class CalendarClient implements ICalendarClient {
   }
 
   private async getEvents(calendar: string, range: DateRange): Promise<CalendarEvent[]> {
-    const events: CalendarEvent[] = [];
+    // Keyed by event id and occurrence, so an event repeated across or within pages is only returned once.
+    const events = new Map<string, CalendarEvent>();
 
     // The service returns events overlapping from/to inclusively; filter again for the exclusive range end.
     // A service that ignores from/to responds with pages of every event, which the filter and paging also handle.
@@ -86,11 +87,14 @@ export class CalendarClient implements ICalendarClient {
         ...(this.tenant ? { tenant: this.tenant } : {}),
       },
       (results) => {
-        events.push(...results.map(mapEvent).filter((event) => isEventInRange(event, range)));
+        results
+          .map(mapEvent)
+          .filter((event) => isEventInRange(event, range))
+          .forEach((event) => events.set(`${event.id}:${event.recurrenceId?.getTime() ?? ''}`, event));
       },
     );
 
-    return events;
+    return [...events.values()];
   }
 
   private async getHolidays(range: DateRange): Promise<CalendarHoliday[]> {

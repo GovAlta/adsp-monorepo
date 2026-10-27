@@ -33,7 +33,7 @@ describe('toCssVariables', () => {
 
     // Assert
     expect(variables).toHaveProperty(
-      ['--adsp-components-button-primary-hover-background'],
+      ['--adsp-components-calendar-button-hover-background'],
       'var(--adsp-color-interactive-hover)',
     );
   });
@@ -68,12 +68,12 @@ describe('toCssVariables', () => {
 describe('toComponentCssVariables', () => {
   test('names instance overrides the way toCssVariables names the component section', () => {
     // Act
-    const variables = toComponentCssVariables('button', { borderRadius: '0', primary: { background: '#00703c' } });
+    const variables = toComponentCssVariables('calendar', { borderColor: '#333333', eventBackground: '#00703c' });
 
     // Assert
     expect(variables).toEqual({
-      '--adsp-components-button-border-radius': '0',
-      '--adsp-components-button-primary-background': '#00703c',
+      '--adsp-components-calendar-border-color': '#333333',
+      '--adsp-components-calendar-event-background': '#00703c',
     });
   });
 });

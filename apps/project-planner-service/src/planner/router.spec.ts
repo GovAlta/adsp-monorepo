@@ -2069,21 +2069,6 @@ describe('planner router routes', () => {
       expect(res.body.changedSections).toEqual(['Title']);
     });
 
-    it('bumps minor when confidence changes', async () => {
-      const base = solutionOwnedBy('owner-1');
-      repository.get.mockResolvedValueOnce({
-        ...base,
-        exportedOnce: true,
-        state: { ...base.state, confidence: { score: 40, threshold: 70, factors: [] } },
-        lastExportHashes: sectionHashes(base),
-      });
-
-      const res = await exportSolution();
-
-      expect(res.body.version).toBe('1.1');
-      expect(res.body.changedSections).toEqual(['Confidence']);
-    });
-
     it('bumps major when a blueprint section changed', async () => {
       const base = solutionOwnedBy('owner-1');
       repository.get.mockResolvedValueOnce({

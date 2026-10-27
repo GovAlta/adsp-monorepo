@@ -232,7 +232,7 @@ export default function Services() {
                     type="non-interactive"
                     width={'full'}
                     testId={service.id}
-                    heading={
+                    title={
                       <h3>
                         <Link to={`${location.pathname}${service.url}`}>{service.name}</Link>
                       </h3>

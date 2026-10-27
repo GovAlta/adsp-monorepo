@@ -5,7 +5,7 @@ import { PlannerApi } from './api';
 import { ConfirmDelete } from './ConfirmDelete';
 import { Solution } from './model';
 import { useBusy } from './useBusy';
-import { download, safeName, solutionToMarkdown } from './utils';
+import { download, harnessToMarkdown, safeName, solutionToMarkdown } from './utils';
 
 const Bar = styled.div`
   display: flex;
@@ -92,6 +92,11 @@ export const SolutionHeader: FunctionComponent<SolutionHeaderProps> = ({
       const data = await fetchExport();
       download(`planner-${safeName(solution)}.md`, solutionToMarkdown({ ...solution, ...data }), 'text/markdown');
     });
+  const exportHarness = () =>
+    attempt(async () => {
+      const data = await fetchExport();
+      download(`planner-${safeName(solution)}-harness.md`, harnessToMarkdown({ ...solution, ...data }), 'text/markdown');
+    });
   const remove = () =>
     attempt(async () => {
       await api.deleteSolution(solution.id);
@@ -171,6 +176,14 @@ export const SolutionHeader: FunctionComponent<SolutionHeaderProps> = ({
                 testId="download-report"
                 disabled={blocked}
                 onClick={exportReport}
+              />
+              <GoabIconButton
+                icon="code-download"
+                title="Download harness instructions"
+                ariaLabel="Download harness instructions"
+                testId="download-harness"
+                disabled={blocked}
+                onClick={exportHarness}
               />
             </>
           )}

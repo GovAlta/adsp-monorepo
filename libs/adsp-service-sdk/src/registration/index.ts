@@ -1,6 +1,7 @@
 import { Logger } from 'winston';
 import { NotificationType } from '..';
 import { TokenProvider } from '../access';
+import type { AuditAction } from '../audit/definitions';
 import { ServiceDirectory } from '../directory';
 import { DomainEventDefinition } from '../event';
 import { FileType } from '../file';
@@ -167,6 +168,16 @@ export interface ServiceRegistration {
    * @memberof ServiceRegistration
    */
   values?: ValueDefinition[];
+  /**
+   * Audit actions: Definitions of the audit actions the service records.
+   *
+   * The actions replace the service's action catalog (`audit-service:actions-<service>`), so removed
+   * actions are deregistered. Names must be unique; duplicates fail initialization.
+   *
+   * @type {(Record<string, AuditAction> | AuditAction[])}
+   * @memberof ServiceRegistration
+   */
+  auditActions?: Record<string, AuditAction> | AuditAction[];
   /**
    * Service configurations: Additional configurations for services to apply at registration.
    *
