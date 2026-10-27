@@ -4,6 +4,7 @@ import { createValidationHandler, InvalidOperationError, NotFoundError } from '@
 import { randomUUID } from 'crypto';
 import { Request, RequestHandler, Router } from 'express';
 import { body, param, query } from 'express-validator';
+import * as multer from 'multer';
 import { Logger } from 'winston';
 import {
   buildHypotheses,
@@ -25,6 +26,11 @@ import {
   toSpecialistNote,
 } from './blueprint';
 import { buildComponents, catalogServices, driftMessage, unmappedServices } from './components';
+import {
+  extractProblemStatementText,
+  isSupportedProblemStatementFile,
+  MAX_PROBLEM_STATEMENT_UPLOAD_BYTES,
+} from './documentExtract';
 import {
   allUserEvidence,
   applyAnswerToFactors,
@@ -308,6 +314,10 @@ export function createPlannerRouter({
 }: PlannerRouterProps): Router {
   const router = Router();
   const validateId = createValidationHandler(param('id').isUUID());
+  const uploadProblemStatementFile = multer({
+    storage: multer.memoryStorage(),
+    limits: { fileSize: MAX_PROBLEM_STATEMENT_UPLOAD_BYTES },
+  });
 
   // Undefined keys mean the catalog could not be read; candidates are live services missing from the component map.
   async function readCatalog(): Promise<{ keys?: string[]; candidates: string[] }> {
@@ -645,6 +655,39 @@ export function createPlannerRouter({
   router.get('/specialists', requirePlannerUser, (_req, res) => {
     res.send({ results: SPECIALISTS });
   });
+
+  router.post(
+    '/documents/extract',
+    requirePlannerUser,
+    uploadProblemStatementFile.single('file'),
+    async (req, res, next) => {
+      try {
+        const file = req.file;
+        if (!file) {
+          throw new InvalidOperationError('No file was uploaded.');
+        }
+        if (!isSupportedProblemStatementFile(file.originalname)) {
+          throw new InvalidOperationError(
+            `${file.originalname} is not a supported format. Upload a Markdown (.md), Word (.docx) or PDF (.pdf) file.`,
+          );
+        }
+        let text: string;
+        try {
+          text = await extractProblemStatementText(file.buffer, file.originalname);
+        } catch (err) {
+          throw new InvalidOperationError(`Could not read ${file.originalname}: ${(err as Error).message}`);
+        }
+        if (!text) {
+          throw new InvalidOperationError(
+            `No readable text was found in ${file.originalname}. Try a different file or enter the problem statement manually.`,
+          );
+        }
+        res.send({ text });
+      } catch (err) {
+        next(err);
+      }
+    },
+  );
 
   router.get(
     '/solutions',

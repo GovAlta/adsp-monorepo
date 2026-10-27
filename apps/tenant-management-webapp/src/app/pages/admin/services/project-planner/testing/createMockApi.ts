@@ -6,6 +6,7 @@ const METHODS: (keyof PlannerApi)[] = [
   'listSolutions',
   'getSolution',
   'createSolution',
+  'extractProblemStatement',
   'deleteSolution',
   'updateSolution',
   'analyze',
