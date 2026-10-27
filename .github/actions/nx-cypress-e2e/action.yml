@@ -34,6 +34,34 @@ runs:
     - uses: actions/setup-dotnet@v5
       with:
         dotnet-version: '9'
+    - name: Check token-handler UAT reachability
+      if: ${{ inputs.app == 'token-handler' && inputs.environment == 'staging' }}
+      shell: bash
+      continue-on-error: true
+      run: |
+        host=token-handler-adsp-uat.apps.aro-01.int.gov.ab.ca
+
+        echo "DNS lookup for ${host}:"
+        if getent ahosts "${host}"; then
+          dns_status=0
+        else
+          dns_status=$?
+        fi
+
+        echo "HTTPS connectivity to ${host}:"
+        if curl --verbose --connect-timeout 10 --max-time 20 \
+          --output /dev/null \
+          --write-out 'HTTP status: %{http_code}\n' \
+          "https://${host}/"; then
+          curl_status=0
+        else
+          curl_status=$?
+        fi
+
+        if [ "${dns_status}" -ne 0 ] || [ "${curl_status}" -ne 0 ]; then
+          echo "::warning::The GitHub runner cannot resolve or reach the token-handler UAT endpoint."
+          exit 1
+        fi
     - name: E2E Test
       uses: cypress-io/github-action@v7
       env:
