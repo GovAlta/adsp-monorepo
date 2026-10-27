@@ -5,6 +5,7 @@ import { FEEDBACK_FEATURE_KEY, feedbackReducer } from './feedback.slice';
 import { FILE_FEATURE_KEY, fileReducer } from './file.slice';
 import { USER_FEATURE_KEY, userReducer } from './user.slice';
 import { FORM_FEATURE_KEY, formReducer } from './form.slice';
+import { CALENDAR_FEATURE_KEY, calendarReducer } from './calendar.slice';
 import { COMMENT_FEATURE_KEY, commentReducer } from './comment.slice';
 import { PDF_FEATURE_KEY, pdfReducer } from './pdf.slice';
 import { POKER_FEATURE_KEY, pokerReducer } from './poker.slice';
@@ -28,6 +29,7 @@ const reduxDevToolsLogOnly: DevToolsEnhancerOptions = {
 export const store = configureStore({
   reducer: {
     [AGENT_FEATURE_KEY]: agentReducer,
+    [CALENDAR_FEATURE_KEY]: calendarReducer,
     [COMMENT_FEATURE_KEY]: commentReducer,
     [CONFIG_FEATURE_KEY]: configReducer,
     [FEEDBACK_FEATURE_KEY]: feedbackReducer,

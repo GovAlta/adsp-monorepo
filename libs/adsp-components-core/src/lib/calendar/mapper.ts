@@ -1,4 +1,4 @@
-import { CalendarEvent, CalendarHoliday, DateRange } from './types';
+import { CalendarEvent, CalendarHoliday, DateRange, RecurrenceEvent } from './types';
 
 const TIME_ZONE = 'America/Edmonton';
 
@@ -12,6 +12,8 @@ export interface CalendarServiceEvent {
   isPublic?: boolean;
   recordId?: string;
   context?: Record<string, unknown>;
+  recurrenceId?: string;
+  recurrence?: RecurrenceEvent;
 }
 
 export interface CalendarServiceDate {
@@ -57,6 +59,14 @@ function fromDateId(id: number): Date {
   return new Date(Date.UTC(year, month - 1, day));
 }
 
+// The id already encodes the Alberta calendar day, so format it directly rather than through a Date.
+function toDayString(id: number): string {
+  const year = Math.floor(id / 10000);
+  const month = Math.floor(id / 100) % 100;
+  const day = id % 100;
+  return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+}
+
 export function getDateIdRange({ start, end }: DateRange): { min?: number; max?: number } {
   const min = start ? toDateId(start) : undefined;
   // The range end is exclusive, so the last included day is the one containing the instant before it.
@@ -76,12 +86,15 @@ export function mapEvent(event: CalendarServiceEvent): CalendarEvent {
     isPublic: !!event.isPublic,
     recordId: event.recordId,
     context: event.context,
+    recurrenceId: event.recurrenceId ? new Date(event.recurrenceId) : undefined,
+    recurrence: event.recurrence,
   };
 }
 
 export function mapHoliday(date: CalendarServiceDate): CalendarHoliday {
   return {
     date: fromDateId(date.id),
+    day: toDayString(date.id),
     name: date.holiday || '',
     isInLieuOfDay: !!date.isInLieuOfDay,
   };
@@ -93,6 +106,12 @@ export function isEventInRange(event: CalendarEvent, range: DateRange): boolean 
   const end = event.end?.getTime();
   const rangeStart = range.start?.getTime() ?? -Infinity;
   const rangeEnd = range.end?.getTime() ?? Infinity;
+
+  // A series started before the range still has occurrences in it unless it has already ended.
+  if (event.recurrence) {
+    const until = event.recurrence.end?.until ? new Date(event.recurrence.end.until).getTime() : Infinity;
+    return start < rangeEnd && !(until < rangeStart);
+  }
 
   return end == null || end <= start ? start >= rangeStart && start < rangeEnd : start < rangeEnd && end > rangeStart;
 }
