@@ -59,11 +59,11 @@ export const DISCOVERY_FACTORS: FactorDefinition[] = [
   },
   {
     id: 'constraints',
-    label: 'Constraints and integrations',
+    label: 'Data classification, constraints and integrations',
     question:
-      'Are there privacy, security, volume, deadline or integration (existing systems) constraints we must respect?',
+      'What is the data classification: Public, Protected A, Protected B or Protected C? Are there privacy, security, volume, deadline or integration (existing systems) constraints we must respect?',
     keywords: [
-      /\b(privacy|foip|pia|security|confidential|sensitive|personal information|compliance|legislation|policy)\b/i,
+      /\b(privacy|foip|pia|popa|security|confidential|sensitive|personal information|compliance|legislation|policy|classification|protected[\s_-]*[abc])\b/i,
       /\b(integrat|existing system|legacy|api|volume|per year|per month|deadline|budget|inventory|spreadsheet|excel|asset|import|export|migrat)\w*/i,
     ],
   },

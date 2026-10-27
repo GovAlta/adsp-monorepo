@@ -1,4 +1,5 @@
 import { ComponentReview, SpecialistChat, Solution } from './model';
+import { HARNESS_TEMPLATE } from './harnessTemplate';
 
 export const fmtDate = (date: string | Date): string => new Date(date).toLocaleString();
 
@@ -25,6 +26,9 @@ const sentence = (text: string): string => {
   return trimmed && !trimmed.endsWith('.') ? `${trimmed}.` : trimmed;
 };
 
+// Keeps AI text on one table row: escapes pipes and folds line breaks.
+const tableCell = (text: string): string => text.replace(/\|/g, '\\|').replace(/\s*\n\s*/g, ' ');
+
 // Indents past the item number so two-digit items keep their details and the list keeps counting.
 const detailBullet = (order: number): string => `${' '.repeat(`${order}. `.length)}- `;
 
@@ -33,15 +37,6 @@ export const REVIEW_LABELS: Record<ComponentReview, string> = {
   approved: 'Approved',
   rejected: 'Rejected',
 };
-
-const COMPONENT_INSTRUCTIONS = [
-  "_Work through these components in order with the user. Rejected components have been removed from this list. Do not create anything without the user's approval._",
-  '',
-  '- **Approved:** check whether it already exists in the tenant; if it does, move on. If you can create it (ADSP configuration), walk the user through creating it one step at a time and get their approval before each step. If you cannot (Keycloak, OpenShift, or anything you lack permission for), walk the user through doing it themselves, one step or command at a time, and wait for them to confirm each step before the next.',
-  '- **Not reviewed:** before you start, list these by number and ask the user which are needed. Set up the needed ones the same way as approved components and skip the rest.',
-  '- **Dependencies:** if a component depends on one that is not reviewed, ask about that one first. If a dependency is not in this list, the user rejected it; raise it with them before continuing.',
-  '- For every component you set up, walk the user through the Where and How steps and ask them to decide every open decision.',
-];
 
 export function chatToMarkdown(chat: SpecialistChat): string {
   const out = [
@@ -110,14 +105,6 @@ export function solutionToMarkdown(solution: Solution): string {
       '',
     );
   }
-  if (st.confidence) {
-    lines.push(
-      `## Confidence: ${st.confidence.score}% (threshold ${st.confidence.threshold}%)`,
-      '',
-      ...st.confidence.factors.map((f) => `- ${f.label}: ${f.score}%${f.note ? ` — ${f.note}` : ''}`),
-      '',
-    );
-  }
   if (st.discovery?.messages?.length) {
     lines.push(
       '## Discovery conversation',
@@ -128,33 +115,30 @@ export function solutionToMarkdown(solution: Solution): string {
       '',
     );
   }
-  lines.push('## Pattern matches', '');
-  (st.patternMatches || []).forEach((m) =>
-    lines.push(`- **${m.patternName}** — ${m.level} (score ${m.score}). ${m.explanation}`),
-  );
-  lines.push('', '## Hypotheses', '');
-  st.hypotheses.forEach((h) => {
-    lines.push(
-      `### ${h.title} (${h.confidence} confidence)`,
-      '',
-      h.rationale,
-      '',
-      '**Recommended services (in order)**',
-      '',
-    );
-    [...h.recommendations]
+  const chosen = st.hypotheses[0];
+  if (chosen) {
+    lines.push('## Chosen approach', '', `### ${chosen.title}`, '', chosen.rationale, '', '**Recommended services (in order)**', '');
+    [...chosen.recommendations]
       .sort((a, b) => a.order - b.order)
       .forEach((r) => lines.push(`${r.order}. **${r.service}** — ${r.reason}`));
-    if (h.assumptions.length) lines.push('', '**Assumptions**', '', ...h.assumptions.map((a) => `- ${a}`));
-    if (h.unknowns.length) lines.push('', '**Unknowns**', '', ...h.unknowns.map((a) => `- ${a}`));
+    if (chosen.assumptions.length) lines.push('', '**Assumptions**', '', ...chosen.assumptions.map((a) => `- ${a}`));
+    if (chosen.unknowns.length) lines.push('', '**Unknowns**', '', ...chosen.unknowns.map((a) => `- ${a}`));
     lines.push('');
-  });
+  }
   lines.push('## Concepts', '');
   st.concepts.forEach((c) => lines.push(`- ${c.type}: ${c.name}`));
   lines.push('', '## Questions and answers', '');
   st.questions.forEach((q) =>
     lines.push(`- **${q.question}** (${q.status})${q.answer ? `\n  - Answer: ${q.answer}` : ''}`),
   );
+  if (st.decisions?.length) {
+    lines.push(
+      '',
+      '## Recorded decisions',
+      '',
+      ...st.decisions.map((d) => `- **${d.title}**: ${sentence(d.decision)}${d.reason ? ` _Why:_ ${d.reason}` : ''}`),
+    );
+  }
   lines.push('', '## Next steps', '');
   st.nextSteps.forEach((n) => lines.push(`- **${n.title}** — ${n.reason}`));
   if (st.conversation?.length) {
@@ -181,6 +165,18 @@ export function solutionToMarkdown(solution: Solution): string {
     bullets('Scope', bp.overview.scope);
     bullets('Out of scope', bp.overview.outOfScope);
     bullets('Stakeholders', bp.overview.stakeholders);
+    if (bp.overview.roles?.length) {
+      lines.push(
+        '',
+        '**Roles**',
+        '',
+        '| Actor | App role | GoA product type |',
+        '|---|---|---|',
+        ...bp.overview.roles.map(
+          (r) => `| ${tableCell(r.actor)} | ${tableCell(r.appRole) || '_Open_'} | ${r.productType || '_Open_'} |`,
+        ),
+      );
+    }
     bullets('Success measures', bp.overview.successMeasures);
     bullets('Key risks', bp.overview.risks);
     lines.push(
@@ -219,8 +215,6 @@ export function solutionToMarkdown(solution: Solution): string {
     lines.push(
       '',
       '## 5. Components to set up',
-      '',
-      ...COMPONENT_INSTRUCTIONS,
       '',
       ...(bp.components ?? []).filter((c) => c.review !== 'rejected').flatMap((c) => {
         const detail = detailBullet(c.order);
@@ -267,4 +261,20 @@ export function solutionToMarkdown(solution: Solution): string {
     bullets('Open questions', bp.delivery.openQuestions);
   }
   return lines.join('\n') + '\n';
+}
+
+export function harnessToMarkdown(solution: Solution): string {
+  const components = (solution.state.blueprint?.components ?? []).filter((c) => c.review !== 'rejected');
+  const componentList = components.length
+    ? components
+        .map((c) => `${c.order}. **${c.name}** (${c.type}, ${c.service}): ${REVIEW_LABELS[c.review ?? 'not-reviewed']}`)
+        .join('\n')
+    : '_No components._';
+  const values: Record<string, string> = {
+    name: solution.name,
+    slug: safeName(solution),
+    n: solution.version,
+    'component list': componentList,
+  };
+  return HARNESS_TEMPLATE.replace(/\{(name|slug|n|component list)\}/g, (_, key: string) => values[key]);
 }
