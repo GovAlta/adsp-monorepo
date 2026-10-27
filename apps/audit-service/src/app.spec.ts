@@ -163,6 +163,7 @@ describe('audit application authorization', () => {
       configurationService: configuration,
       directory: { getServiceUrl: jest.fn(), getResourceUrl: jest.fn() },
       eventService: { send: jest.fn() },
+      auditService: { record: jest.fn(), query: jest.fn(), flush: jest.fn(), droppedEventCount: 0 },
       tokenProvider: { getAccessToken: jest.fn() },
       configurationHandler: jest.fn(),
       healthCheck: jest.fn().mockResolvedValue({}),

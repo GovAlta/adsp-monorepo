@@ -2,6 +2,7 @@ import axios from 'axios';
 import { Logger } from 'winston';
 import { ServiceRegistrar, ServiceRegistration, ServiceRole } from './index';
 import { TokenProvider } from '../access';
+import { auditDefinitions } from '../audit/definitions';
 import { ServiceDirectory } from '../directory';
 import { AdspId, adspId, retry } from '../utils';
 
@@ -147,6 +148,16 @@ export class ServiceRegistrarImpl implements ServiceRegistrar {
         },
       };
       await this.updateConfiguration(adspId`urn:ads:platform:value-service`, update);
+    }
+
+    if (registration.auditActions) {
+      const application = registration.serviceId.service;
+      await this.updateConfiguration(
+        adspId`urn:ads:platform:audit-service`,
+        { kind: 'actionCatalog', application, actions: auditDefinitions(registration.auditActions) },
+        `actions-${application}`,
+        'REPLACE',
+      );
     }
 
     if (registration.serviceConfigurations) {
