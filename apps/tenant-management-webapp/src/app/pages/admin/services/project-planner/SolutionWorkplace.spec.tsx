@@ -478,7 +478,29 @@ describe('SolutionWorkplace', () => {
     );
   });
 
-  it.each(['download-json', 'download-report'])(
+  it('downloads the harness instructions for the exported version', async () => {
+    const { container } = await setup(undefined, { exportSolution: jest.fn().mockResolvedValue({ version: '1.1' }) });
+
+    click(container, 'download-harness');
+
+    await waitFor(() =>
+      expect(download).toHaveBeenCalledWith(
+        'planner-permit-intake-harness.md',
+        expect.stringContaining('solution-version: 1.1'),
+        'text/markdown',
+      ),
+    );
+  });
+
+  it('disables the harness download while an export is running', async () => {
+    const { container } = await setup(undefined, { exportSolution: jest.fn(() => new Promise(() => undefined)) });
+
+    click(container, 'download-harness');
+
+    await waitFor(() => expect(goa(container, 'download-harness').getAttribute('disabled')).toBe('true'));
+  });
+
+  it.each(['download-json', 'download-report', 'download-harness'])(
     'takes the new version from the %s export but keeps the saved state, which still has rejected components',
     async (button) => {
       const solution = analyzed({ discovery: readyDiscovery });
@@ -550,6 +572,7 @@ describe('SolutionWorkplace', () => {
 
     await waitFor(() => expect(container.querySelector('[data-testid="workplace-busy-overlay"]')).not.toBeNull());
     expect(goa(container, 'download-json').getAttribute('disabled')).toBe('true');
+    expect(goa(container, 'download-harness').getAttribute('disabled')).toBe('true');
     expect(goa(container, 'delete-solution').getAttribute('disabled')).toBe('true');
     expect(goa(container, 'problem-continue').getAttribute('disabled')).toBe('true');
 
