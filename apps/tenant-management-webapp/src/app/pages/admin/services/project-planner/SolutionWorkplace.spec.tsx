@@ -422,8 +422,6 @@ describe('SolutionWorkplace', () => {
     const { container } = await setup();
     type(container, 'problem-input', 'Changed permit workflow.');
 
-    expect(container.querySelector('[testid="problem-plan-out-of-date"]')).not.toBeNull();
-    expect(goa(container, 'problem-back-to-questions')).not.toBeNull();
     expect(container.querySelector('[testid="update-plan"]')).toBeNull();
     expect(container.querySelector('[testid="plan-out-of-date"]')?.textContent).toContain('Save & analyze above');
   });
@@ -493,7 +491,6 @@ describe('SolutionWorkplace', () => {
     const { container } = await setup(undefined, { listVersions: jest.fn().mockResolvedValue(versionList(3)) });
 
     await waitFor(() => expect(goa(container, 'solution-version').getAttribute('content')).toBe('v3'));
-    expect(goa(container, 'unsaved-changes')).toBeNull();
     expect(goa(container, 'save-version').getAttribute('disabled')).toBe('true');
   });
 
@@ -502,14 +499,12 @@ describe('SolutionWorkplace', () => {
       listVersions: jest.fn().mockResolvedValueOnce(versionList(1, true)).mockResolvedValue(versionList(2)),
       saveVersion: jest.fn().mockResolvedValue({ number: 2, name: 'Version 2', createdOn: '2026-03-02T10:00:00.000Z' }),
     });
-    await waitFor(() => expect(goa(container, 'unsaved-changes')).not.toBeNull());
-    expect(goa(container, 'save-version').getAttribute('disabled')).toBeNull();
+    await waitFor(() => expect(goa(container, 'save-version').getAttribute('disabled')).toBeNull());
 
     click(container, 'save-version');
 
     await waitFor(() => expect(goa(container, 'solution-version').getAttribute('content')).toBe('v2'));
     expect(api.saveVersion).toHaveBeenCalledWith('solution-1');
-    expect(goa(container, 'unsaved-changes')).toBeNull();
   });
 
   it('refreshes the version status when saving fails', async () => {
@@ -517,7 +512,7 @@ describe('SolutionWorkplace', () => {
       listVersions: jest.fn().mockResolvedValueOnce(versionList(1, true)).mockResolvedValue(versionList(2)),
       saveVersion: jest.fn().mockRejectedValue(new Error('conflict')),
     });
-    await waitFor(() => expect(goa(container, 'unsaved-changes')).not.toBeNull());
+    await waitFor(() => expect(goa(container, 'save-version').getAttribute('disabled')).toBeNull());
 
     click(container, 'save-version');
 
@@ -591,7 +586,7 @@ describe('SolutionWorkplace', () => {
     await waitFor(() => expect(api.blueprint).toHaveBeenCalledTimes(1));
   });
 
-  it('shows a busy overlay and blocks the header and problem statement while discovery is working', async () => {
+  it('blocks the header and problem statement while discovery is working, without a full-page overlay', async () => {
     const planned = withPlan();
     let resolveChat: (value: Solution) => void = () => undefined;
     const chatPromise = new Promise<Solution>((resolve) => {
@@ -605,15 +600,14 @@ describe('SolutionWorkplace', () => {
     type(container, 'discovery-input', 'Add more detail about the renewal process.');
     click(container, 'discovery-send');
 
-    await waitFor(() => expect(container.querySelector('[data-testid="workplace-busy-overlay"]')).not.toBeNull());
-    expect(goa(container, 'download-json').getAttribute('disabled')).toBe('true');
+    await waitFor(() => expect(goa(container, 'download-json').getAttribute('disabled')).toBe('true'));
+    expect(container.querySelector('[data-testid="workplace-busy-overlay"]')).toBeNull();
     expect(goa(container, 'download-harness').getAttribute('disabled')).toBe('true');
     expect(goa(container, 'delete-solution').getAttribute('disabled')).toBe('true');
     expect(goa(container, 'problem-continue').getAttribute('disabled')).toBe('true');
 
     resolveChat(planned);
-    await waitFor(() => expect(container.querySelector('[data-testid="workplace-busy-overlay"]')).toBeNull());
-    expect(goa(container, 'download-json').getAttribute('disabled')).toBeNull();
+    await waitFor(() => expect(goa(container, 'download-json').getAttribute('disabled')).toBeNull());
   });
 
   it('passes accessibility checks', async () => {

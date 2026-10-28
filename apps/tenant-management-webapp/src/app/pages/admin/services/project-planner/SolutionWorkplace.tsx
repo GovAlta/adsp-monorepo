@@ -546,17 +546,6 @@ export const SolutionWorkplace: FunctionComponent<SolutionWorkplaceProps> = ({
                   {analysis.warning}
                 </GoabCallout>
               )}
-              {problemChanged && blueprint && (
-                <GoabCallout
-                  type="important"
-                  emphasis="high"
-                  heading="Plan out of date"
-                  testId="problem-plan-out-of-date"
-                  mt="m"
-                >
-                  Your current plan remains available below. Save &amp; analyze to refresh it.
-                </GoabCallout>
-              )}
             </section>
           </GuidedStep>
         </li>
