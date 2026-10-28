@@ -22,7 +22,6 @@ import {
 import { FeedbackNotification } from './FeedbackNotification';
 import { FormDefinition } from './FormDefinition';
 import { FormHeader } from './FormHeader';
-import { useFeedbackLinkHandler } from '../util/feedbackUtils';
 import { Forms } from './Forms';
 
 const AccountActionsDiv = styled.div`
@@ -53,8 +52,6 @@ export const FormTenant = () => {
       dispatch(selectedDefinition(definitionId));
     }
   }, [dispatch, definitionId, tenant]);
-  useFeedbackLinkHandler();
-
   const { definition } = useSelector(definitionSelector);
   const topic = useSelector(selectedTopicSelector);
   const showMessages = useSelector(showMessagesSelector);
@@ -76,7 +73,7 @@ export const FormTenant = () => {
 
   return (
     <React.Fragment>
-      <GoabMicrositeHeader type="alpha" feedbackUrlTarget="self" headerUrlTarget="self" feedbackUrl="#" />
+      <GoabMicrositeHeader type="alpha" headerUrlTarget="self" />
       <FormHeader
         heading={headerTitle}
         // The topic is only created for definitions with 'create support topic' checked, and only
