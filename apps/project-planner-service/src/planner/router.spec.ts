@@ -15,6 +15,20 @@ import { DISCOVERY_FACTORS, DISCOVERY_THRESHOLD } from './discovery';
 import { BUILT_IN_PATTERNS } from './patterns';
 import { sectionHashes } from './versioning';
 
+const mockGetText = jest.fn();
+const mockPdfDestroy = jest.fn().mockResolvedValue(undefined);
+jest.mock('pdf-parse', () => ({
+  PDFParse: class {
+    getText = mockGetText;
+    destroy = mockPdfDestroy;
+  },
+}));
+
+const mockExtractRawText = jest.fn();
+jest.mock('mammoth', () => ({
+  extractRawText: (...args: unknown[]) => mockExtractRawText(...args),
+}));
+
 const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
 
 const makeSolution = (createdById: string): Solution => ({
@@ -824,6 +838,76 @@ describe('planner router routes', () => {
       const res = await request(buildApp()).get('/planner/v1/solutions');
 
       expect(res.status).toBe(500);
+    });
+  });
+
+  describe('POST /documents/extract', () => {
+    it('extracts text from an uploaded markdown file', async () => {
+      const res = await request(buildApp(owner))
+        .post('/planner/v1/documents/extract')
+        .attach('file', Buffer.from('Applicants apply online.'), 'plan.md');
+
+      expect(res.status).toBe(200);
+      expect(res.body.text).toBe('Applicants apply online.');
+    });
+
+    it('extracts text from an uploaded docx file', async () => {
+      mockExtractRawText.mockResolvedValue({ value: 'Applicants apply online.' });
+
+      const res = await request(buildApp(owner))
+        .post('/planner/v1/documents/extract')
+        .attach('file', Buffer.from('docx-bytes'), 'plan.docx');
+
+      expect(res.status).toBe(200);
+      expect(res.body.text).toBe('Applicants apply online.');
+    });
+
+    it('extracts text from an uploaded pdf file', async () => {
+      mockGetText.mockResolvedValue({ text: 'Applicants apply online.' });
+
+      const res = await request(buildApp(owner))
+        .post('/planner/v1/documents/extract')
+        .attach('file', Buffer.from('pdf-bytes'), 'plan.pdf');
+
+      expect(res.status).toBe(200);
+      expect(res.body.text).toBe('Applicants apply online.');
+    });
+
+    it('returns 400 when no file is uploaded', async () => {
+      const res = await request(buildApp(owner)).post('/planner/v1/documents/extract');
+
+      expect(res.status).toBe(400);
+    });
+
+    it('returns 400 for an unsupported file format', async () => {
+      const res = await request(buildApp(owner))
+        .post('/planner/v1/documents/extract')
+        .attach('file', Buffer.from('bytes'), 'plan.doc');
+
+      expect(res.status).toBe(400);
+      expect(res.body.error).toContain('not a supported format');
+    });
+
+    it('returns 400 when the file cannot be read', async () => {
+      mockGetText.mockRejectedValue(new Error('corrupt pdf'));
+
+      const res = await request(buildApp(owner))
+        .post('/planner/v1/documents/extract')
+        .attach('file', Buffer.from('pdf-bytes'), 'plan.pdf');
+
+      expect(res.status).toBe(400);
+      expect(res.body.error).toContain('Could not read plan.pdf');
+    });
+
+    it('returns 400 when no text can be extracted (e.g. a scanned pdf)', async () => {
+      mockGetText.mockResolvedValue({ text: '' });
+
+      const res = await request(buildApp(owner))
+        .post('/planner/v1/documents/extract')
+        .attach('file', Buffer.from('pdf-bytes'), 'plan.pdf');
+
+      expect(res.status).toBe(400);
+      expect(res.body.error).toContain('No readable text was found');
     });
   });
 
