@@ -49,7 +49,8 @@ export interface AuditEventRecord {
   actor: { id?: string; type?: string; name?: string; email?: string; roles?: string[] };
   resource?: { type: string; id?: string; name?: string };
   correlationId?: string;
-  scope?: string;
+  sessionId?: string;
+  scopeIds?: string[];
   changeSet?: { before?: unknown; after?: unknown };
   metadata?: Record<string, unknown>;
   retentionClass?: string;

@@ -36,6 +36,14 @@ describe('eventsToCsv', () => {
     expect(csv).toContain(`"'=HYPERLINK(""http://x"")"`);
   });
 
+  it('exports the scope IDs and session ID', () => {
+    const [header, row] = eventsToCsv([event({ scopeIds: ['s-1', 's-2'], sessionId: 'session-1' })]).split('\r\n');
+    const columns = header.split(',');
+    expect(row).toContain('"s-1, s-2"');
+    expect(columns).toContain('sessionId');
+    expect(row).toContain('session-1');
+  });
+
   it('omits actor name and email unless personal information is included', () => {
     const events = [event({ actor: { id: 'u', name: 'Jane', email: 'jane@example.com' } })];
 

@@ -24,8 +24,9 @@ export const AuditEventDetails: FunctionComponent<{ event: AuditEventRecord }> =
     <div data-testid="audit-event-details">
       <Field label="Event ID" value={event.id} />
       <Field label="Correlation ID" value={event.correlationId} />
+      <Field label="Session ID" value={event.sessionId} />
       <Field label="Severity" value={event.severity} />
-      <Field label="Scope" value={event.scope} />
+      <Field label="Scope" value={event.scopeIds?.join(', ')} />
       <Field label="Actor ID" value={actor?.id} />
       <Field label="Actor type" value={actor?.type} />
       <Field label="Actor name" value={actor?.name} />
