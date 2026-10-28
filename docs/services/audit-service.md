@@ -288,6 +288,20 @@ A Core caller with the role can select a tenant via
 reads Core catalogs only. The service registers this role for tenant provisioning; existing tenants
 still need their normal role provisioning/assignment process.
 
+### Listing every catalog
+
+```http
+GET /audit/v1/actions
+Authorization: ****** with audit-reader>
+```
+
+Returns `[{ "application", "core", "actions": [...] }]`, one entry per registered `actions-<application>`
+catalog, sorted by application. Each entry is the same effective (tenant plus Core) catalog that
+`GET /audit/v1/{namespace}/actions` returns; `core` is true when the catalog is shared from Core. The
+service finds the catalogs by listing the `audit-service` configuration namespace with its own service
+account, so a caller does not need configuration-service access. Status codes and tenant selection
+follow the single-application listing; `503` is also returned when the catalog listing fails.
+
 The catalog governs future write classification, not history access. Removing a definition performs
 no audit-record deletion. History endpoints query PostgreSQL independently of the catalog, so
 removing an action does not prevent reading its existing records.
@@ -476,8 +490,8 @@ through the deployed Route also require verification in the target environment.
 Both endpoints require `audit-admin` and use the caller's tenant. Core administrators must
 provide `tenantId`. Reader or writer permissions alone are not enough.
 
-| Endpoint                                 | Purpose                                                             |
-| ---------------------------------------- | ------------------------------------------------------------------- |
+| Endpoint                                   | Purpose                                                               |
+| ------------------------------------------ | --------------------------------------------------------------------- |
 | `GET /audit/v1/failed-events`              | List the tenant's open, replayed and discarded events, newest first.  |
 | `POST /audit/v1/failed-events/{id}/replay` | Retry an open event using its stored data. No request body is needed. |
 
@@ -611,12 +625,12 @@ registered by the service at startup in core configuration, alongside `failed-ev
 applies to every tenant. If registration has not propagated yet, reads still succeed but recording
 fails and is counted.
 
-| Action | Category | Recorded when |
-| --- | --- | --- |
-| `events.list` | `data-access` | A namespace listing succeeds. |
-| `events.list-all` | `data-access` | A cross-namespace listing succeeds. |
-| `events.read` | `data-access` | A single event read succeeds. |
-| `failed-events.list` | `data-access` | A failed-events listing succeeds. |
+| Action               | Category      | Recorded when                       |
+| -------------------- | ------------- | ----------------------------------- |
+| `events.list`        | `data-access` | A namespace listing succeeds.       |
+| `events.list-all`    | `data-access` | A cross-namespace listing succeeds. |
+| `events.read`        | `data-access` | A single event read succeeds.       |
+| `failed-events.list` | `data-access` | A failed-events listing succeeds.   |
 
 Reads use the `security` retention class (365 days by default). Replay is recorded
 transactionally by the replay itself (see above), not by this mechanism.

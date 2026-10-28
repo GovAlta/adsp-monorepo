@@ -72,4 +72,44 @@ describe('CatalogService', () => {
 
     await expect(service.getCatalog('case-service', tenantId)).rejects.toBeInstanceOf(CatalogUnavailableError);
   });
+
+  describe('listCatalogs', () => {
+    const source = { listApplications: jest.fn() };
+    const listing = new CatalogService(configuration, logger, source);
+    const catalogOf = (application: string) => ({ kind: 'actionCatalog', application, actions: {} });
+
+    it('merges core and tenant applications once and flags core ones', async () => {
+      source.listApplications.mockImplementation(async (tenant) => (tenant ? ['b-app', 'a-app'] : ['a-app', 'c-app']));
+      configuration.getServiceConfiguration.mockImplementation(async (name: string) =>
+        catalogOf(name.substring('actions-'.length)),
+      );
+
+      const result = await listing.listCatalogs(tenantId);
+
+      expect(result.map(({ application, core }) => [application, core])).toEqual([
+        ['a-app', true],
+        ['b-app', false],
+        ['c-app', true],
+      ]);
+    });
+
+    it('lists only core catalogs without a tenant', async () => {
+      source.listApplications.mockResolvedValue(['a-app']);
+      configuration.getServiceConfiguration.mockResolvedValue(catalogOf('a-app'));
+
+      await listing.listCatalogs();
+
+      expect(source.listApplications).toHaveBeenCalledTimes(1);
+    });
+
+    it('reports a listing failure as unavailable', async () => {
+      source.listApplications.mockRejectedValue(new Error('boom'));
+
+      await expect(listing.listCatalogs(tenantId)).rejects.toBeInstanceOf(CatalogUnavailableError);
+    });
+
+    it('is unavailable when no source is configured', async () => {
+      await expect(service.listCatalogs(tenantId)).rejects.toBeInstanceOf(CatalogUnavailableError);
+    });
+  });
 });

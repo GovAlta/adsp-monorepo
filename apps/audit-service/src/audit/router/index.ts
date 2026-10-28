@@ -69,14 +69,36 @@ export const readActions =
     }
   };
 
+export const readCatalogs =
+  (catalogs: CatalogService): RequestHandler =>
+  async (req, res, next) => {
+    try {
+      const listings = await catalogs.listCatalogs(req.tenant?.id);
+      res.send(
+        listings.map(({ application, core, actions }) => ({
+          application,
+          core,
+          actions: Object.entries(actions).map(([name, definition]) => ({ ...definition, name })),
+        })),
+      );
+    } catch (err) {
+      next(err);
+    }
+  };
+
 export function createAuditRouter(options: AuditRouterOptions): Router {
   const router = Router();
   // Without a submitter the auditor still exists, so unrecorded reads are logged and counted rather than silently skipped.
   const auditor =
-    options.auditor ??
-    (options.serviceId ? new SelfAuditor({ ...options, serviceId: options.serviceId }) : undefined);
+    options.auditor ?? (options.serviceId ? new SelfAuditor({ ...options, serviceId: options.serviceId }) : undefined);
   const validateNamespace = createValidationHandler(
     param('namespace').isString().isLength({ min: 1, max: APPLICATION_MAX_LENGTH }).matches(APPLICATION_PATTERN),
+  );
+  router.get(
+    '/actions',
+    assertAuthenticatedHandler,
+    requireAuditRole(AuditServiceRoles.Reader),
+    readCatalogs(options.catalogs),
   );
   router.get(
     '/:namespace/actions',
