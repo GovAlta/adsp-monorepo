@@ -327,6 +327,7 @@ export interface ChatMessage {
   content: string;
   at: string;
   intent?: SpecialistIntent | string;
+  initiatedBy?: 'planner';
   mode?: AnalysisMode;
   model?: string;
   warning?: string;

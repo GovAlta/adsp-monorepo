@@ -844,6 +844,14 @@ export function createPlannerRouter({
         const confidence = computeConfidence(factors);
         const ready = confidence >= DISCOVERY_THRESHOLD || req.body.force === true;
         let reply = aiDiscovery?.reply || ruleDiscoveryReply(factors, confidence, ready);
+        if (req.body.message) {
+          const priorConfidence = solution.state.discovery?.confidence ?? 0;
+          const confidenceWithoutThisReply = computeConfidence(ruleAssess(userEvidence(problem, prior)));
+          const fromEarlierDetails = confidenceWithoutThisReply - priorConfidence;
+          if (confidence > priorConfidence && fromEarlierDetails >= 10) {
+            reply = `${reply} (Some of that increase comes from details already in the problem statement or earlier answers, not just this reply.)`;
+          }
+        }
         if (req.body.force === true && confidence < DISCOVERY_THRESHOLD) {
           reply = `${reply}\n\nProceeding with a proposed solution at ${confidence}% confidence, as you asked. Expect more open questions and assumptions.`;
         }
@@ -1009,7 +1017,12 @@ export function createPlannerRouter({
     req: Request,
     solution: Solution,
     service: string,
-    { question, proposal, mode }: { question?: string; proposal?: string; mode?: AnalysisMode },
+    {
+      question,
+      proposal,
+      mode,
+      initiatedBy,
+    }: { question?: string; proposal?: string; mode?: AnalysisMode; initiatedBy?: 'planner' },
   ): Promise<{ result: ConsultResult; state: SolutionState }> {
     const baseResult = consultSpecialist(solution.state, service);
     if (!baseResult) {
@@ -1041,7 +1054,13 @@ export function createPlannerRouter({
     const at = new Date().toISOString();
     const asked: string = question || 'Consult on this solution';
     await recordExchange(req, existingChat, { service: result.service, solutionId: solution.id, title: asked }, [
-      { role: 'user', content: proposal ? `${asked}\n\nPlan to validate:\n${proposal}` : asked, at, intent: 'consult' },
+      {
+        role: 'user',
+        content: proposal ? `${asked}\n\nPlan to validate:\n${proposal}` : asked,
+        at,
+        intent: 'consult',
+        initiatedBy,
+      },
       {
         role: 'assistant',
         content: result.advice || result.reason,
@@ -1077,6 +1096,7 @@ export function createPlannerRouter({
     async (req, res, next) => {
       try {
         const solution = loaded(req);
+        const isFirstBlueprint = !solution.state.blueprint;
         const hypothesis = solution.state.hypotheses[0];
         if (!hypothesis) {
           throw new InvalidOperationError('Analyze the problem before generating a blueprint.');
@@ -1097,9 +1117,24 @@ export function createPlannerRouter({
             notes.push(toSpecialistNote(storedConsult(saved), 'saved-consultation', highlights, saved.at));
             continue;
           }
-          const { result, state: updatedState } = await runConsult(req, working, service, { mode: requestedMode });
-          working = { ...working, state: updatedState };
-          notes.push(toSpecialistNote(result, result.advice ? 'ai' : 'rules', highlights, new Date().toISOString()));
+          try {
+            const { result, state: updatedState } = await runConsult(req, working, service, {
+              mode: requestedMode,
+              initiatedBy: 'planner',
+            });
+            working = { ...working, state: updatedState };
+            notes.push(toSpecialistNote(result, result.advice ? 'ai' : 'rules', highlights, new Date().toISOString()));
+          } catch (err) {
+            logger.warn(`Automatic consultation with ${service} failed: ${(err as Error).message}`);
+            await recordExchange(req, chat, { service, solutionId: solution.id, title: 'Consult on this solution' }, [
+              {
+                role: 'assistant',
+                content: 'Last consultation failed. Try consulting this specialist again.',
+                at: new Date().toISOString(),
+                intent: 'consult',
+              },
+            ]);
+          }
         }
 
         const patterns = await getPatterns(req, patternRepository);
@@ -1149,7 +1184,13 @@ export function createPlannerRouter({
           generated?.notCoveredByAdsp,
           components,
         );
-        res.send(await persist(req, { ...solution, state: { ...working.state, blueprint } }, 'blueprint'));
+        const saved = await persist(req, { ...solution, state: { ...working.state, blueprint } }, 'blueprint');
+        if (isFirstBlueprint) {
+          const tenantId = getTenantId(req);
+          const savedChats = await specialistChatRepository.findBySolution(tenantId, saved.id);
+          await solutionVersionRepository.create(tenantId, saved.id, versionContent(saved, savedChats));
+        }
+        res.send(saved);
       } catch (err) {
         next(err);
       }

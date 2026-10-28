@@ -345,6 +345,7 @@ export interface StoredChatMessage {
   at: string;
   // User messages: the task requested. Assistant messages: how the reply was produced.
   intent?: string;
+  initiatedBy?: 'planner';
   mode?: AnalysisMode;
   model?: string;
   warning?: string;

@@ -64,8 +64,7 @@ describe('DiscoveryPanel', () => {
     await waitFor(() => expect(api.listChats).toHaveBeenCalled());
 
     expect(container.textContent).toContain('Who are the users? What steps do they take?');
-    expect(container.querySelector('[testid="discovery-questions"]')?.getAttribute('heading')).toBe('Questions');
-    expect(container.querySelector('[testid="discovery-questions"]')?.getAttribute('secondarytext')).toBeNull();
+    expect(container.querySelector('[testid="discovery-conversation"]')?.getAttribute('heading')).toBe('Conversation');
     expect(container.querySelector('[testid="discovery-force"]')?.textContent).toBe('Skip and show me a plan');
     expect(container.querySelector('[testid="discovery-restart"]')).not.toBeNull();
   });
@@ -88,52 +87,6 @@ describe('DiscoveryPanel', () => {
     expect(container.querySelector('[data-testid="discovery-mode-hint"]')?.textContent).toContain(
       'Using rule-based analysis',
     );
-  });
-
-  it('groups optional questions, conversation, and one shared answer box in the same panel', async () => {
-    const api = createMockApi();
-    const { container } = render(
-      <DiscoveryPanel
-        solution={solution(discovery(), [
-          { id: 'q1', question: 'Who reviews applications?', raisedBy: 'planner', status: 'open' },
-          { id: 'q2', question: 'What documents are required?', raisedBy: 'planner', status: 'open' },
-        ])}
-        api={api}
-        mode="ai"
-        onSolutionChange={jest.fn()}
-      />,
-    );
-    await waitFor(() => expect(api.listChats).toHaveBeenCalled());
-
-    expect(container.querySelector('[testid="discovery-questions"]')).not.toBeNull();
-    expect(container.querySelector('[testid="discovery-questions"]')?.getAttribute('heading')).toBe('Questions');
-    expect(container.querySelectorAll('[testid="discovery-questions"] li')).toHaveLength(2);
-    expect(container.querySelector('[testid="discovery-questions"]')?.hasAttribute('open')).toBe(false);
-    expect(container.querySelectorAll('goa-textarea[testid="discovery-input"]')).toHaveLength(1);
-    expect(container.querySelector('[role="group"][aria-label="Discovery actions"]')).not.toBeNull();
-    expect(container.textContent).toContain(
-      'Refine the analysis by answering optional questions, asking a question, adding more details, or correcting gaps.',
-    );
-    const discoveryPanel = container.querySelector('[data-testid="discovery-panel"]');
-    expect(discoveryPanel?.contains(container.querySelector('[testid="discovery-questions"]'))).toBe(true);
-    expect(discoveryPanel?.contains(container.querySelector('goa-textarea[testid="discovery-input"]'))).toBe(true);
-    expect(discoveryPanel?.contains(container.querySelector('[testid="discovery-conversation"]'))).toBe(true);
-    const conversationHistory = container.querySelector('[testid="discovery-conversation-history"]');
-    expect(conversationHistory?.getAttribute('heading')).toBe('Conversation history (1)');
-    expect(conversationHistory?.hasAttribute('open')).toBe(false);
-    expect(conversationHistory?.querySelector('[testid="discovery-message-0"]')).not.toBeNull();
-    expect(conversationHistory?.contains(container.querySelector('goa-textarea[testid="discovery-input"]'))).toBe(
-      false,
-    );
-    expect(container.querySelector('goa-form-item')?.getAttribute('label')).toBe('Additional details');
-    expect(container.querySelector('goa-textarea[testid="discovery-input"]')?.getAttribute('arialabel')).toBe(
-      'Additional details',
-    );
-    expect(container.querySelector('goa-textarea[testid="discovery-input"]')?.getAttribute('placeholder')).toBe(
-      'Add details, ask a question, or correct anything the planner got wrong.',
-    );
-    expect(discoveryPanel?.textContent).not.toContain('One reply can cover several questions.');
-    expect(container.querySelector('[data-testid="questions-pane"]')).toBeNull();
   });
 
   it('sends the user answers together in one reply', async () => {
@@ -177,234 +130,6 @@ describe('DiscoveryPanel', () => {
     expect(onSolutionChange).toHaveBeenCalledWith(result);
   });
 
-  it('shows an Answer action for an open question and a summary with Show answer/Edit for an answered one', async () => {
-    const longAnswer = 'A'.repeat(350);
-    const api = createMockApi();
-    const { container } = render(
-      <DiscoveryPanel
-        solution={solution(discovery(), [
-          { id: 'q1', question: 'Who reviews applications?', raisedBy: 'planner', status: 'open' },
-          {
-            id: 'q2',
-            question: 'What documents are required?',
-            raisedBy: 'planner',
-            status: 'answered',
-            answer: longAnswer,
-          },
-        ])}
-        api={api}
-        mode="ai"
-        onSolutionChange={jest.fn()}
-      />,
-    );
-    await waitFor(() => expect(api.listChats).toHaveBeenCalled());
-
-    expect(container.querySelector('[testid="discovery-question-status-q1"]')?.getAttribute('content')).toBe('Open');
-    expect(container.querySelector('[testid="discovery-question-answer-q1"]')?.textContent).toBe('Answer');
-    expect(container.querySelector('[testid="discovery-question-input-q1"]')).toBeNull();
-    expect(container.querySelector('[testid="discovery-question-status-q2"]')?.getAttribute('content')).toBe(
-      'Answered',
-    );
-    expect(container.querySelector('[data-testid="discovery-question-summary-q2"]')).toBeNull();
-    expect(container.querySelector('[testid="discovery-question-toggle-q2"]')?.textContent).toBe('Show answer');
-    expect(container.querySelector('[testid="discovery-question-edit-q2"]')?.textContent).toBe('Edit');
-  });
-
-  it('wraps answered questions in a collapsed details section, separate from open questions', async () => {
-    const api = createMockApi();
-    const { container } = render(
-      <DiscoveryPanel
-        solution={solution(discovery(), [
-          { id: 'q1', question: 'Who reviews applications?', raisedBy: 'planner', status: 'open' },
-          {
-            id: 'q2',
-            question: 'What documents are required?',
-            raisedBy: 'planner',
-            status: 'answered',
-            answer: 'A photo ID and proof of address.',
-          },
-        ])}
-        api={api}
-        mode="ai"
-        onSolutionChange={jest.fn()}
-      />,
-    );
-    await waitFor(() => expect(api.listChats).toHaveBeenCalled());
-
-    const answered = container.querySelector('[testid="discovery-answered-questions"]');
-    expect(answered?.getAttribute('heading')).toBe('Answered questions (1)');
-    expect(answered?.hasAttribute('open')).toBe(false);
-    expect(answered?.querySelector('[data-testid="discovery-question-q2"]')).not.toBeNull();
-    expect(answered?.querySelector('[data-testid="discovery-question-q1"]')).toBeNull();
-  });
-
-  it('answers an open question independently through its own Save action', async () => {
-    const result = solution(discovery());
-    const api = createMockApi({ answerQuestion: jest.fn().mockResolvedValue(result) });
-    const onSolutionChange = jest.fn();
-    const { container } = render(
-      <DiscoveryPanel
-        solution={solution(discovery(), [
-          { id: 'q1', question: 'Who reviews applications?', raisedBy: 'planner', status: 'open' },
-        ])}
-        api={api}
-        mode="ai"
-        onSolutionChange={onSolutionChange}
-      />,
-    );
-
-    click(container, 'discovery-question-answer-q1');
-    fireEvent(
-      container.querySelector('goa-textarea[testid="discovery-question-input-q1"]') as Element,
-      new CustomEvent('_change', { detail: { value: 'Staff review each application.' } }),
-    );
-    click(container, 'discovery-question-save-q1');
-
-    await waitFor(() =>
-      expect(api.answerQuestion).toHaveBeenCalledWith('solution-1', 'q1', 'Staff review each application.'),
-    );
-    expect(api.discovery).not.toHaveBeenCalled();
-    expect(api.chat).not.toHaveBeenCalled();
-    expect(onSolutionChange).toHaveBeenCalledWith(result);
-  });
-
-  it('expands the full answer when Show answer is clicked, and collapses it again', async () => {
-    const longAnswer =
-      `${'A photo ID and proof of address, plus a completed application form and a copy of the lease agreement. '.repeat(4)}`.trim();
-    const api = createMockApi();
-    const { container } = render(
-      <DiscoveryPanel
-        solution={solution(discovery(), [
-          {
-            id: 'q2',
-            question: 'What documents are required?',
-            raisedBy: 'planner',
-            status: 'answered',
-            answer: longAnswer,
-          },
-        ])}
-        api={api}
-        mode="ai"
-        onSolutionChange={jest.fn()}
-      />,
-    );
-    await waitFor(() => expect(api.listChats).toHaveBeenCalled());
-
-    click(container, 'discovery-question-toggle-q2');
-    expect(container.querySelector('[data-testid="discovery-question-summary-q2"]')?.textContent).toBe(longAnswer);
-    expect(container.querySelector('[testid="discovery-question-toggle-q2"]')?.textContent).toBe('Hide answer');
-
-    click(container, 'discovery-question-toggle-q2');
-    expect(container.querySelector('[testid="discovery-question-toggle-q2"]')?.textContent).toBe('Show answer');
-    expect(container.querySelector('[data-testid="discovery-question-summary-q2"]')).toBeNull();
-  });
-
-  it('hides the Show/Hide answer toggle when the answer already fits without truncating', async () => {
-    const api = createMockApi();
-    const { container } = render(
-      <DiscoveryPanel
-        solution={solution(discovery(), [
-          {
-            id: 'q2',
-            question: 'What documents are required?',
-            raisedBy: 'planner',
-            status: 'answered',
-            answer: 'A photo ID and proof of address.',
-          },
-        ])}
-        api={api}
-        mode="ai"
-        onSolutionChange={jest.fn()}
-      />,
-    );
-    await waitFor(() => expect(api.listChats).toHaveBeenCalled());
-
-    expect(container.querySelector('[data-testid="discovery-question-summary-q2"]')?.textContent).toBe(
-      'A photo ID and proof of address.',
-    );
-    expect(container.querySelector('[testid="discovery-question-toggle-q2"]')).toBeNull();
-    expect(container.querySelector('[testid="discovery-question-edit-q2"]')).not.toBeNull();
-  });
-
-  it('edits an existing answer, pre-filled with its current text', async () => {
-    const result = solution(discovery());
-    const api = createMockApi({ answerQuestion: jest.fn().mockResolvedValue(result) });
-    const { container } = render(
-      <DiscoveryPanel
-        solution={solution(discovery(), [
-          {
-            id: 'q2',
-            question: 'What documents are required?',
-            raisedBy: 'planner',
-            status: 'answered',
-            answer: 'A photo ID.',
-          },
-        ])}
-        api={api}
-        mode="ai"
-        onSolutionChange={jest.fn()}
-      />,
-    );
-
-    click(container, 'discovery-question-edit-q2');
-    expect(container.querySelector('goa-textarea[testid="discovery-question-input-q2"]')?.getAttribute('value')).toBe(
-      'A photo ID.',
-    );
-
-    fireEvent(
-      container.querySelector('goa-textarea[testid="discovery-question-input-q2"]') as Element,
-      new CustomEvent('_change', { detail: { value: 'A photo ID and a utility bill.' } }),
-    );
-    click(container, 'discovery-question-save-q2');
-
-    await waitFor(() =>
-      expect(api.answerQuestion).toHaveBeenCalledWith('solution-1', 'q2', 'A photo ID and a utility bill.'),
-    );
-  });
-
-  it('cancels answering without saving', async () => {
-    const api = createMockApi();
-    const { container } = render(
-      <DiscoveryPanel
-        solution={solution(discovery(), [
-          { id: 'q1', question: 'Who reviews applications?', raisedBy: 'planner', status: 'open' },
-        ])}
-        api={api}
-        mode="ai"
-        onSolutionChange={jest.fn()}
-      />,
-    );
-    await waitFor(() => expect(api.listChats).toHaveBeenCalled());
-
-    click(container, 'discovery-question-answer-q1');
-    click(container, 'discovery-question-cancel-q1');
-
-    expect(container.querySelector('[testid="discovery-question-input-q1"]')).toBeNull();
-    expect(container.querySelector('[testid="discovery-question-answer-q1"]')?.textContent).toBe('Answer');
-  });
-
-  it('shows only the top 5 open questions with a Show more action for the rest', async () => {
-    const questions: OpenQuestion[] = Array.from({ length: 7 }, (_, i) => ({
-      id: `q${i + 1}`,
-      question: `Question ${i + 1}?`,
-      raisedBy: 'planner',
-      status: 'open',
-    }));
-    const api = createMockApi();
-    const { container } = render(
-      <DiscoveryPanel solution={solution(discovery(), questions)} api={api} mode="ai" onSolutionChange={jest.fn()} />,
-    );
-    await waitFor(() => expect(api.listChats).toHaveBeenCalled());
-
-    expect(container.querySelectorAll('[testid="discovery-questions"] li')).toHaveLength(5);
-    expect(container.querySelector('[testid="discovery-questions-show-more"]')?.textContent).toBe('Show more (2)');
-
-    click(container, 'discovery-questions-show-more');
-
-    expect(container.querySelectorAll('[testid="discovery-questions"] li')).toHaveLength(7);
-    expect(container.querySelector('[testid="discovery-questions-show-less"]')).not.toBeNull();
-  });
-
   it('refines through conversation when discovery is ready and there are no open questions', async () => {
     const ready = solution(discovery({ ready: true, confidence: 75 }));
     const api = createMockApi({ chat: jest.fn().mockResolvedValue(ready) });
@@ -419,7 +144,7 @@ describe('DiscoveryPanel', () => {
     expect(api.discovery).not.toHaveBeenCalled();
   });
 
-  it('keeps existing discovery and refinement messages in a collapsed history section', async () => {
+  it('keeps the latest exchange expanded and collapses earlier turns behind a labeled toggle', async () => {
     const existing = solution(discovery());
     existing.state.conversation = [
       { role: 'user', content: 'There is also a committee vote.', at: '2026-03-01T10:01:00.000Z' },
@@ -434,10 +159,10 @@ describe('DiscoveryPanel', () => {
     const conversation = container.querySelector('[testid="discovery-conversation"]');
     expect(conversation?.getAttribute('heading')).toBe('Conversation');
     expect(conversation?.hasAttribute('open')).toBe(true);
-    const history = conversation?.querySelector('[testid="discovery-conversation-history"]');
-    expect(history?.getAttribute('heading')).toBe('Conversation history (3)');
-    expect(history?.hasAttribute('open')).toBe(false);
-    expect(history?.querySelectorAll('[testid^="discovery-message-"]')).toHaveLength(3);
+    expect(conversation?.querySelectorAll('[testid^="discovery-message-"]')).toHaveLength(3);
+    const earlier = conversation?.querySelector('[testid="discovery-earlier-conversation"]');
+    expect(earlier?.getAttribute('heading')).toBe('Show earlier conversation (1)');
+    expect(earlier?.hasAttribute('open')).toBe(false);
     expect(conversation?.textContent).toContain('Who are the users? What steps do they take?');
     expect(conversation?.textContent).toContain('There is also a committee vote.');
     expect(container.querySelectorAll('[testid="discovery-conversation"]')).toHaveLength(1);
@@ -587,9 +312,9 @@ describe('DiscoveryPanel', () => {
     );
 
     await waitFor(() =>
-      expect(container.querySelector('[testid="specialist-service-form-service"]')?.textContent).toContain('Form (2)'),
+      expect(container.querySelector('[testid="specialist-service-form-service"]')?.textContent).toContain('Form *'),
     );
-    expect(container.querySelector('[testid="specialist-service-file-service"]')?.textContent).toBe('File (1)');
+    expect(container.querySelector('[testid="specialist-service-file-service"]')?.textContent).toBe('File *');
     expect(container.querySelector('[testid="optional-experts-count"]')?.getAttribute('content')).toBe('2 specialists');
   });
 

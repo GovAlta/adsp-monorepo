@@ -403,7 +403,7 @@ describe('SpecialistChat', () => {
 
   it('names downloads generically without a solution', async () => {
     const { container } = renderChat({ solution: undefined });
-    await waitFor(() => expect(api.listChats).toHaveBeenCalled());
+    await waitFor(() => expect(container.querySelector('[testid="chat-download-all-json"]')).not.toBeNull());
 
     click(container, 'chat-download-all-json');
 

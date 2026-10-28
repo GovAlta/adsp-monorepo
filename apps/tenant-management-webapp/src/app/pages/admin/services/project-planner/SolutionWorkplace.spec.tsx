@@ -157,9 +157,6 @@ describe('SolutionWorkplace', () => {
     const { container } = await setup(planned);
     expect(container.querySelector('nav[aria-label="Solution sections"]')).toBeNull();
     expect(container.querySelector('#guided-stepper')).toBeNull();
-    expect(container.textContent).toContain(
-      'Refine the analysis by answering optional questions, asking a question, adding more details, or correcting gaps.',
-    );
     expect(container.querySelector('[testid="problem-continue"]')?.textContent).toContain('Save & analyze');
     expect(container.textContent).not.toContain('At a glance');
     expect(container.querySelector('[testid="plan-summary"]')).toBeNull();
@@ -170,9 +167,6 @@ describe('SolutionWorkplace', () => {
     expect(container.querySelector('[heading="Proposal"]')).not.toBeNull();
     expect(container.querySelector('[heading="Hypotheses"]')).toBeNull();
     expect(container.querySelector('[data-testid="refine-chat"]')).toBeNull();
-    expect(container.textContent).toContain(
-      'Refine the analysis by answering optional questions, asking a question, adding more details, or correcting gaps.',
-    );
     expect(container.querySelector('[testid="optional-experts"]')).not.toBeNull();
     expect(container.querySelector('[testid="specialist-service-form-service"]')).not.toBeNull();
     expect(container.querySelector('[data-testid="selected-specialist-chat"]')).not.toBeNull();
@@ -188,7 +182,7 @@ describe('SolutionWorkplace', () => {
     ).toBeTruthy();
     for (const [step, heading] of [
       ['guided-step-1', 'Problem statement'],
-      ['guided-step-2', 'Discovery conversation'],
+      ['guided-step-2', 'Discovery Conversation & Questions'],
       ['guided-step-3', 'Proposed solution'],
     ]) {
       const toggle = goa(container, `${step}-toggle`);
@@ -297,7 +291,7 @@ describe('SolutionWorkplace', () => {
     });
 
     expect(goa(container, 'guided-step-1-toggle').textContent).toContain('Problem statement');
-    expect(goa(container, 'guided-step-2-toggle').textContent).toContain('Discovery conversation');
+    expect(goa(container, 'guided-step-2-toggle').textContent).toContain('Discovery Conversation & Questions');
     expect(goa(container, 'problem-continue').textContent).toContain('Save & analyze');
     expect(container.querySelectorAll('[testid="problem-continue"]')).toHaveLength(1);
     expect(container.textContent).toContain('Save and analyze the problem to start discovery');
@@ -330,9 +324,6 @@ describe('SolutionWorkplace', () => {
     expect(goa(container, 'analysis-mode-rules').getAttribute('type')).toBe('primary');
     expect(goa(container, 'analysis-mode-badge').getAttribute('content')).toContain('Last run: Rule-based analysis');
     expect(container.querySelector('[data-testid="discovery-panel"]')).not.toBeNull();
-    expect(container.textContent).toContain(
-      'Refine the analysis by answering optional questions, asking a question, adding more details, or correcting gaps.',
-    );
     expect(container.querySelectorAll('goa-textarea[testid="discovery-input"]')).toHaveLength(1);
     expect(container.querySelector('[data-testid="confidence-bar"]')).not.toBeNull();
     expect(
@@ -388,7 +379,7 @@ describe('SolutionWorkplace', () => {
     });
     const { container } = await setup(lowConfidence);
     expect(goa(container, 'discovery-force').textContent).toBe('Skip and show me a plan');
-    expect(goa(container, 'discovery-questions').getAttribute('heading')).toBe('Questions');
+    expect(goa(container, 'discovery-conversation').getAttribute('heading')).toBe('Conversation');
     expect(container.querySelectorAll('goa-textarea[testid="discovery-input"]')).toHaveLength(1);
     expect(container.querySelector('[data-testid="discovery-panel"]')).not.toBeNull();
     expect(container.textContent).not.toContain('Questions are complete');
@@ -431,8 +422,6 @@ describe('SolutionWorkplace', () => {
     const { container } = await setup();
     type(container, 'problem-input', 'Changed permit workflow.');
 
-    expect(container.querySelector('[testid="problem-plan-out-of-date"]')).not.toBeNull();
-    expect(goa(container, 'problem-back-to-questions')).not.toBeNull();
     expect(container.querySelector('[testid="update-plan"]')).toBeNull();
     expect(container.querySelector('[testid="plan-out-of-date"]')?.textContent).toContain('Save & analyze above');
   });
@@ -502,7 +491,6 @@ describe('SolutionWorkplace', () => {
     const { container } = await setup(undefined, { listVersions: jest.fn().mockResolvedValue(versionList(3)) });
 
     await waitFor(() => expect(goa(container, 'solution-version').getAttribute('content')).toBe('v3'));
-    expect(goa(container, 'unsaved-changes')).toBeNull();
     expect(goa(container, 'save-version').getAttribute('disabled')).toBe('true');
   });
 
@@ -511,14 +499,12 @@ describe('SolutionWorkplace', () => {
       listVersions: jest.fn().mockResolvedValueOnce(versionList(1, true)).mockResolvedValue(versionList(2)),
       saveVersion: jest.fn().mockResolvedValue({ number: 2, name: 'Version 2', createdOn: '2026-03-02T10:00:00.000Z' }),
     });
-    await waitFor(() => expect(goa(container, 'unsaved-changes')).not.toBeNull());
-    expect(goa(container, 'save-version').getAttribute('disabled')).toBeNull();
+    await waitFor(() => expect(goa(container, 'save-version').getAttribute('disabled')).toBeNull());
 
     click(container, 'save-version');
 
     await waitFor(() => expect(goa(container, 'solution-version').getAttribute('content')).toBe('v2'));
     expect(api.saveVersion).toHaveBeenCalledWith('solution-1');
-    expect(goa(container, 'unsaved-changes')).toBeNull();
   });
 
   it('refreshes the version status when saving fails', async () => {
@@ -526,7 +512,7 @@ describe('SolutionWorkplace', () => {
       listVersions: jest.fn().mockResolvedValueOnce(versionList(1, true)).mockResolvedValue(versionList(2)),
       saveVersion: jest.fn().mockRejectedValue(new Error('conflict')),
     });
-    await waitFor(() => expect(goa(container, 'unsaved-changes')).not.toBeNull());
+    await waitFor(() => expect(goa(container, 'save-version').getAttribute('disabled')).toBeNull());
 
     click(container, 'save-version');
 
@@ -600,7 +586,7 @@ describe('SolutionWorkplace', () => {
     await waitFor(() => expect(api.blueprint).toHaveBeenCalledTimes(1));
   });
 
-  it('shows a busy overlay and blocks the header and problem statement while discovery is working', async () => {
+  it('blocks the header and problem statement while discovery is working, without a full-page overlay', async () => {
     const planned = withPlan();
     let resolveChat: (value: Solution) => void = () => undefined;
     const chatPromise = new Promise<Solution>((resolve) => {
@@ -614,15 +600,14 @@ describe('SolutionWorkplace', () => {
     type(container, 'discovery-input', 'Add more detail about the renewal process.');
     click(container, 'discovery-send');
 
-    await waitFor(() => expect(container.querySelector('[data-testid="workplace-busy-overlay"]')).not.toBeNull());
-    expect(goa(container, 'download-json').getAttribute('disabled')).toBe('true');
+    await waitFor(() => expect(goa(container, 'download-json').getAttribute('disabled')).toBe('true'));
+    expect(container.querySelector('[data-testid="workplace-busy-overlay"]')).toBeNull();
     expect(goa(container, 'download-harness').getAttribute('disabled')).toBe('true');
     expect(goa(container, 'delete-solution').getAttribute('disabled')).toBe('true');
     expect(goa(container, 'problem-continue').getAttribute('disabled')).toBe('true');
 
     resolveChat(planned);
-    await waitFor(() => expect(container.querySelector('[data-testid="workplace-busy-overlay"]')).toBeNull());
-    expect(goa(container, 'download-json').getAttribute('disabled')).toBeNull();
+    await waitFor(() => expect(goa(container, 'download-json').getAttribute('disabled')).toBeNull());
   });
 
   it('passes accessibility checks', async () => {

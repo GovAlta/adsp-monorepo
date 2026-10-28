@@ -116,7 +116,11 @@ export const SolutionHeader: FunctionComponent<SolutionHeaderProps> = ({
   const exportHarness = () =>
     attempt(async () => {
       const data = await fetchExport();
-      download(`planner-${safeName(solution)}-harness.md`, harnessToMarkdown({ ...solution, ...data }), 'text/markdown');
+      download(
+        `planner-${safeName(solution)}-harness.md`,
+        harnessToMarkdown({ ...solution, ...data }),
+        'text/markdown',
+      );
     });
   const remove = () =>
     attempt(async () => {
@@ -181,9 +185,6 @@ export const SolutionHeader: FunctionComponent<SolutionHeaderProps> = ({
                 icon={false}
                 testId="solution-version"
               />
-              {versions?.unsavedChanges && (
-                <GoabBadge type="important" content="Unsaved changes" icon={false} testId="unsaved-changes" />
-              )}
             </Row>
           )}
         </LeftGroup>

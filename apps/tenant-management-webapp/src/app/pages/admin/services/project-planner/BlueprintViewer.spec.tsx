@@ -293,7 +293,12 @@ describe('BlueprintViewer', () => {
 
     const renderWith = (components?: BlueprintComponent[], api = createMockApi(), onSolutionChange = jest.fn()) =>
       render(
-        <BlueprintViewer solution={makeSolution({ blueprint: { ...blueprint, components } })} api={api} mode="ai" onSolutionChange={onSolutionChange} />,
+        <BlueprintViewer
+          solution={makeSolution({ blueprint: { ...blueprint, components } })}
+          api={api}
+          mode="ai"
+          onSolutionChange={onSolutionChange}
+        />,
       );
 
     const second: BlueprintComponent = { ...component, order: 2, name: 'Applicant role', target: 'keycloak' };
@@ -353,7 +358,11 @@ describe('BlueprintViewer', () => {
     });
 
     it('counts the components still to be reviewed', () => {
-      const { container } = renderWith([component, second, { ...second, order: 3, name: 'Staff role', review: 'approved' }]);
+      const { container } = renderWith([
+        component,
+        second,
+        { ...second, order: 3, name: 'Staff role', review: 'approved' },
+      ]);
       expect(goa(container, 'blueprint-components-to-review').getAttribute('content')).toBe('2 components to review');
     });
 
@@ -372,12 +381,14 @@ describe('BlueprintViewer', () => {
 
     it('has no accessibility violations', async () => {
       const solution = makeSolution({ blueprint: { ...blueprint, components: [component] } });
-      const { container } = render(<BlueprintViewer solution={solution} api={createMockApi()} mode="ai" allOpen onSolutionChange={jest.fn()} />);
+      const { container } = render(
+        <BlueprintViewer solution={solution} api={createMockApi()} mode="ai" allOpen onSolutionChange={jest.fn()} />,
+      );
       await expectNoA11yViolations(container);
     });
   });
 
-  it('shows stale notice and warnings', () => {
+  it('shows the AI fallback warning', () => {
     const solution = makeSolution({
       blueprint: { ...blueprint, warning: 'Rules fallback' },
       analyzedOn: '2026-03-02T10:00:00.000Z',
@@ -385,7 +396,6 @@ describe('BlueprintViewer', () => {
     const { container } = render(
       <BlueprintViewer solution={solution} api={createMockApi()} mode="ai" onSolutionChange={jest.fn()} />,
     );
-    expect(goa(container, 'blueprint-stale')).toBeTruthy();
     expect(goa(container, 'blueprint-warning').textContent).toContain('Rules fallback');
   });
 
