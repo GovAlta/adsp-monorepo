@@ -1,9 +1,15 @@
 import type { ServiceDirectory, User } from '@abgov/adsp-service-sdk';
 import axios, { isAxiosError } from 'axios';
 import * as HttpStatusCodes from 'http-status-codes';
-import { AccessDiscoveryProblem, AccessRealmKind, createProblem } from './types';
-
-const REQUEST_TIMEOUT_MS = 5000;
+import {
+  ACCESS_REQUEST_TIMEOUT_MS,
+  AccessDiscoveryProblem,
+  AccessDiscoveryReason,
+  AccessRealmKind,
+  AvailableAccessScope,
+  createProblem,
+} from './types';
+import { optionalString } from './values';
 
 export interface AccessRealmRecord {
   realm: string;
@@ -25,10 +31,21 @@ export interface RealmOpenIdConfiguration {
 
 export type RealmClientResult<T> = { ok: true; value: T } | { ok: false; problem: AccessDiscoveryProblem };
 
+export interface RequestErrorReasons {
+  forbidden: AccessDiscoveryReason;
+  notFound: AccessDiscoveryReason;
+}
+
+const DEFAULT_REQUEST_ERROR_REASONS: RequestErrorReasons = { forbidden: 'NO_PERMISSION', notFound: 'REALM_NOT_FOUND' };
+
 /**
  * Maps an expected HTTP failure to a user-facing problem. Anything else is a defect and is rethrown.
+ * Callers can name the reasons for forbidden and not found, since what was refused or missing depends on the request.
  */
-export function mapRequestError(err: unknown): AccessDiscoveryProblem {
+export function mapRequestError(
+  err: unknown,
+  reasons: RequestErrorReasons = DEFAULT_REQUEST_ERROR_REASONS,
+): AccessDiscoveryProblem {
   if (!isAxiosError(err)) {
     throw err;
   }
@@ -41,17 +58,13 @@ export function mapRequestError(err: unknown): AccessDiscoveryProblem {
     return createProblem('unavailable', 'SESSION_EXPIRED');
   }
   if (status === HttpStatusCodes.FORBIDDEN) {
-    return createProblem('unavailable', 'NO_PERMISSION');
+    return createProblem('unavailable', reasons.forbidden);
   }
   if (status === HttpStatusCodes.NOT_FOUND) {
-    return createProblem('not-found', 'REALM_NOT_FOUND');
+    return createProblem('not-found', reasons.notFound);
   }
 
   throw err;
-}
-
-function optionalString(value: unknown): string | undefined {
-  return typeof value === 'string' ? value : undefined;
 }
 
 interface RealmClientProps {
@@ -69,7 +82,7 @@ export function createRealmClient({ directory }: RealmClientProps) {
     try {
       const { data } = await axios.get<Record<string, unknown>>(tenantUrl.href, {
         headers: { Authorization: `Bearer ${user.token.bearer}` },
-        timeout: REQUEST_TIMEOUT_MS,
+        timeout: ACCESS_REQUEST_TIMEOUT_MS,
       });
 
       const realm = optionalString(data?.realm);
@@ -106,7 +119,7 @@ export function createRealmClient({ directory }: RealmClientProps) {
     try {
       const { data } = await axios.get<Record<string, unknown>>(configurationUrl.href, {
         headers: { Accept: 'application/json' },
-        timeout: REQUEST_TIMEOUT_MS,
+        timeout: ACCESS_REQUEST_TIMEOUT_MS,
       });
 
       const issuer = optionalString(data?.issuer);
@@ -136,3 +149,24 @@ export function createRealmClient({ directory }: RealmClientProps) {
 }
 
 export type RealmClient = ReturnType<typeof createRealmClient>;
+
+/**
+ * Resolves the realm record for an available scope. Core users get the core realm directly; tenant users get their
+ * tenant's realm, which must match the realm their sign-in was issued by.
+ */
+export async function resolveRealmRecord(
+  realmClient: RealmClient,
+  user: User,
+  scope: AvailableAccessScope,
+): Promise<RealmClientResult<AccessRealmRecord>> {
+  if (scope.realm.kind === 'core') {
+    return { ok: true, value: { realm: scope.realm.id, name: 'Core', kind: 'core' } };
+  }
+
+  const tenantRealm = await realmClient.getTenantRealm(user);
+  if (tenantRealm.ok === true && tenantRealm.value.realm !== scope.realm.id) {
+    return { ok: false, problem: createProblem('unavailable', 'REALM_MISMATCH') };
+  }
+
+  return tenantRealm;
+}

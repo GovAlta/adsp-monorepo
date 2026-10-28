@@ -344,12 +344,13 @@ export default function (state: AgentState = defaultState, action: AgentActionTy
       };
     case CONNECT_AGENT_SUCCESS_ACTION: {
       // Complete any messages stuck in streaming state from a prior connection
-      // (e.g. the stream was interrupted by a token-expiry disconnect).
+      // (e.g. the stream was interrupted by a token-expiry disconnect). They are marked interrupted because
+      // agent-service may still be generating them; the reply never reaches this new connection.
       const patchedMessages = { ...state.messages };
       let patched = false;
       for (const [id, msg] of Object.entries(patchedMessages)) {
         if (msg.from === 'agent' && msg.streaming) {
-          patchedMessages[id] = { ...msg, streaming: false };
+          patchedMessages[id] = { ...msg, streaming: false, interrupted: true };
           patched = true;
         }
       }

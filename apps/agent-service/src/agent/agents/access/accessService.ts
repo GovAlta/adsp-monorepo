@@ -1,6 +1,6 @@
 import { AgentConfiguration } from '../../configuration';
 import { ACCESS_SERVICE_AGENT_MAX_STEPS } from '../../model/executionLimits';
-import { ACCESS_DISCOVERY_TOOL_IDS } from './discovery/types';
+import { ACCESS_CLIENT_TOOL_IDS, ACCESS_DISCOVERY_TOOL_IDS } from './discovery/types';
 import { loadAccessAgentMarkdown } from './loadMarkdown';
 
 export const ACCESS_SERVICE_AGENTS = ['clientAgent', 'tokenRoleAgent', 'identityProviderAgent', 'architectAgent'];
@@ -14,6 +14,6 @@ export const accessServiceAgent: AgentConfiguration = {
   instructions: `${baseKnowledge}\n\n${supervisorInstructions}`,
   userRoles: ['urn:ads:platform:agent-service:agent-user'],
   agents: ACCESS_SERVICE_AGENTS,
-  tools: [...ACCESS_DISCOVERY_TOOL_IDS],
+  tools: [...ACCESS_DISCOVERY_TOOL_IDS, ...ACCESS_CLIENT_TOOL_IDS],
   maxSteps: ACCESS_SERVICE_AGENT_MAX_STEPS,
 };

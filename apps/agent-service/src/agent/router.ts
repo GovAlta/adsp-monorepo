@@ -728,6 +728,35 @@ export function messageAgent(logger: Logger): RequestHandler {
     }
   };
 }
+/**
+ * Deletes one of the user's own conversation threads so a new chat starts without its context. Responds with
+ * deleted false, rather than an error, when the user has no such thread, so repeating the request is harmless.
+ */
+export function deleteThread(logger: Logger): RequestHandler {
+  return async function (req, res, next) {
+    try {
+      const { agentId, threadId } = req.params;
+      const user = req.user;
+      const agent = req[AGENT_KEY] as AgentBroker;
+
+      const deleted = await agent.deleteThread(user, threadId);
+
+      logger.info(
+        `User ${user.name} (ID: ${user.id}) ${deleted ? 'deleted' : 'had no'} thread ${threadId} of agent ${agentId}.`,
+        {
+          context: 'AgentRouter',
+          tenant: req.tenant?.id?.toString(),
+          user: `${user.name} (ID: ${user.id})`,
+        },
+      );
+
+      res.send({ deleted });
+    } catch (err) {
+      next(err);
+    }
+  };
+}
+
 interface AgentRouterProps {
   logger: Logger;
   tenantService: TenantService;
@@ -759,6 +788,8 @@ export function createAgentRouter(ios: IoNamespace[], { logger, tenantService }:
   });
 
   router.post('/agents/:agentId', getAgent, messageAgent(logger));
+
+  router.delete('/agents/:agentId/threads/:threadId', getAgent, deleteThread(logger));
 
   for (const io of ios) {
     io.use(tenantHandler(tenantService));

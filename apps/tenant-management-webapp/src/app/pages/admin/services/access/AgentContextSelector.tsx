@@ -43,6 +43,31 @@ export const QUESTION_HIERARCHY = {
       },
     },
   },
+  'my-clients': {
+    label: 'My Clients',
+    subtopics: {
+      'list-clients': {
+        label: 'List Clients',
+        question: 'List the clients in my realm.',
+        agent: 'AccessServiceAgent',
+      },
+      'inspect-client': {
+        label: 'Inspect a Client',
+        question: 'I want to inspect the configuration of a client in my realm.',
+        agent: 'AccessServiceAgent',
+      },
+      'client-redirects': {
+        label: 'Redirect URIs & Web Origins',
+        question: 'Show me the redirect URIs and web origins configured for a client in my realm.',
+        agent: 'AccessServiceAgent',
+      },
+      'client-roles-scopes': {
+        label: 'Roles, Scopes & Mappers',
+        question: 'Show me the roles, client scopes and protocol mappers configured for a client in my realm.',
+        agent: 'AccessServiceAgent',
+      },
+    },
+  },
   clients: {
     label: 'Clients',
     subtopics: {

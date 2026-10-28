@@ -178,3 +178,38 @@ components:
                   type: object
                   additionalProperties: true
                   nullable: true
+
+/agent/v1/agents/{agentId}/threads/{threadId}:
+  parameters:
+    - name: agentId
+      description: ID of the agent.
+      example: AccessServiceAgent
+      in: path
+      required: true
+      schema:
+        type: string
+    - name: threadId
+      description: ID of the conversation thread.
+      example: 0f8fad5b-d9cb-469f-a165-70867728950e
+      in: path
+      required: true
+      schema:
+        type: string
+  delete:
+    tags:
+      - Agent
+    description: >-
+      Deletes one of the signed-in user's own conversation threads, with its stored messages, observations and
+      workspace, so a new chat starts without its context. Returns deleted false when the user has no thread with
+      this ID, including one that belongs to another user, so repeating the request is harmless.
+    responses:
+      200:
+        description: Request completed successfully.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                deleted:
+                  type: boolean
+              required: [deleted]

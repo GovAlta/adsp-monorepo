@@ -1,7 +1,7 @@
 import { AdspId, EventService } from '@abgov/adsp-service-sdk';
 import { Memory } from '@mastra/memory';
 import { Logger } from 'winston';
-import { threadDeleted } from '../events';
+import { deleteThreadAndWorkspace } from '../model/threadDeletion';
 import { environment } from '../../environments/environment';
 
 interface ThreadCleanupJobProps {
@@ -82,24 +82,11 @@ export function createThreadCleanupJob({
         }
 
         try {
-          await clearWorkspace(threadTenantId, thread.resourceId, thread.id);
-          await memory.deleteThread(thread.id);
+          await deleteThreadAndWorkspace(
+            { logger, deleteThread: (threadId) => memory.deleteThread(threadId), clearWorkspace, eventService },
+            { tenantId: threadTenantId, userId: thread.resourceId, threadId: thread.id },
+          );
           result.cleaned++;
-
-          // Signal thread-deleted event
-          try {
-            if (eventService) {
-              const threadTenantAdspId = toTenantAdspId(threadTenantId);
-              const event = threadDeleted(threadTenantAdspId, thread.id);
-              eventService.send(event);
-            }
-          } catch (err) {
-            logger.warn(`Failed to signal thread-deleted event for thread ${thread.id}.`, {
-              context: 'ThreadCleanupJob',
-              tenant: tenantId.toString(),
-              error: err instanceof Error ? err.message : String(err),
-            });
-          }
         } catch (err) {
           result.failed++;
           logger.warn(`Failed cleanup for expired thread ${thread.id}.`, {
@@ -117,12 +104,4 @@ export function createThreadCleanupJob({
 
     return result;
   }
-}
-
-function toTenantAdspId(tenantContext: string): AdspId {
-  if (tenantContext.startsWith('urn:')) {
-    return AdspId.parse(tenantContext);
-  }
-
-  return AdspId.parse(`urn:ads:platform:tenant-service:v2:/tenants/${tenantContext}`);
 }

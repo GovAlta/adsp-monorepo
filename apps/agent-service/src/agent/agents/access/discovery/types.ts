@@ -4,6 +4,10 @@ export const ACCESS_DISCOVERY_REQUIRED_ROLES = ['urn:ads:platform:agent-service:
 
 export const ACCESS_DISCOVERY_TOOL_IDS = ['listAccessEnvironments', 'listAccessRealms', 'getAccessRealmInfo'];
 
+export const ACCESS_CLIENT_TOOL_IDS = ['listAccessClients', 'getAccessClient'];
+
+export const ACCESS_REQUEST_TIMEOUT_MS = 5000;
+
 export type AccessDiscoveryStatus = 'available' | 'unavailable' | 'not-found' | 'unreachable';
 
 export const ACCESS_DISCOVERY_REASONS = [
@@ -16,6 +20,8 @@ export const ACCESS_DISCOVERY_REASONS = [
   'SESSION_EXPIRED',
   'REALM_NOT_FOUND',
   'ENVIRONMENT_UNREACHABLE',
+  'NO_CLIENT_PERMISSION',
+  'CLIENT_NOT_FOUND',
 ] as const;
 
 export type AccessDiscoveryReason = (typeof ACCESS_DISCOVERY_REASONS)[number];
@@ -34,6 +40,9 @@ export const ACCESS_DISCOVERY_MESSAGES: Record<AccessDiscoveryReason, string> = 
   SESSION_EXPIRED: 'Your session has expired. Sign in again and retry.',
   REALM_NOT_FOUND: 'The realm could not be found or you do not have access to it.',
   ENVIRONMENT_UNREACHABLE: 'A required Access Service endpoint did not respond. Try again later.',
+  NO_CLIENT_PERMISSION:
+    'You do not have permission to view clients in this realm. Viewing clients needs the realm-management view-clients role; ask your tenant administrator.',
+  CLIENT_NOT_FOUND: 'No client with that client ID could be found in your realm, or you do not have access to it.',
 };
 
 export type AccessEnvironmentSummary = Pick<AccessEnvironment, 'id' | 'label' | 'host' | 'readOnly'>;
@@ -73,6 +82,13 @@ export function createProblem(
     message: ACCESS_DISCOVERY_MESSAGES[reason],
     ...(missingRoles ? { missingRoles } : {}),
   };
+}
+
+/**
+ * Returns only the problem fields a tool result carries, so a problem can be spread into any tool output.
+ */
+export function toProblemFields({ status, reason, message, missingRoles }: AccessDiscoveryProblem) {
+  return { status, reason, message, ...(missingRoles ? { missingRoles } : {}) };
 }
 
 export function toEnvironmentSummary({ id, label, host, readOnly }: AccessEnvironment): AccessEnvironmentSummary {
