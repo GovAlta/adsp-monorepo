@@ -18,6 +18,7 @@ import {
   formSelector,
   Form as FormRecord,
   loadForm,
+  resetFileState,
   setShowMessages,
   showSubmitSelector,
   submitForm,
@@ -79,6 +80,7 @@ const FormComponent: FunctionComponent<FormProps> = ({ className }) => {
   useEffect(() => {
     // loadForm dispatches comment connectStream internally (see form.slice.ts)
     // when the form has a support topic configured
+    dispatch(resetFileState());
     dispatch(loadForm(formId));
 
     // Cleanup comment stream socket on unmount, and close the drawer so it doesn't carry over.
@@ -91,8 +93,8 @@ const FormComponent: FunctionComponent<FormProps> = ({ className }) => {
   // Shared by onChange and onSave; they differ only in how their errors are resolved beforehand.
   const saveDraft = useCallback(
     ({ data, errors }: { data: unknown; errors?: ValidationError[] | null }) =>
-      dispatch(updateForm({ data: data as Record<string, unknown>, files, errors })),
-    [dispatch, files],
+      dispatch(updateForm({ data: data as Record<string, unknown>, errors })),
+    [dispatch],
   );
 
   const handleChange = useCallback(

@@ -19,6 +19,7 @@ import { JsonFormsDispatch } from '@jsonforms/react';
 import { getLabelText } from '../../util';
 import pluralize from 'pluralize';
 import { JsonFormContext } from '../../Context';
+import { FileUploader } from '../FileUploader/FileUploaderControl';
 
 import { GoabCheckboxOnChangeDetail } from '@abgov/ui-components-common';
 
@@ -63,6 +64,8 @@ export const PrimitiveArrayControl = (props: ControlProps) => {
   const { data, path, handleChange, visible, enabled, uischema, schema, renderers, cells } = props;
   const enumerators = useContext(JsonFormContext);
   const newSchema = schema as JsonSchema;
+  const itemSchema = schema?.items as JsonSchema | undefined;
+  const isFileUrnArray = itemSchema?.format === 'file-urn';
   const rawItems: string[] = Array.isArray(data) ? data : [];
   const items = rawItems.filter((item): item is string => item !== undefined && item !== null);
   const deleteTriggerFunction = enumerators?.functions?.get('delete-file');
@@ -79,6 +82,14 @@ export const PrimitiveArrayControl = (props: ControlProps) => {
       handleChange(path, items.length > 0 ? items : undefined);
     }
   }, [rawItems, items, handleChange, path]);
+
+  if (isFileUrnArray) {
+    return (
+      <Visible $visible={visible}>
+        <FileUploader {...props} data={items} />
+      </Visible>
+    );
+  }
 
   const addItem = () => {
     handleChange(path, [...items, '']);
@@ -99,7 +110,6 @@ export const PrimitiveArrayControl = (props: ControlProps) => {
     typeof option === 'string' ? undefined : option.description;
 
   const removeItem = (index: number) => {
-    const itemSchema = schema?.items as JsonSchema | undefined;
     const removedItem = items[index];
     const itemPath = composePaths(path, `${index}`);
 
