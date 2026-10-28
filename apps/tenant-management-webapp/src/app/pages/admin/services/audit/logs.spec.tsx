@@ -9,6 +9,7 @@ const state = (roles: string[], extra: Record<string, unknown> = {}) => ({
   session: { resourceAccess: { 'urn:ads:platform:audit-service': { roles } } },
   audit: {
     catalogs: [],
+    namespaces: [],
     retention: { tenant: {}, applications: {} },
     loaded: false,
     events: { results: [], loading: false },
@@ -51,6 +52,14 @@ describe('AuditLogs', () => {
     expect(id()).not.toHaveAttribute('disabled', 'true');
   });
 
+  it('lists namespaces from the namespaces endpoint that have no catalog', () => {
+    const { baseElement } = renderLogs(state(['audit-reader'], { namespaces: ['mcp-gateway-service'] }));
+    const option = baseElement.querySelector(
+      "goa-dropdown[name='audit-namespace'] goa-dropdown-item[value='mcp-gateway-service']",
+    );
+    expect(option).toBeInTheDocument();
+  });
+
   it('offers namespaces from the catalogs as a dropdown', () => {
     const catalogs = [{ application: 'form-app', isCore: false, actions: [{ name: 'submit' }] }];
     const { baseElement } = renderLogs(state(['audit-reader'], { catalogs }));
@@ -88,21 +97,12 @@ describe('AuditLogs', () => {
     fireEvent(baseElement.querySelector("goa-button[testId='audit-search']"), new CustomEvent('_click'));
     fireEvent(baseElement.querySelector("goa-button[testId='audit-export']"), new CustomEvent('_click'));
 
-    expect(store.getActions().pop()).toMatchObject({
+    const exported = store.getActions().pop();
+    expect(exported).toMatchObject({
       type: 'audit/EXPORT_AUDIT_EVENTS_ACTION',
       criteria: { action: 'submit' },
-      includePersonalInfo: false,
     });
-  });
-
-  it('includes personal information in the export only for audit-admin', () => {
-    const results = [{ id: '1', namespace: 'form-app', action: 'submit', occurredAt: '2026-01-01T00:00:00Z' }];
-    const { store, baseElement } = renderLogs(
-      state(['audit-reader', 'audit-admin'], { events: { results, loading: false } }),
-    );
-    fireEvent(baseElement.querySelector("goa-button[testId='audit-export']"), new CustomEvent('_click'));
-
-    expect(store.getActions().pop()).toMatchObject({ includePersonalInfo: true });
+    expect(exported).not.toHaveProperty('includePersonalInfo');
   });
 
   it('shows a removable chip for each applied filter', () => {
@@ -167,10 +167,7 @@ describe('AuditLogs', () => {
   it('searches by severity, correlation ID and session ID', () => {
     const { store, baseElement } = renderLogs(state(['audit-reader']));
     const change = (name: string, value: string) =>
-      fireEvent(
-        baseElement.querySelector(`[name='${name}']`),
-        new CustomEvent('_change', { detail: { name, value } })
-      );
+      fireEvent(baseElement.querySelector(`[name='${name}']`), new CustomEvent('_change', { detail: { name, value } }));
     change('audit-severity', 'critical');
     change('audit-correlation-id', 'trace-1');
     change('audit-session-id', 'session-1');

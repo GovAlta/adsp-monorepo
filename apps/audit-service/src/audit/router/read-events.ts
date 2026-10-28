@@ -59,7 +59,7 @@ export function serializeEvent(event: StoredEvent, { redactActor = false }: Seri
   };
 }
 
-function assertCanReadEvents(req: Parameters<RequestHandler>[0]) {
+export function assertCanReadEvents(req: Parameters<RequestHandler>[0]) {
   const tenantId = req.tenant?.id;
   if (!tenantId || !isAllowedUser(req.user, tenantId, AuditServiceRoles.Reader, true)) {
     throw new UnauthorizedUserError('read audit events', req.user);
@@ -67,7 +67,7 @@ function assertCanReadEvents(req: Parameters<RequestHandler>[0]) {
   return tenantId.toString();
 }
 
-function assertReader(reader?: EventReader): EventReader {
+export function assertReader(reader?: EventReader): EventReader {
   if (!reader) {
     throw new InvalidOperationError('Audit event storage is not configured.', {
       statusCode: HttpStatusCodes.SERVICE_UNAVAILABLE,
@@ -98,7 +98,7 @@ function queryValue(q: Parameters<RequestHandler>[0]['query'], name: keyof typeo
   return q?.[name] ?? q?.[QUERY_ALIASES[name]];
 }
 
-function toCriteria(req: Parameters<RequestHandler>[0], tenantId: string): EventCriteria {
+export function toCriteria(req: Parameters<RequestHandler>[0], tenantId: string): EventCriteria {
   const q = req.query;
   return {
     tenantId,
@@ -118,7 +118,7 @@ function toCriteria(req: Parameters<RequestHandler>[0], tenantId: string): Event
   };
 }
 
-function toFilters({ tenantId: _tenantId, ...criteria }: EventCriteria): Record<string, unknown> {
+export function toFilters({ tenantId: _tenantId, ...criteria }: EventCriteria): Record<string, unknown> {
   return Object.fromEntries(
     Object.entries(criteria)
       .filter(([, value]) => value !== undefined)
@@ -126,7 +126,7 @@ function toFilters({ tenantId: _tenantId, ...criteria }: EventCriteria): Record<
   );
 }
 
-function getEndpoint(req: Parameters<RequestHandler>[0]): string {
+export function getEndpoint(req: Parameters<RequestHandler>[0]): string {
   return `${req.method} ${req.baseUrl}${req.route.path}`;
 }
 
@@ -184,6 +184,17 @@ export function readEvent(reader?: EventReader, auditor?: SelfAuditor): RequestH
 }
 
 export const validateEventId = createValidationHandler(param('id').isUUID());
+
+export function readNamespaces(reader?: EventReader): RequestHandler {
+  return async (req, res, next) => {
+    try {
+      const tenantId = assertCanReadEvents(req);
+      res.send({ results: await assertReader(reader).findNamespaces(tenantId) });
+    } catch (err) {
+      next(err);
+    }
+  };
+}
 
 const ISO_DATE_PREFIX = /^\d{4}-\d{2}-\d{2}/;
 

@@ -163,7 +163,10 @@ describe('GET /audit/v1/:namespace/actions', () => {
     }));
 
     expect(routes).toEqual([
+      { path: '/namespaces', roles: [AuditServiceRoles.Reader] },
       { path: '/:namespace/actions', roles: [AuditServiceRoles.Reader] },
+      { path: '/events/export', roles: [AuditServiceRoles.Reader] },
+      { path: '/:namespace/events/export', roles: [AuditServiceRoles.Reader] },
       { path: '/events', roles: [AuditServiceRoles.Reader] },
       { path: '/:namespace/events', roles: [AuditServiceRoles.Reader] },
       { path: '/:namespace/events/:id', roles: [AuditServiceRoles.Reader] },

@@ -64,7 +64,7 @@ describe('serializeEvent', () => {
 });
 
 describe('read events', () => {
-  const reader: jest.Mocked<EventReader> = { find: jest.fn(), get: jest.fn() };
+  const reader: jest.Mocked<EventReader> = { find: jest.fn(), get: jest.fn(), findNamespaces: jest.fn() };
   const user: User = {
     id: 'reader',
     name: 'Reader',
@@ -253,6 +253,22 @@ describe('read events', () => {
     expect(one.status).toBe(403);
     const all = await request(createApp({ ...user, roles: [] })).get('/audit/v1/events');
     expect(all.status).toBe(403);
+  });
+
+  it('lists the namespaces that have events for the caller tenant', async () => {
+    reader.findNamespaces.mockResolvedValue(['case-service', 'mcp-gateway-service']);
+
+    const res = await request(createApp()).get('/audit/v1/namespaces');
+
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({ results: ['case-service', 'mcp-gateway-service'] });
+    expect(reader.findNamespaces).toHaveBeenCalledWith(tenantA.toString());
+  });
+
+  it('requires audit-reader to list namespaces', async () => {
+    const res = await request(createApp({ ...user, roles: [] })).get('/audit/v1/namespaces');
+    expect(res.status).toBe(403);
+    expect(reader.findNamespaces).not.toHaveBeenCalled();
   });
 
   it('returns 503 when storage is not configured', async () => {

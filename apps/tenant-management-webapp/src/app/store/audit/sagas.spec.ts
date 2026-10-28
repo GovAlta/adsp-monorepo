@@ -61,13 +61,9 @@ describe('audit sagas', () => {
     expect(success).toMatchObject({ next: 'n2', append: false });
   });
 
-  it('exports every page of matching events as a CSV download', async () => {
+  it('downloads the CSV built by the server from the export route', async () => {
     const urls = [];
     const downloads = [];
-    const pages = [
-      { data: { results: [{ id: '1', action: 'a' }], page: { next: 'n2' } } },
-      { data: { results: [{ id: '2', action: 'b' }], page: {} } },
-    ];
     const { effects } = await expectSaga(exportAuditEvents, exportAuditEventsAction({ status: 'failure' }))
       .withState({ config: { serviceUrls: { auditServiceApiUrl: baseUrl } } })
       .provide({
@@ -77,7 +73,7 @@ describe('audit sagas', () => {
           }
           if (effect.fn === axios.get) {
             urls.push(effect.args[0]);
-            return pages.shift();
+            return { data: 'csv-body' };
           }
           if (effect.fn === downloadFile) {
             downloads.push(effect.args);
@@ -88,12 +84,9 @@ describe('audit sagas', () => {
       })
       .run();
 
-    expect(urls).toEqual([
-      `${baseUrl}/audit/v1/events?top=5000&status=failure`,
-      `${baseUrl}/audit/v1/events?top=5000&status=failure&after=n2`,
-    ]);
+    expect(urls).toEqual([`${baseUrl}/audit/v1/events/export?status=failure`]);
     expect(downloads).toHaveLength(1);
-    expect(downloads[0][1].split('\r\n')).toHaveLength(3);
+    expect(downloads[0][1]).toBe('csv-body');
     expect(downloads[0][2]).toBe('text/csv');
     expect(effects.put.map((e) => e.payload.action.type)).toEqual([
       'notifications/success',

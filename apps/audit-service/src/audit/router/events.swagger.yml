@@ -199,6 +199,118 @@ paths:
           description: Missing `audit-reader` role, or a tenant caller attempting to select another tenant.
         '503':
           description: Audit event storage is not configured or unavailable. Retry.
+  /audit/v1/namespaces:
+    get:
+      tags:
+        - Audit events
+      summary: List the namespaces that have audit events in the caller's tenant.
+      description: |
+        Requires `audit-reader`. Returns every namespace the tenant has recorded events for, whether or not an action
+        catalog is visible to the tenant (for example core, platform-level catalogs). Use it to populate a namespace
+        picker.
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+      responses:
+        '200':
+          description: Namespaces, alphabetical.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  results:
+                    type: array
+                    items:
+                      type: string
+                    example: [case-service, mcp-gateway-service]
+        '401':
+          description: Missing or invalid bearer token.
+        '403':
+          description: Missing `audit-reader` role, or a tenant caller attempting to select another tenant.
+        '503':
+          description: Audit event storage is not configured or unavailable. Retry.
+  /audit/v1/events/export:
+    get:
+      tags:
+        - Audit events
+      summary: Export events across every namespace in the caller's tenant as CSV, newest first.
+      description: |
+        Requires `audit-reader`. Accepts the same filters as the event listing (`top` and `after` are ignored)
+        and streams every matching event as CSV, so the export is not capped and is not held in memory.
+        Cancelling the request stops the export. Actor `name` and `email` columns are present only when the
+        caller also holds `audit-admin`; for other callers the columns are omitted. Values that a spreadsheet
+        could read as a formula are prefixed with a single quote. The export is recorded as a `data-access`
+        audit event with the number of events written.
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+        - $ref: '#/components/parameters/ActorId'
+        - $ref: '#/components/parameters/ScopeId'
+        - $ref: '#/components/parameters/From'
+        - $ref: '#/components/parameters/To'
+        - $ref: '#/components/parameters/Actor'
+        - $ref: '#/components/parameters/ResourceType'
+        - $ref: '#/components/parameters/ResourceId'
+        - $ref: '#/components/parameters/Action'
+        - $ref: '#/components/parameters/Status'
+        - $ref: '#/components/parameters/Category'
+        - $ref: '#/components/parameters/Severity'
+        - $ref: '#/components/parameters/CorrelationId'
+        - $ref: '#/components/parameters/SessionId'
+        - $ref: '#/components/parameters/Scope'
+        - $ref: '#/components/parameters/OccurredFrom'
+        - $ref: '#/components/parameters/OccurredTo'
+      responses:
+        '200':
+          $ref: '#/components/responses/AuditEventCsv'
+        '400':
+          description: Invalid query parameter. Fix the request.
+        '401':
+          description: Missing or invalid bearer token.
+        '403':
+          description: Missing `audit-reader` role, or a tenant caller attempting to select another tenant.
+        '503':
+          description: Audit event storage is not configured or unavailable. Retry.
+  /audit/v1/{namespace}/events/export:
+    get:
+      tags:
+        - Audit events
+      summary: Export one namespace's events as CSV, newest first.
+      description: |
+        Requires `audit-reader`. Behaves as the export across all namespaces, limited to the namespace.
+      parameters:
+        - in: path
+          name: namespace
+          required: true
+          schema:
+            type: string
+        - $ref: '#/components/parameters/TenantId'
+        - $ref: '#/components/parameters/ActorId'
+        - $ref: '#/components/parameters/ScopeId'
+        - $ref: '#/components/parameters/From'
+        - $ref: '#/components/parameters/To'
+        - $ref: '#/components/parameters/Actor'
+        - $ref: '#/components/parameters/ResourceType'
+        - $ref: '#/components/parameters/ResourceId'
+        - $ref: '#/components/parameters/Action'
+        - $ref: '#/components/parameters/Status'
+        - $ref: '#/components/parameters/Category'
+        - $ref: '#/components/parameters/Severity'
+        - $ref: '#/components/parameters/CorrelationId'
+        - $ref: '#/components/parameters/SessionId'
+        - $ref: '#/components/parameters/Scope'
+        - $ref: '#/components/parameters/OccurredFrom'
+        - $ref: '#/components/parameters/OccurredTo'
+      responses:
+        '200':
+          $ref: '#/components/responses/AuditEventCsv'
+        '400':
+          description: Invalid namespace or query parameter. Fix the request.
+        '401':
+          description: Missing or invalid bearer token.
+        '403':
+          description: Missing `audit-reader` role, or a tenant caller attempting to select another tenant.
+        '503':
+          description: Audit event storage is not configured or unavailable. Retry.
   /audit/v1/{namespace}/events/{id}:
     get:
       tags:
@@ -325,6 +437,17 @@ components:
       description: Alias of `occurredTo`, as named in the design. `occurredTo` wins if both are supplied.
       schema: { type: string, format: date-time }
   responses:
+    AuditEventCsv:
+      description: The matching events as CSV, with one header row.
+      headers:
+        Content-Disposition:
+          schema:
+            type: string
+          description: Attachment with a dated `audit-events-YYYY-MM-DD.csv` filename.
+      content:
+        text/csv:
+          schema:
+            type: string
     AuditEventPage:
       description: A page of events, newest first by occurredAt.
       content:

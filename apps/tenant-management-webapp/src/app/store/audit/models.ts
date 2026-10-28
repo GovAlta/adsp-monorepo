@@ -2,9 +2,6 @@ export const AUDIT_NAMESPACE = 'audit-service';
 export const AUDIT_SERVICE_CATALOG = 'actions-audit-service';
 export const AUDIT_PAGE_SIZES = [10, 30, 50, 100];
 export const AUDIT_DEFAULT_PAGE_SIZE = 30;
-// Matches the audit service's maximum page size, and caps an export so it cannot grow unbounded.
-export const AUDIT_EXPORT_PAGE_SIZE = 5000;
-export const AUDIT_EXPORT_LIMIT = 10000;
 
 export const DEFAULT_RETENTION_DAYS: Record<string, number> = {
   standard: 90,
@@ -81,6 +78,7 @@ export interface AuditEventsState {
 export interface AuditState {
   catalogs: AuditCatalog[];
   retention: AuditRetention;
+  namespaces: string[];
   loaded: boolean;
   exporting: boolean;
   events: AuditEventsState;
@@ -89,6 +87,7 @@ export interface AuditState {
 export const defaultAuditState: AuditState = {
   catalogs: [],
   retention: { tenant: {}, applications: {} },
+  namespaces: [],
   loaded: false,
   exporting: false,
   events: { results: [], loading: false },
