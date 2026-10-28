@@ -1,5 +1,5 @@
-import { changedSections, classifyBump, nextVersion, sectionHashes } from './versioning';
-import { ComponentReview, SolutionState, SpecialistNote } from './types';
+import { changedSections, contentHash, VersionContent, versionContent } from './versioning';
+import { ComponentReview, Solution, SolutionState, SpecialistChat, SpecialistNote } from './types';
 
 const emptyState: SolutionState = {
   problemStatement: '',
@@ -12,7 +12,19 @@ const emptyState: SolutionState = {
   nextSteps: [],
 };
 
-const solution = (state: SolutionState, name = '') => ({ name, state });
+const content = (overrides: Partial<VersionContent> = {}): VersionContent => ({
+  name: 'Permit intake',
+  scenario: 'new',
+  status: 'draft',
+  state: emptyState,
+  specialistChats: [],
+  ...overrides,
+});
+
+const withState = (state: Partial<SolutionState>) => content({ state: { ...emptyState, ...state } });
+
+const withBlueprint = (blueprint: Partial<SolutionState['blueprint']>) =>
+  withState({ blueprint: { generatedOn: 'x', mode: 'rules', ...blueprint } as SolutionState['blueprint'] });
 
 const specialistNote = (overrides: Partial<SpecialistNote> = {}): SpecialistNote => ({
   service: 'form-service',
@@ -29,25 +41,125 @@ const specialistNote = (overrides: Partial<SpecialistNote> = {}): SpecialistNote
   ...overrides,
 });
 
+const chat = (overrides: Partial<SpecialistChat> = {}): SpecialistChat => ({
+  id: 'chat-1',
+  tenantId: undefined,
+  service: 'form-service',
+  solutionId: 'solution-1',
+  title: 'Intake form',
+  createdById: 'owner-1',
+  createdByName: 'Owner',
+  createdOn: new Date('2026-03-01T10:00:00.000Z'),
+  updatedOn: new Date('2026-03-01T10:05:00.000Z'),
+  messages: [{ role: 'user', content: 'Which form?', at: '2026-03-01T10:00:00.000Z' }],
+  ...overrides,
+});
+
+const solution = {
+  name: 'Permit intake',
+  description: 'Permits',
+  scenario: 'new',
+  status: 'draft',
+  state: emptyState,
+} as Solution;
+
 describe('versioning', () => {
-  describe('sectionHashes', () => {
-    it('records no hashes for an empty solution', () => {
-      expect(sectionHashes(solution(emptyState))).toEqual({});
+  describe('versionContent', () => {
+    it('snapshots the solution details and state', () => {
+      expect(versionContent(solution, [])).toEqual({
+        name: 'Permit intake',
+        description: 'Permits',
+        scenario: 'new',
+        status: 'draft',
+        state: emptyState,
+        specialistChats: [],
+      });
     });
 
-    it('records a hash for a filled-in plan section', () => {
-      const hashes = sectionHashes(solution({ ...emptyState, problemStatement: 'Applicants submit permits.' }));
+    it('copies linked chats without owner ids, with ISO timestamps, oldest first', () => {
+      const later = chat({ id: 'chat-2', createdOn: new Date('2026-03-02T00:00:00.000Z') });
 
-      expect(Object.keys(hashes)).toEqual(['Problem statement']);
+      const { specialistChats } = versionContent(solution, [later, chat()]);
+
+      expect(specialistChats.map((c) => c.id)).toEqual(['chat-1', 'chat-2']);
+      expect(specialistChats[0]).toEqual({
+        id: 'chat-1',
+        service: 'form-service',
+        title: 'Intake form',
+        createdByName: 'Owner',
+        createdOn: '2026-03-01T10:00:00.000Z',
+        updatedOn: '2026-03-01T10:05:00.000Z',
+        messages: chat().messages,
+      });
+    });
+  });
+
+  describe('contentHash', () => {
+    it('ignores key order, since jsonb does not keep it', () => {
+      const reordered = { specialistChats: [], state: emptyState, status: 'draft', scenario: 'new', name: 'Permit intake' };
+
+      expect(contentHash(reordered as VersionContent)).toBe(contentHash(content()));
     });
 
-    it('records a hash for the solution title', () => {
-      const hashes = sectionHashes(solution(emptyState, 'Permit intake'));
-
-      expect(Object.keys(hashes)).toEqual(['Title']);
+    it('treats a null description the same as a missing one', () => {
+      expect(contentHash(content({ description: null }))).toBe(contentHash(content()));
     });
 
-    it('hashes only the chosen hypothesis, since the export shows no other', () => {
+    it('changes when only a chat timestamp changes', () => {
+      const at = (updatedOn: string) =>
+        contentHash(versionContent(solution, [chat({ updatedOn: new Date(updatedOn) })]));
+
+      expect(at('2026-03-01T10:05:00.000Z')).not.toBe(at('2026-03-01T10:06:00.000Z'));
+    });
+
+    it('changes when only whitespace changes', () => {
+      expect(contentHash(withState({ problemStatement: 'Permits.\n' }))).not.toBe(
+        contentHash(withState({ problemStatement: 'Permits.' })),
+      );
+    });
+  });
+
+  describe('changedSections', () => {
+    it('reports nothing when the content is identical', () => {
+      expect(changedSections(content(), content())).toEqual([]);
+    });
+
+    it.each([
+      ['Title', content({ name: 'Renamed' })],
+      ['Description', content({ description: 'New description' })],
+      ['Scenario', content({ scenario: 'prototype' })],
+      ['Status', content({ status: 'analyzed' })],
+      ['Problem statement', withState({ problemStatement: 'Applicants submit permits.' })],
+      ['Analysis', withState({ analysis: { mode: 'rules', analyzedOn: 'x' } as SolutionState['analysis'] })],
+      ['Analysis', withState({ confidence: { score: 40, threshold: 70, factors: [] } })],
+      ['Discovery conversation', withState({ discovery: { messages: [], confidence: 0 } as SolutionState['discovery'] })],
+      ['Planner conversation', withState({ conversation: [{ role: 'user', content: 'Hi', at: 'x' }] })],
+      ['Specialist consultations', content({ specialistChats: versionContent(solution, [chat()]).specialistChats })],
+      ['Overview', withBlueprint({ overview: { title: 'T', summary: 'S' } as SolutionState['blueprint']['overview'] })],
+    ])('reports %s when it changes', (section, current) => {
+      expect(changedSections(content(), current)).toEqual([section]);
+    });
+
+    it('reports Other details when only something outside the named sections changes', () => {
+      expect(changedSections(withState({ problemStatement: 'Permits.' }), withState({ problemStatement: 'Permits.\n' }))).toEqual([
+        'Other details',
+      ]);
+    });
+
+    it('reports a section whose stored copy came back from jsonb with reordered keys and nulls as unchanged', () => {
+      const stored = JSON.parse(JSON.stringify({ ...content(), description: null }));
+
+      expect(changedSections(stored, content())).toEqual([]);
+    });
+
+    it('lists changed sections in plan order', () => {
+      const previous = withBlueprint({ delivery: { phases: [] }, serviceMapping: [] } as Partial<SolutionState['blueprint']>);
+      const current = { ...withBlueprint({ delivery: { phases: [{ name: 'P', items: [] }] }, serviceMapping: [{ service: 's' }] } as Partial<SolutionState['blueprint']>), name: 'Renamed' };
+
+      expect(changedSections(previous, current)).toEqual(['Title', 'Service mapping', 'Delivery']);
+    });
+
+    it('reports only the chosen hypothesis, since the export shows no other', () => {
       const hypothesis = (title: string): SolutionState['hypotheses'][number] => ({
         id: title,
         title,
@@ -58,234 +170,34 @@ describe('versioning', () => {
         assumptions: [],
         unknowns: [],
       });
-      const withRunnerUp = (title: string) =>
-        sectionHashes(solution({ ...emptyState, hypotheses: [hypothesis('Chosen'), hypothesis(title)] })).Hypotheses;
+      const withRunnerUp = (title: string) => withState({ hypotheses: [hypothesis('Chosen'), hypothesis(title)] });
 
-      expect(withRunnerUp('Runner-up')).toBe(withRunnerUp('Another runner-up'));
+      expect(changedSections(withRunnerUp('Runner-up'), withRunnerUp('Another'))).toEqual(['Other details']);
     });
 
-    it('records a hash for a filled-in blueprint section', () => {
-      const hashes = sectionHashes(
-        solution({
-          ...emptyState,
-          blueprint: {
-            generatedOn: 'x',
-            mode: 'rules',
-            overview: {
-              title: 'T',
-              summary: 'S',
-              objectives: [],
-              scope: [],
-              outOfScope: [],
-              stakeholders: [],
-              successMeasures: [],
-              risks: [],
-            },
-          } as SolutionState['blueprint'],
-        }),
-      );
+    it('does not report specialist notes when only consultedOn changes', () => {
+      const withNotes = (consultedOn: string) => withBlueprint({ specialistNotes: [specialistNote({ consultedOn })] });
 
-      expect(Object.keys(hashes)).toEqual(['Overview']);
+      expect(changedSections(withNotes('2026-01-01'), withNotes('2026-02-01'))).toEqual(['Other details']);
     });
 
-    it('does not hash conversation or discovery', () => {
-      const hashes = sectionHashes(
-        solution({
-          ...emptyState,
-          conversation: [{ role: 'user', content: 'Hi', at: 'x' }],
-          discovery: {
-            messages: [],
-            confidence: 0,
-            threshold: 50,
-            factors: [],
-            ready: false,
-            mode: 'rules',
-            updatedOn: 'x',
-          },
-        }),
-      );
-
-      expect(hashes).toEqual({});
-    });
-
-    it('ignores consultedOn so a regenerate with identical advice does not change the hash', () => {
-      const withNotes = (consultedOn: string) =>
-        sectionHashes(
-          solution({
-            ...emptyState,
-            blueprint: {
-              generatedOn: 'x',
-              mode: 'rules',
-              specialistNotes: [specialistNote({ consultedOn })],
-            } as SolutionState['blueprint'],
-          }),
-        )['Specialist notes'];
-
-      expect(withNotes('2026-01-01T00:00:00.000Z')).toBe(withNotes('2026-02-01T00:00:00.000Z'));
-    });
-
-    it('changes the hash when specialist note content actually changes', () => {
-      const withSummary = (summary: string) =>
-        sectionHashes(
-          solution({
-            ...emptyState,
-            blueprint: {
-              generatedOn: 'x',
-              mode: 'rules',
-              specialistNotes: [specialistNote({ summary })],
-            } as SolutionState['blueprint'],
-          }),
-        )['Specialist notes'];
-
-      expect(withSummary('Fits the case.')).not.toBe(withSummary('Does not fit.'));
-    });
-
-    it('trims whitespace before hashing so a stray newline does not change the hash', () => {
-      const trimmed = sectionHashes(solution({ ...emptyState, problemStatement: 'Applicants submit permits.' }));
-      const padded = sectionHashes(solution({ ...emptyState, problemStatement: 'Applicants submit permits.\n\n' }));
-
-      expect(padded['Problem statement']).toBe(trimmed['Problem statement']);
-    });
-
-    it('does not hash notCoveredByAdsp when it is undefined, so a blueprint that predates the feature does not bump', () => {
-      const hashes = sectionHashes(
-        solution({ ...emptyState, blueprint: { generatedOn: 'x', mode: 'rules' } as SolutionState['blueprint'] }),
-      );
-
-      expect(hashes['Not covered by ADSP']).toBeUndefined();
-    });
-
-    it('hashes an empty notCoveredByAdsp array so a regenerate with everything covered is still recorded', () => {
-      const hashes = sectionHashes(
-        solution({
-          ...emptyState,
-          blueprint: { generatedOn: 'x', mode: 'rules', notCoveredByAdsp: [] } as SolutionState['blueprint'],
-        }),
-      );
-
-      expect(hashes['Not covered by ADSP']).toBeDefined();
-    });
-
-    it('changes the hash when notCoveredByAdsp content changes', () => {
-      const withItems = (items: SolutionState['blueprint']['notCoveredByAdsp']) =>
-        sectionHashes(
-          solution({
-            ...emptyState,
-            blueprint: { generatedOn: 'x', mode: 'rules', notCoveredByAdsp: items } as SolutionState['blueprint'],
-          }),
-        )['Not covered by ADSP'];
-
-      expect(withItems([{ requirement: 'Fee', reason: 'x', suggestedApproach: 'y' }])).not.toBe(withItems([]));
-    });
-
-    it('records a hash for the components to set up', () => {
-      const hashes = sectionHashes(
-        solution({
-          ...emptyState,
-          blueprint: {
-            generatedOn: 'x',
-            mode: 'rules',
-            components: [{ order: 1, service: 'form-service', type: 'Form definition', name: 'Application' }],
-          } as SolutionState['blueprint'],
-        }),
-      );
-
-      expect(Object.keys(hashes)).toEqual(['Components to set up']);
+    it('reports Not covered by ADSP when a regenerate finds everything covered', () => {
+      expect(changedSections(withBlueprint({}), withBlueprint({ notCoveredByAdsp: [] }))).toEqual(['Not covered by ADSP']);
     });
 
     describe('component review', () => {
       const withReview = (review?: ComponentReview) =>
-        sectionHashes(
-          solution({
-            ...emptyState,
-            blueprint: {
-              generatedOn: 'x',
-              mode: 'rules',
-              components: [{ order: 1, service: 'form-service', type: 'Form definition', name: 'Application', review }],
-            } as SolutionState['blueprint'],
-          }),
-        );
+        withBlueprint({
+          components: [{ order: 1, service: 'form-service', type: 'Form definition', name: 'Application', review }],
+        } as Partial<SolutionState['blueprint']>);
 
-      it('does not change the components hash when only the review changes', () => {
-        expect(withReview('approved')['Components to set up']).toBe(withReview()['Components to set up']);
+      it('reports Component review, not the components, when only a review changes', () => {
+        expect(changedSections(withReview(), withReview('approved'))).toEqual(['Component review']);
       });
 
-      it('records a component review hash once a component is approved or rejected', () => {
-        expect(withReview('approved')['Component review']).toBeDefined();
-        expect(withReview('approved')['Component review']).not.toBe(withReview('rejected')['Component review']);
+      it('reports Components to set up when a component itself changes', () => {
+        expect(changedSections(withBlueprint({}), withReview())).toEqual(['Components to set up']);
       });
-
-      it.each([
-        ['missing', undefined],
-        ['not reviewed', 'not-reviewed' as const],
-      ])('does not hash the component review while every review is %s', (_name, review) => {
-        expect(withReview(review)['Component review']).toBeUndefined();
-      });
-    });
-  });
-
-  describe('changedSections', () => {
-    it('reports nothing changed when hashes match', () => {
-      const hashes = { 'Problem statement': 'abc' };
-
-      expect(changedSections(hashes, hashes)).toEqual([]);
-    });
-
-    it('reports a section as changed when its hash differs', () => {
-      expect(changedSections({ 'Problem statement': 'abc' }, { 'Problem statement': 'def' })).toEqual([
-        'Problem statement',
-      ]);
-    });
-
-    it('reports a newly-filled section as changed', () => {
-      expect(changedSections({}, { 'Problem statement': 'abc' })).toEqual(['Problem statement']);
-    });
-
-    it('lists changed sections in plan order, whatever order the stored hashes come back in', () => {
-      const previous = { Delivery: 'a', 'Components to set up': 'b', 'Service mapping': 'c' };
-      const current = { Delivery: 'x', 'Components to set up': 'y', 'Service mapping': 'z' };
-
-      expect(changedSections(previous, current)).toEqual(['Service mapping', 'Components to set up', 'Delivery']);
-    });
-
-    it('ignores a section no longer in the plan, so an upgrade does not report it as changed', () => {
-      expect(changedSections({ 'Old section': 'a', Delivery: 'b' }, { Delivery: 'c' })).toEqual(['Delivery']);
-    });
-  });
-
-  describe('classifyBump', () => {
-    it('is none when nothing changed', () => {
-      expect(classifyBump([])).toBe('none');
-    });
-
-    it('is minor when only plan sections changed', () => {
-      expect(classifyBump(['Problem statement', 'Next steps'])).toBe('minor');
-    });
-
-    it('is minor when the title changed', () => {
-      expect(classifyBump(['Title'])).toBe('minor');
-    });
-
-    it('is major when any blueprint section changed', () => {
-      expect(classifyBump(['Problem statement', 'Service mapping'])).toBe('major');
-    });
-
-    it('is major when the components to set up changed', () => {
-      expect(classifyBump(['Components to set up'])).toBe('major');
-    });
-
-    it('is minor when only the component review changed', () => {
-      expect(classifyBump(['Component review'])).toBe('minor');
-    });
-  });
-
-  describe('nextVersion', () => {
-    it('bumps the minor number', () => {
-      expect(nextVersion('1.0', 'minor')).toBe('1.1');
-    });
-
-    it('bumps the major number and resets minor to 0', () => {
-      expect(nextVersion('1.3', 'major')).toBe('2.0');
     });
   });
 });

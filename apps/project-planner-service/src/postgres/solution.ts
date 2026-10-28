@@ -1,7 +1,7 @@
 import { AdspId } from '@abgov/adsp-service-sdk';
 import { decodeAfter, encodeNext, InvalidOperationError, Results } from '@core-services/core-common';
 import { Knex } from 'knex';
-import { Solution, SolutionCriteria, SolutionRepository, SolutionState, SolutionVersionEntry } from '../planner';
+import { Solution, SolutionCriteria, SolutionRepository, SolutionState } from '../planner';
 
 interface SolutionRecord {
   id: string;
@@ -15,10 +15,7 @@ interface SolutionRecord {
   createdOn: Date;
   updatedOn: Date;
   state: SolutionState;
-  version: string;
-  versionHistory: SolutionVersionEntry[];
-  lastExportHashes: Record<string, string>;
-  exportedOnce: boolean;
+  version: number;
 }
 
 const mapRecord = (record: SolutionRecord): Solution => ({
@@ -34,9 +31,6 @@ const mapRecord = (record: SolutionRecord): Solution => ({
   updatedOn: record.updatedOn,
   state: record.state,
   version: record.version,
-  versionHistory: record.versionHistory,
-  lastExportHashes: record.lastExportHashes,
-  exportedOnce: record.exportedOnce,
 });
 
 const mapSolution = (solution: Solution): SolutionRecord => ({
@@ -52,9 +46,6 @@ const mapSolution = (solution: Solution): SolutionRecord => ({
   updatedOn: solution.updatedOn,
   state: solution.state,
   version: solution.version,
-  versionHistory: solution.versionHistory,
-  lastExportHashes: solution.lastExportHashes,
-  exportedOnce: solution.exportedOnce,
 });
 
 export class PostgresSolutionRepository implements SolutionRepository {
@@ -95,14 +86,9 @@ export class PostgresSolutionRepository implements SolutionRepository {
   async save(solution: Solution): Promise<Solution> {
     const record = mapSolution(solution);
     const rows = await this.knex<SolutionRecord>('solutions')
-      .insert({
-        ...record,
-        state: JSON.stringify(record.state) as unknown as SolutionState,
-        versionHistory: JSON.stringify(record.versionHistory) as unknown as SolutionVersionEntry[],
-        lastExportHashes: JSON.stringify(record.lastExportHashes) as unknown as Record<string, string>,
-      })
+      .insert({ ...record, state: JSON.stringify(record.state) as unknown as SolutionState })
       .onConflict('id')
-      .merge()
+      .merge(['name', 'description', 'scenario', 'status', 'updatedOn', 'state'])
       .where('solutions.tenant', record.tenant)
       .returning('*');
 

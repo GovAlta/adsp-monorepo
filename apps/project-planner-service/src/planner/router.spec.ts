@@ -13,7 +13,8 @@ import type { LlmAnalysis, LlmConsultation, PlannerLlm, SpecialistReply } from '
 import { solutionCreated } from './events';
 import { DISCOVERY_FACTORS, DISCOVERY_THRESHOLD } from './discovery';
 import { BUILT_IN_PATTERNS } from './patterns';
-import { sectionHashes } from './versioning';
+import type { SolutionVersion } from './repository';
+import { contentHash, versionContent } from './versioning';
 
 const mockGetText = jest.fn();
 const mockPdfDestroy = jest.fn().mockResolvedValue(undefined);
@@ -41,10 +42,7 @@ const makeSolution = (createdById: string): Solution => ({
   createdByName: 'n',
   createdOn: new Date(),
   updatedOn: new Date(),
-  version: '1.0',
-  versionHistory: [],
-  lastExportHashes: {},
-  exportedOnce: false,
+  version: 1,
   state: {
     problemStatement: '',
     concepts: [],
@@ -70,7 +68,14 @@ describe('planner router routes', () => {
 
   const repository = { get: jest.fn(), find: jest.fn(), save: jest.fn(), delete: jest.fn() };
   const patternRepository = { find: jest.fn(), save: jest.fn(), delete: jest.fn() };
-  const chatRepository = { find: jest.fn(), get: jest.fn(), save: jest.fn(), delete: jest.fn() };
+  const chatRepository = {
+    find: jest.fn(),
+    findBySolution: jest.fn(),
+    get: jest.fn(),
+    save: jest.fn(),
+    delete: jest.fn(),
+  };
+  const versionRepository = { list: jest.fn(), get: jest.fn(), latest: jest.fn(), create: jest.fn(), rename: jest.fn() };
   const eventService = { send: jest.fn() };
   const logger = { info: jest.fn(), debug: jest.fn(), warn: jest.fn(), error: jest.fn() };
   const getConfiguration = jest.fn();
@@ -117,6 +122,7 @@ describe('planner router routes', () => {
         solutionRepository: repository,
         patternRepository,
         specialistChatRepository: chatRepository,
+        solutionVersionRepository: versionRepository,
         eventService: eventService as unknown as EventService,
         llm,
         readAdspCatalog: readCatalog || undefined,
@@ -151,13 +157,31 @@ describe('planner router routes', () => {
     },
   });
 
+  const savedVersion = (
+    number: number,
+    solution: Solution,
+    chats: SpecialistChat[] = [],
+    createdOn = new Date('2026-04-01T09:00:00.000Z'),
+  ): SolutionVersion => {
+    const content = versionContent(solution, chats);
+    return { number, name: `Version ${number}`, createdOn, contentHash: contentHash(content), content };
+  };
+
   beforeEach(() => {
     repository.save.mockImplementation(async (s: Solution) => s);
     patternRepository.find.mockResolvedValue([]);
     patternRepository.save.mockImplementation(async (_tenantId: unknown, pattern: BusinessPattern) => pattern);
     getConfiguration.mockResolvedValue([undefined]);
     chatRepository.find.mockResolvedValue([]);
+    chatRepository.findBySolution.mockResolvedValue([]);
     chatRepository.save.mockImplementation(async (c: SpecialistChat) => c);
+    versionRepository.create.mockImplementation(async (_tenantId: unknown, _solutionId: string, content) => ({
+      number: 1,
+      name: 'Version 1',
+      createdOn: new Date('2026-04-01T09:00:00.000Z'),
+      contentHash: contentHash(content),
+      content,
+    }));
   });
 
   afterEach(() => {
@@ -923,9 +947,17 @@ describe('planner router routes', () => {
         status: 'draft',
         scenario: 'new',
         createdById: 'owner-1',
-        version: '1.0',
-        versionHistory: [],
+        version: 1,
       });
+    });
+
+    it('saves Version 1 of the new solution', async () => {
+      const res = await request(buildApp(owner))
+        .post('/planner/v1/solutions')
+        .send({ name: 'Permit intake', problemStatement: 'Applicants submit permit forms.' });
+
+      const [savedSolution] = repository.save.mock.calls[0];
+      expect(versionRepository.create).toHaveBeenCalledWith(tenantId, res.body.id, versionContent(savedSolution, []));
     });
 
     it('stores the problem statement in the initial state', async () => {
@@ -1033,8 +1065,7 @@ describe('planner router routes', () => {
     it('does not bump the version on a plain edit', async () => {
       const res = await patch({ name: 'Renamed' });
 
-      expect(res.body.version).toBe('1.0');
-      expect(res.body.versionHistory).toEqual([]);
+      expect(res.body.version).toBe(1);
     });
 
     it('keeps existing values for omitted fields', async () => {
@@ -1664,8 +1695,7 @@ describe('planner router routes', () => {
     it('does not bump the version on a plain edit', async () => {
       const res = await answerQuestion();
 
-      expect(res.body.version).toBe('1.0');
-      expect(res.body.versionHistory).toEqual([]);
+      expect(res.body.version).toBe(1);
     });
 
     it('returns 404 for an unknown question', async () => {
@@ -1961,7 +1991,7 @@ describe('planner router routes', () => {
         name: 'S',
         scenario: 'new',
         status: 'draft',
-        version: '1.0',
+        version: 1,
         exportedAt: expect.any(String),
         state: expect.objectContaining({ questions: [] }),
       });
@@ -1973,34 +2003,18 @@ describe('planner router routes', () => {
       expect(res.body.tenantId).toBeUndefined();
     });
 
-    it('leaves rejected components out of the export but keeps them saved', async () => {
-      const stored = withComponents(solutionOwnedBy('owner-1'), [
-        blueprintComponent(1, 'approved'),
-        blueprintComponent(2, 'rejected'),
-        blueprintComponent(3),
-      ]);
-      repository.get.mockResolvedValueOnce(stored);
+    it('leaves rejected components out of the export', async () => {
+      repository.get.mockResolvedValueOnce(
+        withComponents(solutionOwnedBy('owner-1'), [
+          blueprintComponent(1, 'approved'),
+          blueprintComponent(2, 'rejected'),
+          blueprintComponent(3),
+        ]),
+      );
 
       const res = await exportSolution();
 
       expect(res.body.state.blueprint.components.map((c: BlueprintComponent) => c.order)).toEqual([1, 3]);
-      expect(repository.save).toHaveBeenCalledWith(
-        expect.objectContaining({ state: expect.objectContaining({ blueprint: stored.state.blueprint }) }),
-      );
-    });
-
-    it('bumps minor when only a component review changed since the last export', async () => {
-      const exported = withComponents(solutionOwnedBy('owner-1'), [blueprintComponent(1)]);
-      repository.get.mockResolvedValueOnce({
-        ...withComponents(exported, [blueprintComponent(1, 'approved')]),
-        exportedOnce: true,
-        lastExportHashes: sectionHashes(exported),
-      });
-
-      const res = await exportSolution();
-
-      expect(res.body.version).toBe('1.1');
-      expect(res.body.changedSections).toEqual(['Component review']);
     });
 
     it("allows an admin to export another user's solution", async () => {
@@ -2023,181 +2037,89 @@ describe('planner router routes', () => {
       expect(res.status).toBe(404);
     });
 
-    it('labels the first export ever as the initial version, without bumping', async () => {
-      const res = await exportSolution();
-
-      expect(res.body).toMatchObject({ version: '1.0', initial: true, changedSections: [] });
-      expect(repository.save).toHaveBeenCalledWith(expect.objectContaining({ exportedOnce: true }));
-    });
-
-    it('does not bump the version when re-exporting unchanged content', async () => {
-      const base = solutionOwnedBy('owner-1');
-      const state = { ...base.state, problemStatement: 'Applicants submit permits.' };
-      const named = { ...base, state, name: base.name };
-      repository.get.mockResolvedValueOnce({ ...named, exportedOnce: true, lastExportHashes: sectionHashes(named) });
+    it('reports the latest version when nothing changed since it was saved', async () => {
+      const createdOn = new Date('2026-04-02T09:00:00.000Z');
+      versionRepository.latest.mockResolvedValueOnce(savedVersion(1, solutionOwnedBy('owner-1'), [], createdOn));
 
       const res = await exportSolution();
 
-      expect(res.body.version).toBe('1.0');
-      expect(res.body.changedSections).toEqual([]);
-      expect(repository.save).not.toHaveBeenCalled();
-    });
-
-    it('bumps minor when only plan sections changed since the last export', async () => {
-      const base = solutionOwnedBy('owner-1');
-      repository.get.mockResolvedValueOnce({
-        ...base,
-        exportedOnce: true,
-        state: { ...base.state, problemStatement: 'Applicants submit permits.' },
-        lastExportHashes: sectionHashes(base),
+      expect(res.body).toMatchObject({
+        version: 1,
+        unsavedChanges: false,
+        initial: true,
+        changedSections: [],
+        lastUpdated: createdOn.toISOString(),
       });
-
-      const res = await exportSolution();
-
-      expect(res.body.version).toBe('1.1');
-      expect(res.body.changedSections).toEqual(['Problem statement']);
-      expect(repository.save).toHaveBeenCalledWith(expect.objectContaining({ version: '1.1' }));
     });
 
-    it('bumps minor when the solution is renamed', async () => {
-      const base = solutionOwnedBy('owner-1');
-      repository.get.mockResolvedValueOnce({ ...base, exportedOnce: true, lastExportHashes: { Title: 'old-hash' } });
+    it('lists what the latest version changed from the one before it', async () => {
+      const solution = solutionOwnedBy('owner-1');
+      versionRepository.latest.mockResolvedValueOnce(savedVersion(2, solution));
+      versionRepository.get.mockResolvedValueOnce(
+        savedVersion(1, { ...solution, state: { ...solution.state, problemStatement: 'Earlier draft.' } }),
+      );
 
       const res = await exportSolution();
 
-      expect(res.body.version).toBe('1.1');
-      expect(res.body.changedSections).toEqual(['Title']);
-    });
-
-    it('bumps major when a blueprint section changed', async () => {
-      const base = solutionOwnedBy('owner-1');
-      repository.get.mockResolvedValueOnce({
-        ...base,
-        exportedOnce: true,
-        state: {
-          ...base.state,
-          blueprint: {
-            generatedOn: 'x',
-            mode: 'rules',
-            overview: {
-              title: 'T',
-              summary: 'S',
-              objectives: [],
-              scope: [],
-              outOfScope: [],
-              stakeholders: [],
-              successMeasures: [],
-              risks: [],
-            },
-          } as Solution['state']['blueprint'],
-        },
-        lastExportHashes: {},
-      });
-
-      const res = await exportSolution();
-
-      expect(res.body.version).toBe('2.0');
-    });
-
-    it('does not bump when a specialist note is regenerated with identical advice', async () => {
-      const base = solutionOwnedBy('owner-1');
-      const note = {
-        service: 'form-service',
-        displayName: 'Form',
-        fit: 'recommended',
-        source: 'rules',
-        summary: 'Fits the case.',
-        supports: [],
-        constraints: [],
-        questions: [],
-        risks: [],
-        chatHighlights: [],
-        consultedOn: '2026-01-01T00:00:00.000Z',
-      };
-      const state = {
-        ...base.state,
-        blueprint: { generatedOn: 'x', mode: 'rules', specialistNotes: [note] } as Solution['state']['blueprint'],
-      };
-      repository.get.mockResolvedValueOnce({
-        ...base,
-        exportedOnce: true,
-        state,
-        lastExportHashes: sectionHashes({ ...base, state }),
-      });
-
-      const regenerated = {
-        ...base,
-        exportedOnce: true,
-        state: {
-          ...state,
-          blueprint: {
-            ...state.blueprint,
-            specialistNotes: [{ ...note, consultedOn: '2026-03-01T00:00:00.000Z' }],
-          } as Solution['state']['blueprint'],
-        },
-        lastExportHashes: sectionHashes({ ...base, state }),
-      };
-      repository.get.mockResolvedValueOnce(regenerated);
-
-      const res = await exportSolution();
-
-      expect(res.body.version).toBe('1.0');
-      expect(res.body.changedSections).toEqual([]);
-    });
-
-    it('does not bump when only conversation changed', async () => {
-      const base = solutionOwnedBy('owner-1');
-      repository.get.mockResolvedValueOnce({
-        ...base,
-        exportedOnce: true,
-        state: { ...base.state, conversation: [{ role: 'user', content: 'Hi', at: 'x' }] },
-        lastExportHashes: sectionHashes(base),
-      });
-
-      const res = await exportSolution();
-
-      expect(res.body.version).toBe('1.0');
-    });
-
-    it('does not bump a trailing-whitespace-only change to the problem statement', async () => {
-      const base = solutionOwnedBy('owner-1');
-      const state = { ...base.state, problemStatement: 'Applicants submit permits.' };
-      repository.get.mockResolvedValueOnce({
-        ...base,
-        exportedOnce: true,
-        state: { ...state, problemStatement: `${state.problemStatement}\n\n` },
-        lastExportHashes: sectionHashes({ ...base, state }),
-      });
-
-      const res = await exportSolution();
-
-      expect(res.body.version).toBe('1.0');
-      expect(res.body.changedSections).toEqual([]);
-    });
-
-    it('records a history entry with the changed sections and who exported', async () => {
-      const base = solutionOwnedBy('owner-1');
-      repository.get.mockResolvedValueOnce({
-        ...base,
-        exportedOnce: true,
-        state: { ...base.state, problemStatement: 'Applicants submit permits.' },
-        lastExportHashes: sectionHashes(base),
-      });
-
-      const res = await exportSolution();
-
-      expect(res.body.versionHistory[0]).toMatchObject({
-        version: '1.1',
-        changedBy: 'owner-1',
+      expect(versionRepository.get).toHaveBeenCalledWith(tenantId, SOLUTION_ID, 1);
+      expect(res.body).toMatchObject({
+        version: 2,
+        unsavedChanges: false,
+        initial: false,
         changedSections: ['Problem statement'],
       });
+    });
+
+    it('labels changes since the latest version as unsaved', async () => {
+      const solution = { ...solutionOwnedBy('owner-1'), updatedOn: new Date('2026-04-03T09:00:00.000Z') };
+      repository.get.mockResolvedValueOnce(solution);
+      versionRepository.latest.mockResolvedValueOnce(
+        savedVersion(1, { ...solution, state: { ...solution.state, problemStatement: 'Earlier draft.' } }),
+      );
+
+      const res = await exportSolution();
+
+      expect(res.body).toMatchObject({
+        version: 1,
+        unsavedChanges: true,
+        initial: false,
+        changedSections: ['Problem statement'],
+        lastUpdated: '2026-04-03T09:00:00.000Z',
+      });
+    });
+
+    it('counts a newly linked specialist chat as an unsaved change', async () => {
+      versionRepository.latest.mockResolvedValueOnce(savedVersion(1, solutionOwnedBy('owner-1')));
+      chatRepository.findBySolution.mockResolvedValueOnce([storedChat({ solutionId: SOLUTION_ID })]);
+
+      const res = await exportSolution();
+
+      expect(chatRepository.findBySolution).toHaveBeenCalledWith(tenantId, SOLUTION_ID);
+      expect(res.body).toMatchObject({ unsavedChanges: true, changedSections: ['Specialist consultations'] });
+    });
+
+    it('includes the linked specialist chats', async () => {
+      chatRepository.findBySolution.mockResolvedValueOnce([storedChat({ solutionId: SOLUTION_ID })]);
+
+      const res = await exportSolution();
+
+      expect(res.body.specialistChats).toEqual([
+        expect.objectContaining({ id: CHAT_ID, title: 'Earlier question', messages: expect.any(Array) }),
+      ]);
+    });
+
+    it('treats a solution with no saved version as unsaved and initial', async () => {
+      versionRepository.latest.mockResolvedValueOnce(null);
+
+      const res = await exportSolution();
+
+      expect(res.body).toMatchObject({ version: 1, unsavedChanges: true, initial: true, changedSections: [] });
     });
 
     it('flags the blueprint as out of date when the problem statement changed after it was generated', async () => {
       const base = solutionOwnedBy('owner-1');
       repository.get.mockResolvedValueOnce({
         ...base,
-        exportedOnce: true,
         state: {
           ...base.state,
           problemStatementUpdatedOn: '2026-03-01T00:00:00.000Z',
@@ -2214,7 +2136,6 @@ describe('planner router routes', () => {
       const base = solutionOwnedBy('owner-1');
       repository.get.mockResolvedValueOnce({
         ...base,
-        exportedOnce: true,
         state: {
           ...base.state,
           problemStatementUpdatedOn: '2026-01-01T00:00:00.000Z',
@@ -2226,20 +2147,253 @@ describe('planner router routes', () => {
 
       expect(res.body.blueprintOutOfDate).toBe(false);
     });
+  });
 
-    it('defaults a legacy solution with no recorded version to 1.0', async () => {
-      const {
-        version: _version,
-        versionHistory: _versionHistory,
-        lastExportHashes: _lastExportHashes,
-        exportedOnce: _exportedOnce,
-        ...legacy
-      } = solutionOwnedBy('owner-1');
-      repository.get.mockResolvedValueOnce(legacy as Solution);
+  describe('GET /solutions/:id/versions', () => {
+    const listVersions = (user: User = owner) =>
+      request(buildApp(user)).get(`/planner/v1/solutions/${SOLUTION_ID}/versions`);
 
-      const res = await exportSolution();
+    beforeEach(() => {
+      repository.get.mockResolvedValue(solutionOwnedBy('owner-1'));
+    });
 
-      expect(res.body.version).toBe('1.0');
+    it('returns the saved versions with the latest number', async () => {
+      const summaries = [
+        { number: 2, name: 'Approved scope', createdOn: new Date('2026-04-02T09:00:00.000Z') },
+        { number: 1, name: 'Version 1', createdOn: new Date('2026-04-01T09:00:00.000Z') },
+      ];
+      versionRepository.list.mockResolvedValueOnce(summaries);
+      versionRepository.latest.mockResolvedValueOnce(savedVersion(2, solutionOwnedBy('owner-1')));
+
+      const res = await listVersions();
+
+      expect(versionRepository.list).toHaveBeenCalledWith(tenantId, SOLUTION_ID);
+      expect(res.body).toEqual({
+        latest: 2,
+        unsavedChanges: false,
+        results: summaries.map((summary) => ({ ...summary, createdOn: summary.createdOn.toISOString() })),
+      });
+    });
+
+    it('reports unsaved changes when the solution differs from the latest version', async () => {
+      versionRepository.list.mockResolvedValueOnce([]);
+      versionRepository.latest.mockResolvedValueOnce(savedVersion(1, { ...solutionOwnedBy('owner-1'), name: 'Old' }));
+
+      const res = await listVersions();
+
+      expect(res.body.unsavedChanges).toBe(true);
+    });
+
+    it('returns 403 for a user who does not own the solution', async () => {
+      const res = await listVersions(stranger);
+
+      expect(res.status).toBe(403);
+    });
+
+    it('returns 404 when the solution does not exist', async () => {
+      repository.get.mockResolvedValueOnce(null);
+
+      const res = await listVersions();
+
+      expect(res.status).toBe(404);
+    });
+  });
+
+  describe('POST /solutions/:id/versions', () => {
+    const saveVersion = (user: User = owner) =>
+      request(buildApp(user)).post(`/planner/v1/solutions/${SOLUTION_ID}/versions`);
+
+    beforeEach(() => {
+      repository.get.mockResolvedValue(solutionOwnedBy('owner-1'));
+    });
+
+    it('saves the current content and linked chats as a new version', async () => {
+      const solution = solutionOwnedBy('owner-1');
+      const chats = [storedChat({ solutionId: SOLUTION_ID })];
+      chatRepository.findBySolution.mockResolvedValueOnce(chats);
+      versionRepository.latest.mockResolvedValueOnce(savedVersion(1, { ...solution, name: 'Old' }));
+
+      await saveVersion();
+
+      expect(versionRepository.create).toHaveBeenCalledWith(tenantId, SOLUTION_ID, versionContent(solution, chats));
+    });
+
+    it('responds 201 with the version summary', async () => {
+      const res = await saveVersion();
+
+      expect(res.status).toBe(201);
+      expect(res.body).toEqual({ number: 1, name: 'Version 1', createdOn: '2026-04-01T09:00:00.000Z' });
+    });
+
+    it('returns 400 when nothing changed since the latest version', async () => {
+      versionRepository.latest.mockResolvedValueOnce(savedVersion(2, solutionOwnedBy('owner-1')));
+
+      const res = await saveVersion();
+
+      expect(res.status).toBe(400);
+      expect(res.body.error).toBe('No changes since version 2.');
+      expect(versionRepository.create).not.toHaveBeenCalled();
+    });
+
+    it('returns 409 when another save took the version number first', async () => {
+      versionRepository.create.mockRejectedValueOnce(
+        new InvalidOperationError('Version 2 was saved by another request.', { statusCode: 409 }),
+      );
+
+      const res = await saveVersion();
+
+      expect(res.status).toBe(409);
+    });
+
+    it('sends a version-saved update event', async () => {
+      await saveVersion();
+
+      expect(eventService.send).toHaveBeenCalledWith(
+        expect.objectContaining({ payload: expect.objectContaining({ operation: 'version-saved' }) }),
+      );
+    });
+
+    it('returns 403 for a user who does not own the solution', async () => {
+      const res = await saveVersion(stranger);
+
+      expect(res.status).toBe(403);
+      expect(versionRepository.create).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('PATCH /solutions/:id/versions/:number', () => {
+    const renameVersion = (body: object, number: number | string = 2, user: User = owner) =>
+      request(buildApp(user)).patch(`/planner/v1/solutions/${SOLUTION_ID}/versions/${number}`).send(body);
+
+    beforeEach(() => {
+      repository.get.mockResolvedValue(solutionOwnedBy('owner-1'));
+      versionRepository.rename.mockImplementation(async (_tenantId, _solutionId, number: number, name: string) => ({
+        ...savedVersion(number, solutionOwnedBy('owner-1')),
+        name,
+      }));
+    });
+
+    it('renames the version with the trimmed name', async () => {
+      const res = await renameVersion({ name: '  Approved scope  ' });
+
+      expect(versionRepository.rename).toHaveBeenCalledWith(tenantId, SOLUTION_ID, 2, 'Approved scope');
+      expect(res.body).toEqual({ number: 2, name: 'Approved scope', createdOn: '2026-04-01T09:00:00.000Z' });
+    });
+
+    it('falls back to the default name when the name is blank', async () => {
+      await renameVersion({ name: '   ' });
+
+      expect(versionRepository.rename).toHaveBeenCalledWith(tenantId, SOLUTION_ID, 2, 'Version 2');
+    });
+
+    test.each([
+      ['a name over 100 characters', { name: 'x'.repeat(101) }, 2],
+      ['a name that is not a string', { name: 42 }, 2],
+      ['version number 0', { name: 'Scope' }, 0],
+    ])('returns 400 for %s', async (_case, body, number) => {
+      const res = await renameVersion(body, number);
+
+      expect(res.status).toBe(400);
+      expect(versionRepository.rename).not.toHaveBeenCalled();
+    });
+
+    it('returns 404 when the version does not exist', async () => {
+      versionRepository.rename.mockResolvedValueOnce(null);
+
+      const res = await renameVersion({ name: 'Scope' });
+
+      expect(res.status).toBe(404);
+    });
+
+    it('sends a version-renamed update event', async () => {
+      await renameVersion({ name: 'Scope' });
+
+      expect(eventService.send).toHaveBeenCalledWith(
+        expect.objectContaining({ payload: expect.objectContaining({ operation: 'version-renamed' }) }),
+      );
+    });
+
+    it('returns 403 for a user who does not own the solution', async () => {
+      const res = await renameVersion({ name: 'Scope' }, 2, stranger);
+
+      expect(res.status).toBe(403);
+    });
+  });
+
+  describe('GET /solutions/:id/versions/:number/export', () => {
+    const exportVersion = (number = 2, user: User = owner) =>
+      request(buildApp(user)).get(`/planner/v1/solutions/${SOLUTION_ID}/versions/${number}/export`);
+    const createdOn = new Date('2026-04-02T09:00:00.000Z');
+    const current = solutionOwnedBy('owner-1');
+    const snapshot = { ...current, name: 'Snapshot', state: { ...current.state, problemStatement: 'Saved.' } };
+
+    beforeEach(() => {
+      repository.get.mockResolvedValue(current);
+      versionRepository.get.mockImplementation(async (_tenantId, _solutionId, number: number) =>
+        number === 2
+          ? savedVersion(2, snapshot, [storedChat({ solutionId: SOLUTION_ID })], createdOn)
+          : savedVersion(1, current),
+      );
+    });
+
+    it('exports the version snapshot', async () => {
+      const res = await exportVersion();
+
+      expect(res.body).toMatchObject({
+        id: SOLUTION_ID,
+        name: 'Snapshot',
+        version: 2,
+        unsavedChanges: false,
+        lastUpdated: createdOn.toISOString(),
+        updatedOn: createdOn.toISOString(),
+        state: expect.objectContaining({ problemStatement: 'Saved.' }),
+        specialistChats: [expect.objectContaining({ id: CHAT_ID })],
+      });
+    });
+
+    it('lists what the version changed from the one before it', async () => {
+      const res = await exportVersion();
+
+      expect(res.body).toMatchObject({
+        initial: false,
+        changedSections: ['Title', 'Problem statement', 'Specialist consultations'],
+      });
+    });
+
+    it('labels version 1 as the initial version', async () => {
+      const res = await exportVersion(1);
+
+      expect(res.body).toMatchObject({ version: 1, initial: true, changedSections: [] });
+    });
+
+    it('names the attachment after the version', async () => {
+      const res = await exportVersion();
+
+      expect(res.headers['content-disposition']).toBe(`attachment; filename="planner-${SOLUTION_ID}-v2.json"`);
+    });
+
+    it('leaves rejected components out of the export', async () => {
+      versionRepository.get.mockResolvedValueOnce(
+        savedVersion(1, withComponents(current, [blueprintComponent(1), blueprintComponent(2, 'rejected')])),
+      );
+
+      const res = await exportVersion(1);
+
+      expect(res.body.state.blueprint.components.map((c: BlueprintComponent) => c.order)).toEqual([1]);
+    });
+
+    it('returns 404 when the version does not exist', async () => {
+      versionRepository.get.mockResolvedValueOnce(null);
+
+      const res = await exportVersion(3);
+
+      expect(res.status).toBe(404);
+    });
+
+    it('returns 403 for a user who does not own the solution', async () => {
+      const res = await exportVersion(2, stranger);
+
+      expect(res.status).toBe(403);
     });
   });
 

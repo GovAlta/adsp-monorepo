@@ -60,6 +60,9 @@ describe('usePlannerApi', () => {
         '/solutions/s1/consult/form-service',
       ],
       ['exports a solution', (api) => api.exportSolution('s1'), 'get', '/solutions/s1/export'],
+      ['lists solution versions', (api) => api.listVersions('s1'), 'get', '/solutions/s1/versions'],
+      ['saves a solution version', (api) => api.saveVersion('s1'), 'post', '/solutions/s1/versions'],
+      ['exports a solution version', (api) => api.exportVersion('s1', 2), 'get', '/solutions/s1/versions/2/export'],
       ['lists specialists', (api) => api.listSpecialists(), 'get', '/specialists'],
       [
         'lists chats filtered by service and solution',
@@ -100,6 +103,13 @@ describe('usePlannerApi', () => {
         'patch',
         '/solutions/s1',
         { name: 'New' },
+      ],
+      [
+        'renames a solution version',
+        (api) => api.renameVersion('s1', 2, 'Pilot'),
+        'patch',
+        '/solutions/s1/versions/2',
+        { name: 'Pilot' },
       ],
       ['analyzes with text', (api) => api.analyze('s1', 'abc'), 'post', '/solutions/s1/analyze', { text: 'abc' }],
       [
@@ -167,6 +177,7 @@ describe('usePlannerApi', () => {
       ['listChats', (api) => api.listChats(), responseData.results],
       ['listPatterns', (api) => api.listPatterns(), responseData.results],
       ['getSolution', (api) => api.getSolution('s1'), responseData],
+      ['listVersions', (api) => api.listVersions('s1'), responseData],
       ['consult', (api) => api.consult('s1', 'form-service'), responseData],
       ['deleteSolution', (api) => api.deleteSolution('s1'), undefined],
       ['deleteChat', (api) => api.deleteChat('c1'), undefined],

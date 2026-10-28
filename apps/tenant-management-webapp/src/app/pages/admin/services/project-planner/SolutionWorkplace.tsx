@@ -117,6 +117,7 @@ export const SolutionWorkplace: FunctionComponent<SolutionWorkplaceProps> = ({
   const [headerBusy, setHeaderBusy] = useState(false);
   const [discoveryBusy, setDiscoveryBusy] = useState(false);
   const [blueprintBusy, setBlueprintBusy] = useState(false);
+  const [versionsToken, setVersionsToken] = useState(0);
   const busyRef = useRef(false);
   const automaticActions = useRef(new Set<string>());
   const savedMode = useRef<AnalysisMode>();
@@ -422,6 +423,7 @@ export const SolutionWorkplace: FunctionComponent<SolutionWorkplaceProps> = ({
         onSolutionChange={updateSolution}
         disabled={busy || discoveryBusy || blueprintBusy}
         onBusyChange={setHeaderBusy}
+        versionsToken={versionsToken}
         onBack={
           onBack &&
           (() => {
@@ -535,6 +537,7 @@ export const SolutionWorkplace: FunctionComponent<SolutionWorkplaceProps> = ({
                   specialists={specialists}
                   disabled={busy || headerBusy || blueprintBusy}
                   onBusyChange={setDiscoveryBusy}
+                  onChatsChanged={() => setVersionsToken((token) => token + 1)}
                 />
               )}
             </section>
