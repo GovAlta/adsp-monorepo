@@ -4,6 +4,7 @@ import { Logger } from 'winston';
 import { Repositories } from '../planner';
 import { PostgresPatternRepository } from './pattern';
 import { PostgresSolutionRepository } from './solution';
+import { PostgresSolutionVersionRepository } from './solution-version';
 import { PostgresSpecialistChatRepository } from './specialist-chat';
 
 interface PostgresRepositoryProps {
@@ -68,5 +69,6 @@ export const createRepositories = async ({
     solutionRepository: new PostgresSolutionRepository(knex),
     patternRepository: new PostgresPatternRepository(knex),
     specialistChatRepository: new PostgresSpecialistChatRepository(knex),
+    solutionVersionRepository: new PostgresSolutionVersionRepository(knex),
   };
 };

@@ -5,7 +5,7 @@ import { usePlannerApi } from './api';
 import { expectNoA11yViolations } from './testing/axe';
 import { createMockApi, MockPlannerApi } from './testing/createMockApi';
 import { download } from './utils';
-import { Solution, SolutionBlueprint, SpecialistDefinition } from './model';
+import { Solution, SolutionBlueprint, SolutionVersionList, SpecialistDefinition } from './model';
 
 jest.mock('./api', () => ({ usePlannerApi: jest.fn() }));
 jest.mock('./utils', () => ({ ...jest.requireActual('./utils'), download: jest.fn() }));
@@ -55,8 +55,7 @@ const baseSolution = (state: Partial<Solution['state']> = {}): Solution => ({
   status: 'draft',
   createdByName: 'Pat',
   updatedOn: '2026-03-01T10:00:00.000Z',
-  version: '1.0',
-  versionHistory: [],
+  version: 1,
   state: {
     problemStatement: 'Applicants submit permits for staff review.',
     concepts: [],
@@ -94,18 +93,6 @@ const analyzed = (extra: Partial<Solution['state']> = {}): Solution =>
 const withPlan = (extra: Partial<Solution['state']> = {}): Solution =>
   baseSolution({ ...analyzed(extra).state, blueprint, ...extra });
 
-const readyDiscovery: NonNullable<Solution['state']['discovery']> = {
-  messages: [
-    { role: 'assistant', content: 'Looks like permitting. Ready to propose a plan.', at: '2026-03-01T10:02:00.000Z' },
-  ],
-  confidence: 70,
-  threshold: 50,
-  factors: [],
-  ready: true,
-  mode: 'ai',
-  updatedOn: '2026-03-01T10:02:00.000Z',
-};
-
 const specialists = [
   {
     service: 'form-service',
@@ -119,6 +106,16 @@ const specialists = [
   },
 ] as SpecialistDefinition[];
 
+const versionList = (latest = 1, unsavedChanges = false): SolutionVersionList => ({
+  latest,
+  unsavedChanges,
+  results: Array.from({ length: latest }, (_, index) => ({
+    number: latest - index,
+    name: `Version ${latest - index}`,
+    createdOn: '2026-03-01T10:00:00.000Z',
+  })),
+});
+
 describe('SolutionWorkplace', () => {
   let api: MockPlannerApi;
   const onBack = jest.fn();
@@ -128,6 +125,7 @@ describe('SolutionWorkplace', () => {
       listSpecialists: jest.fn().mockResolvedValue(specialists),
       listChats: jest.fn().mockResolvedValue([]),
       getAnalysisOptions: jest.fn().mockResolvedValue({ modes: ['ai', 'rules'], defaultMode: 'ai' }),
+      listVersions: jest.fn().mockResolvedValue(versionList()),
       ...overrides,
     });
     (usePlannerApi as jest.Mock).mockReturnValue(api);
@@ -470,14 +468,14 @@ describe('SolutionWorkplace', () => {
   });
 
   it('downloads the harness instructions for the exported version', async () => {
-    const { container } = await setup(undefined, { exportSolution: jest.fn().mockResolvedValue({ version: '1.1' }) });
+    const { container } = await setup(undefined, { exportSolution: jest.fn().mockResolvedValue({ version: 2 }) });
 
     click(container, 'download-harness');
 
     await waitFor(() =>
       expect(download).toHaveBeenCalledWith(
         'planner-permit-intake-harness.md',
-        expect.stringContaining('solution-version: 1.1'),
+        expect.stringContaining('solution-version: 2'),
         'text/markdown',
       ),
     );
@@ -491,22 +489,68 @@ describe('SolutionWorkplace', () => {
     await waitFor(() => expect(goa(container, 'download-harness').getAttribute('disabled')).toBe('true'));
   });
 
-  it.each(['download-json', 'download-report', 'download-harness'])(
-    'takes the new version from the %s export but keeps the saved state, which still has rejected components',
-    async (button) => {
-      const solution = analyzed({ discovery: readyDiscovery });
-      const exported = { ...solution, version: '1.1', state: { ...solution.state, patternMatches: [] } };
-      const { container } = await setup(solution, {
-        exportSolution: jest.fn().mockResolvedValue(exported),
-        blueprint: jest.fn().mockResolvedValue({ ...solution, state: { ...solution.state, blueprint } }),
-      });
+  it('shows the latest saved version and blocks saving when nothing has changed', async () => {
+    const { container } = await setup(undefined, { listVersions: jest.fn().mockResolvedValue(versionList(3)) });
 
-      click(container, button);
+    await waitFor(() => expect(goa(container, 'solution-version').getAttribute('content')).toBe('v3'));
+    expect(goa(container, 'unsaved-changes')).toBeNull();
+    expect(goa(container, 'save-version').getAttribute('disabled')).toBe('true');
+  });
 
-      await waitFor(() => expect(goa(container, 'solution-version').getAttribute('content')).toBe('v1.1'));
-      expect(container.textContent).toContain('Looks like permitting.');
-    },
-  );
+  it('saves a version when there are unsaved changes', async () => {
+    const { container } = await setup(undefined, {
+      listVersions: jest.fn().mockResolvedValueOnce(versionList(1, true)).mockResolvedValue(versionList(2)),
+      saveVersion: jest.fn().mockResolvedValue({ number: 2, name: 'Version 2', createdOn: '2026-03-02T10:00:00.000Z' }),
+    });
+    await waitFor(() => expect(goa(container, 'unsaved-changes')).not.toBeNull());
+    expect(goa(container, 'save-version').getAttribute('disabled')).toBeNull();
+
+    click(container, 'save-version');
+
+    await waitFor(() => expect(goa(container, 'solution-version').getAttribute('content')).toBe('v2'));
+    expect(api.saveVersion).toHaveBeenCalledWith('solution-1');
+    expect(goa(container, 'unsaved-changes')).toBeNull();
+  });
+
+  it('refreshes the version status when saving fails', async () => {
+    const { container } = await setup(undefined, {
+      listVersions: jest.fn().mockResolvedValueOnce(versionList(1, true)).mockResolvedValue(versionList(2)),
+      saveVersion: jest.fn().mockRejectedValue(new Error('conflict')),
+    });
+    await waitFor(() => expect(goa(container, 'unsaved-changes')).not.toBeNull());
+
+    click(container, 'save-version');
+
+    await waitFor(() => expect(goa(container, 'solution-version').getAttribute('content')).toBe('v2'));
+  });
+
+  it('opens the saved versions', async () => {
+    const { container } = await setup(undefined, { listVersions: jest.fn().mockResolvedValue(versionList(2)) });
+    await waitFor(() => expect(goa(container, 'solution-version').getAttribute('content')).toBe('v2'));
+
+    click(container, 'open-versions');
+
+    expect(goa(container, 'versions-modal').getAttribute('open')).toBe('true');
+    expect(container.textContent).toContain('Version 2');
+  });
+
+  it('refreshes the version status after a specialist chat changes', async () => {
+    const { container } = await setup(undefined, {
+      consult: jest.fn().mockResolvedValue({
+        service: 'form-service',
+        fit: 'recommended',
+        reason: 'Good for intake',
+        questions: [],
+        dependencies: [],
+        risks: [],
+      }),
+    });
+    await waitFor(() => expect(api.listVersions).toHaveBeenCalledTimes(1));
+
+    click(container, 'chat-consult');
+
+    await waitFor(() => expect(api.listVersions).toHaveBeenCalledTimes(2));
+  });
 
   it('confirms before deleting then goes back', async () => {
     const { container } = await setup(undefined, { deleteSolution: jest.fn().mockResolvedValue(undefined) });

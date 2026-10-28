@@ -79,8 +79,8 @@ export interface Solution {
   status: string;
   createdByName: string;
   updatedOn: string;
-  version: string;
-  versionHistory: SolutionVersionEntry[];
+  version: number;
+  unsavedChanges?: boolean;
   lastUpdated?: string;
   changedSections?: string[];
   initial?: boolean;
@@ -88,11 +88,16 @@ export interface Solution {
   state: SolutionState;
 }
 
-export interface SolutionVersionEntry {
-  version: string;
-  changedAt: string;
-  changedBy: string;
-  changedSections: string[];
+export interface SolutionVersionSummary {
+  number: number;
+  name: string;
+  createdOn: string;
+}
+
+export interface SolutionVersionList {
+  latest: number;
+  unsavedChanges: boolean;
+  results: SolutionVersionSummary[];
 }
 
 export interface NotCoveredItem {

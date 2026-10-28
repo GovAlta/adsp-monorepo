@@ -27,8 +27,7 @@ describe('Solutions', () => {
     status: 'draft',
     createdByName: 'Pat Planner',
     updatedOn: '2026-03-01T10:00:00.000Z',
-    version: '1.0',
-    versionHistory: [],
+    version: 1,
     state: {
       problemStatement: '',
       concepts: [],
@@ -366,15 +365,19 @@ describe('Solutions', () => {
       );
     });
 
-    it('downloads the solution as a markdown report', async () => {
-      api.exportSolution.mockResolvedValue({ version: '1.1', versionHistory: [] });
+    it('downloads the solution as a markdown report labelled with its version', async () => {
+      api.exportSolution.mockResolvedValue({ version: 2, unsavedChanges: true });
       const { container, findByText } = render(<Solutions onSelect={onSelect} />);
       await findByText('Permit intake');
 
       click(container, 'export-report-solution-solution-1');
 
       await waitFor(() => expect(api.exportSolution).toHaveBeenCalledWith('solution-1'));
-      expect(download).toHaveBeenCalledWith('planner-permit-intake.md', expect.any(String), 'text/markdown');
+      expect(download).toHaveBeenCalledWith(
+        'planner-permit-intake.md',
+        expect.stringContaining('solution-version: 2 (unsaved changes)\n'),
+        'text/markdown',
+      );
     });
   });
 });

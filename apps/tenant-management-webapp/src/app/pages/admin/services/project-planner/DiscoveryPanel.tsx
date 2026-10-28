@@ -53,6 +53,7 @@ interface DiscoveryPanelProps {
   // Set while another section (problem statement, header, blueprint) is busy, to block this one too.
   disabled?: boolean;
   onBusyChange?: (busy: boolean) => void;
+  onChatsChanged?: () => void;
 }
 
 const serviceName = (service: string, specialists: SpecialistDefinition[]) =>
@@ -77,6 +78,7 @@ export const DiscoveryPanel: FunctionComponent<DiscoveryPanelProps> = ({
   specialists = [],
   disabled = false,
   onBusyChange,
+  onChatsChanged,
 }) => {
   const [draft, setDraft] = useState('');
   const [selectedSpecialistService, setSelectedSpecialistService] = useState<string>();
@@ -137,6 +139,10 @@ export const DiscoveryPanel: FunctionComponent<DiscoveryPanelProps> = ({
     } catch {
       setChatCountsError(true);
     }
+  };
+  const handleChatsChanged = () => {
+    refreshChatCounts();
+    onChatsChanged?.();
   };
 
   const send = (options?: DiscoveryOptions) =>
@@ -321,7 +327,7 @@ export const DiscoveryPanel: FunctionComponent<DiscoveryPanelProps> = ({
                           ? activeRecommendation.reason
                           : activeSpecialist.purpose,
                     }}
-                    onChatsChanged={refreshChatCounts}
+                    onChatsChanged={handleChatsChanged}
                     onSolutionChange={onSolutionChange}
                   />
                 </SpecialistChatPanel>

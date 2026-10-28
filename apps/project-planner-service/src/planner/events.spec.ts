@@ -24,10 +24,7 @@ describe('planner events', () => {
     createdByName: 'Pat Planner',
     createdOn: new Date(),
     updatedOn: new Date(),
-    version: '1.0',
-    versionHistory: [],
-    lastExportHashes: {},
-    exportedOnce: false,
+    version: 1,
     state: {
       problemStatement: '',
       concepts: [],

@@ -7,6 +7,28 @@ export interface AuditMetrics {
   recordWriteFailure(operation: 'ingest' | 'replay', count?: number): void;
 }
 
+export interface RateLimitMetrics {
+  recordRateLimited(tenant: string, namespace: string, events: number): void;
+}
+
+// Tenant and namespace labels identify writers whose configured limit needs attention.
+export function createRateLimitMetrics(meter: Meter | undefined): RateLimitMetrics {
+  const requests = meter?.createCounter('audit.write.rate_limited.requests', {
+    description: 'Write requests refused by rate limiting.',
+    unit: '{request}',
+  });
+  const events = meter?.createCounter('audit.write.rate_limited.events', {
+    description: 'Events in write requests refused by rate limiting.',
+    unit: '{event}',
+  });
+  return {
+    recordRateLimited: (tenant, namespace, count) => {
+      requests?.add(1, { tenant, namespace });
+      events?.add(count, { tenant, namespace });
+    },
+  };
+}
+
 export function createAuditMetrics(
   meter: Meter | undefined,
   repository: FailedEventRepository | undefined,

@@ -14,7 +14,20 @@ describe('applyPlannerMiddleware', () => {
   const eventService = {} as EventService;
   const solutionRepository = { find: jest.fn(), get: jest.fn(), save: jest.fn(), delete: jest.fn() };
   const patternRepository = { find: jest.fn(), save: jest.fn(), delete: jest.fn() };
-  const specialistChatRepository = { find: jest.fn(), get: jest.fn(), save: jest.fn(), delete: jest.fn() };
+  const specialistChatRepository = {
+    find: jest.fn(),
+    findBySolution: jest.fn(),
+    get: jest.fn(),
+    save: jest.fn(),
+    delete: jest.fn(),
+  };
+  const solutionVersionRepository = {
+    list: jest.fn(),
+    get: jest.fn(),
+    latest: jest.fn(),
+    create: jest.fn(),
+    rename: jest.fn(),
+  };
 
   beforeEach(() => {
     createPlannerRouterMock.mockReturnValue(routerMock);
@@ -30,6 +43,7 @@ describe('applyPlannerMiddleware', () => {
       solutionRepository,
       patternRepository,
       specialistChatRepository,
+      solutionVersionRepository,
       eventService,
     });
 
@@ -42,6 +56,7 @@ describe('applyPlannerMiddleware', () => {
       solutionRepository,
       patternRepository,
       specialistChatRepository,
+      solutionVersionRepository,
       eventService,
     });
 
@@ -50,6 +65,7 @@ describe('applyPlannerMiddleware', () => {
       solutionRepository,
       patternRepository,
       specialistChatRepository,
+      solutionVersionRepository,
       eventService,
     });
   });
@@ -62,6 +78,7 @@ describe('applyPlannerMiddleware', () => {
       solutionRepository,
       patternRepository,
       specialistChatRepository,
+      solutionVersionRepository,
       eventService,
       readAdspCatalog,
     });
@@ -75,6 +92,7 @@ describe('applyPlannerMiddleware', () => {
       solutionRepository,
       patternRepository,
       specialistChatRepository,
+      solutionVersionRepository,
       eventService,
     });
 
