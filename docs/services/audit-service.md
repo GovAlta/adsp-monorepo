@@ -339,31 +339,35 @@ A writer over its rate limit receives **429 with Retry-After**; see [Write rate 
 
 ## Write rate limiting
 
-Writes are rate limited per **tenant and namespace**, so one application in a retry loop cannot
-consume the buffer capacity other applications depend on. One namespace exhausting its limit does
-not affect another namespace in the same tenant, or any other tenant. Reads are not rate limited.
+Writes are rate limited per **tenant and namespace** to constrain retry loops.
+One namespace exhausting its allowance does not consume another namespace's allowance in the same
+tenant, or any other tenant's allowance. The buffer remains shared: rate limiting does not reserve
+buffer space or guarantee capacity for other writers. Reads are not rate limited.
 
 The limit counts **events, not requests**: a request of 500 events uses 500 units of allowance,
 the same as 500 requests of one event. Each tenant and namespace has a token bucket that holds at
 most `burst` events and refills at `eventsPerSecond`. A request that does not fit in the current
 allowance is refused whole with **429** and `Retry-After` (seconds until enough allowance has
-accumulated). None of its events are stored and it consumes no allowance, so the caller resends
-the complete request. The check runs after envelope validation and before event enrichment.
-A request that is admitted but then fails as a whole (for example 413 for an oversized enriched
-batch, or 503 for a full buffer) gets its allowance back, so the caller's retry is not turned into
-a 429. Requests returning 202 keep their allowance even when individual events are rejected.
+accumulated, assuming no competing writes for the same key). None of its events are stored and it
+consumes no allowance, so the caller resends the complete request. The check runs after envelope
+validation and before event enrichment. All admitted events consume allowance, including duplicates,
+individual rejections and requests that later return 413 or 503. Failed requests are not refunded:
+otherwise an application retrying during a storage outage could bypass the limiter. A corrected or
+retried request can receive 429 until its allowance refills.
 
 429 and 503 stay distinct: 429 means _this writer is sending too much_; 503 means _the service
 cannot keep up with everyone_ (for example the buffer is full or storage is unavailable).
 
 | Setting           | Default | Bounds                   |
 | ----------------- | ------- | ------------------------ |
-| `eventsPerSecond` | `500`   | 1 to 1,000,000           |
+| `eventsPerSecond` | `500`   | 1 to 500 (inclusive)     |
 | `burst`           | `500`   | 500 to 1,000 (inclusive) |
 
 The burst must accept the largest request (500 events) and must not exceed the per-pod buffer
 (1,000 events). The deployment default comes from `RATE_LIMIT_EVENTS_PER_SECOND` and
 `RATE_LIMIT_BURST`; the service refuses to start with out-of-range values.
+The 500 events/s ceiling applies to both environment settings and Core configuration, including
+tenant overrides. It is an operational guardrail, not a measured database throughput guarantee.
 
 To change limits **without a redeploy**, a platform administrator saves the **Core**
 `audit-service:rate-limit` configuration:
@@ -373,7 +377,7 @@ To change limits **without a redeploy**, a platform administrator saves the **Co
   "kind": "rateLimitSettings",
   "default": { "eventsPerSecond": 500, "burst": 500 },
   "tenants": {
-    "urn:ads:platform:tenant-service:v2:/tenants/<tenant-id>": { "eventsPerSecond": 2000, "burst": 1000 }
+    "urn:ads:platform:tenant-service:v2:/tenants/<tenant-id>": { "eventsPerSecond": 250, "burst": 500 }
   }
 }
 ```
@@ -381,8 +385,11 @@ To change limits **without a redeploy**, a platform administrator saves the **Co
 A tenant entry applies to every namespace in that tenant; `default` applies to tenants without an
 entry; the environment default applies when neither is set. Only the Core document is read, so a
 tenant cannot raise its own ceiling with a tenant-scoped document. Changes apply after the
-configuration cache refreshes. If the document cannot be read or contains an out-of-range limit,
-the service logs a warning and uses the environment default rather than refusing writes.
+configuration cache refreshes. Errors that propagate from the SDK, wrong document kinds and
+out-of-range resolved limits are logged and return 503 with Retry-After rather than silently
+relaxing a tenant's ceiling. The SDK can still convert HTTP or structural conversion failures to
+null, indistinguishable from a missing document; those cases use the environment default, as
+described in [Loading and cache behavior](#loading-and-cache-behavior).
 
 Limits are held **in memory per pod**. With the three API replicas, the effective limit for a
 tenant and namespace is up to three times the configured value, and depends on how the route
@@ -392,7 +399,7 @@ need an external store (for example Redis) and an ADR; it is intentionally not u
 Refusals are counted by `audit.write.rate_limited.requests` and `audit.write.rate_limited.events`
 (exported to Prometheus as `audit_write_rate_limited_requests_total` and
 `audit_write_rate_limited_events_total`), labelled with `tenant` and `namespace`. Sustained
-refusals for a well-behaved application mean its limit is too low.
+refusals warrant checking retry behaviour and expected volume before changing a limit.
 
 ## Reading events
 

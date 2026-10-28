@@ -1,4 +1,5 @@
 import type { RateLimit } from '../configuration';
+import { performance } from 'perf_hooks';
 
 export const RATE_LIMIT_SWEEP_INTERVAL_MS = 60000;
 const MILLISECONDS_PER_SECOND = 1000;
@@ -20,7 +21,7 @@ export class EventRateLimiter {
   private readonly buckets = new Map<string, Bucket>();
   private lastSweep: number;
 
-  constructor(private readonly now: () => number = Date.now) {
+  constructor(private readonly now: () => number = () => performance.now()) {
     this.lastSweep = now();
   }
 
@@ -36,22 +37,12 @@ export class EventRateLimiter {
       this.buckets.set(key, { tokens: tokens - events, updatedAt: now, limit });
       return { allowed: true };
     }
-    // Refused requests consume nothing, so a retry after Retry-After seconds succeeds.
+    // Refused requests consume nothing. The delay assumes no intervening writes for this key.
     this.buckets.set(key, { tokens, updatedAt: now, limit });
     return {
       allowed: false,
       retryAfterSeconds: Math.max(1, Math.ceil((events - tokens) / limit.eventsPerSecond)),
     };
-  }
-
-  // Returns allowance for a request that was admitted but then failed, so a 413 or 503 refusal does
-  // not turn the caller's retry into a 429.
-  refund(key: string, events: number): void {
-    const bucket = this.buckets.get(key);
-    if (!bucket) return;
-    const now = this.now();
-    const tokens = this.available(bucket, bucket.limit, now);
-    this.buckets.set(key, { ...bucket, tokens: Math.min(bucket.limit.burst, tokens + events), updatedAt: now });
   }
 
   private available(bucket: Bucket | undefined, limit: RateLimit, now: number): number {

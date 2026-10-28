@@ -39,7 +39,7 @@ export type AuditConfiguration = ActionCatalog | RetentionSettings | Application
 // a burst above the per-pod buffer would let one application fill the buffer every other writer shares.
 export const MIN_RATE_LIMIT_BURST = 500;
 export const MAX_RATE_LIMIT_BURST = 1000;
-export const MAX_RATE_LIMIT_EVENTS_PER_SECOND = 1000000;
+export const MAX_RATE_LIMIT_EVENTS_PER_SECOND = 500;
 
 export function isValidRateLimit(limit: RateLimit | undefined): limit is RateLimit {
   return (

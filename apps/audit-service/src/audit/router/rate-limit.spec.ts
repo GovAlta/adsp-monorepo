@@ -25,7 +25,7 @@ describe('write rate limiting', () => {
     name: 'Platform writer',
     email: '',
     isCore: true,
-    roles: [AuditServiceRoles.Writer],
+    roles: [AuditServiceRoles.Writer, AuditServiceRoles.Reader],
     token: {
       azp: 'urn:ads:platform:task-service',
       aud: 'urn:ads:platform:audit-service',
@@ -139,6 +139,14 @@ describe('write rate limiting', () => {
     expect((await write(1)).status).toBe(429);
   });
 
+  it('reserves allowance atomically for concurrent requests', async () => {
+    const responses = await Promise.all([write(300), write(300)]);
+
+    expect(responses.map(({ status }) => status).sort()).toEqual([202, 429]);
+    expect(submitter.submit).toHaveBeenCalledTimes(1);
+    expect(submitter.submit.mock.calls[0][0]).toHaveLength(300);
+  });
+
   it('records rejected requests and events by tenant and namespace', async () => {
     await write(500);
 
@@ -162,6 +170,15 @@ describe('write rate limiting', () => {
     expect((await write(500, 'case-service', tenantB)).status).toBe(202);
   });
 
+  it('does not rate limit reads when the writer has exhausted its allowance', async () => {
+    await write(500);
+
+    const response = await request(app).get('/audit/v1/case-service/actions').query({ tenantId: tenantA.toString() });
+
+    expect(response.status).toBe(200);
+    expect(metrics.recordRateLimited).not.toHaveBeenCalled();
+  });
+
   it('accepts a limited caller again after the window elapses', async () => {
     await write(500);
     const limited = await write(500);
@@ -176,7 +193,7 @@ describe('write rate limiting', () => {
       if (name === 'rate-limit') {
         return {
           kind: 'rateLimitSettings',
-          tenants: { [tenantB.toString()]: { eventsPerSecond: 1000, burst: 1000 } },
+          tenants: { [tenantB.toString()]: { eventsPerSecond: 500, burst: 1000 } },
         };
       }
       return name.startsWith('actions-')
@@ -193,13 +210,16 @@ describe('write rate limiting', () => {
   it('keeps 429 for rate limiting distinct from 503 for a full buffer', async () => {
     submitter.submit.mockRejectedValueOnce(new AuditStorageUnavailableError('Audit buffer is at capacity.'));
     const full = await write(500);
+    const limited = await write(500);
+    now += Number(limited.headers['retry-after']) * 1000;
     const retried = await write(500);
-    const limited = await write(1);
 
-    expect([full.status, retried.status, limited.status]).toEqual([503, 202, 429]);
+    expect([full.status, limited.status, retried.status]).toEqual([503, 429, 202]);
+    expect(full.headers['retry-after']).toBe('1');
+    expect(submitter.submit).toHaveBeenCalledTimes(2);
   });
 
-  it('returns the allowance of a request the buffer refuses as too large', async () => {
+  it('does not refund oversized requests into an unbounded retry loop', async () => {
     submitter.submit.mockRejectedValueOnce(
       new InvalidOperationError('Audit batch exceeds the buffer byte limit.', {
         statusCode: HttpStatusCodes.REQUEST_TOO_LONG,
@@ -207,8 +227,36 @@ describe('write rate limiting', () => {
     );
 
     expect((await write(500)).status).toBe(413);
+    const limited = await write(250);
+
+    expect(limited.status).toBe(429);
+    now += Number(limited.headers['retry-after']) * 1000;
     expect((await write(250)).status).toBe(202);
     expect((await write(250)).status).toBe(202);
+  });
+
+  it('refuses writes before storage when rate limit configuration throws', async () => {
+    configuration.getServiceConfiguration.mockRejectedValue(new Error('Configuration unavailable'));
+
+    const response = await write(500);
+
+    expect(response.status).toBe(503);
+    expect(response.headers['retry-after']).toBe('1');
+    expect(submitter.submit).not.toHaveBeenCalled();
+    expect(metrics.recordRateLimited).not.toHaveBeenCalled();
+  });
+
+  it('applies a lower tenant rate after a configuration refresh without restarting the router', async () => {
+    await write(500);
+    configuration.getServiceConfiguration.mockResolvedValueOnce({
+      kind: 'rateLimitSettings',
+      tenants: { [tenantA.toString()]: { eventsPerSecond: 250, burst: 500 } },
+    });
+
+    const limited = await write(500);
+
+    expect(limited.status).toBe(429);
+    expect(limited.headers['retry-after']).toBe('2');
   });
 
   it('keeps the allowance used by a request with per-event rejections', async () => {

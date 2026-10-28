@@ -1,4 +1,6 @@
 import { AdspId, ConfigurationService } from '@abgov/adsp-service-sdk';
+import { InvalidOperationError } from '@core-services/core-common';
+import * as HttpStatusCodes from 'http-status-codes';
 import type { Logger } from 'winston';
 import { assertRateLimit, AuditConfiguration, isValidRateLimit, RateLimit } from '../configuration';
 
@@ -13,8 +15,6 @@ export class RateLimitService {
     assertRateLimit(platformDefault);
   }
 
-  // Rate limiting protects availability, so unreadable or invalid settings fall back to the
-  // deployment default rather than refusing every write.
   async getLimit(tenantId: AdspId): Promise<RateLimit> {
     try {
       // Read Core only: tenant-scoped documents cannot override platform limits.
@@ -31,11 +31,13 @@ export class RateLimitService {
       if (!isValidRateLimit(limit)) throw new Error('Configured rate limit is out of range.');
       return limit;
     } catch (err) {
-      this.logger.warn(`Unable to resolve rate limit; using the platform default: ${err}`, {
+      this.logger.warn(`Unable to resolve audit write rate limit: ${err}`, {
         context: 'AuditRateLimit',
         tenant: tenantId.toString(),
       });
-      return this.platformDefault;
+      throw new InvalidOperationError('Audit write rate limit settings are temporarily unavailable.', {
+        statusCode: HttpStatusCodes.SERVICE_UNAVAILABLE,
+      });
     }
   }
 }

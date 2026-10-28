@@ -11,8 +11,7 @@ export interface RateLimitMetrics {
   recordRateLimited(tenant: string, namespace: string, events: number): void;
 }
 
-// Labelled by tenant and namespace so a limit set too low is visible per writer. Series exist only
-// for writers that have been refused, which keeps cardinality bounded.
+// Tenant and namespace labels identify writers whose configured limit needs attention.
 export function createRateLimitMetrics(meter: Meter | undefined): RateLimitMetrics {
   const requests = meter?.createCounter('audit.write.rate_limited.requests', {
     description: 'Write requests refused by rate limiting.',

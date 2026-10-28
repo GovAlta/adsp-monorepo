@@ -1,4 +1,5 @@
 import { EventRateLimiter, RATE_LIMIT_SWEEP_INTERVAL_MS } from './rate-limiter';
+import { performance } from 'perf_hooks';
 
 describe('EventRateLimiter', () => {
   const limit = { eventsPerSecond: 500, burst: 500 };
@@ -8,6 +9,10 @@ describe('EventRateLimiter', () => {
   beforeEach(() => {
     now = 1_000_000;
     limiter = new EventRateLimiter(() => now);
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
   });
 
   it('accepts requests within the burst allowance', () => {
@@ -77,28 +82,33 @@ describe('EventRateLimiter', () => {
   });
 
   it('applies a changed limit to an existing bucket', () => {
-    const raised = { eventsPerSecond: 1000, burst: 1000 };
-    limiter.consume('key', 500, limit);
-    now += 500;
+    const raised = { eventsPerSecond: 500, burst: 1000 };
+    limiter.consume('key', 500, { eventsPerSecond: 250, burst: 500 });
+    now += 1000;
 
     expect(limiter.consume('key', 1000, raised)).toEqual({ allowed: false, retryAfterSeconds: 1 });
-    now += 500;
+    now += 1000;
     expect(limiter.consume('key', 1000, raised)).toEqual({ allowed: true });
   });
 
-  it('returns refunded allowance up to the burst', () => {
-    limiter.consume('key', 400, limit);
-    limiter.refund('key', 400);
+  it('does not refill from wall-clock adjustments', () => {
+    const monotonicClock = jest.spyOn(performance, 'now').mockReturnValue(0);
+    const wallClock = jest.spyOn(Date, 'now').mockReturnValue(0);
+    const realClockLimiter = new EventRateLimiter();
+    realClockLimiter.consume('tenant-a case-service', 500, limit);
 
-    expect(limiter.consume('key', 500, limit)).toEqual({ allowed: true });
-    limiter.refund('key', 2000);
-    expect(limiter.consume('key', 501, limit).allowed).toBe(false);
+    wallClock.mockReturnValue(3_600_000);
+
+    expect(realClockLimiter.consume('tenant-a case-service', 500, limit).allowed).toBe(false);
+    monotonicClock.mockReturnValue(1000);
+    expect(realClockLimiter.consume('tenant-a case-service', 500, limit).allowed).toBe(true);
   });
 
-  it('ignores a refund for a bucket that has already been evicted', () => {
-    limiter.refund('unknown', 500);
+  it('clamps remaining allowance when the burst is reduced', () => {
+    limiter.consume('key', 1, { eventsPerSecond: 500, burst: 1000 });
 
-    expect(limiter.size).toBe(0);
+    expect(limiter.consume('key', 500, limit).allowed).toBe(true);
+    expect(limiter.consume('key', 1, limit).allowed).toBe(false);
   });
 
   it('evicts refilled buckets on the sweep interval to bound memory', () => {

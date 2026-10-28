@@ -81,6 +81,9 @@ paths:
         500 events per second with a 500-event burst, per pod. A request over the limit
         returns 429 with Retry-After and none of its events are stored. 429 means this
         writer is sending too much; 503 means the service cannot keep up with all writers.
+        Admitted events consume allowance even if storage later fails; retries remain
+        rate limited during outages. Core defaults and tenant overrides are capped at
+        500 events per second per tenant and namespace, per pod.
 
         Configuration uses the SDK's existing error handling: HTTP and conversion
         failures can resolve to null. Such failures cannot reliably be distinguished
@@ -155,7 +158,7 @@ paths:
           description: The tenant and namespace exceeded the write rate limit. No events in the request were stored; resend the whole request after Retry-After.
           headers:
             Retry-After:
-              description: Seconds until enough allowance has accumulated for this request.
+              description: Seconds until enough allowance has accumulated for this request, assuming no competing writes for the same tenant and namespace.
               schema:
                 type: integer
                 example: 1

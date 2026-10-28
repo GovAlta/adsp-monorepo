@@ -24,7 +24,7 @@ export class RateLimitExceededError extends InvalidOperationError {
 
 // Counts events rather than requests, and refuses the whole request before any event is enriched or
 // buffered, so a refused request stores nothing and its retry cannot duplicate a partial write.
-// Admitted requests that then fail (for example 413 or 503 from the buffer) get their allowance back.
+// Failed admitted requests still consume allowance, so retry loops remain limited during outages.
 export function limitWriteRate({ limits, limiter, metrics, logger }: WriteRateLimitOptions): RequestHandler {
   return async (req, res, next) => {
     try {
@@ -45,11 +45,11 @@ export function limitWriteRate({ limits, limiter, metrics, logger }: WriteRateLi
         res.setHeader('Retry-After', decision.retryAfterSeconds.toString());
         throw new RateLimitExceededError();
       }
-      res.once('finish', () => {
-        if (res.statusCode >= HttpStatusCodes.BAD_REQUEST) limiter.refund(key, events);
-      });
       next();
     } catch (err) {
+      if (err instanceof InvalidOperationError && err.extra?.statusCode === HttpStatusCodes.SERVICE_UNAVAILABLE) {
+        res.setHeader('Retry-After', '1');
+      }
       next(err);
     }
   };
