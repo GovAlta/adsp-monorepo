@@ -1,6 +1,6 @@
 import { AdspTheme } from './adsp-theme';
 import { deepFreeze } from './deep-freeze';
-import { defaultCalendarTheme } from '../components/calendar';
+import { defaultCalendarTheme } from '../calendar/calendarTheme';
 
 // Values reference GoA design token custom properties so the theme tracks the design system, dark theme included.
 const standard: AdspTheme = {
