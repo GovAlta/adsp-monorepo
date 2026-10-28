@@ -55,13 +55,11 @@ export const ADSPGoACalendarExample = ({ tenantName }: ADSPGoACalendarExamplePro
     }
   }, [dispatch, calendarServiceUrl, tenantName]);
 
-  // The calendar opens on the range start, so start 365 days before today
+  // The calendar opens on the range start, so start at the beginning of the current month.
   const [dateRange, setDateRange] = useState<DateRange>(() => {
     const now = new Date();
-    const start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    start.setDate(start.getDate() - 365);
-    const end = new Date(start);
-    end.setDate(end.getDate() + 365);
+    const start = new Date(now.getFullYear(), now.getMonth() - 12, 1);
+    const end = new Date(now.getFullYear(), now.getMonth(), 1);
     return { start, end };
   });
 
