@@ -1,4 +1,3 @@
-import { useFeedbackWidgetVisibility } from '@core-services/app-common';
 import { FunctionComponent, useEffect, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { io } from 'socket.io-client';
@@ -53,7 +52,6 @@ const FormSupportPaneComponent: FunctionComponent<FormSupportPaneProps> = ({ cla
 
   // The pane is opened from the Messages control in the app header, so its visibility is shared state.
   const showSupportPane = useSelector(showMessagesSelector);
-  useFeedbackWidgetVisibility(!showSupportPane);
   const [supportTab, setSupportTab] = useState<'comments' | 'agent'>('agent');
   const [agentConnected, setAgentConnected] = useState(false);
 
