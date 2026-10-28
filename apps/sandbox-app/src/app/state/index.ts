@@ -1,4 +1,5 @@
 export * from './agent.slice';
+export * from './calendar.slice';
 export * from './comment.slice';
 export * from './config.slice';
 export * from './feedback.slice';

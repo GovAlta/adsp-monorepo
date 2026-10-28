@@ -47,10 +47,21 @@ describe('versioning', () => {
       expect(Object.keys(hashes)).toEqual(['Title']);
     });
 
-    it('records a hash for confidence', () => {
-      const hashes = sectionHashes(solution({ ...emptyState, confidence: { score: 33, threshold: 70, factors: [] } }));
+    it('hashes only the chosen hypothesis, since the export shows no other', () => {
+      const hypothesis = (title: string): SolutionState['hypotheses'][number] => ({
+        id: title,
+        title,
+        patternId: 'p',
+        confidence: 'high',
+        rationale: '',
+        recommendations: [],
+        assumptions: [],
+        unknowns: [],
+      });
+      const withRunnerUp = (title: string) =>
+        sectionHashes(solution({ ...emptyState, hypotheses: [hypothesis('Chosen'), hypothesis(title)] })).Hypotheses;
 
-      expect(Object.keys(hashes)).toEqual(['Confidence']);
+      expect(withRunnerUp('Runner-up')).toBe(withRunnerUp('Another runner-up'));
     });
 
     it('records a hash for a filled-in blueprint section', () => {
@@ -237,8 +248,8 @@ describe('versioning', () => {
       expect(changedSections(previous, current)).toEqual(['Service mapping', 'Components to set up', 'Delivery']);
     });
 
-    it('lists a section no longer in the plan last', () => {
-      expect(changedSections({ 'Old section': 'a', Delivery: 'b' }, { Delivery: 'c' })).toEqual(['Delivery', 'Old section']);
+    it('ignores a section no longer in the plan, so an upgrade does not report it as changed', () => {
+      expect(changedSections({ 'Old section': 'a', Delivery: 'b' }, { Delivery: 'c' })).toEqual(['Delivery']);
     });
   });
 

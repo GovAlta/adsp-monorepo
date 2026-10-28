@@ -26,11 +26,9 @@ const MINOR_SECTIONS: Record<string, (solution: VersionableSolution) => unknown>
   'Problem statement': (s) => s.state.problemStatement,
   Concepts: (s) => s.state.concepts,
   Decisions: (s) => s.state.decisions,
-  'Pattern matches': (s) => s.state.patternMatches,
-  Hypotheses: (s) => s.state.hypotheses,
+  Hypotheses: (s) => s.state.hypotheses.slice(0, 1),
   'Questions and answers': (s) => s.state.questions,
   'Next steps': (s) => s.state.nextSteps,
-  Confidence: (s) => s.state.confidence,
   'Component review': reviewedComponents,
 };
 
@@ -98,15 +96,13 @@ export function sectionHashes(solution: VersionableSolution): Record<string, str
   return hashes;
 }
 
-const sectionRank = (name: string): number => {
-  const index = SECTION_ORDER.indexOf(name);
-  return index === -1 ? SECTION_ORDER.length : index;
-};
-
 // Sorted because stored hashes are jsonb, which does not keep key order.
+// Stored hashes for sections no longer in the plan are ignored.
 export function changedSections(previous: Record<string, string>, current: Record<string, string>): string[] {
   const names = new Set([...Object.keys(previous), ...Object.keys(current)]);
-  return [...names].filter((name) => previous[name] !== current[name]).sort((a, b) => sectionRank(a) - sectionRank(b));
+  return [...names]
+    .filter((name) => name in SECTIONS && previous[name] !== current[name])
+    .sort((a, b) => SECTION_ORDER.indexOf(a) - SECTION_ORDER.indexOf(b));
 }
 
 export function classifyBump(changed: string[]): VersionBump {

@@ -8,6 +8,7 @@ import { createPlannerRouter } from './router';
 export * from './analysis';
 export * from './configuration';
 export * from './discovery';
+export * from './documentExtract';
 export * from './blueprint';
 export * from './components';
 export * from './events';

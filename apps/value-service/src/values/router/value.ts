@@ -24,6 +24,7 @@ import {
   ValueOrder,
 } from '../types';
 import { createServiceMetricRollupJob, getTrailingCompletedDayRange } from '../jobs/serviceMetricRollup';
+import { parsePayloadSearchQuery, validatePayloadSearchQuery } from './payloadSearch';
 
 interface ValueRouterProps {
   logger: Logger;
@@ -122,6 +123,7 @@ export function readValue(repository: ValuesRepository): RequestHandler {
         tenantId: tenant?.id,
         value: value as string,
         url: url as string,
+        ...parsePayloadSearchQuery(req.query),
       };
 
       const result = await repository.readValues(top, after as string, criteria, (order as ValueOrder) || 'desc');
@@ -511,6 +513,7 @@ export const createValueRouter = ({
         },
         ['query'],
       ),
+      query('payloadPath').custom((_value, { req }) => validatePayloadSearchQuery(req.query)),
     ),
     readValue(repository),
   );
