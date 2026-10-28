@@ -76,6 +76,12 @@ paths:
         returns 413 without storing any events; split it into smaller requests.
         Temporary buffer pressure returns 503 with Retry-After instead.
 
+        **Rate limit:** writes are limited per tenant and namespace, counted in events rather
+        than requests (one request of 500 events uses 500 units). The platform default is
+        500 events per second with a 500-event burst, per pod. A request over the limit
+        returns 429 with Retry-After and none of its events are stored. 429 means this
+        writer is sending too much; 503 means the service cannot keep up with all writers.
+
         Configuration uses the SDK's existing error handling: HTTP and conversion
         failures can resolve to null. Such failures cannot reliably be distinguished
         from missing documents and may produce unknown-action rejections, partial
@@ -145,6 +151,14 @@ paths:
             tenant. A token whose `azp` is not a service URN is also refused.
         '413':
           description: Request body exceeds 20 MiB, or the enriched batch exceeds the 8 MiB buffer capacity. Split the batch; retrying it unchanged will not help.
+        '429':
+          description: The tenant and namespace exceeded the write rate limit. No events in the request were stored; resend the whole request after Retry-After.
+          headers:
+            Retry-After:
+              description: Seconds until enough allowance has accumulated for this request.
+              schema:
+                type: integer
+                example: 1
         '503':
           description: Configuration, retention policy or durable storage is unavailable, or the buffer is temporarily full; retry without re-registering actions.
           headers:

@@ -33,6 +33,8 @@ jest.mock('./environments/environment', () => ({
     RETENTION_BATCH_SIZE: 1000,
     RETENTION_MAX_BATCHES: 10,
     RETENTION_SCHEDULE: '0 2 * * *',
+    RATE_LIMIT_EVENTS_PER_SECOND: 500,
+    RATE_LIMIT_BURST: 500,
   },
 }));
 jest.mock('./audit/jobs/retention', () => ({
@@ -417,16 +419,37 @@ describe('audit application authorization', () => {
   }
 
   function configureAction() {
-    configuration.getServiceConfiguration
-      .mockResolvedValueOnce({
-        kind: 'actionCatalog',
-        application: 'case-service',
-        actions: {
-          'case.update': { version: 1, category: 'administrative', severity: 'info', retentionClass: 'standard' },
-        },
-      })
-      .mockResolvedValue(null);
+    configuration.getServiceConfiguration.mockImplementation(async (name) =>
+      name === 'actions-case-service'
+        ? {
+            kind: 'actionCatalog',
+            application: 'case-service',
+            actions: {
+              'case.update': { version: 1, category: 'administrative', severity: 'info', retentionClass: 'standard' },
+            },
+          }
+        : null,
+    );
   }
+
+  it('rate limits writes per tenant and namespace with 429 and Retry-After', async () => {
+    configureAction();
+    const send = (count: number) =>
+      request(app)
+        .post('/audit/v1/case-service/events')
+        .auth(token([AuditServiceRoles.Writer]), { type: 'bearer' })
+        .send({ events: Array.from({ length: count }, eventInput) });
+
+    expect((await send(500)).status).toBe(202);
+    const limited = await send(500);
+
+    expect(limited.status).toBe(429);
+    expect(Number(limited.headers['retry-after'])).toBeGreaterThanOrEqual(1);
+    const inserted = jest
+      .mocked(PostgresEventRepository.prototype.insert)
+      .mock.calls.reduce((total, [rows]) => total + rows.length, 0);
+    expect(inserted).toBe(500);
+  });
 
   it('writes validated events through the runtime buffer and PostgreSQL adapter', async () => {
     configureAction();

@@ -19,6 +19,10 @@ items:
       RETENTION_MAX_BATCHES: '10'
       RETENTION_MIN_DAYS: '1'
       RETENTION_MAX_DAYS: '3650'
+      # Platform default write rate limit per tenant and namespace, per pod. Core configuration
+      # audit-service:rate-limit overrides these without a redeploy.
+      RATE_LIMIT_EVENTS_PER_SECOND: '500'
+      RATE_LIMIT_BURST: '500'
       OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
   - apiVersion: v1
     kind: Secret
