@@ -20,6 +20,18 @@ module.exports = composePlugins(withNx(), withReact(), (config) => {
     }),
   );
 
+  // Benign browser warning triggered by FullCalendar's height changes; don't show it in the dev overlay.
+  if (config.devServer) {
+    const overlay = config.devServer.client?.overlay;
+    config.devServer.client = {
+      ...config.devServer.client,
+      overlay: {
+        ...(typeof overlay === 'object' ? overlay : { errors: overlay !== false, warnings: false }),
+        runtimeErrors: (error) => !/ResizeObserver loop/.test(error?.message ?? ''),
+      },
+    };
+  }
+
   return aliasReactComponents(config, '@abgov/react-components', {
     ds1Package: '@abgov/react-components',
   });

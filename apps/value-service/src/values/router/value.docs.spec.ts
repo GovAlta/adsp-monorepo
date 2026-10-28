@@ -144,6 +144,11 @@ describe('value router documented behaviour', () => {
   });
 
   describe('GET /:namespace/values/:name', () => {
+    const bounds = {
+      timestampMin: '2026-10-01T00:00:00.000Z',
+      timestampMax: '2026-10-02T00:00:00.000Z',
+    };
+
     it('defaults top to 10', async () => {
       const res = await request(createApp(reader)).get('/value/v1/test-service/values/test-value');
       expect(res.status).toBe(200);
@@ -200,6 +205,60 @@ describe('value router documented behaviour', () => {
         expect.objectContaining({ value: 'target-1', url: '/api' }),
         'desc',
       );
+    });
+
+    it('passes a bounded payload path and scalar value to the repository', async () => {
+      const res = await request(createApp(reader)).get(
+        '/value/v1/event-service/values/event?timestampMin=2026-10-01T00%3A00%3A00.000Z&timestampMax=2026-10-02T00%3A00%3A00.000Z&payloadPath=applicant.contact.email&payloadValue=jane%40example.gov.ab.ca',
+      );
+
+      expect(res.status).toBe(200);
+      expect(repositoryMock.readValues).toHaveBeenCalledWith(
+        10,
+        undefined,
+        expect.objectContaining({
+          timestampMin: expect.any(Date),
+          timestampMax: expect.any(Date),
+          payloadPath: 'applicant.contact.email',
+          payloadValue: 'jane@example.gov.ab.ca',
+        }),
+        'desc',
+      );
+    });
+
+    it('passes a bounded JSON payload containment object to the repository', async () => {
+      const payload = { applicationId: '12345', status: 'submitted' };
+      const res = await request(createApp(reader))
+        .get('/value/v1/event-service/values/event')
+        .query({
+          timestampMin: '2026-10-01T00:00:00.000Z',
+          timestampMax: '2026-10-02T00:00:00.000Z',
+          payload: JSON.stringify(payload),
+        });
+
+      expect(res.status).toBe(200);
+      expect(repositoryMock.readValues).toHaveBeenCalledWith(
+        10,
+        undefined,
+        expect.objectContaining({ payload }),
+        'desc',
+      );
+    });
+
+    it.each([
+      ['a missing payload value', { ...bounds, payloadPath: 'applicationId' }],
+      ['an invalid payload path', { ...bounds, payloadPath: '$.applicationId', payloadValue: '12345' }],
+      ['an unbounded payload search', { payloadPath: 'applicationId', payloadValue: '12345' }],
+      ['malformed payload JSON', { ...bounds, payload: '{"applicationId"' }],
+      [
+        'both payload search approaches',
+        { ...bounds, payloadPath: 'applicationId', payloadValue: '12345', payload: '{"status":"submitted"}' },
+      ],
+    ])('responds 400 for %s', async (_description, query) => {
+      const res = await request(createApp(reader)).get('/value/v1/event-service/values/event').query(query);
+
+      expect(res.status).toBe(400);
+      expect(repositoryMock.readValues).not.toHaveBeenCalled();
     });
 
     it('allows the export-service export-job role', async () => {

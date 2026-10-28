@@ -6,6 +6,7 @@ import { ADSP_COMPONENT_MAP, ComponentDraft } from './components';
 import { DISCOVERY_FACTORS, DISCOVERY_THRESHOLD } from './discovery';
 import { SPECIALISTS } from './specialists';
 import {
+  BlueprintRole,
   BusinessConcept,
   BusinessPattern,
   CONCEPT_TYPES,
@@ -14,6 +15,8 @@ import {
   Hypothesis,
   PatternMatch,
   PatternUnsupportedCapability,
+  PRODUCT_TYPES,
+  ProductType,
   SolutionState,
   SpecialistDefinition,
   SpecialistNote,
@@ -471,7 +474,8 @@ Give up to 6 matches ordered best first, up to 3 hypotheses, 5-12 concepts and u
             .map((c) => `- ${c.service}: ${c.name}`)
             .join('\n')}`
         : '',
-      'Return JSON: {"overview": {"summary": "short paragraph", "objectives": [], "scope": [], "outOfScope": [], "stakeholders": [], "successMeasures": [], "risks": []}, ' +
+      'Return JSON: {"overview": {"summary": "short paragraph", "objectives": [], "scope": [], "outOfScope": [], "stakeholders": [], "successMeasures": [], "risks": [], ' +
+        '"roles": [{"actor": "", "appRole": "what they do in the app", "productType": "public-form | workspace | empty if unsure"}]}, ' +
         '"architecture": {"summary": "", "layers": [{"name": "", "description": "", "components": []}], "integrations": [], "security": []}, ' +
         '"services": [{"service": "<service id>", "role": "what it does in this solution", "capabilities": ["specific features to use"]}], ' +
         '"workflows": [{"name": "", "actors": [], "steps": ["ordered steps naming the service used"]}], ' +
@@ -485,6 +489,10 @@ Give up to 6 matches ordered best first, up to 3 hypotheses, 5-12 concepts and u
         'Combine gaps that would be solved by the same custom-built capability into a single item instead of listing them separately. ' +
         'If a specialist note says a capability is genuinely unsupported (such as time-based scheduling), list it in notCoveredByAdsp too, not only as a risk. ' +
         'Keep every list to at most 8 items, and every item to one sentence. ' +
+        'Give each actor one role row with the GoA product type of the app they use. ' +
+        'public-form: For citizen-facing services where users apply for a benefit, request a service, or submit information. Designed around simplicity and low cognitive load, with plain-language questions, focused pages that ask one thing at a time, save-and-resume, and a clear confirmation of what happens next. ' +
+        'workspace: for productivity-focused services that service delivery staff use as a daily tool to review information, manage records, and complete tasks. The design prioritizes efficiency and accuracy. ' +
+        'Leave productType empty if unsure. ' +
         `Components are the concrete items to set up in each ADSP service, in setup order. Components may use: ${componentServices.join(', ')}.`,
     ]
       .filter(Boolean)
@@ -512,6 +520,14 @@ Give up to 6 matches ordered best first, up to 3 hypotheses, 5-12 concepts and u
         stakeholders: asStrings(overview.stakeholders, 8),
         successMeasures: asStrings(overview.successMeasures, 8),
         risks: asStrings(overview.risks, 8),
+        roles: objs(overview.roles)
+          .slice(0, 8)
+          .map((r): BlueprintRole => ({
+            actor: asString(r.actor, 120),
+            appRole: asString(r.appRole, 300),
+            productType: PRODUCT_TYPES.includes(r.productType as ProductType) ? (r.productType as ProductType) : '',
+          }))
+          .filter((r) => r.actor),
       },
       architecture: {
         summary: asString(architecture.summary, 1500),

@@ -60,6 +60,9 @@ export class PostgresEventRepository implements AuditEventStore, EventReader {
       action: criteria.action,
       status: criteria.status,
       category: criteria.category,
+      severity: criteria.severity,
+      correlation_id: criteria.correlationId,
+      session_id: criteria.sessionId,
     };
     for (const [column, value] of Object.entries(filters)) {
       if (value !== undefined) query.where(column, value);

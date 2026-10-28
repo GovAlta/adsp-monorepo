@@ -26,6 +26,9 @@ paths:
         - $ref: '#/components/parameters/Action'
         - $ref: '#/components/parameters/Status'
         - $ref: '#/components/parameters/Category'
+        - $ref: '#/components/parameters/Severity'
+        - $ref: '#/components/parameters/CorrelationId'
+        - $ref: '#/components/parameters/SessionId'
         - $ref: '#/components/parameters/Scope'
         - $ref: '#/components/parameters/OccurredFrom'
         - $ref: '#/components/parameters/OccurredTo'
@@ -171,6 +174,9 @@ paths:
         - $ref: '#/components/parameters/Action'
         - $ref: '#/components/parameters/Status'
         - $ref: '#/components/parameters/Category'
+        - $ref: '#/components/parameters/Severity'
+        - $ref: '#/components/parameters/CorrelationId'
+        - $ref: '#/components/parameters/SessionId'
         - $ref: '#/components/parameters/Scope'
         - $ref: '#/components/parameters/OccurredFrom'
         - $ref: '#/components/parameters/OccurredTo'
@@ -265,6 +271,18 @@ components:
       in: query
       name: category
       schema: { type: string, enum: [administrative, runtime, security, data-access] }
+    Severity:
+      in: query
+      name: severity
+      schema: { type: string, enum: [info, warning, critical] }
+    CorrelationId:
+      in: query
+      name: correlationId
+      schema: { type: string, minLength: 1 }
+    SessionId:
+      in: query
+      name: sessionId
+      schema: { type: string, minLength: 1, maxLength: 128 }
     Scope:
       in: query
       name: scope

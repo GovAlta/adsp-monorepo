@@ -130,6 +130,38 @@ const response = await fetch(
 const { results, page } = await response.json();
 ```
 
+Event payloads can be searched within a bounded timestamp range. Use `payloadPath` with `payloadValue` for an
+exact scalar match at a dot-separated path:
+
+```typescript
+const parameters = new URLSearchParams({
+  timestampMin: '2026-10-01T00:00:00Z',
+  timestampMax: '2026-10-02T00:00:00Z',
+  payloadPath: 'applicant.contact.email',
+  payloadValue: 'jane@example.gov.ab.ca',
+});
+
+const response = await fetch(`${valueServiceUrl}/value/v1/event-service/values/event?${parameters}`, {
+  headers: { Authorization: `Bearer ${accessToken}` },
+});
+```
+
+Unquoted values that are valid JSON scalars are matched using their JSON type, so `123`, `true`, and `null` match
+a number, boolean, and null respectively. JSON-quote a string that would otherwise parse as another scalar type.
+
+Use `payload` for JSON containment. The event payload may have additional properties beyond those supplied:
+
+```typescript
+const parameters = new URLSearchParams({
+  timestampMin: '2026-10-01T00:00:00Z',
+  timestampMax: '2026-10-02T00:00:00Z',
+  payload: JSON.stringify({ applicationId: '12345', status: 'submitted' }),
+});
+```
+
+The two payload search forms cannot be combined. They can be combined with the existing tenant, event context,
+correlation ID, and timestamp filters. Payload searches use JSONB containment without an additional payload index.
+
 ### Count events in the event log
 
 The count of events matching the event log search criteria is available directly from the event service, so

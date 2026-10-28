@@ -726,6 +726,32 @@ describe('MaasLlm', () => {
       ]);
     });
 
+    it('keeps named roles and clears a product type that is not a GoA product type', async () => {
+      const roles = [
+        { actor: 'Grant officer', appRole: 'Reviews applications', productType: 'workspace' },
+        { actor: 'Applicant', appRole: 'Applies', productType: 'mobile-app' },
+        { actor: '', appRole: 'Nobody', productType: 'workspace' },
+      ];
+      post.mockResolvedValueOnce(completion(JSON.stringify({ ...blueprintJson, overview: { ...blueprintJson.overview, roles } })));
+
+      const { core } = await buildLlm().blueprint(state(), [note]);
+
+      expect(core.overview?.roles).toEqual([
+        { actor: 'Grant officer', appRole: 'Reviews applications', productType: 'workspace' },
+        { actor: 'Applicant', appRole: 'Applies', productType: '' },
+      ]);
+    });
+
+    it('defines both GoA product types in the prompt', async () => {
+      post.mockResolvedValueOnce(completion(JSON.stringify(blueprintJson)));
+
+      await buildLlm().blueprint(state(), [note]);
+
+      const prompt = (post.mock.calls[0][1].messages as { content: string }[]).map((m) => m.content).join('\n');
+      expect(prompt).toContain('public-form: For citizen-facing services where users apply for a benefit');
+      expect(prompt).toContain('workspace: for productivity-focused services that service delivery staff use as a daily tool');
+    });
+
     it('drops workflows without steps', async () => {
       post.mockResolvedValueOnce(completion(JSON.stringify(blueprintJson)));
 

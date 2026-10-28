@@ -281,6 +281,40 @@ components:
         schema:
           type: string
           format: date-time
+      - name: payloadPath
+        description: >
+          Dot-separated property path within an event payload. Must be supplied with payloadValue and with both
+          timestampMin and timestampMax. Cannot be combined with payload.
+        in: query
+        required: false
+        schema:
+          type: string
+          pattern: '^[A-Za-z_][A-Za-z0-9_-]*(\.[A-Za-z_][A-Za-z0-9_-]*)*$'
+          example: applicant.contact.email
+      - name: payloadValue
+        description: >
+          Exact JSON scalar at payloadPath. JSON numbers, booleans, null, and quoted strings are parsed as their
+          JSON types; other input is treated as a string. Must be supplied with payloadPath.
+        in: query
+        required: false
+        schema:
+          type: string
+          example: jane@example.gov.ab.ca
+      - name: payload
+        description: >
+          JSON object that the event payload must contain. Nested objects and multiple properties are supported,
+          and additional event payload properties are ignored. Requires both timestampMin and timestampMax and
+          cannot be combined with payloadPath or payloadValue.
+        in: query
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+              example:
+                applicationId: '12345'
+                status: submitted
       - name: value
         description: Filter to records with a payload targetId equal to this value (used for event log records).
         in: query

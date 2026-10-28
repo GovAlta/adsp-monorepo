@@ -19,6 +19,12 @@ import { getMetricIntervalDefinition } from '../values/metricIntervals';
 
 type ValueRecord = Value & { namespace: string; name: string; tenant: string };
 
+const buildNestedPayload = (path: string, value: ValueCriteria['payloadValue']): Record<string, unknown> =>
+  path.split('.').reduceRight<unknown>((nested, property) => ({ [property]: nested }), value) as Record<
+    string,
+    unknown
+  >;
+
 export class TimescaleValuesRepository implements ValuesRepository {
   constructor(
     private knex: Knex,
@@ -149,6 +155,15 @@ export class TimescaleValuesRepository implements ValuesRepository {
 
       if (criteria.url) {
         query.whereRaw(`value @> ?::jsonb`, [`{"payload": {"URL": "${criteria.url}"}}`]);
+      }
+
+      if (criteria.payloadPath) {
+        const payload = buildNestedPayload(criteria.payloadPath, criteria.payloadValue);
+        query.whereRaw(`value @> ?::jsonb`, [JSON.stringify({ payload })]);
+      }
+
+      if (criteria.payload) {
+        query.whereRaw(`value @> ?::jsonb`, [JSON.stringify({ payload: criteria.payload })]);
       }
     }
 
