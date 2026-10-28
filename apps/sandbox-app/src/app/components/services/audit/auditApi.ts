@@ -43,6 +43,9 @@ export interface EventQuery {
   scope?: string;
   status?: EventStatus;
   category?: string;
+  severity?: string;
+  correlationId?: string;
+  sessionId?: string;
   occurredFrom?: string;
   occurredTo?: string;
 }

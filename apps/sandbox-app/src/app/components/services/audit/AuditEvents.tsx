@@ -18,6 +18,7 @@ import { Card, ErrorCallout, FormGrid, Json, STATUS_BADGE } from './common';
 
 const PAGE_SIZE = 25;
 const STATUSES: EventStatus[] = ['success', 'failure', 'blocked', 'error'];
+const SEVERITIES = ['info', 'warning', 'critical'];
 
 function toDate(value: unknown, endOfDay = false): string | undefined {
   if (!value) return undefined;
@@ -82,10 +83,20 @@ export function AuditEvents() {
             />
           </GoabFormItem>
           <GoabFormItem label="Action">
-            <GoabInput name="action" width="100%" value={filters.action ?? ''} onChange={(e) => setFilter('action', e.value)} />
+            <GoabInput
+              name="action"
+              width="100%"
+              value={filters.action ?? ''}
+              onChange={(e) => setFilter('action', e.value)}
+            />
           </GoabFormItem>
           <GoabFormItem label="Actor id">
-            <GoabInput name="actor" width="100%" value={filters.actor ?? ''} onChange={(e) => setFilter('actor', e.value)} />
+            <GoabInput
+              name="actor"
+              width="100%"
+              value={filters.actor ?? ''}
+              onChange={(e) => setFilter('actor', e.value)}
+            />
           </GoabFormItem>
           <GoabFormItem label="Status">
             <GoabDropdown
@@ -114,6 +125,36 @@ export function AuditEvents() {
               width="100%"
               value={filters.resourceId ?? ''}
               onChange={(e) => setFilter('resourceId', e.value)}
+            />
+          </GoabFormItem>
+          <GoabFormItem label="Severity">
+            <GoabDropdown
+              name="severity"
+              width="100%"
+              value={filters.severity}
+              onChange={(e) => setFilter('severity', e.value as string)}
+            >
+              <GoabDropdownItem value="" label="Any" />
+              {SEVERITIES.map((severity) => (
+                <GoabDropdownItem key={severity} value={severity} label={severity} />
+              ))}
+            </GoabDropdown>
+          </GoabFormItem>
+          <GoabFormItem label="Correlation id">
+            <GoabInput
+              name="correlationId"
+              width="100%"
+              value={filters.correlationId ?? ''}
+              onChange={(e) => setFilter('correlationId', e.value)}
+            />
+          </GoabFormItem>
+          <GoabFormItem label="Session id">
+            <GoabInput
+              name="sessionId"
+              width="100%"
+              maxLength={128}
+              value={filters.sessionId ?? ''}
+              onChange={(e) => setFilter('sessionId', e.value)}
             />
           </GoabFormItem>
           <GoabFormItem label="From">
