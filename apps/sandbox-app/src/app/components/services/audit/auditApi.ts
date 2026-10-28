@@ -82,7 +82,11 @@ function getServiceUrl(urn: string): string {
 
 const getBaseUrl = async () => getServiceUrl(AUDIT_SERVICE_URN);
 
-async function request<T>(method: 'get' | 'post', path: string, options: { params?: unknown; data?: unknown } = {}) {
+async function request<T>(
+  method: 'get' | 'post',
+  path: string,
+  options: { params?: unknown; data?: unknown; responseType?: 'blob' } = {},
+) {
   const [url, token] = await Promise.all([getBaseUrl(), getAccessToken()]);
   const { data } = await axios.request<T>({
     method,
@@ -162,8 +166,19 @@ const eventsPath = (namespace?: string) => (namespace ? `/${encodeURIComponent(n
 // Requires audit-reader.
 export const getActions = (namespace: string) =>
   request<ActionDefinition[]>('get', `/${encodeURIComponent(namespace)}/actions`);
+// Every catalog visible to the tenant, including Core's. Requires audit-reader.
+export const getCatalogs = () =>
+  request<{ application: string; core: boolean; actions: ActionDefinition[] }[]>('get', '/actions');
+// Distinct namespaces that have events for the tenant, whether or not their catalog is visible.
+export const getNamespaces = async () => (await request<{ results: string[] }>('get', '/namespaces')).results;
 export const getEvents = (query: EventQuery, namespace?: string) =>
   request<EventPage>('get', eventsPath(namespace), { params: query });
+// The service streams every matching event as CSV; actor name and email are redacted unless the caller is audit-admin.
+export const exportEvents = (query: EventQuery, namespace?: string) =>
+  request<Blob>('get', `${eventsPath(namespace)}/export`, {
+    params: { ...query, top: undefined, after: undefined },
+    responseType: 'blob',
+  });
 export const getEvent = (namespace: string, id: string) =>
   request<StoredAuditEvent>('get', `${eventsPath(namespace)}/${encodeURIComponent(id)}`);
 
