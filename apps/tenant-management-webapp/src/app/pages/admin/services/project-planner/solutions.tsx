@@ -156,7 +156,6 @@ export const Solutions: FunctionComponent<SolutionsProps> = ({ selectedId, onSel
     try {
       const data = await api.exportSolution(solution.id);
       download(`planner-${safeName(solution)}.json`, JSON.stringify(data, null, 2), 'application/json');
-      await load();
     } catch {
       // Error is surfaced through the notification handled in the api hook.
     }
@@ -166,7 +165,6 @@ export const Solutions: FunctionComponent<SolutionsProps> = ({ selectedId, onSel
     try {
       const data = (await api.exportSolution(solution.id)) as Partial<Solution>;
       download(`planner-${safeName(solution)}.md`, solutionToMarkdown({ ...solution, ...data }), 'text/markdown');
-      await load();
     } catch {
       // Error is surfaced through the notification handled in the api hook.
     }

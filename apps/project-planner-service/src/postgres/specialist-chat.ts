@@ -49,6 +49,14 @@ export class PostgresSpecialistChatRepository implements SpecialistChatRepositor
     return rows.map(mapRecord);
   }
 
+  // No creator filter or cap: a saved version keeps every chat on the solution.
+  async findBySolution(tenantId: AdspId, solutionId: string): Promise<SpecialistChat[]> {
+    const rows = await this.knex<SpecialistChatRecord>('specialist_chats')
+      .where({ tenant: tenantId.toString(), solutionId })
+      .orderBy('createdOn', 'asc');
+    return rows.map(mapRecord);
+  }
+
   async get(tenantId: AdspId, id: string): Promise<SpecialistChat | null> {
     const [record] = await this.knex<SpecialistChatRecord>('specialist_chats')
       .where({ tenant: tenantId.toString(), id })

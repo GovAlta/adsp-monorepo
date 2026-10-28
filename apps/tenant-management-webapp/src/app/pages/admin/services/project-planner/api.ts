@@ -18,6 +18,8 @@ import {
   PatternInput,
   Solution,
   SolutionUpdate,
+  SolutionVersionList,
+  SolutionVersionSummary,
   SpecialistChat,
   SpecialistChatExport,
   SpecialistChatRequest,
@@ -43,6 +45,10 @@ export interface PlannerApi {
   blueprint: (id: string, options?: BlueprintOptions) => Promise<Solution>;
   consult: (id: string, service: string, options?: ConsultOptions) => Promise<ConsultResult & { solution?: Solution }>;
   exportSolution: (id: string) => Promise<unknown>;
+  listVersions: (id: string) => Promise<SolutionVersionList>;
+  saveVersion: (id: string) => Promise<SolutionVersionSummary>;
+  renameVersion: (id: string, number: number, name: string) => Promise<SolutionVersionSummary>;
+  exportVersion: (id: string, number: number) => Promise<unknown>;
   listSpecialists: () => Promise<SpecialistDefinition[]>;
   specialistChat: (service: string, request: SpecialistChatRequest) => Promise<SpecialistChatResponse>;
   listChats: (criteria?: ChatCriteria) => Promise<ChatSummary[]>;
@@ -133,6 +139,11 @@ export function usePlannerApi(): PlannerApi {
       consult: (id, service, options) =>
         request<ConsultResult & { solution?: Solution }>('post', `/solutions/${id}/consult/${service}`, options),
       exportSolution: (id) => request<unknown>('get', `/solutions/${id}/export`),
+      listVersions: (id) => request<SolutionVersionList>('get', `/solutions/${id}/versions`),
+      saveVersion: (id) => request<SolutionVersionSummary>('post', `/solutions/${id}/versions`),
+      renameVersion: (id, number, name) =>
+        request<SolutionVersionSummary>('patch', `/solutions/${id}/versions/${number}`, { name }),
+      exportVersion: (id, number) => request<unknown>('get', `/solutions/${id}/versions/${number}/export`),
       listSpecialists: async () => (await request<{ results: SpecialistDefinition[] }>('get', '/specialists')).results,
       specialistChat: (service, body) => request<SpecialistChatResponse>('post', `/specialists/${service}/chat`, body),
       listChats: async (criteria) =>

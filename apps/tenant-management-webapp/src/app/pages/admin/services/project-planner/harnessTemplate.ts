@@ -1,4 +1,4 @@
-// The harness instructions; harnessToMarkdown fills {name}, {slug}, {n} and {component list}.
+// The harness instructions; harnessToMarkdown fills {name}, {slug}, {file}, {n} and {component list}.
 export const HARNESS_TEMPLATE = `# Build {name}: harness instructions
 
 Follow these instructions to build {name} from a plan exported by the ADSP Project Planner. Start with
@@ -9,12 +9,12 @@ from the step it records.
 ## The downloaded files
 The user downloads two files from the planner into the same folder, then attaches this file, or both,
 to the prompt:
-- \`planner-{slug}.md\`: the plan, solution version {n};
-- \`planner-{slug}-harness.md\`: these instructions.
+- \`{file}.md\`: the plan, solution version {n};
+- \`{file}-harness.md\`: these instructions.
 
-1. Find the plan: the attached file if there is one, otherwise \`planner-{slug}.md\` next to this file,
+1. Find the plan: the attached file if there is one, otherwise \`{file}.md\` next to this file,
    or \`docs/bundle/planner-{slug}.md\` once it is in the project. If it isn't there, ask the user to
-   attach it. If there are copies such as \`planner-{slug} (1).md\`, ask which one to use.
+   attach it. If there are copies such as \`{file} (1).md\`, ask which one to use.
 2. Check that the plan's front matter says \`solution-version: {n}\`. If it doesn't, ask the user to
    download both files again from the same version.
 

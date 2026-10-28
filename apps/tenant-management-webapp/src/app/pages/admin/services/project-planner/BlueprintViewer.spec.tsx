@@ -83,8 +83,7 @@ const makeSolution = (
   status: 'draft',
   createdByName: 'Pat',
   updatedOn: '2026-03-01T10:00:00.000Z',
-  version: '1.0',
-  versionHistory: [],
+  version: 1,
   state: {
     problemStatement: 'Permits',
     concepts: [],

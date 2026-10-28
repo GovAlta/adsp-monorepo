@@ -1,11 +1,19 @@
-import { AdspId, EventService, isAllowedUser, UnauthorizedUserError } from '@abgov/adsp-service-sdk';
-import type { User } from '@abgov/adsp-service-sdk';
+import { EventService } from '@abgov/adsp-service-sdk';
 import { createValidationHandler, InvalidOperationError, NotFoundError } from '@core-services/core-common';
 import { randomUUID } from 'crypto';
-import { Request, RequestHandler, Router } from 'express';
+import { Request, Router } from 'express';
 import { body, param, query } from 'express-validator';
 import * as multer from 'multer';
 import { Logger } from 'winston';
+import {
+  getSolution,
+  getTenantId,
+  isPlannerAdmin,
+  loaded,
+  loadSolution,
+  requirePlannerAdmin,
+  requirePlannerUser,
+} from './access';
 import {
   buildHypotheses,
   buildNextSteps,
@@ -19,7 +27,6 @@ import {
   BlueprintServiceDetail,
   buildRuleBlueprint,
   chatHighlights,
-  isBlueprintOutOfDate,
   mergeBlueprintCore,
   recommendedServices,
   storedConsult,
@@ -49,8 +56,12 @@ import {
 import { solutionCreated, solutionDeleted, solutionUpdated } from './events';
 import { mergeConsultation, PlannerLlm, SpecialistChatMessage, SpecialistIntent, SpecialistReply } from './llm';
 import { BUILT_IN_PATTERNS } from './patterns';
-import { PatternRepository, SolutionRepository, SpecialistChatRepository } from './repository';
-import { PlannerServiceRoles } from './roles';
+import {
+  PatternRepository,
+  SolutionRepository,
+  SolutionVersionRepository,
+  SpecialistChatRepository,
+} from './repository';
 import { getSpecialist, ruleBasedSpecialistReply, SPECIALISTS } from './specialists';
 import {
   AnalysisMode,
@@ -69,13 +80,15 @@ import {
   SpecialistStatus,
   StoredChatMessage,
 } from './types';
-import { changedSections, classifyBump, nextVersion, sectionHashes, VersionBump } from './versioning';
+import { versionContent } from './versioning';
+import { createVersionRouter } from './versionRouter';
 
 interface PlannerRouterProps {
   logger: Logger;
   solutionRepository: SolutionRepository;
   patternRepository: PatternRepository;
   specialistChatRepository: SpecialistChatRepository;
+  solutionVersionRepository: SolutionVersionRepository;
   eventService: EventService;
   // When provided, AI analysis is available and is the default mode.
   llm?: PlannerLlm;
@@ -83,11 +96,9 @@ interface PlannerRouterProps {
   readAdspCatalog?: () => Promise<string[]>;
 }
 
-const SOLUTION_KEY = 'solution';
 const MAX_CHAT_MESSAGES = 200;
 const SPECIALIST_INTENTS: SpecialistIntent[] = ['ask', 'recommend', 'design', 'validate', 'sample'];
 const SOLUTION_STATUSES = ['draft', 'analyzed', 'in-progress', 'completed', 'archived'];
-const ALL_ROLES = [PlannerServiceRoles.Admin, PlannerServiceRoles.User];
 
 const emptyState = (problemStatement = ''): SolutionState => ({
   problemStatement,
@@ -99,16 +110,6 @@ const emptyState = (problemStatement = ''): SolutionState => ({
   specialists: [],
   nextSteps: [],
 });
-
-const getTenantId = (req: Request): AdspId => {
-  const tenantId = req.tenant?.id;
-  if (!tenantId) {
-    throw new InvalidOperationError('Cannot perform planner operation without tenant context.');
-  }
-  return tenantId;
-};
-
-const isPlannerAdmin = (user: User, tenantId: AdspId) => isAllowedUser(user, tenantId, PlannerServiceRoles.Admin);
 
 const BUILT_IN_IDS = new Set(BUILT_IN_PATTERNS.map((p) => p.id));
 
@@ -188,76 +189,6 @@ const patternValidation = () => [
   body('knownUnknowns').optional().isArray({ max: 50 }),
 ];
 
-const requirePlannerUser: RequestHandler = (req, _res, next) => {
-  try {
-    const tenantId = getTenantId(req);
-    if (!isAllowedUser(req.user, tenantId, ALL_ROLES)) {
-      throw new UnauthorizedUserError('access planner', req.user);
-    }
-    next();
-  } catch (err) {
-    next(err);
-  }
-};
-
-const requirePlannerAdmin: RequestHandler = (req, _res, next) => {
-  try {
-    if (!isPlannerAdmin(req.user, getTenantId(req))) {
-      throw new UnauthorizedUserError('manage patterns', req.user);
-    }
-    next();
-  } catch (err) {
-    next(err);
-  }
-};
-
-async function loadSolution(repository: SolutionRepository, req: Request, id: string): Promise<Solution> {
-  const tenantId = getTenantId(req);
-  const solution = await repository.get(tenantId, id);
-  if (!solution) {
-    throw new NotFoundError('solution', id);
-  }
-  if (solution.createdById !== req.user.id && !isPlannerAdmin(req.user, tenantId)) {
-    throw new UnauthorizedUserError('access solution', req.user);
-  }
-  const defaulted: Solution = {
-    version: '1.0',
-    versionHistory: [],
-    lastExportHashes: {},
-    exportedOnce: false,
-    ...solution,
-  };
-  if (!defaulted.exportedOnce && defaulted.versionHistory.length > 0) {
-    defaulted.exportedOnce = true;
-  }
-  return defaulted;
-}
-
-const getSolution =
-  (repository: SolutionRepository): RequestHandler =>
-  async (req, _res, next) => {
-    try {
-      req[SOLUTION_KEY] = await loadSolution(repository, req, req.params.id);
-      next();
-    } catch (err) {
-      next(err);
-    }
-  };
-
-const loaded = (req: Request): Solution => req[SOLUTION_KEY];
-
-// The user rejected these, so the harness never sees them; the saved solution keeps them.
-const withoutRejectedComponents = (state: SolutionState): SolutionState =>
-  state.blueprint?.components
-    ? {
-        ...state,
-        blueprint: {
-          ...state.blueprint,
-          components: state.blueprint.components.filter((c) => c.review !== 'rejected'),
-        },
-      }
-    : state;
-
 // Regenerating renumbers the components, so a review follows its component by service and name.
 const withPreviousReviews = (
   components: BlueprintComponent[],
@@ -308,6 +239,7 @@ export function createPlannerRouter({
   solutionRepository,
   patternRepository,
   specialistChatRepository,
+  solutionVersionRepository,
   eventService,
   llm,
   readAdspCatalog,
@@ -736,12 +668,10 @@ export function createPlannerRouter({
           createdByName: req.user.name,
           createdOn: now,
           updatedOn: now,
-          version: '1.0',
-          versionHistory: [],
-          lastExportHashes: {},
-          exportedOnce: false,
+          version: 1,
           state: emptyState(req.body.problemStatement),
         });
+        await solutionVersionRepository.create(tenantId, solution.id, versionContent(solution, []));
         res.status(201).send(solution);
         eventService.send(solutionCreated(req.user, solution));
         logger.info(`Created solution ${solution.name} (ID: ${solution.id}).`, {
@@ -1044,63 +974,8 @@ export function createPlannerRouter({
     },
   );
 
-  router.get(
-    '/solutions/:id/export',
-    requirePlannerUser,
-    validateId,
-    getSolution(solutionRepository),
-    async (req, res, next) => {
-      try {
-        const solution = loaded(req);
-        const currentHashes = sectionHashes(solution);
-        const changed = changedSections(solution.lastExportHashes, currentHashes);
-        const isInitial = !solution.exportedOnce;
-        const bump: VersionBump = isInitial ? 'none' : classifyBump(changed);
-
-        let { version, versionHistory } = solution;
-        let lastUpdated = versionHistory[versionHistory.length - 1]?.changedAt || solution.updatedOn.toISOString();
-        if (bump !== 'none') {
-          version = nextVersion(solution.version, bump);
-          const changedAt = new Date().toISOString();
-          versionHistory = [
-            ...versionHistory,
-            { version, changedAt, changedBy: req.user.name, changedSections: changed },
-          ];
-          lastUpdated = changedAt;
-        }
-        if (bump !== 'none' || isInitial) {
-          await solutionRepository.save({
-            ...solution,
-            version,
-            versionHistory,
-            lastExportHashes: currentHashes,
-            exportedOnce: true,
-          });
-        }
-
-        res.setHeader('Content-Disposition', `attachment; filename="planner-${solution.id}.json"`);
-        res.send({
-          exportedAt: new Date().toISOString(),
-          id: solution.id,
-          name: solution.name,
-          description: solution.description,
-          scenario: solution.scenario,
-          status: solution.status,
-          createdByName: solution.createdByName,
-          createdOn: solution.createdOn,
-          updatedOn: solution.updatedOn,
-          version,
-          lastUpdated,
-          changedSections: bump === 'none' ? [] : changed,
-          initial: isInitial,
-          blueprintOutOfDate: isBlueprintOutOfDate(solution.state),
-          versionHistory,
-          state: withoutRejectedComponents(solution.state),
-        });
-      } catch (err) {
-        next(err);
-      }
-    },
+  router.use(
+    createVersionRouter({ solutionRepository, specialistChatRepository, solutionVersionRepository, eventService }),
   );
 
   router.post(
