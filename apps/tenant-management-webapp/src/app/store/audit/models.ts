@@ -1,5 +1,4 @@
 export const AUDIT_NAMESPACE = 'audit-service';
-export const AUDIT_SERVICE_CATALOG = 'actions-audit-service';
 export const AUDIT_PAGE_SIZES = [10, 30, 50, 100];
 export const AUDIT_DEFAULT_PAGE_SIZE = 30;
 // Matches the audit service's maximum page size, and caps an export so it cannot grow unbounded.

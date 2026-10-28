@@ -22,7 +22,6 @@ import {
   AUDIT_EXPORT_LIMIT,
   AUDIT_EXPORT_PAGE_SIZE,
   AUDIT_NAMESPACE,
-  AUDIT_SERVICE_CATALOG,
   AuditAction,
   AuditCatalog,
   AuditEventCriteria,
@@ -31,7 +30,6 @@ import {
   RetentionClasses,
 } from './models';
 
-const ACTIONS_PREFIX = 'actions-';
 const RETENTION_PREFIX = 'retention-';
 
 interface ConfigurationResult {
@@ -39,22 +37,23 @@ interface ConfigurationResult {
   latest?: { configuration?: Record<string, unknown> };
 }
 
-function toCatalog(application: string, configuration: Record<string, unknown>, isCore: boolean): AuditCatalog {
-  const actions = (configuration.actions || {}) as Record<string, Omit<AuditAction, 'name'>>;
-  return {
-    application,
-    isCore,
-    actions: Object.entries(actions)
-      .map(([name, action]) => ({ ...action, name }))
-      .sort((a, b) => a.name.localeCompare(b.name)),
-  };
+interface CatalogListing {
+  application: string;
+  core: boolean;
+  actions: AuditAction[];
 }
 
-export function mapAuditConfiguration(
-  results: ConfigurationResult[],
-  coreCatalog?: Record<string, unknown>,
-): { catalogs: AuditCatalog[]; retention: AuditRetention } {
-  const catalogs: AuditCatalog[] = [];
+export function toCatalogs(listings: CatalogListing[]): AuditCatalog[] {
+  return (listings || [])
+    .map(({ application, core, actions }) => ({
+      application,
+      isCore: !!core,
+      actions: [...(actions || [])].sort((a, b) => a.name.localeCompare(b.name)),
+    }))
+    .sort((a, b) => a.application.localeCompare(b.application));
+}
+
+export function mapAuditConfiguration(results: ConfigurationResult[]): { retention: AuditRetention } {
   const retention: AuditRetention = { tenant: {}, applications: {} };
 
   for (const { name, latest } of results) {
@@ -62,9 +61,7 @@ export function mapAuditConfiguration(
     if (!configuration) {
       continue;
     }
-    if (name.startsWith(ACTIONS_PREFIX)) {
-      catalogs.push(toCatalog(name.substring(ACTIONS_PREFIX.length), configuration, false));
-    } else if (name === 'retention') {
+    if (name === 'retention') {
       retention.tenant = (configuration.classes || {}) as RetentionClasses;
     } else if (name.startsWith(RETENTION_PREFIX)) {
       retention.applications[name.substring(RETENTION_PREFIX.length)] = (configuration.classes ||
@@ -72,12 +69,7 @@ export function mapAuditConfiguration(
     }
   }
 
-  if (coreCatalog && !catalogs.some((c) => c.application === 'audit-service')) {
-    catalogs.push(toCatalog('audit-service', coreCatalog, true));
-  }
-
-  catalogs.sort((a, b) => a.application.localeCompare(b.application));
-  return { catalogs, retention };
+  return { retention };
 }
 
 function eventsUrl(auditBaseUrl: string, criteria: AuditEventCriteria, top: number, after?: string): string {
@@ -109,6 +101,7 @@ export function* fetchAuditConfiguration(): SagaIterator {
   const configBaseUrl: string = yield select(
     (state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl,
   );
+  const auditBaseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.auditServiceApiUrl);
   const token: string = yield call(getAccessToken);
 
   if (configBaseUrl && token) {
@@ -117,16 +110,14 @@ export function* fetchAuditConfiguration(): SagaIterator {
       const baseUrl = `${configBaseUrl}/configuration/v2/configuration/${AUDIT_NAMESPACE}`;
       const results: ConfigurationResult[] = yield call(fetchAll, baseUrl, headers);
 
-      // The audit service's own catalog is a core document, so it is not part of the tenant listing.
-      let coreCatalog: Record<string, unknown> | undefined;
-      try {
-        const { data } = yield call(axios.get, `${baseUrl}/${AUDIT_SERVICE_CATALOG}?core`, { headers });
-        coreCatalog = data?.latest?.configuration;
-      } catch {
-        coreCatalog = undefined;
+      // Core catalogs are not part of the tenant configuration listing, so the audit service resolves all of them.
+      let catalogs: AuditCatalog[] = [];
+      if (auditBaseUrl) {
+        const { data } = yield call(axios.get, `${auditBaseUrl}/audit/v1/actions`, { headers });
+        catalogs = toCatalogs(data);
       }
 
-      const { catalogs, retention } = mapAuditConfiguration(results, coreCatalog);
+      const { retention } = mapAuditConfiguration(results);
       yield put(fetchAuditConfigurationSuccess(catalogs, retention));
     } catch (err) {
       yield put(ErrorNotification({ error: err }));
@@ -148,9 +139,13 @@ export function* fetchAuditEvents(action: FetchAuditEventsAction): SagaIterator 
   }
 
   try {
-    const { data } = yield call(axios.get, eventsUrl(auditBaseUrl, action.criteria, action.top ?? AUDIT_DEFAULT_PAGE_SIZE, action.after), {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    const { data } = yield call(
+      axios.get,
+      eventsUrl(auditBaseUrl, action.criteria, action.top ?? AUDIT_DEFAULT_PAGE_SIZE, action.after),
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      },
+    );
     // Pages replace each other rather than accumulate.
     yield put(fetchAuditEventsSuccess(data.results, data.page?.next, false));
   } catch (err) {
@@ -180,7 +175,12 @@ export function* exportAuditEvents(action: ExportAuditEventsAction): SagaIterato
     } while (after && events.length < AUDIT_EXPORT_LIMIT);
 
     const exported = events.slice(0, AUDIT_EXPORT_LIMIT);
-    yield call(downloadFile, `audit-events-${new Date().toISOString().slice(0, 10)}.csv`, eventsToCsv(exported, action.includePersonalInfo), 'text/csv');
+    yield call(
+      downloadFile,
+      `audit-events-${new Date().toISOString().slice(0, 10)}.csv`,
+      eventsToCsv(exported, action.includePersonalInfo),
+      'text/csv',
+    );
     const truncated = !!after || events.length > AUDIT_EXPORT_LIMIT;
     yield put(
       SuccessNotification({

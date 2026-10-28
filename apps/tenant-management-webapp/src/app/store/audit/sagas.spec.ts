@@ -2,7 +2,13 @@ import { expectSaga } from 'redux-saga-test-plan';
 import axios from 'axios';
 import { getAccessToken } from '../tenant/sagas';
 import { downloadFile } from './export';
-import { exportAuditEvents, fetchAuditConfiguration, fetchAuditEvents, mapAuditConfiguration } from './sagas';
+import {
+  exportAuditEvents,
+  fetchAuditConfiguration,
+  fetchAuditEvents,
+  mapAuditConfiguration,
+  toCatalogs,
+} from './sagas';
 import {
   FETCH_AUDIT_CONFIGURATION_SUCCESS_ACTION,
   FETCH_AUDIT_EVENTS_SUCCESS_ACTION,
@@ -14,21 +20,26 @@ const baseUrl = 'http://mock-config-service.com';
 const catalog = (actions: Record<string, unknown>) => ({ latest: { configuration: { actions } } });
 
 describe('audit sagas', () => {
-  it('maps catalogs and retention documents', () => {
-    const { catalogs, retention } = mapAuditConfiguration(
-      [
-        { name: 'actions-form-app', ...catalog({ submit: { category: 'data' }, create: { category: 'data' } }) },
-        { name: 'retention', latest: { configuration: { classes: { standard: { days: 30 } } } } },
-        { name: 'retention-form-app', latest: { configuration: { classes: { security: { days: 400 } } } } },
-      ],
-      { actions: { 'event-read': { category: 'access' } } },
-    );
+  it('maps the catalog listing, sorted, with the core flag', () => {
+    const catalogs = toCatalogs([
+      { application: 'form-app', core: false, actions: [{ name: 'submit' }, { name: 'create' }] as never },
+      { application: 'audit-service', core: true, actions: [] },
+    ]);
 
     expect(catalogs.map((c) => [c.application, c.isCore])).toEqual([
       ['audit-service', true],
       ['form-app', false],
     ]);
     expect(catalogs[1].actions.map((a) => a.name)).toEqual(['create', 'submit']);
+  });
+
+  it('maps retention documents', () => {
+    const { retention } = mapAuditConfiguration([
+      { name: 'actions-form-app', ...catalog({ submit: {} }) },
+      { name: 'retention', latest: { configuration: { classes: { standard: { days: 30 } } } } },
+      { name: 'retention-form-app', latest: { configuration: { classes: { security: { days: 400 } } } } },
+    ]);
+
     expect(retention).toEqual({
       tenant: { standard: { days: 30 } },
       applications: { 'form-app': { security: { days: 400 } } },
@@ -123,28 +134,34 @@ describe('audit sagas', () => {
     ]);
   });
 
-  it('loads tenant documents and tolerates a missing core catalog', async () => {
+  it('loads catalogs from the audit service and retention from the configuration listing', async () => {
+    const urls = [];
     const { effects } = await expectSaga(fetchAuditConfiguration)
-      .withState({ config: { serviceUrls: { configurationServiceApiUrl: baseUrl } } })
+      .withState({
+        config: { serviceUrls: { configurationServiceApiUrl: baseUrl, auditServiceApiUrl: 'http://mock-audit.com' } },
+      })
       .provide({
         call(effect, next) {
           if (effect.fn === getAccessToken) {
             return 'token';
           }
           if (effect.fn === axios.get) {
-            throw new Error('not found');
+            urls.push(effect.args[0]);
+            return { data: [{ application: 'form-app', core: true, actions: [{ name: 'submit' }] }] };
           }
           if (effect.fn.name === 'fetchAll') {
-            return [{ name: 'actions-form-app', ...catalog({ submit: {} }) }];
+            return [{ name: 'retention', latest: { configuration: { classes: { standard: { days: 30 } } } } }];
           }
           return next();
         },
       })
       .run();
 
+    expect(urls).toEqual(['http://mock-audit.com/audit/v1/actions']);
     const success = effects.put
       .map((e) => e.payload.action)
       .find((a) => a.type === FETCH_AUDIT_CONFIGURATION_SUCCESS_ACTION);
-    expect(success.catalogs).toHaveLength(1);
+    expect(success.catalogs).toMatchObject([{ application: 'form-app', isCore: true }]);
+    expect(success.retention.tenant).toEqual({ standard: { days: 30 } });
   });
 });
