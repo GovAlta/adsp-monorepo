@@ -351,7 +351,7 @@ export const SolutionWorkplace: FunctionComponent<SolutionWorkplaceProps> = ({
   const showPageOverlay = headerBusy || (busy && !analysis);
   const progressSteps = [
     { id: 1 as const, label: 'Problem statement', complete: !!analysis },
-    { id: 2 as const, label: 'Discovery conversation', complete: step >= 3 },
+    { id: 2 as const, label: 'Discovery Conversation & Questions', complete: step >= 3 },
     { id: 3 as const, label: 'Proposed solution', complete: !!blueprint },
   ];
   const scrollToStep = (id: 1 | 2 | 3) => {
@@ -562,7 +562,7 @@ export const SolutionWorkplace: FunctionComponent<SolutionWorkplaceProps> = ({
         </li>
         <li ref={step2Ref} style={{ scrollMarginTop: headerOffset }}>
           <GuidedStep
-            heading="2. Discovery conversation"
+            heading="2. Discovery Conversation & Questions"
             testId="guided-step-2"
             expanded={expandedSteps[2]}
             onToggle={() => toggleStep(2)}

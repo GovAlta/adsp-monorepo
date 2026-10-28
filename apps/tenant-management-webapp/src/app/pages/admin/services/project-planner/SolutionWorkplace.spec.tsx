@@ -182,7 +182,7 @@ describe('SolutionWorkplace', () => {
     ).toBeTruthy();
     for (const [step, heading] of [
       ['guided-step-1', 'Problem statement'],
-      ['guided-step-2', 'Discovery conversation'],
+      ['guided-step-2', 'Discovery Conversation & Questions'],
       ['guided-step-3', 'Proposed solution'],
     ]) {
       const toggle = goa(container, `${step}-toggle`);
@@ -291,7 +291,7 @@ describe('SolutionWorkplace', () => {
     });
 
     expect(goa(container, 'guided-step-1-toggle').textContent).toContain('Problem statement');
-    expect(goa(container, 'guided-step-2-toggle').textContent).toContain('Discovery conversation');
+    expect(goa(container, 'guided-step-2-toggle').textContent).toContain('Discovery Conversation & Questions');
     expect(goa(container, 'problem-continue').textContent).toContain('Save & analyze');
     expect(container.querySelectorAll('[testid="problem-continue"]')).toHaveLength(1);
     expect(container.textContent).toContain('Save and analyze the problem to start discovery');
