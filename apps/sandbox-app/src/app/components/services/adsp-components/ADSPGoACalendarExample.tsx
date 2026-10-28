@@ -59,6 +59,7 @@ export const ADSPGoACalendarExample = ({ tenantName }: ADSPGoACalendarExamplePro
   const [dateRange, setDateRange] = useState<DateRange>(() => {
     const now = new Date();
     const start = new Date(now.getFullYear(), now.getMonth(), 1);
+    start.setDate(start.getDate() - 365);
     const end = new Date(start);
     end.setDate(end.getDate() + 365);
     return { start, end };
