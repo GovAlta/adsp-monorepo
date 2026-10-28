@@ -3,6 +3,8 @@ import {
   FETCH_CORE_NOTIFICATION_TYPES_SUCCEEDED,
   FETCH_NOTIFICATION_METRICS_SUCCEEDED,
   FETCH_NOTIFICATION_CONFIGURATION_SUCCEEDED,
+  UPDATE_NOTIFICATION_TYPE_SUCCEEDED,
+  DELETE_NOTIFICATION_TYPE_SUCCEEDED,
 } from './actions';
 import { NOTIFICATION_INIT, NotificationState, NotificationItem } from './models';
 
@@ -69,6 +71,24 @@ export default function (state = NOTIFICATION_INIT, action: ActionTypes): Notifi
         email: action.payload.email,
         notificationTypes: notificationTypes,
       };
+    }
+    case UPDATE_NOTIFICATION_TYPE_SUCCEEDED: {
+      const notificationType = action.payload;
+      const sortedChannels = [...(notificationType.channels || [])].sort((a, _b) => (a === 'email' ? -1 : 1));
+
+      return {
+        ...state,
+        notificationTypes: {
+          ...(state.notificationTypes || {}),
+          [notificationType.id]: { ...notificationType, sortedChannels },
+        },
+      };
+    }
+    case DELETE_NOTIFICATION_TYPE_SUCCEEDED: {
+      const notificationTypes = { ...(state.notificationTypes || {}) };
+      delete notificationTypes[action.payload.id];
+
+      return { ...state, notificationTypes };
     }
     case FETCH_CORE_NOTIFICATION_TYPES_SUCCEEDED: {
       const coreNotificationType = action.payload.notificationInfo.data;
