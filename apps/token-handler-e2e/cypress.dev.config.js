@@ -2,7 +2,7 @@ const { defineConfig } = require('cypress');
 
 module.exports = defineConfig({
   env: {
-    'env-name': 'UAT',
+    'env-name': 'DEV',
     TAGS: '',
     keycloakTokenUrlSuffix: '/protocol/openid-connect/token',
     'client-id': 'auto-test-client',
@@ -13,7 +13,7 @@ module.exports = defineConfig({
     tenantName: 'autotest',
     'autotest-admin-token': '',
     accessManagementApi: '',
-    tenantWebAppUrl: 'https://adsp-uat.alberta.ca/',
+    tenantWebAppUrl: 'https://adsp-dev.alberta.ca/',
   },
   retries: 1,
   defaultCommandTimeout: 10000,
@@ -35,7 +35,7 @@ module.exports = defineConfig({
     setupNodeEvents(on, config) {
       return require('./src/plugins/index.js')(on, config);
     },
-    baseUrl: 'http://localhost:3000',
+    baseUrl: 'https://token-handler-adsp-dev.apps.aro-01.int.gov.ab.ca',
     specPattern: './src/integration/**/*.feature',
     supportFile: './src/support/index.ts',
     excludeSpecPattern: '*.js',

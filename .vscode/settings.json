@@ -8,7 +8,9 @@
     "apps/pii-service-e2e/src/integration/**/*.ts",
     "apps/token-handler-e2e/src/integration/**/*.ts",
     "apps/verify-service-e2e/src/integration/**/*.ts",
-    "apps/task-app-e2e/src/integration/**/*.ts"
+    "apps/task-app-e2e/src/integration/**/*.ts",
+    "apps/agent-service-e2e/src/integration/**/*.ts",
+    "apps/audit-service-e2e/src/integration/**/*.ts"
   ],
   "cucumberautocomplete.syncfeatures": "apps/tenant-management-webapp-e2e/src/integration/**/*.feature",
   "cucumberautocomplete.strictGherkinCompletion": false,
