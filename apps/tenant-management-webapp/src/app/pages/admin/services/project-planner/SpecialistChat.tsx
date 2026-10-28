@@ -56,6 +56,35 @@ const Turns = styled.div`
   margin: 1rem 0;
 `;
 
+const TextLink = styled.button`
+  display: inline-block;
+  margin-top: 0.25rem;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--goa-color-text-default, #333);
+  text-decoration: underline;
+  cursor: pointer;
+  font-size: inherit;
+`;
+
+const TEXT_PREVIEW_LIMIT = 400;
+
+export const ExpandableText: FunctionComponent<{ content: string; testId?: string }> = ({ content, testId }) => {
+  const [expanded, setExpanded] = useState(false);
+  if (content.length <= TEXT_PREVIEW_LIMIT) {
+    return <Text>{content}</Text>;
+  }
+  return (
+    <>
+      <Text>{expanded ? content : `${content.slice(0, TEXT_PREVIEW_LIMIT)}…`}</Text>
+      <TextLink type="button" data-testid={testId} onClick={() => setExpanded(!expanded)}>
+        {expanded ? 'Show fewer' : 'Show more'}
+      </TextLink>
+    </>
+  );
+};
+
 /** Counts saved chats per specialist service, e.g. to label a specialist list as 'Form (3)'. */
 export function countChatsByService(chats: ChatSummary[]): Record<string, number> {
   return (chats || []).reduce<Record<string, number>>((counts, chat) => {
@@ -94,14 +123,14 @@ const Message: FunctionComponent<MessageProps> = ({ message, specialistName, dis
         heading={isPlanner ? 'Planner' : 'You'}
         testId={isPlanner ? 'chat-planner-message' : 'chat-user-message'}
       >
-        <Text>{message.content}</Text>
+        <ExpandableText content={message.content} testId="chat-user-message-toggle" />
       </GoabCallout>
     );
   }
 
   return (
     <GoabCallout type="event" heading={specialistName} testId="chat-assistant-message">
-      <Text>{message.content}</Text>
+      <ExpandableText content={message.content} testId="chat-assistant-message-toggle" />
       {message.warning && <p>{message.warning}</p>}
       {message.consult && (
         <>
@@ -161,6 +190,7 @@ interface SpecialistChatProps {
   api: PlannerApi;
   mode: AnalysisMode;
   context?: { label: string; description: string };
+  disabled?: boolean;
   onChatsChanged?: () => void;
   onSolutionChange?: (solution: Solution) => void;
 }
@@ -172,6 +202,7 @@ export const SpecialistChat: FunctionComponent<SpecialistChatProps> = ({
   api,
   mode,
   context,
+  disabled = false,
   onChatsChanged,
   onSolutionChange,
 }) => {
@@ -181,6 +212,7 @@ export const SpecialistChat: FunctionComponent<SpecialistChatProps> = ({
   const [intent, setIntent] = useState<SpecialistIntent>('ask');
   const [draft, setDraft] = useState('');
   const [busy, run] = useBusy();
+  const blocked = busy || disabled;
   const [deletingChatId, setDeletingChatId] = useState<string>();
   const onChatsChangedRef = useRef(onChatsChanged);
   onChatsChangedRef.current = onChatsChanged;
@@ -233,7 +265,7 @@ export const SpecialistChat: FunctionComponent<SpecialistChatProps> = ({
 
   const send = (text: string) => {
     const message = text.trim();
-    if (busy || !message) {
+    if (blocked || !message) {
       return Promise.resolve();
     }
     return run(async () => {
@@ -323,7 +355,14 @@ export const SpecialistChat: FunctionComponent<SpecialistChatProps> = ({
       )}
 
       {solution && (
-        <GoabButton size="compact" type="secondary" disabled={busy} mb="m" testId="chat-consult" onClick={runConsult}>
+        <GoabButton
+          size="compact"
+          type="secondary"
+          disabled={blocked}
+          mb="m"
+          testId="chat-consult"
+          onClick={runConsult}
+        >
           Consult on this solution
         </GoabButton>
       )}
@@ -398,7 +437,7 @@ export const SpecialistChat: FunctionComponent<SpecialistChatProps> = ({
                       key={`${i}-${message.at}`}
                       message={message}
                       specialistName={displayName}
-                      disabled={busy}
+                      disabled={blocked}
                       onFollowUp={send}
                     />
                   ))}
@@ -418,7 +457,7 @@ export const SpecialistChat: FunctionComponent<SpecialistChatProps> = ({
               key={`${i}-${message.at}`}
               message={message}
               specialistName={displayName}
-              disabled={busy}
+              disabled={blocked}
               onFollowUp={send}
             />
           ))}
@@ -432,6 +471,7 @@ export const SpecialistChat: FunctionComponent<SpecialistChatProps> = ({
             key={key}
             type={intent === key ? 'primary' : 'secondary'}
             size="compact"
+            disabled={blocked}
             testId={`chat-intent-${key}`}
             onClick={() => setIntent(key)}
           >
@@ -446,12 +486,12 @@ export const SpecialistChat: FunctionComponent<SpecialistChatProps> = ({
           value={draft}
           rows={3}
           width="100%"
-          disabled={busy}
+          disabled={blocked}
           testId="chat-input"
           onChange={(detail) => setDraft(detail.value)}
         />
       </GoabFormItem>
-      <GoabButton disabled={busy || !draft.trim()} testId="chat-send" onClick={() => send(draft)}>
+      <GoabButton disabled={blocked || !draft.trim()} testId="chat-send" onClick={() => send(draft)}>
         Send
       </GoabButton>
 

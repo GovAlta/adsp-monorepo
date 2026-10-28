@@ -12,7 +12,7 @@ import {
 import styled from 'styled-components';
 import { PlannerApi } from './api';
 import { AnalysisMode, ConversationMessage, DiscoveryOptions, Solution, SpecialistDefinition } from './model';
-import { countChatsByService, SpecialistChat } from './SpecialistChat';
+import { countChatsByService, ExpandableText, SpecialistChat } from './SpecialistChat';
 import { useBusy } from './useBusy';
 
 const ExpertLayout = styled.div`
@@ -65,7 +65,7 @@ const countBadge = (
   count: number,
   label: string,
   testId: string,
-  type: 'important' | 'success' | 'information' = count > 0 ? 'important' : 'information',
+  type: 'important' | 'success' | 'information' = 'information',
 ) => <GoabBadge type={type} content={plural(count, label)} testId={testId} />;
 
 const RECENT_MESSAGE_COUNT = 2;
@@ -162,7 +162,7 @@ export const DiscoveryPanel: FunctionComponent<DiscoveryPanelProps> = ({
       testId={`discovery-message-${index}`}
       mb="s"
     >
-      <div style={{ whiteSpace: 'pre-wrap' }}>{m.content}</div>
+      <ExpandableText content={m.content} testId={`discovery-message-${index}-toggle`} />
     </GoabCallout>
   );
 
@@ -181,10 +181,11 @@ export const DiscoveryPanel: FunctionComponent<DiscoveryPanelProps> = ({
         heading="Conversation"
         headingContent={countBadge(messages.length, 'message', 'discovery-conversation-count')}
         headingSize="small"
+        headingType="filled"
         open={true}
         testId="discovery-conversation"
       >
-        <p data-testid="discovery-conversation-hint">
+        <p style={{ fontStyle: 'italic' }} data-testid="discovery-conversation-hint">
           Reply in the box below to add details, ask a question, or answer something the planner raised. Each reply is
           recorded here and the plan — including its confidence — updates automatically.
         </p>
@@ -277,6 +278,7 @@ export const DiscoveryPanel: FunctionComponent<DiscoveryPanelProps> = ({
                 countBadge(specialistsWithChatsCount, 'specialist', 'optional-experts-count')}
             </span>
           }
+          headingType="filled"
           open={false}
           testId="optional-experts"
         >
@@ -317,6 +319,7 @@ export const DiscoveryPanel: FunctionComponent<DiscoveryPanelProps> = ({
                     solution={solution}
                     api={api}
                     mode={mode}
+                    disabled={blocked}
                     context={{
                       label:
                         activeRecommendation?.service === activeSpecialist.service

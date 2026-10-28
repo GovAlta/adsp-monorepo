@@ -1096,6 +1096,7 @@ export function createPlannerRouter({
     async (req, res, next) => {
       try {
         const solution = loaded(req);
+        const isFirstBlueprint = !solution.state.blueprint;
         const hypothesis = solution.state.hypotheses[0];
         if (!hypothesis) {
           throw new InvalidOperationError('Analyze the problem before generating a blueprint.');
@@ -1183,7 +1184,13 @@ export function createPlannerRouter({
           generated?.notCoveredByAdsp,
           components,
         );
-        res.send(await persist(req, { ...solution, state: { ...working.state, blueprint } }, 'blueprint'));
+        const saved = await persist(req, { ...solution, state: { ...working.state, blueprint } }, 'blueprint');
+        if (isFirstBlueprint) {
+          const tenantId = getTenantId(req);
+          const savedChats = await specialistChatRepository.findBySolution(tenantId, saved.id);
+          await solutionVersionRepository.create(tenantId, saved.id, versionContent(saved, savedChats));
+        }
+        res.send(saved);
       } catch (err) {
         next(err);
       }
