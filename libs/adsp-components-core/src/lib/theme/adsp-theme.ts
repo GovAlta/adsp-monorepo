@@ -1,4 +1,4 @@
-import type { AdspCalendarTheme } from '../components/calendar';
+import type { AdspCalendarTheme } from '../calendar/calendarTheme';
 
 export interface AdspThemeColor {
   text: { default: string; secondary: string; light: string; disabled: string };

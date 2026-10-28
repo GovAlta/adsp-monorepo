@@ -126,14 +126,14 @@ The result is cached per theme object. Treat these property names as public API:
 
 ## Adding a component
 
-1. Create `src/lib/components/<component>.ts` containing:
-   - its token interface, for example `AdspCardTheme`
+1. Create a folder `src/lib/<component>/`, following `src/lib/calendar/`. Put the component's tokens in `<component>Theme.ts`:
+   - its token interface, for example `AdspCalendarTheme`
    - its default tokens, each aliasing a base role (`var(--adsp-*)`), never a `--goa-*` token
    - any variant types that map to CSS modifier classes
 2. Add the section to `AdspThemeComponents` in `src/lib/theme/adsp-theme.ts`, and the defaults to `AdspThemes.standard`. The compiler enforces that every theme supplies it.
-3. Export its types from `src/index.ts`.
-4. Add its styles to `src/adsp-components.css`:
-   - Prefix class names with `adsp-` and use BEM naming (for example `adsp-card__heading`).
+3. Export its types (`export type`) from the folder's `index.ts`, and re-export the folder from `src/index.ts` (`export * from './lib/<component>'`). Keep the default tokens internal.
+4. Add its styles to `src/lib/<component>/adsp-<component>.css`, and `@import` that file in `src/adsp-components.css`:
+   - Prefix class names with `adsp-` and use BEM naming (for example `adsp-<component>__<element>`).
    - Read `--adsp-components-<component>-*` for anything teams may customize, and base `--adsp-*` roles for the rest. Never read `--goa-*`, which would bypass the selected theme.
    - Set explicit values such as `margin` and `list-style`, so an application's global CSS doesn't leak in.
 5. Build the framework part in each adapter (see [adsp-components-react](../adsp-components-react/README.md#building-a-component)).

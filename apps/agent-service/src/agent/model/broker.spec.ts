@@ -1,6 +1,12 @@
 import { MASTRA_THREAD_ID_KEY, RequestContext } from '@mastra/core/request-context';
 import { Readable } from 'node:stream';
+import { clearThreadWorkspace } from '../workspace';
 import { AgentBroker } from './broker';
+
+jest.mock('../workspace', () => ({
+  ...jest.requireActual('../workspace'),
+  clearThreadWorkspace: jest.fn().mockResolvedValue(undefined),
+}));
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const tarStream = require('tar-stream');
@@ -449,6 +455,100 @@ describe('AgentBroker', () => {
       });
 
       expect(event).toBeUndefined();
+    });
+  });
+
+  describe('deleteThread', () => {
+    const TENANT_ID = 'urn:ads:platform:tenant-service:v2:/tenants/test';
+    const agentUser = { ...user, roles: ['urn:ads:platform:agent-service:agent-user'], tenantId };
+
+    function createBroker(thread: unknown, { userRoles = [] as string[], memory = undefined as unknown } = {}) {
+      const threadMemory = memory ?? {
+        getThreadById: jest.fn().mockResolvedValue(thread),
+        deleteThread: jest.fn().mockResolvedValue(undefined),
+      };
+      const eventService = { send: jest.fn() };
+      const agent = { name: 'Test agent', getMemory: jest.fn().mockResolvedValue(threadMemory) };
+      const broker = new AgentBroker(
+        logger as never,
+        tenantId as never,
+        [],
+        agent as never,
+        { userRoles },
+        undefined,
+        eventService as never,
+        'AccessServiceAgent',
+      );
+      return { broker, memory: threadMemory as { getThreadById: jest.Mock; deleteThread: jest.Mock }, eventService };
+    }
+
+    const ownThread = { id: 'thread-1', resourceId: 'user-123', metadata: { tenantId: TENANT_ID } };
+
+    beforeEach(() => {
+      (clearThreadWorkspace as jest.Mock).mockClear();
+    });
+
+    it("deletes the user's own thread with its workspace and signals thread-deleted", async () => {
+      const { broker, memory, eventService } = createBroker(ownThread);
+
+      await expect(broker.deleteThread(user as never, 'thread-1')).resolves.toBe(true);
+
+      expect(memory.getThreadById).toHaveBeenCalledWith({ threadId: 'thread-1' });
+      expect(clearThreadWorkspace).toHaveBeenCalledWith(logger, {
+        tenantId: TENANT_ID,
+        userId: 'user-123',
+        threadId: 'thread-1',
+      });
+      expect(memory.deleteThread).toHaveBeenCalledWith('thread-1');
+      expect(eventService.send).toHaveBeenCalledWith(expect.objectContaining({ name: 'thread-deleted' }));
+    });
+
+    it.each([
+      ['does not exist', null],
+      ['belongs to another user', { ...ownThread, resourceId: 'someone-else' }],
+      [
+        'belongs to another tenant',
+        { ...ownThread, metadata: { tenantId: 'urn:ads:platform:tenant-service:v2:/tenants/other' } },
+      ],
+      ['has no tenant', { ...ownThread, metadata: {} }],
+    ])('resolves to false without deleting anything when the thread %s', async (_case, thread) => {
+      const { broker, memory, eventService } = createBroker(thread);
+
+      await expect(broker.deleteThread(user as never, 'thread-1')).resolves.toBe(false);
+
+      expect(memory.deleteThread).not.toHaveBeenCalled();
+      expect(clearThreadWorkspace).not.toHaveBeenCalled();
+      expect(eventService.send).not.toHaveBeenCalled();
+    });
+
+    it('resolves to false when the agent has no thread memory', async () => {
+      const { broker } = createBroker(ownThread, { memory: {} });
+
+      await expect(broker.deleteThread(user as never, 'thread-1')).resolves.toBe(false);
+      expect(clearThreadWorkspace).not.toHaveBeenCalled();
+    });
+
+    it('rejects a user who is not allowed to use the agent', async () => {
+      const { broker, memory } = createBroker(ownThread, {
+        userRoles: ['urn:ads:platform:agent-service:agent-user'],
+      });
+
+      await expect(broker.deleteThread({ ...user, roles: [], tenantId } as never, 'thread-1')).rejects.toThrow();
+      expect(memory.getThreadById).not.toHaveBeenCalled();
+    });
+
+    it('deletes the thread of a user who is allowed to use the agent', async () => {
+      const { broker } = createBroker(ownThread, { userRoles: ['urn:ads:platform:agent-service:agent-user'] });
+
+      await expect(broker.deleteThread(agentUser as never, 'thread-1')).resolves.toBe(true);
+    });
+
+    it('rejects when the thread cannot be deleted from storage', async () => {
+      const { broker, memory, eventService } = createBroker(ownThread);
+      memory.deleteThread.mockRejectedValueOnce(new Error('storage failed'));
+
+      await expect(broker.deleteThread(user as never, 'thread-1')).rejects.toThrow('storage failed');
+      expect(eventService.send).not.toHaveBeenCalled();
     });
   });
 });

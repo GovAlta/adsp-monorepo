@@ -7,10 +7,10 @@
   "sideEffects": false,
   "peerDependencies": {
     "@abgov/adsp-components-core": "0.0.1",
+    "@abgov/react-components": "^7.2.2",
     "react": "^18.0.0"
   },
   "dependencies": {
-    "@abgov/react-components": "^7.2.2",
     "@fullcalendar/react": "^7.1.3",
     "temporal-polyfill": "^1.0.6"
   }

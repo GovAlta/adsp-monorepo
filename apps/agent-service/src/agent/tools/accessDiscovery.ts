@@ -1,63 +1,39 @@
-import type { ServiceDirectory, User } from '@abgov/adsp-service-sdk';
+import type { ServiceDirectory } from '@abgov/adsp-service-sdk';
 import { createTool } from '@mastra/core/tools';
 import type { ToolExecutionContext } from '@mastra/core/tools';
 import type { Logger } from 'winston';
 import z from 'zod';
 import {
-  ACCESS_DISCOVERY_REASONS,
-  AccessDiscoveryProblem,
-  AccessRealmRecord,
-  AvailableAccessScope,
-  createProblem,
   createRealmClient,
   findAccessEnvironmentByOrigin,
   getAccessEnvironments,
-  RealmClient,
-  RealmClientResult,
   resolveAccessScope,
+  resolveRealmRecord,
   toEnvironmentSummary,
+  toProblemFields,
 } from '../agents/access/discovery';
-import { AdspRequestContext } from '../types';
-
-const LOG_CONTEXT = 'AccessDiscoveryTools';
-
-const environmentSchema = z.object({
-  id: z.string(),
-  label: z.string(),
-  host: z.string(),
-  readOnly: z.boolean(),
-});
-
-// Output schemas double as an allowlist: fields not listed here are stripped before reaching the model or UI.
-const resultFields = {
-  status: z.enum(['available', 'unavailable', 'not-found', 'unreachable']),
-  reason: z.enum(ACCESS_DISCOVERY_REASONS).optional(),
-  missingRoles: z.array(z.string()).optional(),
-  message: z.string(),
-};
-
-const realmSchema = z.object({
-  realm: z.string(),
-  name: z.string(),
-  kind: z.enum(['tenant', 'core']),
-  status: z.string().optional(),
-});
+import {
+  accessEnvironmentSchema,
+  accessRealmSchema,
+  accessResultFields,
+  createAccessToolRunner,
+} from './accessToolSupport';
 
 const environmentsOutputSchema = z.object({
-  ...resultFields,
-  environments: z.array(environmentSchema.extend({ current: z.boolean(), inspectable: z.boolean() })),
+  ...accessResultFields,
+  environments: z.array(accessEnvironmentSchema.extend({ current: z.boolean(), inspectable: z.boolean() })),
 });
 
 const realmsOutputSchema = z.object({
-  ...resultFields,
-  environment: environmentSchema.optional(),
-  realms: z.array(realmSchema),
+  ...accessResultFields,
+  environment: accessEnvironmentSchema.optional(),
+  realms: z.array(accessRealmSchema),
 });
 
 const realmInfoOutputSchema = z.object({
-  ...resultFields,
-  environment: environmentSchema.optional(),
-  realm: realmSchema
+  ...accessResultFields,
+  environment: accessEnvironmentSchema.optional(),
+  realm: accessRealmSchema
     .extend({
       issuer: z.string(),
       endpoints: z.object({
@@ -77,42 +53,8 @@ type RealmInfoOutput = z.infer<typeof realmInfoOutputSchema>;
 
 const SCOPE_RULES =
   'Takes no input: the environment and realm always come from the signed-in user, and any input is ignored. ' +
-  'Read-only. If status is not "available", tell the user the returned message instead of guessing.';
-
-function getRequestUser(context: ToolExecutionContext): { user?: User; tenantId?: string } {
-  const requestContext = context?.requestContext as AdspRequestContext | undefined;
-  return {
-    user: requestContext?.get('user'),
-    tenantId: requestContext?.get('tenantId')?.toString(),
-  };
-}
-
-function toProblemFields({ status, reason, message, missingRoles }: AccessDiscoveryProblem) {
-  return { status, reason, message, ...(missingRoles ? { missingRoles } : {}) };
-}
-
-async function resolveRealmRecord(
-  realmClient: RealmClient,
-  user: User,
-  scope: AvailableAccessScope,
-): Promise<RealmClientResult<AccessRealmRecord>> {
-  if (scope.realm.kind === 'core') {
-    return { ok: true, value: { realm: scope.realm.id, name: 'Core', kind: 'core' } };
-  }
-
-  const tenantRealm = await realmClient.getTenantRealm(user);
-  if (tenantRealm.ok === true && tenantRealm.value.realm !== scope.realm.id) {
-    return { ok: false, problem: createProblem('unavailable', 'REALM_MISMATCH') };
-  }
-
-  return tenantRealm;
-}
-
-interface LoggableResult {
-  status?: string;
-  reason?: string;
-  environment?: { id?: string };
-}
+  'Read-only. The user sees the result as a card, so do not repeat it in your reply. If status is not "available", ' +
+  'do not guess.';
 
 interface AccessDiscoveryToolsProps {
   logger: Logger;
@@ -122,36 +64,11 @@ interface AccessDiscoveryToolsProps {
 
 export function createAccessDiscoveryTools({ logger, directory, accessServiceUrl }: AccessDiscoveryToolsProps) {
   const realmClient = createRealmClient({ directory });
-
-  function logResult(toolId: string, { user, tenantId }: { user?: User; tenantId?: string }, result: LoggableResult) {
-    logger.info(`Access discovery tool '${toolId}' completed with status '${result.status}'.`, {
-      context: LOG_CONTEXT,
-      tenant: tenantId,
-      user: user?.id,
-      environment: result.environment?.id,
-      reason: result.reason,
-    });
-  }
-
-  async function run<T extends LoggableResult>(
-    toolId: string,
-    context: ToolExecutionContext,
-    execute: (user: User | undefined) => Promise<T>,
-  ): Promise<T> {
-    const requestUser = getRequestUser(context);
-    try {
-      const result = await execute(requestUser.user);
-      logResult(toolId, requestUser, result);
-      return result;
-    } catch (err) {
-      logger.warn(`Access discovery tool '${toolId}' failed: ${err instanceof Error ? err.message : String(err)}`, {
-        context: LOG_CONTEXT,
-        tenant: requestUser.tenantId,
-        user: requestUser.user?.id,
-      });
-      throw err;
-    }
-  }
+  const run = createAccessToolRunner({
+    logger,
+    logContext: 'AccessDiscoveryTools',
+    toolKind: 'Access discovery tool',
+  });
 
   const listAccessEnvironments = createTool({
     id: 'listAccessEnvironments',
