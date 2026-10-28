@@ -1,4 +1,4 @@
-import { adspId, AuditCategories, User } from '@abgov/adsp-service-sdk';
+import { adspId, AuditCategories, AuditSeverities, User } from '@abgov/adsp-service-sdk';
 import { createErrorHandler } from '@core-services/core-common';
 import * as express from 'express';
 import * as request from 'supertest';
@@ -162,8 +162,39 @@ describe('read events', () => {
     expect(reader.find).toHaveBeenCalledWith(expect.objectContaining({ category }), 10, undefined);
   });
 
+  it.each(Object.values(AuditSeverities))('accepts SDK severity %s as a history filter', async (severity) => {
+    const res = await request(createApp()).get(`/audit/v1/events?severity=${severity}`);
+
+    expect(res.status).toBe(200);
+    expect(reader.find).toHaveBeenCalledWith(expect.objectContaining({ severity }), 10, undefined);
+  });
+
+  it('accepts a correlationId longer than 128 characters', async () => {
+    const correlationId = 'c'.repeat(200);
+    const res = await request(createApp()).get(`/audit/v1/events?correlationId=${correlationId}`);
+
+    expect(res.status).toBe(200);
+    expect(reader.find).toHaveBeenCalledWith(expect.objectContaining({ correlationId }), 10, undefined);
+  });
+
+  it('filters by correlation and session', async () => {
+    const res = await request(createApp()).get('/audit/v1/events?correlationId=trace-1&sessionId=session-1');
+
+    expect(res.status).toBe(200);
+    expect(reader.find).toHaveBeenCalledWith(
+      expect.objectContaining({ correlationId: 'trace-1', sessionId: 'session-1' }),
+      10,
+      undefined,
+    );
+  });
+
   it.each([
     'top=0',
+    'severity=bogus',
+    'severity[]=info',
+    `sessionId=${'s'.repeat(129)}`,
+    'correlationId[]=a',
+    'sessionId=',
     'top=5001',
     'after=abc',
     'status=bogus',

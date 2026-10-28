@@ -65,6 +65,9 @@ export interface EventCriteria {
   action?: string;
   status?: AuditEvent['status'];
   category?: AuditActionDefinition['category'];
+  severity?: AuditActionDefinition['severity'];
+  correlationId?: string;
+  sessionId?: string;
   scope?: string;
   occurredFrom?: Date;
   occurredTo?: Date;
