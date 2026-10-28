@@ -90,20 +90,12 @@ function toDate(value: unknown): Date | undefined {
   return text ? new Date(text) : undefined;
 }
 
-// The design names these filters actorId, scopeId, from and to; the original names remain supported.
-// When both spellings are supplied, the original name wins.
-const QUERY_ALIASES = { actor: 'actorId', scope: 'scopeId', occurredFrom: 'from', occurredTo: 'to' } as const;
-
-function queryValue(q: Parameters<RequestHandler>[0]['query'], name: keyof typeof QUERY_ALIASES): unknown {
-  return q?.[name] ?? q?.[QUERY_ALIASES[name]];
-}
-
 function toCriteria(req: Parameters<RequestHandler>[0], tenantId: string): EventCriteria {
   const q = req.query;
   return {
     tenantId,
     namespace: req.params.namespace,
-    actor: str(queryValue(q, 'actor')),
+    actor: str(q.actor),
     resourceType: str(q.resourceType),
     resourceId: str(q.resourceId),
     action: str(q.action),
@@ -112,9 +104,9 @@ function toCriteria(req: Parameters<RequestHandler>[0], tenantId: string): Event
     severity: str(q.severity) as EventCriteria['severity'],
     correlationId: str(q.correlationId),
     sessionId: str(q.sessionId),
-    scope: str(queryValue(q, 'scope')),
-    occurredFrom: toDate(queryValue(q, 'occurredFrom')),
-    occurredTo: toDate(queryValue(q, 'occurredTo')),
+    scope: str(q.scope),
+    occurredFrom: toDate(q.occurredFrom),
+    occurredTo: toDate(q.occurredTo),
   };
 }
 
@@ -218,7 +210,6 @@ const SCALAR_PARAMS = [
   'sessionId',
   'occurredFrom',
   'occurredTo',
-  ...Object.values(QUERY_ALIASES),
 ];
 
 export const validateEventQuery = createValidationHandler(
@@ -229,25 +220,26 @@ export const validateEventQuery = createValidationHandler(
     .withMessage('must be a single value'),
   query('top').optional().isInt({ min: 1, max: MAX_TOP }),
   query('after').optional().custom(isValidCursor).withMessage('after is not a valid cursor'),
-  query(['actor', 'actorId', 'resourceType', 'resourceId', 'action', 'scope', 'scopeId'])
+  query(['actor', 'resourceType', 'resourceId', 'action', 'scope'])
     .optional()
     .isString()
     .isLength({ min: 1, max: 256 }),
   query('status').optional().isIn(EVENT_STATUSES),
   query('category').optional().isIn(EVENT_CATEGORIES),
   query('severity').optional().isIn(EVENT_SEVERITIES),
-  // Matches the 128 character limit applied when events are written.
-  query(['correlationId', 'sessionId']).optional().isString().isLength({ min: 1, max: 128 }),
-  query(['occurredFrom', 'occurredTo', 'from', 'to'])
+  // sessionId matches the 128 character limit applied when events are written; correlationId has no write-side limit.
+  query('correlationId').optional().isString().isLength({ min: 1 }),
+  query('sessionId').optional().isString().isLength({ min: 1, max: 128 }),
+  query(['occurredFrom', 'occurredTo'])
     .optional()
     .custom((value) => parseIsoDate(value) !== undefined)
     .withMessage('must be a valid ISO 8601 date'),
-  query(['occurredTo', 'to'])
+  query('occurredTo')
     .optional()
     .custom((value: string, { req }) => {
-      const from = parseIsoDate(queryValue(req.query, 'occurredFrom'));
+      const from = parseIsoDate(req.query?.occurredFrom);
       const to = parseIsoDate(value);
       return !from || !to || from <= to;
     })
-    .withMessage('the end of the time range must not be before its start'),
+    .withMessage('occurredTo must not be before occurredFrom'),
 );

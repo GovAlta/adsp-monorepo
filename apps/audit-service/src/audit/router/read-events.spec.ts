@@ -169,6 +169,14 @@ describe('read events', () => {
     expect(reader.find).toHaveBeenCalledWith(expect.objectContaining({ severity }), 10, undefined);
   });
 
+  it('accepts a correlationId longer than 128 characters', async () => {
+    const correlationId = 'c'.repeat(200);
+    const res = await request(createApp()).get(`/audit/v1/events?correlationId=${correlationId}`);
+
+    expect(res.status).toBe(200);
+    expect(reader.find).toHaveBeenCalledWith(expect.objectContaining({ correlationId }), 10, undefined);
+  });
+
   it('filters by correlation and session', async () => {
     const res = await request(createApp()).get('/audit/v1/events?correlationId=trace-1&sessionId=session-1');
 
@@ -180,42 +188,10 @@ describe('read events', () => {
     );
   });
 
-  it('accepts the design names actorId, scopeId, from and to', async () => {
-    const res = await request(createApp()).get(
-      '/audit/v1/events?actorId=user-1&scopeId=s-1&from=2026-10-01T00:00:00Z&to=2026-10-02T00:00:00Z',
-    );
-
-    expect(res.status).toBe(200);
-    expect(reader.find).toHaveBeenCalledWith(
-      expect.objectContaining({
-        actor: 'user-1',
-        scope: 's-1',
-        occurredFrom: new Date('2026-10-01T00:00:00Z'),
-        occurredTo: new Date('2026-10-02T00:00:00Z'),
-      }),
-      10,
-      undefined,
-    );
-  });
-
-  it('prefers the original name when both spellings are supplied', async () => {
-    const res = await request(createApp()).get('/audit/v1/events?actor=user-1&actorId=user-2');
-
-    expect(res.status).toBe(200);
-    expect(reader.find).toHaveBeenCalledWith(expect.objectContaining({ actor: 'user-1' }), 10, undefined);
-  });
-
   it.each([
     'top=0',
-    'actorId[]=user-1',
-    'scopeId=',
-    'from=yesterday',
-    'to[]=2026-10-01T00:00:00Z',
-    'from=2026-10-02T00:00:00Z&to=2026-10-01T00:00:00Z',
-    'occurredFrom=2026-10-02T00:00:00Z&to=2026-10-01T00:00:00Z',
     'severity=bogus',
     'severity[]=info',
-    `correlationId=${'c'.repeat(129)}`,
     `sessionId=${'s'.repeat(129)}`,
     'correlationId[]=a',
     'sessionId=',
