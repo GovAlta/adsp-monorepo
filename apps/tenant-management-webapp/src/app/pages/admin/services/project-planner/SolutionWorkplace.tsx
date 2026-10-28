@@ -61,7 +61,7 @@ const GuidedStep: FunctionComponent<GuidedStepProps> = ({ heading, testId, expan
 
   return (
     <div style={{ '--goa-container-padding': '20px 10px' } as React.CSSProperties}>
-      <GoabContainer accent="thin" testId={testId} mb="m">
+      <GoabContainer accent="thin" testId={testId} mb="l">
         <h2
           id={headingId}
           style={{ fontSize: 'calc(var(--goa-font-size-7) * 0.80)', fontWeight: 600, lineHeight: 1, margin: 0 }}
@@ -490,13 +490,26 @@ export const SolutionWorkplace: FunctionComponent<SolutionWorkplaceProps> = ({
                 </GoabCallout>
               )}
               {analysis?.warning && (
-                <GoabCallout type="important" heading="Note" testId="analysis-fallback-warning" mt="m">
+                <GoabCallout
+                  type="important"
+                  emphasis="medium"
+                  heading="Note"
+                  testId="analysis-fallback-warning"
+                  mt="m"
+                  mb="m"
+                >
                   {analysis.warning}
                 </GoabCallout>
               )}
               {problemChanged && blueprint && (
                 <>
-                  <GoabCallout type="important" heading="Plan out of date" testId="problem-plan-out-of-date" mt="m">
+                  <GoabCallout
+                    type="important"
+                    emphasis="high"
+                    heading="Plan out of date"
+                    testId="problem-plan-out-of-date"
+                    mt="m"
+                  >
                     Your current plan remains available below. Save &amp; analyze to refresh it, or go back to the
                     questions first.
                   </GoabCallout>
@@ -523,9 +536,9 @@ export const SolutionWorkplace: FunctionComponent<SolutionWorkplaceProps> = ({
           >
             <section aria-label="Discovery conversation">
               {!analysis ? (
-                <p>
+                <GoabCallout type="information" heading="Not yet" testId="discovery-disabled" mb="m">
                   Save and analyze the problem to start discovery. This section will stay here as your plan develops.
-                </p>
+                </GoabCallout>
               ) : (
                 <DiscoveryPanel
                   solution={solution}
@@ -555,7 +568,13 @@ export const SolutionWorkplace: FunctionComponent<SolutionWorkplaceProps> = ({
                       Refine it in the conversation or consult a specialist.
                     </GoabCallout>
                   ) : (
-                    <GoabCallout type="important" heading="Plan out of date" testId="plan-out-of-date" mb="m">
+                    <GoabCallout
+                      type="important"
+                      emphasis="high"
+                      heading="Plan out of date"
+                      testId="plan-out-of-date"
+                      mb="m"
+                    >
                       Your problem description, answers, or analysis mode changed since this plan was created. Use Save
                       &amp; analyze above to refresh the analysis and plan before exporting.
                     </GoabCallout>
@@ -612,7 +631,7 @@ export const SolutionWorkplace: FunctionComponent<SolutionWorkplaceProps> = ({
                   <h3>Project blueprint</h3>
                   <p>Explore the recommended services, architecture, workflows, and delivery plan.</p>
                   {blueprintGenerationFailed ? (
-                    <GoabCallout type="important" heading="Plan not ready" testId="blueprint-generation-error" mb="m">
+                    <GoabCallout type="emergency" heading="Plan not ready" testId="blueprint-generation-error" mb="m">
                       The planner could not prepare the plan. Try again.
                     </GoabCallout>
                   ) : (
@@ -629,7 +648,7 @@ export const SolutionWorkplace: FunctionComponent<SolutionWorkplaceProps> = ({
                   </GoabButton>
                 </GoabContainer>
               ) : (
-                <GoabCallout type="important" heading="Not yet" testId="step-disabled-3" mb="m">
+                <GoabCallout type="information" heading="Not yet" testId="step-disabled-3" mb="m">
                   The solution is presented once confidence reaches 50%, or when you choose “Skip and show me a plan.”
                 </GoabCallout>
               )}

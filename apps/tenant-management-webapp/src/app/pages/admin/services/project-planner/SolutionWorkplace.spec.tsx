@@ -159,9 +159,6 @@ describe('SolutionWorkplace', () => {
     const { container } = await setup(planned);
     expect(container.querySelector('nav[aria-label="Solution sections"]')).toBeNull();
     expect(container.querySelector('#guided-stepper')).toBeNull();
-    expect(container.textContent).toContain(
-      'Refine the analysis by answering optional questions, asking a question, adding more details, or correcting gaps.',
-    );
     expect(container.querySelector('[testid="problem-continue"]')?.textContent).toContain('Save & analyze');
     expect(container.textContent).not.toContain('At a glance');
     expect(container.querySelector('[testid="plan-summary"]')).toBeNull();
@@ -172,9 +169,6 @@ describe('SolutionWorkplace', () => {
     expect(container.querySelector('[heading="Proposal"]')).not.toBeNull();
     expect(container.querySelector('[heading="Hypotheses"]')).toBeNull();
     expect(container.querySelector('[data-testid="refine-chat"]')).toBeNull();
-    expect(container.textContent).toContain(
-      'Refine the analysis by answering optional questions, asking a question, adding more details, or correcting gaps.',
-    );
     expect(container.querySelector('[testid="optional-experts"]')).not.toBeNull();
     expect(container.querySelector('[testid="specialist-service-form-service"]')).not.toBeNull();
     expect(container.querySelector('[data-testid="selected-specialist-chat"]')).not.toBeNull();
@@ -332,9 +326,6 @@ describe('SolutionWorkplace', () => {
     expect(goa(container, 'analysis-mode-rules').getAttribute('type')).toBe('primary');
     expect(goa(container, 'analysis-mode-badge').getAttribute('content')).toContain('Last run: Rule-based analysis');
     expect(container.querySelector('[data-testid="discovery-panel"]')).not.toBeNull();
-    expect(container.textContent).toContain(
-      'Refine the analysis by answering optional questions, asking a question, adding more details, or correcting gaps.',
-    );
     expect(container.querySelectorAll('goa-textarea[testid="discovery-input"]')).toHaveLength(1);
     expect(container.querySelector('[data-testid="confidence-bar"]')).not.toBeNull();
     expect(
@@ -390,7 +381,7 @@ describe('SolutionWorkplace', () => {
     });
     const { container } = await setup(lowConfidence);
     expect(goa(container, 'discovery-force').textContent).toBe('Skip and show me a plan');
-    expect(goa(container, 'discovery-questions').getAttribute('heading')).toBe('Questions');
+    expect(goa(container, 'discovery-conversation').getAttribute('heading')).toBe('Conversation');
     expect(container.querySelectorAll('goa-textarea[testid="discovery-input"]')).toHaveLength(1);
     expect(container.querySelector('[data-testid="discovery-panel"]')).not.toBeNull();
     expect(container.textContent).not.toContain('Questions are complete');

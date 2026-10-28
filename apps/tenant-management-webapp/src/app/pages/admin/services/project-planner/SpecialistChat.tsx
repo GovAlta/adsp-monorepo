@@ -87,15 +87,20 @@ interface MessageProps {
 
 const Message: FunctionComponent<MessageProps> = ({ message, specialistName, disabled, onFollowUp }) => {
   if (message.role === 'user') {
+    const isPlanner = message.initiatedBy === 'planner';
     return (
-      <GoabCallout type="important" heading="You" testId="chat-user-message">
+      <GoabCallout
+        type={isPlanner ? 'information' : 'success'}
+        heading={isPlanner ? 'Planner' : 'You'}
+        testId={isPlanner ? 'chat-planner-message' : 'chat-user-message'}
+      >
         <Text>{message.content}</Text>
       </GoabCallout>
     );
   }
 
   return (
-    <GoabCallout type="information" heading={specialistName} testId="chat-assistant-message">
+    <GoabCallout type="event" heading={specialistName} testId="chat-assistant-message">
       <Text>{message.content}</Text>
       {message.warning && <p>{message.warning}</p>}
       {message.consult && (
