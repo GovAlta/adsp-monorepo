@@ -1,2 +1,2 @@
 export * from './useConversation';
-export * from './ADSPConversation';
+export * from './adsp-conversation';

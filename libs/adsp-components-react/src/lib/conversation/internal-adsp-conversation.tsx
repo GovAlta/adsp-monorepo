@@ -192,7 +192,7 @@ export function InternalAdspConversation({
                     <GoabIconButton
                       title={`Delete message ${message.id}`}
                       icon="trash"
-                      variant="color"
+                      variant="destructive"
                       size="small"
                       onClick={() => void onDelete?.(message.id)}
                     />

@@ -22,6 +22,7 @@ interface UseConversationResult {
   loading: boolean;
   loadingOlder: boolean;
   error?: string;
+  reachedOldestMessage: boolean;
   canLoadOlder: boolean;
   reload: () => Promise<void>;
   loadOlder: () => Promise<void>;
@@ -44,6 +45,7 @@ export function useConversation({
   const [topicId, setTopicId] = useState<number | undefined>();
   const [messages, setMessages] = useState<ConversationMessage[]>([]);
   const [nextAfter, setNextAfter] = useState<string | undefined>();
+  const [reachedOldestMessage, setReachedOldestMessage] = useState(false);
   const [loading, setLoading] = useState(false);
   const [loadingOlder, setLoadingOlder] = useState(false);
   const [error, setError] = useState<string>();
@@ -55,6 +57,7 @@ export function useConversation({
         setTopicId(undefined);
         setMessages([]);
         setNextAfter(undefined);
+        setReachedOldestMessage(false);
         setError('A resourceId is required to load the conversation topic.');
         return;
       }
@@ -83,6 +86,7 @@ export function useConversation({
           setTopicId(undefined);
           setMessages([]);
           setNextAfter(undefined);
+          setReachedOldestMessage(false);
           setError('No conversation topic was found for this resource.');
           return;
         }
@@ -99,13 +103,22 @@ export function useConversation({
 
         if (mode === 'replace') {
           setMessages(mapped);
+          setNextAfter(comments.page?.next || undefined);
+          setReachedOldestMessage(false);
         } else if (mode === 'append') {
           setMessages((previous) => mergeConversationMessages(previous, mapped));
+          // Some backends can still emit a next cursor with an empty page; treat this as end-of-history.
+          if (mapped.length === 0) {
+            setNextAfter(undefined);
+            setReachedOldestMessage(true);
+          } else {
+            setNextAfter(comments.page?.next || undefined);
+            setReachedOldestMessage(false);
+          }
         } else {
           setMessages((previous) => mergeConversationMessages(previous, mapped));
+          // Keep older-page cursor stable during merge/poll refreshes so end-of-history stays respected.
         }
-
-        setNextAfter(comments.page?.next || undefined);
       } catch (err) {
         if (requestId === requestIdRef.current) {
           setError(err instanceof Error ? err.message : 'Unable to load conversation.');
@@ -185,7 +198,8 @@ export function useConversation({
     loading,
     loadingOlder,
     error,
-    canLoadOlder: !!nextAfter,
+    reachedOldestMessage,
+    canLoadOlder: !!nextAfter && !reachedOldestMessage,
     reload,
     loadOlder,
     send,

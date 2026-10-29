@@ -11,7 +11,7 @@ import {
 import { useConversation } from './useConversation';
 import { useState } from 'react';
 import { GoabButton, GoabButtonGroup, GoabCallout, GoabModal } from '@abgov/react-components';
-import styles from './ADSPConversation.module.css';
+import styles from './adsp-conversation.module.css';
 import { AdspThemeProvider } from '../theme/adsp-theme-provider';
 
 export interface ADSPConversationProps {
@@ -64,6 +64,7 @@ export function ADSPConversation({
   const [confirmDelete, setConfirmDelete] = useState<string | number | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const hasError = !!error;
+  const showLoadOlder = canLoadOlder && messages.length > 0 && !error;
   const scopedConversationThemeOverrides: AdspThemeOverrides | undefined = themeOverrides
     ? { components: { conversation: themeOverrides } }
     : undefined;
@@ -86,7 +87,7 @@ export function ADSPConversation({
 
   return (
     <>
-      {canLoadOlder && !error && (
+      {showLoadOlder && (
         <div className={styles.loadOlder}>
           <GoabButton
             type="secondary"

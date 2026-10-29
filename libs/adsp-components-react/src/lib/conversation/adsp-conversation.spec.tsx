@@ -1,6 +1,6 @@
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import { ADSPConversation } from './ADSPConversation';
+import { ADSPConversation } from './adsp-conversation';
 import type { ReactNode } from 'react';
 
 const mockRemove = jest.fn().mockResolvedValue(undefined);
@@ -154,7 +154,16 @@ describe('ADSPConversation', () => {
 
   test('shows load older button and triggers load older', () => {
     mockUseConversation.mockReturnValue({
-      messages: [],
+      messages: [
+        {
+          id: 1,
+          direction: 'received',
+          sender: 'Reviewer',
+          timestamp: '2026-01-02T10:00:00.000Z',
+          content: 'First message',
+          canDelete: true,
+        },
+      ],
       loading: false,
       loadingOlder: false,
       error: undefined,
@@ -168,6 +177,23 @@ describe('ADSPConversation', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Load older messages' }));
     expect(mockLoadOlder).toHaveBeenCalledTimes(1);
+  });
+
+  test('hides load older button when there are no loaded messages', () => {
+    mockUseConversation.mockReturnValue({
+      messages: [],
+      loading: false,
+      loadingOlder: false,
+      error: undefined,
+      canLoadOlder: true,
+      loadOlder: mockLoadOlder,
+      send: mockSend,
+      remove: mockRemove,
+    });
+
+    render(<ADSPConversation client={{} as never} resourceId="resource-1" canDelete={true} />);
+
+    expect(screen.queryByRole('button', { name: 'Load older messages' })).not.toBeInTheDocument();
   });
 
   test('hides load older button when there is an error', () => {
@@ -194,7 +220,16 @@ describe('ADSPConversation', () => {
 
   test('shows loading label and disabled load older button', () => {
     mockUseConversation.mockReturnValue({
-      messages: [],
+      messages: [
+        {
+          id: 1,
+          direction: 'received',
+          sender: 'Reviewer',
+          timestamp: '2026-01-02T10:00:00.000Z',
+          content: 'First message',
+          canDelete: true,
+        },
+      ],
       loading: false,
       loadingOlder: true,
       error: undefined,

@@ -73,6 +73,76 @@ describe('useConversation', () => {
     expect(result.current.messages.map((m) => m.id)).toEqual(expect.arrayContaining([100, 99]));
   });
 
+  it('stops offering older load when append returns empty results', async () => {
+    const client = createClient({
+      getComments: jest
+        .fn()
+        .mockResolvedValueOnce({
+          results: [{ id: 100, createdOn: '2026-10-15T10:00:00.000Z', content: 'newest' }],
+          page: { next: 'a1' },
+        })
+        .mockResolvedValueOnce({
+          results: [],
+          page: { next: 'a2' },
+        }),
+    });
+
+    const { result } = renderHook(() =>
+      useConversation({
+        client,
+        resourceId: 'urn:test:1',
+      }),
+    );
+
+    await waitFor(() => expect(result.current.canLoadOlder).toBe(true));
+
+    await act(async () => {
+      await result.current.loadOlder();
+    });
+
+    expect(result.current.canLoadOlder).toBe(false);
+  });
+
+  it('keeps older load hidden after merge refresh once end-of-history is reached', async () => {
+    const client = createClient({
+      getComments: jest
+        .fn()
+        .mockResolvedValueOnce({
+          results: [{ id: 100, createdOn: '2026-10-15T10:00:00.000Z', content: 'newest' }],
+          page: { next: 'a1' },
+        })
+        .mockResolvedValueOnce({
+          results: [],
+          page: { next: 'a2' },
+        })
+        .mockResolvedValueOnce({
+          results: [{ id: 100, createdOn: '2026-10-15T10:00:00.000Z', content: 'newest' }],
+          page: { next: 'a1' },
+        }),
+    });
+
+    const { result } = renderHook(() =>
+      useConversation({
+        client,
+        resourceId: 'urn:test:1',
+      }),
+    );
+
+    await waitFor(() => expect(result.current.canLoadOlder).toBe(true));
+
+    await act(async () => {
+      await result.current.loadOlder();
+    });
+
+    expect(result.current.canLoadOlder).toBe(false);
+
+    await act(async () => {
+      await result.current.send('hello');
+    });
+
+    expect(result.current.canLoadOlder).toBe(false);
+  });
+
   it('sends and deletes messages through client', async () => {
     const client = createClient();
 
