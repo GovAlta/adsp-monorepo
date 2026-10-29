@@ -123,10 +123,12 @@ export const RightAlignmentDiv = styled.div`
 
 export const FormStepperSummaryH3 = styled.h3`
   flex: 1;
+  max-width: 100%;
   margin-bottom: var(--goa-space-m);
   font-size: var(--goa-font-size-7);
   line-height: var(--goa-line-height-4);
-  font-weight: var(--goa-font-weight-regular);
+  font-weight: var(--goa-font-weight-bold);
+  overflow-wrap: anywhere;
 `;
 export const PageRenderPadding = styled.div`
   margin-top: var(--goa-space-2xl);

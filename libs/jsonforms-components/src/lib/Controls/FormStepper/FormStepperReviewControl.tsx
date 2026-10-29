@@ -2,8 +2,14 @@ import React from 'react';
 import { JsonFormsDispatch } from '@jsonforms/react';
 import { Categorization, Layout, isVisible, Scoped, UISchemaElement } from '@jsonforms/core';
 import { withJsonFormsLayoutProps, withTranslateProps } from '@jsonforms/react';
-import { CategorizationStepperLayoutReviewRendererProps } from './types';
-import { Anchor, ReviewItem, ReviewItemHeader, ReviewItemSection, ReviewItemTitle } from './styled-components';
+import { CategorizationStepperLayoutReviewRendererProps, FormStepperOptions } from './types';
+import {
+  FormStepperSummaryH3,
+  ReviewItem,
+  ReviewItemHeader,
+  ReviewItemSection,
+  ReviewItemTitle,
+} from './styled-components';
 import { withAjvProps } from '../../util/layout';
 import { GoabTable } from '@abgov/react-components-ds1';
 import { FormStepperComponentProps } from './types';
@@ -169,6 +175,7 @@ export const FormStepperReviewer = (props: CategorizationStepperLayoutReviewRend
   const { uischema, data, schema, ajv, cells, enabled } = props;
 
   const componentProps = (uischema.options?.componentProps as FormStepperComponentProps) ?? {};
+  const { summaryPageTitle } = (uischema.options as FormStepperOptions) ?? {};
   const categorization = uischema as Categorization;
   const categories = categorization.elements;
   const rescopeMaps = ['#/properties/albertaAddress', '#/properties/canadianAddress', '#/properties/sin'];
@@ -193,6 +200,7 @@ export const FormStepperReviewer = (props: CategorizationStepperLayoutReviewRend
 
   return (
     <ReviewItem>
+      {summaryPageTitle && !componentProps.readOnly && <FormStepperSummaryH3>{summaryPageTitle}</FormStepperSummaryH3>}
       {categories.map((category, categoryIndex) => {
         // Preserve index stability
         if (!isVisible(category, data, '', ajv, undefined)) {
