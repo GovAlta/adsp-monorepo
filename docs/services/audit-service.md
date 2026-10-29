@@ -214,23 +214,59 @@ if (outcome.status !== 'recorded') {
 const { results, page } = await auditService.query({ resourceType: 'case', resourceId: caseId }, { top: 50 });
 ```
 
-- **Batching**: events are sent in batches of up to **100** events, or after **500 ms**,
-  whichever comes first. Core services must pass `tenantId`; events are batched per tenant.
+- **Default delivery**: each event is sent immediately in its own HTTP request, without a
+  client-side batch timer. Sending still waits for action registration to settle. Core services
+  must pass `tenantId`.
 - **Outcomes**: `record()` never rejects. It resolves `recorded` (accepted or an idempotent
   duplicate), `rejected` (the service rejected the event, with its `code` and `reason`), or
-  `failed` (not delivered, with a `reason`). Awaiting it is optional; it does not affect batching.
+  `failed` (delivery failed or could not be confirmed, with a `reason`). Await it and check the
+  outcome; `recorded` confirms a committed audit row, not just queue admission. A timeout or lost
+  response can leave the result uncertain; resend with the same `eventId` to avoid duplicates.
 - **Retries**: network errors, timeouts, 429, 502, 503 and 504 are retried with the same `eventId`
   after 200 ms, 1 s, 3 s and 5 s, honouring `Retry-After` up to 30 s. Other errors are not retried.
-- **Buffer**: up to 1,000 events or 8 MB (serialized) can be queued, in flight or retrying. New
-  events beyond either limit fail immediately with `buffer_full`; the buffer is in memory and is
-  lost if the process exits.
+- **Capacity**: up to 1,000 events or 8 MB (serialized) can be in flight, retrying or queued for
+  optional batching. New events beyond either limit fail immediately with `buffer_full`. These
+  limits still apply to immediate delivery; pending work is in memory and is lost if the process exits.
 - **Dropped events**: every `rejected` or `failed` outcome increments the
   `audit.client.dropped_events` OpenTelemetry counter (`audit_client_dropped_events_total` in
   Prometheus) with a `reason` attribute, and `auditService.droppedEventCount`.
-- **Shutdown**: call `await auditService.flush()` before exiting (for example, on `SIGTERM`). It
-  sends buffered events and waits for in-flight batches, including retries.
+- **Shutdown**: no separate audit `flush()` is needed once all `record()` calls have settled.
+  Normal graceful shutdown must still wait for in-flight application requests and tasks. If
+  records remain unawaited or batches are pending, call `await auditService.flush()` before exiting;
+  it sends buffered events and waits for in-flight requests, including retries. Immediate delivery
+  does not guarantee completion of fire-and-forget calls or survive forced process termination.
 - **Queries**: `query()` reads the service's namespace with the service token by default. Pass
   `namespace`, `tenantId` (Core) or a user `token` in options; failures reject.
+
+#### Optional client batching
+
+Set `audit.batchSize` greater than 1 on `initializeService` or `initializePlatform` to opt into
+client-side batching. A full batch is sent immediately; a partial batch waits up to
+`audit.batchIntervalMs` (500 ms by default). Core events are batched separately per tenant.
+The same options are available on the SDK's internal `createAuditService` factory.
+
+```typescript
+const { auditService } = await initializeService(
+  {
+    ...serviceOptions,
+    auditActions: ACTIONS,
+    audit: { batchSize: 100, batchIntervalMs: 500 },
+  },
+  { logger },
+);
+```
+
+This explicitly preserves the previous default of 100 events / 500 ms. Without it, upgrading
+increases HTTP request volume but removes the client-side batch wait. Both modes use the same
+outcome, retry and idempotency contracts. `AuditClientOptions` is exported from the SDK for typed
+configuration, including capacity limits, `requestTimeoutMs` and `retryDelaysMs`.
+
+Client batching reduces HTTP overhead. The service independently combines concurrent submissions
+into database batches of 200 events or 200 ms; a single-event HTTP request does not necessarily
+cause an individual database write. Sequentially awaiting records in one loop does not itself
+provide concurrent events to batch. Immediate delivery still waits for service-side batching,
+database work and possible retries. The request timeout applies per HTTP attempt, not to the total
+call including registration, discovery, token acquisition and retries.
 
 ## Loading and cache behavior
 
@@ -304,6 +340,23 @@ catalog, sorted by application. Each entry is the same effective (tenant plus Co
 service finds the catalogs by listing the `audit-service` configuration namespace with its own service
 account, so a caller does not need configuration-service access. Status codes and tenant selection
 follow the single-application listing; `503` is also returned when the catalog listing fails.
+
+### Reading configured retention
+
+```http
+GET /audit/v1/retention
+Authorization: ****** with audit-reader>
+```
+
+Returns `{ "tenant": { "<class>": { "days": n } }, "applications": { "<application>": { "<class>": { "days": n } } } }`,
+the retention periods that are **configured** for the resolved tenant. It does not include the built-in
+defaults (standard 90, security 365, compliance 365 days), so a class absent from the response uses its
+default. `tenant` holds `audit-service:retention`; `applications` holds `audit-service:retention-<application>`
+for each application with a catalog, omitting applications with no overrides. Periods are resolved the way
+writes resolve them (active configuration revision, with Core settings merged) and are checked against
+`RETENTION_MIN_DAYS` and `RETENTION_MAX_DAYS`, so the response matches what is enforced. Without a tenant
+context the response is empty. `403` is returned without `audit-reader`, and `503` when the settings cannot
+be resolved or fall outside the bounds.
 
 The catalog governs future write classification, not history access. Removing a definition performs
 no audit-record deletion. History endpoints query PostgreSQL independently of the catalog, so
@@ -461,7 +514,8 @@ for the boundary with OSP-708.
 - **Sandbox** (`apps/sandbox-app`, Audit page): tabs to browse events, view the action catalog,
   write an event, and list failed events against a live tenant.
 - **Tenant management webapp** (Admin > Services > Audit, `audit` feature flag): Overview, Logs,
-  Catalogs and Retention tabs. Logs filters by namespace, action, actor, resource, scope,
+  Catalogs and Retention tabs. Catalogs and retention both come from the audit service (`/audit/v1/actions`
+  and `/audit/v1/retention`), so they show the active configuration as enforced. Logs filters by namespace, action, actor, resource, scope,
   status, category, severity, correlation and session IDs, and time range, shows formatted event details, and exports the
   current search to CSV through the [export endpoint](#exporting-events), so the file is not capped and actor name and
   email are included only for `audit-admin` users (design §1.5). Each page is itself a recorded read.

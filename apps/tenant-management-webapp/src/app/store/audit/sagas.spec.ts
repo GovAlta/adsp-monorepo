@@ -6,7 +6,6 @@ import {
   exportAuditEvents,
   fetchAuditConfiguration,
   fetchAuditEvents,
-  mapAuditConfiguration,
   toCatalogs,
 } from './sagas';
 import {
@@ -17,7 +16,6 @@ import {
 } from './actions';
 
 const baseUrl = 'http://mock-config-service.com';
-const catalog = (actions: Record<string, unknown>) => ({ latest: { configuration: { actions } } });
 
 describe('audit sagas', () => {
   it('maps the catalog listing, sorted, with the core flag', () => {
@@ -31,19 +29,6 @@ describe('audit sagas', () => {
       ['form-app', false],
     ]);
     expect(catalogs[1].actions.map((a) => a.name)).toEqual(['create', 'submit']);
-  });
-
-  it('maps retention documents', () => {
-    const { retention } = mapAuditConfiguration([
-      { name: 'actions-form-app', ...catalog({ submit: {} }) },
-      { name: 'retention', latest: { configuration: { classes: { standard: { days: 30 } } } } },
-      { name: 'retention-form-app', latest: { configuration: { classes: { security: { days: 400 } } } } },
-    ]);
-
-    expect(retention).toEqual({
-      tenant: { standard: { days: 30 } },
-      applications: { 'form-app': { security: { days: 400 } } },
-    });
   });
 
   it('loads one page of audit events from the namespace route using the page size and cursor', async () => {
@@ -127,12 +112,10 @@ describe('audit sagas', () => {
     ]);
   });
 
-  it('loads catalogs from the audit service and retention from the configuration listing', async () => {
+  it('loads catalogs and retention from the audit service', async () => {
     const urls = [];
     const { effects } = await expectSaga(fetchAuditConfiguration)
-      .withState({
-        config: { serviceUrls: { configurationServiceApiUrl: baseUrl, auditServiceApiUrl: 'http://mock-audit.com' } },
-      })
+      .withState({ config: { serviceUrls: { auditServiceApiUrl: 'http://mock-audit.com' } } })
       .provide({
         call(effect, next) {
           if (effect.fn === getAccessToken) {
@@ -140,19 +123,23 @@ describe('audit sagas', () => {
           }
           if (effect.fn === axios.get) {
             urls.push(effect.args[0]);
-            return effect.args[0].endsWith('/namespaces')
-              ? { data: { results: ['form-app'] } }
+            if (effect.args[0].endsWith('/namespaces')) {
+              return { data: { results: ['form-app'] } };
+            }
+            return effect.args[0].endsWith('/retention')
+              ? { data: { tenant: { standard: { days: 30 } }, applications: {} } }
               : { data: [{ application: 'form-app', core: true, actions: [{ name: 'submit' }] }] };
-          }
-          if (effect.fn.name === 'fetchAll') {
-            return [{ name: 'retention', latest: { configuration: { classes: { standard: { days: 30 } } } } }];
           }
           return next();
         },
       })
       .run();
 
-    expect(urls).toEqual(['http://mock-audit.com/audit/v1/actions', 'http://mock-audit.com/audit/v1/namespaces']);
+    expect(urls).toEqual([
+      'http://mock-audit.com/audit/v1/actions',
+      'http://mock-audit.com/audit/v1/retention',
+      'http://mock-audit.com/audit/v1/namespaces',
+    ]);
     const success = effects.put
       .map((e) => e.payload.action)
       .find((a) => a.type === FETCH_AUDIT_CONFIGURATION_SUCCESS_ACTION);

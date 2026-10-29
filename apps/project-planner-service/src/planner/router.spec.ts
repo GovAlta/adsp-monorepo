@@ -8,7 +8,14 @@ import { Logger } from 'winston';
 import { createPlannerRouter } from './router';
 import { PlannerServiceRoles } from './roles';
 import { getSpecialist } from './specialists';
-import { BlueprintComponent, BusinessPattern, ComponentReview, Solution, SpecialistChat } from './types';
+import {
+  BlueprintComponent,
+  BusinessPattern,
+  ComponentReview,
+  DecisionRecord,
+  Solution,
+  SpecialistChat,
+} from './types';
 import type { LlmAnalysis, LlmConsultation, PlannerLlm, SpecialistReply } from './llm';
 import { solutionCreated } from './events';
 import { DISCOVERY_FACTORS, DISCOVERY_THRESHOLD } from './discovery';
@@ -940,15 +947,6 @@ describe('planner router routes', () => {
       });
     });
 
-    it('saves Version 1 of the new solution', async () => {
-      const res = await request(buildApp(owner))
-        .post('/planner/v1/solutions')
-        .send({ name: 'Permit intake', problemStatement: 'Applicants submit permit forms.' });
-
-      const [savedSolution] = repository.save.mock.calls[0];
-      expect(versionRepository.create).toHaveBeenCalledWith(tenantId, res.body.id, versionContent(savedSolution, []));
-    });
-
     it('stores the problem statement in the initial state', async () => {
       const res = await request(buildApp(owner))
         .post('/planner/v1/solutions')
@@ -1813,6 +1811,7 @@ describe('planner router routes', () => {
           model: 'GOA-Default',
         }),
         blueprint: jest.fn(),
+        acceptanceCriteria: jest.fn(),
         consult: jest.fn(),
         converse: jest.fn(),
       };
@@ -1839,6 +1838,7 @@ describe('planner router routes', () => {
         analyze: jest.fn(),
         discover: jest.fn(),
         blueprint: jest.fn(),
+        acceptanceCriteria: jest.fn(),
         consult: jest.fn(),
         converse: jest.fn(),
       };
@@ -1976,6 +1976,7 @@ describe('planner router routes', () => {
       analyze: jest.fn(),
       discover: jest.fn(),
       blueprint: jest.fn(),
+      acceptanceCriteria: jest.fn(),
       consult: jest.fn(),
       converse: jest.fn(),
     };
@@ -3059,6 +3060,24 @@ describe('planner router routes', () => {
         expect(res.body.state.blueprint).toMatchObject({ mode: 'ai', model: MODEL });
       });
 
+      it('saves Version 1 with the first blueprint and its acceptance criteria', async () => {
+        await blueprint(buildApp(owner, true, llm));
+
+        const saved: Solution = repository.save.mock.calls[0][0];
+        expect(saved.state.blueprint.acceptance).toBeDefined();
+        expect(versionRepository.create).toHaveBeenCalledWith(tenantId, SOLUTION_ID, versionContent(saved, []));
+      });
+
+      it('leaves saving a regenerated blueprint to the user', async () => {
+        const first = await blueprint(buildApp(owner, true, llm));
+        repository.get.mockResolvedValue(first.body);
+        versionRepository.create.mockClear();
+
+        await blueprint(buildApp(owner, true, llm));
+
+        expect(versionRepository.create).not.toHaveBeenCalled();
+      });
+
       it('merges the ai overview into the blueprint', async () => {
         const res = await blueprint(buildApp(owner, true, llm));
 
@@ -3244,6 +3263,114 @@ describe('planner router routes', () => {
         await blueprint(buildApp(owner, true, llm));
 
         expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining('AI blueprint failed'));
+      });
+
+      describe('acceptance criteria', () => {
+        const draftSaving: DecisionRecord = {
+          id: 'd-1',
+          title: 'Draft saving',
+          decision: 'Applicants can save a draft and return later',
+          reason: 'Long forms',
+          decidedOn: '2026-10-01',
+        };
+        const ruleCriterion = {
+          group: 'Rules',
+          then: 'Applicants can save a draft and return later',
+          source: 'Decision "Draft saving"',
+        };
+
+        beforeEach(() => {
+          const solution = analysed();
+          solution.state.decisions = [draftSaving];
+          repository.get.mockResolvedValue(solution);
+          llm.acceptanceCriteria.mockResolvedValue({
+            criteria: [
+              {
+                group: 'Rules',
+                given: 'a saved draft',
+                when: 'the applicant returns',
+                then: 'the draft opens',
+                source: 'decision:d-1',
+              },
+            ],
+            model: MODEL,
+          });
+        });
+
+        it('stores the ai criteria with the plan item each restates', async () => {
+          const res = await blueprint(buildApp(owner, true, llm));
+
+          expect(res.body.state.blueprint.acceptance).toEqual({
+            mode: 'ai',
+            criteria: [
+              {
+                id: 'AC-1',
+                group: 'Rules',
+                given: 'a saved draft',
+                when: 'the applicant returns',
+                then: 'the draft opens',
+                source: 'Decision "Draft saving"',
+              },
+            ],
+          });
+        });
+
+        it('gives the llm the plan items a criterion may restate', async () => {
+          await blueprint(buildApp(owner, true, llm));
+
+          expect(llm.acceptanceCriteria).toHaveBeenCalledWith(
+            expect.objectContaining({ mode: 'ai' }),
+            expect.arrayContaining([
+              { key: 'decision:d-1', label: 'Decision "Draft saving"', text: draftSaving.decision },
+            ]),
+          );
+        });
+
+        it('falls back to rule-based criteria when the llm fails', async () => {
+          llm.acceptanceCriteria.mockRejectedValueOnce(new Error('Model request failed'));
+
+          const res = await blueprint(buildApp(owner, true, llm));
+
+          expect(res.body.state.blueprint.acceptance.mode).toBe('rules');
+          expect(res.body.state.blueprint.acceptance.criteria).toContainEqual(expect.objectContaining(ruleCriterion));
+        });
+
+        it('falls back to rule-based criteria and logs why when no ai criterion cites the plan', async () => {
+          llm.acceptanceCriteria.mockResolvedValueOnce({
+            criteria: [{ group: 'Rules', then: 'payments settle overnight', source: 'decision:d-9' }],
+            model: MODEL,
+          });
+
+          const res = await blueprint(buildApp(owner, true, llm));
+
+          expect(res.body.state.blueprint.acceptance.mode).toBe('rules');
+          expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining('AI acceptance criteria failed'));
+        });
+
+        it('keeps the blueprint warning clear when only the acceptance criteria fall back', async () => {
+          llm.acceptanceCriteria.mockRejectedValueOnce(new Error('Model request failed'));
+
+          const res = await blueprint(buildApp(owner, true, llm));
+
+          expect(res.body.state.blueprint.warning).toBeUndefined();
+        });
+
+        it('writes rule-based criteria without the llm for a rule-based blueprint', async () => {
+          const res = await blueprint(buildApp(owner, true, llm), { mode: 'rules' });
+
+          expect(llm.acceptanceCriteria).not.toHaveBeenCalled();
+          expect(res.body.state.blueprint.acceptance.mode).toBe('rules');
+          expect(res.body.state.blueprint.acceptance.criteria).toContainEqual(expect.objectContaining(ruleCriterion));
+        });
+
+        it('does not ask the llm for criteria after the ai blueprint failed', async () => {
+          llm.blueprint.mockRejectedValueOnce(new Error('Model request failed'));
+
+          const res = await blueprint(buildApp(owner, true, llm));
+
+          expect(llm.acceptanceCriteria).not.toHaveBeenCalled();
+          expect(res.body.state.blueprint.acceptance.mode).toBe('rules');
+        });
       });
 
       it('adds rule-based components when the llm drafts none', async () => {

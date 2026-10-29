@@ -103,6 +103,7 @@ const SECTIONS: Record<string, (content: VersionContent) => unknown> = {
   Workflows: (c) => c.state.blueprint?.workflows,
   'Data & governance': (c) => c.state.blueprint?.dataGovernance,
   Delivery: (c) => c.state.blueprint?.delivery,
+  'Acceptance criteria': (c) => c.state.blueprint?.acceptance,
 };
 
 const normalize = (value: unknown): unknown => {

@@ -63,7 +63,7 @@ describe('audit service API documentation', () => {
         .flatMap(([path, operations]) => Object.keys(operations as object).map((method) => `${method} ${path}`))
         .sort();
 
-      expect(served).toHaveLength(11);
+      expect(served).toHaveLength(12);
       expect(documented).toEqual(served);
     });
 

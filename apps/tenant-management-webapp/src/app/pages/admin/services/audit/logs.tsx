@@ -467,7 +467,22 @@ export const AuditLogs: FunctionComponent = () => {
       </ActiveFilters>
 
       {loading && results.length === 0 && <PageIndicator />}
-      {!loading && searched && results.length === 0 && renderNoItem('audit event')}
+      {!loading && searched && results.length === 0 && page === 0 && renderNoItem('audit event')}
+      {!loading && results.length === 0 && page > 0 && (
+        // The API returns a cursor for every full page, so the last page can be empty; keep a way back.
+        <PaginationRow>
+          <span>No more events.</span>
+          <GoabButton
+            size="compact"
+            type="secondary"
+            leadingIcon="arrow-back"
+            onClick={goPrevious}
+            testId="audit-previous"
+          >
+            Previous
+          </GoabButton>
+        </PaginationRow>
+      )}
       {results.length > 0 && (
         <>
           <DataTable data-testid="audit-events-table">

@@ -166,6 +166,7 @@ describe('GET /audit/v1/:namespace/actions', () => {
     expect(routes).toEqual([
       { path: '/namespaces', roles: [AuditServiceRoles.Reader] },
       { path: '/actions', roles: [AuditServiceRoles.Reader] },
+      { path: '/retention', roles: [AuditServiceRoles.Reader] },
       { path: '/:namespace/actions', roles: [AuditServiceRoles.Reader] },
       { path: '/events/export', roles: [AuditServiceRoles.Reader] },
       { path: '/:namespace/events/export', roles: [AuditServiceRoles.Reader] },
@@ -176,6 +177,37 @@ describe('GET /audit/v1/:namespace/actions', () => {
       { path: '/failed-events', roles: [AuditServiceRoles.Admin] },
       { path: '/failed-events/:id/replay', roles: [AuditServiceRoles.Admin] },
     ]);
+  });
+
+  describe('GET /audit/v1/retention', () => {
+    it('returns configured retention for the tenant and the applications that override it', async () => {
+      source.listApplications.mockImplementation(async (tenantId) => (tenantId ? ['case-service'] : []));
+      configuration.getServiceConfiguration.mockImplementation(async (name: string) => {
+        if (name === 'retention') {
+          return { kind: 'retentionSettings', classes: { standard: { days: 120 } } };
+        }
+        return name === 'retention-case-service'
+          ? { kind: 'applicationRetentionSettings', application: 'case-service', classes: { security: { days: 400 } } }
+          : name === 'actions-case-service'
+          ? { kind: 'actionCatalog', application: 'case-service', actions: { 'case.update': definition } }
+          : null;
+      });
+
+      const result = await request(createApp()).get('/audit/v1/retention').expect(HttpStatusCodes.OK);
+
+      expect(result.body).toEqual({
+        tenant: { standard: { days: 120 } },
+        applications: { 'case-service': { security: { days: 400 } } },
+      });
+    });
+
+    it('rejects callers without audit-reader', async () => {
+      await request(createApp({ ...user, roles: [] }))
+        .get('/audit/v1/retention')
+        .expect(HttpStatusCodes.FORBIDDEN);
+
+      expect(configuration.getServiceConfiguration).not.toHaveBeenCalled();
+    });
   });
 
   describe('GET /audit/v1/actions', () => {

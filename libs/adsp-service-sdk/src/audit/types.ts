@@ -127,10 +127,12 @@ export interface AuditEventRecord {
  */
 export interface AuditService {
   /**
-   * Records an audit event. Events are batched and sent at 100 events or 500 ms, whichever comes first.
+   * Records an audit event. By default each event is sent immediately, without waiting to fill a batch.
+   * Set audit.batchSize greater than 1 during initialization to opt into client-side batching.
    *
-   * The returned promise never rejects, so an unawaited call cannot crash the process. It resolves
-   * with the outcome once the event is stored, rejected, or dropped.
+   * Await the returned promise and check its outcome. It never rejects and resolves once the event
+   * is confirmed stored, rejected, or delivery fails. A failed delivery may still have been stored
+   * if the response was lost; resend with the same eventId to avoid duplicates.
    *
    * @param {AuditAction} action Definition of the action, as registered in `auditActions`.
    * @param {AuditRecordDetails} details
@@ -148,8 +150,9 @@ export interface AuditService {
    */
   query(criteria?: AuditEventCriteria, options?: AuditQueryOptions): Promise<Results<AuditEventRecord>>;
   /**
-   * Sends every buffered event and resolves when all of them, including retries, have settled.
-   * Call it on shutdown. Never rejects; per-event results are on the `record()` promises.
+   * Sends every buffered event and waits for in-flight requests, including retries, to settle.
+   * Call it before shutdown when records remain unawaited or batches are pending. No separate flush
+   * is needed once all `record()` calls have settled. Never rejects; per-event results are on `record()`.
    *
    * @returns {Promise<void>}
    * @memberof AuditService

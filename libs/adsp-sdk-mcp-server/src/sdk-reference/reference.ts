@@ -67,7 +67,7 @@ export const SDK_REFERENCE: SdkSymbolDoc[] = [
       'Fixes realm to "core". options extends ServiceRegistration with: clientSecret, directoryUrl, accessServiceUrl, ' +
       'ignoreServiceAud?, configurationConverter?, combineConfiguration?, enableConfigurationInvalidation?, ' +
       'useLongConfigurationCacheTTL?, additionalExtractors?, tracing? (TracingOptions | OTLP endpoint string), ' +
-      'metrics? (MetricsOptions | OTLP endpoint string).\n\n' +
+      'metrics? (MetricsOptions | OTLP endpoint string), audit? (AuditClientOptions; immediate delivery by default).\n\n' +
       'Returns PlatformCapabilities: directory, tenantService, configurationService, eventService, auditService, tokenProvider, ' +
       'coreStrategy, tenantStrategy, tenantHandler, configurationHandler, healthCheck, clearCached(tenantId, serviceId), ' +
       'metricsHandler, traceHandler, tracerProvider? (only if tracing enabled), meterProvider? (only if metrics enabled), logger.\n\n' +
@@ -456,11 +456,15 @@ export const SDK_REFERENCE: SdkSymbolDoc[] = [
       '  flush(): Promise<void>;\n' +
       '  readonly droppedEventCount: number;\n' +
       '}\n\n' +
-      'record() batches events (100 events or 500 ms, per tenant for core services), retries network errors and ' +
+      'record() sends each event immediately by default. Set options.audit.batchSize greater than 1 during initialization ' +
+      'to opt into batching (500 ms default batch interval, per tenant for core services). It retries network errors and ' +
       '429/502/503/504 with the same eventId (honouring Retry-After), and buffers at most 1,000 events or 8 MB. ' +
-      'It never rejects; it resolves recorded, rejected, or failed. Non-recorded events increment ' +
+      'Await it and check the outcome: it never rejects and resolves recorded, rejected, or failed. ' +
+      'recorded confirms storage or an idempotent duplicate, not just queue admission. Non-recorded events increment ' +
       'droppedEventCount and the audit.client.dropped_events metric. Change sets are dropped unless the action sets ' +
-      'captureChangeSet. Writes wait for auditActions registration to settle. Call flush() on shutdown. ' +
+      'captureChangeSet. Writes wait for auditActions registration to settle. Call flush() before shutdown if batches ' +
+      'or unawaited records remain; no separate flush is needed once all record() calls have settled. ' +
+      'Normal shutdown must still wait for in-flight application work. ' +
       'query() uses the service token unless options.token is set, and rejects on failure.',
     example:
       "const outcome = await auditService.record(UPDATE_CASE, {\n" +
@@ -468,7 +472,33 @@ export const SDK_REFERENCE: SdkSymbolDoc[] = [
       "  resource: { type: 'case', id: caseId },\n" +
       "});\n" +
       "if (outcome.status !== 'recorded') logger.warn(`Audit event not recorded: ${outcome.reason}`);",
-    seeAlso: ['AuditRecordDetails', 'AuditRecordOutcome', 'AuditEventCriteria', 'AuditQueryOptions', 'ServiceRegistration'],
+    seeAlso: [
+      'AuditClientOptions',
+      'AuditRecordDetails',
+      'AuditRecordOutcome',
+      'AuditEventCriteria',
+      'AuditQueryOptions',
+      'ServiceRegistration',
+    ],
+  },
+  {
+    name: 'AuditClientOptions',
+    kind: 'interface',
+    module: 'audit',
+    summary:
+      'Optional audit delivery configuration on initializeService and initializePlatform; defaults to immediate single-event writes.',
+    details:
+      'interface AuditClientOptions {\n' +
+      '  batchSize?: number; // default 1; greater than 1 enables batching\n' +
+      '  batchIntervalMs?: number; // default 500; unused for single-event delivery\n' +
+      '  maxBufferedEvents?: number; // default 1000, including in-flight and retrying events\n' +
+      '  maxBufferedBytes?: number; // default 8 MiB serialized\n' +
+      '  retryDelaysMs?: number[]; // default [200, 1000, 3000, 5000]\n' +
+      '  maxRetryAfterMs?: number; // default 30000\n' +
+      '  requestTimeoutMs?: number; // default 10000 per HTTP attempt, not a total call deadline\n' +
+      '}',
+    example: 'const options = { ...serviceOptions, audit: { batchSize: 100, batchIntervalMs: 500 } };',
+    seeAlso: ['AuditService', 'initializeService', 'initializePlatform'],
   },
   {
     name: 'AuditRecordDetails',

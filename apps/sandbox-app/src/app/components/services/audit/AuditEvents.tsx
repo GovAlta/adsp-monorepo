@@ -406,7 +406,22 @@ export function AuditEvents() {
 
       <ErrorCallout message={error} />
       {loading && !events?.length && <GoabSpinner type="infinite" size="large" />}
-      {!loading && events && !events.length && !error && <p>No audit events match the filters.</p>}
+      {!loading && events && !events.length && !error && page === 0 && <p>No audit events match the filters.</p>}
+      {!loading && events && !events.length && !error && page > 0 && (
+        // The API returns a cursor for every full page, so the last page can be empty; keep a way back.
+        <div style={{ ...rowStyle, marginTop: '1rem' }}>
+          <span>No more events.</span>
+          <GoabButton
+            size="compact"
+            type="secondary"
+            leadingIcon="arrow-back"
+            onClick={goPrevious}
+            testId="audit-previous"
+          >
+            Previous
+          </GoabButton>
+        </div>
+      )}
 
       {!!events?.length && (
         <>

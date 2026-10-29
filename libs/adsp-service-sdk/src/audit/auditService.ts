@@ -20,9 +20,9 @@ import type {
 } from './types';
 
 export interface AuditClientOptions {
-  /** Events per request; a batch is sent as soon as it is full. */
+  /** Events per request. Defaults to 1 (immediate delivery); set greater than 1 to opt into batching. */
   batchSize?: number;
-  /** Longest an event waits in a partial batch. */
+  /** Longest an event waits in a partial batch. Defaults to 500 ms; unused when batchSize is 1. */
   batchIntervalMs?: number;
   /** Events held across queued, in-flight and retrying batches; further records fail with `buffer_full`. */
   maxBufferedEvents?: number;
@@ -37,7 +37,7 @@ export interface AuditClientOptions {
 }
 
 const DEFAULT_OPTIONS: Required<AuditClientOptions> = {
-  batchSize: 100,
+  batchSize: 1,
   batchIntervalMs: 500,
   // Bounds memory if the audit service is unavailable: events can be up to ~33 KB (16 KiB metadata and change set).
   maxBufferedEvents: 1000,
