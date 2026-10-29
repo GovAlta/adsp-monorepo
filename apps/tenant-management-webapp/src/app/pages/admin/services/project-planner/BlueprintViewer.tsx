@@ -122,7 +122,6 @@ export const BlueprintViewer: FunctionComponent<BlueprintViewerProps> = ({
     );
   }
 
-  const stale = !!analysis && new Date(analysis.analyzedOn) > new Date(blueprint.generatedOn);
   const { overview: o, architecture: a, dataGovernance: d, delivery: dl } = blueprint;
   const components = blueprint.components ?? [];
   const toReview = components.filter((c) => (c.review ?? 'not-reviewed') === 'not-reviewed').length;
@@ -146,12 +145,6 @@ export const BlueprintViewer: FunctionComponent<BlueprintViewerProps> = ({
       {blueprint.warning && (
         <GoabCallout type="important" heading="Note" mt="m" testId="blueprint-warning">
           {blueprint.warning}
-        </GoabCallout>
-      )}
-      {stale && (
-        <GoabCallout type="important" heading="Out of date" mt="m" testId="blueprint-stale">
-          The problem description or answers changed after this plan was created. Update the plan to include the latest
-          information.
         </GoabCallout>
       )}
 

@@ -9,8 +9,10 @@ export const FETCH_CORE_NOTIFICATION_TYPES = 'tenant/core-notification-service/n
 export const FETCH_CORE_NOTIFICATION_TYPES_SUCCEEDED = 'notification-service-core/space/notificationType/succeeded';
 
 export const DELETE_NOTIFICATION_TYPE = 'tenant/notification-service/notificationType/delete';
+export const DELETE_NOTIFICATION_TYPE_SUCCEEDED = 'tenant/notification-service/notificationType/delete/succeeded';
 
 export const UPDATE_NOTIFICATION_TYPE = 'tenant/notification-service/notificationType/update';
+export const UPDATE_NOTIFICATION_TYPE_SUCCEEDED = 'tenant/notification-service/notificationType/update/succeeded';
 
 export const FETCH_NOTIFICATION_TYPE_HAS_NOTIFICATION = 'notification-service/docs/fetch/notification/notificationtype';
 export const FETCH_NOTIFICATION_TYPE_HAS_NOTIFICATION_SUCCEEDED =
@@ -32,7 +34,9 @@ export type ActionTypes =
   | FetchNotificationConfigurationAction
   | FetchCoreNotificationTypeAction
   | UpdateNotificationTypeAction
+  | UpdateNotificationTypeSucceededAction
   | DeleteNotificationTypeAction
+  | DeleteNotificationTypeSucceededAction
   | FetchNotificationMetricsAction
   | FetchNotificationMetricsSucceededAction;
 
@@ -70,6 +74,11 @@ export interface UpdateNotificationTypeAction {
   payload: NotificationItem;
 }
 
+export interface UpdateNotificationTypeSucceededAction {
+  type: typeof UPDATE_NOTIFICATION_TYPE_SUCCEEDED;
+  payload: NotificationItem;
+}
+
 export interface UpdateContactInformationAction {
   type: typeof UPDATE_CONTACT_INFORMATION;
   payload: ContactInformation;
@@ -83,6 +92,11 @@ export interface UpdateEmailInformationAction {
 export interface DeleteNotificationTypeAction {
   type: typeof DELETE_NOTIFICATION_TYPE;
   payload: NotificationItem;
+}
+
+export interface DeleteNotificationTypeSucceededAction {
+  type: typeof DELETE_NOTIFICATION_TYPE_SUCCEEDED;
+  payload: { id: string };
 }
 
 interface FetchNotificationMetricsAction {
@@ -142,6 +156,13 @@ export const UpdateNotificationTypeService = (notificationType: NotificationItem
   payload: notificationType,
 });
 
+export const UpdateNotificationTypeSucceededService = (
+  notificationType: NotificationItem
+): UpdateNotificationTypeSucceededAction => ({
+  type: UPDATE_NOTIFICATION_TYPE_SUCCEEDED,
+  payload: notificationType,
+});
+
 export const UpdateContactInformationService = (
   contactInformation: ContactInformation
 ): UpdateContactInformationAction => ({
@@ -159,6 +180,11 @@ export const UpdateEmailInformationService = (
 export const DeleteNotificationTypeService = (notificationType: NotificationItem): DeleteNotificationTypeAction => ({
   type: DELETE_NOTIFICATION_TYPE,
   payload: notificationType,
+});
+
+export const DeleteNotificationTypeSucceededService = (id: string): DeleteNotificationTypeSucceededAction => ({
+  type: DELETE_NOTIFICATION_TYPE_SUCCEEDED,
+  payload: { id },
 });
 
 export const FetchNotificationMetrics = (): FetchNotificationMetricsAction => ({

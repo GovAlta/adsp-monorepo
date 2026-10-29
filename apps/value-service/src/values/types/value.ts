@@ -19,6 +19,9 @@ export interface ValueCriteria {
   context?: Record<string, boolean | string | number>;
   value?: boolean | string | number;
   url?: string;
+  payloadPath?: string;
+  payloadValue?: boolean | string | number | null;
+  payload?: Record<string, unknown>;
 }
 
 export type ValueOrder = 'asc' | 'desc';

@@ -8,10 +8,9 @@ const solution = (state: Partial<Solution['state']> = {}): Solution => ({
   status: 'analyzed',
   createdByName: 'tester',
   updatedOn: '2026-01-01T00:00:00Z',
-  version: '1.1',
-  versionHistory: [
-    { version: '1.1', changedAt: '2026-01-02T00:00:00Z', changedBy: 'tester', changedSections: ['Problem statement'] },
-  ],
+  version: 2,
+  lastUpdated: '2026-01-02T00:00:00Z',
+  changedSections: ['Problem statement'],
   state: {
     problemStatement: 'Applicants submit permits.',
     concepts: [{ id: 'c1', type: 'actor', name: 'Applicant', source: 'user' }],
@@ -168,7 +167,7 @@ describe('utils', () => {
       const md = solutionToMarkdown(solution());
 
       expect(md).toContain('# Permit Intake!');
-      expect(md).toContain('solution-version: 1.1');
+      expect(md).toContain('solution-version: 2');
       expect(md).toContain(`last-updated: ${fmtDate('2026-01-02T00:00:00Z')}`);
       expect(md).toContain("## What's changed");
       expect(md).toContain('- Problem statement');
@@ -179,27 +178,27 @@ describe('utils', () => {
       expect(md).not.toContain('# Project blueprint');
     });
 
-    it('shows no changes on a re-export that did not bump, instead of repeating the last bump', () => {
-      const md = solutionToMarkdown({
-        ...solution(),
-        version: '1.1',
-        changedSections: [],
-        lastUpdated: '2026-01-03T00:00:00Z',
-      });
+    it('labels the version as having unsaved changes', () => {
+      const md = solutionToMarkdown({ ...solution(), unsavedChanges: true });
 
-      expect(md).toContain(`last-updated: ${fmtDate('2026-01-03T00:00:00Z')}`);
+      expect(md).toContain('solution-version: 2 (unsaved changes)');
+    });
+
+    it('falls back to the solution update time when the export has no last-updated time', () => {
+      const md = solutionToMarkdown({ ...solution(), lastUpdated: undefined });
+
+      expect(md).toContain(`last-updated: ${fmtDate('2026-01-01T00:00:00Z')}`);
+    });
+
+    it('shows no changes when the export lists no changed sections', () => {
+      const md = solutionToMarkdown({ ...solution(), changedSections: [] });
+
       expect(md).toContain('No changes since the previous version.');
       expect(md).not.toContain('- Problem statement');
     });
 
-    it('shows "Initial version" on the first export instead of "No changes"', () => {
-      const md = solutionToMarkdown({
-        ...solution(),
-        version: '1.0',
-        versionHistory: [],
-        initial: true,
-        changedSections: [],
-      });
+    it('shows "Initial version" on the first version instead of "No changes"', () => {
+      const md = solutionToMarkdown({ ...solution(), version: 1, initial: true, changedSections: [] });
 
       expect(md).toContain('Initial version.');
       expect(md).not.toContain('No changes since the previous version.');
@@ -485,8 +484,14 @@ describe('utils', () => {
       const md = harnessToMarkdown(solution());
 
       expect(md).toContain('# Build Permit Intake!: harness instructions');
-      expect(md).toContain('`planner-permit-intake.md`: the plan, solution version 1.1;');
-      expect(md).not.toMatch(/\{(name|slug|n|component list)\}/);
+      expect(md).toContain('`planner-permit-intake.md`: the plan, solution version 2;');
+      expect(md).not.toMatch(/\{(name|slug|file|n|component list)\}/);
+    });
+
+    it('labels the version as having unsaved changes', () => {
+      const md = harnessToMarkdown({ ...solution(), unsavedChanges: true });
+
+      expect(md).toContain('`solution-version: 2 (unsaved changes)`');
     });
 
     it('lists the components with their review status and leaves rejected ones out', () => {

@@ -33,7 +33,7 @@ const Bar: FunctionComponent<{
       height,
       flex: 1,
       minWidth: 140,
-      maxWidth: 420,
+      maxWidth: 600,
       position: 'relative',
     }}
   >
@@ -65,7 +65,7 @@ export const ConfidenceBar: FunctionComponent<ConfidenceBarProps> = ({ confidenc
       data-testid="confidence-bar"
       style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}
     >
-      <div style={{ flex: 1, minWidth: 320, maxWidth: 560 }}>
+      <div style={{ flex: '1 1 480px', minWidth: 320, maxWidth: 900 }}>
         <GoabDetails heading="How well the planner understands your request" testId="confidence-breakdown" mt="none">
           <div
             role="list"
@@ -74,7 +74,7 @@ export const ConfidenceBar: FunctionComponent<ConfidenceBarProps> = ({ confidenc
               padding: 0,
               margin: 0,
               display: 'grid',
-              gridTemplateColumns: 'minmax(140px, 220px) minmax(120px, 1fr) 3rem',
+              gridTemplateColumns: 'minmax(140px, 260px) minmax(120px, 1fr) 3rem',
               gap: '4px 12px',
               alignItems: 'center',
             }}

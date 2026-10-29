@@ -54,6 +54,8 @@ Custom API tools can be configured to call external APIs on behalf of the agent.
 
 Conversations with agents are organized into threads. Each thread maintains context across multiple messages, allowing for coherent multi-turn conversations. Thread IDs can be provided by the client or generated automatically.
 
+A thread's context belongs only to that thread, so a client can start a fresh conversation by sending messages with a new thread ID. Threads expire after a period of inactivity and are then deleted; a user can also delete one of their own threads right away (see [Delete a thread](#delete-a-thread)).
+
 ### Structured Output
 
 Agents can be configured with a JSON Schema that defines the structure of their output. When an agent has an `outputSchema` defined, it will return both text responses and structured JSON objects matching that schema. This is useful for extracting machine-readable data from agent responses, such as:
@@ -187,6 +189,21 @@ socket.on('stream', (data) => {
 socket.on('error', (message) => {
   console.error('Agent error:', message);
 });
+```
+
+### Delete a thread
+
+Delete one of your own threads, with its stored messages and context, for example when the user starts a new chat. The response is `{ "deleted": false }` when you have no thread with that ID, so repeating the request is harmless.
+
+```typescript
+const response = await fetch(`${agentServiceUrl}/agent/v1/agents/${agentId}/threads/${threadId}`, {
+  method: 'DELETE',
+  headers: {
+    Authorization: `Bearer ${accessToken}`,
+  },
+});
+
+const { deleted } = await response.json();
 ```
 
 ### Configure a custom API tool

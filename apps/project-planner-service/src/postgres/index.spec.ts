@@ -4,10 +4,12 @@ import { Logger } from 'winston';
 import { createRepositories } from './index';
 import { PostgresPatternRepository } from './pattern';
 import { PostgresSolutionRepository } from './solution';
+import { PostgresSolutionVersionRepository } from './solution-version';
 import { PostgresSpecialistChatRepository } from './specialist-chat';
 
 jest.mock('knex', () => ({ knex: jest.fn() }));
 jest.mock('./solution', () => ({ PostgresSolutionRepository: jest.fn() }));
+jest.mock('./solution-version', () => ({ PostgresSolutionVersionRepository: jest.fn() }));
 jest.mock('./pattern', () => ({ PostgresPatternRepository: jest.fn() }));
 jest.mock('./specialist-chat', () => ({ PostgresSpecialistChatRepository: jest.fn() }));
 jest.mock('@abgov/adsp-service-sdk', () => ({
@@ -100,6 +102,20 @@ describe('createRepositories', () => {
     const { specialistChatRepository } = await createRepositories(props);
 
     expect(specialistChatRepository).toBe((PostgresSpecialistChatRepository as unknown as jest.Mock).mock.instances[0]);
+  });
+
+  it('creates the solution version repository with the knex instance', async () => {
+    await createRepositories(props);
+
+    expect(PostgresSolutionVersionRepository).toHaveBeenCalledWith(knexMock);
+  });
+
+  it('returns the solution version repository instance', async () => {
+    const { solutionVersionRepository } = await createRepositories(props);
+
+    expect(solutionVersionRepository).toBe(
+      (PostgresSolutionVersionRepository as unknown as jest.Mock).mock.instances[0],
+    );
   });
 
   it('rethrows migration failures so they can be retried', async () => {

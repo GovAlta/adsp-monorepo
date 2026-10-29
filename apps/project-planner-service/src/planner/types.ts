@@ -317,18 +317,9 @@ export interface Solution {
   createdByName: string;
   createdOn: Date;
   updatedOn: Date;
-  version: string;
-  versionHistory: SolutionVersionEntry[];
-  lastExportHashes: Record<string, string>;
-  exportedOnce: boolean;
+  // Number of the latest saved version; only saving a version changes it.
+  version: number;
   state: SolutionState;
-}
-
-export interface SolutionVersionEntry {
-  version: string;
-  changedAt: string;
-  changedBy: string;
-  changedSections: string[];
 }
 
 export interface SolutionCriteria {
@@ -354,6 +345,7 @@ export interface StoredChatMessage {
   at: string;
   // User messages: the task requested. Assistant messages: how the reply was produced.
   intent?: string;
+  initiatedBy?: 'planner';
   mode?: AnalysisMode;
   model?: string;
   warning?: string;

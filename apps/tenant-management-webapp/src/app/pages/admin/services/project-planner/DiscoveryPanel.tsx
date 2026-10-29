@@ -11,8 +11,8 @@ import {
 } from '@abgov/react-components';
 import styled from 'styled-components';
 import { PlannerApi } from './api';
-import { AnalysisMode, DiscoveryOptions, OpenQuestion, Solution, SpecialistDefinition } from './model';
-import { countChatsByService, SpecialistChat } from './SpecialistChat';
+import { AnalysisMode, ConversationMessage, DiscoveryOptions, Solution, SpecialistDefinition } from './model';
+import { countChatsByService, ExpandableText, SpecialistChat } from './SpecialistChat';
 import { useBusy } from './useBusy';
 
 const ExpertLayout = styled.div`
@@ -44,20 +44,6 @@ const SpecialistChatPanel = styled.div`
   }
 `;
 
-const QuestionList = styled.ol`
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: grid;
-  gap: 0.75rem;
-`;
-
-const QuestionRow = styled.li`
-  display: flex;
-  align-items: flex-start;
-  gap: 0.5rem;
-`;
-
 interface DiscoveryPanelProps {
   solution: Solution;
   api: PlannerApi;
@@ -67,6 +53,7 @@ interface DiscoveryPanelProps {
   // Set while another section (problem statement, header, blueprint) is busy, to block this one too.
   disabled?: boolean;
   onBusyChange?: (busy: boolean) => void;
+  onChatsChanged?: () => void;
 }
 
 const serviceName = (service: string, specialists: SpecialistDefinition[]) =>
@@ -78,15 +65,10 @@ const countBadge = (
   count: number,
   label: string,
   testId: string,
-  type: 'important' | 'success' | 'information' = count > 0 ? 'important' : 'information',
+  type: 'important' | 'success' | 'information' = 'information',
 ) => <GoabBadge type={type} content={plural(count, label)} testId={testId} />;
 
-const OPEN_QUESTIONS_LIMIT = 5;
-const SUMMARY_LENGTH = 300;
-
-const isLong = (answer?: string): boolean => (answer || '').length > SUMMARY_LENGTH;
-
-type QuestionRowMode = 'closed' | 'answering' | 'viewing';
+const RECENT_MESSAGE_COUNT = 2;
 
 export const DiscoveryPanel: FunctionComponent<DiscoveryPanelProps> = ({
   solution,
@@ -96,37 +78,24 @@ export const DiscoveryPanel: FunctionComponent<DiscoveryPanelProps> = ({
   specialists = [],
   disabled = false,
   onBusyChange,
+  onChatsChanged,
 }) => {
   const [draft, setDraft] = useState('');
-  const [answerDrafts, setAnswerDrafts] = useState<Record<string, string>>({});
-  const [rowMode, setRowMode] = useState<Record<string, QuestionRowMode>>({});
-  const [showAllOpen, setShowAllOpen] = useState(false);
   const [selectedSpecialistService, setSelectedSpecialistService] = useState<string>();
   const [chatCounts, setChatCounts] = useState<Record<string, number>>({});
   const [chatCountsError, setChatCountsError] = useState(false);
   const [busy, run] = useBusy();
   const blocked = busy || disabled;
   const discovery = solution.state.discovery;
+  const confidence = solution.state.confidence;
   const canSkipDiscovery = !!discovery && !discovery.ready && discovery.confidence < discovery.threshold;
   const message = draft.trim();
-  const allQuestions = [...solution.state.questions].sort((a, b) => {
-    if (a.status === 'open' && b.status !== 'open') {
-      return 1;
-    }
-    if (a.status !== 'open' && b.status === 'open') {
-      return -1;
-    }
-    return 0;
-  });
-  const openQuestions = allQuestions.filter((question) => question.status === 'open');
-  const answeredQuestions = allQuestions.filter((question) => question.status !== 'open');
-  const visibleOpenIds = new Set(
-    (showAllOpen ? openQuestions : openQuestions.slice(0, OPEN_QUESTIONS_LIMIT)).map((question) => question.id),
-  );
-  const hiddenOpenCount = openQuestions.length - visibleOpenIds.size;
+  const openQuestions = solution.state.questions.filter((question) => question.status === 'open');
   const messages = [...(discovery?.messages || []), ...(solution.state.conversation || [])].sort(
     (first, second) => new Date(first.at).getTime() - new Date(second.at).getTime(),
   );
+  const recentMessages = messages.slice(-RECENT_MESSAGE_COUNT);
+  const earlierMessages = messages.slice(0, messages.length - recentMessages.length);
   const recommendations = solution.state.blueprint?.serviceMapping || [];
   const activeRecommendation =
     recommendations.find((recommendation) => recommendation.service === selectedSpecialistService) ||
@@ -171,6 +140,10 @@ export const DiscoveryPanel: FunctionComponent<DiscoveryPanelProps> = ({
       setChatCountsError(true);
     }
   };
+  const handleChatsChanged = () => {
+    refreshChatCounts();
+    onChatsChanged?.();
+  };
 
   const send = (options?: DiscoveryOptions) =>
     run(async () => {
@@ -181,244 +154,71 @@ export const DiscoveryPanel: FunctionComponent<DiscoveryPanelProps> = ({
       onSolutionChange(result);
     });
 
-  const startAnswering = (question: OpenQuestion) => {
-    setAnswerDrafts((drafts) => ({ ...drafts, [question.id]: drafts[question.id] ?? question.answer ?? '' }));
-    setRowMode((modes) => ({ ...modes, [question.id]: 'answering' }));
-  };
-
-  const cancelAnswering = (questionId: string) => setRowMode((modes) => ({ ...modes, [questionId]: 'closed' }));
-
-  const toggleShowAnswer = (questionId: string) =>
-    setRowMode((modes) => ({ ...modes, [questionId]: modes[questionId] === 'viewing' ? 'closed' : 'viewing' }));
-
-  const saveAnswer = (questionId: string) =>
-    run(async () => {
-      const result = await api.answerQuestion(solution.id, questionId, (answerDrafts[questionId] || '').trim());
-      setRowMode((modes) => ({ ...modes, [questionId]: 'closed' }));
-      onSolutionChange(result);
-    });
-
-  const renderQuestionRow = (question: OpenQuestion) => {
-    const isOpen = question.status === 'open';
-    const currentMode = rowMode[question.id] || 'closed';
-    return (
-      <QuestionRow key={question.id} data-testid={`discovery-question-${question.id}`}>
-        <div style={{ flex: 1 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-            <span>{question.question}</span>
-            <GoabBadge
-              type={isOpen ? 'information' : 'success'}
-              content={isOpen ? 'Open' : 'Answered'}
-              testId={`discovery-question-status-${question.id}`}
-            />
-          </div>
-          {currentMode === 'answering' ? (
-            <div style={{ display: 'grid', gap: '0.5rem', marginTop: '0.5rem' }}>
-              <GoabTextArea
-                name={`question-answer-${question.id}`}
-                value={answerDrafts[question.id] ?? ''}
-                rows={2}
-                width="100%"
-                maxWidth="100%"
-                testId={`discovery-question-input-${question.id}`}
-                ariaLabel={`Answer: ${question.question}`}
-                disabled={blocked}
-                onChange={(detail) => setAnswerDrafts((drafts) => ({ ...drafts, [question.id]: detail.value }))}
-              />
-              <div style={{ display: 'flex', gap: '0.5rem' }}>
-                <GoabButton
-                  type="primary"
-                  size="compact"
-                  testId={`discovery-question-save-${question.id}`}
-                  disabled={blocked || !(answerDrafts[question.id] || '').trim()}
-                  onClick={() => saveAnswer(question.id)}
-                >
-                  Save
-                </GoabButton>
-                <GoabButton
-                  type="tertiary"
-                  size="compact"
-                  testId={`discovery-question-cancel-${question.id}`}
-                  disabled={blocked}
-                  onClick={() => cancelAnswering(question.id)}
-                >
-                  Cancel
-                </GoabButton>
-              </div>
-            </div>
-          ) : isOpen ? (
-            <GoabButton
-              type="secondary"
-              size="compact"
-              testId={`discovery-question-answer-${question.id}`}
-              mt="s"
-              disabled={blocked}
-              onClick={() => startAnswering(question)}
-            >
-              Answer
-            </GoabButton>
-          ) : (
-            <div style={{ marginTop: '0.25rem' }}>
-              {(!isLong(question.answer) || currentMode === 'viewing') && (
-                <p data-testid={`discovery-question-summary-${question.id}`}>{question.answer}</p>
-              )}
-              <div style={{ display: 'flex', gap: '0.5rem' }}>
-                {isLong(question.answer) && (
-                  <GoabButton
-                    type="tertiary"
-                    size="compact"
-                    testId={`discovery-question-toggle-${question.id}`}
-                    disabled={blocked}
-                    onClick={() => toggleShowAnswer(question.id)}
-                  >
-                    {currentMode === 'viewing' ? 'Hide answer' : 'Show answer'}
-                  </GoabButton>
-                )}
-                <GoabButton
-                  type="tertiary"
-                  size="compact"
-                  testId={`discovery-question-edit-${question.id}`}
-                  disabled={blocked}
-                  onClick={() => startAnswering(question)}
-                >
-                  Edit
-                </GoabButton>
-              </div>
-            </div>
-          )}
-        </div>
-      </QuestionRow>
-    );
-  };
+  const renderMessage = (m: ConversationMessage, index: number) => (
+    <GoabCallout
+      key={`${m.at}-${index}`}
+      type={m.role === 'user' ? 'success' : 'information'}
+      heading={m.role === 'user' ? 'You' : 'Planner'}
+      testId={`discovery-message-${index}`}
+      mb="s"
+    >
+      <ExpandableText content={m.content} testId={`discovery-message-${index}-toggle`} />
+    </GoabCallout>
+  );
 
   return (
     <div data-testid="discovery-panel">
       {discovery?.warning && (
-        <GoabCallout type="important" heading="Note" testId="discovery-warning">
+        <GoabCallout type="important" emphasis="medium" heading="Note" testId="discovery-warning">
           {discovery.warning}
         </GoabCallout>
       )}
-      <p>
-        Refine the analysis by answering optional questions, asking a question, adding more details, or correcting gaps.
-      </p>
       <p style={{ fontSize: '85%', margin: '0 0 1rem' }} data-testid="discovery-mode-hint">
         Using {mode === 'ai' ? 'AI analysis' : 'rule-based analysis'}. Change this with the Analysis mode toggle in the
         Problem statement step above.
       </p>
       <GoabAccordion
-        heading="Questions"
-        headingContent={
-          <span style={{ display: 'flex', gap: '0.5rem' }}>
-            {countBadge(openQuestions.length, 'open question', 'discovery-questions-count')}
-            {answeredQuestions.length > 0 &&
-              countBadge(answeredQuestions.length, 'answered question', 'discovery-answered-count', 'success')}
-          </span>
-        }
-        headingSize="small"
-        open={false}
-        testId="discovery-questions"
-      >
-        <p>
-          Answer a question directly below it, or use &quot;Additional details&quot; further down for free-form details.
-        </p>
-        {allQuestions.length > 0 ? (
-          <>
-            {answeredQuestions.length > 0 && (
-              <div style={{ marginLeft: '-15px', marginBottom: openQuestions.length > 0 ? '1rem' : 0 }}>
-                <GoabDetails
-                  heading={`Answered questions (${answeredQuestions.length})`}
-                  open={false}
-                  testId="discovery-answered-questions"
-                >
-                  <QuestionList>{answeredQuestions.map((question) => renderQuestionRow(question))}</QuestionList>
-                </GoabDetails>
-              </div>
-            )}
-            {openQuestions.length === 0 && (
-              <GoabCallout type="success" heading="All caught up" testId="discovery-questions-complete" mb="m">
-                Nothing more to answer right now — you&apos;ve answered everything the planner currently knows to ask.
-                Confidence reflects how well each area is understood; use &quot;Additional details&quot; below to add
-                more at any time.
-              </GoabCallout>
-            )}
-            {openQuestions.length > 0 && (
-              <>
-                <QuestionList>
-                  {openQuestions
-                    .filter((question) => visibleOpenIds.has(question.id))
-                    .map((question) => renderQuestionRow(question))}
-                </QuestionList>
-                {hiddenOpenCount > 0 && (
-                  <GoabButton
-                    type="tertiary"
-                    size="compact"
-                    testId="discovery-questions-show-more"
-                    mt="s"
-                    disabled={blocked}
-                    onClick={() => setShowAllOpen(true)}
-                  >
-                    Show more ({hiddenOpenCount})
-                  </GoabButton>
-                )}
-                {showAllOpen && openQuestions.length > OPEN_QUESTIONS_LIMIT && (
-                  <GoabButton
-                    type="tertiary"
-                    size="compact"
-                    testId="discovery-questions-show-less"
-                    mt="s"
-                    disabled={blocked}
-                    onClick={() => setShowAllOpen(false)}
-                  >
-                    Show fewer
-                  </GoabButton>
-                )}
-              </>
-            )}
-          </>
-        ) : (
-          <p>No questions yet.</p>
-        )}
-      </GoabAccordion>
-      <GoabAccordion
         heading="Conversation"
         headingContent={countBadge(messages.length, 'message', 'discovery-conversation-count')}
         headingSize="small"
+        headingType="filled"
         open={true}
         testId="discovery-conversation"
       >
-        {messages.length > 0 ? (
-          <div style={{ marginLeft: '-15px' }}>
+        <p style={{ fontStyle: 'italic' }} data-testid="discovery-conversation-hint">
+          Reply in the box below to add details, ask a question, or answer something the planner raised. Each reply is
+          recorded here and the plan — including its confidence — updates automatically.
+        </p>
+        <section aria-label="Conversation with the planner">
+          {earlierMessages.length > 0 && (
             <GoabDetails
-              heading={`Conversation history (${messages.length})`}
+              heading={`Show earlier conversation (${earlierMessages.length})`}
               open={false}
-              testId="discovery-conversation-history"
+              testId="discovery-earlier-conversation"
+              maxWidth="100%"
+              mb="s"
             >
-              <section aria-label="Conversation with the planner">
-                {messages.map((m, i) => (
-                  <GoabCallout
-                    key={`${m.at}-${i}`}
-                    type={m.role === 'user' ? 'important' : 'information'}
-                    heading={m.role === 'user' ? 'You' : 'Planner'}
-                    testId={`discovery-message-${i}`}
-                    mb="s"
-                  >
-                    <div style={{ whiteSpace: 'pre-wrap' }}>{m.content}</div>
-                  </GoabCallout>
-                ))}
-              </section>
+              {earlierMessages.map((m, i) => renderMessage(m, i))}
             </GoabDetails>
-          </div>
-        ) : (
-          <p>No messages yet.</p>
-        )}
+          )}
+          {recentMessages.map((m, i) => renderMessage(m, earlierMessages.length + i))}
+          {messages.length === 0 &&
+            (confidence && confidence.score >= confidence.threshold ? (
+              <GoabCallout type="information" heading="Planner" testId="discovery-empty-confident">
+                <div>
+                  Your problem statement already gives me enough detail (confidence {confidence.score}%). Reply below
+                  only if you want to add more or ask a question.
+                </div>
+              </GoabCallout>
+            ) : (
+              <p>No messages yet.</p>
+            ))}
+        </section>
         {busy && (
           <GoabCircularProgress visible size="small" message="Asking the model — this can take up to a minute" />
         )}
-        <div style={{ display: 'grid', gap: '1rem', marginTop: '1rem' }}>
-          <GoabFormItem
-            label="Additional details"
-            helpText="You can answer any of the open questions here too — just say which one you mean."
-          >
+        <div style={{ display: 'grid', gap: '1rem', marginTop: '1.5rem' }}>
+          <GoabFormItem label="Additional details">
             <GoabTextArea
               name="plannerMessage"
               value={draft}
@@ -478,6 +278,7 @@ export const DiscoveryPanel: FunctionComponent<DiscoveryPanelProps> = ({
                 countBadge(specialistsWithChatsCount, 'specialist', 'optional-experts-count')}
             </span>
           }
+          headingType="filled"
           open={false}
           testId="optional-experts"
         >
@@ -493,7 +294,7 @@ export const DiscoveryPanel: FunctionComponent<DiscoveryPanelProps> = ({
                 <h3 style={{ margin: 0 }}>Specialists</h3>
                 {specialists.map((specialist) => {
                   const label = `${serviceName(specialist.service, specialists)}${
-                    chatCounts[specialist.service] ? ` (${chatCounts[specialist.service]})` : ''
+                    chatCounts[specialist.service] ? ' *' : ''
                   }`;
 
                   return (
@@ -518,6 +319,7 @@ export const DiscoveryPanel: FunctionComponent<DiscoveryPanelProps> = ({
                     solution={solution}
                     api={api}
                     mode={mode}
+                    disabled={blocked}
                     context={{
                       label:
                         activeRecommendation?.service === activeSpecialist.service
@@ -528,7 +330,7 @@ export const DiscoveryPanel: FunctionComponent<DiscoveryPanelProps> = ({
                           ? activeRecommendation.reason
                           : activeSpecialist.purpose,
                     }}
-                    onChatsChanged={refreshChatCounts}
+                    onChatsChanged={handleChatsChanged}
                     onSolutionChange={onSolutionChange}
                   />
                 </SpecialistChatPanel>

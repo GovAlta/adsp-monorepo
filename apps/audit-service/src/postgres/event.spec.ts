@@ -280,6 +280,18 @@ describe('PostgresEventRepository', () => {
     });
   });
 
+  it('filters by severity, correlation and session', async () => {
+    await repository.find(
+      { tenantId: event.tenant_id, severity: 'critical', correlationId: 'trace-1', sessionId: 'session-1' },
+      10,
+    );
+
+    expect(execute.mock.calls[0][1]).toMatchObject({
+      sql: 'select * from "audit_events" where "tenant_id" = $1 and "severity" = $2 and "correlation_id" = $3 and "session_id" = $4 order by "occurred_at" desc, "id" desc limit $5',
+      bindings: [event.tenant_id, 'critical', 'trace-1', 'session-1', 10],
+    });
+  });
+
   it('keeps tenant isolation when listing across all namespaces', async () => {
     await repository.find({ tenantId: event.tenant_id }, 10);
 

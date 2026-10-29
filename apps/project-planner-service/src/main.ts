@@ -113,6 +113,7 @@ const initializeApp = async (): Promise<express.Application> => {
     solutionRepository: repositories.solutionRepository,
     patternRepository: repositories.patternRepository,
     specialistChatRepository: repositories.specialistChatRepository,
+    solutionVersionRepository: repositories.solutionVersionRepository,
     eventService,
     llm: createLlmFromEnv(
       {
