@@ -73,18 +73,19 @@ export function chatToMarkdown(chat: SpecialistChat): string {
   return out.join('\n') + '\n';
 }
 
+const versionLabel = (solution: Solution) =>
+  `${solution.version}${solution.unsavedChanges ? ' (unsaved changes)' : ''}`;
+
 export function solutionToMarkdown(solution: Solution): string {
   const st = solution.state;
-  const latestChange = solution.versionHistory[solution.versionHistory.length - 1];
-  const changedSections = solution.changedSections ?? latestChange?.changedSections ?? [];
-  const lastUpdated = solution.lastUpdated ?? latestChange?.changedAt ?? solution.updatedOn;
+  const changedSections = solution.changedSections ?? [];
   const lines: string[] = [
     `# ${solution.name}`,
     '',
     `Status: ${solution.status} · Exported ${new Date().toLocaleString()}`,
     '',
-    `solution-version: ${solution.version}`,
-    `last-updated: ${fmtDate(lastUpdated)}`,
+    `solution-version: ${versionLabel(solution)}`,
+    `last-updated: ${fmtDate(solution.lastUpdated ?? solution.updatedOn)}`,
     '',
     "## What's changed",
     '',
@@ -264,7 +265,7 @@ export function solutionToMarkdown(solution: Solution): string {
   return lines.join('\n') + '\n';
 }
 
-export function harnessToMarkdown(solution: Solution): string {
+export function harnessToMarkdown(solution: Solution, file = `planner-${safeName(solution)}`): string {
   const components = (solution.state.blueprint?.components ?? []).filter((c) => c.review !== 'rejected');
   const componentList = components.length
     ? components
@@ -274,8 +275,9 @@ export function harnessToMarkdown(solution: Solution): string {
   const values: Record<string, string> = {
     name: solution.name,
     slug: safeName(solution),
-    n: solution.version,
+    file,
+    n: versionLabel(solution),
     'component list': componentList,
   };
-  return HARNESS_TEMPLATE.replace(/\{(name|slug|n|component list)\}/g, (_, key: string) => values[key]);
+  return HARNESS_TEMPLATE.replace(/\{(name|slug|file|n|component list)\}/g, (_, key: string) => values[key]);
 }

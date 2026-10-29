@@ -174,6 +174,8 @@ export class ContextProviderClass {
   }
 
   setup = (props: Props) => {
+    const previousFileManagement = this.selfProps?.fileManagement;
+    const previousData = this.selfProps?.data;
     this.selfProps = props;
     if (props.fileManagement) {
       const { fileList, uploadFile, downloadFile, deleteFile } = props.fileManagement;
@@ -223,7 +225,11 @@ export class ContextProviderClass {
       onNavigationChange: props.onNavigationChange,
     };
 
-    if (HOST_CONTROLLED_KEYS.some((key) => next[key] !== this.baseEnumerator[key])) {
+    const hostControlledChanged = HOST_CONTROLLED_KEYS.some((key) => next[key] !== this.baseEnumerator[key]);
+    const fileManagementChanged = props.fileManagement !== previousFileManagement;
+    const dataChanged = props.data !== previousData;
+
+    if (hostControlledChanged || fileManagementChanged || dataChanged) {
       this.baseEnumerator = next;
     }
 

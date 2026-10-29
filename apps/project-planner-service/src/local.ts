@@ -70,6 +70,7 @@ const startLocal = async () => {
       solutionRepository: repositories.solutionRepository,
       patternRepository: repositories.patternRepository,
       specialistChatRepository: repositories.specialistChatRepository,
+      solutionVersionRepository: repositories.solutionVersionRepository,
       eventService,
       llm: createLlmFromEnv(process.env, logger),
     }),

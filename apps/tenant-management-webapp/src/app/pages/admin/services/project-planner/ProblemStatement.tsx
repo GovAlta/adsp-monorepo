@@ -51,22 +51,37 @@ interface ProblemStatementProps {
   busy: boolean;
   continueLabel?: string;
   showContinue?: boolean;
+  showUpload?: boolean;
   onChange: (value: string) => void;
   onContinue: () => void;
 }
 
-export const ProblemStatement: FunctionComponent<ProblemStatementProps> = ({
-  value,
-  busy,
-  continueLabel = 'Continue',
-  showContinue = true,
+interface ProblemStatementUploadProps {
+  onChange: (value: string) => void;
+  disabled?: boolean;
+}
+
+export const ProblemStatementUpload: FunctionComponent<ProblemStatementUploadProps> = ({
   onChange,
-  onContinue,
+  disabled = false,
 }) => {
   const api = usePlannerApi();
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const uploadRowRef = useRef<HTMLDivElement>(null);
+  const shadowRootRef = useRef<ShadowRoot | null>(null);
+  const blocked = disabled || uploading;
+  const blockedRef = useRef(blocked);
+  blockedRef.current = blocked;
+
+  const applyDisabled = (root: ShadowRoot) => {
+    const button = root.querySelector('goa-button');
+    if (blockedRef.current) {
+      button?.setAttribute('disabled', 'disabled');
+    } else {
+      button?.removeAttribute('disabled');
+    }
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -105,13 +120,16 @@ export const ProblemStatement: FunctionComponent<ProblemStatementProps> = ({
         frame = requestAnimationFrame(attach);
         return;
       }
+      shadowRootRef.current = root;
       hideMaxFileSize(root);
       compactChooseFileButton(root);
       captureIssue(root);
+      applyDisabled(root);
       observer = new MutationObserver(() => {
         hideMaxFileSize(root);
         compactChooseFileButton(root);
         captureIssue(root);
+        applyDisabled(root);
       });
       observer.observe(root, {
         childList: true,
@@ -130,6 +148,12 @@ export const ProblemStatement: FunctionComponent<ProblemStatementProps> = ({
     };
   }, []);
 
+  useEffect(() => {
+    if (shadowRootRef.current) {
+      applyDisabled(shadowRootRef.current);
+    }
+  }, [blocked]);
+
   const uploadFile = async (detail: GoabFileUploadInputOnSelectFileDetail) => {
     setUploading(true);
     setUploadError(null);
@@ -140,6 +164,47 @@ export const ProblemStatement: FunctionComponent<ProblemStatementProps> = ({
     setUploading(false);
   };
 
+  return (
+    <div>
+      <UploadRow ref={uploadRowRef}>
+        <UploadLabel>
+          Or upload a file
+          <GoabTooltip content={UPLOAD_HINT} position="top">
+            <GoabIcon type="help-circle" ariaLabel="Upload file requirements" />
+          </GoabTooltip>
+        </UploadLabel>
+        <GoabFileUploadInput
+          variant="button"
+          accept={UPLOAD_ACCEPT}
+          maxFileSize={UPLOAD_MAX_FILE_SIZE}
+          testId="problem-statement-upload"
+          onSelectFile={uploadFile}
+        />
+        {uploading && (
+          <span data-testid="problem-statement-uploading" style={{ fontSize: '85%' }}>
+            Uploading…
+          </span>
+        )}
+      </UploadRow>
+      {uploadError && (
+        <UploadError data-testid="problem-statement-upload-error">
+          <GoabIcon type="warning" size="small" theme="filled" ariaLabel="Upload error" />
+          <span>{uploadError}</span>
+        </UploadError>
+      )}
+    </div>
+  );
+};
+
+export const ProblemStatement: FunctionComponent<ProblemStatementProps> = ({
+  value,
+  busy,
+  continueLabel = 'Continue',
+  showContinue = true,
+  showUpload = true,
+  onChange,
+  onContinue,
+}) => {
   return (
     <div data-testid="problem-statement">
       <GoabFormItem label="Describe the problem" maxWidth="100%" mb="m">
@@ -155,34 +220,9 @@ export const ProblemStatement: FunctionComponent<ProblemStatementProps> = ({
           onChange={(detail) => onChange(detail.value)}
         />
       </GoabFormItem>
-      <UploadRow ref={uploadRowRef}>
-        <UploadLabel>
-          Or upload a file
-          <GoabTooltip content={UPLOAD_HINT} position="top">
-            <GoabIcon type="help-circle" ariaLabel="Upload file requirements" />
-          </GoabTooltip>
-        </UploadLabel>
-        <GoabFileUploadInput
-          variant="button"
-          accept={UPLOAD_ACCEPT}
-          maxFileSize={UPLOAD_MAX_FILE_SIZE}
-          testId="problem-statement-upload"
-          onSelectFile={uploadFile}
-        />
-      </UploadRow>
-      {uploadError && (
-        <UploadError data-testid="problem-statement-upload-error">
-          <GoabIcon type="warning" size="small" theme="filled" ariaLabel="Upload error" />
-          <span>{uploadError}</span>
-        </UploadError>
-      )}
+      {showUpload && <ProblemStatementUpload onChange={onChange} />}
       {showContinue && (
-        <GoabButton
-          type="primary"
-          testId="problem-continue"
-          disabled={busy || uploading || !value.trim()}
-          onClick={onContinue}
-        >
+        <GoabButton type="primary" testId="problem-continue" disabled={busy || !value.trim()} onClick={onContinue}>
           {continueLabel}
         </GoabButton>
       )}

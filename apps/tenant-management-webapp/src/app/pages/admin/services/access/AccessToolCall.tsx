@@ -3,7 +3,14 @@ import { GoabBadge } from '@abgov/react-components';
 import type { GoabBadgeType } from '@abgov/ui-components-common';
 import type { ToolCall } from '@core-services/app-common';
 import styled from 'styled-components';
-import { AccessDiscoveryStatus, AccessEnvironmentSummary, AccessRealmKind } from '@store/agent/model';
+import {
+  AccessClientDetails,
+  AccessClientSummary,
+  AccessDiscoveryStatus,
+  AccessEnvironmentSummary,
+  AccessRealmKind,
+} from '@store/agent/model';
+import { ClientDetails, ClientList, ClientSuggestions } from './AccessClientResults';
 
 interface AccessRealm {
   realm: string;
@@ -23,6 +30,10 @@ interface AccessToolResult {
   environments?: Array<AccessEnvironmentSummary & { current: boolean; inspectable: boolean }>;
   realms?: AccessRealm[];
   realm?: AccessRealm;
+  clients?: AccessClientSummary[];
+  truncated?: boolean;
+  suggestions?: string[];
+  client?: AccessClientDetails;
 }
 
 type CardStatus = 'pending' | 'complete' | 'notice' | 'error';
@@ -31,6 +42,8 @@ const TOOL_HEADINGS: Record<string, { pending: string; done: string }> = {
   listAccessEnvironments: { pending: 'Checking environments…', done: 'Access Service environments' },
   listAccessRealms: { pending: 'Checking realms…', done: 'Realms you can inspect' },
   getAccessRealmInfo: { pending: 'Checking realm details…', done: 'Realm details' },
+  listAccessClients: { pending: 'Checking clients…', done: 'Clients in your realm' },
+  getAccessClient: { pending: 'Checking client configuration…', done: 'Client configuration' },
 };
 
 const NOTICE_BADGES: Record<string, { type: GoabBadgeType; content: string }> = {
@@ -167,6 +180,21 @@ const RealmDetails: FunctionComponent<{ realm: AccessRealm; environment?: Access
   </dl>
 );
 
+const AvailableResult: FunctionComponent<{ toolName: string; result: AccessToolResult }> = ({ toolName, result }) => {
+  switch (toolName) {
+    case 'listAccessRealms':
+      return result.realms?.length > 0 ? <RealmList realms={result.realms} /> : null;
+    case 'getAccessRealmInfo':
+      return result.realm ? <RealmDetails realm={result.realm} environment={result.environment} /> : null;
+    case 'listAccessClients':
+      return <ClientList clients={result.clients ?? []} truncated={result.truncated} message={result.message} />;
+    case 'getAccessClient':
+      return result.client ? <ClientDetails client={result.client} /> : null;
+    default:
+      return null;
+  }
+};
+
 export const AccessToolCall: FunctionComponent<{ toolCall: ToolCall }> = ({ toolCall }) => {
   if (!isAccessDiscoveryTool(toolCall.toolName)) {
     return null;
@@ -196,13 +224,13 @@ export const AccessToolCall: FunctionComponent<{ toolCall: ToolCall }> = ({ tool
               Missing role: <code>{result.missingRoles.join(', ')}</code>
             </p>
           )}
+          <ClientSuggestions suggestions={result.suggestions} />
         </>
       )}
       {(status === 'complete' || status === 'notice') && result.environments?.length > 0 && (
         <EnvironmentsTable environments={result.environments} />
       )}
-      {status === 'complete' && result.realms?.length > 0 && <RealmList realms={result.realms} />}
-      {status === 'complete' && result.realm && <RealmDetails realm={result.realm} environment={result.environment} />}
+      {status === 'complete' && <AvailableResult toolName={toolCall.toolName} result={result} />}
     </ToolCard>
   );
 };
@@ -270,6 +298,20 @@ const ToolCard = styled.div`
   & dd {
     margin: 0;
     word-break: break-all;
+  }
+
+  & h4 {
+    margin: var(--goa-space-s) 0 0 0;
+    font-size: var(--goa-font-size-2);
+  }
+
+  & details {
+    margin-top: var(--goa-space-s);
+  }
+
+  & summary {
+    cursor: pointer;
+    font-weight: 600;
   }
 
   & code {

@@ -1,9 +1,60 @@
 import { createHash } from 'crypto';
-import { BlueprintComponent, Solution, SpecialistNote } from './types';
+import { BlueprintComponent, Solution, SpecialistChat, SpecialistNote } from './types';
 
-export type VersionBump = 'major' | 'minor' | 'none';
+export interface VersionChat extends Pick<SpecialistChat, 'id' | 'service' | 'title' | 'createdByName' | 'messages'> {
+  createdOn: string;
+  updatedOn: string;
+}
 
-type VersionableSolution = Pick<Solution, 'name' | 'state'>;
+// Everything a saved version keeps; also what the migration backfills, so keep the two in step.
+export interface VersionContent extends Pick<Solution, 'name' | 'description' | 'scenario' | 'status' | 'state'> {
+  specialistChats: VersionChat[];
+}
+
+export function versionContent(
+  solution: Pick<Solution, 'name' | 'description' | 'scenario' | 'status' | 'state'>,
+  chats: SpecialistChat[],
+): VersionContent {
+  const specialistChats = chats
+    .map(({ id, service, title, createdByName, createdOn, updatedOn, messages }) => ({
+      id,
+      service,
+      title,
+      createdByName,
+      createdOn: new Date(createdOn).toISOString(),
+      updatedOn: new Date(updatedOn).toISOString(),
+      messages,
+    }))
+    .sort((a, b) => a.createdOn.localeCompare(b.createdOn) || a.id.localeCompare(b.id));
+  const { name, description, scenario, status, state } = solution;
+  return { name, description, scenario, status, state, specialistChats };
+}
+
+// Sorted keys and no nulls, so a copy read back from jsonb hashes the same as the original.
+const canonical = (value: unknown): unknown => {
+  if (value instanceof Date) {
+    return value.toISOString();
+  }
+  if (Array.isArray(value)) {
+    return value.map((item) => canonical(item) ?? null);
+  }
+  if (value && typeof value === 'object') {
+    return Object.fromEntries(
+      Object.keys(value)
+        .sort()
+        .filter((key) => value[key] !== null && value[key] !== undefined)
+        .map((key) => [key, canonical(value[key])]),
+    );
+  }
+  return value;
+};
+
+const hash = (value: unknown): string =>
+  createHash('sha256')
+    .update(JSON.stringify(canonical(value)))
+    .digest('hex');
+
+export const contentHash = (content: VersionContent): string => hash(content);
 
 const omitConsultedOn = (note: SpecialistNote): Omit<SpecialistNote, 'consultedOn'> => {
   const { consultedOn: _consultedOn, ...rest } = note;
@@ -15,41 +66,44 @@ const omitReview = (component: BlueprintComponent): Omit<BlueprintComponent, 're
   return rest;
 };
 
-// Only reviewed components, so a blueprint where nothing is reviewed yet does not bump.
-const reviewedComponents = (s: VersionableSolution) =>
-  s.state.blueprint?.components
+const reviewedComponents = (c: VersionContent) =>
+  c.state.blueprint?.components
     ?.filter(({ review }) => review && review !== 'not-reviewed')
     .map(({ order, name, review }) => ({ order, name, review }));
 
-const MINOR_SECTIONS: Record<string, (solution: VersionableSolution) => unknown> = {
-  Title: (s) => s.name,
-  'Problem statement': (s) => s.state.problemStatement,
-  Concepts: (s) => s.state.concepts,
-  Decisions: (s) => s.state.decisions,
-  Hypotheses: (s) => s.state.hypotheses.slice(0, 1),
-  'Questions and answers': (s) => s.state.questions,
-  'Next steps': (s) => s.state.nextSteps,
+const SECTIONS: Record<string, (content: VersionContent) => unknown> = {
+  Title: (c) => c.name,
+  Description: (c) => c.description,
+  Scenario: (c) => c.scenario,
+  Status: (c) => c.status,
+  'Problem statement': (c) => c.state.problemStatement,
+  Analysis: (c) => ({
+    analysis: c.state.analysis,
+    patternMatches: c.state.patternMatches,
+    confidence: c.state.confidence,
+  }),
+  'Discovery conversation': (c) => c.state.discovery,
+  Concepts: (c) => c.state.concepts,
+  Decisions: (c) => c.state.decisions,
+  Hypotheses: (c) => c.state.hypotheses?.slice(0, 1),
+  'Questions and answers': (c) => c.state.questions,
+  'Next steps': (c) => c.state.nextSteps,
+  'Planner conversation': (c) => c.state.conversation,
+  'Specialist consultations': (c) => ({ specialists: c.state.specialists, specialistChats: c.specialistChats }),
   'Component review': reviewedComponents,
-};
-
-const MAJOR_SECTIONS: Record<string, (solution: VersionableSolution) => unknown> = {
-  Overview: (s) => s.state.blueprint?.overview,
-  Architecture: (s) => s.state.blueprint?.architecture,
-  'Service mapping': (s) => s.state.blueprint?.serviceMapping,
-  'Not covered by ADSP': (s) => {
-    const items = s.state.blueprint?.notCoveredByAdsp;
+  Overview: (c) => c.state.blueprint?.overview,
+  Architecture: (c) => c.state.blueprint?.architecture,
+  'Service mapping': (c) => c.state.blueprint?.serviceMapping,
+  'Not covered by ADSP': (c) => {
+    const items = c.state.blueprint?.notCoveredByAdsp;
     return items === undefined ? undefined : { items };
   },
-  'Components to set up': (s) => s.state.blueprint?.components?.map(omitReview),
-  'Specialist notes': (s) => s.state.blueprint?.specialistNotes?.map(omitConsultedOn),
-  Workflows: (s) => s.state.blueprint?.workflows,
-  'Data & governance': (s) => s.state.blueprint?.dataGovernance,
-  Delivery: (s) => s.state.blueprint?.delivery,
+  'Components to set up': (c) => c.state.blueprint?.components?.map(omitReview),
+  'Specialist notes': (c) => c.state.blueprint?.specialistNotes?.map(omitConsultedOn),
+  Workflows: (c) => c.state.blueprint?.workflows,
+  'Data & governance': (c) => c.state.blueprint?.dataGovernance,
+  Delivery: (c) => c.state.blueprint?.delivery,
 };
-
-const SECTIONS = { ...MINOR_SECTIONS, ...MAJOR_SECTIONS };
-const SECTION_ORDER = Object.keys(SECTIONS);
-const MAJOR_SECTION_NAMES = new Set(Object.keys(MAJOR_SECTIONS));
 
 const normalize = (value: unknown): unknown => {
   if (typeof value === 'string') {
@@ -64,11 +118,6 @@ const normalize = (value: unknown): unknown => {
   return value;
 };
 
-const hashSection = (value: unknown): string =>
-  createHash('sha256')
-    .update(JSON.stringify(normalize(value)))
-    .digest('hex');
-
 const isEmpty = (value: unknown): boolean => {
   if (value === undefined || value === null) {
     return true;
@@ -77,7 +126,7 @@ const isEmpty = (value: unknown): boolean => {
     return value.length === 0;
   }
   if (typeof value === 'string') {
-    return value.trim() === '';
+    return value === '';
   }
   if (typeof value === 'object') {
     return Object.keys(value).length === 0;
@@ -85,36 +134,24 @@ const isEmpty = (value: unknown): boolean => {
   return false;
 };
 
-export function sectionHashes(solution: VersionableSolution): Record<string, string> {
+const sectionHashes = (content: VersionContent): Record<string, string> => {
   const hashes: Record<string, string> = {};
   for (const [name, select] of Object.entries(SECTIONS)) {
-    const value = select(solution);
+    const value = canonical(normalize(select(content)));
     if (!isEmpty(value)) {
-      hashes[name] = hashSection(value);
+      hashes[name] = hash(value);
     }
   }
   return hashes;
-}
+};
 
-// Sorted because stored hashes are jsonb, which does not keep key order.
-// Stored hashes for sections no longer in the plan are ignored.
-export function changedSections(previous: Record<string, string>, current: Record<string, string>): string[] {
-  const names = new Set([...Object.keys(previous), ...Object.keys(current)]);
-  return [...names]
-    .filter((name) => name in SECTIONS && previous[name] !== current[name])
-    .sort((a, b) => SECTION_ORDER.indexOf(a) - SECTION_ORDER.indexOf(b));
-}
-
-export function classifyBump(changed: string[]): VersionBump {
-  if (changed.length === 0) {
-    return 'none';
+// Other details covers changes outside the named sections, such as whitespace or timestamps.
+export function changedSections(previous: VersionContent, current: VersionContent): string[] {
+  const before = sectionHashes(previous);
+  const after = sectionHashes(current);
+  const changed = Object.keys(SECTIONS).filter((name) => before[name] !== after[name]);
+  if (changed.length === 0 && contentHash(previous) !== contentHash(current)) {
+    return ['Other details'];
   }
-  return changed.some((name) => MAJOR_SECTION_NAMES.has(name)) ? 'major' : 'minor';
-}
-
-export function nextVersion(current: string, bump: Exclude<VersionBump, 'none'>): string {
-  const [majorPart, minorPart] = current.split('.');
-  const major = Number(majorPart) || 1;
-  const minor = Number(minorPart) || 0;
-  return bump === 'major' ? `${major + 1}.0` : `${major}.${minor + 1}`;
+  return changed;
 }

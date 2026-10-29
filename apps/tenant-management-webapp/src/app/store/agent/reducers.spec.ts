@@ -1,4 +1,10 @@
-import { AGENT_RESPONSE_ACTION, AgentActionTypes, MESSAGE_AGENT_ACTION, START_THREAD_ACTION } from './actions';
+import {
+  AGENT_RESPONSE_ACTION,
+  AgentActionTypes,
+  CONNECT_AGENT_SUCCESS_ACTION,
+  MESSAGE_AGENT_ACTION,
+  START_THREAD_ACTION,
+} from './actions';
 import reducer from './reducers';
 import { AgentMessage } from './models';
 
@@ -63,5 +69,27 @@ describe('agent reducer response chunks', () => {
     const message = state.messages[MESSAGE_ID] as AgentMessage;
     expect(message.errors[0].message).toBe('Generation stopped.');
     expect(message.errors[0].details).toEqual({ code: 'INCREMENT_STOPPED' });
+  });
+});
+
+describe('agent reducer reconnect', () => {
+  const reconnect = { type: CONNECT_AGENT_SUCCESS_ACTION } as AgentActionTypes;
+
+  it('completes a reply cut off by a reconnect and marks it interrupted', () => {
+    const state = reduceAll([responseAction({ type: 'text-delta', payload: { text: 'Partial' } }), reconnect]);
+
+    expect(state.messages[MESSAGE_ID]).toMatchObject({ streaming: false, interrupted: true, content: 'Partial' });
+    expect(state.connected).toBe(true);
+  });
+
+  it('does not mark a reply that finished before the reconnect', () => {
+    const state = reduceAll([
+      responseAction({ type: 'text-delta', payload: { text: 'Complete' } }),
+      responseAction(undefined, true),
+      reconnect,
+    ]);
+
+    expect(state.messages[MESSAGE_ID]).toMatchObject({ streaming: false, content: 'Complete' });
+    expect(state.messages[MESSAGE_ID]).not.toHaveProperty('interrupted');
   });
 });

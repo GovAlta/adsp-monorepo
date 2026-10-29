@@ -20,7 +20,10 @@ import {
   validateTenantContext,
   assertTenantContext,
   createAuditMetrics,
+  createRateLimitMetrics,
+  EventRateLimiter,
   FailedEventService,
+  RateLimitService,
   ReplayEventPreparer,
   AUDIT_SERVICE_NAMESPACE,
 } from './audit';
@@ -29,7 +32,7 @@ import { REPLAY_ACTION, REPLAY_DEFINITION } from './audit/actions';
 import { ConfigurationCatalogSource, SELF_AUDIT_DEFINITIONS } from './audit/model';
 import { SelfAuditor } from './audit/utils/self-audit';
 import { createDatabase, PostgresEventRepository, PostgresFailedEventRepository } from './postgres';
-import { createConfigurationSchema } from './audit/configuration';
+import { assertRateLimit, createConfigurationSchema } from './audit/configuration';
 import { RETENTION_ACTION, RETENTION_DEFINITION, RetentionJob, scheduleRetentionJob } from './audit/jobs/retention';
 import { PostgresRetentionRepository } from './postgres/retention';
 
@@ -43,6 +46,11 @@ export interface AuditApplication extends express.Application {
 
 export const initializeApp = async (): Promise<AuditApplication> => {
   const retentionBounds = { minDays: environment.RETENTION_MIN_DAYS, maxDays: environment.RETENTION_MAX_DAYS };
+  const rateLimitDefault = {
+    eventsPerSecond: environment.RATE_LIMIT_EVENTS_PER_SECOND,
+    burst: environment.RATE_LIMIT_BURST,
+  };
+  assertRateLimit(rateLimitDefault);
   const configurationSchema = createConfigurationSchema(retentionBounds);
   const app = express();
 
@@ -93,7 +101,8 @@ export const initializeApp = async (): Promise<AuditApplication> => {
       ],
       configuration: {
         useNamespace: true,
-        description: 'Audit action catalogs, tenant retention settings, and application retention overrides.',
+        description:
+          'Audit action catalogs, tenant retention settings, application retention overrides, and Core write rate limits.',
         schema: configurationSchema,
       },
       serviceConfigurations: [
@@ -191,6 +200,12 @@ export const initializeApp = async (): Promise<AuditApplication> => {
       logger,
       serviceId,
       auditor,
+      rateLimit: {
+        limits: new RateLimitService(configurationService, logger, rateLimitDefault),
+        limiter: new EventRateLimiter(),
+        metrics: createRateLimitMetrics(meter),
+        logger,
+      },
       failedEvents: new FailedEventService(
         failedEventRepository,
         serviceId.toString(),

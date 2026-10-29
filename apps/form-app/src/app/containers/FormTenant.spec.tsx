@@ -15,11 +15,10 @@ jest.mock('react-redux', () => ({
   useDispatch: () => mockDispatch,
 }));
 
-// The routed content and the feedback widget are not what these tests are about.
+// The routed content and error notifications are not what these tests are about.
 jest.mock('./FormDefinition', () => ({ FormDefinition: () => <div /> }));
 jest.mock('./Forms', () => ({ Forms: () => <div /> }));
 jest.mock('./FeedbackNotification', () => ({ FeedbackNotification: () => <div /> }));
-jest.mock('../util/feedbackUtils', () => ({ useFeedbackLinkHandler: () => undefined }));
 
 const { FormTenant } = require('./FormTenant');
 
@@ -63,6 +62,14 @@ describe('FormTenant', () => {
     const { getByTestId } = renderTenant();
 
     expect(getByTestId('form-header-name')).toHaveTextContent('abc111232');
+  });
+
+  it('does not offer the feedback widget from the microsite header', () => {
+    mockState = stateWith();
+
+    const { container } = renderTenant();
+
+    expect(container.querySelector('goa-microsite-header')).not.toHaveAttribute('feedbackurl');
   });
 
   // The support topic checkbox on the definition is what makes questions available at all.

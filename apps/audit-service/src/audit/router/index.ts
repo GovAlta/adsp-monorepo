@@ -11,6 +11,7 @@ import { requireAuditRole } from '../utils/authorization';
 import { SelfAuditor } from '../utils/self-audit';
 import { validateWriteRequest } from '../utils/request-validation';
 import { writeEvents } from './write-events';
+import { limitWriteRate, WriteRateLimitOptions } from './rate-limit';
 import { failedEventHandler, validateFailedEventId, validateFailedEventPage } from './failed-events';
 import { readEvent, readEvents, validateEventId, validateEventQuery } from './read-events';
 import type { Logger } from 'winston';
@@ -26,6 +27,8 @@ interface AuditRouterOptions {
   serviceId?: AdspId;
   // Overrides the auditor created from serviceId, so the host can observe its failure count.
   auditor?: SelfAuditor;
+  // Applies per tenant and namespace event rate limiting to writes when provided.
+  rateLimit?: WriteRateLimitOptions;
 }
 
 export const validateTenantContext = createValidationHandler(
@@ -137,6 +140,7 @@ export function createAuditRouter(options: AuditRouterOptions): Router {
     validateNamespace,
     assertWriteScope,
     validateWriteRequest,
+    ...(options.rateLimit ? [limitWriteRate(options.rateLimit)] : []),
     writeEvents(options),
   );
   router.get(

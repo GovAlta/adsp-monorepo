@@ -31,10 +31,7 @@ describe('PostgresSolutionRepository', () => {
     createdOn: new Date('2026-01-01'),
     updatedOn: new Date('2026-01-02'),
     state,
-    version: '1.0',
-    versionHistory: [],
-    lastExportHashes: {},
-    exportedOnce: false,
+    version: 1,
   };
   const solution: Solution = {
     id: record.id,
@@ -48,10 +45,7 @@ describe('PostgresSolutionRepository', () => {
     createdOn: record.createdOn,
     updatedOn: record.updatedOn,
     state,
-    version: '1.0',
-    versionHistory: [],
-    lastExportHashes: {},
-    exportedOnce: false,
+    version: 1,
   };
 
   const plain = (s: Solution) => ({ ...s, tenantId: s.tenantId.toString() });
@@ -197,17 +191,12 @@ describe('PostgresSolutionRepository', () => {
       knexMock.mockReturnValueOnce(queryMock);
     });
 
-    it('inserts the record with state, versionHistory and lastExportHashes serialized as JSON', async () => {
+    it('inserts the record with state serialized as JSON', async () => {
       queryMock.returning.mockResolvedValueOnce([record]);
 
       await repository.save(solution);
 
-      expect(queryMock.insert).toHaveBeenCalledWith({
-        ...record,
-        state: JSON.stringify(state),
-        versionHistory: JSON.stringify(record.versionHistory),
-        lastExportHashes: JSON.stringify(record.lastExportHashes),
-      });
+      expect(queryMock.insert).toHaveBeenCalledWith({ ...record, state: JSON.stringify(state) });
     });
 
     it('upserts on id', async () => {
@@ -216,6 +205,14 @@ describe('PostgresSolutionRepository', () => {
       await repository.save(solution);
 
       expect(queryMock.onConflict).toHaveBeenCalledWith('id');
+    });
+
+    it('leaves the version number alone on update, since only saving a version moves it', async () => {
+      queryMock.returning.mockResolvedValueOnce([record]);
+
+      await repository.save(solution);
+
+      expect(queryMock.merge).toHaveBeenCalledWith(['name', 'description', 'scenario', 'status', 'updatedOn', 'state']);
     });
 
     it('only merges within the same tenant', async () => {

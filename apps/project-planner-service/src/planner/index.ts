@@ -2,7 +2,12 @@ import { EventService } from '@abgov/adsp-service-sdk';
 import { Application } from 'express';
 import { Logger } from 'winston';
 import { PlannerLlm } from './llm';
-import { PatternRepository, SolutionRepository, SpecialistChatRepository } from './repository';
+import {
+  PatternRepository,
+  SolutionRepository,
+  SolutionVersionRepository,
+  SpecialistChatRepository,
+} from './repository';
 import { createPlannerRouter } from './router';
 
 export * from './analysis';
@@ -25,6 +30,7 @@ interface PlannerMiddlewareProps {
   solutionRepository: SolutionRepository;
   patternRepository: PatternRepository;
   specialistChatRepository: SpecialistChatRepository;
+  solutionVersionRepository: SolutionVersionRepository;
   eventService: EventService;
   llm?: PlannerLlm;
   readAdspCatalog?: () => Promise<string[]>;
