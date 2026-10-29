@@ -145,6 +145,22 @@ describe('AuditLogs', () => {
       expect(baseElement.querySelector("goa-button[testId='audit-next']")).toHaveAttribute('disabled', 'true');
     });
 
+    it('keeps Previous available when a later page comes back empty', () => {
+      const { baseElement, rerender } = paged();
+      fireEvent(baseElement.querySelector("goa-button[testId='audit-next']"), new CustomEvent('_click'));
+
+      const empty = configureStore([])(state(['audit-reader'], { events: { results: [], loading: false } }));
+      rerender(
+        <Provider store={empty}>
+          <AuditLogs />
+        </Provider>,
+      );
+      expect(baseElement).toHaveTextContent('No more events.');
+
+      fireEvent(baseElement.querySelector("goa-button[testId='audit-previous']"), new CustomEvent('_click'));
+      expect(empty.getActions().pop()).toMatchObject({ top: 30 });
+    });
+
     it('restarts from the first page when the page size changes', () => {
       const { store, baseElement } = paged();
       const size = baseElement.querySelector("goa-dropdown[name='audit-page-size']");
