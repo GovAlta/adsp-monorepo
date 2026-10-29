@@ -128,6 +128,32 @@ describe('formGenerationAgent', () => {
     expect(instructions).toContain('must include name and data');
   });
 
+  it('instructs to switch to the update flow or another name when a register already exists', () => {
+    const instructions = formGenerationAgent.instructions;
+    expect(instructions).toContain('Create never overwrites');
+    expect(instructions).toContain('do not retry the create');
+    expect(instructions).toContain('get → confirm → update');
+  });
+
+  it('instructs to report a missing register rather than an empty list', () => {
+    const instructions = formGenerationAgent.instructions;
+    expect(instructions).toContain('tell the user it was not found. Do not present an empty list.');
+    expect(instructions).toContain('nothing was created: tell the user it was not found.');
+  });
+
+  it('states the register name rules and suggests kebab-case', () => {
+    const instructions = formGenerationAgent.instructions;
+    expect(instructions).toContain(
+      'Register names: 1–50 letters, numbers, spaces, hyphens or underscores, not starting or ending with a space.',
+    );
+    expect(instructions).toContain('Suggest kebab-case');
+  });
+
+  it('instructs to ask the user to reconnect when the session has expired', () => {
+    const instructions = formGenerationAgent.instructions;
+    expect(instructions).toContain('tell the user to reconnect and try again');
+  });
+
   it('instructs to retrieve current values and confirm before updating registers', () => {
     const instructions = formGenerationAgent.instructions;
     expect(instructions).toContain('Updating an existing register (MANDATORY flow)');
