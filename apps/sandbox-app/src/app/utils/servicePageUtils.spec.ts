@@ -164,6 +164,12 @@ describe('servicePageUtils', () => {
           url: '/testTenant/services/adsp-components/theming',
           testId: 'adspTheming',
         },
+        {
+          id: 'adspCalendar',
+          name: 'ADSP Calendar Example 1',
+          url: '/testTenant/services/adsp-components/adspcalendar',
+          testId: 'adspCalendarExample1',
+        },
       ]);
     });
   });

@@ -1,10 +1,19 @@
-import { AdspId, EventService, isAllowedUser, UnauthorizedUserError } from '@abgov/adsp-service-sdk';
-import type { User } from '@abgov/adsp-service-sdk';
+import { EventService } from '@abgov/adsp-service-sdk';
 import { createValidationHandler, InvalidOperationError, NotFoundError } from '@core-services/core-common';
 import { randomUUID } from 'crypto';
-import { Request, RequestHandler, Router } from 'express';
+import { Request, Router } from 'express';
 import { body, param, query } from 'express-validator';
+import * as multer from 'multer';
 import { Logger } from 'winston';
+import {
+  getSolution,
+  getTenantId,
+  isPlannerAdmin,
+  loaded,
+  loadSolution,
+  requirePlannerAdmin,
+  requirePlannerUser,
+} from './access';
 import {
   buildHypotheses,
   buildNextSteps,
@@ -18,7 +27,6 @@ import {
   BlueprintServiceDetail,
   buildRuleBlueprint,
   chatHighlights,
-  isBlueprintOutOfDate,
   mergeBlueprintCore,
   recommendedServices,
   storedConsult,
@@ -26,9 +34,20 @@ import {
 } from './blueprint';
 import { buildComponents, catalogServices, driftMessage, unmappedServices } from './components';
 import {
+  extractProblemStatementText,
+  isSupportedProblemStatementFile,
+  MAX_PROBLEM_STATEMENT_UPLOAD_BYTES,
+} from './documentExtract';
+import {
+  allUserEvidence,
+  applyAnswerToFactors,
+  areSimilarQuestions,
   assessConfidence,
+  capFactors,
   computeConfidence,
+  dedupeOpenQuestions,
   DISCOVERY_THRESHOLD,
+  isQuestionCovered,
   normalizeFactors,
   ruleAssess,
   ruleDiscoveryReply,
@@ -37,8 +56,12 @@ import {
 import { solutionCreated, solutionDeleted, solutionUpdated } from './events';
 import { mergeConsultation, PlannerLlm, SpecialistChatMessage, SpecialistIntent, SpecialistReply } from './llm';
 import { BUILT_IN_PATTERNS } from './patterns';
-import { PatternRepository, SolutionRepository, SpecialistChatRepository } from './repository';
-import { PlannerServiceRoles } from './roles';
+import {
+  PatternRepository,
+  SolutionRepository,
+  SolutionVersionRepository,
+  SpecialistChatRepository,
+} from './repository';
 import { getSpecialist, ruleBasedSpecialistReply, SPECIALISTS } from './specialists';
 import {
   AnalysisMode,
@@ -54,17 +77,18 @@ import {
   SolutionState,
   SpecialistChat,
   SpecialistNote,
-  SpecialistProgress,
   SpecialistStatus,
   StoredChatMessage,
 } from './types';
-import { changedSections, classifyBump, nextVersion, sectionHashes, VersionBump } from './versioning';
+import { versionContent } from './versioning';
+import { createVersionRouter } from './versionRouter';
 
 interface PlannerRouterProps {
   logger: Logger;
   solutionRepository: SolutionRepository;
   patternRepository: PatternRepository;
   specialistChatRepository: SpecialistChatRepository;
+  solutionVersionRepository: SolutionVersionRepository;
   eventService: EventService;
   // When provided, AI analysis is available and is the default mode.
   llm?: PlannerLlm;
@@ -72,11 +96,9 @@ interface PlannerRouterProps {
   readAdspCatalog?: () => Promise<string[]>;
 }
 
-const SOLUTION_KEY = 'solution';
 const MAX_CHAT_MESSAGES = 200;
 const SPECIALIST_INTENTS: SpecialistIntent[] = ['ask', 'recommend', 'design', 'validate', 'sample'];
 const SOLUTION_STATUSES = ['draft', 'analyzed', 'in-progress', 'completed', 'archived'];
-const ALL_ROLES = [PlannerServiceRoles.Admin, PlannerServiceRoles.User];
 
 const emptyState = (problemStatement = ''): SolutionState => ({
   problemStatement,
@@ -88,16 +110,6 @@ const emptyState = (problemStatement = ''): SolutionState => ({
   specialists: [],
   nextSteps: [],
 });
-
-const getTenantId = (req: Request): AdspId => {
-  const tenantId = req.tenant?.id;
-  if (!tenantId) {
-    throw new InvalidOperationError('Cannot perform planner operation without tenant context.');
-  }
-  return tenantId;
-};
-
-const isPlannerAdmin = (user: User, tenantId: AdspId) => isAllowedUser(user, tenantId, PlannerServiceRoles.Admin);
 
 const BUILT_IN_IDS = new Set(BUILT_IN_PATTERNS.map((p) => p.id));
 
@@ -177,75 +189,11 @@ const patternValidation = () => [
   body('knownUnknowns').optional().isArray({ max: 50 }),
 ];
 
-const requirePlannerUser: RequestHandler = (req, _res, next) => {
-  try {
-    const tenantId = getTenantId(req);
-    if (!isAllowedUser(req.user, tenantId, ALL_ROLES)) {
-      throw new UnauthorizedUserError('access planner', req.user);
-    }
-    next();
-  } catch (err) {
-    next(err);
-  }
-};
-
-const requirePlannerAdmin: RequestHandler = (req, _res, next) => {
-  try {
-    if (!isPlannerAdmin(req.user, getTenantId(req))) {
-      throw new UnauthorizedUserError('manage patterns', req.user);
-    }
-    next();
-  } catch (err) {
-    next(err);
-  }
-};
-
-async function loadSolution(repository: SolutionRepository, req: Request, id: string): Promise<Solution> {
-  const tenantId = getTenantId(req);
-  const solution = await repository.get(tenantId, id);
-  if (!solution) {
-    throw new NotFoundError('solution', id);
-  }
-  if (solution.createdById !== req.user.id && !isPlannerAdmin(req.user, tenantId)) {
-    throw new UnauthorizedUserError('access solution', req.user);
-  }
-  const defaulted: Solution = {
-    version: '1.0',
-    versionHistory: [],
-    lastExportHashes: {},
-    exportedOnce: false,
-    ...solution,
-  };
-  if (!defaulted.exportedOnce && defaulted.versionHistory.length > 0) {
-    defaulted.exportedOnce = true;
-  }
-  return defaulted;
-}
-
-const getSolution =
-  (repository: SolutionRepository): RequestHandler =>
-  async (req, _res, next) => {
-    try {
-      req[SOLUTION_KEY] = await loadSolution(repository, req, req.params.id);
-      next();
-    } catch (err) {
-      next(err);
-    }
-  };
-
-const loaded = (req: Request): Solution => req[SOLUTION_KEY];
-
-// The user rejected these, so the harness never sees them; the saved solution keeps them.
-const withoutRejectedComponents = (state: SolutionState): SolutionState =>
-  state.blueprint?.components
-    ? {
-        ...state,
-        blueprint: { ...state.blueprint, components: state.blueprint.components.filter((c) => c.review !== 'rejected') },
-      }
-    : state;
-
 // Regenerating renumbers the components, so a review follows its component by service and name.
-const withPreviousReviews = (components: BlueprintComponent[], previous: BlueprintComponent[] = []): BlueprintComponent[] =>
+const withPreviousReviews = (
+  components: BlueprintComponent[],
+  previous: BlueprintComponent[] = [],
+): BlueprintComponent[] =>
   components.map((component) => {
     const review = previous.find((p) => p.service === component.service && p.name === component.name)?.review;
     return review ? { ...component, review } : component;
@@ -258,6 +206,7 @@ interface AnalysisResult {
   hypotheses: Hypothesis[];
   concepts: BusinessConcept[];
   questionTexts: string[];
+  resolvedQuestionIds: string[];
   reply: string;
 }
 
@@ -272,14 +221,6 @@ const dedupeConcepts = (existing: BusinessConcept[], incoming: BusinessConcept[]
     return true;
   });
 };
-
-function refreshConfidence(state: SolutionState): void {
-  if (state.discovery) {
-    const factors = ruleAssess(userEvidence(state.problemStatement, state.discovery.messages));
-    state.discovery = { ...state.discovery, factors, confidence: computeConfidence(factors) };
-  }
-  state.confidence = assessConfidence(state);
-}
 
 interface AiFallbackWording {
   notConfigured: string;
@@ -298,12 +239,17 @@ export function createPlannerRouter({
   solutionRepository,
   patternRepository,
   specialistChatRepository,
+  solutionVersionRepository,
   eventService,
   llm,
   readAdspCatalog,
 }: PlannerRouterProps): Router {
   const router = Router();
   const validateId = createValidationHandler(param('id').isUUID());
+  const uploadProblemStatementFile = multer({
+    storage: multer.memoryStorage(),
+    limits: { fileSize: MAX_PROBLEM_STATEMENT_UPLOAD_BYTES },
+  });
 
   // Undefined keys mean the catalog could not be read; candidates are live services missing from the component map.
   async function readCatalog(): Promise<{ keys?: string[]; candidates: string[] }> {
@@ -350,10 +296,57 @@ export function createPlannerRouter({
     }
   }
 
+  async function refreshConfidence(req: Request, state: SolutionState, mode?: AnalysisMode): Promise<void> {
+    if (state.discovery) {
+      const requestedMode: AnalysisMode = mode || (llm ? 'ai' : 'rules');
+      const evidence = allUserEvidence(state);
+      const { result: aiFactors, warning } = await tryAi(
+        requestedMode,
+        async (llm) => {
+          const patterns = await getPatterns(req, patternRepository);
+          const recent = [...(state.discovery?.messages || []), ...(state.conversation || [])].map(
+            ({ role, content }) => ({ role, content }),
+          );
+          const discovered = await llm.discover(state.problemStatement, recent, patterns);
+          return normalizeFactors(discovered.factors, evidence);
+        },
+        ruleFallbackWording('scoring', 'rule-based scoring'),
+      );
+      const rawFactors = aiFactors ?? ruleAssess(evidence);
+      const hasOpenQuestions = state.questions.some((q) => q.status === 'open');
+      const factors = capFactors(rawFactors, hasOpenQuestions);
+      const confidence = computeConfidence(factors);
+      // The warning reflects this attempt only, so switching to rules mode clears a stale AI failure note.
+      state.discovery = { ...state.discovery, factors, confidence, ready: confidence >= DISCOVERY_THRESHOLD, warning };
+    }
+    state.confidence = assessConfidence(state);
+  }
+
+  function applySpecialistExchangeToState(state: SolutionState, topic: string, guidance: string): SolutionState {
+    if (!state.discovery || !guidance.trim()) {
+      return state;
+    }
+    const evidence = allUserEvidence(state);
+    const hasOpenQuestions = state.questions.some((q) => q.status === 'open');
+    const factors = capFactors(
+      applyAnswerToFactors(state.discovery.factors, topic, guidance, evidence),
+      hasOpenQuestions,
+    );
+    const confidence = computeConfidence(factors);
+    const discovery = { ...state.discovery, factors, confidence, ready: confidence >= DISCOVERY_THRESHOLD };
+    const withDiscovery = { ...state, discovery };
+    return { ...withDiscovery, confidence: assessConfidence(withDiscovery) };
+  }
+
   async function runAnalysis(
     req: Request,
     solution: Solution,
-    { text, mode, message }: { text: string; mode?: AnalysisMode; message?: string },
+    {
+      text,
+      mode,
+      message,
+      skipConfidenceRefresh,
+    }: { text: string; mode?: AnalysisMode; message?: string; skipConfidenceRefresh?: boolean },
   ): Promise<Solution> {
     const patterns = await getPatterns(req, patternRepository);
     const requestedMode: AnalysisMode = mode || (llm ? 'ai' : 'rules');
@@ -369,6 +362,9 @@ export function createPlannerRouter({
             ({ role, content }) => ({ role, content }),
           ),
           message,
+          openQuestions: solution.state.questions
+            .filter((q) => q.status === 'open')
+            .map((q) => ({ id: q.id, question: q.question })),
         });
         return {
           mode: 'ai',
@@ -377,6 +373,7 @@ export function createPlannerRouter({
           hypotheses: analysis.hypotheses,
           concepts: dedupeConcepts(solution.state.concepts, analysis.concepts),
           questionTexts: analysis.questions,
+          resolvedQuestionIds: analysis.resolvedQuestionIds,
           reply: analysis.reply,
         };
       },
@@ -385,35 +382,64 @@ export function createPlannerRouter({
     const { warning } = ai;
     let result = ai.result;
 
-    // Rule-based mode has no conversational ability, so the message is folded into the problem statement.
-    const ruleText = message ? `${text}\n${message}` : text;
-    const matchText = solution.state.discovery
-      ? `${ruleText}\n${userEvidence('', solution.state.discovery.messages)}`
-      : ruleText;
+    const matchText = message ? `${text}\n${message}` : text;
+    const fullMatchText = solution.state.discovery
+      ? `${matchText}\n${userEvidence('', solution.state.discovery.messages)}`
+      : matchText;
     if (!result) {
-      const matches = matchPatterns(matchText, patterns);
+      const matches = matchPatterns(fullMatchText, patterns);
       const hypotheses = buildHypotheses(matches, patterns);
       result = {
         mode: 'rules',
         matches,
         hypotheses,
-        concepts: extractConcepts(matchText, solution.state.concepts),
+        concepts: extractConcepts(fullMatchText, solution.state.concepts),
         questionTexts: hypotheses
           .filter((h) => h.confidence !== 'high')
           .flatMap((h) => patterns.find((p) => p.id === h.patternId)?.clarifyingQuestions || []),
+        resolvedQuestionIds: [],
         reply: 'Rule-based analysis refreshed using your message. Switch to AI analysis for conversational answers.',
       };
     }
 
-    const existingQuestions = new Set(solution.state.questions.map((q) => q.question));
-    const newQuestions = result.questionTexts
-      .filter((q, i, all) => !existingQuestions.has(q) && all.indexOf(q) === i)
-      .map((question) => ({
-        id: randomUUID(),
-        question,
-        raisedBy: result.mode === 'ai' ? 'ai' : 'planner',
-        status: 'open' as const,
-      }));
+    const resolvedIds = new Set(result.resolvedQuestionIds);
+    const resolutionAnswer = message || text;
+    const questionsAfterResolution = solution.state.questions.map((q) =>
+      q.status === 'open' && resolvedIds.has(q.id)
+        ? { ...q, status: 'answered' as const, answer: resolutionAnswer }
+        : q,
+    );
+    const retainedQuestions = dedupeOpenQuestions(questionsAfterResolution);
+
+    const evidenceSoFar = [
+      fullMatchText,
+      ...retainedQuestions.filter((q) => q.answer).map((q) => q.answer as string),
+    ].join('\n');
+    const answeredQuestionTexts = retainedQuestions.filter((q) => q.status === 'answered').map((q) => q.question);
+    const isRedundant = (text: string) =>
+      isQuestionCovered(text, evidenceSoFar) ||
+      answeredQuestionTexts.some((answered) => areSimilarQuestions(text, answered));
+    const existingQuestions = new Set(retainedQuestions.map((q) => q.question));
+    const retainedOpenTexts = retainedQuestions.filter((q) => q.status === 'open').map((q) => q.question);
+
+    const newQuestionTexts: string[] = [];
+    for (const text of result.questionTexts) {
+      if (existingQuestions.has(text) || isRedundant(text)) {
+        continue;
+      }
+      const isDuplicate =
+        retainedOpenTexts.some((kept) => areSimilarQuestions(text, kept)) ||
+        newQuestionTexts.some((kept) => areSimilarQuestions(text, kept));
+      if (!isDuplicate) {
+        newQuestionTexts.push(text);
+      }
+    }
+    const newQuestions = newQuestionTexts.map((question) => ({
+      id: randomUUID(),
+      question,
+      raisedBy: result.mode === 'ai' ? 'ai' : 'planner',
+      status: 'open' as const,
+    }));
 
     const conversation = [...(solution.state.conversation || [])];
     if (message) {
@@ -425,21 +451,24 @@ export function createPlannerRouter({
       });
     }
 
-    const problemStatement = result.mode === 'rules' ? ruleText : text;
     const state: SolutionState = {
       ...solution.state,
-      problemStatement,
+      problemStatement: message ? solution.state.problemStatement : text,
       problemStatementUpdatedOn:
-        problemStatement === solution.state.problemStatement ? solution.state.problemStatementUpdatedOn : now,
+        !message && text !== solution.state.problemStatement ? now : solution.state.problemStatementUpdatedOn,
       concepts: [...solution.state.concepts, ...result.concepts],
       patternMatches: result.matches,
       hypotheses: result.hypotheses,
-      questions: [...solution.state.questions, ...newQuestions],
+      questions: [...retainedQuestions, ...newQuestions],
       conversation,
       analysis: { mode: result.mode, model: result.model, warning, analyzedOn: now },
     };
     state.nextSteps = buildNextSteps(state);
-    refreshConfidence(state);
+    if (skipConfidenceRefresh) {
+      state.confidence = assessConfidence(state);
+    } else {
+      await refreshConfidence(req, state, requestedMode);
+    }
     return persist(
       req,
       { ...solution, status: solution.status === 'draft' ? 'analyzed' : solution.status, state },
@@ -559,6 +588,39 @@ export function createPlannerRouter({
     res.send({ results: SPECIALISTS });
   });
 
+  router.post(
+    '/documents/extract',
+    requirePlannerUser,
+    uploadProblemStatementFile.single('file'),
+    async (req, res, next) => {
+      try {
+        const file = req.file;
+        if (!file) {
+          throw new InvalidOperationError('No file was uploaded.');
+        }
+        if (!isSupportedProblemStatementFile(file.originalname)) {
+          throw new InvalidOperationError(
+            `${file.originalname} is not a supported format. Upload a Markdown (.md), Word (.docx) or PDF (.pdf) file.`,
+          );
+        }
+        let text: string;
+        try {
+          text = await extractProblemStatementText(file.buffer, file.originalname);
+        } catch (err) {
+          throw new InvalidOperationError(`Could not read ${file.originalname}: ${(err as Error).message}`);
+        }
+        if (!text) {
+          throw new InvalidOperationError(
+            `No readable text was found in ${file.originalname}. Try a different file or enter the problem statement manually.`,
+          );
+        }
+        res.send({ text });
+      } catch (err) {
+        next(err);
+      }
+    },
+  );
+
   router.get(
     '/solutions',
     requirePlannerUser,
@@ -589,7 +651,7 @@ export function createPlannerRouter({
       body('name').isString().isLength({ min: 1, max: 200 }),
       body('description').optional({ nullable: true }).isString(),
       body('scenario').optional().isIn(['new', 'prototype', 'existing-app', 'reconfigure']),
-      body('problemStatement').optional().isString().isLength({ max: 20000 }),
+      body('problemStatement').optional().isString(),
     ),
     async (req, res, next) => {
       try {
@@ -606,12 +668,10 @@ export function createPlannerRouter({
           createdByName: req.user.name,
           createdOn: now,
           updatedOn: now,
-          version: '1.0',
-          versionHistory: [],
-          lastExportHashes: {},
-          exportedOnce: false,
+          version: 1,
           state: emptyState(req.body.problemStatement),
         });
+        await solutionVersionRepository.create(tenantId, solution.id, versionContent(solution, []));
         res.status(201).send(solution);
         eventService.send(solutionCreated(req.user, solution));
         logger.info(`Created solution ${solution.name} (ID: ${solution.id}).`, {
@@ -637,7 +697,7 @@ export function createPlannerRouter({
       body('name').optional().isString().isLength({ min: 1, max: 200 }),
       body('description').optional({ nullable: true }).isString(),
       body('status').optional().isIn(SOLUTION_STATUSES),
-      body('problemStatement').optional().isString().isLength({ max: 20000 }),
+      body('problemStatement').optional().isString(),
       body('concepts').optional().isArray(),
       body('concepts.*.type')
         .optional()
@@ -676,7 +736,7 @@ export function createPlannerRouter({
         };
         if (problemStatement !== undefined && problemStatement !== solution.state.problemStatement) {
           state.problemStatementUpdatedOn = new Date().toISOString();
-          refreshConfidence(state);
+          await refreshConfidence(req, state);
         }
         res.send(
           await persist(
@@ -782,11 +842,16 @@ export function createPlannerRouter({
         const mode: AnalysisMode = aiDiscovery ? 'ai' : 'rules';
 
         const confidence = computeConfidence(factors);
-        const ready =
-          confidence >= DISCOVERY_THRESHOLD ||
-          req.body.force === true ||
-          (!req.body.restart && solution.state.discovery?.ready === true);
+        const ready = confidence >= DISCOVERY_THRESHOLD || req.body.force === true;
         let reply = aiDiscovery?.reply || ruleDiscoveryReply(factors, confidence, ready);
+        if (req.body.message) {
+          const priorConfidence = solution.state.discovery?.confidence ?? 0;
+          const confidenceWithoutThisReply = computeConfidence(ruleAssess(userEvidence(problem, prior)));
+          const fromEarlierDetails = confidenceWithoutThisReply - priorConfidence;
+          if (confidence > priorConfidence && fromEarlierDetails >= 10) {
+            reply = `${reply} (Some of that increase comes from details already in the problem statement or earlier answers, not just this reply.)`;
+          }
+        }
         if (req.body.force === true && confidence < DISCOVERY_THRESHOLD) {
           reply = `${reply}\n\nProceeding with a proposed solution at ${confidence}% confidence, as you asked. Expect more open questions and assumptions.`;
         }
@@ -812,7 +877,7 @@ export function createPlannerRouter({
         };
         res.send(
           ready
-            ? await runAnalysis(req, withDiscovery, { text: problem, mode: requestedMode })
+            ? await runAnalysis(req, withDiscovery, { text: problem, mode: requestedMode, skipConfidenceRefresh: true })
             : await persist(req, withDiscovery, 'discovery'),
         );
       } catch (err) {
@@ -857,15 +922,32 @@ export function createPlannerRouter({
           throw new NotFoundError('question', req.params.questionId);
         }
         const answer: string = req.body.answer.trim();
-        const questions = solution.state.questions.map((q) =>
+        const updatedQuestions = solution.state.questions.map((q) =>
           q.id === existing.id
             ? answer
               ? { ...q, status: 'answered' as const, answer }
               : { id: q.id, question: q.question, raisedBy: q.raisedBy, status: 'open' as const }
             : q,
         );
+        const questions = answer ? dedupeOpenQuestions(updatedQuestions) : updatedQuestions;
         const state = { ...solution.state, questions };
         state.nextSteps = buildNextSteps(state);
+        const hadOpenQuestions = solution.state.questions.some((q) => q.status === 'open');
+        const hasOpenQuestions = questions.some((q) => q.status === 'open');
+        if (state.discovery && answer) {
+          const evidence = allUserEvidence(state);
+          const factors = capFactors(
+            applyAnswerToFactors(state.discovery.factors, existing.question, answer, evidence),
+            hasOpenQuestions,
+          );
+          const confidence = computeConfidence(factors);
+          state.discovery = { ...state.discovery, factors, confidence, ready: confidence >= DISCOVERY_THRESHOLD };
+        }
+        if (llm && answer && hadOpenQuestions && !hasOpenQuestions) {
+          await refreshConfidence(req, state, state.analysis?.mode);
+        } else {
+          state.confidence = assessConfidence(state);
+        }
         res.send(await persist(req, { ...solution, state }, 'answer'));
       } catch (err) {
         next(err);
@@ -900,63 +982,8 @@ export function createPlannerRouter({
     },
   );
 
-  router.get(
-    '/solutions/:id/export',
-    requirePlannerUser,
-    validateId,
-    getSolution(solutionRepository),
-    async (req, res, next) => {
-      try {
-        const solution = loaded(req);
-        const currentHashes = sectionHashes(solution);
-        const changed = changedSections(solution.lastExportHashes, currentHashes);
-        const isInitial = !solution.exportedOnce;
-        const bump: VersionBump = isInitial ? 'none' : classifyBump(changed);
-
-        let { version, versionHistory } = solution;
-        let lastUpdated = versionHistory[versionHistory.length - 1]?.changedAt || solution.updatedOn.toISOString();
-        if (bump !== 'none') {
-          version = nextVersion(solution.version, bump);
-          const changedAt = new Date().toISOString();
-          versionHistory = [
-            ...versionHistory,
-            { version, changedAt, changedBy: req.user.name, changedSections: changed },
-          ];
-          lastUpdated = changedAt;
-        }
-        if (bump !== 'none' || isInitial) {
-          await solutionRepository.save({
-            ...solution,
-            version,
-            versionHistory,
-            lastExportHashes: currentHashes,
-            exportedOnce: true,
-          });
-        }
-
-        res.setHeader('Content-Disposition', `attachment; filename="planner-${solution.id}.json"`);
-        res.send({
-          exportedAt: new Date().toISOString(),
-          id: solution.id,
-          name: solution.name,
-          description: solution.description,
-          scenario: solution.scenario,
-          status: solution.status,
-          createdByName: solution.createdByName,
-          createdOn: solution.createdOn,
-          updatedOn: solution.updatedOn,
-          version,
-          lastUpdated,
-          changedSections: bump === 'none' ? [] : changed,
-          initial: isInitial,
-          blueprintOutOfDate: isBlueprintOutOfDate(solution.state),
-          versionHistory,
-          state: withoutRejectedComponents(solution.state),
-        });
-      } catch (err) {
-        next(err);
-      }
-    },
+  router.use(
+    createVersionRouter({ solutionRepository, specialistChatRepository, solutionVersionRepository, eventService }),
   );
 
   router.post(
@@ -972,13 +999,13 @@ export function createPlannerRouter({
     async (req, res, next) => {
       try {
         const solution = loaded(req);
-        const { result, specialists } = await runConsult(req, solution, req.params.service, {
+        const { result, state } = await runConsult(req, solution, req.params.service, {
           question: req.body.question,
           proposal: req.body.proposal,
           mode: req.body.mode,
         });
-        await persist(req, { ...solution, state: { ...solution.state, specialists } }, 'consult');
-        res.send(result);
+        const saved = await persist(req, { ...solution, state }, 'consult');
+        res.send({ ...result, solution: saved });
       } catch (err) {
         next(err);
       }
@@ -990,8 +1017,13 @@ export function createPlannerRouter({
     req: Request,
     solution: Solution,
     service: string,
-    { question, proposal, mode }: { question?: string; proposal?: string; mode?: AnalysisMode },
-  ): Promise<{ result: ConsultResult; specialists: SpecialistProgress[] }> {
+    {
+      question,
+      proposal,
+      mode,
+      initiatedBy,
+    }: { question?: string; proposal?: string; mode?: AnalysisMode; initiatedBy?: 'planner' },
+  ): Promise<{ result: ConsultResult; state: SolutionState }> {
     const baseResult = consultSpecialist(solution.state, service);
     if (!baseResult) {
       throw new NotFoundError('specialist', service);
@@ -1022,7 +1054,13 @@ export function createPlannerRouter({
     const at = new Date().toISOString();
     const asked: string = question || 'Consult on this solution';
     await recordExchange(req, existingChat, { service: result.service, solutionId: solution.id, title: asked }, [
-      { role: 'user', content: proposal ? `${asked}\n\nPlan to validate:\n${proposal}` : asked, at, intent: 'consult' },
+      {
+        role: 'user',
+        content: proposal ? `${asked}\n\nPlan to validate:\n${proposal}` : asked,
+        at,
+        intent: 'consult',
+        initiatedBy,
+      },
       {
         role: 'assistant',
         content: result.advice || result.reason,
@@ -1033,7 +1071,17 @@ export function createPlannerRouter({
         consult: { ...result },
       },
     ]);
-    return { result, specialists };
+    const guidance = [
+      result.advice,
+      result.reason,
+      ...(result.supports || []),
+      ...(result.constraints || []),
+      ...(result.risks || []),
+    ]
+      .filter(Boolean)
+      .join('\n');
+    const state = applySpecialistExchangeToState({ ...solution.state, specialists }, asked, guidance);
+    return { result, state };
   }
 
   router.post(
@@ -1048,6 +1096,7 @@ export function createPlannerRouter({
     async (req, res, next) => {
       try {
         const solution = loaded(req);
+        const isFirstBlueprint = !solution.state.blueprint;
         const hypothesis = solution.state.hypotheses[0];
         if (!hypothesis) {
           throw new InvalidOperationError('Analyze the problem before generating a blueprint.');
@@ -1057,7 +1106,6 @@ export function createPlannerRouter({
 
         // Reuse each saved consultation; consult only the recommended services that have none (or all when refreshing).
         const notes: SpecialistNote[] = [];
-        let specialists = solution.state.specialists;
         let working = solution;
         for (const { service } of recommendedServices(solution.state)) {
           const chat = chats.find((c) => c.service === service);
@@ -1069,10 +1117,24 @@ export function createPlannerRouter({
             notes.push(toSpecialistNote(storedConsult(saved), 'saved-consultation', highlights, saved.at));
             continue;
           }
-          const { result, specialists: updated } = await runConsult(req, working, service, { mode: requestedMode });
-          specialists = updated;
-          working = { ...working, state: { ...working.state, specialists } };
-          notes.push(toSpecialistNote(result, result.advice ? 'ai' : 'rules', highlights, new Date().toISOString()));
+          try {
+            const { result, state: updatedState } = await runConsult(req, working, service, {
+              mode: requestedMode,
+              initiatedBy: 'planner',
+            });
+            working = { ...working, state: updatedState };
+            notes.push(toSpecialistNote(result, result.advice ? 'ai' : 'rules', highlights, new Date().toISOString()));
+          } catch (err) {
+            logger.warn(`Automatic consultation with ${service} failed: ${(err as Error).message}`);
+            await recordExchange(req, chat, { service, solutionId: solution.id, title: 'Consult on this solution' }, [
+              {
+                role: 'assistant',
+                content: 'Last consultation failed. Try consulting this specialist again.',
+                at: new Date().toISOString(),
+                intent: 'consult',
+              },
+            ]);
+          }
         }
 
         const patterns = await getPatterns(req, patternRepository);
@@ -1122,9 +1184,13 @@ export function createPlannerRouter({
           generated?.notCoveredByAdsp,
           components,
         );
-        res.send(
-          await persist(req, { ...solution, state: { ...solution.state, specialists, blueprint } }, 'blueprint'),
-        );
+        const saved = await persist(req, { ...solution, state: { ...working.state, blueprint } }, 'blueprint');
+        if (isFirstBlueprint) {
+          const tenantId = getTenantId(req);
+          const savedChats = await specialistChatRepository.findBySolution(tenantId, saved.id);
+          await solutionVersionRepository.create(tenantId, saved.id, versionContent(saved, savedChats));
+        }
+        res.send(saved);
       } catch (err) {
         next(err);
       }
@@ -1305,7 +1371,8 @@ export function createPlannerRouter({
         }
 
         const solutionId: string = chat?.solutionId || req.body.solutionId;
-        const state = solutionId ? (await loadSolution(solutionRepository, req, solutionId)).state : undefined;
+        const solution = solutionId ? await loadSolution(solutionRepository, req, solutionId) : undefined;
+        const state = solution?.state;
 
         const history: SpecialistChatMessage[] = [
           ...(chat?.messages || []).map(({ role, content }) => ({ role, content })),
@@ -1324,6 +1391,7 @@ export function createPlannerRouter({
         const replyMode: AnalysisMode = aiReply ? 'ai' : 'rules';
         const reply: Omit<SpecialistReply, 'model'> & { model?: string } =
           aiReply || ruleBasedSpecialistReply(specialist, intent);
+        let updatedSolution: Solution | undefined;
 
         const at = new Date().toISOString();
         const saved = await recordExchange(req, chat, { service: specialist.service, solutionId, title: message }, [
@@ -1342,7 +1410,23 @@ export function createPlannerRouter({
             followUps: reply.followUps,
           },
         ]);
-        res.send({ chatId: saved.id, service: specialist.service, mode: replyMode, warning, ...reply });
+        if (solution && state) {
+          const guidance = [reply.reply, ...(reply.suggestions || []), ...(reply.followUps || [])]
+            .filter(Boolean)
+            .join('\n');
+          const updatedState = applySpecialistExchangeToState(state, message, guidance);
+          if (updatedState !== state) {
+            updatedSolution = await persist(req, { ...solution, state: updatedState }, 'specialist-chat');
+          }
+        }
+        res.send({
+          chatId: saved.id,
+          service: specialist.service,
+          mode: replyMode,
+          warning,
+          ...reply,
+          solution: updatedSolution,
+        });
       } catch (err) {
         next(err);
       }

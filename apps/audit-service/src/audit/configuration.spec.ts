@@ -10,6 +10,9 @@ import {
   combineAuditConfiguration,
   createAuditConfigurationConverter,
   createConfigurationSchema,
+  RateLimitSettings,
+  assertRateLimit,
+  isValidRateLimit,
 } from './configuration';
 
 const logger = createLogger({ transports: [new transports.Console({ silent: true })] });
@@ -60,6 +63,40 @@ describe('audit configuration schema', () => {
     ).not.toThrow();
   });
 
+  it('accepts Core rate limit settings with a default and tenant overrides', () => {
+    expect(() =>
+      validate({
+        kind: 'rateLimitSettings',
+        default: { eventsPerSecond: 500, burst: 500 },
+        tenants: { 'urn:ads:platform:tenant-service:v2:/tenants/case-team': { eventsPerSecond: 250, burst: 500 } },
+      }),
+    ).not.toThrow();
+  });
+
+  it.each([
+    ['a burst below the largest request', { default: { eventsPerSecond: 500, burst: 499 } }],
+    ['a burst above the per-pod buffer', { default: { eventsPerSecond: 500, burst: 1001 } }],
+    ['a zero rate', { default: { eventsPerSecond: 0, burst: 500 } }],
+    ['a rate above the 500-event ceiling', { default: { eventsPerSecond: 501, burst: 500 } }],
+    [
+      'a tenant rate above the 500-event ceiling',
+      { tenants: { 'urn:ads:platform:tenant-service:v2:/tenants/case-team': { eventsPerSecond: 501, burst: 500 } } },
+    ],
+    ['a fractional rate', { default: { eventsPerSecond: 1.5, burst: 500 } }],
+    ['a missing burst', { default: { eventsPerSecond: 500 } }],
+    ['a tenant key that is not a tenant ID', { tenants: { 'case-team': { eventsPerSecond: 500, burst: 500 } } }],
+  ])('rejects rate limit settings with %s', (_, settings) => {
+    expect(() => validate({ kind: 'rateLimitSettings', ...settings })).toThrow();
+  });
+
+  it.each([1, 500])('accepts a rate of %i in configuration and runtime validation', (eventsPerSecond) => {
+    const limit = { eventsPerSecond, burst: 500 };
+
+    expect(() => validate({ kind: 'rateLimitSettings', default: limit })).not.toThrow();
+    expect(isValidRateLimit(limit)).toBe(true);
+    expect(() => assertRateLimit(limit)).not.toThrow();
+  });
+
   describe('combined audit configuration', () => {
     const convert = createAuditConfigurationConverter(logger);
 
@@ -100,6 +137,24 @@ describe('audit configuration schema', () => {
       expect(() => combineAuditConfiguration(catalog, { kind: 'retentionSettings', classes: {} })).toThrow(
         'different kinds',
       );
+    });
+
+    it('uses only Core rate limit settings so a tenant cannot raise its own ceiling', () => {
+      const core: RateLimitSettings = { kind: 'rateLimitSettings', default: { eventsPerSecond: 250, burst: 500 } };
+      const tenant: RateLimitSettings = { kind: 'rateLimitSettings', default: { eventsPerSecond: 500, burst: 1000 } };
+
+      expect(combineAuditConfiguration(tenant, core)).toBe(core);
+      expect(combineAuditConfiguration(tenant, null)).toBeNull();
+    });
+
+    it('converts a rate limit document', () => {
+      const value: RateLimitSettings = {
+        kind: 'rateLimitSettings',
+        default: { eventsPerSecond: 500, burst: 500 },
+        tenants: { 'urn:ads:platform:tenant-service:v2:/tenants/case-team': { eventsPerSecond: 250, burst: 500 } },
+      };
+
+      expect(convert(value)).toEqual(value);
     });
 
     it('rejects application overrides belonging to different namespaces', () => {

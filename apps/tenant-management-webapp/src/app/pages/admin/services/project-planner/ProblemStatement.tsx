@@ -1,74 +1,230 @@
-import React, { FunctionComponent, useEffect, useState } from 'react';
-import { GoabButton, GoabCallout, GoabCircularProgress, GoabFormItem, GoabTextArea } from '@abgov/react-components';
-import { AnalysisModeToggle } from './ModeLayoutToggle';
-import { AnalysisMode } from './model';
-import { fmtDate } from './utils';
-import { PaneProps } from './workplaceTypes';
+import React, { FunctionComponent, useEffect, useRef, useState } from 'react';
+import {
+  GoabButton,
+  GoabFileUploadInput,
+  GoabFormItem,
+  GoabIcon,
+  GoabTextArea,
+  GoabTooltip,
+} from '@abgov/react-components';
+import type { GoabFileUploadInputOnSelectFileDetail } from '@abgov/ui-components-common';
+import styled from 'styled-components';
+import { usePlannerApi } from './api';
 
-interface ProblemStatementProps extends PaneProps {
-  title: string;
-  analysisModes: AnalysisMode[];
-  onAnalysisModeChange: (mode: AnalysisMode) => void;
+const UPLOAD_ACCEPT = '.md,.markdown,.docx,.pdf';
+const UPLOAD_MAX_FILE_SIZE = '20MB';
+const UPLOAD_HINT = 'Markdown (.md) is recommended. Word (.docx) and PDF (.pdf) are also supported.';
+
+const UploadRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: var(--goa-space-l, 1.5rem);
+
+  goa-file-upload-input {
+    flex: 1 1 auto;
+    min-width: 0;
+    --goa-space-l: var(--goa-space-s, 0.75rem);
+  }
+`;
+
+const UploadLabel = styled.span`
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  flex: 0 0 auto;
+  font-weight: var(--fw-bold, 700);
+  white-space: nowrap;
+`;
+
+const UploadError = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: -0.75rem 0 var(--goa-space-l, 1.5rem);
+  color: var(--goa-color-interactive-error, #ca0b00);
+  font-size: var(--goa-font-size-3, 0.875rem);
+`;
+
+interface ProblemStatementProps {
+  value: string;
+  busy: boolean;
+  continueLabel?: string;
+  showContinue?: boolean;
+  showUpload?: boolean;
+  onChange: (value: string) => void;
+  onContinue: () => void;
 }
 
-export const ProblemStatement: FunctionComponent<ProblemStatementProps> = ({
-  solution,
-  api,
-  mode,
-  busy,
-  run,
-  onSolutionChange,
-  title,
-  analysisModes,
-  onAnalysisModeChange,
+interface ProblemStatementUploadProps {
+  onChange: (value: string) => void;
+  disabled?: boolean;
+}
+
+export const ProblemStatementUpload: FunctionComponent<ProblemStatementUploadProps> = ({
+  onChange,
+  disabled = false,
 }) => {
-  const saved = solution.state.problemStatement || '';
-  const [draft, setDraft] = useState(saved);
-  const analysis = solution.state.analysis;
+  const api = usePlannerApi();
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const uploadRowRef = useRef<HTMLDivElement>(null);
+  const shadowRootRef = useRef<ShadowRoot | null>(null);
+  const blocked = disabled || uploading;
+  const blockedRef = useRef(blocked);
+  blockedRef.current = blocked;
 
-  useEffect(() => setDraft(saved), [saved]);
+  const applyDisabled = (root: ShadowRoot) => {
+    const button = root.querySelector('goa-button');
+    if (blockedRef.current) {
+      button?.setAttribute('disabled', 'disabled');
+    } else {
+      button?.removeAttribute('disabled');
+    }
+  };
 
-  const save = () =>
-    run(async () => onSolutionChange(await api.updateSolution(solution.id, { problemStatement: draft })));
-  const analyze = () =>
-    run(async () => {
-      await api.updateSolution(solution.id, { problemStatement: draft });
-      onSolutionChange(await api.analyze(solution.id, { mode }));
-    });
+  useEffect(() => {
+    let cancelled = false;
+    let frame: number;
+    let observer: MutationObserver | undefined;
+
+    const hideMaxFileSize = (root: ShadowRoot) => {
+      const hint = root.querySelector<HTMLElement>('[data-testid="max-file-size"]');
+      if (hint) {
+        hint.style.display = 'none';
+      }
+    };
+
+    const compactChooseFileButton = (root: ShadowRoot) => {
+      root.querySelector('goa-button')?.setAttribute('size', 'compact');
+    };
+
+    const captureIssue = (root: ShadowRoot) => {
+      const card = root.querySelector('goa-file-upload-card') as (Element & { error?: string }) | null;
+      const issues = root.querySelector<HTMLElement>('.issues');
+      if (card && issues) {
+        issues.style.display = 'none';
+        const error = card.getAttribute('error') || card.error || 'This file type is not supported.';
+        setUploadError(`${error} Please reupload a valid file.`);
+      } else {
+        setUploadError(null);
+      }
+    };
+
+    const attach = () => {
+      if (cancelled) {
+        return;
+      }
+      const root = uploadRowRef.current?.querySelector('goa-file-upload-input')?.shadowRoot;
+      if (!root) {
+        frame = requestAnimationFrame(attach);
+        return;
+      }
+      shadowRootRef.current = root;
+      hideMaxFileSize(root);
+      compactChooseFileButton(root);
+      captureIssue(root);
+      applyDisabled(root);
+      observer = new MutationObserver(() => {
+        hideMaxFileSize(root);
+        compactChooseFileButton(root);
+        captureIssue(root);
+        applyDisabled(root);
+      });
+      observer.observe(root, {
+        childList: true,
+        subtree: true,
+        attributes: true,
+        attributeFilter: ['error', 'filename'],
+      });
+    };
+
+    attach();
+
+    return () => {
+      cancelled = true;
+      cancelAnimationFrame(frame);
+      observer?.disconnect();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (shadowRootRef.current) {
+      applyDisabled(shadowRootRef.current);
+    }
+  }, [blocked]);
+
+  const uploadFile = async (detail: GoabFileUploadInputOnSelectFileDetail) => {
+    setUploading(true);
+    setUploadError(null);
+    const extracted = await api.extractProblemStatement(detail.file).catch(() => undefined);
+    if (extracted) {
+      onChange(extracted.text);
+    }
+    setUploading(false);
+  };
 
   return (
+    <div>
+      <UploadRow ref={uploadRowRef}>
+        <UploadLabel>
+          Or upload a file
+          <GoabTooltip content={UPLOAD_HINT} position="top">
+            <GoabIcon type="help-circle" ariaLabel="Upload file requirements" />
+          </GoabTooltip>
+        </UploadLabel>
+        <GoabFileUploadInput
+          variant="button"
+          accept={UPLOAD_ACCEPT}
+          maxFileSize={UPLOAD_MAX_FILE_SIZE}
+          testId="problem-statement-upload"
+          onSelectFile={uploadFile}
+        />
+        {uploading && (
+          <span data-testid="problem-statement-uploading" style={{ fontSize: '85%' }}>
+            Uploading…
+          </span>
+        )}
+      </UploadRow>
+      {uploadError && (
+        <UploadError data-testid="problem-statement-upload-error">
+          <GoabIcon type="warning" size="small" theme="filled" ariaLabel="Upload error" />
+          <span>{uploadError}</span>
+        </UploadError>
+      )}
+    </div>
+  );
+};
+
+export const ProblemStatement: FunctionComponent<ProblemStatementProps> = ({
+  value,
+  busy,
+  continueLabel = 'Continue',
+  showContinue = true,
+  showUpload = true,
+  onChange,
+  onContinue,
+}) => {
+  return (
     <div data-testid="problem-statement">
-      <h2>{title}</h2>
-      <GoabFormItem label="Problem statement" maxWidth="100%" mb="m">
+      <GoabFormItem label="Describe the problem" maxWidth="100%" mb="m">
         <GoabTextArea
           name="problemStatement"
-          value={draft}
+          value={value}
           rows={5}
           width="100%"
           maxWidth="100%"
           testId="problem-input"
           disabled={busy}
-          onChange={(detail) => setDraft(detail.value)}
+          placeholder="Describe who uses the service, the steps they take, the decisions made, and any documents or notifications involved."
+          onChange={(detail) => onChange(detail.value)}
         />
       </GoabFormItem>
-      <AnalysisModeToggle mode={mode} modes={analysisModes} onChange={onAnalysisModeChange} />
-      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', margin: '1rem 0' }}>
-        <GoabButton type="secondary" testId="problem-save" disabled={busy || draft === saved} onClick={save}>
-          Save
+      {showUpload && <ProblemStatementUpload onChange={onChange} />}
+      {showContinue && (
+        <GoabButton type="primary" testId="problem-continue" disabled={busy || !value.trim()} onClick={onContinue}>
+          {continueLabel}
         </GoabButton>
-        <GoabButton type="primary" testId="problem-analyze" disabled={busy || !draft.trim()} onClick={analyze}>
-          {busy ? 'Working…' : 'Save & analyze'}
-        </GoabButton>
-      </div>
-      {busy && <GoabCircularProgress visible size="small" message="Asking the model — this can take up to a minute" />}
-      {analysis && (
-        <GoabCallout
-          type={analysis.warning ? 'important' : 'success'}
-          heading={analysis.mode === 'ai' ? 'AI analysis' : 'Rule-based analysis'}
-          testId="analysis-info"
-        >
-          {analysis.warning || `Completed ${fmtDate(analysis.analyzedOn)}`}
-        </GoabCallout>
       )}
     </div>
   );

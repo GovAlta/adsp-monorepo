@@ -33,6 +33,8 @@ jest.mock('./environments/environment', () => ({
     RETENTION_BATCH_SIZE: 1000,
     RETENTION_MAX_BATCHES: 10,
     RETENTION_SCHEDULE: '0 2 * * *',
+    RATE_LIMIT_EVENTS_PER_SECOND: 500,
+    RATE_LIMIT_BURST: 500,
   },
 }));
 jest.mock('./audit/jobs/retention', () => ({
@@ -60,6 +62,7 @@ import { PROCESS_SHUTDOWN_TIMEOUT_MS, TRAFFIC_WITHDRAWAL_MS } from './shutdown';
 import { MAX_BUFFERED_BYTES, MAX_BUFFERED_EVENTS, SHUTDOWN_TIMEOUT_MS } from './audit/buffer/write-buffer';
 import { HISTORY_QUERY_TIMEOUT_MS, STATEMENT_TIMEOUT_MS } from './postgres/operation';
 import { HEALTH_CHECK_TIMEOUT_MS } from './postgres/health';
+import { performance } from 'perf_hooks';
 
 describe('audit application authorization', () => {
   const logger = createLogger({ transports: [new transports.Console({ silent: true })] });
@@ -146,11 +149,9 @@ describe('audit application authorization', () => {
     jest.spyOn(PostgresEventRepository.prototype, 'get').mockResolvedValue(null);
     jest.spyOn(PostgresFailedEventRepository.prototype, 'list').mockResolvedValue([]);
     jest.spyOn(PostgresFailedEventRepository.prototype, 'countOpen').mockResolvedValue(0);
-    configuration.getServiceConfiguration.mockResolvedValue({
-      kind: 'actionCatalog',
-      application: 'case-service',
-      actions: {},
-    });
+    configuration.getServiceConfiguration.mockImplementation(async (name) =>
+      name === 'actions-case-service' ? { kind: 'actionCatalog', application: 'case-service', actions: {} } : null,
+    );
     jest.mocked(initializePlatform).mockResolvedValue({
       coreStrategy: createStrategy('core', true),
       tenantStrategy: createStrategy(tenantA.realm, false),
@@ -163,6 +164,7 @@ describe('audit application authorization', () => {
       configurationService: configuration,
       directory: { getServiceUrl: jest.fn(), getResourceUrl: jest.fn() },
       eventService: { send: jest.fn() },
+      auditService: { record: jest.fn(), query: jest.fn(), flush: jest.fn(), droppedEventCount: 0 },
       tokenProvider: { getAccessToken: jest.fn() },
       configurationHandler: jest.fn(),
       healthCheck: jest.fn().mockResolvedValue({}),
@@ -416,16 +418,38 @@ describe('audit application authorization', () => {
   }
 
   function configureAction() {
-    configuration.getServiceConfiguration
-      .mockResolvedValueOnce({
-        kind: 'actionCatalog',
-        application: 'case-service',
-        actions: {
-          'case.update': { version: 1, category: 'administrative', severity: 'info', retentionClass: 'standard' },
-        },
-      })
-      .mockResolvedValue(null);
+    configuration.getServiceConfiguration.mockImplementation(async (name) =>
+      name === 'actions-case-service'
+        ? {
+            kind: 'actionCatalog',
+            application: 'case-service',
+            actions: {
+              'case.update': { version: 1, category: 'administrative', severity: 'info', retentionClass: 'standard' },
+            },
+          }
+        : null,
+    );
   }
+
+  it('rate limits writes per tenant and namespace with 429 and Retry-After', async () => {
+    jest.spyOn(performance, 'now').mockReturnValue(0);
+    configureAction();
+    const send = (count: number) =>
+      request(app)
+        .post('/audit/v1/case-service/events')
+        .auth(token([AuditServiceRoles.Writer]), { type: 'bearer' })
+        .send({ events: Array.from({ length: count }, eventInput) });
+
+    expect((await send(500)).status).toBe(202);
+    const limited = await send(500);
+
+    expect(limited.status).toBe(429);
+    expect(Number(limited.headers['retry-after'])).toBeGreaterThanOrEqual(1);
+    const inserted = jest
+      .mocked(PostgresEventRepository.prototype.insert)
+      .mock.calls.reduce((total, [rows]) => total + rows.length, 0);
+    expect(inserted).toBe(500);
+  });
 
   it('writes validated events through the runtime buffer and PostgreSQL adapter', async () => {
     configureAction();
@@ -463,6 +487,7 @@ describe('audit application authorization', () => {
   });
 
   it('requires an oversized valid batch to be split rather than retried unchanged', async () => {
+    const clock = jest.spyOn(performance, 'now').mockReturnValue(0);
     configureAction();
     const events = Array.from({ length: 500 }, () => ({
       ...eventInput(),
@@ -479,6 +504,7 @@ describe('audit application authorization', () => {
     expect(oversized.text).toContain('Split the batch');
     expect(PostgresEventRepository.prototype.insert).not.toHaveBeenCalled();
 
+    clock.mockReturnValue(1000);
     configureAction();
     const smaller = await request(app)
       .post('/audit/v1/case-service/events')

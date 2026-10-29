@@ -1,4 +1,4 @@
-import { AuditCategories, isAllowedUser, UnauthorizedUserError } from '@abgov/adsp-service-sdk';
+import { AuditCategories, AuditSeverities, isAllowedUser, UnauthorizedUserError } from '@abgov/adsp-service-sdk';
 import { createValidationHandler, InvalidOperationError, NotFoundError, Results } from '@core-services/core-common';
 import { RequestHandler } from 'express';
 import { query, param } from 'express-validator';
@@ -16,6 +16,7 @@ const MAX_TOP = 5000;
 // Typed against the domain union so an invalid status fails to compile.
 const EVENT_STATUSES: AuditEvent['status'][] = ['success', 'failure', 'blocked', 'error'];
 const EVENT_CATEGORIES = Object.values(AuditCategories);
+const EVENT_SEVERITIES = Object.values(AuditSeverities);
 
 export interface SerializeOptions {
   // Ordinary reads do not redact; redaction exists for responses that must hide identity from non-admins.
@@ -100,6 +101,9 @@ function toCriteria(req: Parameters<RequestHandler>[0], tenantId: string): Event
     action: str(q.action),
     status: str(q.status) as EventCriteria['status'],
     category: str(q.category) as EventCriteria['category'],
+    severity: str(q.severity) as EventCriteria['severity'],
+    correlationId: str(q.correlationId),
+    sessionId: str(q.sessionId),
     scope: str(q.scope),
     occurredFrom: toDate(q.occurredFrom),
     occurredTo: toDate(q.occurredTo),
@@ -201,6 +205,9 @@ const SCALAR_PARAMS = [
   'scope',
   'status',
   'category',
+  'severity',
+  'correlationId',
+  'sessionId',
   'occurredFrom',
   'occurredTo',
 ];
@@ -219,6 +226,10 @@ export const validateEventQuery = createValidationHandler(
     .isLength({ min: 1, max: 256 }),
   query('status').optional().isIn(EVENT_STATUSES),
   query('category').optional().isIn(EVENT_CATEGORIES),
+  query('severity').optional().isIn(EVENT_SEVERITIES),
+  // sessionId matches the 128 character limit applied when events are written; correlationId has no write-side limit.
+  query('correlationId').optional().isString().isLength({ min: 1 }),
+  query('sessionId').optional().isString().isLength({ min: 1, max: 128 }),
   query(['occurredFrom', 'occurredTo'])
     .optional()
     .custom((value) => parseIsoDate(value) !== undefined)

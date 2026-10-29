@@ -5,7 +5,7 @@ import {
   PeriodicExportingMetricReader,
 } from '@opentelemetry/sdk-metrics';
 import { createLogger, transports } from 'winston';
-import { createAuditMetrics } from './metrics';
+import { createAuditMetrics, createRateLimitMetrics } from './metrics';
 import { FailedEventRepository } from './types';
 import { readFileSync } from 'fs';
 import { resolve } from 'path';
@@ -74,6 +74,26 @@ describe('audit metrics', () => {
     expect(metrics.find(({ descriptor }) => descriptor.name === 'audit.events.parked')?.dataPoints).toEqual([
       expect.objectContaining({ value: 1, attributes: {} }),
     ]);
+  });
+
+  it('counts rate-limited requests and events labelled by tenant and namespace', async () => {
+    const rateLimit = createRateLimitMetrics(provider.getMeter('audit-service'));
+    const attributes = { tenant: 'urn:ads:platform:tenant-service:v2:/tenants/case-team', namespace: 'case-service' };
+
+    rateLimit.recordRateLimited(attributes.tenant, attributes.namespace, 500);
+    rateLimit.recordRateLimited(attributes.tenant, attributes.namespace, 20);
+    const metrics = await collect();
+
+    expect(
+      metrics.find(({ descriptor }) => descriptor.name === 'audit.write.rate_limited.requests')?.dataPoints,
+    ).toEqual([expect.objectContaining({ value: 2, attributes })]);
+    expect(metrics.find(({ descriptor }) => descriptor.name === 'audit.write.rate_limited.events')?.dataPoints).toEqual(
+      [expect.objectContaining({ value: 520, attributes })],
+    );
+  });
+
+  it('ignores rate-limit records without a meter', () => {
+    expect(() => createRateLimitMetrics(undefined).recordRateLimited('tenant', 'case-service', 1)).not.toThrow();
   });
 
   it.each(['ingest', 'replay'] as const)(

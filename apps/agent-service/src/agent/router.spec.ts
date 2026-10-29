@@ -1,5 +1,5 @@
 import { AgentConfigurations } from './configuration';
-import { getAccessScope, onIoConnection } from './router';
+import { deleteThread, getAccessScope, onIoConnection } from './router';
 import { WorkspaceChangeProjector } from './workspace';
 
 jest.mock('@abgov/adsp-service-sdk', () => ({
@@ -951,5 +951,64 @@ describe('getAccessScope', () => {
     });
 
     expect(scope).toMatchObject({ status: 'unavailable', reason: 'MISSING_ROLE', missingRoles: [agentUserRole] });
+  });
+});
+
+describe('deleteThread', () => {
+  const logger = { debug: jest.fn(), info: jest.fn(), warn: jest.fn(), error: jest.fn() };
+  const user = { id: 'user-1', name: 'Tester' };
+
+  function createRequest(deleteResult: Promise<boolean>) {
+    const broker = { deleteThread: jest.fn().mockReturnValue(deleteResult) };
+    const req = {
+      params: { agentId: 'AccessServiceAgent', threadId: 'thread-1' },
+      user,
+      tenant: { id: { toString: () => 'urn:ads:platform:tenant-service:v2:/tenants/tenant-1' } },
+      agent: broker,
+    };
+    return { req, broker };
+  }
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it("deletes the user's thread through the agent and reports it", async () => {
+    const { req, broker } = createRequest(Promise.resolve(true));
+    const res = { send: jest.fn() };
+    const next = jest.fn();
+
+    await deleteThread(logger as never)(req as never, res as never, next);
+
+    expect(broker.deleteThread).toHaveBeenCalledWith(user, 'thread-1');
+    expect(res.send).toHaveBeenCalledWith({ deleted: true });
+    expect(next).not.toHaveBeenCalled();
+    expect(logger.info).toHaveBeenCalledWith(
+      'User Tester (ID: user-1) deleted thread thread-1 of agent AccessServiceAgent.',
+      expect.objectContaining({ context: 'AgentRouter' }),
+    );
+  });
+
+  it('reports deleted false, rather than an error, when the user has no such thread', async () => {
+    const { req } = createRequest(Promise.resolve(false));
+    const res = { send: jest.fn() };
+    const next = jest.fn();
+
+    await deleteThread(logger as never)(req as never, res as never, next);
+
+    expect(res.send).toHaveBeenCalledWith({ deleted: false });
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it('passes failures to the error handler', async () => {
+    const error = new Error('storage failed');
+    const { req } = createRequest(Promise.reject(error));
+    const res = { send: jest.fn() };
+    const next = jest.fn();
+
+    await deleteThread(logger as never)(req as never, res as never, next);
+
+    expect(next).toHaveBeenCalledWith(error);
+    expect(res.send).not.toHaveBeenCalled();
   });
 });

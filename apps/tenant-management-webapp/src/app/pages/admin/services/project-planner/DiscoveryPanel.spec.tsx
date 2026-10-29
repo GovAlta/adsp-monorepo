@@ -3,23 +3,22 @@ import { fireEvent, render, waitFor } from '@testing-library/react';
 import { DiscoveryPanel } from './DiscoveryPanel';
 import { expectNoA11yViolations } from './testing/axe';
 import { createMockApi } from './testing/createMockApi';
-import { DiscoveryState, Solution } from './model';
+import { ChatSummary, DiscoveryState, OpenQuestion, Solution, SpecialistDefinition } from './model';
 
 const discovery = (overrides: Partial<DiscoveryState> = {}): DiscoveryState => ({
   messages: [
-    { role: 'assistant', content: 'Who are the users?', at: '2026-03-01T10:00:00.000Z' },
-    { role: 'user', content: 'Inspectors.', at: '2026-03-01T10:01:00.000Z' },
+    { role: 'assistant', content: 'Who are the users? What steps do they take?', at: '2026-03-01T10:00:00.000Z' },
   ],
   confidence: 30,
   threshold: 50,
   factors: [],
   ready: false,
   mode: 'ai',
-  updatedOn: '2026-03-01T10:01:00.000Z',
+  updatedOn: '2026-03-01T10:00:00.000Z',
   ...overrides,
 });
 
-const solution = (d?: DiscoveryState, blueprint = false): Solution =>
+const solution = (d?: DiscoveryState, questions: OpenQuestion[] = []): Solution =>
   ({
     id: 'solution-1',
     name: 'Permit intake',
@@ -27,22 +26,18 @@ const solution = (d?: DiscoveryState, blueprint = false): Solution =>
     status: 'draft',
     createdByName: 'Pat',
     updatedOn: '2026-03-01T10:00:00.000Z',
-    version: '1.0',
-    versionHistory: [],
+    version: 1,
     state: {
       problemStatement: 'Permits',
       concepts: [],
       decisions: [],
-      questions: [],
+      questions,
       hypotheses: [],
       specialists: [],
       nextSteps: [],
       discovery: d,
-      blueprint: blueprint ? ({ generatedOn: '2026-03-01T10:00:00.000Z' } as never) : undefined,
     },
   }) as Solution;
-
-const goa = (container: HTMLElement, testId: string) => container.querySelector(`[testid="${testId}"]`) as Element;
 
 const click = (container: HTMLElement, testId: string) =>
   fireEvent(container.querySelector(`goa-button[testid="${testId}"]`) as Element, new CustomEvent('_click'));
@@ -54,81 +49,273 @@ const type = (container: HTMLElement, value: string) =>
   );
 
 describe('DiscoveryPanel', () => {
-  it('starts discovery when none exists', async () => {
-    const started = solution(discovery());
-    const api = createMockApi({ discovery: jest.fn().mockResolvedValue(started) });
-    const onSolutionChange = jest.fn();
-    const { container, getByTestId } = render(
-      <DiscoveryPanel solution={solution()} api={api} mode="ai" onSolutionChange={onSolutionChange} />,
-    );
-    expect(getByTestId('discovery-empty')).toBeTruthy();
-    expect(container.querySelector('goa-textarea')).toBeNull();
-
-    click(container, 'discovery-start');
-    expect(container.querySelector('goa-circular-progress')).not.toBeNull();
-    await waitFor(() => expect(onSolutionChange).toHaveBeenCalledWith(started));
-    expect(api.discovery).toHaveBeenCalledWith('solution-1', { mode: 'ai', restart: true });
-    expect(api.blueprint).not.toHaveBeenCalled();
-    expect(container.querySelector('goa-circular-progress')).toBeNull();
-  });
-
-  it('renders the thread and warning', () => {
-    const { container, getByTestId } = render(
+  it('shows the optional question count and start over', async () => {
+    const api = createMockApi();
+    const { container } = render(
       <DiscoveryPanel
-        solution={solution(discovery({ warning: 'Rules used' }))}
-        api={createMockApi()}
+        solution={solution(discovery(), [
+          { id: 'q1', question: 'Who reviews applications?', raisedBy: 'planner', status: 'open' },
+        ])}
+        api={api}
         mode="ai"
         onSolutionChange={jest.fn()}
       />,
     );
-    expect(goa(container, 'discovery-warning').textContent).toContain('Rules used');
-    expect(goa(container, 'discovery-conversation')).not.toBeNull();
-    expect(goa(container, 'discovery-message-0').getAttribute('heading')).toBe('Planner');
-    expect(goa(container, 'discovery-message-0').getAttribute('type')).toBe('information');
-    expect(goa(container, 'discovery-message-1').getAttribute('heading')).toBe('You');
-    expect(goa(container, 'discovery-message-1').getAttribute('type')).toBe('important');
-    expect(container.querySelector('goa-textarea')?.getAttribute('placeholder')).toBe('Type your answers here');
-    expect(container.querySelector('goa-button[testid="discovery-force"]')).not.toBeNull();
+    await waitFor(() => expect(api.listChats).toHaveBeenCalled());
+
+    expect(container.textContent).toContain('Who are the users? What steps do they take?');
+    expect(container.querySelector('[testid="discovery-conversation"]')?.getAttribute('heading')).toBe('Conversation');
+    expect(container.querySelector('[testid="discovery-force"]')?.textContent).toBe('Skip and show me a plan');
+    expect(container.querySelector('[testid="discovery-restart"]')).not.toBeNull();
   });
 
-  it('does not wrap the conversation in a panel when there are no messages yet', () => {
-    const { container } = render(
-      <DiscoveryPanel solution={solution()} api={createMockApi()} mode="ai" onSolutionChange={jest.fn()} />,
+  it('shows which analysis mode discovery actions will use', async () => {
+    const aiApi = createMockApi();
+    const { container, rerender } = render(
+      <DiscoveryPanel solution={solution(discovery())} api={aiApi} mode="ai" onSolutionChange={jest.fn()} />,
     );
-    expect(container.querySelector('goa-accordion[testid="discovery-conversation"]')).toBeNull();
+    await waitFor(() => expect(aiApi.listChats).toHaveBeenCalled());
+
+    expect(container.querySelector('[data-testid="discovery-mode-hint"]')?.textContent).toContain('Using AI analysis');
+
+    const rulesApi = createMockApi();
+    rerender(
+      <DiscoveryPanel solution={solution(discovery())} api={rulesApi} mode="rules" onSolutionChange={jest.fn()} />,
+    );
+    await waitFor(() => expect(rulesApi.listChats).toHaveBeenCalled());
+
+    expect(container.querySelector('[data-testid="discovery-mode-hint"]')?.textContent).toContain(
+      'Using rule-based analysis',
+    );
   });
 
-  it('sends a reply when not ready', async () => {
-    const next = solution(discovery());
-    const api = createMockApi({ discovery: jest.fn().mockResolvedValue(next) });
+  it('sends the user answers together in one reply', async () => {
+    const result = solution(discovery());
+    const api = createMockApi({ discovery: jest.fn().mockResolvedValue(result) });
     const onSolutionChange = jest.fn();
     const { container } = render(
-      <DiscoveryPanel solution={solution(discovery())} api={api} mode="rules" onSolutionChange={onSolutionChange} />,
+      <DiscoveryPanel
+        solution={solution(discovery(), [
+          { id: 'q1', question: 'Who reviews applications?', raisedBy: 'planner', status: 'open' },
+        ])}
+        api={api}
+        mode="ai"
+        onSolutionChange={onSolutionChange}
+      />,
     );
 
-    expect(container.querySelector('goa-button[testid="discovery-send"]')?.getAttribute('disabled')).toBe('true');
-    type(container, '  Staff only ');
+    type(container, 'Staff review applications; applicants receive email updates.');
     click(container, 'discovery-send');
-
-    await waitFor(() => expect(onSolutionChange).toHaveBeenCalledWith(next));
-    expect(api.discovery).toHaveBeenCalledWith('solution-1', { mode: 'rules', message: 'Staff only' });
-    expect(container.querySelector('goa-textarea')?.getAttribute('value')).toBe('');
+    await waitFor(() =>
+      expect(api.discovery).toHaveBeenCalledWith('solution-1', {
+        mode: 'ai',
+        message: 'Staff review applications; applicants receive email updates.',
+      }),
+    );
+    expect(api.blueprint).not.toHaveBeenCalled();
+    expect(onSolutionChange).toHaveBeenCalledWith(result);
   });
 
-  it('forces the solution with and without a message', async () => {
-    const api = createMockApi({ discovery: jest.fn().mockResolvedValue(solution(discovery())) });
+  it('lets the user skip low-confidence discovery and requests a plan', async () => {
+    const result = solution(discovery({ ready: true }));
+    const api = createMockApi({ discovery: jest.fn().mockResolvedValue(result) });
+    const onSolutionChange = jest.fn();
     const { container } = render(
-      <DiscoveryPanel solution={solution(discovery())} api={api} mode="ai" onSolutionChange={jest.fn()} />,
+      <DiscoveryPanel solution={solution(discovery())} api={api} mode="ai" onSolutionChange={onSolutionChange} />,
     );
 
     click(container, 'discovery-force');
+
     await waitFor(() => expect(api.discovery).toHaveBeenCalledWith('solution-1', { mode: 'ai', force: true }));
+    expect(onSolutionChange).toHaveBeenCalledWith(result);
+  });
 
-    type(container, 'More');
-    click(container, 'discovery-force');
+  it('refines through conversation when discovery is ready and there are no open questions', async () => {
+    const ready = solution(discovery({ ready: true, confidence: 75 }));
+    const api = createMockApi({ chat: jest.fn().mockResolvedValue(ready) });
+    const { container } = render(<DiscoveryPanel solution={ready} api={api} mode="ai" onSolutionChange={jest.fn()} />);
+
+    expect(container.querySelectorAll('goa-textarea[testid="discovery-input"]')).toHaveLength(1);
+    type(container, 'Add more information about the approval process.');
+    click(container, 'discovery-send');
     await waitFor(() =>
-      expect(api.discovery).toHaveBeenLastCalledWith('solution-1', { mode: 'ai', force: true, message: 'More' }),
+      expect(api.chat).toHaveBeenCalledWith('solution-1', 'Add more information about the approval process.', 'ai'),
     );
+    expect(api.discovery).not.toHaveBeenCalled();
+  });
+
+  it('keeps the latest exchange expanded and collapses earlier turns behind a labeled toggle', async () => {
+    const existing = solution(discovery());
+    existing.state.conversation = [
+      { role: 'user', content: 'There is also a committee vote.', at: '2026-03-01T10:01:00.000Z' },
+      { role: 'assistant', content: 'I will include the committee vote.', at: '2026-03-01T10:02:00.000Z' },
+    ];
+    const api = createMockApi();
+    const { container } = render(
+      <DiscoveryPanel solution={existing} api={api} mode="ai" onSolutionChange={jest.fn()} />,
+    );
+    await waitFor(() => expect(api.listChats).toHaveBeenCalled());
+
+    const conversation = container.querySelector('[testid="discovery-conversation"]');
+    expect(conversation?.getAttribute('heading')).toBe('Conversation');
+    expect(conversation?.hasAttribute('open')).toBe(true);
+    expect(conversation?.querySelectorAll('[testid^="discovery-message-"]')).toHaveLength(3);
+    const earlier = conversation?.querySelector('[testid="discovery-earlier-conversation"]');
+    expect(earlier?.getAttribute('heading')).toBe('Show earlier conversation (1)');
+    expect(earlier?.hasAttribute('open')).toBe(false);
+    expect(conversation?.textContent).toContain('Who are the users? What steps do they take?');
+    expect(conversation?.textContent).toContain('There is also a committee vote.');
+    expect(container.querySelectorAll('[testid="discovery-conversation"]')).toHaveLength(1);
+  });
+
+  it('keeps discovery actions and the reply box when no questions were needed', async () => {
+    const api = createMockApi();
+    const { container } = render(
+      <DiscoveryPanel solution={solution()} api={api} mode="ai" onSolutionChange={jest.fn()} />,
+    );
+    await waitFor(() => expect(api.listChats).toHaveBeenCalled());
+
+    expect(container.querySelector('goa-textarea[testid="discovery-input"]')).not.toBeNull();
+    expect(container.querySelector('[testid="discovery-send"]')).not.toBeNull();
+    expect(container.querySelector('[testid="discovery-force"]')).toBeNull();
+    expect(container.querySelector('[testid="discovery-restart"]')).not.toBeNull();
+  });
+
+  it('shows service choices beside the specialist chat in the optional accordion', async () => {
+    const specialists: SpecialistDefinition[] = [
+      {
+        service: 'form-service',
+        displayName: 'Form service',
+        purpose: 'Collect applications',
+        workspacePath: '',
+        questions: [],
+        dependsOn: [],
+        risks: [],
+        order: 1,
+      },
+      {
+        service: 'file-service',
+        displayName: 'File service',
+        purpose: 'Store supporting documents',
+        workspacePath: '',
+        questions: [],
+        dependsOn: [],
+        risks: [],
+        order: 2,
+      },
+    ];
+    const planned = solution(discovery());
+    planned.state.blueprint = {
+      serviceMapping: [
+        {
+          order: 1,
+          service: 'form-service',
+          displayName: 'Form service',
+          role: 'Collect applications',
+          reason: 'Applicants need a form.',
+          dependsOn: [],
+          capabilities: [],
+        },
+      ],
+    } as NonNullable<Solution['state']['blueprint']>;
+    const api = createMockApi();
+    const { container } = render(
+      <DiscoveryPanel solution={planned} api={api} mode="ai" onSolutionChange={jest.fn()} specialists={specialists} />,
+    );
+    await waitFor(() => expect(api.listChats).toHaveBeenCalled());
+
+    const expertAccordion = container.querySelector('[testid="optional-experts"]');
+    expect(expertAccordion?.getAttribute('heading')).toBe('Chat/Consult with Specialist');
+    expect(expertAccordion?.hasAttribute('open')).toBe(false);
+    expect(expertAccordion?.querySelector('[testid="specialist-service-form-service"]')?.textContent).toBe('Form');
+    expect(expertAccordion?.querySelector('[testid="specialist-service-file-service"]')?.textContent).toBe('File');
+    const expertLayout = expertAccordion?.querySelector('[data-testid="service-expert-layout"]');
+    expect(expertLayout).not.toBeNull();
+    expect(expertLayout?.querySelector('[aria-label="Available service experts"]')).not.toBeNull();
+    expect(expertLayout?.querySelector('[data-testid="selected-specialist-chat"]')).not.toBeNull();
+    expect(expertLayout?.firstElementChild?.nextElementSibling).toBe(
+      expertLayout?.querySelector('[data-testid="selected-specialist-chat"]'),
+    );
+    expect(expertAccordion?.parentElement?.getAttribute('style')).toContain('margin-top: 1.5rem');
+    expect(expertAccordion?.querySelector('[testid="specialist-service-form-service"]')?.getAttribute('width')).toBe(
+      '100%',
+    );
+    expect(expertAccordion?.querySelector('[data-testid="selected-specialist-chat"] h2')).toBeNull();
+    expect(expertAccordion?.querySelector('[data-testid="chat-heading"]')?.textContent).toBe('Form service');
+    expect(expertAccordion?.querySelector('[data-testid="chat-context"]')?.textContent).toBe(
+      'Recommended for this plan: Applicants need a form.',
+    );
+    expect(expertAccordion?.textContent).not.toContain('Specialist chat');
+    expect(
+      container
+        .querySelector('[role="group"][aria-label="Discovery actions"]')
+        ?.compareDocumentPosition(expertAccordion as Node) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
+
+  it('shows saved chat counts on the matching specialist buttons', async () => {
+    const planned = solution(discovery());
+    planned.state.blueprint = {
+      serviceMapping: [
+        {
+          order: 1,
+          service: 'form-service',
+          displayName: 'Form service',
+          role: 'Collect applications',
+          reason: 'Applicants need a form.',
+          dependsOn: [],
+          capabilities: [],
+        },
+      ],
+    } as NonNullable<Solution['state']['blueprint']>;
+    const savedChats: ChatSummary[] = [
+      {
+        id: 'form-1',
+        service: 'form-service',
+        solutionId: planned.id,
+        title: 'Form consultation',
+        createdOn: '2026-03-01T10:00:00.000Z',
+        updatedOn: '2026-03-01T10:00:00.000Z',
+        messageCount: 2,
+      },
+      {
+        id: 'form-2',
+        service: 'form-service',
+        solutionId: planned.id,
+        title: 'Form follow-up',
+        createdOn: '2026-03-01T10:00:00.000Z',
+        updatedOn: '2026-03-01T10:00:00.000Z',
+        messageCount: 2,
+      },
+      {
+        id: 'file-1',
+        service: 'file-service',
+        solutionId: planned.id,
+        title: 'File consultation',
+        createdOn: '2026-03-01T10:00:00.000Z',
+        updatedOn: '2026-03-01T10:00:00.000Z',
+        messageCount: 2,
+      },
+    ];
+    const api = createMockApi({ listChats: jest.fn().mockResolvedValue(savedChats) });
+    const { container } = render(
+      <DiscoveryPanel
+        solution={planned}
+        api={api}
+        mode="ai"
+        onSolutionChange={jest.fn()}
+        specialists={[
+          { service: 'form-service', displayName: 'Form service', purpose: 'Forms', order: 1 } as SpecialistDefinition,
+          { service: 'file-service', displayName: 'File service', purpose: 'Files', order: 2 } as SpecialistDefinition,
+        ]}
+      />,
+    );
+
+    await waitFor(() =>
+      expect(container.querySelector('[testid="specialist-service-form-service"]')?.textContent).toContain('Form *'),
+    );
+    expect(container.querySelector('[testid="specialist-service-file-service"]')?.textContent).toBe('File *');
+    expect(container.querySelector('[testid="optional-experts-count"]')?.getAttribute('content')).toBe('2 specialists');
   });
 
   it('restarts discovery', async () => {
@@ -136,95 +323,29 @@ describe('DiscoveryPanel', () => {
     const { container } = render(
       <DiscoveryPanel solution={solution(discovery())} api={api} mode="ai" onSolutionChange={jest.fn()} />,
     );
+
     click(container, 'discovery-restart');
     await waitFor(() => expect(api.discovery).toHaveBeenCalledWith('solution-1', { mode: 'ai', restart: true }));
   });
 
-  it('generates the blueprint when first ready', async () => {
-    const ready = solution(discovery({ ready: true }));
-    const final = solution(discovery({ ready: true }), true);
-    const api = createMockApi({
-      discovery: jest.fn().mockResolvedValue(ready),
-      blueprint: jest.fn().mockResolvedValue(final),
-    });
-    const onSolutionChange = jest.fn();
+  it('shows a fallback note only when discovery reports one', async () => {
+    const api = createMockApi();
     const { container } = render(
-      <DiscoveryPanel solution={solution(discovery())} api={api} mode="ai" onSolutionChange={onSolutionChange} />,
+      <DiscoveryPanel
+        solution={solution(discovery({ warning: 'AI unavailable; rules were used.' }))}
+        api={api}
+        mode="ai"
+        onSolutionChange={jest.fn()}
+      />,
     );
-    click(container, 'discovery-force');
-    await waitFor(() => expect(onSolutionChange).toHaveBeenLastCalledWith(final));
-    expect(api.blueprint).toHaveBeenCalledWith('solution-1', { mode: 'ai' });
+    await waitFor(() => expect(api.listChats).toHaveBeenCalled());
+    expect(container.querySelector('[testid="discovery-warning"]')?.textContent).toContain('AI unavailable');
   });
 
-  it('regenerates the blueprint after a refining message when ready', async () => {
-    const ready = solution(discovery({ ready: true }), true);
-    const api = createMockApi({
-      discovery: jest.fn().mockResolvedValue(ready),
-      blueprint: jest.fn().mockResolvedValue(ready),
-    });
-    const { container } = render(<DiscoveryPanel solution={ready} api={api} mode="ai" onSolutionChange={jest.fn()} />);
-    expect(container.querySelector('goa-textarea')?.getAttribute('placeholder')).toContain('refine');
-    expect(container.querySelector('goa-button[testid="discovery-force"]')).toBeNull();
-    expect(container.querySelector('goa-button[testid="discovery-send"]')?.textContent).toBe('Send & refine solution');
-
-    type(container, 'Also email');
-    click(container, 'discovery-send');
-    await waitFor(() => expect(api.blueprint).toHaveBeenCalledTimes(1));
-  });
-
-  it('skips the blueprint when ready, one exists, and no message was sent', async () => {
-    const ready = solution(discovery({ ready: true }), true);
-    const api = createMockApi({ discovery: jest.fn().mockResolvedValue(ready) });
-    const onSolutionChange = jest.fn();
-    const { container } = render(
-      <DiscoveryPanel solution={ready} api={api} mode="ai" onSolutionChange={onSolutionChange} />,
-    );
-    click(container, 'discovery-restart');
-    await waitFor(() => expect(onSolutionChange).toHaveBeenCalledWith(ready));
-    expect(api.blueprint).not.toHaveBeenCalled();
-  });
-
-  it('resets busy state when the api fails', async () => {
-    const api = createMockApi({ discovery: jest.fn().mockRejectedValue(new Error('boom')) });
-    const onSolutionChange = jest.fn();
-    const { container } = render(
-      <DiscoveryPanel solution={solution(discovery())} api={api} mode="ai" onSolutionChange={onSolutionChange} />,
-    );
-    click(container, 'discovery-restart');
-    expect(container.querySelector('goa-button[testid="discovery-restart"]')?.getAttribute('disabled')).toBe('true');
-    await waitFor(() => expect(container.querySelector('goa-circular-progress')).toBeNull());
-    expect(onSolutionChange).not.toHaveBeenCalled();
-  });
-
-  it('has no accessibility violations', async () => {
+  it('passes accessibility checks', async () => {
     const { container } = render(
       <DiscoveryPanel solution={solution(discovery())} api={createMockApi()} mode="ai" onSolutionChange={jest.fn()} />,
     );
     await expectNoA11yViolations(container);
-  });
-
-  it('keeps the button label constant while busy instead of swapping to a status text', async () => {
-    const api = createMockApi({ discovery: jest.fn().mockReturnValue(new Promise(() => undefined)) });
-    const { container } = render(
-      <DiscoveryPanel solution={solution()} api={api} mode="ai" onSolutionChange={jest.fn()} />,
-    );
-
-    click(container, 'discovery-start');
-
-    await waitFor(() => expect(container.querySelector('goa-circular-progress')).not.toBeNull());
-    expect(goa(container, 'discovery-start').textContent).toBe('Start discovery');
-  });
-
-  it('keeps the send reply label constant while busy', async () => {
-    const api = createMockApi({ discovery: jest.fn().mockReturnValue(new Promise(() => undefined)) });
-    const { container } = render(
-      <DiscoveryPanel solution={solution(discovery())} api={api} mode="ai" onSolutionChange={jest.fn()} />,
-    );
-    type(container, 'Reply');
-
-    click(container, 'discovery-send');
-
-    await waitFor(() => expect(container.querySelector('goa-circular-progress')).not.toBeNull());
-    expect(goa(container, 'discovery-send').textContent).toBe('Send reply');
   });
 });

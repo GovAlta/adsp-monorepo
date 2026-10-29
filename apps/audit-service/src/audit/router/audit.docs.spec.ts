@@ -78,6 +78,15 @@ describe('audit service API documentation', () => {
       expect(write.description).toContain('does not mean every event was stored');
     });
 
+    it('documents rate limiting separately from buffer pressure', () => {
+      const write = compileSpecification().paths['/audit/v1/{namespace}/events'].post;
+
+      expect(write.responses['429'].headers['Retry-After'].schema.type).toBe('integer');
+      expect(write.responses['429'].description).toContain('No events in the request were stored');
+      expect(write.responses['503'].description).toContain('buffer is temporarily full');
+      expect(write.description).toContain('Admitted events consume allowance even if storage later fails');
+    });
+
     it('documents every error status for each operation', () => {
       const specification = compileSpecification();
       const missing = Object.entries(specification.paths).flatMap(([path, operations]) =>

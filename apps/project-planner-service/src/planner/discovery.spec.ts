@@ -1,8 +1,14 @@
 import {
+  allUserEvidence,
+  applyAnswerToFactors,
+  areSimilarQuestions,
   assessConfidence,
+  capFactors,
   computeConfidence,
+  dedupeOpenQuestions,
   DISCOVERY_FACTORS,
   DISCOVERY_THRESHOLD,
+  isQuestionCovered,
   normalizeFactors,
   ruleAssess,
   ruleDiscoveryReply,
@@ -97,6 +103,18 @@ describe('ruleAssess', () => {
     expect(communication?.score).toBe(80);
   });
 
+  it('recognizes an existing system to migrate from as a constraints and integrations signal', () => {
+    const constraints = ruleAssess(
+      'There is an Excel asset inventory with asset tags that needs a one-time import.',
+    ).find((f) => f.id === 'constraints');
+
+    expect(constraints?.note).toBeUndefined();
+  });
+
+  it.each(['The data is Protected B', 'POPA applies'])('scores the constraints factor from "%s"', (text) => {
+    expect(ruleAssess(text).find((f) => f.id === 'constraints')?.score).toBe(40);
+  });
+
   it('reaches the discovery threshold for a detailed description', () => {
     expect(computeConfidence(ruleAssess(richText))).toBeGreaterThanOrEqual(DISCOVERY_THRESHOLD);
   });
@@ -140,6 +158,80 @@ describe('normalizeFactors', () => {
   });
 });
 
+describe('capFactors', () => {
+  it('leaves factors unchanged when there are no open questions', () => {
+    const factors = [factor('problem', 95), factor('users', 100)];
+
+    expect(capFactors(factors, false)).toEqual(factors);
+  });
+
+  it('caps every factor at 90 while questions remain open', () => {
+    const factors = [factor('problem', 95), factor('users', 100), factor('process', 40)];
+
+    expect(capFactors(factors, true)).toEqual([factor('problem', 90), factor('users', 90), factor('process', 40)]);
+  });
+});
+
+describe('applyAnswerToFactors', () => {
+  const factors = DISCOVERY_FACTORS.map((f) => ({ id: f.id, label: f.label, score: f.id === 'process' ? 20 : 95 }));
+
+  it('raises only the factor the question and answer are relevant to', () => {
+    const text = 'Someone must review and approve each renewal before it moves to the next stage.';
+
+    const result = applyAnswerToFactors(factors, text, text, text);
+
+    expect(result.find((f) => f.id === 'process')?.score).toBe(80);
+    result.filter((f) => f.id !== 'process').forEach((f) => expect(f.score).toBe(95));
+  });
+
+  it('always raises a relevant factor at least by the bump amount, even with thin keyword overlap', () => {
+    const midFactors = DISCOVERY_FACTORS.map((f) => ({
+      id: f.id,
+      label: f.label,
+      score: f.id === 'process' ? 70 : 95,
+    }));
+
+    const result = applyAnswerToFactors(
+      midFactors,
+      'Is there a process for this?',
+      'Staff review it.',
+      'Staff review it.',
+    );
+
+    expect(result.find((f) => f.id === 'process')?.score).toBe(75);
+  });
+
+  it('moves process and workflow when an answer covers expiry, renewal, and revocation (regression)', () => {
+    const baseline = DISCOVERY_FACTORS.map((f) => ({ id: f.id, label: f.label, score: f.id === 'process' ? 80 : 90 }));
+    const question = 'Do permits expire, and if so, is there a renewal process?';
+    const answer =
+      "Permits expire at the end of each month and staff must renew. The clerk can revoke a permit if it's misused.";
+
+    const result = applyAnswerToFactors(baseline, question, answer, answer);
+
+    expect(result.find((f) => f.id === 'process')?.score).toBeGreaterThan(80);
+  });
+
+  it('never lowers a factor, and clamps at 100', () => {
+    const highFactors = DISCOVERY_FACTORS.map((f) => ({ id: f.id, label: f.label, score: 98 }));
+
+    const result = applyAnswerToFactors(
+      highFactors,
+      'Review?',
+      'Staff review each renewal.',
+      'Staff review each renewal.',
+    );
+
+    expect(result.find((f) => f.id === 'process')?.score).toBe(100);
+  });
+
+  it('leaves every factor untouched when neither the question nor the answer matches any keywords', () => {
+    const result = applyAnswerToFactors(factors, '42', '42', '42');
+
+    expect(result).toEqual(factors);
+  });
+});
+
 describe('userEvidence', () => {
   const messages: ConversationMessage[] = [
     { role: 'user', content: 'Officers approve within 10 days.', at: '2026-03-01T10:00:00.000Z' },
@@ -148,7 +240,9 @@ describe('userEvidence', () => {
   ];
 
   it('joins the problem and the user messages with newlines', () => {
-    expect(userEvidence('Grant intake', messages)).toBe('Grant intake\nOfficers approve within 10 days.\nThe director.');
+    expect(userEvidence('Grant intake', messages)).toBe(
+      'Grant intake\nOfficers approve within 10 days.\nThe director.',
+    );
   });
 
   it('excludes assistant messages', () => {
@@ -157,6 +251,48 @@ describe('userEvidence', () => {
 
   it('returns only the problem when there are no messages', () => {
     expect(userEvidence('Grant intake', [])).toBe('Grant intake');
+  });
+});
+
+describe('allUserEvidence', () => {
+  it('combines the problem, discovery messages, conversation, and answered questions', () => {
+    const state = makeState({
+      problemStatement: 'Grant intake',
+      discovery: {
+        messages: [{ role: 'user', content: 'Officers review each case.', at: '2026-03-01T10:00:00.000Z' }],
+        confidence: 0,
+        threshold: DISCOVERY_THRESHOLD,
+        factors: [],
+        ready: false,
+        mode: 'ai',
+        updatedOn: '2026-03-01T10:00:00.000Z',
+      },
+      conversation: [{ role: 'user', content: 'There is also a committee vote.', at: '2026-03-01T10:01:00.000Z' }],
+      questions: [
+        { id: 'q-1', question: 'What formats are required?', raisedBy: 'ai', status: 'answered', answer: 'PDF only.' },
+        { id: 'q-2', question: 'Still open?', raisedBy: 'ai', status: 'open' },
+      ],
+    });
+
+    const evidence = allUserEvidence(state);
+
+    expect(evidence).toContain('Grant intake');
+    expect(evidence).toContain('Officers review each case.');
+    expect(evidence).toContain('There is also a committee vote.');
+    expect(evidence).toContain('PDF only.');
+    expect(evidence).toContain('What formats are required?');
+  });
+
+  it('excludes unanswered questions and assistant messages', () => {
+    const state = makeState({
+      conversation: [{ role: 'assistant', content: 'Who approves above the limit?', at: '2026-03-01T10:00:00.000Z' }],
+      questions: [{ id: 'q-1', question: 'Still open?', raisedBy: 'ai', status: 'open' }],
+    });
+
+    const evidence = allUserEvidence(state);
+
+    expect(evidence).not.toContain('Who approves above the limit?');
+    expect(evidence).not.toContain('Still open?');
   });
 });
 
@@ -237,9 +373,106 @@ describe('ruleDiscoveryReply', () => {
     expect(reply).not.toContain('5. ');
   });
 
+  it('asks for the data classification level', () => {
+    expect(ruleDiscoveryReply([factor('constraints', 0)], 0, false)).toContain('Public, Protected A, Protected B or Protected C');
+  });
+
   it('skips factors that are not discovery factors', () => {
     const reply = ruleDiscoveryReply([factor('budget', 0)], 0, false);
 
     expect(reply.endsWith('please tell me:\n')).toBe(true);
+  });
+});
+
+describe('isQuestionCovered', () => {
+  it('is covered when most of its distinctive words already appear in the evidence', () => {
+    const question = 'Who approves grants above the delegated limit?';
+    const evidence = 'The director approves grants above the delegated limit for large requests.';
+
+    expect(isQuestionCovered(question, evidence)).toBe(true);
+  });
+
+  it('is not covered when the evidence is unrelated', () => {
+    const question = 'Who approves grants above the delegated limit?';
+    const evidence = 'Applicants upload a photo for identification.';
+
+    expect(isQuestionCovered(question, evidence)).toBe(false);
+  });
+
+  it('is not covered when only a weak minority of words match', () => {
+    const question = 'Are reminders needed, and through which channels?';
+    const evidence = 'Staff review each application and approve it.';
+
+    expect(isQuestionCovered(question, evidence)).toBe(false);
+  });
+
+  it('is never covered when the question has fewer than two distinctive words', () => {
+    expect(isQuestionCovered('Is it urgent?', 'This is extremely urgent and time sensitive.')).toBe(false);
+  });
+});
+
+describe('areSimilarQuestions', () => {
+  it('matches two differently-worded questions about the same topic (regression)', () => {
+    const q1 = 'Do permits expire, and if so, is there a renewal process?';
+    const q5 = 'Do these permits expire after a certain period, or do they need to be renewed annually?';
+
+    expect(areSimilarQuestions(q1, q5)).toBe(true);
+  });
+
+  it('is not similar when the questions cover different topics', () => {
+    const a = 'Do permits expire, and if so, is there a renewal process?';
+    const b = 'Who needs to be notified when an application is approved?';
+
+    expect(areSimilarQuestions(a, b)).toBe(false);
+  });
+
+  it('is never similar when either question has fewer than two distinctive words', () => {
+    expect(areSimilarQuestions('Is it urgent?', 'Is it urgent and time sensitive right now?')).toBe(false);
+  });
+});
+
+describe('dedupeOpenQuestions', () => {
+  const grantA = {
+    id: 'q-1',
+    question: 'Is the grant payment triggered automatically by the system or does it require manual approval?',
+    status: 'open',
+  };
+  const grantB = {
+    id: 'q-2',
+    question: 'Who is responsible for triggering the grant payment in the financial system—automatic or manual?',
+    status: 'open',
+  };
+  const unrelated = {
+    id: 'q-3',
+    question: 'Who needs to be notified when an application is approved?',
+    status: 'open',
+  };
+
+  it('drops a later open question that duplicates an earlier open one, keeping the earlier phrasing', () => {
+    const result = dedupeOpenQuestions([grantA, grantB, unrelated]);
+
+    expect(result).toEqual([grantA, unrelated]);
+  });
+
+  it('drops an open question that duplicates an already-answered question', () => {
+    const answered = { ...grantA, status: 'answered', answer: 'Automatic.' };
+
+    const result = dedupeOpenQuestions([answered, grantB, unrelated]);
+
+    expect(result).toEqual([answered, unrelated]);
+  });
+
+  it('keeps unrelated open questions untouched', () => {
+    const result = dedupeOpenQuestions([grantA, unrelated]);
+
+    expect(result).toEqual([grantA, unrelated]);
+  });
+
+  it('never drops non-open questions', () => {
+    const inferred = { ...unrelated, status: 'inferred' };
+
+    const result = dedupeOpenQuestions([inferred, inferred]);
+
+    expect(result).toEqual([inferred, inferred]);
   });
 });

@@ -41,7 +41,7 @@ export function PrivateApp(): JSX.Element {
       {ready && (
         <HeaderCtx.Provider value={{ setTitle }}>
           <ScrollBarFixTop>
-            <FixedContainer>
+            <FixedContainer data-testid="app-fixed-header">
               <Header serviceName={title} admin={true} />
               <NotificationBanner />
               <LogoutModal />

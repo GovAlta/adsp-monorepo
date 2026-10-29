@@ -45,16 +45,16 @@ const AnonymousFormComponent: FunctionComponent<FormProps> = ({ className }) => 
 
   const handleChange = useCallback(
     ({ data, errors }: { data: unknown; errors?: ValidationError[] }) => {
-      dispatch(updateForm({ data: data as Record<string, unknown>, files, errors: errors }));
+      dispatch(updateForm({ data: data as Record<string, unknown>, errors: errors }));
     },
-    [dispatch, files],
+    [dispatch],
   );
 
   const handleSave = useCallback(
     ({ data, errors }: { data: unknown; errors?: ValidationError[] }) => {
-      dispatch(updateForm({ data: data as Record<string, unknown>, files, errors: errors }));
+      dispatch(updateForm({ data: data as Record<string, unknown>, errors: errors }));
     },
-    [dispatch, files],
+    [dispatch],
   );
 
   const handleSubmit = useCallback(() => {

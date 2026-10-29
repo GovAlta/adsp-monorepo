@@ -141,14 +141,14 @@ describe('SpecialistChat', () => {
     const { getByTestId, container } = renderChat();
     await loaded(container);
 
-    expect(getByTestId('chat-heading').textContent).toBe('Specialist chat: Form');
+    expect(getByTestId('chat-heading').textContent).toBe('Form');
   });
 
   it('falls back to the service name without a specialist', async () => {
     const { getByTestId, container } = renderChat({ specialist: undefined });
     await loaded(container);
 
-    expect(getByTestId('chat-heading').textContent).toBe('Specialist chat: form-service');
+    expect(getByTestId('chat-heading').textContent).toBe('form-service');
   });
 
   it('lists chats scoped to the service and solution', async () => {
@@ -198,7 +198,7 @@ describe('SpecialistChat', () => {
     await waitFor(() =>
       expect(container.querySelectorAll('goa-callout[testid="chat-assistant-message"]')).toHaveLength(1),
     );
-    expect(container.querySelector('goa-callout[heading="Form (rule-based)"]')).not.toBeNull();
+    expect(container.querySelector('goa-callout[heading="Form"]')).not.toBeNull();
     expect(container.textContent).toContain('AI unavailable');
     expect(container.textContent).toContain('Fit: recommended');
     expect(container.textContent).toContain('Verdict: ok');
@@ -403,7 +403,7 @@ describe('SpecialistChat', () => {
 
   it('names downloads generically without a solution', async () => {
     const { container } = renderChat({ solution: undefined });
-    await waitFor(() => expect(api.listChats).toHaveBeenCalled());
+    await waitFor(() => expect(container.querySelector('[testid="chat-download-all-json"]')).not.toBeNull());
 
     click(container, 'chat-download-all-json');
 

@@ -12,6 +12,7 @@ import {
   watchNotificationSagas,
 } from './sagas';
 import {
+  DELETE_NOTIFICATION_TYPE_SUCCEEDED,
   DELETE_NOTIFICATION_TYPE,
   FETCH_CORE_NOTIFICATION_TYPES_SUCCEEDED,
   FETCH_NOTIFICATION_CONFIGURATION,
@@ -19,9 +20,9 @@ import {
   UPDATE_CONTACT_INFORMATION,
   UPDATE_EMAIL_INFORMATION,
   UPDATE_NOTIFICATION_TYPE,
+  UPDATE_NOTIFICATION_TYPE_SUCCEEDED,
   FetchNotificationConfigurationService,
   UpdateNotificationTypeService,
-  DeleteNotificationTypeService,
 } from './actions';
 import { NOTIFICATION_INIT, NotificationItem } from './models';
 import notificationReducer from './reducers';
@@ -89,63 +90,44 @@ const runSaga = async (saga, action, state = storeState(), responses: Record<str
 };
 
 describe('notification sagas', () => {
-  describe('overlapping configuration refreshes', () => {
+  it('keeps a mutation response when an older cache-backed read finishes later', async () => {
+    const oldRead = deferred<{ data: NotificationItem[] }>();
+    const readStarted = deferred<void>();
+    const mutationStored = deferred<void>();
     const eventType = { ...tenantType, events: coreType.events };
-
-    it.each([
-      ['create a type', [], [tenantType], UpdateNotificationTypeService({ ...tenantType })],
-      [
-        'rename a type',
-        [tenantType],
-        [{ ...tenantType, name: 'Updated tenant type' }],
-        UpdateNotificationTypeService({ ...tenantType, name: 'Updated tenant type' }),
-      ],
-      ['add an event', [tenantType], [eventType], UpdateNotificationTypeService({ ...eventType })],
-      ['delete an event', [eventType], [tenantType], UpdateNotificationTypeService({ ...tenantType })],
-      ['delete a type', [tenantType], [], DeleteNotificationTypeService({ ...tenantType })],
-    ])('keeps the saved configuration when an older read finishes after %s', async (_, oldTypes, newTypes, action) => {
-      const oldRead = deferred<{ data: NotificationItem[] }>();
-      const readStarted = deferred<void>();
-      const refreshed = deferred<void>();
-      let typesReads = 0;
-      const initialState = storeState(Object.fromEntries(oldTypes.map((type) => [type.id, type])));
-      const saga = expectSaga(watchNotificationSagas)
-        .withReducer((state = initialState, dispatched) => {
-          const nextState = { ...state, notification: notificationReducer(state.notification, dispatched) };
-          if (dispatched.type === FETCH_NOTIFICATION_CONFIGURATION_SUCCEEDED) {
-            refreshed.resolve();
+    const initialState = storeState({ [tenantType.id]: tenantType });
+    const saga = expectSaga(watchNotificationSagas)
+      .withReducer((state = initialState, action) => {
+        const nextState = { ...state, notification: notificationReducer(state.notification, action) };
+        if (action.type === UPDATE_NOTIFICATION_TYPE_SUCCEEDED) {
+          mutationStored.resolve();
+        }
+        return nextState;
+      }, initialState)
+      .provide({
+        call(effect, next) {
+          if (effect.fn === getAccessToken) return 'mock-token';
+          if (effect.fn === axios.get && effect.args[0].endsWith('/types?source=tenant')) {
+            readStarted.resolve();
+            return oldRead.promise;
           }
-          return nextState;
-        }, initialState)
-        .provide({
-          call(effect, next) {
-            if (effect.fn === getAccessToken) return 'mock-token';
-            if (effect.fn === axios.get && effect.args[0].endsWith('/types?source=tenant')) {
-              typesReads += 1;
-              if (typesReads === 1) {
-                readStarted.resolve();
-                return oldRead.promise;
-              }
-              return { data: newTypes };
-            }
-            if (effect.fn === axios.get) return { data: {} };
-            if ([axios.post, axios.patch, axios.delete].includes(effect.fn)) return { data: {} };
-            return next();
-          },
-        })
-        .dispatch(FetchNotificationConfigurationService());
+          if (effect.fn === axios.patch) return { data: eventType };
+          return next();
+        },
+      })
+      .dispatch(FetchNotificationConfigurationService());
 
-      const execution = saga.run(false);
-      await readStarted.promise;
-      saga.dispatch(action);
-      await refreshed.promise;
-      oldRead.resolve({ data: oldTypes });
-      saga.dispatch(END);
-      const { storeState: finalState } = await execution;
+    const execution = saga.run(false);
+    await readStarted.promise;
+    saga.dispatch(UpdateNotificationTypeService(eventType));
+    await mutationStored.promise;
+    oldRead.resolve({ data: [tenantType] });
+    saga.dispatch(END);
+    const { storeState: finalState } = await execution;
 
-      expect(finalState.notification.notificationTypes).toEqual(
-        Object.fromEntries(newTypes.map((type) => [type.id, { ...type, sortedChannels: ['email'] }]))
-      );
+    expect(finalState.notification.notificationTypes[tenantType.id]).toEqual({
+      ...eventType,
+      sortedChannels: ['email'],
     });
   });
 
@@ -187,7 +169,7 @@ describe('notification sagas', () => {
   });
 
   describe('deleteNotificationTypes', () => {
-    it('deletes the type and refreshes', async () => {
+    it('deletes the type and updates the store without a cache-backed refresh', async () => {
       const { calls, actions } = await runSaga(deleteNotificationTypes, {
         type: DELETE_NOTIFICATION_TYPE,
         payload: { ...tenantType, id: 'type with space' },
@@ -196,7 +178,11 @@ describe('notification sagas', () => {
       expect(calls).toEqual([
         { method: 'delete', args: [`${notificationServiceUrl}/subscription/v1/types/type%20with%20space`, headers] },
       ]);
-      expect(actions.map((a) => a.type)).toContain(FETCH_NOTIFICATION_CONFIGURATION);
+      expect(actions).toContainEqual({
+        type: DELETE_NOTIFICATION_TYPE_SUCCEEDED,
+        payload: { id: 'type with space' },
+      });
+      expect(actions.map((a) => a.type)).not.toContain(FETCH_NOTIFICATION_CONFIGURATION);
     });
   });
 
@@ -213,12 +199,21 @@ describe('notification sagas', () => {
       expect(calls[0].args[1]).toMatchObject({ id: 'new-type', name: tenantType.name });
     });
 
-    it('updates an existing tenant type', async () => {
-      const { calls } = await update({ ...tenantType, name: 'Renamed' }, { [tenantType.id]: tenantType });
+    it('updates an existing tenant type from the mutation response without a cache-backed refresh', async () => {
+      const savedType = { ...tenantType, name: 'Renamed' };
+      const typeUrl = `${notificationServiceUrl}/subscription/v1/types/tenant-type`;
+      const { calls, actions } = await runSaga(
+        updateNotificationType,
+        { type: UPDATE_NOTIFICATION_TYPE, payload: savedType },
+        storeState({ [tenantType.id]: tenantType }),
+        { [typeUrl]: savedType }
+      );
 
       expect(calls[0].method).toBe('patch');
-      expect(calls[0].args[0]).toBe(`${notificationServiceUrl}/subscription/v1/types/tenant-type`);
+      expect(calls[0].args[0]).toBe(typeUrl);
       expect(calls[0].args[1]).toMatchObject({ name: 'Renamed' });
+      expect(actions).toContainEqual({ type: UPDATE_NOTIFICATION_TYPE_SUCCEEDED, payload: savedType });
+      expect(actions.map((a) => a.type)).not.toContain(FETCH_NOTIFICATION_CONFIGURATION);
     });
 
     it('saves a customization of a core type with only event namespace, name, and templates', async () => {
@@ -244,7 +239,7 @@ describe('notification sagas', () => {
       const { calls, actions } = await update({ ...coreType, events: [] });
 
       expect(calls).toEqual([]);
-      expect(actions.map((a) => a.type)).toContain(FETCH_NOTIFICATION_CONFIGURATION);
+      expect(actions).toEqual([]);
     });
 
     it('defaults the channels of types without them', async () => {

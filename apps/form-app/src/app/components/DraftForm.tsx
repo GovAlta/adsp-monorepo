@@ -74,6 +74,7 @@ export const populateDropdown = (schema, enumerators) => {
 
 const JsonFormsWrapper = ({ definition, data, onChange, readonly, user }) => {
   const enumerators = useContext(JsonFormContext) as enumerators;
+  const getFormContextData = enumerators?.getFormContextData;
   const middleware = useMemo(
     () => createAutoPopulateMiddleware(definition.uiSchema, user),
     [definition.uiSchema, user],
@@ -81,7 +82,7 @@ const JsonFormsWrapper = ({ definition, data, onChange, readonly, user }) => {
   // JsonForms recompiles when `schema` identity changes, so the clone must stay stable.
   const schema = useMemo(
     () => populateDropdown(definition.dataSchema, enumerators),
-    [definition.dataSchema, enumerators],
+    [definition.dataSchema, getFormContextData],
   );
 
   return (
@@ -112,6 +113,9 @@ const SavingIndicator = styled.div`
     transition-duration: 1500ms;
   }
 `;
+
+const normalizeFilePropertyId = (path: string): string => path.replace(/(\.\d+|\[\d+\])$/, '');
+const isIndexedFilePropertyId = (path: string): boolean => /(\.\d+|\[\d+\])$/.test(path);
 
 export const DraftForm: FunctionComponent<DraftFormProps> = ({
   definition,
@@ -159,8 +163,8 @@ export const DraftForm: FunctionComponent<DraftFormProps> = ({
   };
 
   const uploadFormFile = async (file: File, propertyId: string) => {
-    const clonedFiles = { ...files };
-    const propertyIdRoot = propertyId.split('.')[0];
+    const propertyIdRoot = normalizeFilePropertyId(propertyId);
+    const isIndexedProperty = isIndexedFilePropertyId(propertyId);
 
     const fileMetaData =
       anonymousApply === true
@@ -185,8 +189,29 @@ export const DraftForm: FunctionComponent<DraftFormProps> = ({
             ).unwrap()
           ).metadata;
 
-    clonedFiles[propertyId] = fileMetaData.urn;
+    const latestFiles = (store.getState() as AppState).form?.files || files || {};
+    const clonedFiles = { ...latestFiles };
+
+    let targetPropertyId = propertyId;
+    if (isIndexedProperty && clonedFiles[targetPropertyId]) {
+      const siblingKeys = Object.keys(clonedFiles).filter(
+        (key) => key === propertyIdRoot || key.startsWith(`${propertyIdRoot}.`) || key.startsWith(`${propertyIdRoot}[`),
+      );
+      const maxIndex = siblingKeys.reduce((max, key) => {
+        const match = key.match(/(?:\.|\[)(\d+)\]?$/);
+        return match ? Math.max(max, Number(match[1])) : max;
+      }, -1);
+      targetPropertyId = `${propertyIdRoot}.${maxIndex + 1}`;
+    }
+
+    clonedFiles[targetPropertyId] = fileMetaData.urn;
     dispatch(formActions.updateFormFiles(clonedFiles));
+
+    // Keep form data in sync with uploaded file refs so backend submit logic can resolve files.
+    const latestData = (store.getState() as AppState).form?.data || populatedData || {};
+    const nextData = _.cloneDeep(latestData);
+    _.set(nextData, targetPropertyId, fileMetaData.urn);
+    onChange({ data: nextData });
   };
 
   const downloadFormFile = async (file) => {
@@ -208,13 +233,29 @@ export const DraftForm: FunctionComponent<DraftFormProps> = ({
   };
 
   const deleteFormFile = async (file) => {
-    const clonedFiles = { ...files };
+    const latestFiles = (store.getState() as AppState).form?.files || files || {};
+    const clonedFiles = { ...latestFiles };
     const propertyId = getKeyByValue(clonedFiles, file.urn);
 
     await dispatch(deleteFile({ urn: file.urn, propertyId, anonymousApply }));
 
-    delete clonedFiles[propertyId];
+    if (propertyId) {
+      delete clonedFiles[propertyId];
+    }
+    Object.keys(clonedFiles).forEach((key) => {
+      if (clonedFiles[key] === file.urn) {
+        delete clonedFiles[key];
+      }
+    });
     dispatch(formActions.updateFormFiles(clonedFiles));
+
+    // Mirror file removal in form data to prevent stale URN refs.
+    const latestData = (store.getState() as AppState).form?.data || populatedData || {};
+    const nextData = _.cloneDeep(latestData);
+    if (propertyId) {
+      _.unset(nextData, propertyId);
+    }
+    onChange({ data: nextData });
   };
 
   return (

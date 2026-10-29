@@ -10,6 +10,7 @@ import { AgentConfiguration } from '../configuration';
 import { BrokerInputProcessor } from '../types';
 import { threadCreated, workspaceCreated, workspaceCreationFailed } from '../events';
 import {
+  clearThreadWorkspace,
   ManagedWorkspace,
   WorkspaceChangeProjector,
   WorkspaceFileUpdate,
@@ -21,6 +22,7 @@ import {
 import { getAgentExecutionLimits } from './executionLimits';
 import { AgentModelConfiguration, getAgentProviderOptions } from './modelConfiguration';
 import { abortExecution, STREAM_ERROR_CODES } from './streamAbort';
+import { deleteThreadAndWorkspace } from './threadDeletion';
 
 type ThreadMetadataRecord = {
   id: string;
@@ -149,15 +151,19 @@ export class AgentBroker<TAgentId extends string = string, TTools extends ToolsI
     return requestContext;
   }
 
+  private assertAllowedUser(user: User): void {
+    if (this.userRoles.length > 0 && !isAllowedUser(user, this.tenantId, this.userRoles)) {
+      throw new UnauthorizedUserError('use agent', user);
+    }
+  }
+
   private async prepareAgentRequest(
     user: User,
     threadId: string,
     input: CoreUserMessage | CoreUserMessage[],
     context: Record<string, unknown> = {},
   ): Promise<RequestContext<Record<string, unknown>>> {
-    if (this.userRoles.length > 0 && !isAllowedUser(user, this.tenantId, this.userRoles)) {
-      throw new UnauthorizedUserError('use agent', user);
-    }
+    this.assertAllowedUser(user);
 
     const requestContext = this.buildRequestContext(user, threadId, context);
     await this.updateThreadExpiry(user, threadId);
@@ -328,6 +334,39 @@ export class AgentBroker<TAgentId extends string = string, TTools extends ToolsI
     );
 
     return result;
+  }
+
+  /**
+   * Deletes one of the user's own threads with its stored messages, observations and workspace, so a new chat starts
+   * without any of its context. Resolves to false when the user has no thread with this ID in this tenant; a thread
+   * that belongs to another user or tenant gets the same answer, so its existence is not revealed.
+   */
+  public async deleteThread(user: User, threadId: string): Promise<boolean> {
+    this.assertAllowedUser(user);
+
+    const memory = await this.agent.getMemory?.();
+    if (!memory?.getThreadById || !memory.deleteThread) {
+      return false;
+    }
+
+    const tenantId = this.tenantId?.toString();
+    const thread = await memory.getThreadById({ threadId });
+    if (!thread || thread.resourceId !== user.id || thread.metadata?.tenantId !== tenantId) {
+      return false;
+    }
+
+    await deleteThreadAndWorkspace(
+      {
+        logger: this.logger,
+        deleteThread: (id) => memory.deleteThread(id),
+        clearWorkspace: (workspaceTenantId, userId, workspaceThreadId) =>
+          clearThreadWorkspace(this.logger, { tenantId: workspaceTenantId, userId, threadId: workspaceThreadId }),
+        eventService: this.eventService,
+      },
+      { tenantId, userId: user.id, threadId },
+    );
+
+    return true;
   }
 
   public async readWorkspace(user: User, threadId: string): Promise<WorkspaceReadResult> {

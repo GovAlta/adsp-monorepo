@@ -5,6 +5,43 @@ import type { ToolCall } from '@core-services/app-common';
 import { AccessToolCall, isAccessDiscoveryTool, renderAccessToolCall } from './AccessToolCall';
 
 const devEnvironment = { id: 'dev', label: 'Development', host: 'https://access.adsp-dev.gov.ab.ca', readOnly: true };
+const tenantRealm = { realm: 'realm-1', name: 'Tenant One', kind: 'tenant', status: 'active' };
+
+const clientDetails = {
+  clientId: 'urn:ads:tenant:demo:web-app',
+  name: 'Demo web app',
+  enabled: true,
+  type: 'public',
+  protocol: 'openid-connect',
+  builtIn: false,
+  urls: { root: 'https://demo.alberta.ca' },
+  authentication: { clientAuthentication: false, consentRequired: false, pkceMethod: 'S256' },
+  flows: {
+    standardFlow: true,
+    implicitFlow: false,
+    directAccessGrants: false,
+    serviceAccounts: false,
+    deviceAuthorizationGrant: false,
+    ciba: false,
+  },
+  redirects: {
+    redirectUris: ['https://demo.alberta.ca/*'],
+    webOrigins: ['https://demo.alberta.ca'],
+    postLogoutRedirectUris: [],
+  },
+  roles: [],
+  scopes: {
+    defaultClientScopes: ['profile'],
+    optionalClientScopes: [],
+    fullScopeAllowed: true,
+    realmRoleScopeMappings: [],
+    clientRoleScopeMappings: [],
+  },
+  protocolMappers: [],
+  tokens: {},
+  logout: { frontChannelLogout: true },
+  authorizationServicesEnabled: false,
+};
 
 function toolCall(toolName: string, overrides: Partial<ToolCall> = {}): ToolCall {
   return { toolCallId: `${toolName}-1`, toolName, args: {}, ...overrides };
@@ -19,6 +56,8 @@ describe('AccessToolCall', () => {
     expect(isAccessDiscoveryTool('listAccessEnvironments')).toBe(true);
     expect(isAccessDiscoveryTool('listAccessRealms')).toBe(true);
     expect(isAccessDiscoveryTool('getAccessRealmInfo')).toBe(true);
+    expect(isAccessDiscoveryTool('listAccessClients')).toBe(true);
+    expect(isAccessDiscoveryTool('getAccessClient')).toBe(true);
     expect(isAccessDiscoveryTool('agent-clientAgent')).toBe(false);
     expect(isAccessDiscoveryTool('toString')).toBe(false);
     expect(isAccessDiscoveryTool(undefined)).toBe(false);
@@ -163,6 +202,110 @@ describe('AccessToolCall', () => {
     expect(badgeContent(container)).toBe('Not found');
     expect(getByText('The realm could not be found or you do not have access to it.')).toBeInTheDocument();
     expect(queryByTestId('access-realm-details')).toBeNull();
+  });
+
+  it('shows a pending state while client configuration is read', () => {
+    const { getByText } = render(<AccessToolCall toolCall={toolCall('getAccessClient')} />);
+
+    expect(getByText('Checking client configuration…')).toBeInTheDocument();
+  });
+
+  it('lists the clients in the realm without showing realm details', () => {
+    const { getByTestId, queryByTestId, container } = render(
+      <AccessToolCall
+        toolCall={toolCall('listAccessClients', {
+          result: {
+            status: 'available',
+            message: 'Found 2 clients.',
+            environment: devEnvironment,
+            realm: tenantRealm,
+            clients: [
+              {
+                clientId: 'urn:ads:tenant:demo:web-app',
+                name: 'Demo web app',
+                type: 'public',
+                enabled: true,
+                builtIn: false,
+              },
+              { clientId: 'realm-management', type: 'bearer-only', enabled: true, builtIn: true },
+            ],
+          },
+        })}
+      />,
+    );
+
+    expect(getByTestId('access-tool-listAccessClients')).toHaveAttribute('data-status', 'complete');
+    expect(badgeContent(container)).toBe('Read-only');
+    expect(getByTestId('access-clients-table')).toHaveTextContent('urn:ads:tenant:demo:web-app');
+    expect(queryByTestId('access-realm-details')).toBeNull();
+  });
+
+  it('shows the configuration of a client without showing realm details', () => {
+    const { getByTestId, getByText, queryByTestId } = render(
+      <AccessToolCall
+        toolCall={toolCall('getAccessClient', {
+          result: {
+            status: 'available',
+            message: 'Client urn:ads:tenant:demo:web-app (read-only).',
+            environment: devEnvironment,
+            realm: tenantRealm,
+            clientId: 'urn:ads:tenant:demo:web-app',
+            client: clientDetails,
+          },
+        })}
+      />,
+    );
+
+    expect(getByText('Client configuration')).toBeInTheDocument();
+    expect(getByTestId('access-client-details')).toBeInTheDocument();
+    expect(getByTestId('access-client-redirect-uris')).toHaveTextContent('https://demo.alberta.ca/*');
+    expect(queryByTestId('access-realm-details')).toBeNull();
+  });
+
+  it('reports a client that cannot be found and offers similar client IDs', () => {
+    const { getByTestId, getByText, queryByTestId, container } = render(
+      <AccessToolCall
+        toolCall={toolCall('getAccessClient', {
+          result: {
+            status: 'not-found',
+            reason: 'CLIENT_NOT_FOUND',
+            message: 'No client with that client ID could be found in your realm, or you do not have access to it.',
+            environment: devEnvironment,
+            realm: tenantRealm,
+            clientId: 'web-app',
+            suggestions: ['urn:ads:tenant:demo:web-app'],
+          },
+        })}
+      />,
+    );
+
+    expect(getByTestId('access-tool-getAccessClient')).toHaveAttribute('data-status', 'notice');
+    expect(badgeContent(container)).toBe('Not found');
+    expect(
+      getByText('No client with that client ID could be found in your realm, or you do not have access to it.'),
+    ).toBeInTheDocument();
+    expect(getByTestId('access-client-suggestions')).toHaveTextContent('urn:ads:tenant:demo:web-app');
+    expect(queryByTestId('access-client-details')).toBeNull();
+  });
+
+  it('explains missing client permission as a notice', () => {
+    const { getByTestId, getByText, queryByTestId } = render(
+      <AccessToolCall
+        toolCall={toolCall('listAccessClients', {
+          result: {
+            status: 'unavailable',
+            reason: 'NO_CLIENT_PERMISSION',
+            message: 'You do not have permission to view clients in this realm.',
+            clients: [],
+          },
+        })}
+      />,
+    );
+
+    expect(getByTestId('access-tool-listAccessClients')).toHaveAttribute('data-status', 'notice');
+    expect(getByText('You do not have permission to view clients in this realm.')).toBeInTheDocument();
+    expect(queryByTestId('access-clients-table')).toBeNull();
+    expect(queryByTestId('access-clients-empty')).toBeNull();
   });
 
   it('shows unexpected tool errors as failures', () => {

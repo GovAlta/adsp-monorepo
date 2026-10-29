@@ -63,6 +63,17 @@ describe('ProjectPlanner', () => {
     expect(getByTestId('solutions-content')).toBeTruthy();
   });
 
+  it('hides the page title and tabs when viewing a solution, since its own back button returns to the list', () => {
+    useParamsMock.mockReturnValue({ id: 'solution-1' });
+
+    const { queryByTestId } = render(<ProjectPlanner />);
+
+    expect(queryByTestId('project-planner-title')).toBeNull();
+    expect(queryByTestId('project-planner-overview-tab')).toBeNull();
+    expect(queryByTestId('project-planner-solutions-tab')).toBeNull();
+    expect(queryByTestId('project-planner-patterns-tab')).toBeNull();
+  });
+
   it('shows the patterns tab when the route tab is patterns', () => {
     useParamsMock.mockReturnValue({ tab: 'patterns' });
 
@@ -98,15 +109,6 @@ describe('ProjectPlanner', () => {
 
   it('navigates when switching tabs by clicking, keeping the URL in sync', () => {
     useParamsMock.mockReturnValue({ tab: 'solutions' });
-    const { getByTestId } = render(<ProjectPlanner />);
-
-    fireEvent.click(getByTestId('tab-btn-0'));
-
-    expect(mockNavigate).toHaveBeenCalledWith('../overview');
-  });
-
-  it('navigates one level up when switching tabs from an open solution', () => {
-    useParamsMock.mockReturnValue({ id: 'solution-1' });
     const { getByTestId } = render(<ProjectPlanner />);
 
     fireEvent.click(getByTestId('tab-btn-0'));

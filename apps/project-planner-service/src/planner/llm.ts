@@ -6,6 +6,7 @@ import { ADSP_COMPONENT_MAP, ComponentDraft } from './components';
 import { DISCOVERY_FACTORS, DISCOVERY_THRESHOLD } from './discovery';
 import { SPECIALISTS } from './specialists';
 import {
+  BlueprintRole,
   BusinessConcept,
   BusinessPattern,
   CONCEPT_TYPES,
@@ -14,6 +15,8 @@ import {
   Hypothesis,
   PatternMatch,
   PatternUnsupportedCapability,
+  PRODUCT_TYPES,
+  ProductType,
   SolutionState,
   SpecialistDefinition,
   SpecialistNote,
@@ -32,6 +35,7 @@ export interface AnalysisContext {
   answers: { question: string; answer: string }[];
   conversation: { role: 'user' | 'assistant'; content: string }[];
   message?: string;
+  openQuestions?: { id: string; question: string }[];
 }
 
 export interface LlmAnalysis {
@@ -39,6 +43,7 @@ export interface LlmAnalysis {
   matches: PatternMatch[];
   hypotheses: Hypothesis[];
   questions: string[];
+  resolvedQuestionIds: string[];
   // Plain-language reply to the user's latest message or a summary of what changed.
   reply: string;
   model: string;
@@ -278,6 +283,9 @@ export class MaasLlm implements PlannerLlm {
       context?.answers.length
         ? `The user has already answered these questions (treat the answers as facts and do not ask them again):\n${context.answers.map((a) => `Q: ${a.question}\nA: ${a.answer}`).join('\n')}`
         : '',
+      context?.openQuestions?.length
+        ? `These questions are still open (ids shown). Check the business problem, conversation and latest message against each one: if it is now answered, put its id in "resolvedQuestionIds". Do not propose a new question that duplicates or rephrases one that is still open and unresolved.\n${context.openQuestions.map((q) => `${q.id}: ${q.question}`).join('\n')}`
+        : '',
       context?.conversation.length
         ? `Conversation so far:\n${context.conversation
             .slice(-12)
@@ -295,9 +303,10 @@ export class MaasLlm implements PlannerLlm {
   "matches": [{"patternId": "<pattern id>", "score": 0-10, "level": "high|medium|low", "explanation": "why it fits, plain language"}],
   "hypotheses": [{"title": "...", "patternId": "<pattern id or empty>", "confidence": "high|medium|low", "rationale": "plain-language explanation of the approach and why", "recommendations": [{"service": "<service name>", "reason": "why this service", "order": 1}], "assumptions": ["..."], "unknowns": ["..."]}],
   "questions": ["clarifying question to ask the user"],
+  "resolvedQuestionIds": ["<id from the open questions list above that the conversation now answers>"],
   "reply": "2-4 plain-language sentences: answer the user's latest message if any, otherwise summarize what you understood and what changed"
 }
-Give up to 6 matches ordered best first, up to 3 hypotheses, 5-12 concepts and up to 6 questions (only questions that are still unanswered). Recommendation order is the suggested implementation order starting at 1.`,
+Give up to 6 matches ordered best first, up to 3 hypotheses, 5-12 concepts and up to 6 questions (only questions that are still unanswered and not already covered by an open question above). Recommendation order is the suggested implementation order starting at 1.`,
     ]
       .filter(Boolean)
       .join('\n\n');
@@ -377,6 +386,7 @@ Give up to 6 matches ordered best first, up to 3 hypotheses, 5-12 concepts and u
       matches,
       hypotheses,
       questions: asStrings(json.questions, 6),
+      resolvedQuestionIds: asStrings(json.resolvedQuestionIds, 20),
       reply: asString(json.reply, 2000),
       model: this.config.model,
     };
@@ -464,7 +474,8 @@ Give up to 6 matches ordered best first, up to 3 hypotheses, 5-12 concepts and u
             .map((c) => `- ${c.service}: ${c.name}`)
             .join('\n')}`
         : '',
-      'Return JSON: {"overview": {"summary": "short paragraph", "objectives": [], "scope": [], "outOfScope": [], "stakeholders": [], "successMeasures": [], "risks": []}, ' +
+      'Return JSON: {"overview": {"summary": "short paragraph", "objectives": [], "scope": [], "outOfScope": [], "stakeholders": [], "successMeasures": [], "risks": [], ' +
+        '"roles": [{"actor": "", "appRole": "what they do in the app", "productType": "public-form | workspace | empty if unsure"}]}, ' +
         '"architecture": {"summary": "", "layers": [{"name": "", "description": "", "components": []}], "integrations": [], "security": []}, ' +
         '"services": [{"service": "<service id>", "role": "what it does in this solution", "capabilities": ["specific features to use"]}], ' +
         '"workflows": [{"name": "", "actors": [], "steps": ["ordered steps naming the service used"]}], ' +
@@ -478,6 +489,10 @@ Give up to 6 matches ordered best first, up to 3 hypotheses, 5-12 concepts and u
         'Combine gaps that would be solved by the same custom-built capability into a single item instead of listing them separately. ' +
         'If a specialist note says a capability is genuinely unsupported (such as time-based scheduling), list it in notCoveredByAdsp too, not only as a risk. ' +
         'Keep every list to at most 8 items, and every item to one sentence. ' +
+        'Give each actor one role row with the GoA product type of the app they use. ' +
+        'public-form: For citizen-facing services where users apply for a benefit, request a service, or submit information. Designed around simplicity and low cognitive load, with plain-language questions, focused pages that ask one thing at a time, save-and-resume, and a clear confirmation of what happens next. ' +
+        'workspace: for productivity-focused services that service delivery staff use as a daily tool to review information, manage records, and complete tasks. The design prioritizes efficiency and accuracy. ' +
+        'Leave productType empty if unsure. ' +
         `Components are the concrete items to set up in each ADSP service, in setup order. Components may use: ${componentServices.join(', ')}.`,
     ]
       .filter(Boolean)
@@ -505,6 +520,14 @@ Give up to 6 matches ordered best first, up to 3 hypotheses, 5-12 concepts and u
         stakeholders: asStrings(overview.stakeholders, 8),
         successMeasures: asStrings(overview.successMeasures, 8),
         risks: asStrings(overview.risks, 8),
+        roles: objs(overview.roles)
+          .slice(0, 8)
+          .map((r): BlueprintRole => ({
+            actor: asString(r.actor, 120),
+            appRole: asString(r.appRole, 300),
+            productType: PRODUCT_TYPES.includes(r.productType as ProductType) ? (r.productType as ProductType) : '',
+          }))
+          .filter((r) => r.actor),
       },
       architecture: {
         summary: asString(architecture.summary, 1500),

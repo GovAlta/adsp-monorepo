@@ -20,7 +20,7 @@ export interface OpenQuestion {
   id: string;
   question: string;
   raisedBy: string;
-  status: 'open' | 'answered';
+  status: 'open' | 'answered' | 'inferred';
   answer?: string;
 }
 
@@ -79,8 +79,8 @@ export interface Solution {
   status: string;
   createdByName: string;
   updatedOn: string;
-  version: string;
-  versionHistory: SolutionVersionEntry[];
+  version: number;
+  unsavedChanges?: boolean;
   lastUpdated?: string;
   changedSections?: string[];
   initial?: boolean;
@@ -88,11 +88,16 @@ export interface Solution {
   state: SolutionState;
 }
 
-export interface SolutionVersionEntry {
-  version: string;
-  changedAt: string;
-  changedBy: string;
-  changedSections: string[];
+export interface SolutionVersionSummary {
+  number: number;
+  name: string;
+  createdOn: string;
+}
+
+export interface SolutionVersionList {
+  latest: number;
+  unsavedChanges: boolean;
+  results: SolutionVersionSummary[];
 }
 
 export interface NotCoveredItem {
@@ -233,6 +238,15 @@ export interface BlueprintWorkflow {
 
 export type ComponentReview = 'not-reviewed' | 'approved' | 'rejected';
 
+export type ProductType = 'public-form' | 'workspace';
+
+// One row of the roles table; blank cells are still open.
+export interface BlueprintRole {
+  actor: string;
+  appRole: string;
+  productType: ProductType | '';
+}
+
 export interface BlueprintComponent {
   order: number;
   service: string;
@@ -260,6 +274,8 @@ export interface SolutionBlueprint {
     stakeholders: string[];
     successMeasures: string[];
     risks: string[];
+    // Absent on blueprints generated before roles were added.
+    roles?: BlueprintRole[];
   };
   architecture: {
     summary: string;
@@ -311,6 +327,7 @@ export interface ChatMessage {
   content: string;
   at: string;
   intent?: SpecialistIntent | string;
+  initiatedBy?: 'planner';
   mode?: AnalysisMode;
   model?: string;
   warning?: string;
@@ -367,6 +384,7 @@ export interface SpecialistChatResponse {
   validation?: SpecialistValidation;
   followUps: string[];
   model?: string;
+  solution?: Solution;
 }
 
 export interface PatternInput {

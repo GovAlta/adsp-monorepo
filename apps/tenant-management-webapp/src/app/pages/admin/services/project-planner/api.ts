@@ -18,6 +18,8 @@ import {
   PatternInput,
   Solution,
   SolutionUpdate,
+  SolutionVersionList,
+  SolutionVersionSummary,
   SpecialistChat,
   SpecialistChatExport,
   SpecialistChatRequest,
@@ -30,6 +32,7 @@ export interface PlannerApi {
   listSolutions: () => Promise<Solution[]>;
   getSolution: (id: string) => Promise<Solution>;
   createSolution: (name: string, problemStatement: string) => Promise<Solution>;
+  extractProblemStatement: (file: File) => Promise<{ text: string }>;
   deleteSolution: (id: string) => Promise<void>;
   updateSolution: (id: string, update: SolutionUpdate) => Promise<Solution>;
   /** Accepts the problem text directly (legacy) or options with text and mode. */
@@ -40,8 +43,12 @@ export interface PlannerApi {
   reviewComponent: (id: string, order: number, review: ComponentReview) => Promise<Solution>;
   discovery: (id: string, options?: DiscoveryOptions) => Promise<Solution>;
   blueprint: (id: string, options?: BlueprintOptions) => Promise<Solution>;
-  consult: (id: string, service: string, options?: ConsultOptions) => Promise<ConsultResult>;
+  consult: (id: string, service: string, options?: ConsultOptions) => Promise<ConsultResult & { solution?: Solution }>;
   exportSolution: (id: string) => Promise<unknown>;
+  listVersions: (id: string) => Promise<SolutionVersionList>;
+  saveVersion: (id: string) => Promise<SolutionVersionSummary>;
+  renameVersion: (id: string, number: number, name: string) => Promise<SolutionVersionSummary>;
+  exportVersion: (id: string, number: number) => Promise<unknown>;
   listSpecialists: () => Promise<SpecialistDefinition[]>;
   specialistChat: (service: string, request: SpecialistChatRequest) => Promise<SpecialistChatResponse>;
   listChats: (criteria?: ChatCriteria) => Promise<ChatSummary[]>;
@@ -88,10 +95,29 @@ export function usePlannerApi(): PlannerApi {
       }
     };
 
+    const requestFile = async <T>(path: string, file: File): Promise<T> => {
+      try {
+        const token = await dispatch(getAccessToken());
+        const form = new FormData();
+        form.append('file', file, file.name);
+        const { data: result } = await axios.request<T>({
+          method: 'post',
+          url: new URL(`/planner/v1${path}`, baseUrl).href,
+          data: form,
+          headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'multipart/form-data' },
+        });
+        return result;
+      } catch (err) {
+        dispatch(ErrorNotification({ message: err?.response?.data?.errorMessage || err?.message || String(err) }));
+        throw err;
+      }
+    };
+
     return {
       listSolutions: async () => (await request<{ results: Solution[] }>('get', '/solutions?top=100')).results,
       getSolution: (id) => request<Solution>('get', `/solutions/${id}`),
       createSolution: (name, problemStatement) => request<Solution>('post', '/solutions', { name, problemStatement }),
+      extractProblemStatement: (file) => requestFile<{ text: string }>('/documents/extract', file),
       deleteSolution: async (id) => {
         await request('delete', `/solutions/${id}`);
       },
@@ -111,11 +137,15 @@ export function usePlannerApi(): PlannerApi {
       discovery: (id, options = {}) => request<Solution>('post', `/solutions/${id}/discovery`, options),
       blueprint: (id, options = {}) => request<Solution>('post', `/solutions/${id}/blueprint`, options),
       consult: (id, service, options) =>
-        request<ConsultResult>('post', `/solutions/${id}/consult/${service}`, options),
+        request<ConsultResult & { solution?: Solution }>('post', `/solutions/${id}/consult/${service}`, options),
       exportSolution: (id) => request<unknown>('get', `/solutions/${id}/export`),
+      listVersions: (id) => request<SolutionVersionList>('get', `/solutions/${id}/versions`),
+      saveVersion: (id) => request<SolutionVersionSummary>('post', `/solutions/${id}/versions`),
+      renameVersion: (id, number, name) =>
+        request<SolutionVersionSummary>('patch', `/solutions/${id}/versions/${number}`, { name }),
+      exportVersion: (id, number) => request<unknown>('get', `/solutions/${id}/versions/${number}/export`),
       listSpecialists: async () => (await request<{ results: SpecialistDefinition[] }>('get', '/specialists')).results,
-      specialistChat: (service, body) =>
-        request<SpecialistChatResponse>('post', `/specialists/${service}/chat`, body),
+      specialistChat: (service, body) => request<SpecialistChatResponse>('post', `/specialists/${service}/chat`, body),
       listChats: async (criteria) =>
         (await request<{ results: ChatSummary[] }>('get', `/specialists/chats${chatQuery(criteria)}`)).results,
       getChat: (id) => request<SpecialistChat>('get', `/specialists/chats/${id}`),
