@@ -89,6 +89,27 @@ export const readCatalogs =
     }
   };
 
+export const readRetention =
+  (catalogs: CatalogService, retention: RetentionService): RequestHandler =>
+  async (req, res, next) => {
+    try {
+      const tenantId = req.tenant?.id;
+      if (!tenantId) {
+        res.send({ tenant: {}, applications: {} });
+        return;
+      }
+      const listings = await catalogs.listCatalogs(tenantId);
+      res.send(
+        await retention.getConfigured(
+          tenantId,
+          listings.map(({ application }) => application),
+        ),
+      );
+    } catch (err) {
+      next(err);
+    }
+  };
+
 export function createAuditRouter(options: AuditRouterOptions): Router {
   const router = Router();
   // Without a submitter the auditor still exists, so unrecorded reads are logged and counted rather than silently skipped.
@@ -102,6 +123,12 @@ export function createAuditRouter(options: AuditRouterOptions): Router {
     assertAuthenticatedHandler,
     requireAuditRole(AuditServiceRoles.Reader),
     readCatalogs(options.catalogs),
+  );
+  router.get(
+    '/retention',
+    assertAuthenticatedHandler,
+    requireAuditRole(AuditServiceRoles.Reader),
+    readRetention(options.catalogs, options.retention),
   );
   router.get(
     '/:namespace/actions',
