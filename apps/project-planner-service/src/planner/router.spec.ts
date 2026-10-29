@@ -908,7 +908,7 @@ describe('planner router routes', () => {
     it('returns 400 for an unsupported file format', async () => {
       const res = await request(buildApp(owner))
         .post('/planner/v1/documents/extract')
-        .attach('file', Buffer.from('bytes'), 'plan.doc');
+        .attach('file', Buffer.from('bytes'), 'plan.txt');
 
       expect(res.status).toBe(400);
       expect(res.body.error).toContain('not a supported format');

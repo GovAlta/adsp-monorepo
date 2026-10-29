@@ -21,8 +21,12 @@ import { ConfidenceFactor, ConversationMessage, SolutionState } from './types';
 const factor = (id: string, score: number): ConfidenceFactor => ({ id, label: id, score });
 
 const richText =
-  'Our goal is to reduce the backlog of grant applications. Applicants submit a form with documents, ' +
-  'staff review and approve each one, applicants get an email and can track status, and privacy legislation applies.';
+  'Our goal is to reduce the backlog of grant applications and success is measured by faster approvals. ' +
+  'Applicants and staff reviewers have different roles with access permissions in the ministry department. ' +
+  'Staff review and approve each submission through a multi-step workflow process with escalation. ' +
+  'Applicants submit a form with documents and we retain records for audit history. ' +
+  'Applicants get an email and can track status on a portal dashboard. ' +
+  'The data is Protected B under FOIP privacy legislation and integrates with our existing legacy case management system.';
 
 const makeState = (overrides: Partial<SolutionState> = {}): SolutionState => ({
   problemStatement: richText,
@@ -60,7 +64,7 @@ describe('isDiscoveryReady', () => {
   });
 
   it('is ready when the average clears the threshold and every factor is at least the floor', () => {
-    const factors = [factor('problem', 90), factor('users', 80), factor('constraints', DISCOVERY_FACTOR_FLOOR)];
+    const factors = [factor('problem', 100), factor('users', 85), factor('constraints', DISCOVERY_FACTOR_FLOOR)];
 
     expect(isDiscoveryReady(factors, computeConfidence(factors))).toBe(true);
   });
