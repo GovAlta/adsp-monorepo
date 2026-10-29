@@ -72,14 +72,39 @@ const { auditService } = await initializeService(
 );
 
 const outcome = await auditService.record(UPDATE_CASE, { actor: { id: user.id, type: 'user' } });
-// outcome.status: 'recorded' | 'rejected' | 'failed'; record() never rejects.
-
-process.on('SIGTERM', async () => {
-  await auditService.flush();
-  process.exit(0);
-});
+if (outcome.status !== 'recorded') {
+  logger.warn(`Audit event ${outcome.eventId} was not recorded: ${outcome.reason}`);
+}
 ```
 
-Events are batched (100 events or 500 ms), retried on transient failures, and counted in the
-`audit.client.dropped_events` metric when not recorded. See the
+By default, each event is sent immediately in its own HTTP request. Await `record()` and check its
+outcome: it never rejects, and `recorded` means the service confirmed storage or an idempotent
+duplicate, not just receipt in an in-memory queue. Once all calls have settled, no separate audit
+`flush()` is needed. Normal application shutdown must still wait for in-flight requests and tasks.
+Sending immediately does not make fire-and-forget calls safe against process termination.
+
+For high-throughput workloads, opt into client-side batching through the `audit` option on either
+`initializeService` or `initializePlatform`:
+
+```typescript
+const { auditService } = await initializeService(
+  {
+    ...serviceOptions,
+    auditActions: [UPDATE_CASE],
+    audit: { batchSize: 100, batchIntervalMs: 500 },
+  },
+  { logger },
+);
+```
+
+Batching is enabled by setting `batchSize` greater than 1; partial batches wait up to
+`batchIntervalMs` (500 ms by default). Before shutdown, call `await auditService.flush()` if batches
+or unawaited records remain. This configuration preserves the previous 100-event / 500-ms behavior;
+the new default increases HTTP request volume. Audit Service still batches database writes on the
+server, independently of client batching.
+
+Both modes retain bounded in-flight/retry memory, transient retries with the same `eventId`, and
+the `audit.client.dropped_events` metric. A failed delivery may already have been stored if its
+response was lost; resend with the same `eventId`. `AuditClientOptions` is exported for typed
+configuration, including request timeouts and retry delays. See the
 [Audit service documentation](https://govalta.github.io/adsp-monorepo/services/audit-service.html).

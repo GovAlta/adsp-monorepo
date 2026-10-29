@@ -73,6 +73,41 @@ describe('AuditServiceImpl', () => {
   });
 
   describe('record', () => {
+    it('sends each event immediately by default without a batch timer or flush', async () => {
+      jest.useFakeTimers();
+      axiosMock.post.mockResolvedValue(accept(1));
+      const service = new AuditServiceImpl(false, logger, directory, tokenProvider, serviceId);
+
+      const outcomes = await Promise.all([service.record(action, details), service.record(action, details)]);
+
+      expect(outcomes).toEqual([
+        expect.objectContaining({ status: 'recorded' }),
+        expect.objectContaining({ status: 'recorded' }),
+      ]);
+      expect(axiosMock.post).toHaveBeenCalledTimes(2);
+      expect(sentEvents(0)).toHaveLength(1);
+      expect(sentEvents(1)).toHaveLength(1);
+      expect(jest.getTimerCount()).toBe(0);
+    });
+
+    it('waits for the service response before resolving an immediate write', async () => {
+      jest.useFakeTimers();
+      let confirm: (response: ReturnType<typeof accept>) => void;
+      axiosMock.post.mockReturnValueOnce(new Promise((resolve) => (confirm = resolve)));
+      const service = new AuditServiceImpl(false, logger, directory, tokenProvider, serviceId);
+      const settled = jest.fn();
+
+      const outcome = service.record(action, details);
+      outcome.then(settled);
+      await jest.advanceTimersByTimeAsync(0);
+
+      expect(axiosMock.post).toHaveBeenCalledTimes(1);
+      expect(settled).not.toHaveBeenCalled();
+      expect(jest.getTimerCount()).toBe(0);
+      confirm(accept(1));
+      await expect(outcome).resolves.toMatchObject({ status: 'recorded' });
+    });
+
     it('writes an event to the namespace URL resolved from the directory and resolves with its outcome', async () => {
       axiosMock.post.mockResolvedValueOnce(accept(1));
       const occurredAt = new Date('2026-10-26T12:00:00Z');
@@ -142,7 +177,7 @@ describe('AuditServiceImpl', () => {
       axiosMock.post.mockResolvedValueOnce(
         accept(1, [{ index: 1, code: 'invalid_metadata', reason: 'metadata is invalid' }]),
       );
-      const service = create();
+      const service = create(false, { batchSize: 2 });
 
       const outcomes = await Promise.all([service.record(action, details), service.record(action, details)]);
 
@@ -176,7 +211,7 @@ describe('AuditServiceImpl', () => {
 
     it('sends core events in separate batches per tenant', async () => {
       axiosMock.post.mockResolvedValue(accept(1));
-      const service = create(true);
+      const service = create(true, { batchSize: 100 });
 
       await Promise.all([
         service.record(action, { ...details, tenantId }),
@@ -200,10 +235,10 @@ describe('AuditServiceImpl', () => {
   });
 
   describe('batching', () => {
-    it('sends a full batch of 100 events immediately', async () => {
+    it('sends a full batch of 100 events immediately when batching is enabled', async () => {
       jest.useFakeTimers();
       axiosMock.post.mockResolvedValue(accept(100));
-      const service = new AuditServiceImpl(false, logger, directory, tokenProvider, serviceId);
+      const service = new AuditServiceImpl(false, logger, directory, tokenProvider, serviceId, { batchSize: 100 });
 
       const outcomes = Promise.all(Array.from({ length: 101 }, () => service.record(action, details)));
       await jest.advanceTimersByTimeAsync(0);
@@ -218,19 +253,22 @@ describe('AuditServiceImpl', () => {
       expect((await outcomes).every(({ status }) => status === 'recorded')).toBe(true);
     });
 
-    it('sends a partial batch after 500 ms', async () => {
+    it('sends a partial batch after 500 ms when batching is enabled', async () => {
       jest.useFakeTimers();
       axiosMock.post.mockResolvedValue(accept(2));
-      const service = new AuditServiceImpl(false, logger, directory, tokenProvider, serviceId);
+      const service = new AuditServiceImpl(false, logger, directory, tokenProvider, serviceId, { batchSize: 100 });
 
-      service.record(action, details);
-      service.record(action, details);
+      const outcomes = Promise.all([service.record(action, details), service.record(action, details)]);
       await jest.advanceTimersByTimeAsync(499);
       expect(axiosMock.post).not.toHaveBeenCalled();
 
       await jest.advanceTimersByTimeAsync(1);
       expect(axiosMock.post).toHaveBeenCalledTimes(1);
       expect(sentEvents()).toHaveLength(2);
+      await expect(outcomes).resolves.toEqual([
+        expect.objectContaining({ status: 'recorded' }),
+        expect.objectContaining({ status: 'recorded' }),
+      ]);
     });
 
     it('waits for action registration before sending', async () => {
@@ -258,7 +296,7 @@ describe('AuditServiceImpl', () => {
   describe('flush', () => {
     it('sends everything buffered and resolves after it is sent', async () => {
       axiosMock.post.mockResolvedValue(accept(2));
-      const service = create(false, { batchIntervalMs: 60000 });
+      const service = create(false, { batchSize: 100, batchIntervalMs: 60000 });
       const outcomes = [service.record(action, details), service.record(action, details)];
 
       await service.flush();
@@ -280,6 +318,26 @@ describe('AuditServiceImpl', () => {
 
       expect(settled).toBe(true);
       expect(axiosMock.post).toHaveBeenCalledTimes(2);
+    });
+
+    it('waits for an unawaited immediate request already in flight', async () => {
+      jest.useFakeTimers();
+      let confirm: (response: ReturnType<typeof accept>) => void;
+      axiosMock.post.mockReturnValueOnce(new Promise((resolve) => (confirm = resolve)));
+      const service = create();
+      service.record(action, details);
+      await jest.advanceTimersByTimeAsync(0);
+      const settled = jest.fn();
+
+      const flushing = service.flush();
+      flushing.then(settled);
+      await jest.advanceTimersByTimeAsync(0);
+
+      expect(settled).not.toHaveBeenCalled();
+      confirm(accept(1));
+      await flushing;
+      expect(settled).toHaveBeenCalledTimes(1);
+      expect(axiosMock.post).toHaveBeenCalledTimes(1);
     });
 
     it('resolves when nothing is buffered', async () => {
@@ -306,7 +364,7 @@ describe('AuditServiceImpl', () => {
       const service = create(false, { retryDelaysMs: [200], maxRetryAfterMs: 30000 });
 
       service.record(action, details);
-      await jest.advanceTimersByTimeAsync(5 + 1999);
+      await jest.advanceTimersByTimeAsync(1999);
       expect(axiosMock.post).toHaveBeenCalledTimes(1);
 
       await jest.advanceTimersByTimeAsync(1);
@@ -319,7 +377,7 @@ describe('AuditServiceImpl', () => {
 
       const outcomes = await Promise.all([service.record(action, details), service.record(action, details)]);
 
-      expect(axiosMock.post).toHaveBeenCalledTimes(3);
+      expect(axiosMock.post).toHaveBeenCalledTimes(6);
       expect(outcomes).toEqual([
         expect.objectContaining({
           status: 'failed',
@@ -356,7 +414,7 @@ describe('AuditServiceImpl', () => {
 
     it('fails new events while the buffer, including retrying batches, is full', async () => {
       axiosMock.post.mockRejectedValueOnce(httpError(503)).mockResolvedValueOnce(accept(2));
-      const service = create(false, { maxBufferedEvents: 2, retryDelaysMs: [20] });
+      const service = create(false, { batchSize: 2, maxBufferedEvents: 2, retryDelaysMs: [20] });
 
       const buffered = [service.record(action, details), service.record(action, details)];
       const overflow = await service.record(action, details);
@@ -380,6 +438,26 @@ describe('AuditServiceImpl', () => {
       expect(large).toMatchObject({ status: 'failed', reason: 'buffer_full' });
       await expect(small).resolves.toMatchObject({ status: 'recorded' });
       await expect(service.record(action, details)).resolves.toMatchObject({ status: 'recorded' });
+    });
+
+    it('bounds immediate requests in flight and releases capacity after confirmation', async () => {
+      jest.useFakeTimers();
+      let confirm: (response: ReturnType<typeof accept>) => void;
+      axiosMock.post.mockReturnValueOnce(new Promise((resolve) => (confirm = resolve))).mockResolvedValue(accept(1));
+      const service = create(false, { maxBufferedEvents: 1 });
+      const first = service.record(action, details);
+      await jest.advanceTimersByTimeAsync(0);
+
+      await expect(service.record(action, details)).resolves.toMatchObject({
+        status: 'failed',
+        reason: 'buffer_full',
+      });
+
+      expect(axiosMock.post).toHaveBeenCalledTimes(1);
+      confirm(accept(1));
+      await expect(first).resolves.toMatchObject({ status: 'recorded' });
+      await expect(service.record(action, details)).resolves.toMatchObject({ status: 'recorded' });
+      expect(axiosMock.post).toHaveBeenCalledTimes(2);
     });
 
     it('fails an unserializable event without affecting its batch', async () => {
