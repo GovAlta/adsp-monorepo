@@ -38,6 +38,9 @@ const escapeRegExp = (text: string): string => text.replace(/[.*+?^${}()|[\]\\]/
 
 const decodeQuotedPrintable = (text: string): string => {
   const normalized = text.replace(/=\r?\n/g, '');
+  if (normalized.length > MAX_PROBLEM_STATEMENT_UPLOAD_BYTES) {
+    throw new Error('File content is too large to decode.');
+  }
   const bytes: number[] = [];
   for (let i = 0; i < normalized.length; i++) {
     const hex = normalized.substr(i + 1, 2);
@@ -100,8 +103,54 @@ const decodeHtmlEntities = (text: string): string =>
     return NAMED_HTML_ENTITIES[entity.toLowerCase()] ?? match;
   });
 
+// Linear-time scan (no regex backtracking) to drop a fixed open/close delimiter pair, e.g. HTML comments.
+const stripBlock = (html: string, open: string, close: string): string => {
+  let result = '';
+  let index = 0;
+  while (index < html.length) {
+    const start = html.indexOf(open, index);
+    if (start === -1) {
+      result += html.slice(index);
+      break;
+    }
+    const closeStart = html.indexOf(close, start + open.length);
+    const stop = closeStart === -1 ? html.length : closeStart + close.length;
+    result += `${html.slice(index, start)} `;
+    index = stop;
+  }
+  return result;
+};
+
+// Linear-time scan to drop a tagged block (e.g. <script ...>...</script>), case-insensitively.
+const stripTagBlock = (html: string, tagName: string): string => {
+  const lower = html.toLowerCase();
+  const openPrefix = `<${tagName}`;
+  const closeTag = `</${tagName}>`;
+  let result = '';
+  let index = 0;
+  while (index < html.length) {
+    const start = lower.indexOf(openPrefix, index);
+    if (start === -1) {
+      result += html.slice(index);
+      break;
+    }
+    const openEnd = lower.indexOf('>', start);
+    if (openEnd === -1) {
+      result += html.slice(index, start);
+      break;
+    }
+    const closeStart = lower.indexOf(closeTag, openEnd);
+    const stop = closeStart === -1 ? html.length : closeStart + closeTag.length;
+    result += `${html.slice(index, start)} `;
+    index = stop;
+  }
+  return result;
+};
+
 const extractTextFromHtml = (html: string): string => {
-  const withoutNonContent = html.replace(/<!--[\s\S]*?-->/g, ' ').replace(/<(script|style)[^>]*>[\s\S]*?<\/\1>/gi, ' ');
+  const withoutComments = stripBlock(html, '<!--', '-->');
+  const withoutScripts = stripTagBlock(withoutComments, 'script');
+  const withoutNonContent = stripTagBlock(withoutScripts, 'style');
   const withLineBreaks = withoutNonContent
     .replace(/<br\s*\/?>/gi, '\n')
     .replace(/<\/(p|div|li|tr|table|h[1-6])>/gi, '\n');
