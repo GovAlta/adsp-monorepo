@@ -1,11 +1,6 @@
-import { Given, When, Then } from '@badeball/cypress-cucumber-preprocessor';
+import { When, Then } from '@badeball/cypress-cucumber-preprocessor';
 
 let responseObj: Cypress.Response<any>;
-
-Given('a user has obtained an authentication token', function () {
-  cy.getConfig();
-  cy.postToken();
-});
 
 When('a developer sends a request to get audit actions for namespace {string}', function (namespace: string) {
   cy.request({
