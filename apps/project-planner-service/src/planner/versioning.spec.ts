@@ -185,6 +185,15 @@ describe('versioning', () => {
       expect(changedSections(withBlueprint({}), withBlueprint({ notCoveredByAdsp: [] }))).toEqual(['Not covered by ADSP']);
     });
 
+    it('reports Acceptance criteria when a regenerate adds them', () => {
+      const acceptance = {
+        mode: 'rules' as const,
+        criteria: [{ id: 'AC-1', group: 'Rules', then: 'Drafts save', source: 'Decision "Drafts"' }],
+      };
+
+      expect(changedSections(withBlueprint({}), withBlueprint({ acceptance }))).toEqual(['Acceptance criteria']);
+    });
+
     describe('component review', () => {
       const withReview = (review?: ComponentReview) =>
         withBlueprint({

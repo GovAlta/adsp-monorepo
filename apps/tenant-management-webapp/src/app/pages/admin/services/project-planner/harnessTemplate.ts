@@ -25,7 +25,7 @@ Done when you have the plan and its version matches.
 |---|---|---|
 | \`docs/bundle/planner-{slug}.md\` | The plan (solution version {n}): what to build and why | Nobody; read only |
 | \`docs/planner-{slug}-harness.md\` | These instructions | Nobody |
-| \`docs/{slug}-build-notes.md\` | Your working record: the current step, decisions (D-n), differences from the plan, component status | You, recording the user's answers |
+| \`docs/{slug}-build-notes.md\` | Your working record: the current step, decisions (D-n), differences from the plan, component status, acceptance results | You, recording the user's answers |
 
 ## MCP servers
 | Server | Connect with | Use it for |
@@ -156,6 +156,24 @@ disagrees with the plan, or where two parts of the plan disagree with each other
 or raise other questions; ask the new ones next. If an answer changes an earlier decision, say which
 one and ask before replacing it.
 
+Then read the acceptance criteria (section 10): the checks the finished app must pass. If the plan has
+no section 10, or it says to regenerate the blueprint, offer three options:
+1. Regenerate the blueprint in the planner and download both files again (recommended).
+2. Write the criteria yourself from the plan, following the rules below. Record them in the build
+   notes as written by you, not taken from the plan.
+3. Continue without the acceptance table. Record this as a decision.
+
+The rules for a criterion:
+- It restates one thing the plan already says: a workflow (section 7), a recorded decision, an
+  answered question, a scope item, or a rule in section 8 or 9. Never write one where the plan is
+  silent.
+- Write it as \`AC-n (Actor): Given …, when …, then ….\` and name its source in the plan.
+- Group them under one heading per workflow, then a Rules heading.
+
+If a decision conflicts with a criterion, record it as a difference from the plan and ask the user
+before building against the decision. If section 10 says the plan states nothing to check, skip the
+acceptance table and say why in the build notes.
+
 Ask how the app will be deployed, and record the answer as a decision:
 1. Their own pipeline.
 2. \`oc\` commands.
@@ -178,7 +196,17 @@ Put each ADSP service behind a port with a local stub and a platform adapter, ch
 \`ADSP_MODE=local|platform\`. The app then runs and is tested locally with no ADSP access.
 Run \`/factory docs/bundle\`. Each of its \`/ship\` runs is a local checkpoint (see Checks), not the
 finish.
-Done when the app runs end to end in local mode and the checks pass.
+If the plan has acceptance criteria, each requirement (FR) lists the AC ids it covers, if any, and
+every AC is covered by at least one FR.
+Check this before building, and raise any gap with the user.
+
+At the end of this step, fill in the Acceptance table in the build notes, one row per AC:
+| AC | FRs | Test name | Result |
+|---|---|---|---|
+The test name is the one the runner prints, such as \`intake.spec.ts › restores a saved draft\`. The
+result is pass, fail, or a difference the user accepted.
+Done when the app runs end to end in local mode, the checks pass, and the Acceptance table is filled
+in.
 
 ## Step 5: Set up components and connect
 Set up each component below in order, exactly as section 5 of the plan describes the one with the
@@ -198,8 +226,9 @@ open, look it up (see Guidelines) and ask the user.
   confirms. Check the result where you can.
 
 Then switch to \`ADSP_MODE=platform\` and run a smoke test that exercises each platform adapter.
-Done when every component is set up or marked skipped by the user, the smoke test passes, and the
-checks pass.
+Rerun the acceptance tests and refresh the Acceptance table.
+Done when every component is set up or marked skipped by the user, the smoke test passes, the checks
+pass, and every AC in the Acceptance table passes or has a difference the user accepted.
 
 {component list}
 
