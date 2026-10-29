@@ -5,7 +5,7 @@ module.exports = defineConfig({
     'env-name': 'UAT',
     TAGS: '',
     keycloakTokenUrlSuffix: '/protocol/openid-connect/token',
-    'client-id': 'auto-test-client',
+    'client-id': 'urn:ads:autotest:auto-test-client',
     clientSecret: '',
     email: 'auto.test@gov.ab.ca',
     password: '',
