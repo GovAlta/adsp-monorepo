@@ -391,6 +391,9 @@ export const SolutionWorkplace: FunctionComponent<SolutionWorkplaceProps> = ({
   const handleContinue = () =>
     run(async () => {
       const hasBlueprint = !!solution.state.blueprint;
+      if (hasBlueprint && !planOutOfDate) {
+        return;
+      }
       if (hasBlueprint) {
         setBlueprintRefreshing(true);
       }
@@ -571,6 +574,7 @@ export const SolutionWorkplace: FunctionComponent<SolutionWorkplaceProps> = ({
                   onSolutionChange={onDiscoverySolutionChange}
                   specialists={specialists}
                   disabled={busy || headerBusy || blueprintBusy}
+                  consultingSpecialists={blueprintRefreshing}
                   onBusyChange={setDiscoveryBusy}
                   onChatsChanged={() => setVersionsToken((token) => token + 1)}
                 />
@@ -679,7 +683,7 @@ export const SolutionWorkplace: FunctionComponent<SolutionWorkplaceProps> = ({
                 </GoabContainer>
               ) : (
                 <GoabCallout type="information" heading="Not yet" testId="step-disabled-3" mb="m">
-                  The solution is presented once confidence reaches 50%, or when you choose “Skip and show me a plan.”
+                  The solution is presented once confidence reaches 75%, or when you choose “Skip and show me a plan.”
                 </GoabCallout>
               )}
             </section>

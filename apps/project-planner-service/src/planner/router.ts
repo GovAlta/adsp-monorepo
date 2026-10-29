@@ -48,6 +48,7 @@ import {
   computeConfidence,
   dedupeOpenQuestions,
   DISCOVERY_THRESHOLD,
+  isDiscoveryReady,
   isQuestionCovered,
   normalizeFactors,
   ruleAssess,
@@ -344,7 +345,13 @@ export function createPlannerRouter({
       const factors = capFactors(rawFactors, hasOpenQuestions);
       const confidence = computeConfidence(factors);
       // The warning reflects this attempt only, so switching to rules mode clears a stale AI failure note.
-      state.discovery = { ...state.discovery, factors, confidence, ready: confidence >= DISCOVERY_THRESHOLD, warning };
+      state.discovery = {
+        ...state.discovery,
+        factors,
+        confidence,
+        ready: isDiscoveryReady(factors, confidence),
+        warning,
+      };
     }
     state.confidence = assessConfidence(state);
   }
@@ -360,7 +367,7 @@ export function createPlannerRouter({
       hasOpenQuestions,
     );
     const confidence = computeConfidence(factors);
-    const discovery = { ...state.discovery, factors, confidence, ready: confidence >= DISCOVERY_THRESHOLD };
+    const discovery = { ...state.discovery, factors, confidence, ready: isDiscoveryReady(factors, confidence) };
     const withDiscovery = { ...state, discovery };
     return { ...withDiscovery, confidence: assessConfidence(withDiscovery) };
   }
@@ -627,7 +634,7 @@ export function createPlannerRouter({
         }
         if (!isSupportedProblemStatementFile(file.originalname)) {
           throw new InvalidOperationError(
-            `${file.originalname} is not a supported format. Upload a Markdown (.md), Word (.docx) or PDF (.pdf) file.`,
+            `${file.originalname} is not a supported format. Upload a Markdown (.md), Word (.doc, .docx) or PDF (.pdf) file.`,
           );
         }
         let text: string;
@@ -868,7 +875,7 @@ export function createPlannerRouter({
         const mode: AnalysisMode = aiDiscovery ? 'ai' : 'rules';
 
         const confidence = computeConfidence(factors);
-        const ready = confidence >= DISCOVERY_THRESHOLD || req.body.force === true;
+        const ready = isDiscoveryReady(factors, confidence, req.body.force === true);
         let reply = aiDiscovery?.reply || ruleDiscoveryReply(factors, confidence, ready);
         if (req.body.message) {
           const priorConfidence = solution.state.discovery?.confidence ?? 0;
@@ -967,7 +974,7 @@ export function createPlannerRouter({
             hasOpenQuestions,
           );
           const confidence = computeConfidence(factors);
-          state.discovery = { ...state.discovery, factors, confidence, ready: confidence >= DISCOVERY_THRESHOLD };
+          state.discovery = { ...state.discovery, factors, confidence, ready: isDiscoveryReady(factors, confidence) };
         }
         if (llm && answer && hadOpenQuestions && !hasOpenQuestions) {
           await refreshConfidence(req, state, state.analysis?.mode);

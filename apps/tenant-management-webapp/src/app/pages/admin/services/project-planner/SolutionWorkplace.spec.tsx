@@ -251,11 +251,26 @@ describe('SolutionWorkplace', () => {
     expect(container.querySelector('[testid="optional-experts"]')?.hasAttribute('open')).toBe(false);
   });
 
-  it('refreshes the saved solution plan with Save & analyze', async () => {
+  it('skips re-analyzing and re-generating when Save & analyze is clicked with nothing changed', async () => {
     const planned = withPlan();
     const { container } = await setup(planned, {
       analyze: jest.fn().mockResolvedValue(planned),
       blueprint: jest.fn().mockResolvedValue(planned),
+    });
+
+    click(container, 'problem-continue');
+
+    await waitFor(() => expect(container.querySelector('[testid="problem-continue"]')).not.toBeNull());
+    expect(api.analyze).not.toHaveBeenCalled();
+    expect(api.blueprint).not.toHaveBeenCalled();
+  });
+
+  it('re-analyzes and regenerates the blueprint when the plan is flagged out of date', async () => {
+    const stale = withPlan();
+    stale.blueprintOutOfDate = true;
+    const { container } = await setup(stale, {
+      analyze: jest.fn().mockResolvedValue(stale),
+      blueprint: jest.fn().mockResolvedValue(stale),
     });
 
     click(container, 'problem-continue');
