@@ -49,7 +49,6 @@ export async function createTools({ logger, directory, tokenProvider }: ToolsPro
     await createDataRegisterTools({
       logger,
       directory,
-      tokenProvider,
     });
 
   const { emailNotificationGenerateTool } = await createNotificationTemplateTools({

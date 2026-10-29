@@ -207,17 +207,18 @@ export function onIoConnection(logger: Logger) {
       const expiry = getUserTokenExpiry(user);
       const timeToExpiry = expiry !== null ? Math.max(expiry - TOKEN_EXPIRY_THRESHOLD_MS - Date.now(), 0) : null;
 
-      // Track whether an agent response is currently being streamed so that
-      // token-expiry disconnects can be deferred until the stream finishes.
-      let streaming = false;
+      // Count the messages still being answered so that token-expiry disconnects can be deferred until each reply is
+      // sent: replies only go to this socket. A message counts from when it is accepted, because thread memory and input
+      // processors run before the stream starts.
+      let messagesInProgress = 0;
       let disconnectDeferred = false;
 
       const deferredDisconnect = () => {
-        if (streaming) {
+        if (messagesInProgress > 0) {
           // An agent response is in-flight — defer the disconnect until it completes.
           disconnectDeferred = true;
           logger.info(
-            `Deferring token-expiry disconnect for user ${user.name} (ID: ${user.id}) while stream is in progress.`,
+            `Deferring token-expiry disconnect for user ${user.name} (ID: ${user.id}) while a message is in progress.`,
             {
               context: 'AgentRouter',
               tenant: tenant?.id?.toString(),
@@ -250,12 +251,13 @@ export function onIoConnection(logger: Logger) {
       };
 
       socket.on('message', async (payload) => {
-        try {
-          if (isUserTokenExpired(user)) {
-            disconnectExpiredSocket(socket, logger, user, tenant);
-            return;
-          }
+        if (isUserTokenExpired(user)) {
+          disconnectExpiredSocket(socket, logger, user, tenant);
+          return;
+        }
 
+        messagesInProgress += 1;
+        try {
           if (typeof payload !== 'object') {
             throw new InvalidOperationError('payload for message must be a JSON object.');
           } else {
@@ -298,6 +300,8 @@ export function onIoConnection(logger: Logger) {
               throw new InvalidValueError('content', 'content must string or array of text, image, or file parts.');
             }
 
+            // Thread memory and input processors (such as prompt injection detection) run before the stream starts.
+            const requestStartTime = Date.now();
             const result = await aiAgent.stream(
               user,
               threadId,
@@ -309,11 +313,11 @@ export function onIoConnection(logger: Logger) {
             );
             const replyId = uuid();
 
-            streaming = true;
             // Send periodic heartbeats during streaming to prevent reverse proxy
             // (e.g. OpenShift HAProxy route) from timing out the WebSocket connection
             // during long LLM thinking or tool execution gaps.
             const streamStartTime = Date.now();
+            const preStreamDurationMs = streamStartTime - requestStartTime;
             const streamMeta = { agent, threadId, messageId: replyId, replyTo: messageId };
             const heartbeatInterval = setInterval(() => {
               if (socket.connected) {
@@ -405,14 +409,17 @@ export function onIoConnection(logger: Logger) {
                 );
               }
 
-              const totalDurationMs = Date.now() - streamStartTime;
+              const streamEndTime = Date.now();
+              const resultObjectDurationMs = streamEndTime - streamStartTime - streamLoopDurationMs;
+              const totalDurationMs = streamEndTime - requestStartTime;
               logger.info(
-                `Stream complete for agent ${agent}: total=${totalDurationMs}ms, streamLoop=${streamLoopDurationMs}ms, resultObject=${totalDurationMs - streamLoopDurationMs}ms`,
+                `Stream complete for agent ${agent}: total=${totalDurationMs}ms, preStream=${preStreamDurationMs}ms, streamLoop=${streamLoopDurationMs}ms, resultObject=${resultObjectDurationMs}ms`,
                 {
                   context: 'AgentRouter',
                   tenant: tenant?.id?.toString(),
                   user: `${user.name} (ID: ${user.id})`,
                   totalDurationMs,
+                  preStreamDurationMs,
                   streamLoopDurationMs,
                 },
               );
@@ -431,18 +438,19 @@ export function onIoConnection(logger: Logger) {
               }
             } finally {
               clearInterval(heartbeatInterval);
-              streaming = false;
-
-              // If a token-expiry disconnect was deferred while the stream was
-              // in progress, execute it now that the response has been delivered.
-              if (disconnectDeferred) {
-                disconnectDeferred = false;
-                disconnectExpiredSocket(socket, logger, user, tenant);
-              }
             }
           }
         } catch (err) {
           socket.emit('error', describeStreamError(err));
+        } finally {
+          messagesInProgress -= 1;
+
+          // If a token-expiry disconnect was deferred while a message was
+          // in progress, execute it now that the response has been delivered.
+          if (messagesInProgress === 0 && disconnectDeferred) {
+            disconnectDeferred = false;
+            disconnectExpiredSocket(socket, logger, user, tenant);
+          }
         }
       });
       socket.on('workspace-init', async (payload) => {

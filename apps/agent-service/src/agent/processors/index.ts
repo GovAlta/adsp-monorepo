@@ -21,6 +21,9 @@ export function createInputProcessors({ requestContext }: InputProcessorProps): 
       threshold: 0.8,
       strategy: 'block',
       detectionTypes: ['injection', 'jailbreak', 'system-override'],
+      // The input includes the recalled thread, and each message is a separate model call made in sequence. Earlier
+      // user messages were checked on the turn they were sent, so only the new one needs checking.
+      lastMessageOnly: true,
     }),
   );
 

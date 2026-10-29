@@ -12,11 +12,42 @@ describe('formGenerationAgent', () => {
     expect(formGenerationAgent.instructions).toContain('Layout Selection');
   });
 
-  it('embeds control examples in instructions', () => {
-    expect(formGenerationAgent.instructions).toContain('Text Area');
-    expect(formGenerationAgent.instructions).toContain('Inline Help');
-    expect(formGenerationAgent.instructions).toContain('File Upload');
-    expect(formGenerationAgent.instructions).toContain('Multi-Select Checkboxes');
+  it('leaves the worked examples other than data registers out of the instructions', () => {
+    const instructions = formGenerationAgent.instructions;
+    expect(instructions).not.toContain('# UI Control Examples');
+    expect(instructions).not.toContain('# Computed Field Examples');
+    expect(instructions).not.toContain('# Rule Examples');
+    // Every model call re-sends the instructions; with the worked examples inline they were over 130k characters.
+    expect(instructions.length).toBeLessThan(60000);
+  });
+
+  it('keeps the data register examples in the instructions', () => {
+    const instructions = formGenerationAgent.instructions;
+    expect(instructions).toContain('# Data Register Examples');
+    expect(instructions).toContain('Data Register — Object Array with Label/Value Mapping');
+    expect(instructions).toContain('Data Register — Weekdays (String Array)');
+  });
+
+  it('instructs to read a register before wiring it and to map object entries by their exact keys', () => {
+    const instructions = formGenerationAgent.instructions;
+    expect(instructions).toContain(
+      'Before wiring an existing register, call dataRegisterGetTool to see its entries. Never guess their shape.',
+    );
+    expect(instructions).toContain('next to\n  options.register (not inside it)');
+    expect(instructions).toContain('"label": "ministryName", "value": "ministryCode"');
+  });
+
+  it('instructs to ask for the document again when the build request has none attached', () => {
+    const instructions = formGenerationAgent.instructions;
+    expect(instructions).toContain('formGenerationRun reads only the documents attached to the user\'s current message.');
+    expect(instructions).toContain('Do not call formGenerationRun without it.');
+  });
+
+  it('instructs to load worked examples on demand with formExamplesTool', () => {
+    const instructions = formGenerationAgent.instructions;
+    expect(instructions).toContain('call formExamplesTool for worked examples. Request only the groups you need.');
+    expect(instructions).toContain('formExamplesTool:             must include groups');
+    expect(instructions).toContain('load the rules examples with formExamplesTool');
   });
 
   it('embeds document use-case mapping so other form types can be matched from a requirements document', () => {
@@ -24,7 +55,6 @@ describe('formGenerationAgent', () => {
     expect(formGenerationAgent.instructions).toContain('Government application (permits, licenses, benefits)');
     expect(formGenerationAgent.instructions).toContain('Vendor or program registration');
     expect(formGenerationAgent.instructions).toContain('Eligibility calculator or computed totals');
-    expect(formGenerationAgent.instructions).toContain('### When to use');
   });
 
   it('embeds layout examples in instructions', () => {
@@ -74,7 +104,7 @@ describe('formGenerationAgent', () => {
   it('includes Data Registers behavioral section', () => {
     const instructions = formGenerationAgent.instructions;
     expect(instructions).toContain('## Data Registers');
-    expect(instructions).toContain('data-register');
+    expect(instructions).toContain('Wiring a register into a form');
   });
 
   it('instructs to suggest data registers for reusable dropdown values', () => {
@@ -126,6 +156,32 @@ describe('formGenerationAgent', () => {
     expect(instructions).toContain('dataRegisterGetTool');
     expect(instructions).toContain('dataRegisterUpdateTool');
     expect(instructions).toContain('must include name and data');
+  });
+
+  it('instructs to switch to the update flow or another name when a register already exists', () => {
+    const instructions = formGenerationAgent.instructions;
+    expect(instructions).toContain('Create never overwrites');
+    expect(instructions).toContain('do not retry the create');
+    expect(instructions).toContain('get → confirm → update');
+  });
+
+  it('instructs to report a missing register rather than an empty list', () => {
+    const instructions = formGenerationAgent.instructions;
+    expect(instructions).toContain('tell the user it was not found. Do not present an empty list.');
+    expect(instructions).toContain('nothing was created: tell the user it was not found.');
+  });
+
+  it('states the register name rules and suggests kebab-case', () => {
+    const instructions = formGenerationAgent.instructions;
+    expect(instructions).toContain(
+      'Register names: 1–50 letters, numbers, spaces, hyphens or underscores, not starting or ending with a space.',
+    );
+    expect(instructions).toContain('Suggest kebab-case');
+  });
+
+  it('instructs to ask the user to reconnect when the session has expired', () => {
+    const instructions = formGenerationAgent.instructions;
+    expect(instructions).toContain('tell the user to reconnect and try again');
   });
 
   it('instructs to retrieve current values and confirm before updating registers', () => {
@@ -200,6 +256,7 @@ describe('formGenerationAgent', () => {
       'fileDownloadTool',
       'documentExtractTool',
       'rendererCatalogTool',
+      'formExamplesTool',
       'dataRegisterListTool',
       'dataRegisterCreateTool',
       'dataRegisterGetTool',

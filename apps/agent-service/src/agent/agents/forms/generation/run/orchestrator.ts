@@ -194,6 +194,8 @@ export async function runFormGeneration(input: RunFormGenerationInput): Promise<
 
   return {
     complexity: plan.complexity,
+    planReason: plan.reason,
+    documentCount: documents.length,
     total: plan.steps.length,
     saved: savedLabels.length,
     savedLabels,

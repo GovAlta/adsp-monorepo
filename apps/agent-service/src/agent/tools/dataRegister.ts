@@ -1,29 +1,121 @@
-import { adspId, ServiceDirectory, TokenProvider } from '@abgov/adsp-service-sdk';
+import { adspId, AdspId, ServiceDirectory, User } from '@abgov/adsp-service-sdk';
 import { createTool } from '@mastra/core/tools';
 import type { ToolExecutionContext } from '@mastra/core/tools';
 import axios, { isAxiosError } from 'axios';
+import * as HttpStatusCodes from 'http-status-codes';
 import type { Logger } from 'winston';
 import z from 'zod';
 import { AdspRequestContext } from '../types';
 
 const DATA_REGISTER_NAMESPACE = 'data-register';
 
-function buildRegisterSchema(data: Array<string | Record<string, unknown>>): Record<string, unknown> {
-  const hasObjects = data.some((item) => typeof item === 'object' && item !== null);
-  return {
-    type: 'array',
-    items: { type: hasObjects ? 'object' : 'string' },
-  };
+// Same rule form-service applies to register names (apps/form-service/src/form/router/register.ts): 1 to 50 letters,
+// digits, hyphens, underscores and spaces, not starting or ending with a space. Checked here so an invalid name is
+// rejected before any call to form-service.
+const REGISTER_NAME_PATTERN =/^[a-zA-Z0-9-_](?:[a-zA-Z0-9-_ ]{0,48}[a-zA-Z0-9-_])?$/;
+
+export const SESSION_EXPIRED_MESSAGE = 'Your session has expired. Reconnect and try again.';
+
+type DataRegisterEntry = string | Record<string, unknown>;
+
+interface DataRegisterResponse {
+  namespace: string;
+  name: string;
+  description: string;
+  entries: DataRegisterEntry[];
+}
+
+interface RegisterErrorMessages {
+  notFound?: string;
+  conflict?: string;
+}
+
+const createRegisterEntriesSchema = () => z.array(z.union([z.string(), z.record(z.unknown())]));
+
+const registerNameDescription =
+  '1 to 50 letters, numbers, spaces, hyphens or underscores, not starting or ending with a space.';
+
+// The URN is left unencoded, the same as TMW: jsonforms resolves registers by exact URN match and saved forms embed it.
+const toUrn = (name: string): string =>
+  `urn:ads:platform:configuration:v2:/configuration/${DATA_REGISTER_NAMESPACE}/${name}`;
+
+const getNotFoundMessage = (name: string): string => `Data register '${name}' does not exist.`;
+
+function assertValidName(name: string): void {
+  if (!REGISTER_NAME_PATTERN.test(name)) {
+    throw new Error(
+      `Invalid register name '${name}'. Use 1–50 letters, numbers, spaces, hyphens or underscores, with no space at the start or end.`,
+    );
+  }
+}
+
+// The agent router waits for a streaming response to finish before disconnecting an expired session, so a tool can
+// run after the user's token has expired.
+function assertSessionActive(user: User | undefined): asserts user is User {
+  const exp = user?.token?.exp;
+  if (!user?.token?.bearer || (typeof exp === 'number' && exp * 1000 <= Date.now())) {
+    throw new Error(SESSION_EXPIRED_MESSAGE);
+  }
+}
+
+function toToolError(action: string, err: unknown, messages: RegisterErrorMessages = {}): Error {
+  if (isAxiosError(err)) {
+    const status = err.response?.status;
+    if (status === HttpStatusCodes.UNAUTHORIZED) {
+      return new Error(SESSION_EXPIRED_MESSAGE);
+    }
+    if (status === HttpStatusCodes.NOT_FOUND && messages.notFound) {
+      return new Error(messages.notFound);
+    }
+    if (status === HttpStatusCodes.CONFLICT && messages.conflict) {
+      return new Error(messages.conflict);
+    }
+
+    const errorMessage = (err.response?.data as { errorMessage?: string })?.errorMessage;
+    return new Error(`Failed to ${action}: ${errorMessage || err.message}`);
+  }
+
+  return new Error(`Failed to ${action}: ${err instanceof Error ? err.message : String(err)}`);
+}
+
+function getErrorDetails(err: unknown) {
+  return isAxiosError(err)
+    ? {
+        status: err.response?.status,
+        statusText: err.response?.statusText,
+        data: err.response?.data,
+      }
+    : String(err);
 }
 
 interface DataRegisterToolsProps {
   directory: ServiceDirectory;
-  tokenProvider: TokenProvider;
   logger: Logger;
 }
 
-export async function createDataRegisterTools({ directory, tokenProvider, logger }: DataRegisterToolsProps) {
-  const configurationServiceUrl = await directory.getServiceUrl(adspId`urn:ads:platform:configuration-service:v2`);
+/**
+ * Data register tools call the form-service register API as the signed-in user, so form-service applies the same
+ * register rules as TMW and its audit log shows the user as the actor.
+ */
+export async function createDataRegisterTools({ directory, logger }: DataRegisterToolsProps) {
+  const formServiceUrl = await directory.getServiceUrl(adspId`urn:ads:platform:form-service:v1`);
+
+  const getRegistersUrl = (name?: string): string =>
+    new URL(name === undefined ? 'v1/registers' : `v1/registers/${encodeURIComponent(name)}`, formServiceUrl).href;
+
+  const getRequestConfig = (user: User, tenantId: AdspId | undefined) => ({
+    params: {
+      tenantId: tenantId?.toString(),
+    },
+    headers: {
+      Authorization: `Bearer ${user.token.bearer}`,
+    },
+  });
+
+  const getRequestContext = (context: ToolExecutionContext) => {
+    const requestContext = context.requestContext as AdspRequestContext;
+    return { tenantId: requestContext.get('tenantId'), user: requestContext.get('user') };
+  };
 
   const dataRegisterListTool = createTool({
     id: 'list-data-registers',
@@ -40,42 +132,22 @@ export async function createDataRegisterTools({ directory, tokenProvider, logger
       ),
     }),
     execute: async (_, context: ToolExecutionContext) => {
-      const requestContext = context.requestContext as AdspRequestContext;
-      const tenantId = requestContext.get('tenantId');
+      const { tenantId, user } = getRequestContext(context);
+      assertSessionActive(user);
 
       try {
-        const configUrl = new URL('v2/configuration/platform/configuration-service/latest', configurationServiceUrl);
+        const { data } = await axios.get<DataRegisterResponse[]>(getRegistersUrl(), getRequestConfig(user, tenantId));
 
-        const { data } = await axios.get(configUrl.href, {
-          params: {
-            tenantId: tenantId?.toString(),
-          },
-          headers: {
-            Authorization: `Bearer ${await tokenProvider.getAccessToken()}`,
-          },
-        });
-
-        const registers: Array<{ name: string; description: string; urn: string }> = [];
-        const configuration = data?.configuration || data;
-
-        for (const [key, value] of Object.entries(configuration)) {
-          if (key.startsWith(`${DATA_REGISTER_NAMESPACE}:`)) {
-            const def = value as Record<string, unknown>;
-            const schema = def.configurationSchema as Record<string, unknown>;
-            if (schema?.type === 'array') {
-              const registerName = key.replace(`${DATA_REGISTER_NAMESPACE}:`, '');
-              registers.push({
-                name: registerName,
-                description: (def.description as string) || '',
-                urn: `urn:ads:platform:configuration:v2:/configuration/${DATA_REGISTER_NAMESPACE}/${registerName}`,
-              });
-            }
-          }
-        }
+        const registers = data.map((register) => ({
+          name: register.name,
+          description: register.description || '',
+          urn: toUrn(register.name),
+        }));
 
         logger.info(`Listed ${registers.length} data registers.`, {
           context: 'dataRegisterListTool',
           tenant: tenantId?.toString(),
+          user: `${user.name} (ID: ${user.id})`,
         });
 
         return { registers };
@@ -83,16 +155,11 @@ export async function createDataRegisterTools({ directory, tokenProvider, logger
         logger.error('Failed to list data registers.', {
           context: 'dataRegisterListTool',
           tenant: tenantId?.toString(),
-          error: isAxiosError(err)
-            ? {
-                status: err.response?.status,
-                statusText: err.response?.statusText,
-                data: err.response?.data,
-              }
-            : String(err),
+          user: `${user.name} (ID: ${user.id})`,
+          error: getErrorDetails(err),
         });
 
-        throw new Error(`Failed to list data registers: ${err.message}`);
+        throw toToolError('list data registers', err);
       }
     },
   });
@@ -100,100 +167,63 @@ export async function createDataRegisterTools({ directory, tokenProvider, logger
   const dataRegisterCreateTool = createTool({
     id: 'create-data-register',
     description:
-      'Create a new data register with initial values. Data registers are reusable lists stored in the Configuration Service that can populate dropdowns across multiple forms.',
+      'Create a new data register with initial values. Data registers are reusable lists that can populate dropdowns across multiple forms. ' +
+      'If a register with the same name already exists, nothing is changed and an error is returned.',
     inputSchema: z.object({
-      name: z.string().describe('The name of the register (kebab-case, e.g. "weekdays", "goa-ministries").'),
-      description: z.string().optional().describe('A description of what the register contains.'),
-      data: z
-        .array(z.union([z.string(), z.record(z.unknown())]))
+      name: z
+        .string()
         .describe(
-          'The register values. Either an array of strings (e.g. ["Monday","Tuesday"]) or an array of objects (e.g. [{"label":"Alberta","value":"AB"}]).',
+          `The name of the register: ${registerNameDescription} Kebab-case is preferred (e.g. "weekdays", "goa-ministries").`,
         ),
+      description: z.string().optional().describe('A description of what the register contains.'),
+      data: createRegisterEntriesSchema().describe(
+        'The register values. Either an array of strings (e.g. ["Monday","Tuesday"]) or an array of objects (e.g. [{"label":"Alberta","value":"AB"}]).',
+      ),
     }),
     outputSchema: z.object({
       name: z.string(),
       description: z.string(),
       urn: z.string(),
-      data: z.array(z.union([z.string(), z.record(z.unknown())])),
+      data: createRegisterEntriesSchema(),
     }),
     execute: async (inputData, context: ToolExecutionContext) => {
-      const { name, description, data: registerData } = inputData;
-      const requestContext = context.requestContext as AdspRequestContext;
-      const tenantId = requestContext.get('tenantId');
+      const { name, description, data: entries } = inputData;
+      const { tenantId, user } = getRequestContext(context);
+      assertValidName(name);
+      assertSessionActive(user);
 
       try {
-        // Step 1: Create the configuration definition
-        const definitionUrl = new URL('v2/configuration/platform/configuration-service', configurationServiceUrl);
-
-        await axios.patch(
-          definitionUrl.href,
-          {
-            operation: 'UPDATE',
-            update: {
-              [`${DATA_REGISTER_NAMESPACE}:${name}`]: {
-                configurationSchema: buildRegisterSchema(registerData),
-                description: description || '',
-              },
-            },
-          },
-          {
-            params: {
-              tenantId: tenantId?.toString(),
-            },
-            headers: {
-              Authorization: `Bearer ${await tokenProvider.getAccessToken()}`,
-            },
-          },
+        const { data: register } = await axios.post<DataRegisterResponse>(
+          getRegistersUrl(),
+          { name, description, entries },
+          getRequestConfig(user, tenantId),
         );
-
-        // Step 2: Set the initial data
-        const dataUrl = new URL(`v2/configuration/${DATA_REGISTER_NAMESPACE}/${name}`, configurationServiceUrl);
-
-        await axios.patch(
-          dataUrl.href,
-          {
-            operation: 'REPLACE',
-            configuration: registerData,
-          },
-          {
-            params: {
-              tenantId: tenantId?.toString(),
-            },
-            headers: {
-              Authorization: `Bearer ${await tokenProvider.getAccessToken()}`,
-            },
-          },
-        );
-
-        const urn = `urn:ads:platform:configuration:v2:/configuration/${DATA_REGISTER_NAMESPACE}/${name}`;
 
         logger.info(`Data register '${name}' created successfully.`, {
           context: 'dataRegisterCreateTool',
           tenant: tenantId?.toString(),
+          user: `${user.name} (ID: ${user.id})`,
           registerName: name,
         });
 
         return {
-          name,
-          description: description || '',
-          urn,
-          data: registerData,
+          name: register.name,
+          description: register.description || '',
+          urn: toUrn(register.name),
+          data: register.entries,
         };
       } catch (err) {
         logger.error(`Failed to create data register '${name}'.`, {
           context: 'dataRegisterCreateTool',
           tenant: tenantId?.toString(),
+          user: `${user.name} (ID: ${user.id})`,
           registerName: name,
-          error: isAxiosError(err)
-            ? {
-                status: err.response?.status,
-                statusText: err.response?.statusText,
-                data: err.response?.data,
-              }
-            : String(err),
+          error: getErrorDetails(err),
         });
 
-        throw new Error(`Failed to create data register: ${err.message}`);
+        throw toToolError('create data register', err, {
+          conflict: `Data register '${name}' already exists. Nothing was changed. Use the update flow (get → confirm → update) or choose another name.`,
+        });
       }
     },
   });
@@ -207,118 +237,94 @@ export async function createDataRegisterTools({ directory, tokenProvider, logger
     }),
     outputSchema: z.object({
       name: z.string(),
-      data: z.array(z.union([z.string(), z.record(z.unknown())])),
+      data: createRegisterEntriesSchema(),
     }),
     execute: async (inputData, context: ToolExecutionContext) => {
       const { name } = inputData;
-      const requestContext = context.requestContext as AdspRequestContext;
-      const tenantId = requestContext.get('tenantId');
+      const { tenantId, user } = getRequestContext(context);
+      assertValidName(name);
+      assertSessionActive(user);
 
       try {
-        const dataUrl = new URL(`v2/configuration/${DATA_REGISTER_NAMESPACE}/${name}/latest`, configurationServiceUrl);
-
-        const { data } = await axios.get(dataUrl.href, {
-          params: {
-            tenantId: tenantId?.toString(),
-          },
-          headers: {
-            Authorization: `Bearer ${await tokenProvider.getAccessToken()}`,
-          },
-        });
-
-        const registerData = data?.configuration ?? data?.latest ?? data ?? [];
+        const { data: register } = await axios.get<DataRegisterResponse>(
+          getRegistersUrl(name),
+          getRequestConfig(user, tenantId),
+        );
 
         logger.info(`Retrieved data register '${name}'.`, {
           context: 'dataRegisterGetTool',
           tenant: tenantId?.toString(),
+          user: `${user.name} (ID: ${user.id})`,
           registerName: name,
         });
 
         return {
-          name,
-          data: Array.isArray(registerData) ? registerData : [],
+          name: register.name,
+          data: register.entries,
         };
       } catch (err) {
         logger.error(`Failed to retrieve data register '${name}'.`, {
           context: 'dataRegisterGetTool',
           tenant: tenantId?.toString(),
+          user: `${user.name} (ID: ${user.id})`,
           registerName: name,
-          error: isAxiosError(err)
-            ? {
-                status: err.response?.status,
-                statusText: err.response?.statusText,
-                data: err.response?.data,
-              }
-            : String(err),
+          error: getErrorDetails(err),
         });
 
-        throw new Error(`Failed to retrieve data register: ${err.message}`);
+        throw toToolError('retrieve data register', err, { notFound: getNotFoundMessage(name) });
       }
     },
   });
 
   const dataRegisterUpdateTool = createTool({
     id: 'update-data-register',
-    description: 'Update the values of an existing data register. Replaces all current values with the new data.',
+    description:
+      'Update the values of an existing data register. Replaces all current values with the new data; the description is not changed. ' +
+      'Returns an error if the register does not exist.',
     inputSchema: z.object({
       name: z.string().describe('The name of the existing register to update.'),
-      data: z
-        .array(z.union([z.string(), z.record(z.unknown())]))
-        .describe('The new register values. Either an array of strings or an array of objects.'),
+      data: createRegisterEntriesSchema().describe(
+        'The new register values. Either an array of strings or an array of objects.',
+      ),
     }),
     outputSchema: z.object({
       name: z.string(),
-      data: z.array(z.union([z.string(), z.record(z.unknown())])),
+      data: createRegisterEntriesSchema(),
     }),
     execute: async (inputData, context: ToolExecutionContext) => {
-      const { name, data: registerData } = inputData;
-      const requestContext = context.requestContext as AdspRequestContext;
-      const tenantId = requestContext.get('tenantId');
+      const { name, data: entries } = inputData;
+      const { tenantId, user } = getRequestContext(context);
+      assertValidName(name);
+      assertSessionActive(user);
 
       try {
-        const dataUrl = new URL(`v2/configuration/${DATA_REGISTER_NAMESPACE}/${name}`, configurationServiceUrl);
-
-        await axios.patch(
-          dataUrl.href,
-          {
-            operation: 'REPLACE',
-            configuration: registerData,
-          },
-          {
-            params: {
-              tenantId: tenantId?.toString(),
-            },
-            headers: {
-              Authorization: `Bearer ${await tokenProvider.getAccessToken()}`,
-            },
-          },
+        const { data: register } = await axios.patch<DataRegisterResponse>(
+          getRegistersUrl(name),
+          { entries },
+          getRequestConfig(user, tenantId),
         );
 
         logger.info(`Data register '${name}' updated successfully.`, {
           context: 'dataRegisterUpdateTool',
           tenant: tenantId?.toString(),
+          user: `${user.name} (ID: ${user.id})`,
           registerName: name,
         });
 
         return {
-          name,
-          data: registerData,
+          name: register.name,
+          data: register.entries,
         };
       } catch (err) {
         logger.error(`Failed to update data register '${name}'.`, {
           context: 'dataRegisterUpdateTool',
           tenant: tenantId?.toString(),
+          user: `${user.name} (ID: ${user.id})`,
           registerName: name,
-          error: isAxiosError(err)
-            ? {
-                status: err.response?.status,
-                statusText: err.response?.statusText,
-                data: err.response?.data,
-              }
-            : String(err),
+          error: getErrorDetails(err),
         });
 
-        throw new Error(`Failed to update data register: ${err.message}`);
+        throw toToolError('update data register', err, { notFound: getNotFoundMessage(name) });
       }
     },
   });

@@ -1,3 +1,4 @@
+import { environment } from '../environments/environment';
 import { AgentConfigurations } from './configuration';
 import { deleteThread, getAccessScope, onIoConnection } from './router';
 import { WorkspaceChangeProjector } from './workspace';
@@ -30,7 +31,7 @@ describe('onIoConnection workspace socket events', () => {
     stream?: jest.Mock;
   }
 
-  function buildSocketHarness(brokerOverrides: MockBrokerOverrides = {}) {
+  function buildSocketHarness(brokerOverrides: MockBrokerOverrides = {}, user: Record<string, unknown> = mockUser) {
     const mockBroker = {
       initializeWorkspace:
         brokerOverrides.initializeWorkspace ??
@@ -73,7 +74,7 @@ describe('onIoConnection workspace socket events', () => {
     const eventHandlers: Record<string, (...args: unknown[]) => Promise<void>> = {};
     const socket = {
       request: {
-        user: mockUser,
+        user,
         tenant: mockTenant,
         getServiceConfiguration: jest.fn().mockResolvedValue(mockConfiguration),
       },
@@ -89,8 +90,8 @@ describe('onIoConnection workspace socket events', () => {
     return { socket, eventHandlers, mockBroker, getAgent };
   }
 
-  async function connect(brokerOverrides: MockBrokerOverrides = {}) {
-    const harness = buildSocketHarness(brokerOverrides);
+  async function connect(brokerOverrides: MockBrokerOverrides = {}, user: Record<string, unknown> = mockUser) {
+    const harness = buildSocketHarness(brokerOverrides, user);
     await onIoConnection(logger as never)(harness.socket as never);
     return harness;
   }
@@ -416,6 +417,105 @@ describe('onIoConnection workspace socket events', () => {
           chunk: { type: 'error', payload: { message: 'model refused' } },
         }),
       );
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // message latency logging
+  // -------------------------------------------------------------------------
+
+  describe('message latency logging', () => {
+    const PRE_STREAM_DELAY_MS = 25;
+
+    it('includes the time before the stream starts in the logged total', async () => {
+      const streamResult = {
+        fullStream: (async function* () {})(),
+        textStream: (async function* () {
+          yield 'hello';
+        })(),
+        object: Promise.resolve(null),
+      };
+      const stream = jest.fn(() => new Promise((resolve) => setTimeout(() => resolve(streamResult), PRE_STREAM_DELAY_MS)));
+      const { eventHandlers } = await connect({ stream });
+
+      await eventHandlers['message']({
+        agent: 'formGenerationAgent',
+        threadId: 'thread-1',
+        messageId: 'user-message-1',
+        content: 'List the data registers',
+      });
+
+      expect(logger.info).toHaveBeenCalledWith(
+        expect.stringMatching(/^Stream complete for agent formGenerationAgent: total=\d+ms, preStream=\d+ms, /),
+        expect.objectContaining({
+          preStreamDurationMs: expect.any(Number),
+          totalDurationMs: expect.any(Number),
+        }),
+      );
+      const [, meta] = logger.info.mock.calls.find(([message]) => String(message).startsWith('Stream complete'));
+      expect(meta.preStreamDurationMs).toBeGreaterThanOrEqual(PRE_STREAM_DELAY_MS - 5);
+      expect(meta.totalDurationMs).toBeGreaterThanOrEqual(meta.preStreamDurationMs + meta.streamLoopDurationMs);
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // token expiry while a message is in progress
+  // -------------------------------------------------------------------------
+
+  describe('token expiry while a message is in progress', () => {
+    const EXPIRY_TIMER_MS = 40;
+
+    // A token whose expiry disconnect (threshold before exp) fires EXPIRY_TIMER_MS after connecting.
+    const expiringUser = () => ({
+      ...mockUser,
+      token: { exp: (Date.now() + environment.AGENT_TOKEN_EXPIRY_THRESHOLD_MS + EXPIRY_TIMER_MS) / 1000 },
+    });
+    const streamResult = () => ({
+      fullStream: (async function* () {})(),
+      textStream: (async function* () {
+        yield 'The form is valid.';
+      })(),
+      object: Promise.resolve(null),
+    });
+    const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+    const message = { agent: 'formGenerationAgent', threadId: 'thread-1', messageId: 'user-message-1', content: 'Validate' };
+
+    it('sends the reply before disconnecting when the token expires before the stream starts', async () => {
+      let startStream: (result: unknown) => void = () => undefined;
+      const stream = jest.fn(() => new Promise((resolve) => (startStream = resolve)));
+      const { socket, eventHandlers } = await connect({ stream }, expiringUser());
+
+      const handling = eventHandlers['message'](message);
+      await wait(EXPIRY_TIMER_MS * 2);
+      const disconnectedBeforeReply = socket.disconnect.mock.calls.length > 0;
+      startStream(streamResult());
+      await handling;
+
+      expect(disconnectedBeforeReply).toBe(false);
+      expect(socket.emit).toHaveBeenCalledWith('stream', expect.objectContaining({ replyTo: 'user-message-1', done: true }));
+      expect(socket.disconnect).toHaveBeenCalledWith(true);
+      expect(socket.emit).toHaveBeenLastCalledWith('session-expired', expect.objectContaining({ code: 'USER_TOKEN_EXPIRED' }));
+    });
+
+    it('reports the error before disconnecting when the agent fails before the stream starts', async () => {
+      const stream = jest.fn(
+        () => new Promise((_resolve, reject) => setTimeout(() => reject(new Error('model unavailable')), EXPIRY_TIMER_MS * 2)),
+      );
+      const { socket, eventHandlers } = await connect({ stream }, expiringUser());
+
+      await eventHandlers['message'](message);
+
+      expect(socket.emit).toHaveBeenCalledWith('error', expect.anything());
+      expect(socket.disconnect).toHaveBeenCalledWith(true);
+      expect(socket.emit).toHaveBeenLastCalledWith('session-expired', expect.objectContaining({ code: 'USER_TOKEN_EXPIRED' }));
+    });
+
+    it('disconnects as soon as the token expires when no message is in progress', async () => {
+      const { socket } = await connect({}, expiringUser());
+
+      await wait(EXPIRY_TIMER_MS * 2);
+
+      expect(socket.disconnect).toHaveBeenCalledWith(true);
     });
   });
 

@@ -13,6 +13,23 @@ function escapeRegExp(s: string) {
   return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
+const NUMERIC_STRING = /^[-+]?(\d+\.?\d*|\.\d+)(e[-+]?\d+)?$/i;
+
+/**
+ * A referenced value as a finite number, or undefined. Computed fields store their result as a numeric string, so
+ * those are read as numbers to let one computed field reference another.
+ */
+function toFiniteNumber(value: unknown): number | undefined {
+  if (typeof value === 'number') {
+    return Number.isFinite(value) ? value : undefined;
+  }
+  if (typeof value === 'string' && NUMERIC_STRING.test(value.trim())) {
+    const parsed = Number(value.trim());
+    return Number.isFinite(parsed) ? parsed : undefined;
+  }
+  return undefined;
+}
+
 /**
  * Resolve a JSON Pointer–style scope like "#/properties/x" or "#/properties/arr/c3"
  */
@@ -87,9 +104,10 @@ export function evaluateSum(scope: string, data: unknown, opts?: { knownScopes?:
   for (const row of cur) {
     if (row == null || typeof row !== 'object') continue;
     const v = (row as Record<string, unknown>)[colKey];
-    if (typeof v === 'number' && Number.isFinite(v)) {
+    const num = toFiniteNumber(v);
+    if (num !== undefined) {
       anyValue = true;
-      sum += v;
+      sum += num;
     } else if (v !== undefined && v !== null) {
       anyMissing = true;
     }
@@ -151,8 +169,8 @@ export function evaluateExpression(
 
   uniqueScopes.forEach((scope, idx) => {
     const normalized = scope.replace(/^#\/(properties\/)?/, '#/properties/');
-    const val = resolveScope(scope, data);
-    if (typeof val === 'number' && Number.isFinite(val)) {
+    const val = toFiniteNumber(resolveScope(scope, data));
+    if (val !== undefined) {
       anyValuePresent = true;
       const varName = `v${idx}`;
       vars[varName] = val;

@@ -57,6 +57,13 @@ describe('CalculationEngine', () => {
       expect(result.error).toMatch(/c3/i);
     });
 
+    it('sums numeric strings, such as computed fields in each row', () => {
+      const result = evaluateSum('#/properties/arr/c3', { arr: [{ c3: '1.5' }, { c3: 2 }, { c3: '-0.5' }] });
+
+      expect(result.value).toBe(3);
+      expect(result.error).toBeUndefined();
+    });
+
     it('returns an error when scope format is invalid', () => {
       const result = evaluateSum('not-a-scope', data);
 
@@ -114,6 +121,19 @@ describe('CalculationEngine', () => {
       expect(result.error).toContain('#/properties/z');
       // and *not* complain about x as missing
       expect(result.error).not.toContain('#/properties/x');
+    });
+
+    it('reads numeric strings, so a computed field can reference another computed field', () => {
+      const result = evaluateExpression('#/properties/subtotal * 2', { subtotal: ' 1050.5 ' });
+
+      expect(result.value).toBe(2101);
+      expect(result.error).toBeUndefined();
+    });
+
+    it.each(['', '   ', 'abc', '12abc', '0x10'])('treats the string "%s" as a missing value', (subtotal) => {
+      const result = evaluateExpression('#/properties/subtotal * #/properties/rate', { subtotal, rate: 2 });
+
+      expect(result.error).toBe('Please provide values for: #/properties/subtotal');
     });
 
     it('reports invalid scopes when a referenced path does not exist', () => {

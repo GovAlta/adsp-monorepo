@@ -1,11 +1,16 @@
 import { expectSaga } from 'redux-saga-test-plan';
-import { AGENT_RESPONSE_ACTION, AgentResponseAction, TOOL_CALL_RESULT } from '@store/agent/actions';
+import { AGENT_RESPONSE_ACTION, AgentResponseAction, TOOL_CALL_ERROR, TOOL_CALL_RESULT } from '@store/agent/actions';
 import {
   FETCH_CONFIGURATION_DEFINITIONS_ACTION,
   FETCH_REGISTER_DATA_ACTION,
   getRegisterDataAction,
 } from '@store/configuration/action';
-import { initializeFormEditorSaga, refreshDefinition, refreshDefinitionOnAgentResponse } from './sagas';
+import {
+  initializeFormEditorSaga,
+  isDefinitionRefreshChunk,
+  refreshDefinition,
+  refreshDefinitionOnAgentResponse,
+} from './sagas';
 
 const registerCreatedResponse: AgentResponseAction = {
   type: AGENT_RESPONSE_ACTION,
@@ -18,6 +23,33 @@ const registerCreatedResponse: AgentResponseAction = {
       toolName: 'dataRegisterCreateTool',
       args: { name: 'weekdays' },
       result: { success: true },
+    },
+  },
+};
+
+const registerUpdatedResponse: AgentResponseAction = {
+  ...registerCreatedResponse,
+  chunk: {
+    type: TOOL_CALL_RESULT,
+    payload: {
+      toolCallId: 'tool-call-2',
+      toolName: 'dataRegisterUpdateTool',
+      args: { name: 'weekdays', data: ['Monday'] },
+      result: { name: 'weekdays', data: ['Monday'] },
+    },
+  },
+};
+
+// The register tools throw when form-service refuses a change (e.g. a duplicate name), which arrives as a tool error.
+const registerCreateFailedResponse: AgentResponseAction = {
+  ...registerCreatedResponse,
+  chunk: {
+    type: TOOL_CALL_ERROR,
+    payload: {
+      toolCallId: 'tool-call-3',
+      toolName: 'dataRegisterCreateTool',
+      args: { name: 'weekdays', data: ['Monday'] },
+      error: { message: "Data register 'weekdays' already exists." },
     },
   },
 };
@@ -51,6 +83,37 @@ describe('form sagas data register refresh', () => {
         .run();
 
       expect(calledFns).toContain(refreshDefinition);
+    });
+
+    it('refetches the registers after the agent updates a register', async () => {
+      const { effects } = await expectSaga(refreshDefinitionOnAgentResponse, registerUpdatedResponse)
+        .provide({
+          call: () => undefined,
+        })
+        .run();
+
+      expect(effects.put.map((effect) => effect.payload.action)).toEqual([getRegisterDataAction()]);
+    });
+
+    it('does not refetch when a register tool fails', async () => {
+      const { effects } = await expectSaga(refreshDefinitionOnAgentResponse, registerCreateFailedResponse)
+        .provide({
+          call: () => undefined,
+        })
+        .run();
+
+      expect(putActionTypes(effects)).toEqual([]);
+    });
+  });
+
+  describe('isDefinitionRefreshChunk', () => {
+    it('triggers a refresh for register create and update results', () => {
+      expect(isDefinitionRefreshChunk(registerCreatedResponse.chunk)).toBe(true);
+      expect(isDefinitionRefreshChunk(registerUpdatedResponse.chunk)).toBe(true);
+    });
+
+    it('does not trigger a refresh for a register tool error', () => {
+      expect(isDefinitionRefreshChunk(registerCreateFailedResponse.chunk)).toBe(false);
     });
   });
 
