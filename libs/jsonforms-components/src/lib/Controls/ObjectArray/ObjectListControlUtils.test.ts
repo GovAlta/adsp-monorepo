@@ -319,7 +319,7 @@ describe('isObjectArrayEmpty', () => {
 });
 
 describe('renderNoneGivenText', () => {
-  test('returns (none given) text when data is undefined', () => {
+  test('returns the no-answer message when data is undefined', () => {
     // Arrange
     const data = undefined;
 
@@ -327,10 +327,10 @@ describe('renderNoneGivenText', () => {
     const { container } = render(renderNoneGivenText(data) as JSX.Element);
 
     // Assert
-    expect(container.textContent).toContain('(none given)');
+    expect(container.textContent).toContain('Not answered.');
   });
 
-  test('returns (none given) text when data is empty string', () => {
+  test('returns the no-answer message when data is empty string', () => {
     // Arrange
     const data = '';
 
@@ -338,7 +338,7 @@ describe('renderNoneGivenText', () => {
     const { container } = render(renderNoneGivenText(data) as JSX.Element);
 
     // Assert
-    expect(container.textContent).toContain('(none given)');
+    expect(container.textContent).toContain('Not answered.');
   });
 
   test('returns the provided text when data is not empty', () => {
@@ -363,7 +363,7 @@ describe('renderNoneGivenText', () => {
     expect(result).toBe('42');
   });
 
-  test('returns (none given) text when data is 0', () => {
+  test('returns the provided text when data is 0', () => {
     // Arrange
     const data = '0';
 

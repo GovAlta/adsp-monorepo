@@ -32,3 +32,5 @@ export type StepStatusType = StepStatus.COMPLETED | StepStatus.NOT_STARTED | Ste
 export const getAddressLookupFieldLabel = (fieldName: string): string => {
   return ADDRESS_LOOKUP_LABELS[fieldName as keyof typeof ADDRESS_LOOKUP_LABELS] || fieldName;
 };
+
+export const NO_ANSWER_MESSAGE = 'Not answered.';

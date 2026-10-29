@@ -15,7 +15,7 @@ import {
 } from '../Inputs/style-component';
 import { GoabFormItem } from '@abgov/react-components-ds1';
 import { useJsonForms } from '@jsonforms/react';
-import { REQUIRED_PROPERTY_ERROR, getAddressLookupFieldLabel } from '../../common/Constants';
+import { NO_ANSWER_MESSAGE, REQUIRED_PROPERTY_ERROR, getAddressLookupFieldLabel } from '../../common/Constants';
 import { useShowChangeButtons } from '../../Context/ContextProvider';
 
 type AddressViewProps = ControlProps;
@@ -156,7 +156,7 @@ export const AddressLoopUpControlTableReview = (props: AddressViewProps): JSX.El
             )}
           </ReviewHeader>
           <ReviewValue>
-            {!value ? <NoneGivenText>(none given)</NoneGivenText> : value}
+            {!value ? <NoneGivenText>{NO_ANSWER_MESSAGE}</NoneGivenText> : value}
             {errorMessage && <GoabFormItem error={errorMessage} label=""></GoabFormItem>}
           </ReviewValue>
         </PageReviewContainer>

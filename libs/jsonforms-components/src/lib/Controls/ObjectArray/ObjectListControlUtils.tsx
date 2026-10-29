@@ -8,7 +8,7 @@ import { ErrorObject } from 'ajv';
 import { NoneGivenTableText } from '../Inputs/style-component';
 import { humanizeAjvError } from './ListWithDetailControl';
 import { JsonSchema, UISchemaElement } from '@jsonforms/core';
-import { REQUIRED_PROPERTY_ERROR } from '../../common/Constants';
+import { REQUIRED_PROPERTY_ERROR, NO_ANSWER_MESSAGE } from '../../common/Constants';
 
 const jsonPreviewStyle: React.CSSProperties = {
   display: 'block',
@@ -154,7 +154,7 @@ export const isObjectArrayEmpty = (currentData: string) => {
 export const renderNoneGivenText = (data: string | undefined) => {
   return !data ? (
     <>
-      <NoneGivenTableText>(none given)</NoneGivenTableText>
+      <NoneGivenTableText>{NO_ANSWER_MESSAGE}</NoneGivenTableText>
       <br />
     </>
   ) : (
@@ -256,7 +256,7 @@ export const createHumanizeError = (
           humanMessage = prettify(propertyMatch[1]) + ' is required';
         }
       }
-    } catch (err) {
+    } catch {
       const raw = (error as unknown as { message?: string }).message as string;
       const propertyMatch = raw?.match(/'([^']+)'/);
       if (propertyMatch && propertyMatch[1]) {

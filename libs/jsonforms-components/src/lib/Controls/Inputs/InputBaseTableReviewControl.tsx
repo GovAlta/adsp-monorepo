@@ -25,6 +25,7 @@ import { useReviewChange } from '../FormStepper/context/useReviewChange';
 import { BackButton } from '../FormStepper/BackButton';
 import { useShowChangeButtons } from '../../Context/ContextProvider';
 import { JsonFormsDispatch, useJsonForms } from '@jsonforms/react';
+import { NO_ANSWER_MESSAGE } from '../../common/Constants';
 
 export const GoAInputBaseTableReview = (props: ControlProps): JSX.Element | null => {
   const { data, uischema, label, schema, rootSchema, path, errors, enabled, cells, required, visible } = props;
@@ -219,7 +220,6 @@ export const GoAInputBaseTableReview = (props: ControlProps): JSX.Element | null
     isBooleanRequiredError = true;
   }
 
-  // eslint-disable-next-line
   const stepId = uischema.options?.stepId;
 
   function handleChangeClick(): void {
@@ -255,7 +255,7 @@ export const GoAInputBaseTableReview = (props: ControlProps): JSX.Element | null
         <ReviewValue>
           {showInlineValue ? (
             <div data-testid={`review-value-${label}`}>
-              {isValueEmpty ? <NoneGivenText>(none given)</NoneGivenText> : (reviewText ?? '')}
+              {isValueEmpty ? <NoneGivenText>{NO_ANSWER_MESSAGE}</NoneGivenText> : (reviewText ?? '')}
             </div>
           ) : (
             <JsonFormsDispatch

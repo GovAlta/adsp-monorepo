@@ -756,7 +756,7 @@ describe('InputBaseTableReviewControl', () => {
     expect(errorFormItem).toBeInTheDocument();
   });
 
-  it('shows (none given) for undefined data', () => {
+  it('shows the no-answer message for undefined data', () => {
     const { getByTestId } = render(
       <table>
         <tbody>
@@ -785,10 +785,10 @@ describe('InputBaseTableReviewControl', () => {
       </table>,
     );
 
-    expect(getByTestId('review-value-First name').textContent).toBe('(none given)');
+    expect(getByTestId('review-value-First name').textContent).toBe('Not answered.');
   });
 
-  it('shows (none given) for null data', () => {
+  it('shows the no-answer message for null data', () => {
     const { getByTestId } = render(
       <table>
         <tbody>
@@ -817,10 +817,10 @@ describe('InputBaseTableReviewControl', () => {
       </table>,
     );
 
-    expect(getByTestId('review-value-First name').textContent).toBe('(none given)');
+    expect(getByTestId('review-value-First name').textContent).toBe('Not answered.');
   });
 
-  it('shows (none given) for empty string data', () => {
+  it('shows the no-answer message for empty string data', () => {
     const { getByTestId } = render(
       <table>
         <tbody>
@@ -849,10 +849,10 @@ describe('InputBaseTableReviewControl', () => {
       </table>,
     );
 
-    expect(getByTestId('review-value-First name').textContent).toBe('(none given)');
+    expect(getByTestId('review-value-First name').textContent).toBe('Not answered.');
   });
 
-  it('does not show (none given) for unchecked required boolean (shows error instead)', () => {
+  it('does not show the no-answer message for unchecked required boolean (shows error instead)', () => {
     const { getByTestId } = render(
       <table>
         <tbody>
