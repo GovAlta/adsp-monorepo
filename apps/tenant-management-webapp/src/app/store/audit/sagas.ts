@@ -1,5 +1,5 @@
 import { SagaIterator } from '@redux-saga/core';
-import { call, put, select, takeLatest } from 'redux-saga/effects';
+import { all, call, put, select, takeLatest } from 'redux-saga/effects';
 import axios from 'axios';
 import { RootState } from '..';
 import { ErrorNotification, SuccessNotification } from '../notifications/actions';
@@ -21,21 +21,12 @@ import {
   AUDIT_DEFAULT_PAGE_SIZE,
   AUDIT_EXPORT_LIMIT,
   AUDIT_EXPORT_PAGE_SIZE,
-  AUDIT_NAMESPACE,
   AuditAction,
   AuditCatalog,
   AuditEventCriteria,
   AuditEventRecord,
   AuditRetention,
-  RetentionClasses,
 } from './models';
-
-const RETENTION_PREFIX = 'retention-';
-
-interface ConfigurationResult {
-  name: string;
-  latest?: { configuration?: Record<string, unknown> };
-}
 
 interface CatalogListing {
   application: string;
@@ -53,25 +44,6 @@ export function toCatalogs(listings: CatalogListing[]): AuditCatalog[] {
     .sort((a, b) => a.application.localeCompare(b.application));
 }
 
-export function mapAuditConfiguration(results: ConfigurationResult[]): { retention: AuditRetention } {
-  const retention: AuditRetention = { tenant: {}, applications: {} };
-
-  for (const { name, latest } of results) {
-    const configuration = latest?.configuration;
-    if (!configuration) {
-      continue;
-    }
-    if (name === 'retention') {
-      retention.tenant = (configuration.classes || {}) as RetentionClasses;
-    } else if (name.startsWith(RETENTION_PREFIX)) {
-      retention.applications[name.substring(RETENTION_PREFIX.length)] = (configuration.classes ||
-        {}) as RetentionClasses;
-    }
-  }
-
-  return { retention };
-}
-
 function eventsUrl(auditBaseUrl: string, criteria: AuditEventCriteria, top: number, after?: string): string {
   const { namespace, ...filters } = criteria;
   const params = new URLSearchParams({ top: String(top) });
@@ -83,42 +55,26 @@ function eventsUrl(auditBaseUrl: string, criteria: AuditEventCriteria, top: numb
   return `${auditBaseUrl}/audit/v1${path}?${params.toString()}`;
 }
 
-async function fetchAll(baseUrl: string, headers: Record<string, string>): Promise<ConfigurationResult[]> {
-  const results: ConfigurationResult[] = [];
-  const url = `${baseUrl}?top=50`;
-  let next: string | undefined;
-  do {
-    const { data } = await axios.get(next ? `${url}&after=${next}` : url, { headers });
-    results.push(...data.results);
-    next = data.page?.next;
-  } while (next);
-  return results;
-}
-
 export function* fetchAuditConfiguration(): SagaIterator {
   yield put(UpdateIndicator({ show: true, message: 'Loading...' }));
 
-  const configBaseUrl: string = yield select(
-    (state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl,
-  );
   const auditBaseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.auditServiceApiUrl);
   const token: string = yield call(getAccessToken);
 
-  if (configBaseUrl && token) {
+  if (auditBaseUrl && token) {
     try {
       const headers = { Authorization: `Bearer ${token}` };
-      const baseUrl = `${configBaseUrl}/configuration/v2/configuration/${AUDIT_NAMESPACE}`;
-      const results: ConfigurationResult[] = yield call(fetchAll, baseUrl, headers);
-
-      // Core catalogs are not part of the tenant configuration listing, so the audit service resolves all of them.
-      let catalogs: AuditCatalog[] = [];
-      if (auditBaseUrl) {
-        const { data } = yield call(axios.get, `${auditBaseUrl}/audit/v1/actions`, { headers });
-        catalogs = toCatalogs(data);
-      }
-
-      const { retention } = mapAuditConfiguration(results);
-      yield put(fetchAuditConfigurationSuccess(catalogs, retention));
+      // The audit service resolves catalogs and retention (active revision, Core merged) as it applies them.
+      const [catalogResponse, retentionResponse]: { data: unknown }[] = yield all([
+        call(axios.get, `${auditBaseUrl}/audit/v1/actions`, { headers }),
+        call(axios.get, `${auditBaseUrl}/audit/v1/retention`, { headers }),
+      ]);
+      yield put(
+        fetchAuditConfigurationSuccess(
+          toCatalogs(catalogResponse.data as CatalogListing[]),
+          retentionResponse.data as AuditRetention,
+        ),
+      );
     } catch (err) {
       yield put(ErrorNotification({ error: err }));
     }
