@@ -43,7 +43,10 @@ export class SelfAuditor {
     return this.failures;
   }
 
-  async record(req: Request, { action, endpoint, filters, resultCount, status = 'success' }: SelfAuditRecord): Promise<void> {
+  async record(
+    req: Request,
+    { action, endpoint, filters, resultCount, status = 'success' }: SelfAuditRecord,
+  ): Promise<void> {
     const { serviceId, catalogs, retention, submitter, logger } = this.options;
     const tenantId = req.tenant?.id;
     try {

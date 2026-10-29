@@ -1,4 +1,3 @@
-export const AUDIT_NAMESPACE = 'audit-service';
 export const AUDIT_PAGE_SIZES = [10, 30, 50, 100];
 export const AUDIT_DEFAULT_PAGE_SIZE = 30;
 
