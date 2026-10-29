@@ -13,7 +13,14 @@ import {
 import { PlannerApi } from './api';
 import { AnalysisMode, ComponentReview, Solution } from './model';
 import { useBusy } from './useBusy';
-import { REVIEW_LABELS } from './utils';
+import {
+  acceptanceGroups,
+  acceptanceModeLabel,
+  acceptanceSentence,
+  NO_ACCEPTANCE_CRITERIA,
+  REGENERATE_FOR_ACCEPTANCE,
+  REVIEW_LABELS,
+} from './utils';
 
 interface BlueprintViewerProps {
   solution: Solution;
@@ -115,7 +122,7 @@ export const BlueprintViewer: FunctionComponent<BlueprintViewerProps> = ({
         <p>
           The blueprint turns the proposed solution into a complete plan: project overview, technical architecture, ADSP
           service mapping, requirements not covered by ADSP, the components to set up, consolidated specialist
-          consultation notes, core workflows, data and governance, and a delivery plan.
+          consultation notes, core workflows, data and governance, a delivery plan, and acceptance criteria.
         </p>
         {controls}
       </div>
@@ -398,6 +405,35 @@ export const BlueprintViewer: FunctionComponent<BlueprintViewerProps> = ({
           <SubList title="Non-functional requirements" items={dl.nonFunctional} />
           <SubList title="Open questions" items={dl.openQuestions} />
         </>,
+      )}
+
+      {section(
+        'acceptance',
+        '10. Acceptance criteria',
+        !blueprint.acceptance ? (
+          <p>{REGENERATE_FOR_ACCEPTANCE}</p>
+        ) : (
+          <>
+            <p>{acceptanceModeLabel(blueprint.acceptance)}</p>
+            {blueprint.acceptance.criteria.length === 0 ? (
+              <p>{NO_ACCEPTANCE_CRITERIA}</p>
+            ) : (
+              acceptanceGroups(blueprint.acceptance.criteria).map(([group, criteria]) => (
+                <div key={group}>
+                  <h4>{group}</h4>
+                  <ul>
+                    {criteria.map((c) => (
+                      <li key={c.id}>
+                        <strong>{c.id}</strong>
+                        {c.actor && ` (${c.actor})`}: {acceptanceSentence(c)} <em>Source:</em> {c.source}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))
+            )}
+          </>
+        ),
       )}
     </div>
   );

@@ -244,6 +244,23 @@ export interface BlueprintComponent {
   review?: ComponentReview;
 }
 
+// A check the generated app must pass; it only restates what the plan already says.
+export interface AcceptanceCriterion {
+  id: string;
+  // A workflow name, or Rules for access, audit, retention, privacy and non-functional criteria.
+  group: string;
+  actor?: string;
+  given?: string;
+  when?: string;
+  then: string;
+  source: string;
+}
+
+export interface BlueprintAcceptance {
+  mode: AnalysisMode;
+  criteria: AcceptanceCriterion[];
+}
+
 // The complete plan behind a proposed solution.
 export interface SolutionBlueprint {
   generatedOn: string;
@@ -286,6 +303,8 @@ export interface SolutionBlueprint {
     nonFunctional: string[];
     openQuestions: string[];
   };
+  // Absent on blueprints generated before acceptance criteria were added.
+  acceptance?: BlueprintAcceptance;
 }
 
 export interface SolutionState {
