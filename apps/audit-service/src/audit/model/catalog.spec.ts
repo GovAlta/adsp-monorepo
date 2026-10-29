@@ -73,6 +73,77 @@ describe('CatalogService', () => {
     await expect(service.getCatalog('case-service', tenantId)).rejects.toBeInstanceOf(CatalogUnavailableError);
   });
 
+  describe('addAction', () => {
+    const source = { listApplications: jest.fn() };
+    const store = { readActionNames: jest.fn(), saveAction: jest.fn() };
+    const adding = new CatalogService(configuration, logger, source, store);
+    const definition = { version: 1, category: 'runtime', severity: 'info', retentionClass: 'standard' } as never;
+    const core = { 'audit-service': ['retention.run', 'events.list'] } as Record<string, string[]>;
+
+    beforeEach(() => {
+      source.listApplications.mockResolvedValue(['audit-service']);
+      store.readActionNames.mockImplementation(async (application: string, tenant?: unknown) =>
+        tenant ? ['sample-action'] : (core[application] ?? null),
+      );
+      store.saveAction.mockResolvedValue(undefined);
+    });
+
+    it('adds an unused name to the existing tenant catalog', async () => {
+      await adding.addAction('sandbox-app', 'my-action', definition, tenantId, 'token');
+
+      expect(store.saveAction).toHaveBeenCalledWith('sandbox-app', 'my-action', definition, 'token', true);
+    });
+
+    it('creates the catalog when the tenant has none', async () => {
+      store.readActionNames.mockImplementation(async (application: string, tenant?: unknown) =>
+        tenant ? null : core[application],
+      );
+
+      await adding.addAction('sandbox-app', 'my-action', definition, tenantId, 'token');
+
+      expect(store.saveAction).toHaveBeenCalledWith('sandbox-app', 'my-action', definition, 'token', false);
+    });
+
+    it.each([
+      ['a Core action', 'retention.run'],
+      ['a Core action in a different case', 'Retention.RUN'],
+    ])('rejects %s', async (_label, name) => {
+      await expect(adding.addAction('sandbox-app', name, definition, tenantId, 'token')).rejects.toMatchObject({
+        extra: { statusCode: HttpStatusCodes.CONFLICT },
+      });
+      expect(store.saveAction).not.toHaveBeenCalled();
+    });
+
+    it('allows a name that only extends a Core action name', async () => {
+      await adding.addAction('sandbox-app', 'retention.run.succeeded', definition, tenantId, 'token');
+
+      expect(store.saveAction).toHaveBeenCalled();
+    });
+
+    it('rejects a name already in the namespace catalog, ignoring case', async () => {
+      await expect(
+        adding.addAction('sandbox-app', 'Sample-Action', definition, tenantId, 'token'),
+      ).rejects.toMatchObject({ extra: { statusCode: HttpStatusCodes.CONFLICT } });
+    });
+
+    it('rejects changes to a Core namespace', async () => {
+      await expect(
+        adding.addAction('audit-service', 'new-action', definition, tenantId, 'token'),
+      ).rejects.toMatchObject({
+        extra: { statusCode: HttpStatusCodes.CONFLICT },
+      });
+    });
+
+    it('reports a failed check as unavailable and writes nothing', async () => {
+      store.readActionNames.mockRejectedValue(new Error('boom'));
+
+      await expect(adding.addAction('sandbox-app', 'my-action', definition, tenantId, 'token')).rejects.toBeInstanceOf(
+        CatalogUnavailableError,
+      );
+      expect(store.saveAction).not.toHaveBeenCalled();
+    });
+  });
+
   describe('listCatalogs', () => {
     const source = { listApplications: jest.fn() };
     const listing = new CatalogService(configuration, logger, source);

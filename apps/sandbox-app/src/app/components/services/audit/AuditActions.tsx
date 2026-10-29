@@ -8,7 +8,6 @@ import {
   GoabFormItem,
   GoabInput,
 } from '@abgov/react-components';
-import axios from 'axios';
 import { useState } from 'react';
 import { ActionDefinition, addAction, getActions, SAMPLE_NAMESPACE } from './auditApi';
 import { errorMessage } from './util';
@@ -59,18 +58,7 @@ export function AuditActions() {
       setError(undefined);
       setAdded(undefined);
       const { name, resourceType, description, ...rest } = form;
-      // Refresh from the service so the check covers actions added since the last load; a 404 means no catalog yet.
-      const existing = await getActions(namespace).catch((err) => {
-        if (axios.isAxiosError(err) && err.response?.status === 404) {
-          return [] as ActionDefinition[];
-        }
-        throw err;
-      });
-      // Actions are namespace-scoped and matched case-sensitively, as the audit service does.
-      if (existing.some((action) => action.name === name)) {
-        setError(`Action "${name}" already exists in the ${namespace} catalog.`);
-        return;
-      }
+      // Duplicate checks (this namespace and Core namespaces) are enforced by the audit service.
       await addAction(name, {
         version: 1,
         ...rest,

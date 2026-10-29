@@ -341,6 +341,22 @@ service finds the catalogs by listing the `audit-service` configuration namespac
 account, so a caller does not need configuration-service access. Status codes and tenant selection
 follow the single-application listing; `503` is also returned when the catalog listing fails.
 
+### Adding an action
+
+```http
+POST /audit/v1/{namespace}/actions
+Authorization: Bearer <token with audit-admin>
+Content-Type: application/json
+
+{ "name": "case.update", "version": 1, "category": "runtime", "severity": "info", "retentionClass": "standard" }
+```
+
+Adds the action to the caller's tenant catalog (`actions-<namespace>`, created if missing). The caller's token is
+forwarded to the configuration service, so configuration write permission is required as well. The name is compared
+in full and case-insensitively with the namespace's own catalog and every Core catalog, read directly from the
+configuration service rather than the cache. `409` is returned when the name already exists in either, or when the
+namespace is itself a Core namespace; `503` when the check cannot be made, in which case nothing is written.
+
 ### Reading configured retention
 
 ```http

@@ -143,12 +143,10 @@ export interface NewAction {
   forwardToSiem?: boolean;
 }
 
-// Adds (or overwrites) one action in the sample namespace's catalog. Requires the configuration-admin role.
+// Adds one action to the sample namespace's catalog. The audit service rejects names that already exist in the
+// namespace or in a Core namespace (409). Requires audit-admin and the configuration-admin role.
 export const addAction = (name: string, action: NewAction) =>
-  patchCatalog({
-    operation: 'UPDATE',
-    update: { kind: 'actionCatalog', application: SAMPLE_NAMESPACE, actions: { [name]: action } },
-  });
+  request<unknown>('post', `/${encodeURIComponent(SAMPLE_NAMESPACE)}/actions`, { data: { name, ...action } });
 
 async function patchCatalog(body: unknown) {
   const configurationUrl = getServiceUrl(CONFIGURATION_SERVICE_URN);
