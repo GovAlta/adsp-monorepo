@@ -29,7 +29,7 @@ import {
 } from './audit';
 import { AuditWriteBuffer } from './audit/buffer';
 import { REPLAY_ACTION, REPLAY_DEFINITION } from './audit/actions';
-import { SELF_AUDIT_DEFINITIONS } from './audit/model';
+import { ConfigurationCatalogSource, SELF_AUDIT_DEFINITIONS } from './audit/model';
 import { SelfAuditor } from './audit/utils/self-audit';
 import { createDatabase, PostgresEventRepository, PostgresFailedEventRepository } from './postgres';
 import { assertRateLimit, createConfigurationSchema } from './audit/configuration';
@@ -72,6 +72,8 @@ export const initializeApp = async (): Promise<AuditApplication> => {
     tenantStrategy,
     tenantHandler,
     configurationService,
+    directory,
+    tokenProvider,
     healthCheck,
     traceHandler,
     metricsHandler,
@@ -142,7 +144,11 @@ export const initializeApp = async (): Promise<AuditApplication> => {
   const auditMetrics = createAuditMetrics(meter, failedEventRepository, logger);
   const repository = new PostgresEventRepository(knex, logger);
   const buffer = new AuditWriteBuffer(repository, logger, {}, meter, auditMetrics);
-  const catalogs = new CatalogService(configurationService, logger);
+  const catalogs = new CatalogService(
+    configurationService,
+    logger,
+    new ConfigurationCatalogSource(directory, tokenProvider),
+  );
   const retention = new RetentionService(configurationService, logger, retentionBounds);
   let stopping = false;
 

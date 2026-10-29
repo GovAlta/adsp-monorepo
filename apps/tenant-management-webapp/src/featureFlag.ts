@@ -13,6 +13,12 @@ const completeServiceVariables = [
     beta: true,
   },
   {
+    name: 'Audit',
+    link: 'services/audit',
+    description: 'The audit service records who did what, with configurable action catalogs and retention.',
+    beta: true,
+  },
+  {
     name: 'Cache',
     link: 'services/cache',
     description:
@@ -156,6 +162,7 @@ export const defaultFeaturesVisible = {
   Value: true,
   Cache: true,
   Agent: false,
+  Audit: false,
   'Project Planner': false,
 };
 

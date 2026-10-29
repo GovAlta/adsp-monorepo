@@ -8,6 +8,7 @@ import {
   GoabFormItem,
   GoabInput,
 } from '@abgov/react-components';
+import axios from 'axios';
 import { useState } from 'react';
 import { ActionDefinition, addAction, getActions, SAMPLE_NAMESPACE } from './auditApi';
 import { errorMessage } from './util';
@@ -58,6 +59,18 @@ export function AuditActions() {
       setError(undefined);
       setAdded(undefined);
       const { name, resourceType, description, ...rest } = form;
+      // Refresh from the service so the check covers actions added since the last load; a 404 means no catalog yet.
+      const existing = await getActions(namespace).catch((err) => {
+        if (axios.isAxiosError(err) && err.response?.status === 404) {
+          return [] as ActionDefinition[];
+        }
+        throw err;
+      });
+      // Actions are namespace-scoped and matched case-sensitively, as the audit service does.
+      if (existing.some((action) => action.name === name)) {
+        setError(`Action "${name}" already exists in the ${namespace} catalog.`);
+        return;
+      }
       await addAction(name, {
         version: 1,
         ...rest,
@@ -74,7 +87,12 @@ export function AuditActions() {
 
   const select = (key: 'category' | 'severity' | 'retentionClass', values: string[], label: string) => (
     <GoabFormItem label={label}>
-      <GoabDropdown name={key} value={form[key]} width="100%" onChange={(e) => setForm({ ...form, [key]: e.value as string })}>
+      <GoabDropdown
+        name={key}
+        value={form[key]}
+        width="100%"
+        onChange={(e) => setForm({ ...form, [key]: e.value as string })}
+      >
         {values.map((value) => (
           <GoabDropdownItem key={value} value={value} label={value} />
         ))}

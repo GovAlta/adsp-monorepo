@@ -97,6 +97,33 @@ describe('write-time retention', () => {
     });
   });
 
+  it('returns only configured periods for the tenant and each application with overrides', async () => {
+    configuration.getServiceConfiguration.mockImplementation(async (name: string) => {
+      if (name === 'retention') {
+        return { kind: 'retentionSettings', classes: { standard: { days: 120 } } };
+      }
+      return name === 'retention-case-service'
+        ? { kind: 'applicationRetentionSettings', application: 'case-service', classes: { security: { days: 400 } } }
+        : null;
+    });
+
+    expect(await retention.getConfigured(tenantId, ['case-service', 'form-service'])).toEqual({
+      tenant: { standard: { days: 120 } },
+      applications: { 'case-service': { security: { days: 400 } } },
+    });
+  });
+
+  it('refuses out-of-range configured periods when listing configured retention', async () => {
+    configuration.getServiceConfiguration.mockResolvedValueOnce({
+      kind: 'retentionSettings',
+      classes: { standard: { days: 0 } },
+    });
+
+    await expect(retention.getConfigured(tenantId, [])).rejects.toMatchObject({
+      extra: { statusCode: HttpStatusCodes.SERVICE_UNAVAILABLE },
+    });
+  });
+
   it.each([
     ['standard', 90],
     ['security', 365],

@@ -1,0 +1,149 @@
+import { expectSaga } from 'redux-saga-test-plan';
+import axios from 'axios';
+import { getAccessToken } from '../tenant/sagas';
+import { downloadFile } from './export';
+import {
+  exportAuditEvents,
+  fetchAuditConfiguration,
+  fetchAuditEvents,
+  toCatalogs,
+} from './sagas';
+import {
+  FETCH_AUDIT_CONFIGURATION_SUCCESS_ACTION,
+  FETCH_AUDIT_EVENTS_SUCCESS_ACTION,
+  exportAuditEvents as exportAuditEventsAction,
+  fetchAuditEvents as fetchAuditEventsAction,
+} from './actions';
+
+const baseUrl = 'http://mock-config-service.com';
+
+describe('audit sagas', () => {
+  it('maps the catalog listing, sorted, with the core flag', () => {
+    const catalogs = toCatalogs([
+      { application: 'form-app', core: false, actions: [{ name: 'submit' }, { name: 'create' }] as never },
+      { application: 'audit-service', core: true, actions: [] },
+    ]);
+
+    expect(catalogs.map((c) => [c.application, c.isCore])).toEqual([
+      ['audit-service', true],
+      ['form-app', false],
+    ]);
+    expect(catalogs[1].actions.map((a) => a.name)).toEqual(['create', 'submit']);
+  });
+
+  it('loads one page of audit events from the namespace route using the page size and cursor', async () => {
+    const calls = [];
+    const { effects } = await expectSaga(
+      fetchAuditEvents,
+      fetchAuditEventsAction({ namespace: 'form-app', status: 'failure' }, 'cursor', 25),
+    )
+      .withState({ config: { serviceUrls: { auditServiceApiUrl: baseUrl } } })
+      .provide({
+        call(effect, next) {
+          if (effect.fn === getAccessToken) {
+            return 'token';
+          }
+          if (effect.fn === axios.get) {
+            calls.push(effect.args[0]);
+            return { data: { results: [{ id: '1' }], page: { next: 'n2' } } };
+          }
+          return next();
+        },
+      })
+      .run();
+
+    expect(calls).toEqual([`${baseUrl}/audit/v1/form-app/events?top=25&status=failure&after=cursor`]);
+    const success = effects.put.map((e) => e.payload.action).find((a) => a.type === FETCH_AUDIT_EVENTS_SUCCESS_ACTION);
+    expect(success).toMatchObject({ next: 'n2', append: false });
+  });
+
+  it('exports every page of matching events as a CSV download', async () => {
+    const urls = [];
+    const downloads = [];
+    const pages = [
+      { data: { results: [{ id: '1', action: 'a' }], page: { next: 'n2' } } },
+      { data: { results: [{ id: '2', action: 'b' }], page: {} } },
+    ];
+    const { effects } = await expectSaga(exportAuditEvents, exportAuditEventsAction({ status: 'failure' }))
+      .withState({ config: { serviceUrls: { auditServiceApiUrl: baseUrl } } })
+      .provide({
+        call(effect, next) {
+          if (effect.fn === getAccessToken) {
+            return 'token';
+          }
+          if (effect.fn === axios.get) {
+            urls.push(effect.args[0]);
+            return pages.shift();
+          }
+          if (effect.fn === downloadFile) {
+            downloads.push(effect.args);
+            return undefined;
+          }
+          return next();
+        },
+      })
+      .run();
+
+    expect(urls).toEqual([
+      `${baseUrl}/audit/v1/events?top=5000&status=failure`,
+      `${baseUrl}/audit/v1/events?top=5000&status=failure&after=n2`,
+    ]);
+    expect(downloads).toHaveLength(1);
+    expect(downloads[0][1].split('\r\n')).toHaveLength(3);
+    expect(downloads[0][2]).toBe('text/csv');
+    expect(effects.put.map((e) => e.payload.action.type)).toEqual([
+      'notifications/success',
+      'audit/EXPORT_AUDIT_EVENTS_DONE_ACTION',
+    ]);
+  });
+
+  it('reports a failed export and still finishes', async () => {
+    const { effects } = await expectSaga(exportAuditEvents, exportAuditEventsAction({}))
+      .withState({ config: { serviceUrls: { auditServiceApiUrl: baseUrl } } })
+      .provide({
+        call(effect, next) {
+          if (effect.fn === getAccessToken) {
+            return 'token';
+          }
+          if (effect.fn === axios.get) {
+            throw new Error('boom');
+          }
+          return next();
+        },
+      })
+      .run();
+
+    expect(effects.put.map((e) => e.payload.action.type)).toEqual([
+      'notifications/error',
+      'audit/EXPORT_AUDIT_EVENTS_DONE_ACTION',
+    ]);
+  });
+
+  it('loads catalogs and retention from the audit service', async () => {
+    const urls = [];
+    const { effects } = await expectSaga(fetchAuditConfiguration)
+      .withState({ config: { serviceUrls: { auditServiceApiUrl: 'http://mock-audit.com' } } })
+      .provide({
+        call(effect, next) {
+          if (effect.fn === getAccessToken) {
+            return 'token';
+          }
+          if (effect.fn === axios.get) {
+            urls.push(effect.args[0]);
+            return effect.args[0].endsWith('/retention')
+              ? { data: { tenant: { standard: { days: 30 } }, applications: {} } }
+              : { data: [{ application: 'form-app', core: true, actions: [{ name: 'submit' }] }] };
+          }
+          return next();
+        },
+      })
+      .run();
+
+    expect(urls).toEqual(['http://mock-audit.com/audit/v1/actions', 'http://mock-audit.com/audit/v1/retention']);
+    const success = effects.put
+      .map((e) => e.payload.action)
+      .find((a) => a.type === FETCH_AUDIT_CONFIGURATION_SUCCESS_ACTION);
+    expect(success.catalogs).toMatchObject([{ application: 'form-app', isCore: true }]);
+    expect(success.retention.tenant).toEqual({ standard: { days: 30 } });
+  });
+});

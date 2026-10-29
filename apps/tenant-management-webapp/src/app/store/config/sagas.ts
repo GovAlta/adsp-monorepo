@@ -74,6 +74,7 @@ export function* fetchConfig(): SagaIterator {
           exportServiceUrl: entryMapping['export-service'],
           formAppApiUrl: entryMapping['form-service'],
           agentServiceApiUrl: getAgentServiceUrl(entryMapping),
+          auditServiceApiUrl: entryMapping['audit-service'],
           projectPlannerServiceApiUrl: getProjectPlannerServiceUrl(data, entryMapping),
           tokenHandlerApiUrl: entryMapping['token-handler'],
         },

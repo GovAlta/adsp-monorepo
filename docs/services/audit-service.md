@@ -327,6 +327,37 @@ A Core caller with the role can select a tenant via
 reads Core catalogs only. The service registers this role for tenant provisioning; existing tenants
 still need their normal role provisioning/assignment process.
 
+### Listing every catalog
+
+```http
+GET /audit/v1/actions
+Authorization: ****** with audit-reader>
+```
+
+Returns `[{ "application", "core", "actions": [...] }]`, one entry per registered `actions-<application>`
+catalog, sorted by application. Each entry is the same effective (tenant plus Core) catalog that
+`GET /audit/v1/{namespace}/actions` returns; `core` is true when the catalog is shared from Core. The
+service finds the catalogs by listing the `audit-service` configuration namespace with its own service
+account, so a caller does not need configuration-service access. Status codes and tenant selection
+follow the single-application listing; `503` is also returned when the catalog listing fails.
+
+### Reading configured retention
+
+```http
+GET /audit/v1/retention
+Authorization: ****** with audit-reader>
+```
+
+Returns `{ "tenant": { "<class>": { "days": n } }, "applications": { "<application>": { "<class>": { "days": n } } } }`,
+the retention periods that are **configured** for the resolved tenant. It does not include the built-in
+defaults (standard 90, security 365, compliance 365 days), so a class absent from the response uses its
+default. `tenant` holds `audit-service:retention`; `applications` holds `audit-service:retention-<application>`
+for each application with a catalog, omitting applications with no overrides. Periods are resolved the way
+writes resolve them (active configuration revision, with Core settings merged) and are checked against
+`RETENTION_MIN_DAYS` and `RETENTION_MAX_DAYS`, so the response matches what is enforced. Without a tenant
+context the response is empty. `403` is returned without `audit-reader`, and `503` when the settings cannot
+be resolved or fall outside the bounds.
+
 The catalog governs future write classification, not history access. Removing a definition performs
 no audit-record deletion. History endpoints query PostgreSQL independently of the catalog, so
 removing an action does not prevent reading its existing records.
@@ -458,6 +489,18 @@ Database read failures return 503 rather than an empty result or a false 404.
 
 See the [submission contract](https://github.com/GovAlta/adsp-monorepo/blob/main/apps/audit-service/README.md#submission-contract-osp-707--osp-708)
 for the boundary with OSP-708.
+
+## Examples and administration UI
+
+- **Sandbox** (`apps/sandbox-app`, Audit page): tabs to browse events, view the action catalog,
+  write an event, and list failed events against a live tenant.
+- **Tenant management webapp** (Admin > Services > Audit, `audit` feature flag): Overview, Logs,
+  Catalogs and Retention tabs. Catalogs and retention both come from the audit service (`/audit/v1/actions`
+  and `/audit/v1/retention`), so they show the active configuration as enforced. Logs filters by namespace, action, actor, resource, scope,
+  status, category, severity, correlation and session IDs, and time range, shows formatted event details, and exports the
+  current search to CSV. Export is client-side: it pages through the read API and is capped at
+  the 10,000 most recent matching events. Actor name and email are included only for `audit-admin`
+  users (design §1.5). Each page is itself a recorded read.
 
 ## Write buffer
 
