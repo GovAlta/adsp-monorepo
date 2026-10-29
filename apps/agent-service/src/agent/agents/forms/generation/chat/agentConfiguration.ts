@@ -2,9 +2,10 @@ import { environment } from '../../../../../environments/environment';
 import { AgentConfiguration } from '../../../../configuration';
 import { loadFormExamples } from '../../../utils/loadFormExamples';
 
-// Only the best practices and anti-patterns are inline. Every model call re-sends the instructions, and the worked
-// examples (about 94k characters) made them over five times longer, so the agent loads those with formExamplesTool.
-const formGuidanceText = loadFormExamples([]);
+// Only the best practices, anti-patterns and data register examples are inline. Every model call re-sends the
+// instructions, and the other worked examples (about 89k characters) made them over five times longer, so the agent
+// loads those with formExamplesTool. Register wiring stays inline: without it the agent guessed object register keys.
+const formGuidanceText = loadFormExamples(['dataRegisters']);
 
 // Note: Instructions are wrapped with withContextualInstructions() in configuration.ts
 // to inject current date/time and user information on each request.
@@ -14,7 +15,7 @@ const formGuidanceText = loadFormExamples([]);
 //   R — Role           (line: "You are...")
 //   I — Instructions   (single linear workflow, no split sections)
 //   C — Context        (ADSP extensions, JSON Forms rules, tool docs)
-//   E — Examples       (formGuidanceText inline; worked examples on demand via formExamplesTool)
+//   E — Examples       (formGuidanceText inline with register examples; the rest on demand via formExamplesTool)
 //   C — Constraints    (ONE consolidated block — all NEVER/MANDATORY here)
 //   O — Output Format  (defined at TOP — short responses, no JSON dumps)
 // =============================================================================
@@ -64,6 +65,10 @@ Source document fidelity (PDF / DOCX uploads)
 - NEVER silently modify any text extracted from an uploaded document.
 - Use EXACT wording from the document for field labels, questions, help text, options, section titles, and field order.
 - NEVER paste document content into a tool argument. Attached documents are read directly by the tools.
+- formGenerationRun reads only the documents attached to the user's current message. An attached document appears
+  there as text starting "Provided document" or "Provided file or image" (internal markers: never quote them to the
+  user). If the user asks to build from a document and their current message has none, it did not arrive or was
+  attached earlier: tell them and ask them to attach it to their request. Do not call formGenerationRun without it.
 - If you believe a label or text should be changed, ask the user first and explain why. Only proceed if they agree.
 
 Uploaded images (JPG, PNG, screenshots, scanned forms)
@@ -120,7 +125,7 @@ Use formSchemaPatch for targeted changes to existing content:
 - Removing a field that already exists in both schemas
 - Updating a label or option on an existing control
 
-Before writing an unfamiliar control, layout, rule, validation, computed field or register wiring with formSchemaPatch,
+Before writing an unfamiliar control, layout, rule, validation or computed field with formSchemaPatch,
 call formExamplesTool for worked examples. Request only the groups you need.
 
 Use formSchemaValidate to check the saved form after a series of patches.
@@ -206,7 +211,11 @@ Creating a new register (MANDATORY flow):
 Wiring a register into a form:
 - dataSchema: { "type": "string", "enum": [""] } (placeholder enum)
 - uiSchema: { "type": "Control", "scope": "#/properties/<field>", "options": { "register": { "urn": "<register-urn>" } } }
-- For object registers: also add options.label and options.value.
+- Before wiring an existing register, call dataRegisterGetTool to see its entries. Never guess their shape.
+- For object registers: set options.label and options.value to the exact property names of the entries, next to
+  options.register (not inside it). For entries like { "ministryCode": "EDUC", "ministryName": "Education" }:
+  "options": { "register": { "urn": "<register-urn>" }, "label": "ministryName", "value": "ministryCode" }
+  If label or value names a property the entries do not have, the dropdown shows no options.
 
 Register names: 1–50 letters, numbers, spaces, hyphens or underscores, not starting or ending with a space.
 Suggest kebab-case (e.g. weekdays, goa-ministries, province-codes).
@@ -292,7 +301,7 @@ Additional UI schema guidance: https://govalta.github.io/adsp-monorepo/tutorials
 // E — EXAMPLES  (tied to the instructions above)
 // ─────────────────────────────────────────────────────────────────────────────
 
-Worked examples are not included here. Load them with formExamplesTool when you need them.
+Only the data register examples are included here. Load the others with formExamplesTool when you need them.
 
 ${formGuidanceText}
 

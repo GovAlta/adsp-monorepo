@@ -12,12 +12,35 @@ describe('formGenerationAgent', () => {
     expect(formGenerationAgent.instructions).toContain('Layout Selection');
   });
 
-  it('leaves the worked examples out of the instructions', () => {
+  it('leaves the worked examples other than data registers out of the instructions', () => {
     const instructions = formGenerationAgent.instructions;
-    expect(instructions).not.toContain('Inline Help');
-    expect(instructions).not.toContain('### When to use');
+    expect(instructions).not.toContain('# UI Control Examples');
+    expect(instructions).not.toContain('# Computed Field Examples');
+    expect(instructions).not.toContain('# Rule Examples');
     // Every model call re-sends the instructions; with the worked examples inline they were over 130k characters.
     expect(instructions.length).toBeLessThan(60000);
+  });
+
+  it('keeps the data register examples in the instructions', () => {
+    const instructions = formGenerationAgent.instructions;
+    expect(instructions).toContain('# Data Register Examples');
+    expect(instructions).toContain('Data Register — Object Array with Label/Value Mapping');
+    expect(instructions).toContain('Data Register — Weekdays (String Array)');
+  });
+
+  it('instructs to read a register before wiring it and to map object entries by their exact keys', () => {
+    const instructions = formGenerationAgent.instructions;
+    expect(instructions).toContain(
+      'Before wiring an existing register, call dataRegisterGetTool to see its entries. Never guess their shape.',
+    );
+    expect(instructions).toContain('next to\n  options.register (not inside it)');
+    expect(instructions).toContain('"label": "ministryName", "value": "ministryCode"');
+  });
+
+  it('instructs to ask for the document again when the build request has none attached', () => {
+    const instructions = formGenerationAgent.instructions;
+    expect(instructions).toContain('formGenerationRun reads only the documents attached to the user\'s current message.');
+    expect(instructions).toContain('Do not call formGenerationRun without it.');
   });
 
   it('instructs to load worked examples on demand with formExamplesTool', () => {
