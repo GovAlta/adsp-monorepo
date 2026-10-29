@@ -12,6 +12,7 @@ export interface SelfAuditRecord {
   endpoint: string;
   filters?: Record<string, unknown>;
   resultCount: number;
+  status?: 'success' | 'failure';
 }
 
 interface SelfAuditorOptions {
@@ -42,7 +43,7 @@ export class SelfAuditor {
     return this.failures;
   }
 
-  async record(req: Request, { action, endpoint, filters, resultCount }: SelfAuditRecord): Promise<void> {
+  async record(req: Request, { action, endpoint, filters, resultCount, status = 'success' }: SelfAuditRecord): Promise<void> {
     const { serviceId, catalogs, retention, submitter, logger } = this.options;
     const tenantId = req.tenant?.id;
     try {
@@ -62,7 +63,7 @@ export class SelfAuditor {
         eventId: randomUUID(),
         occurredAt: now.toISOString(),
         action,
-        status: 'success' as const,
+        status,
         actor: {
           id: user.id,
           type: user.name?.startsWith(SERVICE_ACCOUNT_PREFIX) ? ('service' as const) : ('user' as const),

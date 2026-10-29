@@ -499,7 +499,9 @@ namespace's catalog may not be visible to the tenant (for example core services)
 (`text/csv`, sent as an attachment). They require `audit-reader` and accept the same filters as the lists;
 `top` and `after` are ignored. Events are read in keyset pages of 1,000 and written as they are read, so the
 export is not capped, is not held in memory, and stops if the client disconnects. A failure after the first
-page breaks the connection, so a truncated file is not mistaken for a complete one.
+page breaks the connection, so a truncated file is not mistaken for a complete one, and the export is recorded
+with a `failure` status and the number of events written so far. The `id` column is the stored event ID that the UI
+and the event endpoint use; `eventId` is the ID the submitting service supplied.
 
 The `actorName` and `actorEmail` columns are included only when the caller also holds `audit-admin`; for other
 callers the columns are omitted. This is decided on the server from the caller's token (design §1.5). Values that

@@ -3,7 +3,8 @@ import type { serializeEvent } from '../router/read-events';
 type SerializedEvent = ReturnType<typeof serializeEvent>;
 
 const COLUMNS: [string, (event: SerializedEvent) => unknown, personal?: true][] = [
-  ['id', (e) => e.eventId],
+  ['id', (e) => e.id],
+  ['eventId', (e) => e.eventId],
   ['occurredAt', (e) => e.occurredAt],
   ['namespace', (e) => e.namespace],
   ['action', (e) => e.action],

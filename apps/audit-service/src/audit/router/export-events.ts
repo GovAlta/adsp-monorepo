@@ -14,10 +14,11 @@ export function exportEvents(reader?: EventReader, auditor?: SelfAuditor): Reque
   return async (req, res, next) => {
     let total = 0;
     let started = false;
+    let criteria: ReturnType<typeof toCriteria>;
     try {
       const tenantId = assertCanReadEvents(req);
       const eventReader = assertReader(reader);
-      const criteria = toCriteria(req, tenantId);
+      criteria = toCriteria(req, tenantId);
       // Redaction is decided here, on the server, from the caller's own roles.
       const includePersonalInfo = isAllowedUser(req.user, req.tenant.id, AuditServiceRoles.Admin, true);
       const format = createEventCsvFormat(includePersonalInfo);
@@ -67,6 +68,14 @@ export function exportEvents(reader?: EventReader, auditor?: SelfAuditor): Reque
       });
     } catch (err) {
       if (started) {
+        // Rows may already have been sent, so the failed export is recorded with the number written so far.
+        await auditor?.record(req, {
+          action: SelfAuditActions.ExportEvents,
+          endpoint: getEndpoint(req),
+          filters: toFilters(criteria),
+          resultCount: total,
+          status: 'failure',
+        });
         // Headers are sent, so the only way to signal a truncated export is to break the connection.
         res.destroy(err as Error);
       } else {

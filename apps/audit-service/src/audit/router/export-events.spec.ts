@@ -149,6 +149,31 @@ describe('export events', () => {
     const res = await request(createApp()).get('/audit/v1/events/export');
     expect(res.status).toBe(500);
     expect(res.headers['content-type']).not.toContain('text/csv');
+    expect(auditor.record).not.toHaveBeenCalled();
+  });
+
+  it('records a failed export when a later page fails', async () => {
+    const firstPage = Array.from({ length: 1000 }, (_, i) => makeEvent(i));
+    reader.find.mockResolvedValueOnce(firstPage).mockRejectedValueOnce(new Error('db down'));
+
+    await request(createApp())
+      .get('/audit/v1/events/export')
+      .then(
+        () => undefined,
+        () => undefined,
+      );
+
+    expect(auditor.record).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ action: SelfAuditActions.ExportEvents, resultCount: 1000, status: 'failure' }),
+    );
+  });
+
+  it('exports the stored event id as id and the client event id as eventId', async () => {
+    const res = await request(createApp()).get('/audit/v1/events/export');
+    const [header, row] = res.text.trim().split('\r\n');
+    expect(header.startsWith('id,eventId,occurredAt')).toBe(true);
+    expect(row.startsWith('00000000-0000-4000-8000-000000000001,10000000-0000-4000-8000-000000000001,')).toBe(true);
   });
 
   it('requires audit-reader', async () => {
