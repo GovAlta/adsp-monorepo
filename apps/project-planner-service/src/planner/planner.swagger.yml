@@ -128,7 +128,7 @@ paths:
   /planner/v1/solutions/{id}/discovery:
     post:
       tags: [Solution]
-      summary: Advances the discovery conversation; presents the solution once confidence reaches 50% (or force is set).
+      summary: Advances the discovery conversation; presents the solution once confidence reaches 75% and every factor is at least 40% (or force is set).
       parameters:
         - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
       requestBody:
@@ -156,7 +156,8 @@ paths:
               type: object
               properties:
                 mode: { type: string, enum: [ai, rules] }
-                refreshConsultations: { type: boolean, description: Run fresh specialist consultations instead of reusing saved ones. }
+                refreshConsultations:
+                  { type: boolean, description: Run fresh specialist consultations instead of reusing saved ones. }
       responses:
         200: { description: The solution with state.blueprint populated. }
         400: { description: The solution has no analysis yet. }
@@ -166,7 +167,13 @@ paths:
       summary: Records the user's review of a blueprint component. Rejected components are left out of the export.
       parameters:
         - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
-        - { name: order, in: path, required: true, schema: { type: integer, minimum: 1 }, description: The component's order in the blueprint. }
+        - {
+            name: order,
+            in: path,
+            required: true,
+            schema: { type: integer, minimum: 1 },
+            description: The component's order in the blueprint.,
+          }
       requestBody:
         required: true
         content:

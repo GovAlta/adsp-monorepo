@@ -6,8 +6,10 @@ import {
   capFactors,
   computeConfidence,
   dedupeOpenQuestions,
+  DISCOVERY_FACTOR_FLOOR,
   DISCOVERY_FACTORS,
   DISCOVERY_THRESHOLD,
+  isDiscoveryReady,
   isQuestionCovered,
   normalizeFactors,
   ruleAssess,
@@ -39,8 +41,34 @@ describe('DISCOVERY_FACTORS', () => {
     expect(DISCOVERY_FACTORS).toHaveLength(6);
   });
 
-  it('uses a threshold of 50 percent', () => {
-    expect(DISCOVERY_THRESHOLD).toBe(50);
+  it('uses a threshold of 75 percent', () => {
+    expect(DISCOVERY_THRESHOLD).toBe(75);
+  });
+});
+
+describe('isDiscoveryReady', () => {
+  it('is not ready when the average is below the threshold, even with no weak factors', () => {
+    const factors = [factor('problem', 70), factor('users', 70)];
+
+    expect(isDiscoveryReady(factors, 70)).toBe(false);
+  });
+
+  it('is not ready when the average clears the threshold but a factor is below the floor', () => {
+    const factors = [factor('problem', 100), factor('users', 100), factor('constraints', 0)];
+
+    expect(isDiscoveryReady(factors, computeConfidence(factors))).toBe(false);
+  });
+
+  it('is ready when the average clears the threshold and every factor is at least the floor', () => {
+    const factors = [factor('problem', 90), factor('users', 80), factor('constraints', DISCOVERY_FACTOR_FLOOR)];
+
+    expect(isDiscoveryReady(factors, computeConfidence(factors))).toBe(true);
+  });
+
+  it('is ready when forced, regardless of average or weak factors', () => {
+    const factors = [factor('constraints', 0)];
+
+    expect(isDiscoveryReady(factors, 0, true)).toBe(true);
   });
 });
 
@@ -350,7 +378,7 @@ describe('ruleDiscoveryReply', () => {
   it('states the current and required confidence when not ready', () => {
     const reply = ruleDiscoveryReply([factor('users', 10)], 20, false);
 
-    expect(reply).toContain("I'm 20% confident so far (I need 50% to propose a solution)");
+    expect(reply).toContain("I'm 20% confident so far (I need 75% to propose a solution)");
   });
 
   it('asks the question for the weakest factor first', () => {
@@ -360,7 +388,7 @@ describe('ruleDiscoveryReply', () => {
   });
 
   it('omits questions for factors at or above the threshold', () => {
-    const reply = ruleDiscoveryReply([factor('problem', 50), factor('users', 5)], 28, false);
+    const reply = ruleDiscoveryReply([factor('problem', 80), factor('users', 5)], 28, false);
 
     expect(reply).not.toContain(DISCOVERY_FACTORS.find((f) => f.id === 'problem')?.question);
   });
@@ -374,7 +402,9 @@ describe('ruleDiscoveryReply', () => {
   });
 
   it('asks for the data classification level', () => {
-    expect(ruleDiscoveryReply([factor('constraints', 0)], 0, false)).toContain('Public, Protected A, Protected B or Protected C');
+    expect(ruleDiscoveryReply([factor('constraints', 0)], 0, false)).toContain(
+      'Public, Protected A, Protected B or Protected C',
+    );
   });
 
   it('skips factors that are not discovery factors', () => {

@@ -168,6 +168,38 @@ describe('DiscoveryPanel', () => {
     expect(container.querySelectorAll('[testid="discovery-conversation"]')).toHaveLength(1);
   });
 
+  it('keeps the initial "enough detail" greeting visible as history once a real reply arrives', async () => {
+    const confident = solution();
+    confident.state.confidence = { score: 60, threshold: 50, factors: [] };
+    const replied = {
+      ...confident,
+      state: {
+        ...confident.state,
+        discovery: discovery({
+          confidence: 73,
+          messages: [
+            { role: 'user', content: 'The data is Protected B.', at: '2026-03-01T10:01:00.000Z' },
+            { role: 'assistant', content: 'Thanks, noted.', at: '2026-03-01T10:02:00.000Z' },
+          ],
+        }),
+      },
+    };
+    const api = createMockApi({ chat: jest.fn().mockResolvedValue(replied) });
+    const { container, rerender } = render(
+      <DiscoveryPanel solution={confident} api={api} mode="ai" onSolutionChange={jest.fn()} />,
+    );
+    await waitFor(() => expect(api.listChats).toHaveBeenCalled());
+    expect(container.querySelector('[testid="discovery-conversation"]')?.textContent).toContain(
+      'Your problem statement already gives me enough detail (confidence 60%)',
+    );
+
+    rerender(<DiscoveryPanel solution={replied} api={api} mode="ai" onSolutionChange={jest.fn()} />);
+
+    const conversation = container.querySelector('[testid="discovery-conversation"]');
+    expect(conversation?.textContent).toContain('Your problem statement already gives me enough detail');
+    expect(conversation?.textContent).toContain('Thanks, noted.');
+  });
+
   it('keeps discovery actions and the reply box when no questions were needed', async () => {
     const api = createMockApi();
     const { container } = render(
@@ -316,6 +348,37 @@ describe('DiscoveryPanel', () => {
     );
     expect(container.querySelector('[testid="specialist-service-file-service"]')?.textContent).toBe('File *');
     expect(container.querySelector('[testid="optional-experts-count"]')?.getAttribute('content')).toBe('2 specialists');
+  });
+
+  it('shows a consulting-in-progress message while a blueprint call may auto-consult specialists', () => {
+    const api = createMockApi();
+    const { container } = render(
+      <DiscoveryPanel
+        solution={solution(discovery())}
+        api={api}
+        mode="ai"
+        onSolutionChange={jest.fn()}
+        specialists={[
+          { service: 'form-service', displayName: 'Form service', purpose: 'Forms', order: 1 } as SpecialistDefinition,
+        ]}
+        consultingSpecialists
+      />,
+    );
+
+    expect(container.querySelector('[testid="specialist-auto-consult-progress"]')).toBeTruthy();
+    expect(container.querySelector('[testid="optional-experts-consulting"]')?.getAttribute('content')).toBe(
+      'Consulting specialists…',
+    );
+  });
+
+  it('does not show a consulting message when no blueprint call is in flight', () => {
+    const api = createMockApi();
+    const { container } = render(
+      <DiscoveryPanel solution={solution(discovery())} api={api} mode="ai" onSolutionChange={jest.fn()} />,
+    );
+
+    expect(container.querySelector('[testid="specialist-auto-consult-progress"]')).toBeFalsy();
+    expect(container.querySelector('[testid="optional-experts-consulting"]')).toBeFalsy();
   });
 
   it('restarts discovery', async () => {

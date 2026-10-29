@@ -11,9 +11,9 @@ import type { GoabFileUploadInputOnSelectFileDetail } from '@abgov/ui-components
 import styled from 'styled-components';
 import { usePlannerApi } from './api';
 
-const UPLOAD_ACCEPT = '.md,.markdown,.docx,.pdf';
+const UPLOAD_ACCEPT = '.md,.markdown,.doc,.docx,.pdf';
 const UPLOAD_MAX_FILE_SIZE = '20MB';
-const UPLOAD_HINT = 'Markdown (.md) is recommended. Word (.docx) and PDF (.pdf) are also supported.';
+const UPLOAD_HINT = 'Markdown (.md) is recommended. Word (.doc, .docx) and PDF (.pdf) are also supported.';
 
 const UploadRow = styled.div`
   display: flex;

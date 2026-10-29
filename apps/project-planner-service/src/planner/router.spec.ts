@@ -81,7 +81,13 @@ describe('planner router routes', () => {
     save: jest.fn(),
     delete: jest.fn(),
   };
-  const versionRepository = { list: jest.fn(), get: jest.fn(), latest: jest.fn(), create: jest.fn(), rename: jest.fn() };
+  const versionRepository = {
+    list: jest.fn(),
+    get: jest.fn(),
+    latest: jest.fn(),
+    create: jest.fn(),
+    rename: jest.fn(),
+  };
   const eventService = { send: jest.fn() };
   const logger = { info: jest.fn(), debug: jest.fn(), warn: jest.fn(), error: jest.fn() };
   const getConfiguration = jest.fn();
@@ -2333,8 +2339,12 @@ describe('planner router routes', () => {
     describe('POST /solutions/:id/discovery', () => {
       const vagueProblem = 'We handle grants.';
       const detailedProblem =
-        'Our goal is to reduce the backlog of grant applications. Applicants submit a form with documents, ' +
-        'staff review and approve each one, applicants get an email and can track status, and privacy legislation applies.';
+        'Our goal is to reduce the backlog of grant applications and success is measured by faster approvals. ' +
+        'Applicants and staff reviewers have different roles with access permissions in the ministry department. ' +
+        'Staff review and approve each submission through a multi-step workflow process with escalation. ' +
+        'Applicants upload documents and we retain records for audit history. ' +
+        'Applicants receive email notifications and can track status on a portal dashboard. ' +
+        'The data is Protected B under FOIP privacy legislation and integrates with our existing legacy case management system.';
       const lowFactors = [
         { id: 'problem', score: 30, note: 'Goal unclear' },
         { id: 'users', score: 10 },
@@ -2440,7 +2450,10 @@ describe('planner router routes', () => {
 
         const res = await discovery(buildApp(owner, true, llm));
 
-        expect(res.body.state.confidence).toMatchObject({ score: res.body.state.discovery.confidence, threshold: 50 });
+        expect(res.body.state.confidence).toMatchObject({
+          score: res.body.state.discovery.confidence,
+          threshold: DISCOVERY_THRESHOLD,
+        });
       });
 
       it('appends the user message before the assistant reply', async () => {
@@ -2651,7 +2664,7 @@ describe('planner router routes', () => {
 
         const res = await analyze(buildApp(owner, true, llm));
 
-        expect(res.body.state.confidence).toMatchObject({ threshold: 50, factors: expect.any(Array) });
+        expect(res.body.state.confidence).toMatchObject({ threshold: DISCOVERY_THRESHOLD, factors: expect.any(Array) });
       });
     });
 
