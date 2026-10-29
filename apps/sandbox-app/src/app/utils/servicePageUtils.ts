@@ -69,6 +69,12 @@ export const addAdspComponentsPages = (tenantName: string) => {
       url: `${prefix}/adspcalendar`,
       testId: 'adspCalendarExample1',
     },
+    {
+      id: 'adspConversation',
+      name: 'Conversation',
+      url: `${prefix}/conversation`,
+      testId: 'adspConversation',
+    },
   ];
 
   return adspComponentsPages;

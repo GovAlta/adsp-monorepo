@@ -1,4 +1,8 @@
 import type { AdspCalendarTheme } from '../calendar/calendarTheme';
+import type { AdspBadgeTheme } from '../components/badge';
+import type { AdspButtonTheme } from '../components/button';
+import type { AdspConversationTheme } from '../components/conversation';
+import type { AdspCardTheme } from '../components/card';
 
 export interface AdspThemeColor {
   text: { default: string; secondary: string; light: string; disabled: string };
@@ -30,6 +34,10 @@ export type AdspThemeBorderRadius = Record<'none' | 'xs' | 's' | 'm' | 'l' | 'xl
 // Component-level tokens. A new component adds its section here and supplies it in every theme in AdspThemes.
 export interface AdspThemeComponents {
   calendar: AdspCalendarTheme;
+  badge: AdspBadgeTheme;
+  button: AdspButtonTheme;
+  card: AdspCardTheme;
+  conversation: AdspConversationTheme;
 }
 
 // A theme controls presentation, never behaviour. Start from AdspThemes; adjust with createAdspTheme.
