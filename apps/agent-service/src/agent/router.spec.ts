@@ -420,6 +420,44 @@ describe('onIoConnection workspace socket events', () => {
   });
 
   // -------------------------------------------------------------------------
+  // message latency logging
+  // -------------------------------------------------------------------------
+
+  describe('message latency logging', () => {
+    const PRE_STREAM_DELAY_MS = 25;
+
+    it('includes the time before the stream starts in the logged total', async () => {
+      const streamResult = {
+        fullStream: (async function* () {})(),
+        textStream: (async function* () {
+          yield 'hello';
+        })(),
+        object: Promise.resolve(null),
+      };
+      const stream = jest.fn(() => new Promise((resolve) => setTimeout(() => resolve(streamResult), PRE_STREAM_DELAY_MS)));
+      const { eventHandlers } = await connect({ stream });
+
+      await eventHandlers['message']({
+        agent: 'formGenerationAgent',
+        threadId: 'thread-1',
+        messageId: 'user-message-1',
+        content: 'List the data registers',
+      });
+
+      expect(logger.info).toHaveBeenCalledWith(
+        expect.stringMatching(/^Stream complete for agent formGenerationAgent: total=\d+ms, preStream=\d+ms, /),
+        expect.objectContaining({
+          preStreamDurationMs: expect.any(Number),
+          totalDurationMs: expect.any(Number),
+        }),
+      );
+      const [, meta] = logger.info.mock.calls.find(([message]) => String(message).startsWith('Stream complete'));
+      expect(meta.preStreamDurationMs).toBeGreaterThanOrEqual(PRE_STREAM_DELAY_MS - 5);
+      expect(meta.totalDurationMs).toBeGreaterThanOrEqual(meta.preStreamDurationMs + meta.streamLoopDurationMs);
+    });
+  });
+
+  // -------------------------------------------------------------------------
   // workspace-init
   // -------------------------------------------------------------------------
 

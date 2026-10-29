@@ -2,18 +2,9 @@ import { environment } from '../../../../../environments/environment';
 import { AgentConfiguration } from '../../../../configuration';
 import { loadFormExamples } from '../../../utils/loadFormExamples';
 
-// The complex full-form examples belong to bulk generation, which the orchestrator now owns.
-const formExamplesText = loadFormExamples([
-  'controls',
-  'layouts',
-  'commonFields',
-  'content',
-  'repeating',
-  'rules',
-  'validation',
-  'dataRegisters',
-  'computed',
-]);
+// Only the best practices and anti-patterns are inline. Every model call re-sends the instructions, and the worked
+// examples (about 94k characters) made them over five times longer, so the agent loads those with formExamplesTool.
+const formGuidanceText = loadFormExamples([]);
 
 // Note: Instructions are wrapped with withContextualInstructions() in configuration.ts
 // to inject current date/time and user information on each request.
@@ -23,7 +14,7 @@ const formExamplesText = loadFormExamples([
 //   R — Role           (line: "You are...")
 //   I — Instructions   (single linear workflow, no split sections)
 //   C — Context        (ADSP extensions, JSON Forms rules, tool docs)
-//   E — Examples       (formExamplesText — tied to specific instructions)
+//   E — Examples       (formGuidanceText inline; worked examples on demand via formExamplesTool)
 //   C — Constraints    (ONE consolidated block — all NEVER/MANDATORY here)
 //   O — Output Format  (defined at TOP — short responses, no JSON dumps)
 // =============================================================================
@@ -129,6 +120,9 @@ Use formSchemaPatch for targeted changes to existing content:
 - Removing a field that already exists in both schemas
 - Updating a label or option on an existing control
 
+Before writing an unfamiliar control, layout, rule, validation, computed field or register wiring with formSchemaPatch,
+call formExamplesTool for worked examples. Request only the groups you need.
+
 Use formSchemaValidate to check the saved form after a series of patches.
 
 Do not call formConfigurationRetrievalTool or formConfigurationUpdateTool for form construction.
@@ -146,6 +140,8 @@ Do not call formConfigurationRetrievalTool or formConfigurationUpdateTool for fo
                                Use "add" when the target path does not exist yet (new subfield, new property).
                                Use "replace" ONLY when the path already exists — "replace" on a missing path throws an error.
 - rendererCatalogTool:          must include schema. Use for fields with uncertain renderer support (objects, arrays, file-urn).
+- formExamplesTool:             must include groups (1 to 3 of: controls, layouts, commonFields, content, repeating, rules,
+                               validation, dataRegisters, computed, complex).
 - schemaDefinitionTool:         must include url. Use exact definition names — e.g. personFullName (not fullName), postalAddressAlberta (not address).
 - fileDownloadTool:             must include fileId.
 - dataRegisterListTool:         call with {}.
@@ -155,7 +151,7 @@ Do not call formConfigurationRetrievalTool or formConfigurationUpdateTool for fo
 
 ## JSON Forms Rules Reference
 Rules control visibility and editability of UI elements based on field values.
-Effects and condition patterns are demonstrated in the rules examples below.
+For effect and condition patterns, load the rules examples with formExamplesTool.
 
 Key guidance:
 - Choose effect based on DEFAULT state: use SHOW when hidden-by-default, HIDE when visible-by-default. Same logic for ENABLE vs DISABLE.
@@ -296,7 +292,9 @@ Additional UI schema guidance: https://govalta.github.io/adsp-monorepo/tutorials
 // E — EXAMPLES  (tied to the instructions above)
 // ─────────────────────────────────────────────────────────────────────────────
 
-${formExamplesText}
+Worked examples are not included here. Load them with formExamplesTool when you need them.
+
+${formGuidanceText}
 
     **Arrays of objects**: Use ListWithDetail with detail layout:
     Data: \`{ "items": { "type": "array", "items": { "type": "object", "properties": {...} } } }\`
@@ -318,6 +316,7 @@ Examples demonstrate schema shapes, not the execution sequence. When the user wa
     'fileDownloadTool',
     'documentExtractTool',
     'rendererCatalogTool',
+    'formExamplesTool',
     'dataRegisterListTool',
     'dataRegisterCreateTool',
     'dataRegisterGetTool',

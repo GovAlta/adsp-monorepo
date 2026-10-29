@@ -12,11 +12,19 @@ describe('formGenerationAgent', () => {
     expect(formGenerationAgent.instructions).toContain('Layout Selection');
   });
 
-  it('embeds control examples in instructions', () => {
-    expect(formGenerationAgent.instructions).toContain('Text Area');
-    expect(formGenerationAgent.instructions).toContain('Inline Help');
-    expect(formGenerationAgent.instructions).toContain('File Upload');
-    expect(formGenerationAgent.instructions).toContain('Multi-Select Checkboxes');
+  it('leaves the worked examples out of the instructions', () => {
+    const instructions = formGenerationAgent.instructions;
+    expect(instructions).not.toContain('Inline Help');
+    expect(instructions).not.toContain('### When to use');
+    // Every model call re-sends the instructions; with the worked examples inline they were over 130k characters.
+    expect(instructions.length).toBeLessThan(60000);
+  });
+
+  it('instructs to load worked examples on demand with formExamplesTool', () => {
+    const instructions = formGenerationAgent.instructions;
+    expect(instructions).toContain('call formExamplesTool for worked examples. Request only the groups you need.');
+    expect(instructions).toContain('formExamplesTool:             must include groups');
+    expect(instructions).toContain('load the rules examples with formExamplesTool');
   });
 
   it('embeds document use-case mapping so other form types can be matched from a requirements document', () => {
@@ -24,7 +32,6 @@ describe('formGenerationAgent', () => {
     expect(formGenerationAgent.instructions).toContain('Government application (permits, licenses, benefits)');
     expect(formGenerationAgent.instructions).toContain('Vendor or program registration');
     expect(formGenerationAgent.instructions).toContain('Eligibility calculator or computed totals');
-    expect(formGenerationAgent.instructions).toContain('### When to use');
   });
 
   it('embeds layout examples in instructions', () => {
@@ -74,7 +81,7 @@ describe('formGenerationAgent', () => {
   it('includes Data Registers behavioral section', () => {
     const instructions = formGenerationAgent.instructions;
     expect(instructions).toContain('## Data Registers');
-    expect(instructions).toContain('data-register');
+    expect(instructions).toContain('Wiring a register into a form');
   });
 
   it('instructs to suggest data registers for reusable dropdown values', () => {
@@ -226,6 +233,7 @@ describe('formGenerationAgent', () => {
       'fileDownloadTool',
       'documentExtractTool',
       'rendererCatalogTool',
+      'formExamplesTool',
       'dataRegisterListTool',
       'dataRegisterCreateTool',
       'dataRegisterGetTool',

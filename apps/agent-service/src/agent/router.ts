@@ -298,6 +298,8 @@ export function onIoConnection(logger: Logger) {
               throw new InvalidValueError('content', 'content must string or array of text, image, or file parts.');
             }
 
+            // Thread memory and input processors (such as prompt injection detection) run before the stream starts.
+            const requestStartTime = Date.now();
             const result = await aiAgent.stream(
               user,
               threadId,
@@ -314,6 +316,7 @@ export function onIoConnection(logger: Logger) {
             // (e.g. OpenShift HAProxy route) from timing out the WebSocket connection
             // during long LLM thinking or tool execution gaps.
             const streamStartTime = Date.now();
+            const preStreamDurationMs = streamStartTime - requestStartTime;
             const streamMeta = { agent, threadId, messageId: replyId, replyTo: messageId };
             const heartbeatInterval = setInterval(() => {
               if (socket.connected) {
@@ -405,14 +408,17 @@ export function onIoConnection(logger: Logger) {
                 );
               }
 
-              const totalDurationMs = Date.now() - streamStartTime;
+              const streamEndTime = Date.now();
+              const resultObjectDurationMs = streamEndTime - streamStartTime - streamLoopDurationMs;
+              const totalDurationMs = streamEndTime - requestStartTime;
               logger.info(
-                `Stream complete for agent ${agent}: total=${totalDurationMs}ms, streamLoop=${streamLoopDurationMs}ms, resultObject=${totalDurationMs - streamLoopDurationMs}ms`,
+                `Stream complete for agent ${agent}: total=${totalDurationMs}ms, preStream=${preStreamDurationMs}ms, streamLoop=${streamLoopDurationMs}ms, resultObject=${resultObjectDurationMs}ms`,
                 {
                   context: 'AgentRouter',
                   tenant: tenant?.id?.toString(),
                   user: `${user.name} (ID: ${user.id})`,
                   totalDurationMs,
+                  preStreamDurationMs,
                   streamLoopDurationMs,
                 },
               );
