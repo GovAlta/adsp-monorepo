@@ -37,6 +37,7 @@ describe('local', () => {
     solutionRepository: { name: 'solutions' },
     patternRepository: { name: 'patterns' },
     specialistChatRepository: { name: 'chats' },
+    solutionVersionRepository: { name: 'versions' },
     isConnected: jest.fn(),
   };
 
@@ -131,6 +132,7 @@ describe('local', () => {
         solutionRepository: repositories.solutionRepository,
         patternRepository: repositories.patternRepository,
         specialistChatRepository: repositories.specialistChatRepository,
+        solutionVersionRepository: repositories.solutionVersionRepository,
       });
     });
 

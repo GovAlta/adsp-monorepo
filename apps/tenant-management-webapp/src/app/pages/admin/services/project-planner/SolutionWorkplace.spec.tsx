@@ -5,7 +5,7 @@ import { usePlannerApi } from './api';
 import { expectNoA11yViolations } from './testing/axe';
 import { createMockApi, MockPlannerApi } from './testing/createMockApi';
 import { download } from './utils';
-import { Solution, SolutionBlueprint, SpecialistDefinition } from './model';
+import { Solution, SolutionBlueprint, SolutionVersionList, SpecialistDefinition } from './model';
 
 jest.mock('./api', () => ({ usePlannerApi: jest.fn() }));
 jest.mock('./utils', () => ({ ...jest.requireActual('./utils'), download: jest.fn() }));
@@ -55,8 +55,7 @@ const baseSolution = (state: Partial<Solution['state']> = {}): Solution => ({
   status: 'draft',
   createdByName: 'Pat',
   updatedOn: '2026-03-01T10:00:00.000Z',
-  version: '1.0',
-  versionHistory: [],
+  version: 1,
   state: {
     problemStatement: 'Applicants submit permits for staff review.',
     concepts: [],
@@ -94,18 +93,6 @@ const analyzed = (extra: Partial<Solution['state']> = {}): Solution =>
 const withPlan = (extra: Partial<Solution['state']> = {}): Solution =>
   baseSolution({ ...analyzed(extra).state, blueprint, ...extra });
 
-const readyDiscovery: NonNullable<Solution['state']['discovery']> = {
-  messages: [
-    { role: 'assistant', content: 'Looks like permitting. Ready to propose a plan.', at: '2026-03-01T10:02:00.000Z' },
-  ],
-  confidence: 70,
-  threshold: 50,
-  factors: [],
-  ready: true,
-  mode: 'ai',
-  updatedOn: '2026-03-01T10:02:00.000Z',
-};
-
 const specialists = [
   {
     service: 'form-service',
@@ -119,6 +106,16 @@ const specialists = [
   },
 ] as SpecialistDefinition[];
 
+const versionList = (latest = 1, unsavedChanges = false): SolutionVersionList => ({
+  latest,
+  unsavedChanges,
+  results: Array.from({ length: latest }, (_, index) => ({
+    number: latest - index,
+    name: `Version ${latest - index}`,
+    createdOn: '2026-03-01T10:00:00.000Z',
+  })),
+});
+
 describe('SolutionWorkplace', () => {
   let api: MockPlannerApi;
   const onBack = jest.fn();
@@ -128,6 +125,7 @@ describe('SolutionWorkplace', () => {
       listSpecialists: jest.fn().mockResolvedValue(specialists),
       listChats: jest.fn().mockResolvedValue([]),
       getAnalysisOptions: jest.fn().mockResolvedValue({ modes: ['ai', 'rules'], defaultMode: 'ai' }),
+      listVersions: jest.fn().mockResolvedValue(versionList()),
       ...overrides,
     });
     (usePlannerApi as jest.Mock).mockReturnValue(api);
@@ -159,9 +157,6 @@ describe('SolutionWorkplace', () => {
     const { container } = await setup(planned);
     expect(container.querySelector('nav[aria-label="Solution sections"]')).toBeNull();
     expect(container.querySelector('#guided-stepper')).toBeNull();
-    expect(container.textContent).toContain(
-      'Refine the analysis by answering optional questions, asking a question, adding more details, or correcting gaps.',
-    );
     expect(container.querySelector('[testid="problem-continue"]')?.textContent).toContain('Save & analyze');
     expect(container.textContent).not.toContain('At a glance');
     expect(container.querySelector('[testid="plan-summary"]')).toBeNull();
@@ -172,9 +167,6 @@ describe('SolutionWorkplace', () => {
     expect(container.querySelector('[heading="Proposal"]')).not.toBeNull();
     expect(container.querySelector('[heading="Hypotheses"]')).toBeNull();
     expect(container.querySelector('[data-testid="refine-chat"]')).toBeNull();
-    expect(container.textContent).toContain(
-      'Refine the analysis by answering optional questions, asking a question, adding more details, or correcting gaps.',
-    );
     expect(container.querySelector('[testid="optional-experts"]')).not.toBeNull();
     expect(container.querySelector('[testid="specialist-service-form-service"]')).not.toBeNull();
     expect(container.querySelector('[data-testid="selected-specialist-chat"]')).not.toBeNull();
@@ -190,7 +182,7 @@ describe('SolutionWorkplace', () => {
     ).toBeTruthy();
     for (const [step, heading] of [
       ['guided-step-1', 'Problem statement'],
-      ['guided-step-2', 'Discovery conversation'],
+      ['guided-step-2', 'Discovery Conversation & Questions'],
       ['guided-step-3', 'Proposed solution'],
     ]) {
       const toggle = goa(container, `${step}-toggle`);
@@ -299,7 +291,7 @@ describe('SolutionWorkplace', () => {
     });
 
     expect(goa(container, 'guided-step-1-toggle').textContent).toContain('Problem statement');
-    expect(goa(container, 'guided-step-2-toggle').textContent).toContain('Discovery conversation');
+    expect(goa(container, 'guided-step-2-toggle').textContent).toContain('Discovery Conversation & Questions');
     expect(goa(container, 'problem-continue').textContent).toContain('Save & analyze');
     expect(container.querySelectorAll('[testid="problem-continue"]')).toHaveLength(1);
     expect(container.textContent).toContain('Save and analyze the problem to start discovery');
@@ -332,9 +324,6 @@ describe('SolutionWorkplace', () => {
     expect(goa(container, 'analysis-mode-rules').getAttribute('type')).toBe('primary');
     expect(goa(container, 'analysis-mode-badge').getAttribute('content')).toContain('Last run: Rule-based analysis');
     expect(container.querySelector('[data-testid="discovery-panel"]')).not.toBeNull();
-    expect(container.textContent).toContain(
-      'Refine the analysis by answering optional questions, asking a question, adding more details, or correcting gaps.',
-    );
     expect(container.querySelectorAll('goa-textarea[testid="discovery-input"]')).toHaveLength(1);
     expect(container.querySelector('[data-testid="confidence-bar"]')).not.toBeNull();
     expect(
@@ -390,7 +379,7 @@ describe('SolutionWorkplace', () => {
     });
     const { container } = await setup(lowConfidence);
     expect(goa(container, 'discovery-force').textContent).toBe('Skip and show me a plan');
-    expect(goa(container, 'discovery-questions').getAttribute('heading')).toBe('Questions');
+    expect(goa(container, 'discovery-conversation').getAttribute('heading')).toBe('Conversation');
     expect(container.querySelectorAll('goa-textarea[testid="discovery-input"]')).toHaveLength(1);
     expect(container.querySelector('[data-testid="discovery-panel"]')).not.toBeNull();
     expect(container.textContent).not.toContain('Questions are complete');
@@ -433,8 +422,6 @@ describe('SolutionWorkplace', () => {
     const { container } = await setup();
     type(container, 'problem-input', 'Changed permit workflow.');
 
-    expect(container.querySelector('[testid="problem-plan-out-of-date"]')).not.toBeNull();
-    expect(goa(container, 'problem-back-to-questions')).not.toBeNull();
     expect(container.querySelector('[testid="update-plan"]')).toBeNull();
     expect(container.querySelector('[testid="plan-out-of-date"]')?.textContent).toContain('Save & analyze above');
   });
@@ -478,22 +465,87 @@ describe('SolutionWorkplace', () => {
     );
   });
 
-  it.each(['download-json', 'download-report'])(
-    'takes the new version from the %s export but keeps the saved state, which still has rejected components',
-    async (button) => {
-      const solution = analyzed({ discovery: readyDiscovery });
-      const exported = { ...solution, version: '1.1', state: { ...solution.state, patternMatches: [] } };
-      const { container } = await setup(solution, {
-        exportSolution: jest.fn().mockResolvedValue(exported),
-        blueprint: jest.fn().mockResolvedValue({ ...solution, state: { ...solution.state, blueprint } }),
-      });
+  it('downloads the harness instructions for the exported version', async () => {
+    const { container } = await setup(undefined, { exportSolution: jest.fn().mockResolvedValue({ version: 2 }) });
 
-      click(container, button);
+    click(container, 'download-harness');
 
-      await waitFor(() => expect(goa(container, 'solution-version').getAttribute('content')).toBe('v1.1'));
-      expect(container.textContent).toContain('Looks like permitting.');
-    },
-  );
+    await waitFor(() =>
+      expect(download).toHaveBeenCalledWith(
+        'planner-permit-intake-harness.md',
+        expect.stringContaining('solution-version: 2'),
+        'text/markdown',
+      ),
+    );
+  });
+
+  it('disables the harness download while an export is running', async () => {
+    const { container } = await setup(undefined, { exportSolution: jest.fn(() => new Promise(() => undefined)) });
+
+    click(container, 'download-harness');
+
+    await waitFor(() => expect(goa(container, 'download-harness').getAttribute('disabled')).toBe('true'));
+  });
+
+  it('shows the latest saved version and blocks saving when nothing has changed', async () => {
+    const { container } = await setup(undefined, { listVersions: jest.fn().mockResolvedValue(versionList(3)) });
+
+    await waitFor(() => expect(goa(container, 'solution-version').getAttribute('content')).toBe('v3'));
+    expect(goa(container, 'save-version').getAttribute('disabled')).toBe('true');
+  });
+
+  it('saves a version when there are unsaved changes', async () => {
+    const { container } = await setup(undefined, {
+      listVersions: jest.fn().mockResolvedValueOnce(versionList(1, true)).mockResolvedValue(versionList(2)),
+      saveVersion: jest.fn().mockResolvedValue({ number: 2, name: 'Version 2', createdOn: '2026-03-02T10:00:00.000Z' }),
+    });
+    await waitFor(() => expect(goa(container, 'save-version').getAttribute('disabled')).toBeNull());
+
+    click(container, 'save-version');
+
+    await waitFor(() => expect(goa(container, 'solution-version').getAttribute('content')).toBe('v2'));
+    expect(api.saveVersion).toHaveBeenCalledWith('solution-1');
+  });
+
+  it('refreshes the version status when saving fails', async () => {
+    const { container } = await setup(undefined, {
+      listVersions: jest.fn().mockResolvedValueOnce(versionList(1, true)).mockResolvedValue(versionList(2)),
+      saveVersion: jest.fn().mockRejectedValue(new Error('conflict')),
+    });
+    await waitFor(() => expect(goa(container, 'save-version').getAttribute('disabled')).toBeNull());
+
+    click(container, 'save-version');
+
+    await waitFor(() => expect(goa(container, 'solution-version').getAttribute('content')).toBe('v2'));
+  });
+
+  it('opens the saved versions', async () => {
+    const { container } = await setup(undefined, { listVersions: jest.fn().mockResolvedValue(versionList(2)) });
+    await waitFor(() => expect(goa(container, 'solution-version').getAttribute('content')).toBe('v2'));
+
+    click(container, 'open-versions');
+
+    expect(goa(container, 'versions-modal').getAttribute('open')).toBe('true');
+    expect(container.textContent).toContain('Version 2');
+  });
+
+  it('refreshes the version status after a specialist chat changes', async () => {
+    const { container } = await setup(undefined, {
+      consult: jest.fn().mockResolvedValue({
+        service: 'form-service',
+        fit: 'recommended',
+        reason: 'Good for intake',
+        questions: [],
+        dependencies: [],
+        risks: [],
+      }),
+    });
+    await waitFor(() => expect(api.listVersions).toHaveBeenCalledTimes(1));
+
+    click(container, 'chat-consult');
+
+    await waitFor(() => expect(api.listVersions).toHaveBeenCalledTimes(2));
+  });
 
   it('confirms before deleting then goes back', async () => {
     const { container } = await setup(undefined, { deleteSolution: jest.fn().mockResolvedValue(undefined) });
@@ -534,7 +586,7 @@ describe('SolutionWorkplace', () => {
     await waitFor(() => expect(api.blueprint).toHaveBeenCalledTimes(1));
   });
 
-  it('shows a busy overlay and blocks the header and problem statement while discovery is working', async () => {
+  it('blocks the header and problem statement while discovery is working, without a full-page overlay', async () => {
     const planned = withPlan();
     let resolveChat: (value: Solution) => void = () => undefined;
     const chatPromise = new Promise<Solution>((resolve) => {
@@ -548,14 +600,14 @@ describe('SolutionWorkplace', () => {
     type(container, 'discovery-input', 'Add more detail about the renewal process.');
     click(container, 'discovery-send');
 
-    await waitFor(() => expect(container.querySelector('[data-testid="workplace-busy-overlay"]')).not.toBeNull());
-    expect(goa(container, 'download-json').getAttribute('disabled')).toBe('true');
+    await waitFor(() => expect(goa(container, 'download-json').getAttribute('disabled')).toBe('true'));
+    expect(container.querySelector('[data-testid="workplace-busy-overlay"]')).toBeNull();
+    expect(goa(container, 'download-harness').getAttribute('disabled')).toBe('true');
     expect(goa(container, 'delete-solution').getAttribute('disabled')).toBe('true');
     expect(goa(container, 'problem-continue').getAttribute('disabled')).toBe('true');
 
     resolveChat(planned);
-    await waitFor(() => expect(container.querySelector('[data-testid="workplace-busy-overlay"]')).toBeNull());
-    expect(goa(container, 'download-json').getAttribute('disabled')).toBeNull();
+    await waitFor(() => expect(goa(container, 'download-json').getAttribute('disabled')).toBeNull());
   });
 
   it('passes accessibility checks', async () => {

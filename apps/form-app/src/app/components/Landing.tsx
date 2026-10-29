@@ -2,7 +2,6 @@ import { GoabAppHeader, GoabMicrositeHeader } from '@abgov/react-components';
 import { Band, Container, Footer, Grid, GridItem } from '@core-services/app-common';
 import React, { FunctionComponent } from 'react';
 import styled from 'styled-components';
-import { useFeedbackLinkHandler } from '../util/feedbackUtils';
 import GoALogo from '../../assets/goa-logo.svg';
 import MakeFormAvailable from '../../assets/MakeFormAvailable.png';
 import UseUIComponents from '../../assets/UseUIComponents.png';
@@ -17,11 +16,9 @@ const DashBoardImg = styled.img`
 `;
 
 export const Landing: FunctionComponent = () => {
-  useFeedbackLinkHandler();
-
   return (
     <React.Fragment>
-      <GoabMicrositeHeader type="alpha" feedbackUrlTarget="self" headerUrlTarget="self" feedbackUrl="#" />
+      <GoabMicrositeHeader type="alpha" headerUrlTarget="self" />
 
       <GoabAppHeader url="https://www.alberta.ca/" heading="Alberta Digital Service Platform - Form" />
       <Band title="Form">Draft, save and submit information using forms.</Band>

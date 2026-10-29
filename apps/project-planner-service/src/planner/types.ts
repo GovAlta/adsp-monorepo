@@ -220,6 +220,16 @@ export type ComponentTarget = 'adsp' | 'keycloak' | 'openshift'; // clean-code-i
 // The user's call on whether the solution needs a component; rejected components are left out of the export.
 export type ComponentReview = 'not-reviewed' | 'approved' | 'rejected'; // clean-code-ignore: RULE-19 — types only; no runtime code to test.
 
+export const PRODUCT_TYPES = ['public-form', 'workspace'] as const;
+export type ProductType = (typeof PRODUCT_TYPES)[number]; // clean-code-ignore: RULE-19 — types only; no runtime code to test.
+
+// One row of the roles table; blank cells are still open.
+export interface BlueprintRole {
+  actor: string;
+  appRole: string;
+  productType: ProductType | '';
+}
+
 // A concrete thing to create or configure so the solution can run.
 export interface BlueprintComponent {
   order: number;
@@ -249,6 +259,7 @@ export interface SolutionBlueprint {
     stakeholders: string[];
     successMeasures: string[];
     risks: string[];
+    roles: BlueprintRole[];
   };
   architecture: {
     summary: string;
@@ -306,18 +317,9 @@ export interface Solution {
   createdByName: string;
   createdOn: Date;
   updatedOn: Date;
-  version: string;
-  versionHistory: SolutionVersionEntry[];
-  lastExportHashes: Record<string, string>;
-  exportedOnce: boolean;
+  // Number of the latest saved version; only saving a version changes it.
+  version: number;
   state: SolutionState;
-}
-
-export interface SolutionVersionEntry {
-  version: string;
-  changedAt: string;
-  changedBy: string;
-  changedSections: string[];
 }
 
 export interface SolutionCriteria {
@@ -343,6 +345,7 @@ export interface StoredChatMessage {
   at: string;
   // User messages: the task requested. Assistant messages: how the reply was produced.
   intent?: string;
+  initiatedBy?: 'planner';
   mode?: AnalysisMode;
   model?: string;
   warning?: string;

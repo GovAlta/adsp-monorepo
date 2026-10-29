@@ -1,5 +1,5 @@
 export { configurationSchema, createAuditConfigurationConverter, combineAuditConfiguration } from './configuration';
-export { CatalogService, FailedEventService, ReplayEventPreparer, RetentionService } from './model';
+export { CatalogService, FailedEventService, RateLimitService, ReplayEventPreparer, RetentionService } from './model';
 export { AuditServiceRoles } from './roles';
 export { createAuditRouter, validateTenantContext, assertTenantContext } from './router';
 export { createAuditJsonParser } from './utils/request-validation';
@@ -20,6 +20,7 @@ export type {
   FailedEventReplayTransaction,
   ReplayAuditRecord,
 } from './types';
-export { createAuditMetrics } from './metrics';
+export { createAuditMetrics, createRateLimitMetrics } from './metrics';
+export { EventRateLimiter } from './utils/rate-limiter';
 export { AuditWriteBuffer, AuditStoreError, AuditStorageUnavailableError } from './buffer';
 export type { AuditEventStore, AuditStoreContext, FailedAuditEvent, WriteBufferOptions } from './buffer';

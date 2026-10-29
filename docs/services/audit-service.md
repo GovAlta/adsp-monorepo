@@ -96,6 +96,9 @@ security and compliance 365 days. Application settings in `audit-service:retenti
 override `audit-service:retention`, which overrides those defaults. Expiry is calculated from
 `occurred_at` in UTC days. Missing custom classes fail writes with a retryable 503.
 
+The schema also accepts the Core-only `rateLimitSettings` document described in
+[Write rate limiting](#write-rate-limiting).
+
 ### Retention periods and forward-only changes
 
 `RETENTION_MIN_DAYS` and `RETENTION_MAX_DAYS` configure platform-wide, inclusive bounds
@@ -288,6 +291,20 @@ A Core caller with the role can select a tenant via
 reads Core catalogs only. The service registers this role for tenant provisioning; existing tenants
 still need their normal role provisioning/assignment process.
 
+### Listing every catalog
+
+```http
+GET /audit/v1/actions
+Authorization: ****** with audit-reader>
+```
+
+Returns `[{ "application", "core", "actions": [...] }]`, one entry per registered `actions-<application>`
+catalog, sorted by application. Each entry is the same effective (tenant plus Core) catalog that
+`GET /audit/v1/{namespace}/actions` returns; `core` is true when the catalog is shared from Core. The
+service finds the catalogs by listing the `audit-service` configuration namespace with its own service
+account, so a caller does not need configuration-service access. Status codes and tenant selection
+follow the single-application listing; `503` is also returned when the catalog listing fails.
+
 The catalog governs future write classification, not history access. Removing a definition performs
 no audit-record deletion. History endpoints query PostgreSQL independently of the catalog, so
 removing an action does not prevent reading its existing records.
@@ -332,6 +349,71 @@ Each rejection includes a zero-based input `index`, `code`, `reason`, and an
 `eventId` when available. Counts and rejection length account for every input.
 Duplicates are determined by PostgreSQL, not an in-memory router check.
 If durable storage is unavailable, valid submissions return **503 with Retry-After**.
+A writer over its rate limit receives **429 with Retry-After**; see [Write rate limiting](#write-rate-limiting).
+
+## Write rate limiting
+
+Writes are rate limited per **tenant and namespace** to constrain retry loops.
+One namespace exhausting its allowance does not consume another namespace's allowance in the same
+tenant, or any other tenant's allowance. The buffer remains shared: rate limiting does not reserve
+buffer space or guarantee capacity for other writers. Reads are not rate limited.
+
+The limit counts **events, not requests**: a request of 500 events uses 500 units of allowance,
+the same as 500 requests of one event. Each tenant and namespace has a token bucket that holds at
+most `burst` events and refills at `eventsPerSecond`. A request that does not fit in the current
+allowance is refused whole with **429** and `Retry-After` (seconds until enough allowance has
+accumulated, assuming no competing writes for the same key). None of its events are stored and it
+consumes no allowance, so the caller resends the complete request. The check runs after envelope
+validation and before event enrichment. All admitted events consume allowance, including duplicates,
+individual rejections and requests that later return 413 or 503. Failed requests are not refunded:
+otherwise an application retrying during a storage outage could bypass the limiter. A corrected or
+retried request can receive 429 until its allowance refills.
+
+429 and 503 stay distinct: 429 means _this writer is sending too much_; 503 means _the service
+cannot keep up with everyone_ (for example the buffer is full or storage is unavailable).
+
+| Setting           | Default | Bounds                   |
+| ----------------- | ------- | ------------------------ |
+| `eventsPerSecond` | `500`   | 1 to 500 (inclusive)     |
+| `burst`           | `500`   | 500 to 1,000 (inclusive) |
+
+The burst must accept the largest request (500 events) and must not exceed the per-pod buffer
+(1,000 events). The deployment default comes from `RATE_LIMIT_EVENTS_PER_SECOND` and
+`RATE_LIMIT_BURST`; the service refuses to start with out-of-range values.
+The 500 events/s ceiling applies to both environment settings and Core configuration, including
+tenant overrides. It is an operational guardrail, not a measured database throughput guarantee.
+
+To change limits **without a redeploy**, a platform administrator saves the **Core**
+`audit-service:rate-limit` configuration:
+
+```json
+{
+  "kind": "rateLimitSettings",
+  "default": { "eventsPerSecond": 500, "burst": 500 },
+  "tenants": {
+    "urn:ads:platform:tenant-service:v2:/tenants/<tenant-id>": { "eventsPerSecond": 250, "burst": 500 }
+  }
+}
+```
+
+A tenant entry applies to every namespace in that tenant; `default` applies to tenants without an
+entry; the environment default applies when neither is set. Only the Core document is read, so a
+tenant cannot raise its own ceiling with a tenant-scoped document. Changes apply after the
+configuration cache refreshes. Errors that propagate from the SDK, wrong document kinds and
+out-of-range resolved limits are logged and return 503 with Retry-After rather than silently
+relaxing a tenant's ceiling. The SDK can still convert HTTP or structural conversion failures to
+null, indistinguishable from a missing document; those cases use the environment default, as
+described in [Loading and cache behavior](#loading-and-cache-behavior).
+
+Limits are held **in memory per pod**. With the three API replicas, the effective limit for a
+tenant and namespace is up to three times the configured value, and depends on how the route
+distributes requests. Restarting a pod resets its buckets. A limit shared across replicas would
+need an external store (for example Redis) and an ADR; it is intentionally not used.
+
+Refusals are counted by `audit.write.rate_limited.requests` and `audit.write.rate_limited.events`
+(exported to Prometheus as `audit_write_rate_limited_requests_total` and
+`audit_write_rate_limited_events_total`), labelled with `tenant` and `namespace`. Sustained
+refusals warrant checking retry behaviour and expected volume before changing a limit.
 
 ## Reading events
 
@@ -342,9 +424,8 @@ returning 404 when it does not exist in that tenant and namespace.
 All three require `audit-reader` and tenant context. Core readers can select a tenant with `tenantId`.
 
 Lists accept `actor`, `resourceType`, `resourceId`, `action`, `status`, `category`, `severity`, `scope`,
-`correlationId`, `sessionId`, `occurredFrom` and `occurredTo`. The design's names `actorId`, `scopeId`, `from`
-and `to` are accepted as aliases; if both spellings are sent, the original name wins. Filters combine with AND; time bounds are inclusive, and `scope`
-matches an element of `scopeIds`. `severity` and `sessionId` have no dedicated
+`correlationId`, `sessionId`, `occurredFrom` and `occurredTo`. Filters combine with AND; time bounds are
+inclusive, and `scope` matches an element of `scopeIds`. `severity` and `sessionId` have no dedicated
 index; combine them with other filters on large tenants. Free-text search is not supported. Results are ordered by `occurred_at DESC, id DESC`, with `top`
 and an opaque `after` keyset cursor (the last event's `occurred_at` and `id`, returned as `page.next`)
 controlling pagination. Paging is stable while new events arrive, including the events recorded by
@@ -495,8 +576,8 @@ through the deployed Route also require verification in the target environment.
 Both endpoints require `audit-admin` and use the caller's tenant. Core administrators must
 provide `tenantId`. Reader or writer permissions alone are not enough.
 
-| Endpoint                                 | Purpose                                                             |
-| ---------------------------------------- | ------------------------------------------------------------------- |
+| Endpoint                                   | Purpose                                                               |
+| ------------------------------------------ | --------------------------------------------------------------------- |
 | `GET /audit/v1/failed-events`              | List the tenant's open, replayed and discarded events, newest first.  |
 | `POST /audit/v1/failed-events/{id}/replay` | Retry an open event using its stored data. No request body is needed. |
 
@@ -630,14 +711,13 @@ registered by the service at startup in core configuration, alongside `failed-ev
 applies to every tenant. If registration has not propagated yet, reads still succeed but recording
 fails and is counted.
 
-| Action | Category | Recorded when |
-| --- | --- | --- |
-| `events.list` | `data-access` | A namespace listing succeeds. |
-| `events.list-all` | `data-access` | A cross-namespace listing succeeds. |
-| `events.read` | `data-access` | A single event read succeeds. |
-| `events.export` | `data-access` | An export finishes or the client disconnects. |
-| `failed-events.list` | `data-access` | A failed-events listing succeeds. |
-
+| Action               | Category      | Recorded when                                 |
+| -------------------- | ------------- | --------------------------------------------- |
+| `events.list`        | `data-access` | A namespace listing succeeds.                 |
+| `events.list-all`    | `data-access` | A cross-namespace listing succeeds.           |
+| `events.read`        | `data-access` | A single event read succeeds.                 |
+| `events.export`      | `data-access` | An export finishes or the client disconnects. |
+| `failed-events.list` | `data-access` | A failed-events listing succeeds.             |
 Reads use the `security` retention class (365 days by default). Replay is recorded
 transactionally by the replay itself (see above), not by this mechanism.
 

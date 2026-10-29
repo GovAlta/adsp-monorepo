@@ -1,5 +1,4 @@
 export const AUDIT_NAMESPACE = 'audit-service';
-export const AUDIT_SERVICE_CATALOG = 'actions-audit-service';
 export const AUDIT_PAGE_SIZES = [10, 30, 50, 100];
 export const AUDIT_DEFAULT_PAGE_SIZE = 30;
 
@@ -46,7 +45,8 @@ export interface AuditEventRecord {
   actor: { id?: string; type?: string; name?: string; email?: string; roles?: string[] };
   resource?: { type: string; id?: string; name?: string };
   correlationId?: string;
-  scope?: string;
+  sessionId?: string;
+  scopeIds?: string[];
   changeSet?: { before?: unknown; after?: unknown };
   metadata?: Record<string, unknown>;
   retentionClass?: string;

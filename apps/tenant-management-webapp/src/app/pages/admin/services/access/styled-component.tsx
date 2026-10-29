@@ -86,6 +86,14 @@ export const LoadingIndicatorContainer = styled.div`
   left: -3.5rem;
 `;
 
+export const AgentHeader = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--goa-space-s);
+`;
+
 export const AgentLayout = styled.div`
   display: grid;
   grid-template-columns: minmax(0, 7fr) minmax(16rem, 3fr);

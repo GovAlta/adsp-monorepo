@@ -30,6 +30,53 @@ function isFeedbackPayload(payload: unknown): payload is FeedbackMessage {
   );
 }
 
+function toErrorText(value: unknown): string {
+  if (value === null || value === undefined) {
+    return 'Unknown error';
+  }
+
+  if (typeof value === 'string') {
+    return value;
+  }
+
+  if (value instanceof Error) {
+    return value.message;
+  }
+
+  if (typeof value === 'object') {
+    const candidate = value as {
+      message?: unknown;
+      errorMessage?: unknown;
+      detail?: unknown;
+      error?: unknown;
+    };
+
+    if (typeof candidate.errorMessage === 'string' && candidate.errorMessage.length > 0) {
+      return candidate.errorMessage;
+    }
+
+    if (typeof candidate.message === 'string' && candidate.message.length > 0) {
+      return candidate.message;
+    }
+
+    if (typeof candidate.detail === 'string' && candidate.detail.length > 0) {
+      return candidate.detail;
+    }
+
+    if (typeof candidate.error === 'string' && candidate.error.length > 0) {
+      return candidate.error;
+    }
+
+    try {
+      return JSON.stringify(value);
+    } catch {
+      return String(value);
+    }
+  }
+
+  return String(value);
+}
+
 const feedbackSlice = createSlice({
   name: FEEDBACK_FEATURE_KEY,
   initialState: initialFeedbackState,
@@ -46,14 +93,16 @@ const feedbackSlice = createSlice({
       } else if (isAxiosErrorPayload(payload)) {
         item = {
           id: uuidv4(),
-          message: `Error encountered: ${payload.message} (${payload.status}) `,
+          message: `Error encountered: ${toErrorText(payload.message)} (${payload.status})`,
           level: 'error',
           in: type,
         };
       } else {
+        const payloadText = payload === null || payload === undefined ? '' : toErrorText(payload);
+        const errorText = toErrorText(error?.message);
         item = {
           id: uuidv4(),
-          message: `Error encountered: ${payload || error.message}`,
+          message: `Error encountered: ${payloadText || errorText}`,
           level: 'error',
           in: type,
         };
@@ -70,5 +119,5 @@ export const feedbackActions = feedbackSlice.actions;
 
 export const feedbackSelector = createSelector(
   (state: AppState) => state.feedback,
-  (feedback) => feedback.items[0]
+  (feedback) => feedback.items[0],
 );

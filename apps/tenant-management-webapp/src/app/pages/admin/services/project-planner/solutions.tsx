@@ -2,10 +2,12 @@ import React, { FunctionComponent, useCallback, useEffect, useState } from 'reac
 import {
   GoabBadge,
   GoabButton,
+  GoabButtonGroup,
   GoabCircularProgress,
   GoabFormItem,
   GoabIconButton,
   GoabInput,
+  GoabModal,
   GoabTable,
   GoabTableSortHeader,
 } from '@abgov/react-components';
@@ -13,20 +15,9 @@ import styled from 'styled-components';
 import { usePlannerApi } from './api';
 import { ConfirmDelete } from './ConfirmDelete';
 import { Solution } from './model';
+import ProblemStatement from './ProblemStatement';
 import { useBusy } from './useBusy';
 import { download, safeName, solutionToMarkdown } from './utils';
-
-const NewSolution = styled.div`
-  display: flex;
-  align-items: flex-end;
-  gap: 0.5rem;
-  max-width: 420px;
-
-  > *:first-child {
-    flex: 1;
-    min-width: 0;
-  }
-`;
 
 const NameButton = styled.button`
   display: block;
@@ -57,7 +48,7 @@ const TopRow = styled.div`
   margin-bottom: 1.5rem;
 `;
 
-const RightControls = styled.div`
+const SearchControls = styled.div`
   display: flex;
   align-items: center;
   gap: 0.75rem;
@@ -65,6 +56,10 @@ const RightControls = styled.div`
 
 const SearchRow = styled.div`
   width: 280px;
+`;
+
+const CreateButtonSlot = styled.div`
+  margin-left: auto;
 `;
 
 // Reserves space for everything above/below the table (header, tabs, top row, table header, pagination)
@@ -83,6 +78,9 @@ export const Solutions: FunctionComponent<SolutionsProps> = ({ selectedId, onSel
   const api = usePlannerApi();
   const [solutions, setSolutions] = useState<Solution[]>();
   const [name, setName] = useState('');
+  const [problemStatement, setProblemStatement] = useState('');
+  const [creating, setCreating] = useState(false);
+  const [formKey, setFormKey] = useState(0);
   const [busy, run] = useBusy();
   const [deleting, setDeleting] = useState<Solution>();
   const [search, setSearch] = useState('');
@@ -122,10 +120,23 @@ export const Solutions: FunctionComponent<SolutionsProps> = ({ selectedId, onSel
   const currentPage = Math.min(page, totalPages - 1);
   const paged = sorted.slice(currentPage * pageSize, currentPage * pageSize + pageSize);
 
+  const startCreate = () => {
+    setCreating(true);
+    setFormKey((key) => key + 1);
+  };
+
+  const cancelCreate = () => {
+    setCreating(false);
+    setName('');
+    setProblemStatement('');
+  };
+
   const create = () =>
     run(async () => {
-      const solution = await api.createSolution(name.trim(), '');
+      const solution = await api.createSolution(name.trim(), problemStatement.trim());
       setName('');
+      setProblemStatement('');
+      setCreating(false);
       await load();
       onSelect(solution.id);
     });
@@ -145,7 +156,6 @@ export const Solutions: FunctionComponent<SolutionsProps> = ({ selectedId, onSel
     try {
       const data = await api.exportSolution(solution.id);
       download(`planner-${safeName(solution)}.json`, JSON.stringify(data, null, 2), 'application/json');
-      await load();
     } catch {
       // Error is surfaced through the notification handled in the api hook.
     }
@@ -155,7 +165,6 @@ export const Solutions: FunctionComponent<SolutionsProps> = ({ selectedId, onSel
     try {
       const data = (await api.exportSolution(solution.id)) as Partial<Solution>;
       download(`planner-${safeName(solution)}.md`, solutionToMarkdown({ ...solution, ...data }), 'text/markdown');
-      await load();
     } catch {
       // Error is surfaced through the notification handled in the api hook.
     }
@@ -164,24 +173,8 @@ export const Solutions: FunctionComponent<SolutionsProps> = ({ selectedId, onSel
   return (
     <section aria-label="Solutions">
       <TopRow>
-        <NewSolution>
-          <GoabFormItem label="Solution name">
-            <GoabInput
-              size="compact"
-              name="newSolutionName"
-              value={name}
-              width="100%"
-              testId="new-solution-name"
-              aria-label="Solution name"
-              onChange={(detail) => setName(detail.value)}
-            />
-          </GoabFormItem>
-          <GoabButton size="compact" testId="new-solution" disabled={!name.trim() || busy} onClick={create}>
-            Create solution
-          </GoabButton>
-        </NewSolution>
         {solutions && solutions.length > 0 && (
-          <RightControls>
+          <SearchControls>
             <SearchRow>
               <GoabInput
                 size="compact"
@@ -217,8 +210,13 @@ export const Solutions: FunctionComponent<SolutionsProps> = ({ selectedId, onSel
                 />
               </>
             )}
-          </RightControls>
+          </SearchControls>
         )}
+        <CreateButtonSlot>
+          <GoabButton size="compact" testId="new-solution" onClick={startCreate}>
+            Create solution
+          </GoabButton>
+        </CreateButtonSlot>
       </TopRow>
 
       {!solutions && <GoabCircularProgress visible message="Loading solutions..." size="small" />}
@@ -308,6 +306,42 @@ export const Solutions: FunctionComponent<SolutionsProps> = ({ selectedId, onSel
         This action cannot be undone. <strong>{deleting?.name}</strong> and its saved specialist chats will be
         permanently removed.
       </ConfirmDelete>
+
+      <GoabModal open={creating} testId="new-solution-modal" heading="Create solution" onClose={cancelCreate}>
+        <GoabFormItem label="Solution name" mb="m">
+          <GoabInput
+            name="newSolutionName"
+            value={name}
+            width="100%"
+            testId="new-solution-name"
+            aria-label="Solution name"
+            disabled={busy}
+            onChange={(detail) => setName(detail.value)}
+          />
+        </GoabFormItem>
+        <ProblemStatement
+          key={formKey}
+          value={problemStatement}
+          busy={busy}
+          showContinue={false}
+          onChange={setProblemStatement}
+          onContinue={() => undefined}
+        />
+        <GoabButtonGroup alignment="end" mt="m">
+          <GoabButton
+            size="compact"
+            type="secondary"
+            testId="new-solution-cancel"
+            disabled={busy}
+            onClick={cancelCreate}
+          >
+            Cancel
+          </GoabButton>
+          <GoabButton size="compact" testId="new-solution-submit" disabled={!name.trim() || busy} onClick={create}>
+            Create solution
+          </GoabButton>
+        </GoabButtonGroup>
+      </GoabModal>
     </section>
   );
 };

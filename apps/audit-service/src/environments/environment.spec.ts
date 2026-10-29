@@ -33,4 +33,10 @@ describe('retention environment settings', () => {
   it('keeps the default daily schedule at 02:00 UTC', () => {
     expect(loadEnvironment().RETENTION_SCHEDULE).toBe('0 2 * * *');
   });
+
+  it('defaults the write rate limit to 500 events per second with a 500-event burst', () => {
+    const environment = loadEnvironment();
+
+    expect([environment.RATE_LIMIT_EVENTS_PER_SECOND, environment.RATE_LIMIT_BURST]).toEqual([500, 500]);
+  });
 });

@@ -24,6 +24,8 @@ export const environment = envalid.cleanEnv(
     RETENTION_SCHEDULE: envalid.str({ default: '0 2 * * *' }),
     RETENTION_BATCH_SIZE: envalid.num({ default: 1000 }),
     RETENTION_MAX_BATCHES: envalid.num({ default: 10 }),
+    RATE_LIMIT_EVENTS_PER_SECOND: envalid.num({ default: 500 }),
+    RATE_LIMIT_BURST: envalid.num({ default: 500 }),
     LOG_LEVEL: envalid.str({ default: 'debug' }),
     PORT: envalid.num({ default: 3352 }),
     TRUSTED_PROXY: envalid.str({ default: 'uniquelocal' }),

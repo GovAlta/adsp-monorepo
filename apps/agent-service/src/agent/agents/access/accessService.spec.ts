@@ -7,7 +7,7 @@ import { ACCESS_ENVIRONMENTS } from './discovery/environments';
 import { ACCESS_SERVICE_AGENT_MAX_STEPS } from '../../model/executionLimits';
 
 describe('accessServiceAgent', () => {
-  it('orchestrates the configured read-only agents and discovery tools', () => {
+  it('orchestrates the configured read-only agents, discovery tools and client tools', () => {
     expect(accessServiceAgent.name).toBe('Access Service Agent');
     expect(accessServiceAgent.userRoles).toEqual(['urn:ads:platform:agent-service:agent-user']);
     expect(accessServiceAgent.agents).toEqual([
@@ -16,7 +16,13 @@ describe('accessServiceAgent', () => {
       'identityProviderAgent',
       'architectAgent',
     ]);
-    expect(accessServiceAgent.tools).toEqual(['listAccessEnvironments', 'listAccessRealms', 'getAccessRealmInfo']);
+    expect(accessServiceAgent.tools).toEqual([
+      'listAccessEnvironments',
+      'listAccessRealms',
+      'getAccessRealmInfo',
+      'listAccessClients',
+      'getAccessClient',
+    ]);
     expect(accessServiceAgent.mcp).toBeUndefined();
     expect(accessServiceAgent.workspace?.enabled).not.toBe(true);
   });
@@ -33,9 +39,39 @@ describe('accessServiceAgent', () => {
       'Production can be inspected with these tools but must never be changed',
     );
     expect(accessServiceAgent.instructions).not.toContain('cannot inspect live Keycloak realms');
+    expect(accessServiceAgent.instructions).not.toContain('It cannot inspect clients');
     expect(accessServiceAgent.instructions).toContain('https://access.adsp-dev.gov.ab.ca');
     expect(accessServiceAgent.instructions).toContain('https://access-uat.alberta.ca');
     expect(accessServiceAgent.instructions).toContain('https://access.alberta.ca');
+  });
+
+  it('tells the supervisor to inspect clients read-only without inventing configuration or showing secrets', () => {
+    expect(accessServiceAgent.instructions).toContain('## Live Client Tools (read-only)');
+    expect(accessServiceAgent.instructions).toContain('never invent clients or configuration');
+    expect(accessServiceAgent.instructions).toContain('Never describe configuration for a client that was not found');
+    expect(accessServiceAgent.instructions).toContain(
+      'The tools never return client secrets, credentials, keys, or tokens',
+    );
+    expect(accessServiceAgent.instructions).toContain('Inspecting a client never changes it, in any environment');
+    expect(accessServiceAgent.instructions).toContain(
+      "Mappers from the client's assigned client scopes are not included",
+    );
+  });
+
+  it('tells the supervisor not to repeat what a tool result card already shows', () => {
+    expect(accessServiceAgent.instructions).toContain('## Replying When a Tool Result Is Shown as a Card');
+    for (const toolId of accessServiceAgent.tools as string[]) {
+      expect(accessServiceAgent.instructions).toContain(`\`${toolId}\``);
+    }
+    expect(accessServiceAgent.instructions).toContain('Never repeat what a card shows');
+    expect(accessServiceAgent.instructions).toContain('give only the direct answer');
+    expect(accessServiceAgent.instructions).not.toContain('tell the user its `message` in plain language');
+  });
+
+  it('lets specialists reason from client configuration the supervisor read', () => {
+    expect(clientAgent.instructions).toContain('when it gives you that configuration, reason from it');
+    expect(clientAgent.instructions).not.toContain('Never claim to inspect or mutate a client');
+    expect(tokenRoleAgent.instructions).toContain('client configuration it read with its read-only client tools');
   });
 
   it('documents the same environment hosts that the discovery tools use', () => {

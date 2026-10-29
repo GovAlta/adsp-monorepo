@@ -27,8 +27,7 @@ describe('Solutions', () => {
     status: 'draft',
     createdByName: 'Pat Planner',
     updatedOn: '2026-03-01T10:00:00.000Z',
-    version: '1.0',
-    versionHistory: [],
+    version: 1,
     state: {
       problemStatement: '',
       concepts: [],
@@ -113,38 +112,86 @@ describe('Solutions', () => {
   });
 
   describe('new solution', () => {
-    it('disables create until a name is entered', () => {
+    it('opens the create-solution modal without requiring a name first', () => {
       const { container } = render(<Solutions onSelect={onSelect} />);
 
-      expect(container.querySelector('goa-button[testid="new-solution"]')?.getAttribute('disabled')).toBe('true');
+      click(container, 'new-solution');
+
+      expect(container.querySelector('goa-modal[testid="new-solution-modal"]')?.getAttribute('open')).toBe('true');
+      expect(container.querySelector('[data-testid="problem-statement"]')).not.toBeNull();
     });
 
-    it('enables create once a name is entered', () => {
+    it('does not create a solution just by opening the modal', () => {
       const { container } = render(<Solutions onSelect={onSelect} />);
+
+      click(container, 'new-solution');
+
+      expect(api.createSolution).not.toHaveBeenCalled();
+    });
+
+    it('disables submit until a name is entered', () => {
+      const { container } = render(<Solutions onSelect={onSelect} />);
+      click(container, 'new-solution');
+
+      expect(container.querySelector('goa-button[testid="new-solution-submit"]')?.getAttribute('disabled')).toBe(
+        'true',
+      );
+    });
+
+    it('enables submit once a name is entered', () => {
+      const { container } = render(<Solutions onSelect={onSelect} />);
+      click(container, 'new-solution');
 
       type(container, 'goa-input[testid="new-solution-name"]', 'Permit intake');
 
-      expect(container.querySelector('goa-button[testid="new-solution"]')?.getAttribute('disabled')).toBeNull();
+      expect(container.querySelector('goa-button[testid="new-solution-submit"]')?.getAttribute('disabled')).toBeNull();
     });
 
     it('creates a solution with the trimmed name and no problem statement', async () => {
       api.createSolution.mockResolvedValue({ ...permitIntake, id: 'solution-2' });
       const { container } = render(<Solutions onSelect={onSelect} />);
+      click(container, 'new-solution');
       type(container, 'goa-input[testid="new-solution-name"]', ' Permit intake ');
 
-      click(container, 'new-solution');
+      click(container, 'new-solution-submit');
 
       await waitFor(() => expect(api.createSolution).toHaveBeenCalledWith('Permit intake', ''));
       expect(api.analyze).not.toHaveBeenCalled();
       await waitFor(() => expect(onSelect).toHaveBeenCalledWith('solution-2'));
     });
 
+    it('creates a solution with the entered problem statement', async () => {
+      api.createSolution.mockResolvedValue({ ...permitIntake, id: 'solution-2' });
+      const { container } = render(<Solutions onSelect={onSelect} />);
+      click(container, 'new-solution');
+      type(container, 'goa-input[testid="new-solution-name"]', 'Permit intake');
+      type(container, 'goa-textarea[testid="problem-input"]', 'Applicants submit permits for staff review.');
+
+      click(container, 'new-solution-submit');
+
+      await waitFor(() =>
+        expect(api.createSolution).toHaveBeenCalledWith('Permit intake', 'Applicants submit permits for staff review.'),
+      );
+    });
+
+    it('closes the modal without creating when cancelled', () => {
+      const { container } = render(<Solutions onSelect={onSelect} />);
+      click(container, 'new-solution');
+      type(container, 'goa-input[testid="new-solution-name"]', 'Permit intake');
+
+      click(container, 'new-solution-cancel');
+
+      expect(container.querySelector('goa-modal[testid="new-solution-modal"]')?.getAttribute('open')).toBeNull();
+      expect(api.createSolution).not.toHaveBeenCalled();
+    });
+
     it('clears the name field after creating', async () => {
       api.createSolution.mockResolvedValue(permitIntake);
       const { container } = render(<Solutions onSelect={onSelect} />);
+      click(container, 'new-solution');
       type(container, 'goa-input[testid="new-solution-name"]', 'Permit intake');
 
-      click(container, 'new-solution');
+      click(container, 'new-solution-submit');
 
       await waitFor(() =>
         expect(container.querySelector('goa-input[testid="new-solution-name"]')?.getAttribute('value')).toBe(''),
@@ -154,9 +201,10 @@ describe('Solutions', () => {
     it('stays on the page when creation fails', async () => {
       api.createSolution.mockRejectedValue(new Error('Network Error'));
       const { container } = render(<Solutions onSelect={onSelect} />);
+      click(container, 'new-solution');
       type(container, 'goa-input[testid="new-solution-name"]', 'Permit intake');
 
-      click(container, 'new-solution');
+      click(container, 'new-solution-submit');
 
       await waitFor(() => expect(api.createSolution).toHaveBeenCalled());
       expect(onSelect).not.toHaveBeenCalled();
@@ -317,15 +365,19 @@ describe('Solutions', () => {
       );
     });
 
-    it('downloads the solution as a markdown report', async () => {
-      api.exportSolution.mockResolvedValue({ version: '1.1', versionHistory: [] });
+    it('downloads the solution as a markdown report labelled with its version', async () => {
+      api.exportSolution.mockResolvedValue({ version: 2, unsavedChanges: true });
       const { container, findByText } = render(<Solutions onSelect={onSelect} />);
       await findByText('Permit intake');
 
       click(container, 'export-report-solution-solution-1');
 
       await waitFor(() => expect(api.exportSolution).toHaveBeenCalledWith('solution-1'));
-      expect(download).toHaveBeenCalledWith('planner-permit-intake.md', expect.any(String), 'text/markdown');
+      expect(download).toHaveBeenCalledWith(
+        'planner-permit-intake.md',
+        expect.stringContaining('solution-version: 2 (unsaved changes)\n'),
+        'text/markdown',
+      );
     });
   });
 });

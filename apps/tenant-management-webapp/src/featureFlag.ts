@@ -162,7 +162,7 @@ export const defaultFeaturesVisible = {
   Value: true,
   Cache: true,
   Agent: false,
-  Audit: true,
+  Audit: false,
   'Project Planner': false,
 };
 

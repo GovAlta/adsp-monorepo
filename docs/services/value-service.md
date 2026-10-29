@@ -38,6 +38,11 @@ Value definitions are managed through the value service definitions API (`/value
 > Counting events in the event log is exposed by the [event service](event-service.md#count-events-in-the-event-log).
 > Consumers of the event log count should use that API rather than calling value service directly.
 
+Event log reads support exact payload searching with either `payloadPath` and `payloadValue`, or a JSON object in
+`payload`. Both `timestampMin` and `timestampMax` are required for payload searches, and the two search forms are
+mutually exclusive. See [Search the event log](event-service.md#search-the-event-log) for examples and scalar type
+handling.
+
 ### Value
 
 A value represents a particular time series stream. Each write results in a new record with a timestamp. It differs from a typical transactional record in that the record has no unique identity; instead it represents another entry in the set of entries for the value. Consumers can write scalars or json objects to values.

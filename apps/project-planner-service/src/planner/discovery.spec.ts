@@ -111,6 +111,10 @@ describe('ruleAssess', () => {
     expect(constraints?.note).toBeUndefined();
   });
 
+  it.each(['The data is Protected B', 'POPA applies'])('scores the constraints factor from "%s"', (text) => {
+    expect(ruleAssess(text).find((f) => f.id === 'constraints')?.score).toBe(40);
+  });
+
   it('reaches the discovery threshold for a detailed description', () => {
     expect(computeConfidence(ruleAssess(richText))).toBeGreaterThanOrEqual(DISCOVERY_THRESHOLD);
   });
@@ -367,6 +371,10 @@ describe('ruleDiscoveryReply', () => {
     const reply = ruleDiscoveryReply(factors, 0, false);
 
     expect(reply).not.toContain('5. ');
+  });
+
+  it('asks for the data classification level', () => {
+    expect(ruleDiscoveryReply([factor('constraints', 0)], 0, false)).toContain('Public, Protected A, Protected B or Protected C');
   });
 
   it('skips factors that are not discovery factors', () => {

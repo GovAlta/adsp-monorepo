@@ -14,7 +14,7 @@ import BlueprintViewer from './BlueprintViewer';
 import ConfidenceBar from './ConfidenceBar';
 import DiscoveryPanel from './DiscoveryPanel';
 import { AnalysisModeToggle } from './ModeLayoutToggle';
-import ProblemStatement from './ProblemStatement';
+import ProblemStatement, { ProblemStatementUpload } from './ProblemStatement';
 import ProgressStepper from './ProgressStepper';
 import SolutionHeader from './SolutionHeader';
 import { AnalysisMode, Solution, SpecialistDefinition } from './model';
@@ -61,10 +61,10 @@ const GuidedStep: FunctionComponent<GuidedStepProps> = ({ heading, testId, expan
 
   return (
     <div style={{ '--goa-container-padding': '20px 10px' } as React.CSSProperties}>
-      <GoabContainer accent="thin" testId={testId} mb="m">
+      <GoabContainer accent="thin" testId={testId} mb="l">
         <h2
           id={headingId}
-          style={{ fontSize: 'calc(var(--goa-font-size-7) * 0.80)', fontWeight: 600, lineHeight: 1, margin: 0 }}
+          style={{ fontSize: 'calc(var(--goa-font-size-7) * 0.78)', fontWeight: 600, lineHeight: 1, margin: 0 }}
         >
           <button
             type="button"
@@ -91,7 +91,7 @@ const GuidedStep: FunctionComponent<GuidedStepProps> = ({ heading, testId, expan
           </button>
         </h2>
         {expanded && (
-          <div id={panelId} role="region" aria-labelledby={headingId} style={{ fontSize: '80%', paddingTop: '5px' }}>
+          <div id={panelId} role="region" aria-labelledby={headingId} style={{ fontSize: '78%', paddingTop: '5px' }}>
             {children}
           </div>
         )}
@@ -117,6 +117,9 @@ export const SolutionWorkplace: FunctionComponent<SolutionWorkplaceProps> = ({
   const [headerBusy, setHeaderBusy] = useState(false);
   const [discoveryBusy, setDiscoveryBusy] = useState(false);
   const [blueprintBusy, setBlueprintBusy] = useState(false);
+  const [discoveryStarting, setDiscoveryStarting] = useState(false);
+  const [blueprintRefreshing, setBlueprintRefreshing] = useState(false);
+  const [versionsToken, setVersionsToken] = useState(0);
   const busyRef = useRef(false);
   const automaticActions = useRef(new Set<string>());
   const savedMode = useRef<AnalysisMode>();
@@ -195,11 +198,14 @@ export const SolutionWorkplace: FunctionComponent<SolutionWorkplaceProps> = ({
   const generateInitialBlueprint = () =>
     run(async () => {
       setBlueprintGenerationFailed(false);
+      setBlueprintRefreshing(true);
       try {
         updateSolution(await api.blueprint(solutionId, { mode }));
       } catch (error) {
         setBlueprintGenerationFailed(true);
         throw error;
+      } finally {
+        setBlueprintRefreshing(false);
       }
     });
 
@@ -216,8 +222,13 @@ export const SolutionWorkplace: FunctionComponent<SolutionWorkplaceProps> = ({
         return;
       }
       automaticActions.current.add(autoDiscoveryKey);
+      setDiscoveryStarting(true);
       void run(async () => {
-        updateSolution(await api.discovery(solution.id, { mode, restart: true }));
+        try {
+          updateSolution(await api.discovery(solution.id, { mode, restart: true }));
+        } finally {
+          setDiscoveryStarting(false);
+        }
       });
       return;
     }
@@ -337,9 +348,10 @@ export const SolutionWorkplace: FunctionComponent<SolutionWorkplaceProps> = ({
   const analysis = solution.state.analysis;
   const blueprint = solution.state.blueprint;
   const anyBusy = busy || headerBusy || discoveryBusy || blueprintBusy;
+  const showPageOverlay = headerBusy || (busy && !analysis);
   const progressSteps = [
     { id: 1 as const, label: 'Problem statement', complete: !!analysis },
-    { id: 2 as const, label: 'Discovery conversation', complete: step >= 3 },
+    { id: 2 as const, label: 'Discovery Conversation & Questions', complete: step >= 3 },
     { id: 3 as const, label: 'Proposed solution', complete: !!blueprint },
   ];
   const scrollToStep = (id: 1 | 2 | 3) => {
@@ -351,47 +363,67 @@ export const SolutionWorkplace: FunctionComponent<SolutionWorkplaceProps> = ({
     stepRefs[id].current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
   const toggleStep = (id: 1 | 2 | 3) => setExpandedSteps((expanded) => ({ ...expanded, [id]: !expanded[id] }));
-  const problemChanged = problemDraft !== solution.state.problemStatement;
+  const problemChanged = problemDraft.trim() !== solution.state.problemStatement.trim();
+  const modeMismatch = !blueprint?.warning && mode !== blueprint?.mode;
   const planOutOfDate =
     !!blueprint &&
     (problemChanged ||
-      mode !== blueprint.mode ||
+      modeMismatch ||
       !!solution.blueprintOutOfDate ||
       (!!analysis && new Date(analysis.analyzedOn) > new Date(blueprint.generatedOn)));
+  const modeLabel = (value: AnalysisMode) => (value === 'ai' ? 'AI analysis' : 'rule-based analysis');
+  const planOutOfDateReasons: string[] = [];
+  if (blueprint) {
+    if (problemChanged) {
+      planOutOfDateReasons.push('the problem statement has unsaved edits');
+    } else if (solution.blueprintOutOfDate) {
+      planOutOfDateReasons.push('the problem statement was updated after this plan was created');
+    }
+    if (modeMismatch) {
+      planOutOfDateReasons.push(`the analysis mode changed from ${modeLabel(blueprint.mode)} to ${modeLabel(mode)}`);
+    }
+    if (!problemChanged && analysis && new Date(analysis.analyzedOn) > new Date(blueprint.generatedOn)) {
+      planOutOfDateReasons.push('the problem was re-analyzed after this plan was created');
+    }
+  }
   const onDiscoverySolutionChange = updateSolution;
 
   const handleContinue = () =>
     run(async () => {
       const hasBlueprint = !!solution.state.blueprint;
-      if (problemDraft !== solution.state.problemStatement) {
-        await api.updateSolution(solution.id, { problemStatement: problemDraft });
-      }
-      const analyzed = await api.analyze(solution.id, { mode });
-      setMode(analyzed.state.analysis?.mode ?? mode);
-      updateSolution(analyzed);
       if (hasBlueprint) {
-        updateSolution(await api.blueprint(solution.id, { mode: analyzed.state.analysis?.mode ?? mode }));
+        setBlueprintRefreshing(true);
       }
-    });
-
-  const backToQuestions = () =>
-    run(async () => {
-      if (problemChanged) {
-        updateSolution(await api.updateSolution(solution.id, { problemStatement: problemDraft }));
-        updateSolution(await api.analyze(solution.id, { mode }));
+      try {
+        if (problemChanged) {
+          await api.updateSolution(solution.id, { problemStatement: problemDraft });
+        }
+        const analyzed = await api.analyze(solution.id, { mode });
+        setMode(analyzed.state.analysis?.mode ?? mode);
+        updateSolution(analyzed);
+        if (hasBlueprint) {
+          updateSolution(await api.blueprint(solution.id, { mode: analyzed.state.analysis?.mode ?? mode }));
+        }
+      } finally {
+        if (hasBlueprint) {
+          setBlueprintRefreshing(false);
+        }
       }
-      const updated = await api.discovery(solution.id, { mode, restart: true });
-      updateSolution(updated);
     });
 
   const refreshSpecialists = () =>
     run(async () => {
-      updateSolution(await api.blueprint(solution.id, { mode, refreshConsultations: true }));
+      setBlueprintRefreshing(true);
+      try {
+        updateSolution(await api.blueprint(solution.id, { mode, refreshConsultations: true }));
+      } finally {
+        setBlueprintRefreshing(false);
+      }
     });
 
   return (
     <div ref={contentRef} data-testid="solution-workplace" style={{ position: 'relative' }}>
-      {anyBusy && (
+      {showPageOverlay && (
         <div
           aria-hidden="true"
           data-testid="workplace-busy-overlay"
@@ -422,6 +454,7 @@ export const SolutionWorkplace: FunctionComponent<SolutionWorkplaceProps> = ({
         onSolutionChange={updateSolution}
         disabled={busy || discoveryBusy || blueprintBusy}
         onBusyChange={setHeaderBusy}
+        versionsToken={versionsToken}
         onBack={
           onBack &&
           (() => {
@@ -446,28 +479,40 @@ export const SolutionWorkplace: FunctionComponent<SolutionWorkplaceProps> = ({
                 busy={busy}
                 continueLabel="Save & analyze"
                 showContinue={false}
+                showUpload={false}
                 onChange={setProblemDraft}
                 onContinue={handleContinue}
               />
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
-                <AnalysisModeToggle
-                  mode={mode}
-                  modes={analysisModes}
-                  onChange={(selectedMode) => {
-                    userSelectedMode.current = true;
-                    setMode(selectedMode);
-                  }}
-                />
-                {analysis && (
-                  <GoabBadge
-                    type="success"
-                    content={`Last run: ${analysis.mode === 'ai' ? 'AI analysis' : 'Rule-based analysis'} · ${new Date(
-                      analysis.analyzedOn,
-                    ).toLocaleString()}`}
-                    icon={false}
-                    testId="analysis-mode-badge"
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: '0.75rem',
+                  flexWrap: 'wrap',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+                  <AnalysisModeToggle
+                    mode={mode}
+                    modes={analysisModes}
+                    onChange={(selectedMode) => {
+                      userSelectedMode.current = true;
+                      setMode(selectedMode);
+                    }}
                   />
-                )}
+                  {analysis && (
+                    <GoabBadge
+                      type="success"
+                      content={`Last run: ${analysis.mode === 'ai' ? 'AI analysis' : 'Rule-based analysis'} · ${new Date(
+                        analysis.analyzedOn,
+                      ).toLocaleString()}`}
+                      icon={false}
+                      testId="analysis-mode-badge"
+                    />
+                  )}
+                </div>
+                <ProblemStatementUpload onChange={setProblemDraft} disabled={anyBusy} />
               </div>
               <GoabButton
                 type="primary"
@@ -490,42 +535,34 @@ export const SolutionWorkplace: FunctionComponent<SolutionWorkplaceProps> = ({
                 </GoabCallout>
               )}
               {analysis?.warning && (
-                <GoabCallout type="important" heading="Note" testId="analysis-fallback-warning" mt="m">
+                <GoabCallout
+                  type="important"
+                  emphasis="medium"
+                  heading="Note"
+                  testId="analysis-fallback-warning"
+                  mt="m"
+                  mb="m"
+                >
                   {analysis.warning}
                 </GoabCallout>
-              )}
-              {problemChanged && blueprint && (
-                <>
-                  <GoabCallout type="important" heading="Plan out of date" testId="problem-plan-out-of-date" mt="m">
-                    Your current plan remains available below. Save &amp; analyze to refresh it, or go back to the
-                    questions first.
-                  </GoabCallout>
-                  <GoabButton
-                    type="tertiary"
-                    testId="problem-back-to-questions"
-                    disabled={anyBusy}
-                    onClick={backToQuestions}
-                    ml="s"
-                  >
-                    Back to questions
-                  </GoabButton>
-                </>
               )}
             </section>
           </GuidedStep>
         </li>
         <li ref={step2Ref} style={{ scrollMarginTop: headerOffset }}>
           <GuidedStep
-            heading="2. Discovery conversation"
+            heading="2. Discovery Conversation & Questions"
             testId="guided-step-2"
             expanded={expandedSteps[2]}
             onToggle={() => toggleStep(2)}
           >
             <section aria-label="Discovery conversation">
               {!analysis ? (
-                <p>
+                <GoabCallout type="information" heading="Not yet" testId="discovery-disabled" mb="m">
                   Save and analyze the problem to start discovery. This section will stay here as your plan develops.
-                </p>
+                </GoabCallout>
+              ) : discoveryStarting ? (
+                <GoabCircularProgress visible size="small" message="Starting the discovery conversation" />
               ) : (
                 <DiscoveryPanel
                   solution={solution}
@@ -535,6 +572,7 @@ export const SolutionWorkplace: FunctionComponent<SolutionWorkplaceProps> = ({
                   specialists={specialists}
                   disabled={busy || headerBusy || blueprintBusy}
                   onBusyChange={setDiscoveryBusy}
+                  onChatsChanged={() => setVersionsToken((token) => token + 1)}
                 />
               )}
             </section>
@@ -555,11 +593,22 @@ export const SolutionWorkplace: FunctionComponent<SolutionWorkplaceProps> = ({
                       Refine it in the conversation or consult a specialist.
                     </GoabCallout>
                   ) : (
-                    <GoabCallout type="important" heading="Plan out of date" testId="plan-out-of-date" mb="m">
-                      Your problem description, answers, or analysis mode changed since this plan was created. Use Save
-                      &amp; analyze above to refresh the analysis and plan before exporting.
+                    <GoabCallout
+                      type="important"
+                      emphasis="high"
+                      heading="Plan out of date"
+                      testId="plan-out-of-date"
+                      mb="m"
+                    >
+                      <div>
+                        This plan no longer reflects your request because{' '}
+                        {planOutOfDateReasons.length ? planOutOfDateReasons.join(', and ') : 'the request changed'}. Use
+                        Save &amp; analyze above to refresh the analysis and plan before exporting.
+                      </div>
                     </GoabCallout>
                   )}
+
+                  {blueprintRefreshing && <GoabCircularProgress visible size="small" message="Refreshing your plan" />}
 
                   <GoabDetails heading="Proposal" maxWidth="100%" mb="s">
                     <Hypotheses solution={solution} open={false} />
@@ -612,7 +661,7 @@ export const SolutionWorkplace: FunctionComponent<SolutionWorkplaceProps> = ({
                   <h3>Project blueprint</h3>
                   <p>Explore the recommended services, architecture, workflows, and delivery plan.</p>
                   {blueprintGenerationFailed ? (
-                    <GoabCallout type="important" heading="Plan not ready" testId="blueprint-generation-error" mb="m">
+                    <GoabCallout type="emergency" heading="Plan not ready" testId="blueprint-generation-error" mb="m">
                       The planner could not prepare the plan. Try again.
                     </GoabCallout>
                   ) : (
@@ -629,7 +678,7 @@ export const SolutionWorkplace: FunctionComponent<SolutionWorkplaceProps> = ({
                   </GoabButton>
                 </GoabContainer>
               ) : (
-                <GoabCallout type="important" heading="Not yet" testId="step-disabled-3" mb="m">
+                <GoabCallout type="information" heading="Not yet" testId="step-disabled-3" mb="m">
                   The solution is presented once confidence reaches 50%, or when you choose “Skip and show me a plan.”
                 </GoabCallout>
               )}

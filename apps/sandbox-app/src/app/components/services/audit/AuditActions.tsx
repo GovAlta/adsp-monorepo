@@ -8,8 +8,9 @@ import {
   GoabFormItem,
   GoabInput,
 } from '@abgov/react-components';
+import axios from 'axios';
 import { useState } from 'react';
-import { ActionDefinition, addAction, getActions, SAMPLE_NAMESPACE } from './auditApi';
+import { ActionDefinition, addAction, getActions, getCatalogs, SAMPLE_NAMESPACE } from './auditApi';
 import { errorMessage } from './util';
 import { Card, ErrorCallout, FormGrid, Json } from './common';
 
@@ -58,6 +59,25 @@ export function AuditActions() {
       setError(undefined);
       setAdded(undefined);
       const { name, resourceType, description, ...rest } = form;
+      // Refresh from the service so the check covers actions added since the last load; a 404 means no catalog yet.
+      const catalogs = await getCatalogs().catch((err) => {
+        if (axios.isAxiosError(err) && err.response?.status === 404) {
+          return [];
+        }
+        throw err;
+      });
+      // Core catalogs (e.g. audit-service) win over tenant actions, so a clash anywhere would be ignored or confusing.
+      const clash = catalogs.find((catalog) =>
+        catalog.actions.some((action) => action.name.toLowerCase() === name.toLowerCase()),
+      );
+      if (clash) {
+        setError(
+          clash.application === namespace
+            ? `Action "${name}" already exists in the ${namespace} catalog.`
+            : `Action "${name}" already exists in the ${clash.application}${clash.core ? ' (core)' : ''} catalog.`,
+        );
+        return;
+      }
       await addAction(name, {
         version: 1,
         ...rest,
@@ -74,7 +94,12 @@ export function AuditActions() {
 
   const select = (key: 'category' | 'severity' | 'retentionClass', values: string[], label: string) => (
     <GoabFormItem label={label}>
-      <GoabDropdown name={key} value={form[key]} width="100%" onChange={(e) => setForm({ ...form, [key]: e.value as string })}>
+      <GoabDropdown
+        name={key}
+        value={form[key]}
+        width="100%"
+        onChange={(e) => setForm({ ...form, [key]: e.value as string })}
+      >
         {values.map((value) => (
           <GoabDropdownItem key={value} value={value} label={value} />
         ))}

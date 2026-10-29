@@ -12,9 +12,13 @@ import {
   FETCH_NOTIFICATION_CONFIGURATION,
   FETCH_CORE_NOTIFICATION_TYPES,
   UPDATE_NOTIFICATION_TYPE,
+  UPDATE_NOTIFICATION_TYPE_SUCCEEDED,
+  DELETE_NOTIFICATION_TYPE_SUCCEEDED,
   UPDATE_CONTACT_INFORMATION,
   FETCH_NOTIFICATION_METRICS,
   FetchNotificationMetricsSucceeded,
+  UpdateNotificationTypeSucceededService,
+  DeleteNotificationTypeSucceededService,
   UpdateEmailInformationAction,
   UPDATE_EMAIL_INFORMATION,
 } from './actions';
@@ -79,6 +83,12 @@ export function* fetchNotificationTypes(): SagaIterator {
   }
 }
 
+function* refreshNotificationTypes(action: { type: string }): SagaIterator {
+  if (action.type === FETCH_NOTIFICATION_CONFIGURATION) {
+    yield call(fetchNotificationTypes);
+  }
+}
+
 export function* fetchCoreNotificationTypes(): SagaIterator {
   const notificationServiceUrl: string = yield call(selectNotificationServiceUrl);
   const token: string = yield call(getAccessToken);
@@ -126,7 +136,7 @@ export function* deleteNotificationTypes(action: DeleteNotificationTypeAction): 
           headers: { Authorization: `Bearer ${token}` },
         }
       );
-      yield put(FetchNotificationConfigurationService());
+      yield put(DeleteNotificationTypeSucceededService(notificationType.id));
     } catch (err) {
       yield put(ErrorNotification({ error: err }));
     }
@@ -167,6 +177,7 @@ export function* updateNotificationType({ payload }: UpdateNotificationTypeActio
         // Without customized events, the tenant's customization of the core notification type is removed.
         if (isTenantType) {
           yield call(axios.delete, typeUrl, headers);
+          yield put(DeleteNotificationTypeSucceededService(payloadId));
         }
       } else {
         const definition = {
@@ -185,14 +196,16 @@ export function* updateNotificationType({ payload }: UpdateNotificationTypeActio
           attachmentPath: payload.attachmentPath,
         };
 
+        let savedType: NotificationItem;
         if (isCoreType || isTenantType) {
-          yield call(axios.patch, typeUrl, definition, headers);
+          const { data } = yield call(axios.patch, typeUrl, definition, headers);
+          savedType = data;
         } else {
-          yield call(axios.post, typesUrl, definition, headers);
+          const { data } = yield call(axios.post, typesUrl, definition, headers);
+          savedType = data;
         }
+        yield put(UpdateNotificationTypeSucceededService(savedType));
       }
-
-      yield put(FetchNotificationConfigurationService());
     } catch (err) {
       yield put(ErrorNotification({ error: err }));
     }
@@ -266,8 +279,11 @@ export function* fetchNotificationMetrics(): SagaIterator {
 }
 
 export function* watchNotificationSagas(): Generator {
-  // Only the newest refresh may publish results; an older read can finish after a save's refresh.
-  yield takeLatest(FETCH_NOTIFICATION_CONFIGURATION, fetchNotificationTypes);
+  // A mutation response is authoritative and cancels any older cache-backed read still in flight.
+  yield takeLatest(
+    [FETCH_NOTIFICATION_CONFIGURATION, UPDATE_NOTIFICATION_TYPE_SUCCEEDED, DELETE_NOTIFICATION_TYPE_SUCCEEDED],
+    refreshNotificationTypes,
+  );
   yield takeLatest(FETCH_CORE_NOTIFICATION_TYPES, fetchCoreNotificationTypes);
   yield takeEvery(DELETE_NOTIFICATION_TYPE, deleteNotificationTypes);
   yield takeEvery(UPDATE_NOTIFICATION_TYPE, updateNotificationType);

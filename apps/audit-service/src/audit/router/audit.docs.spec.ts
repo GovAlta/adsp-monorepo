@@ -63,7 +63,7 @@ describe('audit service API documentation', () => {
         .flatMap(([path, operations]) => Object.keys(operations as object).map((method) => `${method} ${path}`))
         .sort();
 
-      expect(served).toHaveLength(10);
+      expect(served).toHaveLength(11);
       expect(documented).toEqual(served);
     });
 
@@ -76,6 +76,15 @@ describe('audit service API documentation', () => {
       expect(MAX_JSON_FIELD_BYTES).toBe(16 * 1024);
       expect(write.description).toContain('16 KiB');
       expect(write.description).toContain('does not mean every event was stored');
+    });
+
+    it('documents rate limiting separately from buffer pressure', () => {
+      const write = compileSpecification().paths['/audit/v1/{namespace}/events'].post;
+
+      expect(write.responses['429'].headers['Retry-After'].schema.type).toBe('integer');
+      expect(write.responses['429'].description).toContain('No events in the request were stored');
+      expect(write.responses['503'].description).toContain('buffer is temporarily full');
+      expect(write.description).toContain('Admitted events consume allowance even if storage later fails');
     });
 
     it('documents every error status for each operation', () => {

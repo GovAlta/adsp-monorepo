@@ -18,10 +18,6 @@ paths:
           schema:
             type: string
         - $ref: '#/components/parameters/TenantId'
-        - $ref: '#/components/parameters/ActorId'
-        - $ref: '#/components/parameters/ScopeId'
-        - $ref: '#/components/parameters/From'
-        - $ref: '#/components/parameters/To'
         - $ref: '#/components/parameters/Top'
         - $ref: '#/components/parameters/After'
         - $ref: '#/components/parameters/Actor'
@@ -82,6 +78,15 @@ paths:
         including retained original input. A batch that cannot fit in an empty buffer
         returns 413 without storing any events; split it into smaller requests.
         Temporary buffer pressure returns 503 with Retry-After instead.
+
+        **Rate limit:** writes are limited per tenant and namespace, counted in events rather
+        than requests (one request of 500 events uses 500 units). The platform default is
+        500 events per second with a 500-event burst, per pod. A request over the limit
+        returns 429 with Retry-After and none of its events are stored. 429 means this
+        writer is sending too much; 503 means the service cannot keep up with all writers.
+        Admitted events consume allowance even if storage later fails; retries remain
+        rate limited during outages. Core defaults and tenant overrides are capped at
+        500 events per second per tenant and namespace, per pod.
 
         Configuration uses the SDK's existing error handling: HTTP and conversion
         failures can resolve to null. Such failures cannot reliably be distinguished
@@ -152,6 +157,14 @@ paths:
             tenant. A token whose `azp` is not a service URN is also refused.
         '413':
           description: Request body exceeds 20 MiB, or the enriched batch exceeds the 8 MiB buffer capacity. Split the batch; retrying it unchanged will not help.
+        '429':
+          description: The tenant and namespace exceeded the write rate limit. No events in the request were stored; resend the whole request after Retry-After.
+          headers:
+            Retry-After:
+              description: Seconds until enough allowance has accumulated for this request, assuming no competing writes for the same tenant and namespace.
+              schema:
+                type: integer
+                example: 1
         '503':
           description: Configuration, retention policy or durable storage is unavailable, or the buffer is temporarily full; retry without re-registering actions.
           headers:
@@ -170,10 +183,6 @@ paths:
         namespace listing. Actor `name` and `email` are included as recorded.
       parameters:
         - $ref: '#/components/parameters/TenantId'
-        - $ref: '#/components/parameters/ActorId'
-        - $ref: '#/components/parameters/ScopeId'
-        - $ref: '#/components/parameters/From'
-        - $ref: '#/components/parameters/To'
         - $ref: '#/components/parameters/Top'
         - $ref: '#/components/parameters/After'
         - $ref: '#/components/parameters/Actor'
@@ -243,10 +252,6 @@ paths:
         audit event with the number of events written.
       parameters:
         - $ref: '#/components/parameters/TenantId'
-        - $ref: '#/components/parameters/ActorId'
-        - $ref: '#/components/parameters/ScopeId'
-        - $ref: '#/components/parameters/From'
-        - $ref: '#/components/parameters/To'
         - $ref: '#/components/parameters/Actor'
         - $ref: '#/components/parameters/ResourceType'
         - $ref: '#/components/parameters/ResourceId'
@@ -284,10 +289,6 @@ paths:
           schema:
             type: string
         - $ref: '#/components/parameters/TenantId'
-        - $ref: '#/components/parameters/ActorId'
-        - $ref: '#/components/parameters/ScopeId'
-        - $ref: '#/components/parameters/From'
-        - $ref: '#/components/parameters/To'
         - $ref: '#/components/parameters/Actor'
         - $ref: '#/components/parameters/ResourceType'
         - $ref: '#/components/parameters/ResourceId'
@@ -398,7 +399,7 @@ components:
     CorrelationId:
       in: query
       name: correlationId
-      schema: { type: string, minLength: 1, maxLength: 128 }
+      schema: { type: string, minLength: 1 }
     SessionId:
       in: query
       name: sessionId
@@ -415,26 +416,6 @@ components:
     OccurredTo:
       in: query
       name: occurredTo
-      schema: { type: string, format: date-time }
-    ActorId:
-      in: query
-      name: actorId
-      description: Alias of `actor`, as named in the design. `actor` wins if both are supplied.
-      schema: { type: string }
-    ScopeId:
-      in: query
-      name: scopeId
-      description: Alias of `scope`, as named in the design. `scope` wins if both are supplied.
-      schema: { type: string }
-    From:
-      in: query
-      name: from
-      description: Alias of `occurredFrom`, as named in the design. `occurredFrom` wins if both are supplied.
-      schema: { type: string, format: date-time }
-    To:
-      in: query
-      name: to
-      description: Alias of `occurredTo`, as named in the design. `occurredTo` wins if both are supplied.
       schema: { type: string, format: date-time }
   responses:
     AuditEventCsv:

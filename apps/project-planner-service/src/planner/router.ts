@@ -1,10 +1,19 @@
-import { AdspId, EventService, isAllowedUser, UnauthorizedUserError } from '@abgov/adsp-service-sdk';
-import type { User } from '@abgov/adsp-service-sdk';
+import { EventService } from '@abgov/adsp-service-sdk';
 import { createValidationHandler, InvalidOperationError, NotFoundError } from '@core-services/core-common';
 import { randomUUID } from 'crypto';
-import { Request, RequestHandler, Router } from 'express';
+import { Request, Router } from 'express';
 import { body, param, query } from 'express-validator';
+import * as multer from 'multer';
 import { Logger } from 'winston';
+import {
+  getSolution,
+  getTenantId,
+  isPlannerAdmin,
+  loaded,
+  loadSolution,
+  requirePlannerAdmin,
+  requirePlannerUser,
+} from './access';
 import {
   buildHypotheses,
   buildNextSteps,
@@ -18,13 +27,17 @@ import {
   BlueprintServiceDetail,
   buildRuleBlueprint,
   chatHighlights,
-  isBlueprintOutOfDate,
   mergeBlueprintCore,
   recommendedServices,
   storedConsult,
   toSpecialistNote,
 } from './blueprint';
 import { buildComponents, catalogServices, driftMessage, unmappedServices } from './components';
+import {
+  extractProblemStatementText,
+  isSupportedProblemStatementFile,
+  MAX_PROBLEM_STATEMENT_UPLOAD_BYTES,
+} from './documentExtract';
 import {
   allUserEvidence,
   applyAnswerToFactors,
@@ -43,8 +56,12 @@ import {
 import { solutionCreated, solutionDeleted, solutionUpdated } from './events';
 import { mergeConsultation, PlannerLlm, SpecialistChatMessage, SpecialistIntent, SpecialistReply } from './llm';
 import { BUILT_IN_PATTERNS } from './patterns';
-import { PatternRepository, SolutionRepository, SpecialistChatRepository } from './repository';
-import { PlannerServiceRoles } from './roles';
+import {
+  PatternRepository,
+  SolutionRepository,
+  SolutionVersionRepository,
+  SpecialistChatRepository,
+} from './repository';
 import { getSpecialist, ruleBasedSpecialistReply, SPECIALISTS } from './specialists';
 import {
   AnalysisMode,
@@ -63,13 +80,15 @@ import {
   SpecialistStatus,
   StoredChatMessage,
 } from './types';
-import { changedSections, classifyBump, nextVersion, sectionHashes, VersionBump } from './versioning';
+import { versionContent } from './versioning';
+import { createVersionRouter } from './versionRouter';
 
 interface PlannerRouterProps {
   logger: Logger;
   solutionRepository: SolutionRepository;
   patternRepository: PatternRepository;
   specialistChatRepository: SpecialistChatRepository;
+  solutionVersionRepository: SolutionVersionRepository;
   eventService: EventService;
   // When provided, AI analysis is available and is the default mode.
   llm?: PlannerLlm;
@@ -77,11 +96,9 @@ interface PlannerRouterProps {
   readAdspCatalog?: () => Promise<string[]>;
 }
 
-const SOLUTION_KEY = 'solution';
 const MAX_CHAT_MESSAGES = 200;
 const SPECIALIST_INTENTS: SpecialistIntent[] = ['ask', 'recommend', 'design', 'validate', 'sample'];
 const SOLUTION_STATUSES = ['draft', 'analyzed', 'in-progress', 'completed', 'archived'];
-const ALL_ROLES = [PlannerServiceRoles.Admin, PlannerServiceRoles.User];
 
 const emptyState = (problemStatement = ''): SolutionState => ({
   problemStatement,
@@ -93,16 +110,6 @@ const emptyState = (problemStatement = ''): SolutionState => ({
   specialists: [],
   nextSteps: [],
 });
-
-const getTenantId = (req: Request): AdspId => {
-  const tenantId = req.tenant?.id;
-  if (!tenantId) {
-    throw new InvalidOperationError('Cannot perform planner operation without tenant context.');
-  }
-  return tenantId;
-};
-
-const isPlannerAdmin = (user: User, tenantId: AdspId) => isAllowedUser(user, tenantId, PlannerServiceRoles.Admin);
 
 const BUILT_IN_IDS = new Set(BUILT_IN_PATTERNS.map((p) => p.id));
 
@@ -182,76 +189,6 @@ const patternValidation = () => [
   body('knownUnknowns').optional().isArray({ max: 50 }),
 ];
 
-const requirePlannerUser: RequestHandler = (req, _res, next) => {
-  try {
-    const tenantId = getTenantId(req);
-    if (!isAllowedUser(req.user, tenantId, ALL_ROLES)) {
-      throw new UnauthorizedUserError('access planner', req.user);
-    }
-    next();
-  } catch (err) {
-    next(err);
-  }
-};
-
-const requirePlannerAdmin: RequestHandler = (req, _res, next) => {
-  try {
-    if (!isPlannerAdmin(req.user, getTenantId(req))) {
-      throw new UnauthorizedUserError('manage patterns', req.user);
-    }
-    next();
-  } catch (err) {
-    next(err);
-  }
-};
-
-async function loadSolution(repository: SolutionRepository, req: Request, id: string): Promise<Solution> {
-  const tenantId = getTenantId(req);
-  const solution = await repository.get(tenantId, id);
-  if (!solution) {
-    throw new NotFoundError('solution', id);
-  }
-  if (solution.createdById !== req.user.id && !isPlannerAdmin(req.user, tenantId)) {
-    throw new UnauthorizedUserError('access solution', req.user);
-  }
-  const defaulted: Solution = {
-    version: '1.0',
-    versionHistory: [],
-    lastExportHashes: {},
-    exportedOnce: false,
-    ...solution,
-  };
-  if (!defaulted.exportedOnce && defaulted.versionHistory.length > 0) {
-    defaulted.exportedOnce = true;
-  }
-  return defaulted;
-}
-
-const getSolution =
-  (repository: SolutionRepository): RequestHandler =>
-  async (req, _res, next) => {
-    try {
-      req[SOLUTION_KEY] = await loadSolution(repository, req, req.params.id);
-      next();
-    } catch (err) {
-      next(err);
-    }
-  };
-
-const loaded = (req: Request): Solution => req[SOLUTION_KEY];
-
-// The user rejected these, so the harness never sees them; the saved solution keeps them.
-const withoutRejectedComponents = (state: SolutionState): SolutionState =>
-  state.blueprint?.components
-    ? {
-        ...state,
-        blueprint: {
-          ...state.blueprint,
-          components: state.blueprint.components.filter((c) => c.review !== 'rejected'),
-        },
-      }
-    : state;
-
 // Regenerating renumbers the components, so a review follows its component by service and name.
 const withPreviousReviews = (
   components: BlueprintComponent[],
@@ -302,12 +239,17 @@ export function createPlannerRouter({
   solutionRepository,
   patternRepository,
   specialistChatRepository,
+  solutionVersionRepository,
   eventService,
   llm,
   readAdspCatalog,
 }: PlannerRouterProps): Router {
   const router = Router();
   const validateId = createValidationHandler(param('id').isUUID());
+  const uploadProblemStatementFile = multer({
+    storage: multer.memoryStorage(),
+    limits: { fileSize: MAX_PROBLEM_STATEMENT_UPLOAD_BYTES },
+  });
 
   // Undefined keys mean the catalog could not be read; candidates are live services missing from the component map.
   async function readCatalog(): Promise<{ keys?: string[]; candidates: string[] }> {
@@ -646,6 +588,39 @@ export function createPlannerRouter({
     res.send({ results: SPECIALISTS });
   });
 
+  router.post(
+    '/documents/extract',
+    requirePlannerUser,
+    uploadProblemStatementFile.single('file'),
+    async (req, res, next) => {
+      try {
+        const file = req.file;
+        if (!file) {
+          throw new InvalidOperationError('No file was uploaded.');
+        }
+        if (!isSupportedProblemStatementFile(file.originalname)) {
+          throw new InvalidOperationError(
+            `${file.originalname} is not a supported format. Upload a Markdown (.md), Word (.docx) or PDF (.pdf) file.`,
+          );
+        }
+        let text: string;
+        try {
+          text = await extractProblemStatementText(file.buffer, file.originalname);
+        } catch (err) {
+          throw new InvalidOperationError(`Could not read ${file.originalname}: ${(err as Error).message}`);
+        }
+        if (!text) {
+          throw new InvalidOperationError(
+            `No readable text was found in ${file.originalname}. Try a different file or enter the problem statement manually.`,
+          );
+        }
+        res.send({ text });
+      } catch (err) {
+        next(err);
+      }
+    },
+  );
+
   router.get(
     '/solutions',
     requirePlannerUser,
@@ -693,12 +668,10 @@ export function createPlannerRouter({
           createdByName: req.user.name,
           createdOn: now,
           updatedOn: now,
-          version: '1.0',
-          versionHistory: [],
-          lastExportHashes: {},
-          exportedOnce: false,
+          version: 1,
           state: emptyState(req.body.problemStatement),
         });
+        await solutionVersionRepository.create(tenantId, solution.id, versionContent(solution, []));
         res.status(201).send(solution);
         eventService.send(solutionCreated(req.user, solution));
         logger.info(`Created solution ${solution.name} (ID: ${solution.id}).`, {
@@ -871,6 +844,14 @@ export function createPlannerRouter({
         const confidence = computeConfidence(factors);
         const ready = confidence >= DISCOVERY_THRESHOLD || req.body.force === true;
         let reply = aiDiscovery?.reply || ruleDiscoveryReply(factors, confidence, ready);
+        if (req.body.message) {
+          const priorConfidence = solution.state.discovery?.confidence ?? 0;
+          const confidenceWithoutThisReply = computeConfidence(ruleAssess(userEvidence(problem, prior)));
+          const fromEarlierDetails = confidenceWithoutThisReply - priorConfidence;
+          if (confidence > priorConfidence && fromEarlierDetails >= 10) {
+            reply = `${reply} (Some of that increase comes from details already in the problem statement or earlier answers, not just this reply.)`;
+          }
+        }
         if (req.body.force === true && confidence < DISCOVERY_THRESHOLD) {
           reply = `${reply}\n\nProceeding with a proposed solution at ${confidence}% confidence, as you asked. Expect more open questions and assumptions.`;
         }
@@ -1001,63 +982,8 @@ export function createPlannerRouter({
     },
   );
 
-  router.get(
-    '/solutions/:id/export',
-    requirePlannerUser,
-    validateId,
-    getSolution(solutionRepository),
-    async (req, res, next) => {
-      try {
-        const solution = loaded(req);
-        const currentHashes = sectionHashes(solution);
-        const changed = changedSections(solution.lastExportHashes, currentHashes);
-        const isInitial = !solution.exportedOnce;
-        const bump: VersionBump = isInitial ? 'none' : classifyBump(changed);
-
-        let { version, versionHistory } = solution;
-        let lastUpdated = versionHistory[versionHistory.length - 1]?.changedAt || solution.updatedOn.toISOString();
-        if (bump !== 'none') {
-          version = nextVersion(solution.version, bump);
-          const changedAt = new Date().toISOString();
-          versionHistory = [
-            ...versionHistory,
-            { version, changedAt, changedBy: req.user.name, changedSections: changed },
-          ];
-          lastUpdated = changedAt;
-        }
-        if (bump !== 'none' || isInitial) {
-          await solutionRepository.save({
-            ...solution,
-            version,
-            versionHistory,
-            lastExportHashes: currentHashes,
-            exportedOnce: true,
-          });
-        }
-
-        res.setHeader('Content-Disposition', `attachment; filename="planner-${solution.id}.json"`);
-        res.send({
-          exportedAt: new Date().toISOString(),
-          id: solution.id,
-          name: solution.name,
-          description: solution.description,
-          scenario: solution.scenario,
-          status: solution.status,
-          createdByName: solution.createdByName,
-          createdOn: solution.createdOn,
-          updatedOn: solution.updatedOn,
-          version,
-          lastUpdated,
-          changedSections: bump === 'none' ? [] : changed,
-          initial: isInitial,
-          blueprintOutOfDate: isBlueprintOutOfDate(solution.state),
-          versionHistory,
-          state: withoutRejectedComponents(solution.state),
-        });
-      } catch (err) {
-        next(err);
-      }
-    },
+  router.use(
+    createVersionRouter({ solutionRepository, specialistChatRepository, solutionVersionRepository, eventService }),
   );
 
   router.post(
@@ -1091,7 +1017,12 @@ export function createPlannerRouter({
     req: Request,
     solution: Solution,
     service: string,
-    { question, proposal, mode }: { question?: string; proposal?: string; mode?: AnalysisMode },
+    {
+      question,
+      proposal,
+      mode,
+      initiatedBy,
+    }: { question?: string; proposal?: string; mode?: AnalysisMode; initiatedBy?: 'planner' },
   ): Promise<{ result: ConsultResult; state: SolutionState }> {
     const baseResult = consultSpecialist(solution.state, service);
     if (!baseResult) {
@@ -1123,7 +1054,13 @@ export function createPlannerRouter({
     const at = new Date().toISOString();
     const asked: string = question || 'Consult on this solution';
     await recordExchange(req, existingChat, { service: result.service, solutionId: solution.id, title: asked }, [
-      { role: 'user', content: proposal ? `${asked}\n\nPlan to validate:\n${proposal}` : asked, at, intent: 'consult' },
+      {
+        role: 'user',
+        content: proposal ? `${asked}\n\nPlan to validate:\n${proposal}` : asked,
+        at,
+        intent: 'consult',
+        initiatedBy,
+      },
       {
         role: 'assistant',
         content: result.advice || result.reason,
@@ -1159,6 +1096,7 @@ export function createPlannerRouter({
     async (req, res, next) => {
       try {
         const solution = loaded(req);
+        const isFirstBlueprint = !solution.state.blueprint;
         const hypothesis = solution.state.hypotheses[0];
         if (!hypothesis) {
           throw new InvalidOperationError('Analyze the problem before generating a blueprint.');
@@ -1179,9 +1117,24 @@ export function createPlannerRouter({
             notes.push(toSpecialistNote(storedConsult(saved), 'saved-consultation', highlights, saved.at));
             continue;
           }
-          const { result, state: updatedState } = await runConsult(req, working, service, { mode: requestedMode });
-          working = { ...working, state: updatedState };
-          notes.push(toSpecialistNote(result, result.advice ? 'ai' : 'rules', highlights, new Date().toISOString()));
+          try {
+            const { result, state: updatedState } = await runConsult(req, working, service, {
+              mode: requestedMode,
+              initiatedBy: 'planner',
+            });
+            working = { ...working, state: updatedState };
+            notes.push(toSpecialistNote(result, result.advice ? 'ai' : 'rules', highlights, new Date().toISOString()));
+          } catch (err) {
+            logger.warn(`Automatic consultation with ${service} failed: ${(err as Error).message}`);
+            await recordExchange(req, chat, { service, solutionId: solution.id, title: 'Consult on this solution' }, [
+              {
+                role: 'assistant',
+                content: 'Last consultation failed. Try consulting this specialist again.',
+                at: new Date().toISOString(),
+                intent: 'consult',
+              },
+            ]);
+          }
         }
 
         const patterns = await getPatterns(req, patternRepository);
@@ -1231,7 +1184,13 @@ export function createPlannerRouter({
           generated?.notCoveredByAdsp,
           components,
         );
-        res.send(await persist(req, { ...solution, state: { ...working.state, blueprint } }, 'blueprint'));
+        const saved = await persist(req, { ...solution, state: { ...working.state, blueprint } }, 'blueprint');
+        if (isFirstBlueprint) {
+          const tenantId = getTenantId(req);
+          const savedChats = await specialistChatRepository.findBySolution(tenantId, saved.id);
+          await solutionVersionRepository.create(tenantId, saved.id, versionContent(saved, savedChats));
+        }
+        res.send(saved);
       } catch (err) {
         next(err);
       }

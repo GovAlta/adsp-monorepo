@@ -11,6 +11,7 @@ import { requireAuditRole } from '../utils/authorization';
 import { SelfAuditor } from '../utils/self-audit';
 import { validateWriteRequest } from '../utils/request-validation';
 import { writeEvents } from './write-events';
+import { limitWriteRate, WriteRateLimitOptions } from './rate-limit';
 import { failedEventHandler, validateFailedEventId, validateFailedEventPage } from './failed-events';
 import { readEvent, readEvents, readNamespaces, validateEventId, validateEventQuery } from './read-events';
 import { exportEvents } from './export-events';
@@ -27,6 +28,8 @@ interface AuditRouterOptions {
   serviceId?: AdspId;
   // Overrides the auditor created from serviceId, so the host can observe its failure count.
   auditor?: SelfAuditor;
+  // Applies per tenant and namespace event rate limiting to writes when provided.
+  rateLimit?: WriteRateLimitOptions;
 }
 
 export const validateTenantContext = createValidationHandler(
@@ -70,12 +73,28 @@ export const readActions =
     }
   };
 
+export const readCatalogs =
+  (catalogs: CatalogService): RequestHandler =>
+  async (req, res, next) => {
+    try {
+      const listings = await catalogs.listCatalogs(req.tenant?.id);
+      res.send(
+        listings.map(({ application, core, actions }) => ({
+          application,
+          core,
+          actions: Object.entries(actions).map(([name, definition]) => ({ ...definition, name })),
+        })),
+      );
+    } catch (err) {
+      next(err);
+    }
+  };
+
 export function createAuditRouter(options: AuditRouterOptions): Router {
   const router = Router();
   // Without a submitter the auditor still exists, so unrecorded reads are logged and counted rather than silently skipped.
   const auditor =
-    options.auditor ??
-    (options.serviceId ? new SelfAuditor({ ...options, serviceId: options.serviceId }) : undefined);
+    options.auditor ?? (options.serviceId ? new SelfAuditor({ ...options, serviceId: options.serviceId }) : undefined);
   const validateNamespace = createValidationHandler(
     param('namespace').isString().isLength({ min: 1, max: APPLICATION_MAX_LENGTH }).matches(APPLICATION_PATTERN),
   );
@@ -84,6 +103,12 @@ export function createAuditRouter(options: AuditRouterOptions): Router {
     assertAuthenticatedHandler,
     requireAuditRole(AuditServiceRoles.Reader),
     readNamespaces(options.reader),
+  );
+  router.get(
+    '/actions',
+    assertAuthenticatedHandler,
+    requireAuditRole(AuditServiceRoles.Reader),
+    readCatalogs(options.catalogs),
   );
   router.get(
     '/:namespace/actions',
@@ -137,6 +162,7 @@ export function createAuditRouter(options: AuditRouterOptions): Router {
     validateNamespace,
     assertWriteScope,
     validateWriteRequest,
+    ...(options.rateLimit ? [limitWriteRate(options.rateLimit)] : []),
     writeEvents(options),
   );
   router.get(

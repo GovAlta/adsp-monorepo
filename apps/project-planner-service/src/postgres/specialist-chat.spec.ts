@@ -166,6 +166,27 @@ describe('PostgresSpecialistChatRepository', () => {
     });
   });
 
+  describe('findBySolution', () => {
+    const queryMock = { where: jest.fn(), orderBy: jest.fn() };
+
+    beforeEach(() => {
+      queryMock.where.mockReturnValue(queryMock);
+      knexMock.mockReturnValueOnce(queryMock);
+    });
+
+    it('returns every chat linked to the solution, whoever started it, oldest first', async () => {
+      queryMock.orderBy.mockResolvedValueOnce([record]);
+
+      const result = await repository.findBySolution(tenantId, record.solutionId);
+
+      expect([queryMock.where.mock.calls[0], queryMock.orderBy.mock.calls[0], result.map(plain)]).toEqual([
+        [{ tenant: tenantId.toString(), solutionId: record.solutionId }],
+        ['createdOn', 'asc'],
+        [plain(chat)],
+      ]);
+    });
+  });
+
   describe('get', () => {
     const queryMock = { where: jest.fn(), limit: jest.fn() };
 

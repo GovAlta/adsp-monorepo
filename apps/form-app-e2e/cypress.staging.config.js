@@ -10,7 +10,7 @@ module.exports = defineConfig({
     'core-api-user': 'dio-qa-dev@gov.ab.ca',
     coreApiUserPassword: '',
     'core-api-token': '',
-    'client-id': 'auto-test-client',
+    'client-id': 'urn:ads:autotest:auto-test-client',
     clientSecret: '',
     email: 'auto.test@gov.ab.ca',
     password: '',

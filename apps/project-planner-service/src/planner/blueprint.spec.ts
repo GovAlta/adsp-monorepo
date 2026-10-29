@@ -240,6 +240,13 @@ describe('buildRuleBlueprint', () => {
     expect(buildRuleBlueprint(grantState(), pattern).overview.stakeholders).toEqual(['Grant officer', 'Applicant']);
   });
 
+  it('lists each actor as a role with the app role and product type left open', () => {
+    expect(buildRuleBlueprint(grantState(), pattern).overview.roles).toEqual([
+      { actor: 'Grant officer', appRole: '', productType: '' },
+      { actor: 'Applicant', appRole: '', productType: '' },
+    ]);
+  });
+
   it('includes hypothesis unknowns and a specialist risk in the overview risks', () => {
     const { risks } = buildRuleBlueprint(grantState(), pattern).overview;
 

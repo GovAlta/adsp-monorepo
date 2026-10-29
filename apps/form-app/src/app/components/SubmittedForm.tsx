@@ -4,9 +4,20 @@ import { AppState } from '../state';
 import { GoabCallout } from '@abgov/react-components';
 import { Grid, GridItem } from '@core-services/app-common';
 import { JsonForms } from '@jsonforms/react';
-import { FunctionComponent, useEffect } from 'react';
+import { FunctionComponent, useEffect, useMemo } from 'react';
 import styled from 'styled-components';
-import { Form, FormDefinition, metaDataSelector, AppDispatch, downloadFile, downloadFormPdf, store } from '../state';
+import {
+  Form,
+  FormDefinition,
+  metaDataSelector,
+  AppDispatch,
+  downloadFile,
+  downloadFormPdf,
+  fileBusySelector,
+  filesSelector,
+  loadFileMetadata,
+  store,
+} from '../state';
 import { useDispatch, useSelector } from 'react-redux';
 import { checkPdfFileSelector, getSocketChannel } from '../state';
 import { DownloadLink } from '../containers/DownloadLink';
@@ -48,9 +59,43 @@ const setReadOnly = (element) => {
   return element;
 };
 
+const normalizeFilePropertyId = (path: string): string => path.replace(/(\.\d+|\[\d+\])$/, '');
+
+const extractFileRefsFromData = (
+  value: unknown,
+  currentPath = '',
+  refs: Record<string, string> = {},
+): Record<string, string> => {
+  if (typeof value === 'string') {
+    if (value.startsWith('urn:ads:platform:file-service:')) {
+      refs[currentPath] = value;
+    }
+    return refs;
+  }
+
+  if (Array.isArray(value)) {
+    value.forEach((entry, index) => {
+      const nextPath = currentPath ? `${currentPath}.${index}` : `${index}`;
+      extractFileRefsFromData(entry, nextPath, refs);
+    });
+    return refs;
+  }
+
+  if (value && typeof value === 'object') {
+    Object.entries(value).forEach(([key, entry]) => {
+      const nextPath = currentPath ? `${currentPath}.${key}` : key;
+      extractFileRefsFromData(entry, nextPath, refs);
+    });
+  }
+
+  return refs;
+};
+
 export const SubmittedForm: FunctionComponent<ApplicationStatusProps> = ({ definition, form, data }) => {
   const dispatch = useDispatch<AppDispatch>();
   const pdfFileExists = useSelector((state: AppState) => checkPdfFileSelector(state) || checkExistingPdfFile(state));
+  const attachedFiles = useSelector(filesSelector);
+  const fileBusy = useSelector(fileBusySelector);
 
   const socketChannel = useSelector((state: AppState) => {
     return getSocketChannel(state);
@@ -82,18 +127,32 @@ export const SubmittedForm: FunctionComponent<ApplicationStatusProps> = ({ defin
     element.click();
   };
 
-  // Mount-only effect: Check if PDF already exists (e.g., from a previous session or page reload).
-  // Empty deps are intentional - we only want this initial check once, not on every state change.
-  // Subsequent PDF status updates come through the socket stream, not this effect.
+  const fileQueryUrn = form?.urn;
+  const inferredFileRefs = useMemo<Record<string, string>>(() => extractFileRefsFromData(data || {}), [data]);
+
+  // PDF checks/downloads require a form URN; submission URN fails gateway validation.
   useEffect(() => {
     if (definition.generatesPdf) {
-      if (pdfFileExists === null && form?.urn) {
-        dispatch(checkPdfFile(form.submission?.id ? form.submission.urn : form?.urn));
+      if (pdfFileExists === null && fileQueryUrn) {
+        dispatch(checkPdfFile(fileQueryUrn));
       }
     }
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [definition.generatesPdf, dispatch, fileQueryUrn, pdfFileExists]);
 
   const metadata = useSelector(metaDataSelector);
+  const hasAttachedFiles = !!attachedFiles && Object.keys(attachedFiles).length > 0;
+  const metadataLoaded = !!metadata && Object.keys(metadata).length > 0;
+  const isMetadataReady = !hasAttachedFiles || metadataLoaded || fileBusy.loaded;
+
+  useEffect(() => {
+    Object.entries(inferredFileRefs as Record<string, string>).forEach(([propertyId, urn]) => {
+      const propertyIdRoot = normalizeFilePropertyId(propertyId);
+      const existingMetadata = metadata[propertyIdRoot];
+      if (!existingMetadata?.find((m) => m.urn === urn)) {
+        dispatch(loadFileMetadata({ propertyId: propertyIdRoot, urn }));
+      }
+    });
+  }, [dispatch, inferredFileRefs, metadata]);
 
   useEffect(() => {
     if (!socketChannel && definition.generatesPdf) {
@@ -116,30 +175,29 @@ export const SubmittedForm: FunctionComponent<ApplicationStatusProps> = ({ defin
           Your application was received on {form.submitted.toFormat('LLLL d, yyyy')} and we're working on it.
           {definition.generatesPdf && pdfFileExists && (
             <div>
-              <DownloadLink
-                link={() => downloadPDFFile(form.submission?.id ? form.submission.urn : form?.urn)}
-                text="Download PDF copy"
-              />
+              <DownloadLink link={() => downloadPDFFile(fileQueryUrn)} text="Download PDF copy" />
             </div>
           )}
         </GoabCallout>
         <Heading>The submitted form for your reference</Heading>
-        <ContextProvider
-          fileManagement={{
-            fileList: metadata,
-            downloadFile: downloadFormFile,
-          }}
-          isFormSubmitted={true}
-        >
-          <JsonForms
-            readonly={true}
-            schema={definition.dataSchema}
-            uischema={readOnlyUiSchema(definition.uiSchema)}
-            data={data}
-            validationMode="NoValidation"
-            renderers={GoAReviewRenderers}
-          />
-        </ContextProvider>
+        {isMetadataReady && (
+          <ContextProvider
+            fileManagement={{
+              fileList: metadata,
+              downloadFile: downloadFormFile,
+            }}
+            isFormSubmitted={true}
+          >
+            <JsonForms
+              readonly={true}
+              schema={definition.dataSchema}
+              uischema={readOnlyUiSchema(definition.uiSchema)}
+              data={data}
+              validationMode="NoValidation"
+              renderers={GoAReviewRenderers}
+            />
+          </ContextProvider>
+        )}
       </GridItem>
       <GridItem md={1} />
     </Grid>

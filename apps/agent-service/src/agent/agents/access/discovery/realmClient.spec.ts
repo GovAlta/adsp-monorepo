@@ -1,8 +1,8 @@
 import type { User } from '@abgov/adsp-service-sdk';
 import axios from 'axios';
 import * as HttpStatusCodes from 'http-status-codes';
-import { createRealmClient, mapRequestError } from './realmClient';
-import { ACCESS_DISCOVERY_MESSAGES } from './types';
+import { createRealmClient, mapRequestError, RealmClient, resolveRealmRecord } from './realmClient';
+import { ACCESS_DISCOVERY_MESSAGES, AvailableAccessScope } from './types';
 
 jest.mock('axios', () => {
   const actual = jest.requireActual('axios');
@@ -46,6 +46,22 @@ describe('mapRequestError', () => {
 
   it('maps a timeout or network failure to ENVIRONMENT_UNREACHABLE', () => {
     expect(mapRequestError(axiosError())).toMatchObject({ status: 'unreachable', reason: 'ENVIRONMENT_UNREACHABLE' });
+  });
+
+  it('uses the reasons the caller gives for forbidden and not found', () => {
+    const reasons = { forbidden: 'NO_CLIENT_PERMISSION', notFound: 'CLIENT_NOT_FOUND' } as const;
+
+    expect(mapRequestError(axiosError(HttpStatusCodes.FORBIDDEN), reasons)).toMatchObject({
+      status: 'unavailable',
+      reason: 'NO_CLIENT_PERMISSION',
+    });
+    expect(mapRequestError(axiosError(HttpStatusCodes.NOT_FOUND), reasons)).toMatchObject({
+      status: 'not-found',
+      reason: 'CLIENT_NOT_FOUND',
+    });
+    expect(mapRequestError(axiosError(HttpStatusCodes.UNAUTHORIZED), reasons)).toMatchObject({
+      reason: 'SESSION_EXPIRED',
+    });
   });
 
   it('rethrows unexpected HTTP failures', () => {
@@ -189,5 +205,60 @@ describe('createRealmClient', () => {
         client.getRealmOpenIdConfiguration('https://access.adsp-dev.gov.ab.ca', 'realm-1'),
       ).resolves.toMatchObject({ ok: false, problem: { reason: 'ENVIRONMENT_UNREACHABLE' } });
     });
+  });
+});
+
+describe('resolveRealmRecord', () => {
+  const environment = {
+    id: 'dev',
+    label: 'Development',
+    host: 'https://access.adsp-dev.gov.ab.ca',
+    readOnly: true,
+  } as const;
+  const scope = (id: string, kind: 'tenant' | 'core'): AvailableAccessScope => ({
+    status: 'available',
+    message: '',
+    environment,
+    realm: { id, kind },
+    readOnly: true,
+  });
+
+  function realmClientReturning(result: Awaited<ReturnType<RealmClient['getTenantRealm']>>) {
+    return { getTenantRealm: jest.fn().mockResolvedValue(result) } as unknown as RealmClient;
+  }
+
+  it('returns the core realm for a core user without reading a tenant', async () => {
+    const realmClient = realmClientReturning({ ok: true, value: { realm: 'unused', name: 'Unused', kind: 'tenant' } });
+
+    await expect(resolveRealmRecord(realmClient, user, scope('core', 'core'))).resolves.toEqual({
+      ok: true,
+      value: { realm: 'core', name: 'Core', kind: 'core' },
+    });
+    expect(realmClient.getTenantRealm).not.toHaveBeenCalled();
+  });
+
+  it("returns the tenant realm when it matches the user's sign-in realm", async () => {
+    const tenantRealm = { ok: true, value: { realm: 'realm-1', name: 'Tenant One', kind: 'tenant' } } as const;
+
+    await expect(
+      resolveRealmRecord(realmClientReturning(tenantRealm), user, scope('realm-1', 'tenant')),
+    ).resolves.toEqual(tenantRealm);
+  });
+
+  it("reports REALM_MISMATCH when the tenant realm differs from the user's sign-in realm", async () => {
+    const realmClient = realmClientReturning({ ok: true, value: { realm: 'realm-2', name: 'Other', kind: 'tenant' } });
+
+    await expect(resolveRealmRecord(realmClient, user, scope('realm-1', 'tenant'))).resolves.toMatchObject({
+      ok: false,
+      problem: { reason: 'REALM_MISMATCH' },
+    });
+  });
+
+  it('passes through a problem reading the tenant', async () => {
+    const problem = { status: 'unavailable', reason: 'NO_PERMISSION', message: 'No permission' } as const;
+
+    await expect(
+      resolveRealmRecord(realmClientReturning({ ok: false, problem }), user, scope('realm-1', 'tenant')),
+    ).resolves.toEqual({ ok: false, problem });
   });
 });

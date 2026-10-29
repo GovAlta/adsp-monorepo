@@ -29,6 +29,13 @@ describe('AuditEventDetails', () => {
     expect(details).toHaveTextContent('Severity: high');
   });
 
+  it('shows the session ID and joins the scope IDs', () => {
+    render(<AuditEventDetails event={{ ...baseEvent, sessionId: 'session-1', scopeIds: ['s-1', 's-2'] }} />);
+    const details = screen.getByTestId('audit-event-details');
+    expect(details).toHaveTextContent('Session ID: session-1');
+    expect(details).toHaveTextContent('Scope: s-1, s-2');
+  });
+
   it('shows the change set and metadata only when present', () => {
     const { rerender } = render(<AuditEventDetails event={baseEvent} />);
     expect(screen.queryByTestId('audit-event-changeset-after')).not.toBeInTheDocument();

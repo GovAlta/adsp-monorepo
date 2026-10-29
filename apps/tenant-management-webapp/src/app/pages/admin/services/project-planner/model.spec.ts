@@ -23,8 +23,7 @@ describe('project-planner model', () => {
       status: 'draft',
       createdByName: 'Pat Planner',
       updatedOn: '2026-10-12T00:00:00Z',
-      version: '1.0',
-      versionHistory: [],
+      version: 1,
       state,
     };
 

@@ -4,7 +4,7 @@ import * as express from 'express';
 import * as request from 'supertest';
 import { createLogger, transports } from 'winston';
 import * as HttpStatusCodes from 'http-status-codes';
-import { CatalogService, RetentionService } from '../model';
+import { CatalogApplicationSource, CatalogService, RetentionService } from '../model';
 import { createAuditRouter, assertTenantContext, validateTenantContext } from './index';
 import { AuditServiceRoles } from '../roles';
 import * as authorization from '../utils/authorization';
@@ -27,7 +27,8 @@ describe('GET /audit/v1/:namespace/actions', () => {
     getServiceConfiguration: jest.fn(),
     getServiceConfigurationRevision: jest.fn(),
   };
-  const catalogs = new CatalogService(configuration, logger);
+  const source: jest.Mocked<CatalogApplicationSource> = { listApplications: jest.fn() };
+  const catalogs = new CatalogService(configuration, logger, source);
   const definition = {
     version: 1,
     category: 'administrative',
@@ -164,6 +165,7 @@ describe('GET /audit/v1/:namespace/actions', () => {
 
     expect(routes).toEqual([
       { path: '/namespaces', roles: [AuditServiceRoles.Reader] },
+      { path: '/actions', roles: [AuditServiceRoles.Reader] },
       { path: '/:namespace/actions', roles: [AuditServiceRoles.Reader] },
       { path: '/events/export', roles: [AuditServiceRoles.Reader] },
       { path: '/:namespace/events/export', roles: [AuditServiceRoles.Reader] },
@@ -174,6 +176,61 @@ describe('GET /audit/v1/:namespace/actions', () => {
       { path: '/failed-events', roles: [AuditServiceRoles.Admin] },
       { path: '/failed-events/:id/replay', roles: [AuditServiceRoles.Admin] },
     ]);
+  });
+
+  describe('GET /audit/v1/actions', () => {
+    it('lists tenant and Core catalogs with named actions and the core flag', async () => {
+      source.listApplications.mockImplementation(async (tenantId) =>
+        tenantId ? ['case-service'] : ['audit-service', 'case-service'],
+      );
+      configuration.getServiceConfiguration.mockImplementation(async (name: string) => ({
+        kind: 'actionCatalog',
+        application: name.substring('actions-'.length),
+        actions: { 'case.update': definition },
+      }));
+
+      const result = await request(createApp()).get('/audit/v1/actions').expect(HttpStatusCodes.OK);
+
+      expect(result.body).toEqual([
+        { application: 'audit-service', core: true, actions: [{ ...definition, name: 'case.update' }] },
+        { application: 'case-service', core: true, actions: [{ ...definition, name: 'case.update' }] },
+      ]);
+      expect(source.listApplications).toHaveBeenCalledWith();
+      expect(source.listApplications).toHaveBeenCalledWith(tenantA);
+    });
+
+    it('marks tenant-only catalogs as not core', async () => {
+      source.listApplications.mockImplementation(async (tenantId) => (tenantId ? ['case-service'] : []));
+
+      const result = await request(createApp()).get('/audit/v1/actions').expect(HttpStatusCodes.OK);
+
+      expect(result.body).toMatchObject([{ application: 'case-service', core: false }]);
+    });
+
+    it('rejects callers without audit-reader before listing', async () => {
+      await request(createApp({ ...user, roles: [] }))
+        .get('/audit/v1/actions')
+        .expect(HttpStatusCodes.FORBIDDEN);
+
+      expect(source.listApplications).not.toHaveBeenCalled();
+    });
+
+    it('rejects a tenant attempting to select another tenant', async () => {
+      await request(createApp())
+        .get('/audit/v1/actions')
+        .query({ tenantId: tenantB.toString() })
+        .expect(HttpStatusCodes.FORBIDDEN);
+
+      expect(source.listApplications).not.toHaveBeenCalled();
+    });
+
+    it('returns 503 when catalogs cannot be listed', async () => {
+      source.listApplications.mockRejectedValue(new Error('Configuration service unavailable'));
+
+      const result = await request(createApp()).get('/audit/v1/actions').expect(HttpStatusCodes.SERVICE_UNAVAILABLE);
+
+      expect(result.body.errorMessage).toContain('temporarily unavailable');
+    });
   });
 
   it.each(['invalid tenant', 'urn:ads:platform:file-service:v1:/files/one'])(
