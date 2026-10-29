@@ -618,6 +618,45 @@ describe('utils', () => {
       expect(md).toContain('every AC in the Acceptance table passes or has a difference the user accepted');
     });
 
+    it('writes one .mcp.json that both Copilot and Claude Code read', () => {
+      const md = harnessToMarkdown(solution());
+
+      expect(md).toContain('`.mcp.json` in the project folder; Copilot in VS Code and Claude Code both read it');
+      expect(md).toContain(
+        '  "mcpServers": {\n' +
+          '    "adsp-sdk": { "type": "stdio", "command": "npx", "args": ["-y", "@abgov/adsp-sdk-mcp-server"] },',
+      );
+    });
+
+    it('finds why a server failed before asking the user', () => {
+      const md = harnessToMarkdown(solution());
+
+      expect(md).toContain('`npm view @abgov/adsp-sdk-mcp-server version`');
+      expect(md).toContain('timeout means the user is off the GoA network or VPN');
+    });
+
+    it('has Copilot start new servers with a message and Claude Code with a restart', () => {
+      const md = harnessToMarkdown(solution());
+
+      expect(md).toContain('ask the user to send any message, which starts new servers');
+      expect(md).toContain("ask the user to restart the\n  session, approve the project's servers");
+      expect(md).toContain(
+        '`Follow docs/planner-permit-intake-harness.md and continue from docs/permit-intake-build-notes.md.`',
+      );
+    });
+
+    it('falls back to the public GoA and ADSP sites instead of its own UI or services', () => {
+      const md = harnessToMarkdown(solution());
+
+      expect(md).toContain('https://design.alberta.ca/examples/');
+      expect(md).toContain('https://design.alberta.ca/get-started/developers/setup/');
+      expect(md).toContain('https://govalta.github.io/adsp-monorepo/');
+      expect(md).toContain(
+        '- Never write your own UI in place of a GoA component, or your own code in place of an ADSP\n' +
+          '     service the plan names.',
+      );
+    });
+
     it('keeps replacement patterns in the name literal', () => {
       expect(harnessToMarkdown({ ...solution(), name: 'Fees $& more' })).toContain('# Build Fees $& more: harness');
     });
