@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { Logger } from 'winston';
 import { ConsultResult } from './analysis';
+import { AcceptanceReference } from './acceptance';
 import {
   createLlmFromEnv,
   LlmConfig,
@@ -12,7 +13,7 @@ import {
 } from './llm';
 import { BUILT_IN_PATTERNS } from './patterns';
 import { getSpecialist } from './specialists';
-import { SolutionState, SpecialistNote } from './types';
+import { SolutionBlueprint, SolutionState, SpecialistNote } from './types';
 
 jest.mock('axios');
 
@@ -937,6 +938,70 @@ describe('MaasLlm', () => {
       await expect(buildLlm().blueprint(emptyState(), [])).rejects.toThrow(
         'Model response did not contain a usable blueprint.',
       );
+    });
+  });
+
+  describe('acceptanceCriteria', () => {
+    const plan = {
+      overview: { title: 'Grants', summary: 'Grant intake and review.' },
+      workflows: [{ name: 'Apply', actors: ['Applicant'], steps: ['Submit the form'] }],
+    } as SolutionBlueprint;
+    const references: AcceptanceReference[] = [
+      { key: 'workflow:1', label: 'Workflow "Apply"', text: 'Actors: Applicant. Steps: (1) Submit the form' },
+      { key: 'decision:d-1', label: 'Decision "Drafts"', text: 'Applicants can save a draft' },
+    ];
+    const criterion = {
+      group: 'Apply',
+      actor: 'Applicant',
+      given: 'a saved draft',
+      when: 'they return',
+      then: 'the draft opens',
+      source: 'decision:d-1',
+    };
+    const draftWith = (criteria: unknown) => {
+      post.mockResolvedValueOnce(completion(JSON.stringify({ criteria })));
+      return buildLlm().acceptanceCriteria(plan, references);
+    };
+    const userPrompt = () => post.mock.calls[0][1].messages[1].content as string;
+
+    it('maps the response to draft criteria with the model', async () => {
+      const result = await draftWith([criterion]);
+
+      expect(result).toEqual({ criteria: [criterion], model: 'GOA-Default' });
+    });
+
+    it('lists every plan reference by key with its text', async () => {
+      await draftWith([criterion]);
+
+      expect(userPrompt()).toContain('decision:d-1: Applicants can save a draft');
+      expect(userPrompt()).toContain('workflow:1: Actors: Applicant. Steps: (1) Submit the form');
+    });
+
+    it('offers each workflow and Rules as the groups', async () => {
+      await draftWith([criterion]);
+
+      expect(userPrompt()).toContain('Groups: "Apply", "Rules"');
+    });
+
+    it('leaves out blank actor, given and when', async () => {
+      const { criteria } = await draftWith([{ ...criterion, actor: '', given: ' ', when: undefined }]);
+
+      expect(criteria[0]).toEqual({ group: 'Apply', then: 'the draft opens', source: 'decision:d-1' });
+    });
+
+    it('skips criteria with no then or source', async () => {
+      const { criteria } = await draftWith([
+        { ...criterion, then: '' },
+        { ...criterion, source: '' },
+        'text',
+        criterion,
+      ]);
+
+      expect(criteria).toHaveLength(1);
+    });
+
+    it('throws when the response has no criteria', async () => {
+      await expect(draftWith([])).rejects.toThrow('Model response did not contain acceptance criteria.');
     });
   });
 

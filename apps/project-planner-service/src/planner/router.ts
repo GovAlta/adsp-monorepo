@@ -14,6 +14,7 @@ import {
   requirePlannerAdmin,
   requirePlannerUser,
 } from './access';
+import { acceptanceReferences, checkedAcceptanceCriteria, ruleAcceptanceCriteria } from './acceptance';
 import {
   buildHypotheses,
   buildNextSteps,
@@ -65,6 +66,7 @@ import {
 import { getSpecialist, ruleBasedSpecialistReply, SPECIALISTS } from './specialists';
 import {
   AnalysisMode,
+  BlueprintAcceptance,
   BusinessConcept,
   BlueprintComponent,
   BusinessPattern,
@@ -74,6 +76,7 @@ import {
   PatternMatch,
   PlannerConfiguration,
   Solution,
+  SolutionBlueprint,
   SolutionState,
   SpecialistChat,
   SpecialistNote,
@@ -294,6 +297,30 @@ export function createPlannerRouter({
       logger.warn(`${wording.logFailure}: ${reason}`);
       return { warning: wording.warning(reason) };
     }
+  }
+
+  // Only the label records a fallback here; the reason is logged, not shown as a warning.
+  async function buildAcceptance(
+    blueprint: SolutionBlueprint,
+    state: SolutionState,
+    mode: AnalysisMode,
+  ): Promise<BlueprintAcceptance> {
+    const references = acceptanceReferences(blueprint, state);
+    const { result: criteria } = await tryAi(
+      mode,
+      async (llm) => {
+        const { criteria: drafts } = await llm.acceptanceCriteria(blueprint, references);
+        const checked = checkedAcceptanceCriteria(drafts, blueprint, references);
+        if (!checked.length) {
+          throw new Error('No criteria restated an item in the plan.');
+        }
+        return checked;
+      },
+      ruleFallbackWording('acceptance criteria', 'rule-based acceptance criteria'),
+    );
+    return criteria
+      ? { mode: 'ai', criteria }
+      : { mode: 'rules', criteria: ruleAcceptanceCriteria(blueprint, state.decisions) };
   }
 
   async function refreshConfidence(req: Request, state: SolutionState, mode?: AnalysisMode): Promise<void> {
@@ -671,7 +698,6 @@ export function createPlannerRouter({
           version: 1,
           state: emptyState(req.body.problemStatement),
         });
-        await solutionVersionRepository.create(tenantId, solution.id, versionContent(solution, []));
         res.status(201).send(solution);
         eventService.send(solutionCreated(req.user, solution));
         logger.info(`Created solution ${solution.name} (ID: ${solution.id}).`, {
@@ -1184,7 +1210,12 @@ export function createPlannerRouter({
           generated?.notCoveredByAdsp,
           components,
         );
-        const saved = await persist(req, { ...solution, state: { ...working.state, blueprint } }, 'blueprint');
+        const acceptance = await buildAcceptance(blueprint, solution.state, mode);
+        const saved = await persist(
+          req,
+          { ...solution, state: { ...working.state, blueprint: { ...blueprint, acceptance } } },
+          'blueprint',
+        );
         if (isFirstBlueprint) {
           const tenantId = getTenantId(req);
           const savedChats = await specialistChatRepository.findBySolution(tenantId, saved.id);
