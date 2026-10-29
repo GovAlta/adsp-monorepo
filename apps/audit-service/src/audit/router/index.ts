@@ -108,7 +108,7 @@ export const addAction =
       const { namespace } = req.params;
       const { name, ...definition } = req.body;
       await catalogs.addAction(namespace, name, definition, tenantId, token);
-      res.status(HttpStatusCodes.CREATED).send({ ...definition, name });
+      res.status(HttpStatusCodes.CREATED).json({ ...definition, name });
     } catch (err) {
       next(err);
     }
