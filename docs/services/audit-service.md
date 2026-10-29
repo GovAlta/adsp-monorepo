@@ -487,6 +487,27 @@ the reads themselves.
 Responses retain the existing camelCase event shape and never expose `tenant_id`.
 Database read failures return 503 rather than an empty result or a false 404.
 
+### Listing namespaces
+
+`GET /audit/v1/namespaces` returns `{ "results": ["form-service", ...] }`: the distinct namespaces that have
+events for the tenant. It requires `audit-reader`. Clients use it to populate namespace pickers, since a
+namespace's catalog may not be visible to the tenant (for example core services).
+
+### Exporting events
+
+`GET /audit/v1/events/export` and `GET /audit/v1/{namespace}/events/export` stream the matching events as CSV
+(`text/csv`, sent as an attachment). They require `audit-reader` and accept the same filters as the lists;
+`top` and `after` are ignored. Events are read in keyset pages of 1,000 and written as they are read, so the
+export is not capped, is not held in memory, and stops if the client disconnects. A failure after the first
+page breaks the connection, so a truncated file is not mistaken for a complete one, and the export is recorded
+with a `failure` status and the number of events written so far. The `id` column is the stored event ID that the UI
+and the event endpoint use; `eventId` is the ID the submitting service supplied.
+
+The `actorName` and `actorEmail` columns are included only when the caller also holds `audit-admin`; for other
+callers the columns are omitted. This is decided on the server from the caller's token (design §1.5). Values that
+begin with `=`, `+`, `-` or `@` are prefixed with a single quote so spreadsheets do not evaluate them. Each export
+is recorded as an `events.export` event with the filters and the number of events written.
+
 See the [submission contract](https://github.com/GovAlta/adsp-monorepo/blob/main/apps/audit-service/README.md#submission-contract-osp-707--osp-708)
 for the boundary with OSP-708.
 
@@ -498,9 +519,8 @@ for the boundary with OSP-708.
   Catalogs and Retention tabs. Catalogs and retention both come from the audit service (`/audit/v1/actions`
   and `/audit/v1/retention`), so they show the active configuration as enforced. Logs filters by namespace, action, actor, resource, scope,
   status, category, severity, correlation and session IDs, and time range, shows formatted event details, and exports the
-  current search to CSV. Export is client-side: it pages through the read API and is capped at
-  the 10,000 most recent matching events. Actor name and email are included only for `audit-admin`
-  users (design §1.5). Each page is itself a recorded read.
+  current search to CSV through the [export endpoint](#exporting-events), so the file is not capped and actor name and
+  email are included only for `audit-admin` users (design §1.5). Each page is itself a recorded read.
 
 ## Write buffer
 
@@ -747,13 +767,13 @@ registered by the service at startup in core configuration, alongside `failed-ev
 applies to every tenant. If registration has not propagated yet, reads still succeed but recording
 fails and is counted.
 
-| Action               | Category      | Recorded when                       |
-| -------------------- | ------------- | ----------------------------------- |
-| `events.list`        | `data-access` | A namespace listing succeeds.       |
-| `events.list-all`    | `data-access` | A cross-namespace listing succeeds. |
-| `events.read`        | `data-access` | A single event read succeeds.       |
-| `failed-events.list` | `data-access` | A failed-events listing succeeds.   |
-
+| Action               | Category      | Recorded when                                 |
+| -------------------- | ------------- | --------------------------------------------- |
+| `events.list`        | `data-access` | A namespace listing succeeds.                 |
+| `events.list-all`    | `data-access` | A cross-namespace listing succeeds.           |
+| `events.read`        | `data-access` | A single event read succeeds.                 |
+| `events.export`      | `data-access` | An export finishes or the client disconnects. |
+| `failed-events.list` | `data-access` | A failed-events listing succeeds.             |
 Reads use the `security` retention class (365 days by default). Replay is recorded
 transactionally by the replay itself (see above), not by this mechanism.
 

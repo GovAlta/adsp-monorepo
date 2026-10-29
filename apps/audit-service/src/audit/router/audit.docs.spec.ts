@@ -35,7 +35,7 @@ describe('audit service API documentation', () => {
     getServiceConfigurationRevision: jest.fn(),
   };
   const submitter: jest.Mocked<EventSubmitter> = { submit: jest.fn() };
-  const reader: jest.Mocked<EventReader> = { find: jest.fn(), get: jest.fn() };
+  const reader: jest.Mocked<EventReader> = { find: jest.fn(), get: jest.fn(), findNamespaces: jest.fn() };
 
   const router = createAuditRouter({
     catalogs: new CatalogService(configuration, logger),
@@ -63,7 +63,7 @@ describe('audit service API documentation', () => {
         .flatMap(([path, operations]) => Object.keys(operations as object).map((method) => `${method} ${path}`))
         .sort();
 
-      expect(served).toHaveLength(9);
+      expect(served).toHaveLength(12);
       expect(documented).toEqual(served);
     });
 

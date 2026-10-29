@@ -13,7 +13,8 @@ import { validateWriteRequest } from '../utils/request-validation';
 import { writeEvents } from './write-events';
 import { limitWriteRate, WriteRateLimitOptions } from './rate-limit';
 import { failedEventHandler, validateFailedEventId, validateFailedEventPage } from './failed-events';
-import { readEvent, readEvents, validateEventId, validateEventQuery } from './read-events';
+import { readEvent, readEvents, readNamespaces, validateEventId, validateEventQuery } from './read-events';
+import { exportEvents } from './export-events';
 import type { Logger } from 'winston';
 
 interface AuditRouterOptions {
@@ -119,6 +120,12 @@ export function createAuditRouter(options: AuditRouterOptions): Router {
     param('namespace').isString().isLength({ min: 1, max: APPLICATION_MAX_LENGTH }).matches(APPLICATION_PATTERN),
   );
   router.get(
+    '/namespaces',
+    assertAuthenticatedHandler,
+    requireAuditRole(AuditServiceRoles.Reader),
+    readNamespaces(options.reader),
+  );
+  router.get(
     '/actions',
     assertAuthenticatedHandler,
     requireAuditRole(AuditServiceRoles.Reader),
@@ -136,6 +143,21 @@ export function createAuditRouter(options: AuditRouterOptions): Router {
     requireAuditRole(AuditServiceRoles.Reader),
     validateNamespace,
     readActions(options.catalogs),
+  );
+  router.get(
+    '/events/export',
+    assertAuthenticatedHandler,
+    requireAuditRole(AuditServiceRoles.Reader),
+    validateEventQuery,
+    exportEvents(options.reader, auditor),
+  );
+  router.get(
+    '/:namespace/events/export',
+    assertAuthenticatedHandler,
+    requireAuditRole(AuditServiceRoles.Reader),
+    validateNamespace,
+    validateEventQuery,
+    exportEvents(options.reader, auditor),
   );
   router.get(
     '/events',

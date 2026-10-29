@@ -12,7 +12,6 @@ export const EXPORT_AUDIT_EVENTS_DONE_ACTION = 'audit/EXPORT_AUDIT_EVENTS_DONE_A
 export interface ExportAuditEventsAction {
   type: typeof EXPORT_AUDIT_EVENTS_ACTION;
   criteria: AuditEventCriteria;
-  includePersonalInfo: boolean;
 }
 
 export interface ExportAuditEventsDoneAction {
@@ -27,6 +26,7 @@ export interface FetchAuditConfigurationSuccessAction {
   type: typeof FETCH_AUDIT_CONFIGURATION_SUCCESS_ACTION;
   catalogs: AuditCatalog[];
   retention: AuditRetention;
+  namespaces: string[];
 }
 
 export interface FetchAuditEventsAction {
@@ -68,10 +68,12 @@ export const fetchAuditConfiguration = (): FetchAuditConfigurationAction => ({
 export const fetchAuditConfigurationSuccess = (
   catalogs: AuditCatalog[],
   retention: AuditRetention,
+  namespaces: string[] = [],
 ): FetchAuditConfigurationSuccessAction => ({
   type: FETCH_AUDIT_CONFIGURATION_SUCCESS_ACTION,
   catalogs,
   retention,
+  namespaces,
 });
 
 export const fetchAuditEvents = (criteria: AuditEventCriteria, after?: string, top?: number): FetchAuditEventsAction => ({
@@ -100,10 +102,9 @@ export const clearAuditEvents = (): ClearAuditEventsAction => ({
   type: CLEAR_AUDIT_EVENTS_ACTION,
 });
 
-export const exportAuditEvents = (criteria: AuditEventCriteria, includePersonalInfo = false): ExportAuditEventsAction => ({
+export const exportAuditEvents = (criteria: AuditEventCriteria): ExportAuditEventsAction => ({
   type: EXPORT_AUDIT_EVENTS_ACTION,
   criteria,
-  includePersonalInfo,
 });
 
 export const exportAuditEventsDone = (): ExportAuditEventsDoneAction => ({

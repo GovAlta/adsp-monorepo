@@ -57,13 +57,9 @@ describe('audit sagas', () => {
     expect(success).toMatchObject({ next: 'n2', append: false });
   });
 
-  it('exports every page of matching events as a CSV download', async () => {
+  it('downloads the CSV built by the server from the export route', async () => {
     const urls = [];
     const downloads = [];
-    const pages = [
-      { data: { results: [{ id: '1', action: 'a' }], page: { next: 'n2' } } },
-      { data: { results: [{ id: '2', action: 'b' }], page: {} } },
-    ];
     const { effects } = await expectSaga(exportAuditEvents, exportAuditEventsAction({ status: 'failure' }))
       .withState({ config: { serviceUrls: { auditServiceApiUrl: baseUrl } } })
       .provide({
@@ -73,7 +69,7 @@ describe('audit sagas', () => {
           }
           if (effect.fn === axios.get) {
             urls.push(effect.args[0]);
-            return pages.shift();
+            return { data: 'csv-body' };
           }
           if (effect.fn === downloadFile) {
             downloads.push(effect.args);
@@ -84,12 +80,9 @@ describe('audit sagas', () => {
       })
       .run();
 
-    expect(urls).toEqual([
-      `${baseUrl}/audit/v1/events?top=5000&status=failure`,
-      `${baseUrl}/audit/v1/events?top=5000&status=failure&after=n2`,
-    ]);
+    expect(urls).toEqual([`${baseUrl}/audit/v1/events/export?status=failure`]);
     expect(downloads).toHaveLength(1);
-    expect(downloads[0][1].split('\r\n')).toHaveLength(3);
+    expect(downloads[0][1]).toBe('csv-body');
     expect(downloads[0][2]).toBe('text/csv');
     expect(effects.put.map((e) => e.payload.action.type)).toEqual([
       'notifications/success',
@@ -130,6 +123,9 @@ describe('audit sagas', () => {
           }
           if (effect.fn === axios.get) {
             urls.push(effect.args[0]);
+            if (effect.args[0].endsWith('/namespaces')) {
+              return { data: { results: ['form-app'] } };
+            }
             return effect.args[0].endsWith('/retention')
               ? { data: { tenant: { standard: { days: 30 } }, applications: {} } }
               : { data: [{ application: 'form-app', core: true, actions: [{ name: 'submit' }] }] };
@@ -139,11 +135,16 @@ describe('audit sagas', () => {
       })
       .run();
 
-    expect(urls).toEqual(['http://mock-audit.com/audit/v1/actions', 'http://mock-audit.com/audit/v1/retention']);
+    expect(urls).toEqual([
+      'http://mock-audit.com/audit/v1/actions',
+      'http://mock-audit.com/audit/v1/retention',
+      'http://mock-audit.com/audit/v1/namespaces',
+    ]);
     const success = effects.put
       .map((e) => e.payload.action)
       .find((a) => a.type === FETCH_AUDIT_CONFIGURATION_SUCCESS_ACTION);
     expect(success.catalogs).toMatchObject([{ application: 'form-app', isCore: true }]);
+    expect(success.namespaces).toEqual(['form-app']);
     expect(success.retention.tenant).toEqual({ standard: { days: 30 } });
   });
 });

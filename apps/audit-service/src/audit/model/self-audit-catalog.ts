@@ -9,6 +9,7 @@ export const SelfAuditActions = {
   ListNamespaceEvents: 'events.list',
   ListAllEvents: 'events.list-all',
   ReadEvent: 'events.read',
+  ExportEvents: 'events.export',
   ListFailedEvents: 'failed-events.list',
 } as const;
 
@@ -41,5 +42,6 @@ export const SELF_AUDIT_DEFINITIONS: Record<SelfAuditAction, AuditActionDefiniti
   [SelfAuditActions.ListNamespaceEvents]: readAction('Listed the audit events of one namespace.'),
   [SelfAuditActions.ListAllEvents]: readAction('Listed audit events across all namespaces.'),
   [SelfAuditActions.ReadEvent]: readAction('Read a single audit event.'),
+  [SelfAuditActions.ExportEvents]: readAction('Exported audit events.'),
   [SelfAuditActions.ListFailedEvents]: readAction('Listed failed audit events.'),
 };

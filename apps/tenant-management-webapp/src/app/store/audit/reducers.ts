@@ -13,7 +13,7 @@ import { AuditState, defaultAuditState } from './models';
 export default function (state: AuditState = defaultAuditState, action: AuditActionTypes): AuditState {
   switch (action.type) {
     case FETCH_AUDIT_CONFIGURATION_SUCCESS_ACTION:
-      return { ...state, catalogs: action.catalogs, retention: action.retention, loaded: true };
+      return { ...state, catalogs: action.catalogs, retention: action.retention, namespaces: action.namespaces, loaded: true };
     case FETCH_AUDIT_EVENTS_ACTION:
       return { ...state, events: { ...state.events, loading: true } };
     case FETCH_AUDIT_EVENTS_SUCCESS_ACTION:

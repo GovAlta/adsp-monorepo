@@ -84,6 +84,8 @@ export interface EventReader {
   find(criteria: EventCriteria, top: number, after?: EventCursor): Promise<StoredEvent[]>;
   // Must match tenant and namespace, so an id from another tenant is never returned.
   get(tenantId: string, namespace: string, id: string): Promise<StoredEvent | null>;
+  // Distinct namespaces the tenant has events in, alphabetical.
+  findNamespaces(tenantId: string): Promise<string[]>;
 }
 
 // Namespace of the events the service records about itself (replays and audited reads).

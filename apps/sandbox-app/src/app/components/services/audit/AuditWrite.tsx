@@ -9,9 +9,17 @@ import {
   GoabTextArea,
 } from '@abgov/react-components';
 import { useEffect, useState } from 'react';
+import { useSelector } from 'react-redux';
+import { authenticatedUserSelector } from '../../../state/user.slice';
+import { hasRole } from '../../../state/util';
 import { ActionDefinition, AuditEventInput, getActions, SAMPLE_NAMESPACE, WriteResult, writeEvents } from './auditApi';
-import { errorMessage } from './util';
+import { errorMessage, isForbidden } from './util';
 import { Card, ErrorCallout, FormGrid } from './common';
+
+const AUDIT_WRITER_ROLE = 'urn:ads:platform:audit-service:audit-writer';
+
+const NOT_PERMITTED =
+  'You do not have permission to write audit events. This requires the audit-writer role; ask a tenant administrator to grant it to your account.';
 
 function newEvent(): AuditEventInput {
   return {
@@ -33,9 +41,13 @@ const WRITE_NAMESPACE = SAMPLE_NAMESPACE;
 // The action must be defined in the namespace's audit action catalog (registered via service configuration).
 export function AuditWrite() {
   const namespace = WRITE_NAMESPACE;
+  const user = useSelector(authenticatedUserSelector);
+  // Until the user is known the form is shown; a 403 from the service is still handled on submit.
+  const canWrite = !user || hasRole(AUDIT_WRITER_ROLE, user);
   const [body, setBody] = useState(() => format(newEvent()));
   const [result, setResult] = useState<WriteResult>();
   const [error, setError] = useState<string>();
+  const [forbidden, setForbidden] = useState(false);
   const [actions, setActions] = useState<ActionDefinition[]>([]);
 
   useEffect(() => {
@@ -71,12 +83,25 @@ export function AuditWrite() {
   const submit = async () => {
     try {
       setError(undefined);
+      setForbidden(false);
       setResult(await writeEvents(namespace, [JSON.parse(body)]));
     } catch (err) {
       setResult(undefined);
-      setError(errorMessage(err));
+      if (isForbidden(err)) {
+        setForbidden(true);
+      } else {
+        setError(errorMessage(err));
+      }
     }
   };
+
+  if (!canWrite) {
+    return (
+      <GoabCallout type="important" heading="Permission required" mt="l">
+        {NOT_PERMITTED}
+      </GoabCallout>
+    );
+  }
 
   return (
     <>
@@ -110,6 +135,11 @@ export function AuditWrite() {
           </GoabButton>
         </GoabBlock>
       </Card>
+      {forbidden && (
+        <GoabCallout type="important" heading="Permission required" mt="l">
+          {NOT_PERMITTED}
+        </GoabCallout>
+      )}
       <ErrorCallout message={error} />
       {result && (
         <GoabCallout

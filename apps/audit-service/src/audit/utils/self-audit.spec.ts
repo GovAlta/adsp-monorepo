@@ -39,7 +39,7 @@ const AUDIT_SERVICE_CATALOG = {
 describe('audit-service read actions', () => {
   it('are all data-access with security retention', () => {
     const definitions = Object.values(SELF_AUDIT_DEFINITIONS);
-    expect(definitions).toHaveLength(4);
+    expect(definitions).toHaveLength(5);
     definitions.forEach((definition) => {
       expect(definition.category).toBe('data-access');
       expect(definition.retentionClass).toBe('security');
@@ -48,7 +48,7 @@ describe('audit-service read actions', () => {
 });
 
 describe('self-auditing reads', () => {
-  const reader: jest.Mocked<EventReader> = { find: jest.fn(), get: jest.fn() };
+  const reader: jest.Mocked<EventReader> = { find: jest.fn(), get: jest.fn(), findNamespaces: jest.fn() };
   const submitter: jest.Mocked<EventSubmitter> = { submit: jest.fn() };
   const failedEvents = { list: jest.fn() };
   const retention = { getClasses: jest.fn() } as unknown as jest.Mocked<RetentionService>;

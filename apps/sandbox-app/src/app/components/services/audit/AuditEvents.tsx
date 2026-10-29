@@ -14,11 +14,12 @@ import {
   ActionDefinition,
   EventQuery,
   StoredAuditEvent,
+  exportEvents,
   getActions,
   getEvents,
   getNamespaces,
 } from './auditApi';
-import { errorMessage } from './util';
+import { downloadCsv, errorMessage, exportErrorMessage } from './util';
 import { ErrorCallout, Json, STATUS_BADGE } from './common';
 
 const PAGE_SIZES = [10, 25, 50, 100];
@@ -125,6 +126,7 @@ export function AuditEvents() {
   const [cursors, setCursors] = useState<(string | undefined)[]>([undefined]);
   const [next, setNext] = useState<string>();
   const [loading, setLoading] = useState(false);
+  const [exporting, setExporting] = useState(false);
   const [error, setError] = useState<string>();
 
   const set = (key: keyof Criteria, value?: string) =>
@@ -204,6 +206,20 @@ export function AuditEvents() {
     return loadFirstPage(applied, size);
   };
 
+  const download = async () => {
+    try {
+      setExporting(true);
+      setError(undefined);
+      const { namespace, ...filters } = applied;
+      const csv = await exportEvents(filters, namespace);
+      downloadCsv(`audit-events-${new Date().toISOString().slice(0, 10)}.csv`, csv);
+    } catch (err) {
+      setError(await exportErrorMessage(err));
+    } finally {
+      setExporting(false);
+    }
+  };
+
   useEffect(() => {
     loadFirstPage({});
     // The namespace list only improves the filter, so failing to load it is not surfaced as an error.
@@ -276,6 +292,16 @@ export function AuditEvents() {
     <section>
       <p>The audit log shows who did what, and when, in your tenant. Events are read-only.</p>
       <div style={{ ...rowStyle, marginTop: 0 }}>
+        <GoabButton
+          size="compact"
+          type="secondary"
+          leadingIcon="download"
+          disabled={loading || exporting || !events?.length}
+          onClick={download}
+          testId="audit-export"
+        >
+          {exporting ? 'Downloading...' : 'Download CSV'}
+        </GoabButton>
         <GoabButton
           size="compact"
           type="secondary"

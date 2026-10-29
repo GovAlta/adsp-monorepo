@@ -31,7 +31,6 @@ import {
 import { AuditEventDetails } from './eventDetails';
 
 const READER_ROLE = 'audit-reader';
-const ADMIN_ROLE = 'audit-admin';
 const ANY = 'any';
 const CATEGORIES = ['administrative', 'runtime', 'security', 'data-access'];
 const STATUSES = ['success', 'failure', 'blocked', 'error'];
@@ -94,11 +93,9 @@ export const AuditLogs: FunctionComponent = () => {
   const hasReaderRole = useSelector((state: RootState) =>
     state.session?.resourceAccess?.['urn:ads:platform:audit-service']?.roles?.includes(READER_ROLE),
   );
-  const isAdmin = useSelector((state: RootState) =>
-    state.session?.resourceAccess?.['urn:ads:platform:audit-service']?.roles?.includes(ADMIN_ROLE),
-  );
   const { results, next, loading } = useSelector((state: RootState) => state.audit.events);
   const catalogs = useSelector((state: RootState) => state.audit.catalogs);
+  const knownNamespaces = useSelector((state: RootState) => state.audit.namespaces);
   const exporting = useSelector((state: RootState) => state.audit.exporting);
   const [criteria, setCriteria] = useState<AuditEventCriteria>({});
   const [applied, setApplied] = useState<AuditEventCriteria>({});
@@ -124,7 +121,13 @@ export const AuditLogs: FunctionComponent = () => {
   const setNamespace = (value?: string) =>
     setCriteria((current) => ({ ...current, namespace: value || undefined, action: undefined }));
 
-  const namespaces = catalogs.map((c) => c.application);
+  // Catalogs list registered applications; the namespaces endpoint adds any namespace that has events but no visible
+  // catalog (e.g. core services).
+  const namespaces = Array.from(
+    new Set([...catalogs.map((c) => c.application), ...knownNamespaces, applied.namespace ?? '']),
+  )
+    .filter(Boolean)
+    .sort((a, b) => a.localeCompare(b));
   // Without a namespace, actions are shown as "namespace/action" so duplicates across applications stay distinct.
   const actionOptions = (criteria.namespace ? catalogs.filter((c) => c.application === criteria.namespace) : catalogs)
     .flatMap((c) =>
@@ -234,7 +237,7 @@ export const AuditLogs: FunctionComponent = () => {
           <GoabButton
             size="compact"
             type="secondary"
-            onClick={() => dispatch(exportAuditEvents(applied, !!isAdmin))}
+            onClick={() => dispatch(exportAuditEvents(applied))}
             disabled={loading || exporting || results.length === 0}
             testId="audit-export"
           >
