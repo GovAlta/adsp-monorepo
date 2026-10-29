@@ -250,7 +250,7 @@ Then('the user clicks Cancel button in notification type modal', function () {
   cy.wait(1000);
 });
 
-When('the user clicks back to notification types link on notification type details pane', function () {
+When('the user clicks back to notification types link in notification type details pane', function () {
   notificationsObj
     .notificationTypeDetailsPaneBackToNotificationTypesLink()
     .shadow()
@@ -281,7 +281,7 @@ Then(
   }
 );
 
-Then(
+When(
   'the user clicks the notification type of {string}, {string}, {string}, {string}',
   function (name, typeId, publicOrNot: string, selfServiceOrNot: string) {
     name = commonlib.stringReplacement(name, replacementString);
@@ -295,11 +295,24 @@ Then(
   }
 );
 
+When(
+  'the user clicks the core notification type of {string}, {string}, {string}, {string}',
+  function (name, typeId, publicOrNot: string, selfServiceOrNot: string) {
+    typeId = commonlib.stringReplacement(typeId, replacementString);
+    const capitalizedPublicOrNot = publicOrNot.charAt(0).toUpperCase() + publicOrNot.slice(1);
+    const capitalizedSelfServiceOrNot = selfServiceOrNot.charAt(0).toUpperCase() + selfServiceOrNot.slice(1);
+
+    notificationsObj
+      .notificationTypeCoreRows(name, typeId, capitalizedPublicOrNot, capitalizedSelfServiceOrNot)
+      .click({ force: true });
+  }
+);
+
 Then('the user views Add notification type button on Notification types page', function () {
   notificationsObj.addANotificationTypeButtonOnNotificationTypesPage().should('exist');
 });
 
-When('the user clicks {string} button on {string} notification type details pane', function (buttonType, typeName) {
+When('the user clicks {string} button in {string} notification type details pane', function (buttonType, typeName) {
   typeName = commonlib.stringReplacement(typeName, replacementString);
   notificationsObj.notificationTypeDetailsPaneSectionTitleNumberOne().invoke('text').should('contain', typeName);
   switch (buttonType) {
@@ -339,7 +352,7 @@ Given('a tenant admin user is on notification types page', function () {
   cy.wait(2000);
 });
 
-When('the user clicks Add event button on {string} notification type details pane', function (typeName) {
+When('the user clicks Add event button in {string} notification type details pane', function (typeName) {
   notificationsObj.notificationTypeDetailsPaneSectionTitleNumberOne().invoke('text').should('contain', typeName);
   notificationsObj.notificationTypeSelectAnEventBtn().shadow().find('button').scrollIntoView().click({ force: true });
   cy.wait(1000); // Add a wait to avoid accessibility test to run too quickly before the modal is fully loaded
@@ -394,11 +407,11 @@ When('the user clicks Add button in Add an email template page', function () {
 });
 
 Then(
-  'the user {string} the event of {string} on {string} notification type details pane',
+  'the user {string} the event of {string} in {string} notification type details pane',
   function (viewOrNot, eventName: string, typeName: string) {
     cy.wait(4000); // To wait for the record to show up in the grid before validating the record existence
+    notificationsObj.notificationTypeDetailsPaneSectionTitleNumberOne().invoke('text').should('contain', typeName);
     if (viewOrNot == 'views') {
-      notificationsObj.notificationTypeDetailsPaneSectionTitleNumberOne().invoke('text').should('contain', typeName);
       notificationsObj.notificaitonTypeDetailsPaneEventTitles().then((elements) => {
         const matchingEventTitles = Array.from(elements).filter(
           (element) => element.innerText.trim() === eventName.trim()
@@ -406,7 +419,6 @@ Then(
         expect(matchingEventTitles.length).equals(1);
       });
     } else if (viewOrNot == 'should not view') {
-      notificationsObj.notificationTypeDetailsPaneSectionTitleNumberOne().invoke('text').should('contain', typeName);
       notificationsObj.notificaitonTypeDetailsPaneEventTitles().then((elements) => {
         const eventFound = Array.from(elements).some((element) => element.innerText.trim() === eventName.trim());
         expect(eventFound).equals(false);
@@ -418,11 +430,12 @@ Then(
 );
 
 When(
-  'the user clicks {string} button for {string} on {string} notification type details pane',
+  'the user clicks {string} button for {string} in {string} notification type details pane',
   function (buttonName: string, event, typeName) {
+    notificationsObj.notificationTypeDetailsPaneSectionTitleNumberOne().invoke('text').should('contain', typeName);
     switch (buttonName.toLowerCase()) {
       case 'edit':
-        notificationsObj.notificationTypeEventEditButton(typeName, event).click({ force: true });
+        notificationsObj.notificationTypeDetailsPaneEventEditTemplates(event).click({ force: true });
         cy.wait(2000);
         break;
       case 'delete':
@@ -433,7 +446,7 @@ When(
           .click({ force: true });
         break;
       case 'reset':
-        notificationsObj.notificationTypeEventResetBtn(typeName, event).click({ force: true });
+        notificationsObj.notificationTypeDetailsPaneEventResetBtn(event).click({ force: true });
         break;
       default:
         expect(buttonName.toLowerCase()).to.be.oneOf(['edit', 'delete', 'reset']);
@@ -452,39 +465,101 @@ Then(
   }
 );
 
-Then('the user {string} {string} for {string} in {string}', function (viewOrNot, elementType, eventName, typeName) {
-  if (viewOrNot == 'views') {
-    switch (elementType) {
-      case 'email template indicator':
-        notificationsObj.notificationTypeEventMailIcon(typeName, eventName).should('exist');
-        break;
-      case 'Edit button':
-        notificationsObj.notificationTypeEventEditButton(typeName, eventName).should('exist');
-        break;
-      case 'Reset':
-        notificationsObj.notificationTypeEventDeleteBtn(typeName, eventName).should('exist');
-        break;
-      default:
-        expect(elementType).to.be.oneOf(['email template indicator', 'Preview link', 'Edit button', 'Reset']);
+Then(
+  'the user {string} {string} for the event of {string} in {string} notification type details pane',
+  function (viewOrNot, elementType, eventName, typeName) {
+    cy.wait(2000); // Wait for the notification type details to update
+    notificationsObj.notificationTypeDetailsPaneSectionTitleNumberOne().invoke('text').should('contain', typeName);
+    if (viewOrNot == 'views') {
+      switch (elementType) {
+        case 'Email template configured':
+          notificationsObj.notificationTypeDetailsPaneEventEmailTemplateConfigured(eventName).should('exist');
+          break;
+        case 'Bot template configured':
+          notificationsObj.notificationTypeDetailsPaneEventBotTemplateConfigured(eventName).should('exist');
+          break;
+        case 'No bot template configured':
+          notificationsObj.notificationTypeDetailsPaneEventNoBotTemplateConfigured(eventName).should('exist');
+          break;
+        case 'SMS template configured':
+          notificationsObj.notificationTypeDetailsPaneEventSmsTemplateConfigured(eventName).should('exist');
+          break;
+        case 'No sms template configured':
+          notificationsObj.notificationTypeDetailsPaneEventNoSmsTemplateConfigured(eventName).should('exist');
+          break;
+        case 'Edit templates':
+          notificationsObj.notificationTypeDetailsPaneEventEditTemplates(eventName).should('exist');
+          break;
+        case 'Reset':
+          notificationsObj.notificationTypeDetailsPaneEventResetBtn(eventName).should('exist');
+          break;
+        default:
+          expect(elementType).to.be.oneOf([
+            'Email template configured',
+            'Bot template configured',
+            'No bot template configured',
+            'SMS template configured',
+            'No sms template configured',
+            'Edit templates',
+            'Reset',
+          ]);
+      }
+    } else if (viewOrNot == 'should not view') {
+      switch (elementType) {
+        case 'Email template configured':
+          notificationsObj.notificationTypeDetailsPaneEventEmailTemplateConfigured(eventName).should('not.exist');
+          break;
+        case 'Bot template configured':
+          notificationsObj.notificationTypeDetailsPaneEventBotTemplateConfigured(eventName).should('not.exist');
+          break;
+        case 'No bot template configured':
+          notificationsObj.notificationTypeDetailsPaneEventNoBotTemplateConfigured(eventName).should('not.exist');
+          break;
+        case 'SMS template configured':
+          notificationsObj.notificationTypeDetailsPaneEventSmsTemplateConfigured(eventName).should('not.exist');
+          break;
+        case 'No sms template configured':
+          notificationsObj.notificationTypeDetailsPaneEventNoSmsTemplateConfigured(eventName).should('not.exist');
+          break;
+        case 'Edit templates':
+          notificationsObj.notificationTypeDetailsPaneEventEditTemplates(eventName).should('not.exist');
+          break;
+        case 'Reset':
+          notificationsObj.notificationTypeDetailsPaneEventResetBtn(eventName).should('not.exist');
+          break;
+        default:
+          expect(elementType).to.be.oneOf([
+            'Email template configured',
+            'Bot template configured',
+            'No bot template configured',
+            'SMS template configured',
+            'No sms template configured',
+            'Edit templates',
+            'Reset',
+          ]);
+      }
+    } else {
+      expect(viewOrNot).to.be.oneOf(['views', 'should not view']);
     }
-  } else if (viewOrNot == 'should not view') {
-    switch (elementType) {
-      case 'email template indicator':
-        notificationsObj.notificationTypeEventMailIcon(typeName, eventName).should('not.exist');
-        break;
-      case 'Edit button':
-        notificationsObj.notificationTypeEventEditButton(typeName, eventName).should('not.exist');
-        break;
-      case 'Reset':
-        notificationsObj.notificationTypeEventDeleteBtn(typeName, eventName).should('not.exist');
-        break;
-      default:
-        expect(elementType).to.be.oneOf(['email template indicator', 'Preview link', 'Edit button', 'Reset']);
-    }
-  } else {
-    expect(viewOrNot).to.be.oneOf(['views', 'should not view']);
   }
-});
+);
+
+When(
+  'the user clicks {string} for the event of {string} in {string} notification type details pane',
+  function (elementType: string, eventName: string, typeName: string) {
+    notificationsObj.notificationTypeDetailsPaneSectionTitleNumberOne().invoke('text').should('contain', typeName);
+    switch (elementType) {
+      case 'Edit templates':
+        notificationsObj.notificationTypeDetailsPaneEventEditTemplates(eventName).click({ force: true });
+        break;
+      case 'Reset':
+        notificationsObj.notificationTypeDetailsPaneEventResetBtn(eventName).click({ force: true });
+        break;
+      default:
+        throw new Error(`Unsupported element type: ${elementType}`);
+    }
+  }
+);
 
 Then('the user views Preview an email template modal', function () {
   notificationsObj.eventTemplatePreviewModalTitle().invoke('text').should('contain', 'Preview an email template');
@@ -879,77 +954,6 @@ When('the user clicks Add notification type button on Notification type page', f
   notificationsObj.addNotificationTypeBtnOnNotificationType().shadow().find('button').click({ force: true });
 });
 
-Then(
-  'the user {string} {string} for the event of {string} in {string} on tenant events',
-  function (viewOrNot, elementType, eventName, typeName) {
-    if (viewOrNot == 'views') {
-      switch (elementType) {
-        case 'email template indicator':
-          notificationsObj.tenantNotificationTypeEventMailIcon(typeName, eventName).should('exist');
-          notificationsObj.tenantNotificationTypeEventMailBadge(typeName, eventName).should('not.exist');
-          break;
-        case 'bot template indicator':
-          notificationsObj.tenantNotificationTypeEventBotIcon(typeName, eventName).should('exist');
-          notificationsObj.tenantNotificationTypeEventBotIconBadge(typeName, eventName).should('not.exist');
-          break;
-        case 'sms template indicator':
-          notificationsObj.tenantNotificationTypeEventSmsIcon(typeName, eventName).should('exist');
-          notificationsObj.tenantNotificationTypeEventSmsIconBadge(typeName, eventName).should('not.exist');
-          break;
-        case 'email template indicator with warning':
-          notificationsObj.tenantNotificationTypeEventMailBadge(typeName, eventName).should('exist');
-          notificationsObj.tenantNotificationTypeEventMailIcon(typeName, eventName).should('exist');
-          break;
-        case 'bot template indicator with warning':
-          notificationsObj.tenantNotificationTypeEventBotIconBadge(typeName, eventName).should('exist');
-          notificationsObj.tenantNotificationTypeEventBotIcon(typeName, eventName).should('exist');
-          break;
-        case 'sms template indicator with warning':
-          notificationsObj.tenantNotificationTypeEventSmsIconBadge(typeName, eventName).should('exist');
-          notificationsObj.tenantNotificationTypeEventSmsIcon(typeName, eventName).should('exist');
-          break;
-        default:
-          expect(elementType).to.be.oneOf([
-            'email template indicator',
-            'bot template indicator',
-            'sms template indicator',
-            'email template indicator with warning',
-            'bot template indicator with warning',
-            'sms template indicator with warning',
-          ]);
-      }
-    } else if (viewOrNot == 'should not view') {
-      switch (elementType) {
-        case 'bot template indicator':
-          notificationsObj.tenantNotificationTypeEventBotIcon(typeName, eventName).should('not.exist');
-          break;
-        case 'sms template indicator':
-          notificationsObj.tenantNotificationTypeEventSmsIcon(typeName, eventName).should('not.exist');
-          break;
-        case 'email template indicator with warning':
-          notificationsObj.tenantNotificationTypeEventMailBadge(typeName, eventName).should('not.exist');
-          break;
-        case 'bot template indicator with warning':
-          notificationsObj.tenantNotificationTypeEventBotIconBadge(typeName, eventName).should('not.exist');
-          break;
-        case 'sms template indicator with warning':
-          notificationsObj.tenantNotificationTypeEventSmsIconBadge(typeName, eventName).should('not.exist');
-          break;
-        default:
-          expect(elementType).to.be.oneOf([
-            'bot template indicator',
-            'sms template indicator',
-            'email template indicator with warning',
-            'bot template indicator with warning',
-            'sms template indicator with warning',
-          ]);
-      }
-    } else {
-      expect(viewOrNot).to.be.oneOf(['views', 'should not view']);
-    }
-  }
-);
-
 Then('the user views that email channel is greyed out', function () {
   notificationsObj.notificationChannelEmailCheckbox().shadow().find('input').should('be.disabled');
   notificationsObj.notificationChannelEmailCheckbox().shadow().find('input').should('be.checked');
@@ -1036,19 +1040,6 @@ When('the user clicks Save all button in template modal', function () {
   cy.wait(2000);
   notificationsObj.editTemplateModalSaveallBtn().shadow().find('button').click({ force: true });
   cy.wait(4000);
-});
-
-Then('the user {string} Reset button for {string} in {string}', function (viewOrNot, eventName, typeName) {
-  switch (viewOrNot) {
-    case 'views':
-      notificationsObj.notificationTypeEventResetBtn(typeName, eventName).should('exist');
-      break;
-    case 'should not view':
-      notificationsObj.notificationTypeEventResetBtn(typeName, eventName).should('not.exist');
-      break;
-    default:
-      expect(viewOrNot).to.be.oneOf(['views', 'should not view']);
-  }
 });
 
 Then('the user views Reset email template modal', function () {
