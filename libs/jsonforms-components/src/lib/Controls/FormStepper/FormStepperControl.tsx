@@ -45,7 +45,7 @@ export const FormStepper = (props: CategorizationStepperLayoutRendererProps) => 
 };
 
 export const FormStepperView = (props: CategorizationStepperLayoutRendererProps): JSX.Element => {
-  const { uischema, data, schema, path, cells, renderers, visible, t, enabled } = props;
+  const { uischema, data, schema, path, cells, renderers, visible, enabled } = props;
 
   const enumerators = useContext(JsonFormContext);
   const formStepperCtx = useContext(JsonFormsStepperContext);

@@ -17,6 +17,7 @@ import { GoabFormItem } from '@abgov/react-components-ds1';
 import { useJsonForms } from '@jsonforms/react';
 import { REQUIRED_PROPERTY_ERROR, getAddressLookupFieldLabel } from '../../common/Constants';
 import { useShowChangeButtons } from '../../Context/ContextProvider';
+import { useStepperPageOptions } from '../FormStepper/context/StepperOptionsContext';
 
 type AddressViewProps = ControlProps;
 
@@ -31,6 +32,7 @@ export const AddressLookUpControlReview = (props: AddressViewProps): JSX.Element
 export const AddressLoopUpControlTableReview = (props: AddressViewProps): JSX.Element => {
   const { data, schema, uischema, path } = props;
   const jsonForms = useJsonForms();
+  const { noAnswerMessage } = useStepperPageOptions();
 
   const stepId = uischema.options?.stepId;
   const reportChange = useReviewChange();
@@ -156,7 +158,7 @@ export const AddressLoopUpControlTableReview = (props: AddressViewProps): JSX.El
             )}
           </ReviewHeader>
           <ReviewValue>
-            {!value ? <NoneGivenText>(none given)</NoneGivenText> : value}
+            {!value ? <NoneGivenText>{noAnswerMessage}</NoneGivenText> : value}
             {errorMessage && <GoabFormItem error={errorMessage} label=""></GoabFormItem>}
           </ReviewValue>
         </PageReviewContainer>

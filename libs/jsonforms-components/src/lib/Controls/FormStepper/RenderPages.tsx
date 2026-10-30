@@ -10,6 +10,7 @@ import { CategorizationStepperLayoutRendererProps } from './types';
 import { useContext, useState } from 'react';
 import { JsonFormContext } from '../../Context';
 import { BackButton } from './BackButton';
+import { BACK_TO_OVERVIEW_LABEL } from '../../common/Constants';
 
 export interface PageRenderingProps {
   categoryProps: CategorizationStepperLayoutRendererProps;
@@ -25,10 +26,9 @@ export const RenderPages = (props: PageRenderingProps): JSX.Element => {
     formStepperCtx as JsonFormsStepperContextProps
   ).selectStepperState();
 
-  const hideSubmit = props.categoryProps.uischema.options?.hideSubmit ?? false;
-  const toAppOverviewLabel = props.categoryProps.uischema.options?.toAppOverviewLabel ?? 'Back to application overview';
-  const submissionLabel = props.categoryProps.uischema.options?.submissionLabel ?? 'Next';
-  const hideSummary = props.categoryProps.uischema.options?.hideSummary as boolean;
+  const { hideSubmit, toAppOverviewLabel, submissionLabel, hideSummary } = (
+    formStepperCtx as JsonFormsStepperContextProps
+  ).selectStepperOptions();
   const submitFormFunction = enumerators?.submitFunction.get('submit-form');
   const submitForm = submitFormFunction && submitFormFunction();
 
@@ -98,7 +98,7 @@ export const RenderPages = (props: PageRenderingProps): JSX.Element => {
         <div id={`${path || `goa`}-form-pages`}>
           <PageBorder>
             <BackButton
-              text={toAppOverviewLabel}
+              text={toAppOverviewLabel ?? BACK_TO_OVERVIEW_LABEL}
               link={() => {
                 handleSave();
                 goToTableOfContext();

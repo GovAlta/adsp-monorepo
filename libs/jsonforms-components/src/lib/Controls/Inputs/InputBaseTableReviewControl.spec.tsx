@@ -526,6 +526,7 @@ describe('InputBaseTableReviewControl', () => {
     const mockGoToPage = jest.fn();
     const contextValue: JsonFormsStepperContextProps = {
       goToPage: mockGoToPage,
+      selectStepperOptions: jest.fn().mockReturnValue({ noAnswerMessage: '(none given)' }),
     } as unknown as JsonFormsStepperContextProps;
     const { baseElement } = render(
       <JsonFormsStepperContext.Provider value={contextValue}>
@@ -756,7 +757,7 @@ describe('InputBaseTableReviewControl', () => {
     expect(errorFormItem).toBeInTheDocument();
   });
 
-  it('shows (none given) for undefined data', () => {
+  it('shows the no-answer message for undefined data', () => {
     const { getByTestId } = render(
       <table>
         <tbody>
@@ -788,7 +789,7 @@ describe('InputBaseTableReviewControl', () => {
     expect(getByTestId('review-value-First name').textContent).toBe('(none given)');
   });
 
-  it('shows (none given) for null data', () => {
+  it('shows the no-answer message for null data', () => {
     const { getByTestId } = render(
       <table>
         <tbody>
@@ -820,7 +821,7 @@ describe('InputBaseTableReviewControl', () => {
     expect(getByTestId('review-value-First name').textContent).toBe('(none given)');
   });
 
-  it('shows (none given) for empty string data', () => {
+  it('shows the no-answer message for empty string data', () => {
     const { getByTestId } = render(
       <table>
         <tbody>
@@ -852,7 +853,7 @@ describe('InputBaseTableReviewControl', () => {
     expect(getByTestId('review-value-First name').textContent).toBe('(none given)');
   });
 
-  it('does not show (none given) for unchecked required boolean (shows error instead)', () => {
+  it('does not show the no-answer message for unchecked required boolean (shows error instead)', () => {
     const { getByTestId } = render(
       <table>
         <tbody>
@@ -888,7 +889,10 @@ describe('InputBaseTableReviewControl', () => {
   it('calls onReviewChange with stepId and scope when Change button is clicked', () => {
     const onReviewChange = jest.fn();
     const mockGoToPage = jest.fn();
-    const contextValue = { goToPage: mockGoToPage } as unknown as JsonFormsStepperContextProps;
+    const contextValue = {
+      goToPage: mockGoToPage,
+      selectStepperOptions: jest.fn().mockReturnValue({ noAnswerMessage: '(none given)' }),
+    } as unknown as JsonFormsStepperContextProps;
     const scope = '#/properties/firstName';
 
     render(

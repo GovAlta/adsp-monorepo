@@ -151,10 +151,10 @@ export const isObjectArrayEmpty = (currentData: string) => {
   return result;
 };
 
-export const renderNoneGivenText = (data: string | undefined) => {
+export const renderNoneGivenText = (data: string | undefined, noAnswerMessage: string) => {
   return !data ? (
     <>
-      <NoneGivenTableText>(none given)</NoneGivenTableText>
+      <NoneGivenTableText>{noAnswerMessage}</NoneGivenTableText>
       <br />
     </>
   ) : (
@@ -170,11 +170,12 @@ export const renderCellColumn = ({
   rowPath,
   element,
   isRequired,
+  noAnswerMessage,
 }: RenderCellColumnProps) => {
   const renderWarningCell = (error?: string | undefined) => {
     return (
       <HilightCellWarning>
-        {renderNoneGivenText(data)}
+        {renderNoneGivenText(data, noAnswerMessage)}
         {error && (
           <ObjectArrayWarningIconDiv>
             <GoabIcon type="warning" title="warning" size="small" theme="filled" mt="2xs"></GoabIcon>
@@ -256,7 +257,7 @@ export const createHumanizeError = (
           humanMessage = prettify(propertyMatch[1]) + ' is required';
         }
       }
-    } catch (err) {
+    } catch {
       const raw = (error as unknown as { message?: string }).message as string;
       const propertyMatch = raw?.match(/'([^']+)'/);
       if (propertyMatch && propertyMatch[1]) {
