@@ -7,8 +7,14 @@ import { EventMetrics, MetricResult } from '../types';
 const VALUE_SERVICE_ID = adspId`urn:ads:platform:value-service:v1`;
 const EVENT_LOG_NAMESPACE = 'event-service';
 const EVENT_LOG_NAME = 'event';
-const EVENT_PAGE_SIZE = 100;
+const EVENT_PAGE_SIZE = 1000;
 const METRICS_PAGE_SIZE = 400;
+/**
+ * Most recent days read on their own. The rollup job composes a day some time after it closes, and
+ * value-service falls back to aggregating raw metrics for the whole window when any of it is not
+ * rolled up yet — so the not-yet-composed days are kept out of the long windows.
+ */
+const TRAILING_DAYS = 2;
 const USER_AGENT =
   'Mozilla/5.0 (compatible; ADSP-tenant-management-gateway/1.0; +https://adsp.alberta.ca)';
 
@@ -52,14 +58,78 @@ function withTrailingSlash(url: URL): URL {
   return new URL(href);
 }
 
-function intervalMax(to: string): string {
-  return `${to}T23:59:59.999Z`;
+function addDays(day: string, days: number): string {
+  const date = new Date(`${day}T00:00:00.000Z`);
+  date.setUTCDate(date.getUTCDate() + days);
+  return date.toISOString().substring(0, 10);
 }
 
+function firstOfMonth(day: string): string {
+  return `${day.substring(0, 7)}-01`;
+}
+
+function firstOfNextMonth(day: string): string {
+  const date = new Date(`${firstOfMonth(day)}T00:00:00.000Z`);
+  date.setUTCMonth(date.getUTCMonth() + 1);
+  return date.toISOString().substring(0, 10);
+}
+
+/** Value-service serves buckets starting before an exclusive max, so `to` needs the next midnight. */
 function timestampMaxExclusive(to: string): string {
-  const end = new Date(`${to}T00:00:00.000Z`);
-  end.setUTCDate(end.getUTCDate() + 1);
-  return end.toISOString();
+  return `${addDays(to, 1)}T00:00:00.000Z`;
+}
+
+export interface MetricWindow {
+  interval: 'daily' | 'monthly';
+  /** Inclusive yyyy-mm-dd. */
+  from: string;
+  /** Inclusive yyyy-mm-dd. */
+  to: string;
+}
+
+/**
+ * Split a report period so each piece is answered from the rollups: whole calendar months from the
+ * monthly rollup, the partial months either side from daily, and the trailing days on their own so a
+ * day the rollup job has not composed yet only drags that small window back to raw metrics.
+ */
+export function splitMetricWindows(from: string, to: string): MetricWindow[] {
+  const windows: MetricWindow[] = [];
+  const recentFrom = addDays(to, 1 - TRAILING_DAYS) > from ? addDays(to, 1 - TRAILING_DAYS) : from;
+  const settledTo = addDays(recentFrom, -1);
+
+  if (from <= settledTo) {
+    const monthsFrom = from === firstOfMonth(from) ? from : firstOfNextMonth(from);
+    const monthsTo =
+      addDays(settledTo, 1) === firstOfNextMonth(settledTo) ? settledTo : addDays(firstOfMonth(settledTo), -1);
+
+    if (monthsFrom <= monthsTo) {
+      if (from < monthsFrom) {
+        windows.push({ interval: 'daily', from, to: addDays(monthsFrom, -1) });
+      }
+      windows.push({ interval: 'monthly', from: monthsFrom, to: monthsTo });
+      if (monthsTo < settledTo) {
+        windows.push({ interval: 'daily', from: addDays(monthsTo, 1), to: settledTo });
+      }
+    } else {
+      windows.push({ interval: 'daily', from, to: settledTo });
+    }
+  }
+
+  windows.push({ interval: 'daily', from: recentFrom, to });
+  return windows;
+}
+
+/**
+ * Split a period into calendar months, so a long period's event log is read as many short scans in
+ * parallel rather than one long scan paged in sequence.
+ */
+export function splitMonths(from: string, to: string): { from: string; to: string }[] {
+  const months: { from: string; to: string }[] = [];
+  for (let start = from; start <= to; start = firstOfNextMonth(start)) {
+    const end = addDays(firstOfNextMonth(start), -1);
+    months.push({ from: start, to: end < to ? end : to });
+  }
+  return months;
 }
 
 /** Return the next cursor, or stop when value-service repeats one it already sent. */
@@ -173,55 +243,77 @@ export function createValueServiceClient({ directory, valueServiceUrl }: ValueCl
     return values;
   };
 
+  const readMetricWindow = async (
+    base: URL,
+    token: string,
+    metricLike: string,
+    window: MetricWindow,
+    metrics: EventMetrics
+  ): Promise<void> => {
+    let after: string | undefined;
+    const seen = new Set<string>();
+    for (;;) {
+      const params: Record<string, string | number> = {
+        interval: window.interval,
+        top: METRICS_PAGE_SIZE,
+        criteria: JSON.stringify({
+          metricLike,
+          intervalMin: `${window.from}T00:00:00.000Z`,
+          intervalMax: timestampMaxExclusive(window.to),
+        }),
+      };
+      if (after) {
+        params.after = after;
+      }
+
+      let data: MetricsResponse;
+      try {
+        const response = await axios.get<MetricsResponse>(new URL('event-service/values/event/metrics', base).href, {
+          headers: headers(token),
+          params,
+        });
+        data = response.data;
+      } catch (err) {
+        rethrowValueServiceError(err);
+      }
+
+      const { page, ...pageMetrics } = data || {};
+      const appended = appendMetrics(metrics, pageMetrics);
+      if (!appended) {
+        break;
+      }
+      after = followCursor(page?.next, seen);
+      if (!after) {
+        break;
+      }
+    }
+  };
+
   return {
     async readEventMetrics(token, metricLike, from, to) {
       const base = await resolveBase();
+      const windows = splitMetricWindows(from, to);
+      const perWindow = windows.map((): EventMetrics => ({}));
+      await Promise.all(
+        windows.map((window, index) => readMetricWindow(base, token, metricLike, window, perWindow[index]))
+      );
+
+      // Merged in window order so rows come back oldest window first, whichever request finished first.
       const metrics: EventMetrics = {};
-      let after: string | undefined;
-      const seen = new Set<string>();
-      for (;;) {
-        const params: Record<string, string | number> = {
-          interval: 'daily',
-          top: METRICS_PAGE_SIZE,
-          criteria: JSON.stringify({
-            metricLike,
-            intervalMin: `${from}T00:00:00.000Z`,
-            intervalMax: intervalMax(to),
-          }),
-        };
-        if (after) {
-          params.after = after;
-        }
-
-        let data: MetricsResponse;
-        try {
-          const response = await axios.get<MetricsResponse>(new URL('event-service/values/event/metrics', base).href, {
-            headers: headers(token),
-            params,
-          });
-          data = response.data;
-        } catch (err) {
-          rethrowValueServiceError(err);
-        }
-
-        const { page, ...pageMetrics } = data || {};
-        const appended = appendMetrics(metrics, pageMetrics);
-        if (!appended) {
-          break;
-        }
-        after = followCursor(page?.next, seen);
-        if (!after) {
-          break;
-        }
-      }
+      perWindow.forEach((windowMetrics) => appendMetrics(metrics, windowMetrics));
       return metrics;
     },
 
     async countDistinctContext(token, query, from, to) {
       const base = await resolveBase();
       const ids = new Set<string>();
+      const months = splitMonths(from, to);
       const collected = await Promise.all(
-        query.eventNames.map((name) => readContextValues(base, token, query.namespace, name, query.contextKey, from, to))
+        query.eventNames.flatMap((name) =>
+          months.map((month) =>
+            readContextValues(base, token, query.namespace, name, query.contextKey, month.from, month.to)
+          )
+        )
       );
       collected.forEach((values) => values.forEach((id) => ids.add(id)));
       return ids.size;
