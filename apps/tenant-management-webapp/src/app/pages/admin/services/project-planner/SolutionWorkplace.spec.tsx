@@ -194,7 +194,13 @@ describe('SolutionWorkplace', () => {
     }
     expect(goa(container, 'guided-step-2').querySelectorAll('goa-textarea[testid="discovery-input"]')).toHaveLength(1);
     expect(goa(container, 'guided-step-2').querySelector('[testid="refine-input"]')).toBeNull();
-    expect(goa(container, 'guided-step-2').querySelector('[testid="optional-experts"]')).not.toBeNull();
+    expect(
+      goa(container, 'guided-step-2-toggle')
+        .querySelector('[testid="discovery-message-count"]')
+        ?.getAttribute('content'),
+    ).toBe('1 message');
+    expect(goa(container, 'guided-step-2').querySelector('[testid="optional-experts"]')).toBeNull();
+    expect(goa(container, 'guided-step-3').querySelector('[testid="optional-experts"]')).not.toBeNull();
     expect(goa(container, 'project-blueprint-generate').closest('[role="group]')).toBe(
       goa(container, 'refresh-specialist-consultations').closest('[role="group]'),
     );
@@ -394,7 +400,7 @@ describe('SolutionWorkplace', () => {
     });
     const { container } = await setup(lowConfidence);
     expect(goa(container, 'discovery-force').textContent).toBe('Skip and show me a plan');
-    expect(goa(container, 'discovery-conversation').getAttribute('heading')).toBe('Conversation');
+    expect(container.querySelector('[data-testid="discovery-conversation"]')).not.toBeNull();
     expect(container.querySelectorAll('goa-textarea[testid="discovery-input"]')).toHaveLength(1);
     expect(container.querySelector('[data-testid="discovery-panel"]')).not.toBeNull();
     expect(container.textContent).not.toContain('Questions are complete');

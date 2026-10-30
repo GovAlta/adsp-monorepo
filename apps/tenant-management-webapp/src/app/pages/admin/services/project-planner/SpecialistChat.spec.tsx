@@ -427,6 +427,39 @@ describe('SpecialistChat', () => {
     expect(container.querySelector('[testid="chat-download-current-md"]')).toBeNull();
   });
 
+  it('refreshes saved chats and the open conversation when the solution updates elsewhere, without closing it', async () => {
+    const { container, rerender } = renderChat();
+    await loaded(container);
+    toggle(container, 'chat-1', true);
+    await waitFor(() => expect(container.querySelector('[testid="chat-download-current-md"]')).not.toBeNull());
+
+    const updatedChat: SpecialistChatModel = {
+      ...storedChat,
+      messages: [
+        ...storedChat.messages,
+        { role: 'assistant', content: 'Consulted again in the background.', at: '2026-03-01T10:05:00.000Z' },
+      ],
+    };
+    api.listChats.mockResolvedValueOnce([{ ...summary, messageCount: 3 }]);
+    api.getChat.mockResolvedValueOnce(updatedChat);
+
+    await act(async () => {
+      rerender(
+        <SpecialistChat
+          service="form-service"
+          specialist={specialist}
+          solution={{ ...solution, updatedOn: '2026-03-01T10:05:00.000Z' }}
+          api={api}
+          mode="ai"
+          onChatsChanged={onChatsChanged}
+        />,
+      );
+    });
+
+    await waitFor(() => expect(container.textContent).toContain('Consulted again in the background.'));
+    expect(container.querySelector('[testid="chat-download-current-md"]')).not.toBeNull();
+  });
+
   it('has no accessibility violations', async () => {
     const { container } = renderChat();
     await loaded(container);

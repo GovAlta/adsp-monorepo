@@ -60,6 +60,12 @@ The config goes in \`.mcp.json\` in the project folder; Copilot in VS Code and C
   Use a server's public site instead if the user chose it in step 2. If none answers it, ask the user.
 - Check each ADSP or GoA claim with a lookup before relying on it, and cite the lookup in the build
   notes.
+- Never assume a server, site or command is unreachable. Try it first, and
+  record the command and its output in the build notes before you tell the user it can't be reached.
+- Build every screen with GoA Design System components, installed with the packages and styles on
+  https://design.alberta.ca/get-started/developers/setup/. This doesn't depend on the MCP servers.
+  Never write your own UI in place of a GoA component, or your own code in place of an ADSP service
+  the plan names.
 - Build screens from GoA Design System examples. For each screen, propose the closest example for its
   actor's product type (the plan's roles table), get the user's approval, then start from that
   example's code. If the user says they have their own designs, build from those instead.
@@ -91,6 +97,12 @@ Run checks at every checkpoint in step 4, at the end of step 5, and before every
   approval.
 
 Tell the user which of the two you used.
+
+With either one, also check the GoA and ADSP wiring, and fix any gap before going on:
+- \`package.json\` lists an \`@abgov\` components package, and the app imports
+  \`@abgov/web-components/index.css\`;
+- every screen takes its components from \`@abgov/\`;
+- every local stub has a platform adapter (see step 4).
 
 ## Step 1: Set up the project folder
 Keystone's checks only see code inside the folder that holds \`.claude/\`, so Keystone is copied INTO
@@ -127,14 +139,17 @@ Done when \`/build\` passes, or the user has chosen option 2 or 3.
 ## Step 2: Connect the MCP servers
 Make one lookup on each server. If you don't have a server's tools, it has failed. If adsp-sdk or
 goa-design-system fails, find the cause yourself before asking the user:
-- Check \`.mcp.json\` in the project folder. If it is missing or lacks a server, add it from MCP servers.
+- Check \`.mcp.json\` at the root of the folder open in the editor. If that isn't the project folder,
+  record the current step in the build notes and ask the user to open the project folder and send the
+  command below. If the file is missing or lacks a server, add it from MCP servers.
 - adsp-sdk: run \`node --version\`, \`npx --version\` and \`npm view @abgov/adsp-sdk-mcp-server version\`.
   A missing command means Node.js isn't installed. A certificate error means the GoA network's
   certificates: set \`NODE_OPTIONS=--use-system-ca\`. Never turn off certificate checks. Any other npm
   error means the npm registry can't be reached.
-- goa-design-system: make one request to its URL. Any HTTP response means it is reachable; a DNS
-  failure or timeout means the user is off the GoA network or VPN; a certificate error is the same
-  certificate problem as above.
+- goa-design-system: make one request to its URL. Any HTTP response means it is reachable, including
+  \`400 Invalid or missing session ID\`: the servers need no sign-in or headers. A DNS failure or
+  timeout means the user is off the GoA network or VPN; a certificate error is the same certificate
+  problem as above.
 
 Show the user what you found and how to fix each cause. Record the current step in the build notes,
 then start the servers:
@@ -144,15 +159,16 @@ then start the servers:
 - **Claude Code:** it reads \`.mcp.json\` only when a session starts, so ask the user to restart the
   session, approve the project's servers and send the command below.
 
+Then stop and wait for the user's reply. Don't write or change app code until this step is done.
+
 The command: \`Follow docs/planner-{slug}-harness.md and continue from docs/{slug}-build-notes.md.\`
 
-If it still fails, offer two options:
+If it still fails, offer two options and wait for the user's choice. Never choose option 2 yourself.
 1. Stop until both connect (recommended).
 2. Use the public site of each server that failed (see MCP servers), under these rules:
-   - Install the GoA components and styles the setup page lists, and build every screen from the
-     examples page and those components.
-   - Never write your own UI in place of a GoA component, or your own code in place of an ADSP
-     service the plan names. If the public sites don't cover something, ask the user.
+   - First fetch the setup and examples pages, and record their URLs in the build notes. If a fetch
+     fails, show the user the error and stop.
+   - If the public sites don't cover something, ask the user.
    - Mark each claim taken from them "unverified" in the build notes, with its URL.
 
 With option 2, recheck the unverified claims once the servers connect, before step 5.
@@ -230,6 +246,8 @@ development.
 ## Step 4: Develop locally
 Put each ADSP service behind a port with a local stub and a platform adapter, chosen by
 \`ADSP_MODE=local|platform\`. The app then runs and is tested locally with no ADSP access.
+Write each platform adapter in this step too, from the SDK lookups (see Guidelines), and unit-test it
+against a mocked HTTP response. It makes its first live call in step 5.
 Run \`/factory docs/bundle\`. Each of its \`/ship\` runs is a local checkpoint (see Checks), not the
 finish.
 If the plan has acceptance criteria, each requirement (FR) lists the AC ids it covers, if any, and
@@ -241,10 +259,61 @@ At the end of this step, fill in the Acceptance table in the build notes, one ro
 |---|---|---|---|
 The test name is the one the runner prints, such as \`intake.spec.ts › restores a saved draft\`. The
 result is pass, fail, or a difference the user accepted.
-Done when the app runs end to end in local mode, the checks pass, and the Acceptance table is filled
-in.
+Done when the app runs end to end in local mode, the checks pass, the Acceptance table is filled in,
+and every stub has a platform adapter with a passing unit test.
 
 ## Step 5: Set up components and connect
+Ask which environments need components set up: dev, test (UAT) or prod.
+Record the answer as a decision. Start with dev, or the one the user names, then repeat this step for
+each of the others or let user defer other environments for later.
+
+For each environment, ask how the user wants to sign in to the tenant:
+1. By tenant name: \`npx @abgov/adsp-cli login --local --env <env> --tenant "<tenant name>"\`
+2. By realm ID: \`npx @abgov/adsp-cli login --local --env <env> --realm <realm id>\`
+Add \`--scope adsp-cli-admin\` only if you will do Keycloak items. The user runs it in their own
+terminal, because it opens a browser and waits for them to sign in. \`--local\` brings the browser back
+to the CLI on port 3000; without it, the user pastes a code from the browser instead.
+Then run \`npx @abgov/adsp-cli status\` and check that the environment, realm and token match. Never
+print a token.
+
+If the login fails, ask for the error and work out the cause with the user:
+| Error or symptom | Likely cause | What to do |
+|---|---|---|
+| \`Tenant '<name>' not found.\` | The name is wrong, or the tenant is in another environment | Run \`npx @abgov/adsp-cli tenants "<name>"\` with \`ADSP_ENV\` set to each of dev, test and prod, then ask for the exact name or the realm ID |
+| Keycloak shows "Client not found" | The tenant is older than the \`adsp-cli\` client | Walk the user through adding the client (below), then retry |
+| Keycloak shows "Invalid redirect uri" | The tenant's \`adsp-cli\` client doesn't allow this sign-in's redirect | Retry without \`--local\` |
+| \`EADDRINUSE\` on port 3000 | Something else is using port 3000 | Ask the user to stop it, or retry without \`--local\` |
+| \`did not grant the requested scope(s): adsp-cli-admin\` | The realm doesn't have the optional scope | Walk the user through adding the scope (below), or the user does the Keycloak items |
+| \`Could not open a browser\`, or no browser opens | No default browser, or a headless environment | Retry without \`--local\`, and ask the user to open the printed URL by hand |
+| \`Timed out waiting for login.\`, or \`status\` shows the token \`expired\` or \`missing\` | The sign-in wasn't finished in time, or the token ran out | Ask the user to run the login again |
+| A certificate, DNS or timeout error | The network | The same checks as step 2 |
+
+To add the client, the user opens the Keycloak admin console for the tenant realm and creates a
+public OpenID Connect client \`adsp-cli\`: standard flow only, consent required, PKCE method S256 and
+full scope off. Its scope gets \`configuration-admin\` on
+\`urn:ads:platform:configuration-service\`, \`directory-admin\` on \`urn:ads:platform:directory-service\`
+and \`agent-user\` on \`urn:ads:platform:agent-service\`. To add the scope, they create a client scope
+\`adsp-cli-admin\` with \`manage-clients\` and \`manage-users\` from \`realm-management\`, and add it to
+\`adsp-cli\` as optional. Give one setting at a time and wait for the user to confirm each.
+
+What you can do in each group:
+| Group | What you can do | What it needs | Only the user can do |
+|---|---|---|---|
+| ADSP configuration | Every item, through the configuration API | The sign-in above | Designing a form in the editor, if they prefer |
+| Keycloak | The app client, the service account client, client roles, role grants | The sign-in with \`--scope adsp-cli-admin\`, and the user's own realm-management rights | Realm roles, client secret values |
+| OpenShift | The Deployment and ConfigMap with \`oc apply\`, and checks with \`oc get\` | \`oc login\` by the user, on the VPN | Signing in, creating or getting access to the project, Secret values |
+
+Before each group, explain what you can do in it and offer:
+1. You do it.
+2. The user does it, with exact steps from you.
+3. A combination.
+For Keycloak, say that you can't do every Keycloak item, and recommend option 2. Record each choice
+as a decision.
+
+Within a group you do, still ask before each item: say what you will create and wait for approval.
+The user can decline an item and do it themselves. Never read or print a secret value. Check each
+result where you can, and record in the component status who set it up.
+
 Set up each component below in order, exactly as section 5 of the plan describes the one with the
 same number: its Where, How and Docs, and the open decisions the user settled in step 3 (see the
 build notes). Walk the user through the Where and How steps as you go.
@@ -254,12 +323,6 @@ open, look it up (see Guidelines) and ask the user.
 - **Not reviewed:** before you start, list these by number and ask which are needed. Skip the rest.
 - **Dependencies:** if a component depends on one that is not reviewed, ask about that one first.
   If a dependency is missing from the list, the user rejected it; raise it before continuing.
-- **ADSP configuration:** the user approved these in the plan. Before each one, say what you will
-  create and ask to go ahead, then create it. If you need the user, for example for a missing
-  permission or to design a form in the editor, ask for their help with the exact steps.
-- **Keycloak and OpenShift:** you do not make these changes. Give the instructions and recommended
-  commands one step at a time. The user decides whether to do or skip each step, does it, and
-  confirms. Check the result where you can.
 
 Then switch to \`ADSP_MODE=platform\` and run a smoke test that exercises each platform adapter.
 Rerun the acceptance tests and refresh the Acceptance table.
