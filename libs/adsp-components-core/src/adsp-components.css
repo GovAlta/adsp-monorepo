@@ -153,6 +153,7 @@
   flex-direction: row;
   align-items: flex-end;
   gap: var(--adsp-spacing-2xs);
+  width: 100%;
 }
 
 .adsp-conversation__message-body {
@@ -164,6 +165,7 @@
 
 .adsp-conversation__message[data-direction='sent'] {
   align-self: flex-end;
+  justify-content: flex-end;
   flex-direction: row;
 }
 
@@ -175,6 +177,7 @@
 
 .adsp-conversation__message[data-direction='received'] {
   align-self: flex-start;
+  justify-content: flex-start;
   flex-direction: row;
 }
 

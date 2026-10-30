@@ -1,6 +1,6 @@
-import { useLayoutEffect, useMemo, useRef, useState, type FormEvent } from 'react';
+import { useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { type AdspComponentThemeOverrides } from '@abgov/adsp-components-core';
-import { GoabCallout, GoabIconButton } from '@abgov/react-components';
+import { GoabButton, GoabCallout, GoabIconButton } from '@abgov/react-components';
 import { useAdspThemeStyle } from '../theme/adsp-theme-provider';
 
 export type AdspConversationDirection = 'sent' | 'received';
@@ -139,8 +139,8 @@ export function InternalAdspConversation({
     previousLatestMessageId.current = latestId;
   }, [sortedMessages]);
 
-  const handleSend = async (event: FormEvent) => {
-    event.preventDefault();
+  const handleSend = async (event?: { preventDefault?: () => void }) => {
+    event?.preventDefault?.();
     if (!onSend || !resolvedDraft.trim() || !canSend || isSending) {
       return;
     }
@@ -214,7 +214,12 @@ export function InternalAdspConversation({
         )}
       </div>
 
-      <form className="adsp-conversation__composer" onSubmit={handleSend}>
+      <form
+        className="adsp-conversation__composer"
+        onSubmit={(event) => {
+          event.preventDefault();
+        }}
+      >
         {sendError && (
           <GoabCallout type="emergency" heading="Unable to send message" mb="s" testId="adsp-conversation-send-error">
             {sendError}
@@ -236,21 +241,19 @@ export function InternalAdspConversation({
           disabled={!canSend || loading || !!error}
         />
         <div className="adsp-conversation__composer-actions">
-          <button
-            type="button"
-            className="adsp-button adsp-button--secondary"
-            onClick={() => setDraft('')}
-            disabled={!resolvedDraft}
-          >
+          <GoabButton type="secondary" size="compact" onClick={() => setDraft('')} disabled={!resolvedDraft}>
             Clear
-          </button>
-          <button
-            type="submit"
-            className="adsp-button adsp-button--primary"
+          </GoabButton>
+          <GoabButton
+            type="primary"
+            size="compact"
+            onClick={() => {
+              void handleSend();
+            }}
             disabled={!resolvedDraft.trim() || !canSend || loading || !!error || isSending}
           >
             {sendLabel}
-          </button>
+          </GoabButton>
         </div>
       </form>
     </section>

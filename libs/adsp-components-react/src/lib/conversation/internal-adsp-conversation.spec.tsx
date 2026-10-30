@@ -4,6 +4,19 @@ import { InternalAdspConversation, type AdspConversationMessage } from './intern
 import type { ReactNode } from 'react';
 
 jest.mock('@abgov/react-components', () => ({
+  GoabButton: ({
+    children,
+    onClick,
+    disabled,
+  }: {
+    children: ReactNode;
+    onClick?: (event: React.MouseEvent<HTMLButtonElement>) => void;
+    disabled?: boolean;
+  }) => (
+    <button type="button" onClick={onClick} disabled={disabled}>
+      {children}
+    </button>
+  ),
   GoabCallout: ({ children, heading, testId }: { children: ReactNode; heading?: string; testId?: string }) => (
     <section data-testid={testId}>
       {heading && <h2>{heading}</h2>}
