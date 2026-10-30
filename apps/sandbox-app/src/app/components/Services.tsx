@@ -53,6 +53,13 @@ const SERVICES: ServiceInfo[] = [
     url: '/agent',
   },
   {
+    id: 'AuditService',
+    name: 'Audit service',
+    show: true,
+    description: 'Audit event and action catalog services',
+    url: '/audit',
+  },
+  {
     id: 'CacheService',
     name: 'Cache service',
     show: true,
@@ -225,7 +232,7 @@ export default function Services() {
                     type="non-interactive"
                     width={'full'}
                     testId={service.id}
-                    heading={
+                    title={
                       <h3>
                         <Link to={`${location.pathname}${service.url}`}>{service.name}</Link>
                       </h3>

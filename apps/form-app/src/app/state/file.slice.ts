@@ -14,18 +14,34 @@ export interface FileMetadata {
 }
 
 const FILE_SERVICE_ID = 'urn:ads:platform:file-service';
+
+function getFileServicePathFromUrn(urn: string): string {
+  if (!AdspId.isAdspId(urn)) {
+    throw new Error('Specified urn is not recognized as a file URN.');
+  }
+
+  const parsed = AdspId.parse(urn);
+  const namespace = parsed.namespace?.replace(/^:+/, '');
+  const service = parsed.service?.replace(/^:+/, '');
+  if (namespace !== 'platform' || service !== 'file-service') {
+    throw new Error('Specified urn is not recognized as a file URN.');
+  }
+
+  // app-common AdspId parser keeps leading ':' in segments; normalize to "files/<id>".
+  const resource = (parsed.resource || '').replace(/^:+/, '');
+  return resource.replace(/^\/+/, '');
+}
+
 async function getFileMetadata(fileServiceUrl: string, urn: string): Promise<FileMetadata> {
   if (!AdspId.isAdspId(urn) || !urn.startsWith(FILE_SERVICE_ID)) {
     throw new Error('Specified urn is not recognized as a file URN.');
   }
 
   const token = await getAccessToken();
-  const { data } = await axios.get<FileMetadata>(
-    new URL(`/file/v1/${urn.substring(FILE_SERVICE_ID.length + 4)}`, fileServiceUrl).href,
-    {
-      headers: { Authorization: `Bearer ${token}` },
-    },
-  );
+  const filePath = getFileServicePathFromUrn(urn);
+  const { data } = await axios.get<FileMetadata>(new URL(`/file/v1/${filePath}`, fileServiceUrl).href, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
 
   return data;
 }
@@ -73,8 +89,9 @@ export const downloadFile = createAsyncThunk(
       }
 
       const token = await getAccessToken();
+      const filePath = getFileServicePathFromUrn(urn);
       const { data, headers } = await axios.get(
-        new URL(`/file/v1/${urn.substring(FILE_SERVICE_ID.length + 4)}/download?unsafe=true`, fileServiceUrl).href,
+        new URL(`/file/v1/${filePath}/download?unsafe=true`, fileServiceUrl).href,
         {
           responseType: 'blob',
           headers: { Authorization: `Bearer ${token}` },
@@ -151,6 +168,12 @@ export const checkPdfFile = createAsyncThunk(
       }
     } catch (err) {
       if (axios.isAxiosError(err)) {
+        // Gateway returns 404 when no generated PDF exists yet for the form.
+        // This is an expected state and should not surface as a global error.
+        if (err.response?.status === 404) {
+          return { data: { fileId: null } };
+        }
+
         return rejectWithValue({
           status: err.response?.status,
           message: err.response?.data?.errorMessage || err.message,
@@ -334,6 +357,7 @@ const fileSlice = createSlice({
   name: FILE_FEATURE_KEY,
   initialState: initialFileState,
   reducers: {
+    resetFileState: () => initialFileState,
     setUploadProgress: (state, { payload }: { payload: { name: string; progress: number } }) => {
       state.upload = payload;
     },
@@ -413,10 +437,12 @@ const fileSlice = createSlice({
       })
       .addCase(deleteFile.fulfilled, (state, { meta }) => {
         state.files[meta.arg.urn] = null;
-        const propertyIdRoot = meta.arg.propertyId.split('.')?.[0];
-        state.metadata[propertyIdRoot] = state.metadata[propertyIdRoot].filter((f) => f.urn !== meta.arg.urn);
-        if (state.metadata[propertyIdRoot].length === 0) {
-          delete state.metadata[propertyIdRoot];
+        const propertyIdRoot = meta.arg.propertyId?.replace(/(\.\d+|\[\d+\])$/, '');
+        if (propertyIdRoot && state.metadata[propertyIdRoot]) {
+          state.metadata[propertyIdRoot] = state.metadata[propertyIdRoot].filter((f) => f.urn !== meta.arg.urn);
+          if (state.metadata[propertyIdRoot].length === 0) {
+            delete state.metadata[propertyIdRoot];
+          }
         }
         state.busy.loading = false;
       });
@@ -424,6 +450,7 @@ const fileSlice = createSlice({
 });
 
 const fileActions = fileSlice.actions;
+export const { resetFileState } = fileActions;
 
 export const fileReducer = fileSlice.reducer;
 export const metaDataSelector = (state: AppState) => state.file.metadata;

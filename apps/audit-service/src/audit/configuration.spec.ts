@@ -1,4 +1,4 @@
-import { AuditActionDefinition } from '@abgov/adsp-service-sdk';
+import { AuditActionDefinition, AuditCategories, AuditSeverities } from '@abgov/adsp-service-sdk';
 import { AjvValidationService } from '@core-services/core-common';
 import { createLogger, transports } from 'winston';
 import {
@@ -9,6 +9,10 @@ import {
   AuditConfiguration,
   combineAuditConfiguration,
   createAuditConfigurationConverter,
+  createConfigurationSchema,
+  RateLimitSettings,
+  assertRateLimit,
+  isValidRateLimit,
 } from './configuration';
 
 const logger = createLogger({ transports: [new transports.Console({ silent: true })] });
@@ -39,6 +43,58 @@ describe('audit configuration schema', () => {
     };
 
     expect(() => validate({ ...catalog, actions: { 'case.update': action } })).not.toThrow();
+  });
+
+  it.each(Object.values(AuditCategories))('accepts SDK category %s', (category) => {
+    expect(() =>
+      validate({
+        ...catalog,
+        actions: { 'case.update': { ...definition, category } },
+      }),
+    ).not.toThrow();
+  });
+
+  it.each(Object.values(AuditSeverities))('accepts SDK severity %s', (severity) => {
+    expect(() =>
+      validate({
+        ...catalog,
+        actions: { 'case.update': { ...definition, severity } },
+      }),
+    ).not.toThrow();
+  });
+
+  it('accepts Core rate limit settings with a default and tenant overrides', () => {
+    expect(() =>
+      validate({
+        kind: 'rateLimitSettings',
+        default: { eventsPerSecond: 500, burst: 500 },
+        tenants: { 'urn:ads:platform:tenant-service:v2:/tenants/case-team': { eventsPerSecond: 250, burst: 500 } },
+      }),
+    ).not.toThrow();
+  });
+
+  it.each([
+    ['a burst below the largest request', { default: { eventsPerSecond: 500, burst: 499 } }],
+    ['a burst above the per-pod buffer', { default: { eventsPerSecond: 500, burst: 1001 } }],
+    ['a zero rate', { default: { eventsPerSecond: 0, burst: 500 } }],
+    ['a rate above the 500-event ceiling', { default: { eventsPerSecond: 501, burst: 500 } }],
+    [
+      'a tenant rate above the 500-event ceiling',
+      { tenants: { 'urn:ads:platform:tenant-service:v2:/tenants/case-team': { eventsPerSecond: 501, burst: 500 } } },
+    ],
+    ['a fractional rate', { default: { eventsPerSecond: 1.5, burst: 500 } }],
+    ['a missing burst', { default: { eventsPerSecond: 500 } }],
+    ['a tenant key that is not a tenant ID', { tenants: { 'case-team': { eventsPerSecond: 500, burst: 500 } } }],
+  ])('rejects rate limit settings with %s', (_, settings) => {
+    expect(() => validate({ kind: 'rateLimitSettings', ...settings })).toThrow();
+  });
+
+  it.each([1, 500])('accepts a rate of %i in configuration and runtime validation', (eventsPerSecond) => {
+    const limit = { eventsPerSecond, burst: 500 };
+
+    expect(() => validate({ kind: 'rateLimitSettings', default: limit })).not.toThrow();
+    expect(isValidRateLimit(limit)).toBe(true);
+    expect(() => assertRateLimit(limit)).not.toThrow();
   });
 
   describe('combined audit configuration', () => {
@@ -83,6 +139,24 @@ describe('audit configuration schema', () => {
       );
     });
 
+    it('uses only Core rate limit settings so a tenant cannot raise its own ceiling', () => {
+      const core: RateLimitSettings = { kind: 'rateLimitSettings', default: { eventsPerSecond: 250, burst: 500 } };
+      const tenant: RateLimitSettings = { kind: 'rateLimitSettings', default: { eventsPerSecond: 500, burst: 1000 } };
+
+      expect(combineAuditConfiguration(tenant, core)).toBe(core);
+      expect(combineAuditConfiguration(tenant, null)).toBeNull();
+    });
+
+    it('converts a rate limit document', () => {
+      const value: RateLimitSettings = {
+        kind: 'rateLimitSettings',
+        default: { eventsPerSecond: 500, burst: 500 },
+        tenants: { 'urn:ads:platform:tenant-service:v2:/tenants/case-team': { eventsPerSecond: 250, burst: 500 } },
+      };
+
+      expect(convert(value)).toEqual(value);
+    });
+
     it('rejects application overrides belonging to different namespaces', () => {
       expect(() =>
         combineAuditConfiguration(
@@ -125,6 +199,8 @@ describe('audit configuration schema', () => {
   });
 
   it.each([
+    { kind: 'retentionSettings', classes: { standard: { days: 1 } } },
+    { kind: 'retentionSettings', classes: { standard: { days: 3650 } } },
     { kind: 'retentionSettings', classes: { standard: { days: 365 } } },
     { kind: 'applicationRetentionSettings', application: 'case-service', classes: {} },
     { ...catalog, actions: {} },
@@ -137,10 +213,56 @@ describe('audit configuration schema', () => {
     { ...catalog, application: 'a'.repeat(41) },
     { ...catalog, application: 'case service' },
     { kind: 'retentionSettings', classes: { standard: { days: 0 } } },
+    { kind: 'retentionSettings', classes: { standard: { days: -1 } } },
+    { kind: 'retentionSettings', classes: { standard: { days: 0.5 } } },
     { kind: 'retentionSettings', classes: { standard: { days: '365' } } },
+    { kind: 'retentionSettings', classes: { standard: { days: 3651 } } },
+    { kind: 'applicationRetentionSettings', application: 'case-service', classes: { custom: { days: 3651 } } },
     { ...catalog, extra: true },
   ])('rejects malformed documents %j', (value) => {
     expect(() => validate(value)).toThrow();
+  });
+});
+
+describe('deployment retention bounds', () => {
+  it.each([30, 730])('accepts inclusive configured boundary %i', (days) => {
+    const validation = new AjvValidationService(logger);
+    validation.setSchema('bounded', createConfigurationSchema({ minDays: 30, maxDays: 730 }));
+
+    expect(() =>
+      validation.validate('retention', 'bounded', {
+        kind: 'retentionSettings',
+        classes: { custom: { days } },
+      }),
+    ).not.toThrow();
+  });
+
+  it.each([29, 731])('refuses periods outside configured boundaries: %i', (days) => {
+    const validation = new AjvValidationService(logger);
+    validation.setSchema('bounded', createConfigurationSchema({ minDays: 30, maxDays: 730 }));
+
+    expect(() =>
+      validation.validate('retention', 'bounded', {
+        kind: 'applicationRetentionSettings',
+        application: 'case-service',
+        classes: { custom: { days } },
+      }),
+    ).toThrow();
+  });
+
+  it.each([
+    { minDays: 0, maxDays: 3650 },
+    { minDays: 30, maxDays: 29 },
+    { minDays: 1.5, maxDays: 3650 },
+    { minDays: 1, maxDays: Infinity },
+  ])('refuses invalid platform bounds %j', (bounds) => {
+    expect(() => createConfigurationSchema(bounds)).toThrow('Retention bounds');
+  });
+
+  it('preserves old positive periods for explicit runtime rejection instead of SDK missing-config fallback', () => {
+    const value = { kind: 'retentionSettings', classes: { standard: { days: 4000 } } };
+
+    expect(createAuditConfigurationConverter(logger)(value)).toEqual(value);
   });
 });
 

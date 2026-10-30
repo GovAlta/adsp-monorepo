@@ -1,9 +1,17 @@
 import React from 'react';
 import { Provider } from 'react-redux';
 import configureStore from 'redux-mock-store';
-import { fireEvent, render } from '@testing-library/react';
+import { fireEvent, render, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { EventLog } from './eventLog';
+import { defaultEventLogCriteria } from './util';
+import { exportEventLogEntries } from './exportEventLog';
+import type { EventSearchCriteria } from '@store/event/models';
+
+jest.mock('./exportEventLog', () => ({
+  ...jest.requireActual('./exportEventLog'),
+  exportEventLogEntries: jest.fn().mockResolvedValue(1),
+}));
 
 jest.mock('@lib/dynamicPlaceHolder', () => ({
   dynamicGeneratePayload: jest.fn(),
@@ -12,15 +20,19 @@ jest.mock('@lib/dynamicPlaceHolder', () => ({
 jest.mock('./eventSearchForm', () => ({
   EventSearchForm: ({
     onSearch,
-    onCancel,
     leftAction,
   }: {
-    onSearch?: (criteria: { namespace: string; name: string }) => void;
-    onCancel?: () => void;
+    onSearch?: (criteria: EventSearchCriteria) => void;
     leftAction?: React.ReactNode;
   }) => (
     <div>
       {leftAction}
+      <button
+        data-testid="remove-date-range"
+        onClick={() => onSearch?.({ namespace: '', name: '', timestampMin: '', timestampMax: '' })}
+      >
+        Remove date range
+      </button>
       <button
         data-testid="event-log-filter-search"
         onClick={() => onSearch?.({ namespace: 'form-service', name: 'form-created' })}
@@ -31,12 +43,19 @@ jest.mock('./eventSearchForm', () => ({
         { id: 'namespace', namespace: 'form-service', name: '' },
         { id: 'name', namespace: '', name: 'form-created' },
         { id: 'unfiltered', namespace: '', name: '' },
-      ].map(({ id, namespace, name }) => (
-        <button key={id} data-testid={`search-${id}`} onClick={() => onSearch?.({ namespace, name })}>
+        { id: 'correlation', correlationId: 'corr-1', timestampMin: '', timestampMax: '' },
+        { id: 'context', context: { formId: 'application-form' }, timestampMin: '', timestampMax: '' },
+        { id: 'applications', applications: 'tenant-management-webapp', timestampMin: '', timestampMax: '' },
+        { id: 'url', url: '/forms', timestampMin: '', timestampMax: '' },
+      ].map(({ id, ...criteria }) => (
+        <button key={id} data-testid={`search-${id}`} onClick={() => onSearch?.(criteria)}>
           Search {id}
         </button>
       ))}
-      <button data-testid="event-log-filter-reset" onClick={() => onCancel?.()}>
+      <button
+        data-testid="event-log-filter-reset"
+        onClick={() => onSearch?.(jest.requireActual('./util').defaultEventLogCriteria())}
+      >
         Reset
       </button>
     </div>
@@ -44,10 +63,24 @@ jest.mock('./eventSearchForm', () => ({
 }));
 
 jest.mock('./eventLogEntries', () => ({
-  EventLogEntries: () => <div data-testid="event-log-entries" />,
+  EventLogEntries: ({ onSearch }) => (
+    <button data-testid="search-related" onClick={() => onSearch({ correlationId: 'corr-related' })}>
+      Related events
+    </button>
+  ),
 }));
 
 describe('EventLog', () => {
+  beforeEach(() => {
+    jest.useFakeTimers();
+    jest.setSystemTime(new Date('2026-10-19T18:30:45.123Z'));
+  });
+
+  afterEach(() => {
+    jest.clearAllMocks();
+    jest.useRealTimers();
+  });
+
   const mockStore = configureStore([]);
   const fetchPageType = 'eventLog/FETCH_EVENT_LOG_PAGE_ACTION';
 
@@ -99,7 +132,7 @@ describe('EventLog', () => {
       new CustomEvent('_change', { detail: { value } }),
     );
 
-  it('loads the first page of the event log with its total and without a lower time bound', () => {
+  it('loads exactly one first page with the Last 7 days bounds and total', () => {
     const store = createStore();
 
     renderEventLog(store);
@@ -109,7 +142,7 @@ describe('EventLog', () => {
         page: 1,
         pageSize: 10,
         includeTotal: true,
-        searchCriteria: { timestampMax: expect.any(String) },
+        searchCriteria: defaultEventLogCriteria(),
       }),
     ]);
   });
@@ -129,15 +162,16 @@ describe('EventLog', () => {
     );
   });
 
-  it('returns to the first page without filters when the filters are reset', () => {
+  it('returns to the first page with a fresh Last 7 days range when filters are reset', () => {
     const store = createStore({ page: 3, pageSize: 10, total: 347 });
     const { getByTestId } = renderEventLog(store);
     fireEvent.click(getByTestId('event-log-filter-search'));
 
+    jest.setSystemTime(new Date('2026-10-20T20:00:00Z'));
     fireEvent.click(getByTestId('event-log-filter-reset'));
 
     expect(fetchPageActions(store).pop()).toEqual(
-      expect.objectContaining({ page: 1, includeTotal: true, searchCriteria: { timestampMax: expect.any(String) } }),
+      expect.objectContaining({ page: 1, includeTotal: true, searchCriteria: defaultEventLogCriteria() }),
     );
   });
 
@@ -207,30 +241,96 @@ describe('EventLog', () => {
     expect(queryByText('Load more')).not.toBeInTheDocument();
   });
 
-  it.each([
-    ['event-log-filter-search', false],
-    ['search-namespace', false],
-    ['search-name', false],
-    ['search-unfiltered', true],
-  ])('sets CSV download availability for %s and disables it after reset', (searchButton, disabled) => {
-    const store = createStore();
-    const { getByTestId, container } = render(
-      <Provider store={store}>
-        <EventLog />
-      </Provider>,
-    );
+  it('enables CSV download for the default Last 7 days filter', () => {
+    const { container } = renderEventLog();
 
     const csvButton = container.querySelector('goa-button[testid="export-event-log-csv"]');
-    expect(csvButton).toHaveAttribute('disabled');
+
+    expect(csvButton).not.toHaveAttribute('disabled');
+  });
+
+  it.each([
+    'event-log-filter-search',
+    'search-namespace',
+    'search-name',
+    'search-correlation',
+    'search-context',
+    'search-applications',
+    'search-url',
+    'event-log-filter-reset',
+  ])('enables CSV download with the applied filters from %s', (searchButton) => {
+    const { getByTestId, container } = renderEventLog();
+    fireEvent.click(getByTestId('remove-date-range'));
 
     fireEvent.click(getByTestId(searchButton));
-    if (disabled) {
-      expect(csvButton).toHaveAttribute('disabled');
-    } else {
-      expect(csvButton).not.toHaveAttribute('disabled');
-    }
 
-    fireEvent.click(getByTestId('event-log-filter-reset'));
-    expect(csvButton).toHaveAttribute('disabled');
+    expect(container.querySelector('goa-button[testid="export-event-log-csv"]')).not.toHaveAttribute('disabled');
+  });
+
+  it('disables CSV download when all filters are removed despite the pinned pagination cutoff', () => {
+    const { getByTestId, container } = renderEventLog();
+
+    fireEvent.click(getByTestId('remove-date-range'));
+
+    expect(container.querySelector('goa-button[testid="export-event-log-csv"]')).toHaveAttribute('disabled');
+  });
+
+  it('keeps CSV download disabled when there are no results', () => {
+    const state = createStore().getState();
+    const store = mockStore({ ...state, event: { ...state.event, entries: [] } });
+
+    const { container } = renderEventLog(store);
+
+    expect(container.querySelector('goa-button[testid="export-event-log-csv"]')).toHaveAttribute('disabled');
+  });
+
+  it.each([
+    ['event-log-filter-reset', defaultEventLogCriteria],
+    [
+      'search-correlation',
+      () => ({ correlationId: 'corr-1', timestampMin: '', timestampMax: '2026-10-19T18:30:45.123Z' }),
+    ],
+  ])('exports the applied criteria with a fallback filename after %s', async (searchButton, criteria) => {
+    const { getByTestId, container } = renderEventLog();
+    fireEvent.click(getByTestId(searchButton));
+
+    fireEvent(container.querySelector('goa-button[testid="export-event-log-csv"]'), new CustomEvent('_click'));
+
+    await waitFor(() =>
+      expect(exportEventLogEntries).toHaveBeenCalledWith(
+        'http://value-service',
+        'token',
+        'event-log',
+        criteria(),
+        expect.any(AbortSignal),
+      ),
+    );
+  });
+
+  it('keeps the applied date constraint when searching related events', () => {
+    const store = createStore();
+    const { getByTestId } = renderEventLog(store);
+
+    fireEvent.click(getByTestId('search-related'));
+
+    expect(fetchPageActions(store).pop().searchCriteria).toEqual({
+      correlationId: 'corr-related',
+      timestampMin: defaultEventLogCriteria().timestampMin,
+      timestampMax: defaultEventLogCriteria().timestampMax,
+    });
+  });
+
+  it('clears the selected period while retaining the pagination upper bound', () => {
+    const store = createStore();
+    const { getByTestId } = renderEventLog(store);
+
+    fireEvent.click(getByTestId('remove-date-range'));
+
+    expect(fetchPageActions(store).pop().searchCriteria).toEqual({
+      namespace: '',
+      name: '',
+      timestampMin: '',
+      timestampMax: '2026-10-19T18:30:45.123Z',
+    });
   });
 });

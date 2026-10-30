@@ -35,7 +35,9 @@ const GoACalculation = (props: ControlProps) => {
 
   useEffect(() => {
     if (computedValue !== undefined && typeof handleChange === 'function' && path) {
-      handleChange(path, computedValue);
+      // Computed fields are declared as strings (the tester requires it), so a number would fail validation and the
+      // page could never be completed or submitted.
+      handleChange(path, String(computedValue));
     }
   }, [computedValue, handleChange, path]);
 

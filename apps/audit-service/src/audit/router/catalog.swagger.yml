@@ -1,4 +1,79 @@
 paths:
+  /audit/v1/retention:
+    get:
+      tags:
+        - Retention
+      summary: Get the configured retention periods for the caller's tenant.
+      description: |
+        Requires audit-reader. Returns the retention periods as the service applies them at write time: the active
+        configuration revision (falling back to the latest), with Core settings merged. Only configured periods are
+        returned, not the built-in defaults. Application entries are included for registered action catalogs that
+        override at least one class. Precedence is built-in defaults, then `tenant`, then the application entry.
+        Without a tenant context (Core callers not naming a tenant) both properties are empty.
+      parameters:
+        - in: query
+          name: tenantId
+          description: Tenant URN. Available to Core service accounts only; tenant callers cannot select another tenant.
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Configured retention periods.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - tenant
+                  - applications
+                properties:
+                  tenant:
+                    $ref: '#/components/schemas/RetentionClasses'
+                  applications:
+                    type: object
+                    additionalProperties:
+                      $ref: '#/components/schemas/RetentionClasses'
+        '400':
+          description: Invalid tenant identifier.
+        '401':
+          description: Missing or invalid bearer token.
+        '403':
+          description: Missing `audit-reader` role, or a tenant caller attempting to select another tenant.
+        '503':
+          description: Retention settings could not be resolved or are out of bounds. Retry.
+  /audit/v1/actions:
+    get:
+      tags:
+        - Action catalogs
+      summary: List all action catalogs visible to the caller.
+      description: |
+        Requires audit-reader, including for Core callers. Returns every catalog registered in audit-service:actions-<application>
+        for the caller's tenant and for Core (such as the platform services), so a client can discover the available
+        namespaces and actions. As for the single-namespace endpoint, each catalog merges tenant and Core actions with Core winning.
+        Without a tenant context (Core callers not naming a tenant) only Core catalogs are returned.
+      parameters:
+        - in: query
+          name: tenantId
+          description: Tenant URN. Available to Core service accounts only; tenant callers cannot select another tenant.
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Catalogs ordered by application; an empty array means none are registered.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AuditActionCatalog'
+        '400':
+          description: Invalid tenant identifier.
+        '401':
+          description: Missing or invalid bearer token.
+        '403':
+          description: Missing `audit-reader` role, or a tenant caller attempting to select another tenant.
+        '503':
+          description: Catalogs could not be listed or resolved. Retry; do not re-register actions.
   /audit/v1/{namespace}/actions:
     get:
       tags:
@@ -19,7 +94,7 @@ paths:
             pattern: '^[a-z0-9]+(?:-[a-z0-9]+)*$'
         - in: query
           name: tenantId
-          description: Tenant URN. Only a Core caller may select another tenant.
+          description: Tenant URN. Available to Core service accounts only; tenant callers cannot select another tenant.
           schema:
             type: string
       responses:
@@ -36,13 +111,44 @@ paths:
         '401':
           description: Missing or invalid bearer token.
         '403':
-          description: Missing audit-reader or an attempt to access another tenant.
+          description: Missing `audit-reader` role (have it granted to the caller), or a tenant caller attempting to select another tenant.
         '404':
-          description: Neither Core nor the tenant supplied a catalog. Configuration HTTP or converter failures handled by the SDK can also produce this response.
+          description: No action catalog is registered for this namespace (neither Core nor the tenant supplied one). Register the namespace's actions in the audit-service configuration (actions-<application>) and retry. Configuration HTTP or converter failures handled by the SDK can also produce this response.
         '503':
           description: A propagated SDK error or application-name consistency failure. Retry; do not re-register actions.
 components:
   schemas:
+    RetentionClasses:
+      type: object
+      description: Retention class name to period.
+      additionalProperties:
+        type: object
+        required:
+          - days
+        properties:
+          days:
+            type: integer
+            minimum: 1
+      example:
+        standard:
+          days: 120
+    AuditActionCatalog:
+      type: object
+      required:
+        - application
+        - core
+        - actions
+      properties:
+        application:
+          type: string
+          example: case-service
+        core:
+          type: boolean
+          description: True when Core registers a catalog for the application, so its actions are not tenant-managed.
+        actions:
+          type: array
+          items:
+            $ref: '#/components/schemas/AuditAction'
     AuditAction:
       type: object
       required:

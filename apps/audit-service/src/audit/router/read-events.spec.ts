@@ -1,4 +1,4 @@
-import { adspId, User } from '@abgov/adsp-service-sdk';
+import { adspId, AuditCategories, AuditSeverities, User } from '@abgov/adsp-service-sdk';
 import { createErrorHandler } from '@core-services/core-common';
 import * as express from 'express';
 import * as request from 'supertest';
@@ -8,6 +8,7 @@ import { AuditServiceRoles } from '../roles';
 import { EventReader, StoredEvent } from '../types';
 import { createAuditRouter } from './index';
 import { serializeEvent } from './read-events';
+import { decodeEventCursor, encodeEventCursor } from '../utils/event-cursor';
 
 const logger = createLogger({ transports: [new transports.Console({ silent: true })] });
 const tenantA = adspId`urn:ads:platform:tenant-service:v2:/tenants/case-team`;
@@ -63,7 +64,7 @@ describe('serializeEvent', () => {
 });
 
 describe('read events', () => {
-  const reader: jest.Mocked<EventReader> = { find: jest.fn(), get: jest.fn() };
+  const reader: jest.Mocked<EventReader> = { find: jest.fn(), get: jest.fn(), findNamespaces: jest.fn() };
   const user: User = {
     id: 'reader',
     name: 'Reader',
@@ -107,19 +108,19 @@ describe('read events', () => {
     expect(res.body.results).toHaveLength(1);
     expect(res.body.results[0]).not.toHaveProperty('tenant_id');
     expect(res.body.page.size).toBe(1);
-    expect(Buffer.from(res.body.page.next, 'base64').toString()).toBe('1');
+    expect(decodeEventCursor(res.body.page.next)).toEqual({ occurredAt: stored.occurred_at, id: stored.id });
     expect(reader.find).toHaveBeenCalledWith(
       expect.objectContaining({ tenantId: tenantA.toString(), namespace: 'case-service' }),
       1,
-      0,
+      undefined,
     );
   });
 
   it('applies after cursor and omits next on a short page', async () => {
-    const after = Buffer.from('20').toString('base64');
+    const after = encodeEventCursor(stored);
     const res = await request(createApp()).get(`/audit/v1/case-service/events?top=5&after=${after}`);
     expect(res.status).toBe(200);
-    expect(reader.find).toHaveBeenCalledWith(expect.anything(), 5, 20);
+    expect(reader.find).toHaveBeenCalledWith(expect.anything(), 5, { occurredAt: stored.occurred_at, id: stored.id });
     expect(res.body.page.next).toBeUndefined();
   });
 
@@ -143,7 +144,7 @@ describe('read events', () => {
         occurredTo: new Date('2026-10-02T00:00:00Z'),
       },
       10,
-      0,
+      undefined,
     );
   });
 
@@ -154,8 +155,46 @@ describe('read events', () => {
     expect(reader.find.mock.calls[0][0].tenantId).toBe(tenantA.toString());
   });
 
+  it.each(Object.values(AuditCategories))('accepts SDK category %s as a history filter', async (category) => {
+    const res = await request(createApp()).get(`/audit/v1/events?category=${category}`);
+
+    expect(res.status).toBe(200);
+    expect(reader.find).toHaveBeenCalledWith(expect.objectContaining({ category }), 10, undefined);
+  });
+
+  it.each(Object.values(AuditSeverities))('accepts SDK severity %s as a history filter', async (severity) => {
+    const res = await request(createApp()).get(`/audit/v1/events?severity=${severity}`);
+
+    expect(res.status).toBe(200);
+    expect(reader.find).toHaveBeenCalledWith(expect.objectContaining({ severity }), 10, undefined);
+  });
+
+  it('accepts a correlationId longer than 128 characters', async () => {
+    const correlationId = 'c'.repeat(200);
+    const res = await request(createApp()).get(`/audit/v1/events?correlationId=${correlationId}`);
+
+    expect(res.status).toBe(200);
+    expect(reader.find).toHaveBeenCalledWith(expect.objectContaining({ correlationId }), 10, undefined);
+  });
+
+  it('filters by correlation and session', async () => {
+    const res = await request(createApp()).get('/audit/v1/events?correlationId=trace-1&sessionId=session-1');
+
+    expect(res.status).toBe(200);
+    expect(reader.find).toHaveBeenCalledWith(
+      expect.objectContaining({ correlationId: 'trace-1', sessionId: 'session-1' }),
+      10,
+      undefined,
+    );
+  });
+
   it.each([
     'top=0',
+    'severity=bogus',
+    'severity[]=info',
+    `sessionId=${'s'.repeat(129)}`,
+    'correlationId[]=a',
+    'sessionId=',
     'top=5001',
     'after=abc',
     'status=bogus',
@@ -190,6 +229,22 @@ describe('read events', () => {
     expect(one.status).toBe(403);
     const all = await request(createApp({ ...user, roles: [] })).get('/audit/v1/events');
     expect(all.status).toBe(403);
+  });
+
+  it('lists the namespaces that have events for the caller tenant', async () => {
+    reader.findNamespaces.mockResolvedValue(['case-service', 'mcp-gateway-service']);
+
+    const res = await request(createApp()).get('/audit/v1/namespaces');
+
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({ results: ['case-service', 'mcp-gateway-service'] });
+    expect(reader.findNamespaces).toHaveBeenCalledWith(tenantA.toString());
+  });
+
+  it('requires audit-reader to list namespaces', async () => {
+    const res = await request(createApp({ ...user, roles: [] })).get('/audit/v1/namespaces');
+    expect(res.status).toBe(403);
+    expect(reader.findNamespaces).not.toHaveBeenCalled();
   });
 
   it('returns 503 when storage is not configured', async () => {

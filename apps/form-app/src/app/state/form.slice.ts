@@ -41,6 +41,8 @@ interface SerializableForm {
   id: string;
   urn: string;
   status: 'draft' | 'locked' | 'submitted' | 'archived';
+  data?: Record<string, unknown>;
+  files?: Record<string, string>;
   created: string;
   submitted?: string;
   submission?: {
@@ -278,6 +280,22 @@ export const findUserForms = createAsyncThunk(
 const SUPPORT_TOPIC_TYPE_ID = 'form-questions';
 const SUPPORT_TOPIC_STREAM_ID = 'form-questions-updates';
 
+function mergeFileRefsIntoData(data: Record<string, unknown>, files: Record<string, string>): Record<string, unknown> {
+  const merged = _.cloneDeep(data || {});
+
+  Object.entries(files || {}).forEach(([path, urn]) => {
+    if (path && typeof urn === 'string' && urn.length > 0) {
+      _.set(merged, path, urn);
+    }
+  });
+
+  return merged;
+}
+
+function normalizeFilePropertyId(path: string): string {
+  return (path || '').replace(/(\.\d+|\[\d+\])$/, '');
+}
+
 export const loadForm = createAsyncThunk(
   'form/load-form',
   async (formId: string, { getState, dispatch, rejectWithValue }) => {
@@ -290,6 +308,7 @@ export const loadForm = createAsyncThunk(
         new URL(`/form/v1/forms/${formId}`, formServiceUrl).href,
         {
           headers: { Authorization: `Bearer ${token}` },
+          params: { includeData: true },
         },
       );
 
@@ -301,12 +320,19 @@ export const loadForm = createAsyncThunk(
         },
       );
 
-      if (data.files && Object.values(data.files).length > 0) {
-        const formFiles = Object.values(data.files);
+      const persistedFiles =
+        data.files && Object.keys(data.files).length > 0
+          ? data.files
+          : form.files && Object.keys(form.files).length > 0
+            ? form.files
+            : {};
+
+      if (persistedFiles && Object.values(persistedFiles).length > 0) {
+        const formFiles = Object.values(persistedFiles);
         for (const fileUrn of formFiles) {
-          const propertyId = Object.keys(data.files)
-            .find((key) => data.files[key] === fileUrn)
-            .split('.')?.[0]; //Need to map the propertyId/controlId to the actual file meta data
+          const propertyId = Object.keys(persistedFiles)
+            .find((key) => persistedFiles[key] === fileUrn)
+            ?.replace(/(\.\d+|\[\d+\])$/, ''); // Map indexed property paths to root metadata key.
           //otherwise the file upload control wont display properly.
           if (propertyId) {
             dispatch(loadFileMetadata({ propertyId, urn: fileUrn }));
@@ -333,7 +359,10 @@ export const loadForm = createAsyncThunk(
         const currentDefinition = loadedForm.definitions[form.definition.id];
         ajv.validate(currentDefinition.dataSchema, data.data);
       }
-      return { ...data, form, digest: await hashData(data) };
+      const resolvedData = data.data || form.data || {};
+      const resolvedPayload = { ...data, data: resolvedData, files: persistedFiles };
+
+      return { ...resolvedPayload, form, digest: await hashData(resolvedPayload) };
     } catch (err) {
       if (axios.isAxiosError(err)) {
         return rejectWithValue({
@@ -429,7 +458,7 @@ export const applyServerFormUpdate = createAsyncThunk(
 
     if (nextFiles) {
       for (const [propertyId, fileUrn] of Object.entries(nextFiles)) {
-        const propertyIdRoot = propertyId.split('.')?.[0];
+        const propertyIdRoot = normalizeFilePropertyId(propertyId);
         const existingMetadata = file.metadata[propertyIdRoot];
         if (!existingMetadata?.find((m) => m.urn === fileUrn)) {
           dispatch(loadFileMetadata({ propertyId: propertyIdRoot, urn: fileUrn }));
@@ -459,7 +488,8 @@ const saveCurrentFormData = async (
     const { config, form } = getState() as AppState;
     const formServiceUrl = config.directory[FORM_SERVICE_ID];
 
-    const update = { data: form.data, files: form.files };
+    const dataWithFileRefs = mergeFileRefsIntoData(form.data, form.files);
+    const update = { data: dataWithFileRefs, files: form.files };
     const digest = await hashData({ id: formId, ...update });
 
     if (digest === form.saved) {
@@ -497,11 +527,10 @@ const saveCurrentFormData = async (
 
 export const saveForm = createAsyncThunk(
   'form/save-form',
-  debounce(
-    async (formId: string, thunkApi) => saveCurrentFormData(formId, thunkApi),
-    800,
-    { leading: false, trailing: true },
-  ),
+  debounce(async (formId: string, thunkApi) => saveCurrentFormData(formId, thunkApi), 800, {
+    leading: false,
+    trailing: true,
+  }),
 );
 
 export const saveFormNow = createAsyncThunk('form/save-form-now', async (formId: string, thunkApi) =>
@@ -510,10 +539,13 @@ export const saveFormNow = createAsyncThunk('form/save-form-now', async (formId:
 
 export const submitForm = createAsyncThunk(
   'form/submit-form',
-  async (formId: string, { getState, rejectWithValue }) => {
+  async (formId: string, { getState, dispatch, rejectWithValue }) => {
     try {
       const { config, user } = getState() as AppState;
       const formServiceUrl = config.directory[FORM_SERVICE_ID];
+
+      // Ensure any recent file uploads are persisted before submit.
+      await dispatch(saveFormNow(formId));
 
       const roles = user?.user?.roles ?? [];
       const dryRun = roles.includes('urn:ads:platform:form-service:form-tester');
@@ -552,12 +584,13 @@ export const submitAnonymousForm = createAsyncThunk(
 
       const roles = user?.user?.roles ?? [];
       const dryRun = roles.includes('urn:ads:platform:form-service:form-tester');
+      const mergedData = mergeFileRefsIntoData(form.data, form.files);
 
       const { data } = await axios.post<SerializableForm>(`/api/gateway/v1/forms`, {
         token,
         tenant: user.tenant.name,
         definitionId: form.selected,
-        data: form.data,
+        data: mergedData,
         files: form.files,
         dryRun: dryRun,
       });
@@ -900,9 +933,9 @@ export const showSubmitSelector = createSelector(definitionSelector, ({ definiti
 
 export const canSubmitSelector = createSelector(
   (state: AppState) => state.form.errors,
-  (state: AppState) => state.form.busy.saving,
   (state: AppState) => state.form.busy.submitting,
-  (errors, saving, submitting) => !errors?.length && !saving && !submitting,
+  // Avoid save-state flicker; submit thunk performs a final save before submit.
+  (errors, submitting) => !errors?.length && !submitting,
 );
 
 export type FormDefinition = ReturnType<typeof definitionSelector>['definition'];

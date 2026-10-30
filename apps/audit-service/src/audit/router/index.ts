@@ -2,15 +2,19 @@ import { AdspId, UnauthorizedUserError } from '@abgov/adsp-service-sdk';
 import { assertAuthenticatedHandler, createValidationHandler, NotFoundError } from '@core-services/core-common';
 import { RequestHandler, Router } from 'express';
 import { param, query } from 'express-validator';
-import { CatalogService, RetentionService } from '../model';
+import { CatalogService, FailedEventService, RetentionService } from '../model';
 import { APPLICATION_MAX_LENGTH, APPLICATION_PATTERN } from '../configuration';
 import { AuditServiceRoles } from '../roles';
 import { EventReader, EventSubmitter } from '../types';
 import { assertWriteScope } from '../utils/write-access';
 import { requireAuditRole } from '../utils/authorization';
+import { SelfAuditor } from '../utils/self-audit';
 import { validateWriteRequest } from '../utils/request-validation';
 import { writeEvents } from './write-events';
-import { readEvent, readEvents, validateEventId, validateEventQuery } from './read-events';
+import { limitWriteRate, WriteRateLimitOptions } from './rate-limit';
+import { failedEventHandler, validateFailedEventId, validateFailedEventPage } from './failed-events';
+import { readEvent, readEvents, readNamespaces, validateEventId, validateEventQuery } from './read-events';
+import { exportEvents } from './export-events';
 import type { Logger } from 'winston';
 
 interface AuditRouterOptions {
@@ -18,7 +22,14 @@ interface AuditRouterOptions {
   retention: RetentionService;
   logger: Logger;
   submitter?: EventSubmitter;
+  failedEvents?: FailedEventService;
   reader?: EventReader;
+  // The service's own client ID; enables recording of reads as audit events.
+  serviceId?: AdspId;
+  // Overrides the auditor created from serviceId, so the host can observe its failure count.
+  auditor?: SelfAuditor;
+  // Applies per tenant and namespace event rate limiting to writes when provided.
+  rateLimit?: WriteRateLimitOptions;
 }
 
 export const validateTenantContext = createValidationHandler(
@@ -62,10 +73,69 @@ export const readActions =
     }
   };
 
+export const readCatalogs =
+  (catalogs: CatalogService): RequestHandler =>
+  async (req, res, next) => {
+    try {
+      const listings = await catalogs.listCatalogs(req.tenant?.id);
+      res.send(
+        listings.map(({ application, core, actions }) => ({
+          application,
+          core,
+          actions: Object.entries(actions).map(([name, definition]) => ({ ...definition, name })),
+        })),
+      );
+    } catch (err) {
+      next(err);
+    }
+  };
+
+export const readRetention =
+  (catalogs: CatalogService, retention: RetentionService): RequestHandler =>
+  async (req, res, next) => {
+    try {
+      const tenantId = req.tenant?.id;
+      if (!tenantId) {
+        res.send({ tenant: {}, applications: {} });
+        return;
+      }
+      const listings = await catalogs.listCatalogs(tenantId);
+      res.send(
+        await retention.getConfigured(
+          tenantId,
+          listings.map(({ application }) => application),
+        ),
+      );
+    } catch (err) {
+      next(err);
+    }
+  };
+
 export function createAuditRouter(options: AuditRouterOptions): Router {
   const router = Router();
+  // Without a submitter the auditor still exists, so unrecorded reads are logged and counted rather than silently skipped.
+  const auditor =
+    options.auditor ?? (options.serviceId ? new SelfAuditor({ ...options, serviceId: options.serviceId }) : undefined);
   const validateNamespace = createValidationHandler(
     param('namespace').isString().isLength({ min: 1, max: APPLICATION_MAX_LENGTH }).matches(APPLICATION_PATTERN),
+  );
+  router.get(
+    '/namespaces',
+    assertAuthenticatedHandler,
+    requireAuditRole(AuditServiceRoles.Reader),
+    readNamespaces(options.reader),
+  );
+  router.get(
+    '/actions',
+    assertAuthenticatedHandler,
+    requireAuditRole(AuditServiceRoles.Reader),
+    readCatalogs(options.catalogs),
+  );
+  router.get(
+    '/retention',
+    assertAuthenticatedHandler,
+    requireAuditRole(AuditServiceRoles.Reader),
+    readRetention(options.catalogs, options.retention),
   );
   router.get(
     '/:namespace/actions',
@@ -75,11 +145,26 @@ export function createAuditRouter(options: AuditRouterOptions): Router {
     readActions(options.catalogs),
   );
   router.get(
+    '/events/export',
+    assertAuthenticatedHandler,
+    requireAuditRole(AuditServiceRoles.Reader),
+    validateEventQuery,
+    exportEvents(options.reader, auditor),
+  );
+  router.get(
+    '/:namespace/events/export',
+    assertAuthenticatedHandler,
+    requireAuditRole(AuditServiceRoles.Reader),
+    validateNamespace,
+    validateEventQuery,
+    exportEvents(options.reader, auditor),
+  );
+  router.get(
     '/events',
     assertAuthenticatedHandler,
     requireAuditRole(AuditServiceRoles.Reader),
     validateEventQuery,
-    readEvents(options.reader),
+    readEvents(options.reader, auditor),
   );
   router.get(
     '/:namespace/events',
@@ -87,7 +172,7 @@ export function createAuditRouter(options: AuditRouterOptions): Router {
     requireAuditRole(AuditServiceRoles.Reader),
     validateNamespace,
     validateEventQuery,
-    readEvents(options.reader),
+    readEvents(options.reader, auditor),
   );
   router.get(
     '/:namespace/events/:id',
@@ -95,7 +180,7 @@ export function createAuditRouter(options: AuditRouterOptions): Router {
     requireAuditRole(AuditServiceRoles.Reader),
     validateNamespace,
     validateEventId,
-    readEvent(options.reader),
+    readEvent(options.reader, auditor),
   );
   router.post(
     '/:namespace/events',
@@ -104,7 +189,22 @@ export function createAuditRouter(options: AuditRouterOptions): Router {
     validateNamespace,
     assertWriteScope,
     validateWriteRequest,
+    ...(options.rateLimit ? [limitWriteRate(options.rateLimit)] : []),
     writeEvents(options),
+  );
+  router.get(
+    '/failed-events',
+    assertAuthenticatedHandler,
+    requireAuditRole(AuditServiceRoles.Admin),
+    validateFailedEventPage,
+    failedEventHandler(options.failedEvents, options.logger, 'list', auditor),
+  );
+  router.post(
+    '/failed-events/:id/replay',
+    assertAuthenticatedHandler,
+    requireAuditRole(AuditServiceRoles.Admin),
+    validateFailedEventId,
+    failedEventHandler(options.failedEvents, options.logger, 'replay'),
   );
   return router;
 }

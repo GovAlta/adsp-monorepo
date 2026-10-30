@@ -102,7 +102,7 @@ export const SubscriberModalForm: FunctionComponent<NotificationTypeFormProps> =
         }
       } else {
         if (phone.length === 0) {
-          channels.splice(smsIndex);
+          channels.splice(smsIndex, 1);
           emailIndex = getChannelIndex(subscriber, 'email');
           botIndex = getChannelIndex(subscriber, 'bot');
         } else {
@@ -210,7 +210,7 @@ export const SubscriberModalForm: FunctionComponent<NotificationTypeFormProps> =
                   value={phone}
                   testId="contact-sms-input"
                   onChange={(detail: GoabInputOnChangeDetail) => {
-                    if (detail.value) setPhone(detail.value);
+                    setPhone(detail.value ?? '');
                   }}
                   trailingIcon="close"
                   trailingIconAriaLabel="Clear phone number"

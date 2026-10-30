@@ -52,6 +52,58 @@ components:
                     file: "#/components/schemas/FilePart"
             - type: string
 
+/agent/v1/access/scope:
+  get:
+    tags:
+      - Agent
+    description: >-
+      Gets the Access Service environment and realm the current user may inspect (read-only). Determined from the
+      verified user token only; no AI is involved. Returns status "unavailable" with a reason and message, rather
+      than an error, when the user cannot inspect (for example, a missing role).
+    responses:
+      200:
+        description: Request completed successfully.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  enum: [available, unavailable]
+                reason:
+                  type: string
+                  enum: [NO_SESSION, MISSING_ROLE, UNKNOWN_ENVIRONMENT, ENVIRONMENT_MISMATCH, REALM_MISMATCH]
+                message:
+                  type: string
+                missingRoles:
+                  type: array
+                  items:
+                    type: string
+                readOnly:
+                  type: boolean
+                environment:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      enum: [dev, uat, prod, local]
+                    label:
+                      type: string
+                    host:
+                      type: string
+                    readOnly:
+                      type: boolean
+                realm:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                    kind:
+                      type: string
+                      enum: [tenant, core]
+              required: [status, message]
+
 /agent/v1/agents:
   get:
     tags:
@@ -126,3 +178,38 @@ components:
                   type: object
                   additionalProperties: true
                   nullable: true
+
+/agent/v1/agents/{agentId}/threads/{threadId}:
+  parameters:
+    - name: agentId
+      description: ID of the agent.
+      example: AccessServiceAgent
+      in: path
+      required: true
+      schema:
+        type: string
+    - name: threadId
+      description: ID of the conversation thread.
+      example: 0f8fad5b-d9cb-469f-a165-70867728950e
+      in: path
+      required: true
+      schema:
+        type: string
+  delete:
+    tags:
+      - Agent
+    description: >-
+      Deletes one of the signed-in user's own conversation threads, with its stored messages, observations and
+      workspace, so a new chat starts without its context. Returns deleted false when the user has no thread with
+      this ID, including one that belongs to another user, so repeating the request is harmless.
+    responses:
+      200:
+        description: Request completed successfully.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                deleted:
+                  type: boolean
+              required: [deleted]

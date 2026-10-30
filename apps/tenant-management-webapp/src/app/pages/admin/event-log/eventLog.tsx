@@ -13,6 +13,7 @@ import { exportEventLogEntries, isExportCanceled } from './exportEventLog';
 import { EventLogExportModal } from './eventLogExportModal';
 import { EventLogPagination } from './eventLogPagination';
 import { SmallButton } from './styled-components';
+import { defaultEventLogCriteria } from './util';
 import { ErrorNotification } from '@store/notifications/actions';
 
 export const EventLog: FunctionComponent = () => {
@@ -20,7 +21,10 @@ export const EventLog: FunctionComponent = () => {
   const hasReaderRole = useSelector((state: RootState) =>
     state.session?.resourceAccess?.['urn:ads:platform:value-service']?.roles?.includes(readerRole),
   );
-  const [searchCriteria, setSearchCriteria] = useState<EventSearchCriteria>(null);
+  const [initialCriteria] = useState(defaultEventLogCriteria);
+  const [searchCriteria, setSearchCriteria] = useState<EventSearchCriteria>(initialCriteria);
+  // Clearing the date filter must not display pagination's pinned cutoff as a Custom filter.
+  const [pageCriteria, setPageCriteria] = useState<EventSearchCriteria>(initialCriteria);
   const [pageSize, setPageSize] = useState(DEFAULT_EVENT_LOG_PAGE_SIZE);
   const [isExporting, setIsExporting] = useState(false);
   const [exportOpen, setExportOpen] = useState(false);
@@ -37,7 +41,8 @@ export const EventLog: FunctionComponent = () => {
     (criteria: EventSearchCriteria, size: number) => {
       // Pin the upper bound so newly logged events do not shift page offsets or the total while paging.
       const pinnedCriteria = { ...criteria, timestampMax: criteria.timestampMax || new Date().toISOString() };
-      setSearchCriteria(pinnedCriteria);
+      setSearchCriteria(criteria);
+      setPageCriteria(pinnedCriteria);
       dispatch(clearEventLogEntries());
       dispatch(getEventLogPage(1, size, pinnedCriteria, true));
     },
@@ -46,9 +51,9 @@ export const EventLog: FunctionComponent = () => {
 
   useEffect(() => {
     if (hasReaderRole) {
-      search({}, DEFAULT_EVENT_LOG_PAGE_SIZE);
+      search(initialCriteria, DEFAULT_EVENT_LOG_PAGE_SIZE);
     }
-  }, [search, hasReaderRole]);
+  }, [search, hasReaderRole, initialCriteria]);
 
   useEffect(() => {
     return function clean() {
@@ -59,21 +64,34 @@ export const EventLog: FunctionComponent = () => {
 
   const onSearch = (criteria: EventSearchCriteria) => {
     if (hasReaderRole) {
-      search(criteria, pageSize);
+      search(
+        {
+          ...criteria,
+          timestampMin: criteria.timestampMin ?? searchCriteria.timestampMin,
+          timestampMax: criteria.timestampMax ?? searchCriteria.timestampMax,
+        },
+        pageSize,
+      );
     }
   };
-  const onSearchCancel = () => {
-    search({}, pageSize);
-  };
   const onPage = (page: number) => {
-    dispatch(getEventLogPage(page, pageSize, searchCriteria));
+    dispatch(getEventLogPage(page, pageSize, pageCriteria));
   };
   const onPageSize = (size: number) => {
     setPageSize(size);
     // The total is unchanged, so only the first page at the new size is needed.
-    dispatch(getEventLogPage(1, size, searchCriteria));
+    dispatch(getEventLogPage(1, size, pageCriteria));
   };
-  const hasSelectedEvent = Boolean(searchCriteria?.namespace || searchCriteria?.name);
+  const hasFilters = [
+    searchCriteria.namespace,
+    searchCriteria.name,
+    searchCriteria.timestampMin,
+    searchCriteria.timestampMax,
+    searchCriteria.correlationId,
+    searchCriteria.applications,
+    searchCriteria.url,
+    Object.keys(searchCriteria.context ?? {}).length,
+  ].some(Boolean);
   const hasEntries = Boolean(entries?.length);
   const closeExportModal = () => {
     setExportOpen(false);
@@ -85,7 +103,7 @@ export const EventLog: FunctionComponent = () => {
     closeExportModal();
   };
   const onExport = async () => {
-    if (!hasReaderRole || !hasSelectedEvent || !hasEntries || !valueServiceApiUrl || !token) {
+    if (!hasReaderRole || !hasFilters || !hasEntries || !valueServiceApiUrl || !token) {
       return;
     }
     const controller = new AbortController();
@@ -94,14 +112,8 @@ export const EventLog: FunctionComponent = () => {
     setExportOpen(true);
     setExportRowCount(0);
     try {
-      const fileName = [searchCriteria.namespace, searchCriteria.name].filter(Boolean).join('-');
-      const count = await exportEventLogEntries(
-        valueServiceApiUrl,
-        token,
-        fileName,
-        searchCriteria || {},
-        controller.signal,
-      );
+      const fileName = [searchCriteria.namespace, searchCriteria.name].filter(Boolean).join('-') || 'event-log';
+      const count = await exportEventLogEntries(valueServiceApiUrl, token, fileName, pageCriteria, controller.signal);
       setExportRowCount(count);
     } catch (error) {
       if (isExportCanceled(error)) {
@@ -128,13 +140,13 @@ export const EventLog: FunctionComponent = () => {
               <EventSearchForm
                 disabled={isLoading}
                 onSearch={(criteria) => onSearch(criteria)}
-                onCancel={onSearchCancel}
+                initialValue={searchCriteria}
                 leftAction={
                   <SmallButton>
                     <GoabButton
                       size="compact"
                       type="tertiary"
-                      disabled={isExporting || !hasSelectedEvent || !hasEntries}
+                      disabled={isExporting || !hasFilters || !hasEntries}
                       onClick={onExport}
                       testId="export-event-log-csv"
                     >

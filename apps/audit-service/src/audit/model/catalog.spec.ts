@@ -2,6 +2,7 @@ import { adspId, ConfigurationService } from '@abgov/adsp-service-sdk';
 import { createLogger, transports } from 'winston';
 import * as HttpStatusCodes from 'http-status-codes';
 import { CatalogService, CatalogUnavailableError } from './catalog';
+import { REPLAY_ACTION, REPLAY_DEFINITION } from '../actions';
 
 describe('CatalogService', () => {
   const logger = createLogger({ transports: [new transports.Console({ silent: true })] });
@@ -36,6 +37,24 @@ describe('CatalogService', () => {
     expect(await service.getCatalog('case-service', tenantId)).toEqual(catalog);
   });
 
+  it('does not supply a built-in replay action when the registered catalog is missing', async () => {
+    configuration.getServiceConfiguration.mockResolvedValue(null);
+    expect(await service.getCatalog('audit-service', tenantId)).toBeNull();
+    expect(configuration.getServiceConfiguration).toHaveBeenCalledWith('actions-audit-service', tenantId);
+  });
+
+  it('uses the configured replay definition without overriding it with local constants', async () => {
+    configuration.getServiceConfiguration.mockResolvedValue({
+      kind: 'actionCatalog',
+      application: 'audit-service',
+      actions: { custom: REPLAY_DEFINITION, [REPLAY_ACTION]: { ...REPLAY_DEFINITION, version: 99 } },
+    });
+    expect((await service.getCatalog('audit-service', tenantId)).actions).toEqual({
+      custom: REPLAY_DEFINITION,
+      [REPLAY_ACTION]: { ...REPLAY_DEFINITION, version: 99 },
+    });
+  });
+
   it('reports a propagated SDK failure as unavailable', async () => {
     configuration.getServiceConfiguration.mockRejectedValue(new Error('Token provider unavailable'));
 
@@ -52,5 +71,45 @@ describe('CatalogService', () => {
     });
 
     await expect(service.getCatalog('case-service', tenantId)).rejects.toBeInstanceOf(CatalogUnavailableError);
+  });
+
+  describe('listCatalogs', () => {
+    const source = { listApplications: jest.fn() };
+    const listing = new CatalogService(configuration, logger, source);
+    const catalogOf = (application: string) => ({ kind: 'actionCatalog', application, actions: {} });
+
+    it('merges core and tenant applications once and flags core ones', async () => {
+      source.listApplications.mockImplementation(async (tenant) => (tenant ? ['b-app', 'a-app'] : ['a-app', 'c-app']));
+      configuration.getServiceConfiguration.mockImplementation(async (name: string) =>
+        catalogOf(name.substring('actions-'.length)),
+      );
+
+      const result = await listing.listCatalogs(tenantId);
+
+      expect(result.map(({ application, core }) => [application, core])).toEqual([
+        ['a-app', true],
+        ['b-app', false],
+        ['c-app', true],
+      ]);
+    });
+
+    it('lists only core catalogs without a tenant', async () => {
+      source.listApplications.mockResolvedValue(['a-app']);
+      configuration.getServiceConfiguration.mockResolvedValue(catalogOf('a-app'));
+
+      await listing.listCatalogs();
+
+      expect(source.listApplications).toHaveBeenCalledTimes(1);
+    });
+
+    it('reports a listing failure as unavailable', async () => {
+      source.listApplications.mockRejectedValue(new Error('boom'));
+
+      await expect(listing.listCatalogs(tenantId)).rejects.toBeInstanceOf(CatalogUnavailableError);
+    });
+
+    it('is unavailable when no source is configured', async () => {
+      await expect(service.listCatalogs(tenantId)).rejects.toBeInstanceOf(CatalogUnavailableError);
+    });
   });
 });

@@ -1,5 +1,6 @@
+import { environment } from '../environments/environment';
 import { AgentConfigurations } from './configuration';
-import { onIoConnection } from './router';
+import { deleteThread, getAccessScope, onIoConnection } from './router';
 import { WorkspaceChangeProjector } from './workspace';
 
 jest.mock('@abgov/adsp-service-sdk', () => ({
@@ -30,7 +31,7 @@ describe('onIoConnection workspace socket events', () => {
     stream?: jest.Mock;
   }
 
-  function buildSocketHarness(brokerOverrides: MockBrokerOverrides = {}) {
+  function buildSocketHarness(brokerOverrides: MockBrokerOverrides = {}, user: Record<string, unknown> = mockUser) {
     const mockBroker = {
       initializeWorkspace:
         brokerOverrides.initializeWorkspace ??
@@ -73,7 +74,7 @@ describe('onIoConnection workspace socket events', () => {
     const eventHandlers: Record<string, (...args: unknown[]) => Promise<void>> = {};
     const socket = {
       request: {
-        user: mockUser,
+        user,
         tenant: mockTenant,
         getServiceConfiguration: jest.fn().mockResolvedValue(mockConfiguration),
       },
@@ -89,8 +90,8 @@ describe('onIoConnection workspace socket events', () => {
     return { socket, eventHandlers, mockBroker, getAgent };
   }
 
-  async function connect(brokerOverrides: MockBrokerOverrides = {}) {
-    const harness = buildSocketHarness(brokerOverrides);
+  async function connect(brokerOverrides: MockBrokerOverrides = {}, user: Record<string, unknown> = mockUser) {
+    const harness = buildSocketHarness(brokerOverrides, user);
     await onIoConnection(logger as never)(harness.socket as never);
     return harness;
   }
@@ -416,6 +417,105 @@ describe('onIoConnection workspace socket events', () => {
           chunk: { type: 'error', payload: { message: 'model refused' } },
         }),
       );
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // message latency logging
+  // -------------------------------------------------------------------------
+
+  describe('message latency logging', () => {
+    const PRE_STREAM_DELAY_MS = 25;
+
+    it('includes the time before the stream starts in the logged total', async () => {
+      const streamResult = {
+        fullStream: (async function* () {})(),
+        textStream: (async function* () {
+          yield 'hello';
+        })(),
+        object: Promise.resolve(null),
+      };
+      const stream = jest.fn(() => new Promise((resolve) => setTimeout(() => resolve(streamResult), PRE_STREAM_DELAY_MS)));
+      const { eventHandlers } = await connect({ stream });
+
+      await eventHandlers['message']({
+        agent: 'formGenerationAgent',
+        threadId: 'thread-1',
+        messageId: 'user-message-1',
+        content: 'List the data registers',
+      });
+
+      expect(logger.info).toHaveBeenCalledWith(
+        expect.stringMatching(/^Stream complete for agent formGenerationAgent: total=\d+ms, preStream=\d+ms, /),
+        expect.objectContaining({
+          preStreamDurationMs: expect.any(Number),
+          totalDurationMs: expect.any(Number),
+        }),
+      );
+      const [, meta] = logger.info.mock.calls.find(([message]) => String(message).startsWith('Stream complete'));
+      expect(meta.preStreamDurationMs).toBeGreaterThanOrEqual(PRE_STREAM_DELAY_MS - 5);
+      expect(meta.totalDurationMs).toBeGreaterThanOrEqual(meta.preStreamDurationMs + meta.streamLoopDurationMs);
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // token expiry while a message is in progress
+  // -------------------------------------------------------------------------
+
+  describe('token expiry while a message is in progress', () => {
+    const EXPIRY_TIMER_MS = 40;
+
+    // A token whose expiry disconnect (threshold before exp) fires EXPIRY_TIMER_MS after connecting.
+    const expiringUser = () => ({
+      ...mockUser,
+      token: { exp: (Date.now() + environment.AGENT_TOKEN_EXPIRY_THRESHOLD_MS + EXPIRY_TIMER_MS) / 1000 },
+    });
+    const streamResult = () => ({
+      fullStream: (async function* () {})(),
+      textStream: (async function* () {
+        yield 'The form is valid.';
+      })(),
+      object: Promise.resolve(null),
+    });
+    const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+    const message = { agent: 'formGenerationAgent', threadId: 'thread-1', messageId: 'user-message-1', content: 'Validate' };
+
+    it('sends the reply before disconnecting when the token expires before the stream starts', async () => {
+      let startStream: (result: unknown) => void = () => undefined;
+      const stream = jest.fn(() => new Promise((resolve) => (startStream = resolve)));
+      const { socket, eventHandlers } = await connect({ stream }, expiringUser());
+
+      const handling = eventHandlers['message'](message);
+      await wait(EXPIRY_TIMER_MS * 2);
+      const disconnectedBeforeReply = socket.disconnect.mock.calls.length > 0;
+      startStream(streamResult());
+      await handling;
+
+      expect(disconnectedBeforeReply).toBe(false);
+      expect(socket.emit).toHaveBeenCalledWith('stream', expect.objectContaining({ replyTo: 'user-message-1', done: true }));
+      expect(socket.disconnect).toHaveBeenCalledWith(true);
+      expect(socket.emit).toHaveBeenLastCalledWith('session-expired', expect.objectContaining({ code: 'USER_TOKEN_EXPIRED' }));
+    });
+
+    it('reports the error before disconnecting when the agent fails before the stream starts', async () => {
+      const stream = jest.fn(
+        () => new Promise((_resolve, reject) => setTimeout(() => reject(new Error('model unavailable')), EXPIRY_TIMER_MS * 2)),
+      );
+      const { socket, eventHandlers } = await connect({ stream }, expiringUser());
+
+      await eventHandlers['message'](message);
+
+      expect(socket.emit).toHaveBeenCalledWith('error', expect.anything());
+      expect(socket.disconnect).toHaveBeenCalledWith(true);
+      expect(socket.emit).toHaveBeenLastCalledWith('session-expired', expect.objectContaining({ code: 'USER_TOKEN_EXPIRED' }));
+    });
+
+    it('disconnects as soon as the token expires when no message is in progress', async () => {
+      const { socket } = await connect({}, expiringUser());
+
+      await wait(EXPIRY_TIMER_MS * 2);
+
+      expect(socket.disconnect).toHaveBeenCalledWith(true);
     });
   });
 
@@ -911,5 +1011,104 @@ describe('Agent Router - Structured Output', () => {
       const agentDef = agentConfig['text-agent'];
       expect(agentDef.outputSchema).toBeUndefined();
     });
+  });
+});
+
+describe('getAccessScope', () => {
+  const accessServiceUrl = new URL('https://access.adsp-dev.gov.ab.ca');
+  const agentUserRole = 'urn:ads:platform:agent-service:agent-user';
+
+  function callHandler(user: unknown) {
+    const res = { send: jest.fn() };
+    getAccessScope(accessServiceUrl)({ user } as never, res as never, jest.fn());
+    return res.send.mock.calls[0][0];
+  }
+
+  it("returns the user's environment and realm without any AI involvement", () => {
+    const scope = callHandler({
+      id: 'user-1',
+      roles: [agentUserRole],
+      tenantId: { toString: () => 'urn:ads:platform:tenant-service:v2:/tenants/tenant-1' },
+      isCore: false,
+      token: { iss: 'https://access.adsp-dev.gov.ab.ca/auth/realms/realm-1', bearer: 'user-token' },
+    });
+
+    expect(scope).toMatchObject({
+      status: 'available',
+      environment: { id: 'dev', label: 'Development', readOnly: true },
+      realm: { id: 'realm-1', kind: 'tenant' },
+      readOnly: true,
+    });
+    expect(JSON.stringify(scope)).not.toContain('user-token');
+  });
+
+  it('explains a missing role instead of returning an error', () => {
+    const scope = callHandler({
+      id: 'user-1',
+      roles: [],
+      isCore: false,
+      token: { iss: 'https://access.adsp-dev.gov.ab.ca/auth/realms/realm-1' },
+    });
+
+    expect(scope).toMatchObject({ status: 'unavailable', reason: 'MISSING_ROLE', missingRoles: [agentUserRole] });
+  });
+});
+
+describe('deleteThread', () => {
+  const logger = { debug: jest.fn(), info: jest.fn(), warn: jest.fn(), error: jest.fn() };
+  const user = { id: 'user-1', name: 'Tester' };
+
+  function createRequest(deleteResult: Promise<boolean>) {
+    const broker = { deleteThread: jest.fn().mockReturnValue(deleteResult) };
+    const req = {
+      params: { agentId: 'AccessServiceAgent', threadId: 'thread-1' },
+      user,
+      tenant: { id: { toString: () => 'urn:ads:platform:tenant-service:v2:/tenants/tenant-1' } },
+      agent: broker,
+    };
+    return { req, broker };
+  }
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it("deletes the user's thread through the agent and reports it", async () => {
+    const { req, broker } = createRequest(Promise.resolve(true));
+    const res = { send: jest.fn() };
+    const next = jest.fn();
+
+    await deleteThread(logger as never)(req as never, res as never, next);
+
+    expect(broker.deleteThread).toHaveBeenCalledWith(user, 'thread-1');
+    expect(res.send).toHaveBeenCalledWith({ deleted: true });
+    expect(next).not.toHaveBeenCalled();
+    expect(logger.info).toHaveBeenCalledWith(
+      'User Tester (ID: user-1) deleted thread thread-1 of agent AccessServiceAgent.',
+      expect.objectContaining({ context: 'AgentRouter' }),
+    );
+  });
+
+  it('reports deleted false, rather than an error, when the user has no such thread', async () => {
+    const { req } = createRequest(Promise.resolve(false));
+    const res = { send: jest.fn() };
+    const next = jest.fn();
+
+    await deleteThread(logger as never)(req as never, res as never, next);
+
+    expect(res.send).toHaveBeenCalledWith({ deleted: false });
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it('passes failures to the error handler', async () => {
+    const error = new Error('storage failed');
+    const { req } = createRequest(Promise.reject(error));
+    const res = { send: jest.fn() };
+    const next = jest.fn();
+
+    await deleteThread(logger as never)(req as never, res as never, next);
+
+    expect(next).toHaveBeenCalledWith(error);
+    expect(res.send).not.toHaveBeenCalled();
   });
 });

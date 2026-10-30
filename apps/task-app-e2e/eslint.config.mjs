@@ -13,8 +13,19 @@ export default [
   ...baseConfig,
   ...compat.extends('plugin:cypress/recommended'),
   {
-    files: ['**/*.ts', '**/*.tsx', '**/*.js', '**/*.jsx'],
-    // Override or add rules here
-    rules: {},
+    rules: {
+      '@typescript-eslint/explicit-module-boundary-types': 'off',
+      'cypress/no-unnecessary-waiting': 'off',
+      '@typescript-eslint/no-non-null-assertion': 'off',
+      '@typescript-eslint/no-explicit-any': 'off',
+    },
+  },
+  {
+    files: ['src/plugins/index.js', 'src/support/multiple-cucumber-html-reporter.js', 'src/support/index.ts'],
+    rules: {
+      '@typescript-eslint/no-var-requires': 'off',
+      '@typescript-eslint/camelcase': 'off',
+      'no-undef': 'off',
+    },
   },
 ];

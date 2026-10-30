@@ -23,6 +23,51 @@ export const QUESTION_HIERARCHY = {
       },
     },
   },
+  'environment-realm': {
+    label: 'My Environment & Realm',
+    subtopics: {
+      'inspectable-environments': {
+        label: 'Inspectable Environments',
+        question: 'List the Access Service environments and tell me which ones I can inspect.',
+        agent: 'AccessServiceAgent',
+      },
+      'my-realms': {
+        label: 'My Realms',
+        question: 'Which realms can I inspect in this environment?',
+        agent: 'AccessServiceAgent',
+      },
+      'realm-details': {
+        label: 'Realm Details',
+        question: 'Show me the basic identifying information for my realm.',
+        agent: 'AccessServiceAgent',
+      },
+    },
+  },
+  'my-clients': {
+    label: 'My Clients',
+    subtopics: {
+      'list-clients': {
+        label: 'List Clients',
+        question: 'List the clients in my realm.',
+        agent: 'AccessServiceAgent',
+      },
+      'inspect-client': {
+        label: 'Inspect a Client',
+        question: 'I want to inspect the configuration of a client in my realm.',
+        agent: 'AccessServiceAgent',
+      },
+      'client-redirects': {
+        label: 'Redirect URIs & Web Origins',
+        question: 'Show me the redirect URIs and web origins configured for a client in my realm.',
+        agent: 'AccessServiceAgent',
+      },
+      'client-roles-scopes': {
+        label: 'Roles, Scopes & Mappers',
+        question: 'Show me the roles, client scopes and protocol mappers configured for a client in my realm.',
+        agent: 'AccessServiceAgent',
+      },
+    },
+  },
   clients: {
     label: 'Clients',
     subtopics: {
@@ -114,9 +159,7 @@ export interface AgentContextSelectorProps {
 }
 
 const SelectorContainer = styled.div`
-  width: 70%;
-  min-width: min(100%, 20rem);
-  max-width: 100%;
+  width: 100%;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
@@ -124,7 +167,6 @@ const SelectorContainer = styled.div`
   padding: var(--goa-space-s);
   background-color: var(--goa-color-greyscale-100);
   border-radius: var(--goa-border-radius-s);
-  margin-bottom: var(--goa-space-s);
 `;
 
 const TopicSelectorWrapper = styled.div`

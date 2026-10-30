@@ -551,17 +551,49 @@ describe('POST /audit/v1/:namespace/events', () => {
       expect(result.body).not.toHaveProperty('accepted');
     });
 
-    it('refuses an over-capacity request without storing any of its events', async () => {
+    it('requires a batch larger than total capacity to be split without storing any of its events', async () => {
       buffer = new AuditWriteBuffer(store, logger, { maxEvents: 1 });
 
       const result = await request(createApp(user, buffer))
         .post('/audit/v1/case-service/events')
         .send({ events: [event, event] })
-        .expect(HttpStatusCodes.SERVICE_UNAVAILABLE);
+        .expect(HttpStatusCodes.REQUEST_TOO_LONG);
 
-      expect(result.headers['retry-after']).toBe('1');
+      expect(result.headers['retry-after']).toBeUndefined();
+      expect(result.body.errorMessage).toContain('Split the batch');
       expect(store.insert).not.toHaveBeenCalled();
       expect(store.park).not.toHaveBeenCalled();
+    });
+
+    it('keeps temporary capacity pressure retryable while an admitted write is in flight', async () => {
+      buffer = new AuditWriteBuffer(store, logger, { maxEvents: 1 });
+      let started: () => void;
+      let commit: () => void;
+      const writing = new Promise<void>((resolve) => (started = resolve));
+      store.insert.mockImplementationOnce(
+        (events) =>
+          new Promise((resolve) => {
+            commit = () => resolve(events.map(({ id }) => id));
+            started();
+          }),
+      );
+      const app = createApp(user, buffer);
+      const admitted = request(app)
+        .post('/audit/v1/case-service/events')
+        .send({ events: [event] })
+        .then((response) => response);
+      await writing;
+
+      const refused = await request(app)
+        .post('/audit/v1/case-service/events')
+        .send({ events: [event] });
+      commit();
+      const accepted = await admitted;
+
+      expect(refused.status).toBe(HttpStatusCodes.SERVICE_UNAVAILABLE);
+      expect(refused.headers['retry-after']).toBe('1');
+      expect(accepted.status).toBe(HttpStatusCodes.ACCEPTED);
+      expect(store.insert).toHaveBeenCalledTimes(1);
     });
 
     it('refuses writes after the buffer has begun shutdown', async () => {

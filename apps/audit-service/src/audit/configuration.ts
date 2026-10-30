@@ -1,4 +1,4 @@
-import { AuditActionDefinition } from '@abgov/adsp-service-sdk';
+import { AuditActionDefinition, AuditCategories, AuditSeverities } from '@abgov/adsp-service-sdk';
 import { AjvValidationService } from '@core-services/core-common';
 import type { Logger } from 'winston';
 
@@ -22,7 +22,57 @@ export interface ApplicationRetentionSettings {
   classes: Record<string, { days: number }>;
 }
 
-export type AuditConfiguration = ActionCatalog | RetentionSettings | ApplicationRetentionSettings;
+export interface RateLimit {
+  eventsPerSecond: number;
+  burst: number;
+}
+
+export interface RateLimitSettings {
+  kind: 'rateLimitSettings';
+  default?: RateLimit;
+  tenants?: Record<string, RateLimit>;
+}
+
+export type AuditConfiguration = ActionCatalog | RetentionSettings | ApplicationRetentionSettings | RateLimitSettings;
+
+// A burst below the largest request would make full-size requests permanently unacceptable;
+// a burst above the per-pod buffer would let one application fill the buffer every other writer shares.
+export const MIN_RATE_LIMIT_BURST = 500;
+export const MAX_RATE_LIMIT_BURST = 1000;
+export const MAX_RATE_LIMIT_EVENTS_PER_SECOND = 500;
+
+export function isValidRateLimit(limit: RateLimit | undefined): limit is RateLimit {
+  return (
+    Number.isSafeInteger(limit?.eventsPerSecond) &&
+    limit.eventsPerSecond >= 1 &&
+    limit.eventsPerSecond <= MAX_RATE_LIMIT_EVENTS_PER_SECOND &&
+    Number.isSafeInteger(limit.burst) &&
+    limit.burst >= MIN_RATE_LIMIT_BURST &&
+    limit.burst <= MAX_RATE_LIMIT_BURST
+  );
+}
+
+export function assertRateLimit(limit: RateLimit): void {
+  if (!isValidRateLimit(limit)) {
+    throw new Error(
+      `Rate limit must be 1 to ${MAX_RATE_LIMIT_EVENTS_PER_SECOND} events per second ` +
+        `with a burst of ${MIN_RATE_LIMIT_BURST} to ${MAX_RATE_LIMIT_BURST} events.`,
+    );
+  }
+}
+
+export interface RetentionBounds {
+  minDays: number;
+  maxDays: number;
+}
+
+export const DEFAULT_RETENTION_BOUNDS: RetentionBounds = { minDays: 1, maxDays: 3650 };
+
+export function assertRetentionBounds({ minDays, maxDays }: RetentionBounds): void {
+  if (!Number.isSafeInteger(minDays) || !Number.isSafeInteger(maxDays) || minDays < 1 || maxDays < minDays) {
+    throw new Error('Retention bounds must be positive integer days with minimum <= maximum.');
+  }
+}
 
 const applicationSchema = {
   type: 'string',
@@ -54,8 +104,8 @@ export const actionCatalogSchema = {
         type: 'object',
         properties: {
           version: { type: 'integer', minimum: 1 },
-          category: { type: 'string', enum: ['administrative', 'runtime', 'security', 'data-access'] },
-          severity: { type: 'string', enum: ['info', 'warning', 'critical'] },
+          category: { type: 'string', enum: Object.values(AuditCategories) },
+          severity: { type: 'string', enum: Object.values(AuditSeverities) },
           retentionClass: retentionClassSchema,
           description: { type: 'string', minLength: 1, pattern: '\\S' },
           resourceType: { type: 'string', minLength: 1 },
@@ -90,14 +140,66 @@ const applicationRetentionSettingsSchema = {
   additionalProperties: false,
 };
 
-export const configurationSchema = {
-  $schema: 'http://json-schema.org/draft-07/schema#',
-  oneOf: [actionCatalogSchema, retentionSettingsSchema, applicationRetentionSettingsSchema],
+const rateLimitSchema = {
+  type: 'object',
+  properties: {
+    eventsPerSecond: { type: 'integer', minimum: 1, maximum: MAX_RATE_LIMIT_EVENTS_PER_SECOND },
+    burst: { type: 'integer', minimum: MIN_RATE_LIMIT_BURST, maximum: MAX_RATE_LIMIT_BURST },
+  },
+  required: ['eventsPerSecond', 'burst'],
+  additionalProperties: false,
 };
+
+const rateLimitSettingsSchema = {
+  type: 'object',
+  properties: {
+    kind: { const: 'rateLimitSettings' },
+    default: rateLimitSchema,
+    tenants: {
+      type: 'object',
+      propertyNames: { type: 'string', pattern: '^urn:ads:platform:tenant-service:v2:/tenants/[^/]+$' },
+      additionalProperties: rateLimitSchema,
+    },
+  },
+  required: ['kind'],
+  additionalProperties: false,
+};
+
+const structuralConfigurationSchema = {
+  $schema: 'http://json-schema.org/draft-07/schema#',
+  oneOf: [actionCatalogSchema, retentionSettingsSchema, applicationRetentionSettingsSchema, rateLimitSettingsSchema],
+};
+
+export function createConfigurationSchema(bounds: RetentionBounds = DEFAULT_RETENTION_BOUNDS) {
+  assertRetentionBounds(bounds);
+  const boundedClasses = {
+    ...classesSchema,
+    additionalProperties: {
+      ...classesSchema.additionalProperties,
+      properties: { days: { type: 'integer', minimum: bounds.minDays, maximum: bounds.maxDays } },
+    },
+  };
+  return {
+    ...structuralConfigurationSchema,
+    oneOf: [
+      actionCatalogSchema,
+      { ...retentionSettingsSchema, properties: { ...retentionSettingsSchema.properties, classes: boundedClasses } },
+      {
+        ...applicationRetentionSettingsSchema,
+        properties: { ...applicationRetentionSettingsSchema.properties, classes: boundedClasses },
+      },
+      rateLimitSettingsSchema,
+    ],
+  };
+}
+
+export const configurationSchema = createConfigurationSchema();
 
 export function createAuditConfigurationConverter(logger: Logger): (value: unknown) => AuditConfiguration | null {
   const validation = new AjvValidationService(logger);
-  validation.setSchema('audit-configuration', configurationSchema);
+  // The SDK converts thrown converter errors into missing configuration. Check deployment-specific
+  // bounds in RetentionService instead, so an old out-of-range period cannot become a default.
+  validation.setSchema('audit-configuration', structuralConfigurationSchema);
 
   function assertConfiguration(value: unknown): asserts value is AuditConfiguration {
     validation.validate('audit configuration', 'audit-configuration', value);
@@ -163,6 +265,10 @@ export function combineAuditConfiguration(
       core?.kind === 'actionCatalog' ? core : null,
     );
   }
+  if (configuration.kind === 'rateLimitSettings') {
+    // Only platform (Core) administrators set rate limits; a tenant must not raise its own ceiling.
+    return core?.kind === 'rateLimitSettings' ? core : null;
+  }
   if (tenant?.kind === 'applicationRetentionSettings' && core?.kind === 'applicationRetentionSettings') {
     if (tenant.application !== core.application) {
       throw new Error('Core and tenant retention settings have different applications.');
@@ -171,8 +277,8 @@ export function combineAuditConfiguration(
   return {
     ...configuration,
     classes: {
-      ...(core && core.kind !== 'actionCatalog' ? core.classes : {}),
-      ...(tenant && tenant.kind !== 'actionCatalog' ? tenant.classes : {}),
+      ...(core && 'classes' in core ? core.classes : {}),
+      ...(tenant && 'classes' in tenant ? tenant.classes : {}),
     },
   };
 }

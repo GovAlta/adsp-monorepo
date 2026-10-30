@@ -1,0 +1,155 @@
+paths:
+  /audit/v1/failed-events:
+    get:
+      tags: [Failed audit events]
+      summary: List parked audit events in the resolved tenant.
+      description: |
+        Requires audit-admin, not audit-reader. Includes open, replayed and discarded rows,
+        ordered by failed_at descending and id descending. Tenant callers cannot select
+        another tenant. Core administrators must explicitly select a tenant.
+
+        Reads persisted PostgreSQL rows. Offset pagination is not a snapshot:
+        concurrent new failures may shift pages.
+      parameters:
+        - $ref: '#/components/parameters/FailedEventsTenant'
+        - in: query
+          name: top
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - in: query
+          name: after
+          description: Opaque keyset cursor (failed_at, id) returned as page.next. Stable while new failures are parked.
+          schema:
+            type: string
+            maxLength: 32
+          example: MjA=
+      responses:
+        '200':
+          description: Tenant-scoped page. A full page can have a next cursor even if the following page is empty.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [results, page]
+                properties:
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/FailedAuditEvent'
+                  page:
+                    type: object
+                    required: [size]
+                    properties:
+                      after:
+                        type: string
+                        description: Supplied cursor; omitted on the first page.
+                      size:
+                        type: integer
+                      next:
+                        type: string
+        '400':
+          description: Invalid pagination, invalid tenant ID or missing Core tenant context.
+        '401':
+          description: Missing or invalid bearer token.
+        '403':
+          description: Missing audit-admin or forbidden tenant override.
+        '503':
+          $ref: '#/components/responses/FailedEventsUnavailable'
+  /audit/v1/failed-events/{id}/replay:
+    post:
+      tags: [Failed audit events]
+      summary: Replay an open parked event.
+      description: |
+        Requires audit-admin. No request body is used; the stored input is the source of
+        the original actor and namespace. The Audit Service is written_by on the recovered
+        audit row, and replayed_as links to that row's id (not its event_id).
+
+        PostgreSQL uses a tenant-scoped row lock and one transaction for
+        the recovered row, status/link update and self-audit in namespace audit-service.
+        Closed rows return 409, including a second concurrent replay after the first commits.
+        A failure rolls back all three writes. Replay validates the stored input against the
+        current action catalog and retention settings, without ingestion's seven-day age limit.
+
+        If the same tenant, namespace and event_id already exist, replay links to that row
+        without changing it. The operation is recorded as failed-event.replay.succeeded.
+        Startup registers its definition through the SDK into actions-audit-service.
+        A missing or incompatible registered replay action returns 503 and rolls back the replay.
+      parameters:
+        - $ref: '#/components/parameters/FailedEventsTenant'
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Replay transaction committed; the failed row now has status replayed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FailedAuditEvent'
+        '400':
+          description: Invalid UUID, tenant context or stored event; the failed row remains open.
+        '401':
+          description: Missing or invalid bearer token.
+        '403':
+          description: Missing audit-admin or forbidden tenant override.
+        '404':
+          description: No failed event with this ID in the resolved tenant.
+        '409':
+          description: The event has already been replayed or discarded.
+        '503':
+          $ref: '#/components/responses/FailedEventsUnavailable'
+components:
+  parameters:
+    FailedEventsTenant:
+      in: query
+      name: tenantId
+      description: Tenant URN, for example urn:ads:platform:tenant-service:v2:/tenants/case-team. Required for Core administrators; leave empty as a tenant caller, who cannot select another tenant.
+      schema:
+        type: string
+  responses:
+    FailedEventsUnavailable:
+      description: Database, action configuration or transactional self-auditing is unavailable; retry.
+      headers:
+        Retry-After:
+          schema:
+            type: integer
+            example: 1
+  schemas:
+    FailedAuditEvent:
+      type: object
+      required: [id, tenant_id, namespace, event_id, event, error, attempts, failed_at, status, replayed_as]
+      properties:
+        id:
+          type: string
+          format: uuid
+        tenant_id:
+          type: string
+        namespace:
+          type: string
+        event_id:
+          type: string
+          format: uuid
+          nullable: true
+        event:
+          description: Original stored JSON input. Only audit-admin may access this potentially sensitive payload.
+          nullable: true
+        error:
+          type: string
+        attempts:
+          type: integer
+        failed_at:
+          type: string
+          format: date-time
+        status:
+          type: string
+          enum: [open, replayed, discarded]
+        replayed_as:
+          type: string
+          format: uuid
+          nullable: true

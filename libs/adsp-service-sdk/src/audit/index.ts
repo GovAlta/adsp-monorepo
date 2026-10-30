@@ -1,30 +1,46 @@
-export interface AuditActionDefinition {
-  version: number;
-  category: 'administrative' | 'runtime' | 'security' | 'data-access';
-  severity: 'info' | 'warning' | 'critical';
-  retentionClass: string;
-  description?: string;
-  resourceType?: string;
-  captureChangeSet?: boolean;
-  forwardToSiem?: boolean;
-  metadataSchema?: Record<string, unknown>;
+import type { MeterProvider } from '@opentelemetry/api';
+import type { Logger } from 'winston';
+import type { TokenProvider } from '../access';
+import type { ServiceDirectory } from '../directory';
+import type { AdspId } from '../utils';
+import { AuditClientOptions, AuditServiceImpl } from './auditService';
+
+export { auditDefinitions, AuditCategories, AuditSeverities, BuiltInRetentionClasses } from './definitions';
+export type { AuditAction, AuditActionDefinition, AuditCategory, AuditSeverity } from './definitions';
+export type { AuditClientOptions } from './auditService';
+export type {
+  AuditActor,
+  AuditActorType,
+  AuditChangeSet,
+  AuditDropReason,
+  AuditEventCriteria,
+  AuditEventRecord,
+  AuditEventStatus,
+  AuditQueryOptions,
+  AuditRecordDetails,
+  AuditRecordOutcome,
+  AuditResource,
+  AuditService,
+} from './types';
+
+interface AuditServiceOptions extends AuditClientOptions {
+  isCore: boolean;
+  logger: Logger;
+  directory: ServiceDirectory;
+  tokenProvider: TokenProvider;
+  serviceId: AdspId;
+  /** Settles when action registration completes; sending waits for it. */
+  ready?: Promise<unknown>;
+  meterProvider?: MeterProvider;
 }
 
-export interface AuditAction extends AuditActionDefinition {
-  name: string;
-}
-
-/** Converts application action constants into a catalog, rejecting duplicate action names. */
-export function auditDefinitions(actions: Record<string, AuditAction>): Record<string, AuditActionDefinition> {
-  const definitions = new Map<string, AuditActionDefinition>();
-  for (const { name, ...definition } of Object.values(actions)) {
-    if (typeof name !== 'string' || !/^[a-zA-Z0-9]+(?:[._:-][a-zA-Z0-9]+)*$/.test(name)) {
-      throw new Error(`Invalid audit action name: ${name}`);
-    }
-    if (definitions.has(name)) {
-      throw new Error(`Duplicate audit action name: ${name}`);
-    }
-    definitions.set(name, definition);
-  }
-  return Object.fromEntries(definitions);
-}
+export const createAuditService = ({
+  isCore,
+  logger,
+  directory,
+  tokenProvider,
+  serviceId,
+  ...options
+}: AuditServiceOptions): AuditServiceImpl => {
+  return new AuditServiceImpl(isCore, logger, directory, tokenProvider, serviceId, options);
+};

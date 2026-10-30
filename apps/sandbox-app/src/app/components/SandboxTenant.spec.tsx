@@ -78,6 +78,8 @@ jest.mock('./services/planning-poker/PlanningPokerMain', () => ({ PlanningPokerM
 jest.mock('./services/planning-poker/PlanningPokerBoard', () => ({ PlanningPokerBoard: () => null }));
 jest.mock('./services/AdspComponentsMain', () => ({ AdspComponentsMain: () => null }));
 jest.mock('./services/adsp-components/AdspThemingExample', () => ({ AdspThemingExample: () => null }));
+jest.mock('./services/adsp-components/ADSPGoACalendarExample', () => ({ ADSPGoACalendarExample: () => null }));
+jest.mock('./services/AuditServiceMain', () => ({ AuditServiceMain: () => null }));
 jest.mock('@core-services/app-common', () => ({
   ...jest.requireActual('@core-services/app-common'),
   Band: () => null,

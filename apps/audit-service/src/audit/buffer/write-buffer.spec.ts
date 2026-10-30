@@ -3,9 +3,10 @@ import { randomUUID } from 'crypto';
 import { createLogger, transports } from 'winston';
 import type { EnrichedEvent } from '../types';
 import { PARK_TIMEOUT_MS, WRITE_TIMEOUT_MS } from './durable-writer';
-import { AuditEventStore, AuditStorageUnavailableError, AuditStoreError } from './store';
+import { AuditBatchTooLargeError, AuditEventStore, AuditStorageUnavailableError, AuditStoreError } from './store';
 import {
   AuditWriteBuffer,
+  MAX_BUFFERED_BYTES,
   MAX_BUFFERED_EVENTS,
   SHUTDOWN_TIMEOUT_MS,
   WRITE_BATCH_SIZE,
@@ -117,6 +118,42 @@ describe('AuditWriteBuffer', () => {
     expect(store.insert.mock.calls[0][0]).toEqual([first, second]);
     await expect(firstResult).resolves.toEqual(new Map([[first.id, { status: 'accepted' }]]));
     await expect(secondResult).resolves.toEqual(new Map([[second.id, { status: 'accepted' }]]));
+  });
+
+  it('counts parked events only after parking commits and uses one failure counter', async () => {
+    await buffer.close();
+    const auditMetrics = { recordParkedEvent: jest.fn(), recordWriteFailure: jest.fn() };
+    jest.mocked(meter.createCounter).mockClear();
+    buffer = new AuditWriteBuffer(store, logger, {}, meter, auditMetrics);
+    store.insert.mockRejectedValue(new AuditStoreError('Database rejected the event.', 'permanent'));
+    const parking = deferred<void>();
+    store.park.mockReturnValue(parking.promise);
+
+    const result = buffer.submit([createEvent()]);
+    await jest.advanceTimersByTimeAsync(WRITE_BATCH_WINDOW_MS);
+    expect(auditMetrics.recordParkedEvent).not.toHaveBeenCalled();
+    parking.resolve(undefined);
+    await result;
+
+    expect(auditMetrics.recordParkedEvent).toHaveBeenCalledTimes(1);
+    expect(auditMetrics.recordWriteFailure).not.toHaveBeenCalled();
+    expect(meter.createCounter).not.toHaveBeenCalled();
+  });
+
+  it('counts unconfirmed ingest failures without claiming that parking succeeded', async () => {
+    await buffer.close();
+    const auditMetrics = { recordParkedEvent: jest.fn(), recordWriteFailure: jest.fn() };
+    buffer = new AuditWriteBuffer(store, logger, {}, meter, auditMetrics);
+    store.insert.mockRejectedValue(new AuditStoreError('Database unavailable.', 'permanent'));
+    store.park.mockRejectedValue(new Error('Parking unavailable.'));
+
+    const result = expect(buffer.submit([createEvent()])).rejects.toBeInstanceOf(AuditStorageUnavailableError);
+    await jest.advanceTimersByTimeAsync(WRITE_BATCH_WINDOW_MS);
+    await result;
+
+    expect(auditMetrics.recordParkedEvent).not.toHaveBeenCalled();
+    expect(auditMetrics.recordWriteFailure).toHaveBeenCalledTimes(1);
+    expect(auditMetrics.recordWriteFailure).toHaveBeenCalledWith('ingest', 1);
   });
 
   it('flushes exactly 200 events without waiting for the 200 ms window', async () => {
@@ -462,7 +499,7 @@ describe('AuditWriteBuffer', () => {
     expect(store.park).not.toHaveBeenCalled();
   });
 
-  it('caps retained events at 5000 including events already being written', async () => {
+  it('caps retained events at 1000 including events already being written', async () => {
     const events = createEvents(MAX_BUFFERED_EVENTS);
     const commit = deferred<readonly string[]>();
     store.insert.mockReturnValueOnce(commit.promise);
@@ -471,6 +508,7 @@ describe('AuditWriteBuffer', () => {
 
     await expect(buffer.submit([createEvent()])).rejects.toBeInstanceOf(AuditStorageUnavailableError);
     expect(buffer.depth).toBe(MAX_BUFFERED_EVENTS);
+    expect(buffer.canAcceptWrites).toBe(true);
     expect(store.insert).toHaveBeenCalledTimes(1);
     commit.resolve(events.slice(0, WRITE_BATCH_SIZE).map(({ id }) => id));
     await jest.advanceTimersByTimeAsync(0);
@@ -512,12 +550,63 @@ describe('AuditWriteBuffer', () => {
     const result = buffer.submit([first]);
 
     expect(buffer.bufferedBytes).toBe(bytes);
-    await expect(buffer.submit([createEvent()])).rejects.toBeInstanceOf(AuditStorageUnavailableError);
+    await expect(buffer.submit([createEvent({ originalEvent: first.originalEvent })])).rejects.toBeInstanceOf(
+      AuditStorageUnavailableError,
+    );
     await jest.advanceTimersByTimeAsync(WRITE_BATCH_WINDOW_MS);
     await result;
 
     expect(buffer.bufferedBytes).toBe(0);
     expect(bytesAdd.mock.calls).toEqual([[bytes], [-bytes]]);
+  });
+
+  it('accepts exactly 8 MiB of retained serialized input without exceeding the byte cap', async () => {
+    const event = createEvent({ originalEvent: { padding: '' } });
+    const overhead = Buffer.byteLength(JSON.stringify(event), 'utf8');
+    event.originalEvent = { padding: 'x'.repeat(MAX_BUFFERED_BYTES - overhead) };
+
+    const result = buffer.submit([event]);
+
+    expect(buffer.bufferedBytes).toBe(8 * 1024 * 1024);
+    await expect(buffer.submit([createEvent()])).rejects.toBeInstanceOf(AuditStorageUnavailableError);
+    await jest.advanceTimersByTimeAsync(WRITE_BATCH_WINDOW_MS);
+    await result;
+    expect(buffer.bufferedBytes).toBe(0);
+  });
+
+  it('rejects a batch one byte above the 8 MiB cap with a non-retryable split instruction', async () => {
+    const event = createEvent({ originalEvent: { padding: '' } });
+    const overhead = Buffer.byteLength(JSON.stringify(event), 'utf8');
+    event.originalEvent = { padding: 'x'.repeat(MAX_BUFFERED_BYTES - overhead + 1) };
+
+    await expect(buffer.submit([event])).rejects.toMatchObject({
+      message: expect.stringContaining('Split the batch'),
+      extra: { statusCode: 413 },
+    });
+
+    expect(buffer.depth).toBe(0);
+    expect(buffer.bufferedBytes).toBe(0);
+    expect(store.insert).not.toHaveBeenCalled();
+  });
+
+  it('rejects a single batch above the event cap rather than suggesting an unchanged retry', async () => {
+    await expect(buffer.submit(createEvents(MAX_BUFFERED_EVENTS + 1))).rejects.toBeInstanceOf(AuditBatchTooLargeError);
+
+    expect(buffer.depth).toBe(0);
+    expect(store.insert).not.toHaveBeenCalled();
+  });
+
+  it('classifies an intrinsically oversized batch as 413 even while the buffer is occupied', async () => {
+    const admitted = createEvent();
+    const bytes = Buffer.byteLength(JSON.stringify(admitted), 'utf8');
+    buffer = new AuditWriteBuffer(store, logger, { maxBytes: bytes }, meter);
+    const result = buffer.submit([admitted]);
+
+    await expect(buffer.submit(createEvents(2))).rejects.toBeInstanceOf(AuditBatchTooLargeError);
+    await jest.advanceTimersByTimeAsync(WRITE_BATCH_WINDOW_MS);
+    await result;
+
+    expect(store.insert.mock.calls[0][0]).toEqual([admitted]);
   });
 
   it('refuses unmeasurable input without retaining a partial submission', async () => {
@@ -561,10 +650,11 @@ describe('AuditWriteBuffer', () => {
 
   it.each<WriteBufferOptions>([
     { maxEvents: 0 },
-    { maxEvents: 5001 },
+    { maxEvents: MAX_BUFFERED_EVENTS + 1 },
     { maxEvents: 1.5 },
     { maxBytes: 0 },
     { maxBytes: Number.NaN },
+    { maxBytes: MAX_BUFFERED_BYTES + 1 },
     { shutdownTimeoutMs: PARK_TIMEOUT_MS },
     { shutdownTimeoutMs: 30000 },
   ])('rejects invalid buffer configuration %j', (options) => {

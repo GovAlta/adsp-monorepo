@@ -16,6 +16,9 @@ import { createSchemaPatchTools } from './schemaPatch';
 import { createSchemaValidateTools } from './schemaValidate';
 import { createBuilderFormSchemaTools } from './builderFormSchema';
 import { createFormGenerationTools } from '../agents/forms/generation';
+import { createAccessDiscoveryTools } from './accessDiscovery';
+import { createAccessClientTools } from './accessClients';
+import { environment } from '../../environments/environment';
 
 interface ToolsProps {
   logger: Logger;
@@ -46,7 +49,6 @@ export async function createTools({ logger, directory, tokenProvider }: ToolsPro
     await createDataRegisterTools({
       logger,
       directory,
-      tokenProvider,
     });
 
   const { emailNotificationGenerateTool } = await createNotificationTemplateTools({
@@ -64,6 +66,13 @@ export async function createTools({ logger, directory, tokenProvider }: ToolsPro
   const { formSchemaValidate } = await createSchemaValidateTools({ logger, directory, tokenProvider });
   const { formGenerationRun } = await createFormGenerationTools({ logger, directory, tokenProvider });
   const { builderFormSchemaValidate, formExamplesTool } = createBuilderFormSchemaTools();
+  const accessServiceUrl = new URL(environment.KEYCLOAK_ROOT_URL);
+  const { listAccessEnvironments, listAccessRealms, getAccessRealmInfo } = createAccessDiscoveryTools({
+    logger,
+    directory,
+    accessServiceUrl,
+  });
+  const { listAccessClients, getAccessClient } = createAccessClientTools({ logger, directory, accessServiceUrl });
 
   return {
     fileDownloadTool,
@@ -93,6 +102,11 @@ export async function createTools({ logger, directory, tokenProvider }: ToolsPro
     formGenerationRun,
     builderFormSchemaValidate,
     formExamplesTool,
+    listAccessEnvironments,
+    listAccessRealms,
+    getAccessRealmInfo,
+    listAccessClients,
+    getAccessClient,
   };
 }
 

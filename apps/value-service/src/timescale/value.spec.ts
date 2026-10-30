@@ -609,6 +609,18 @@ describe('TimescaleValuesRepository readValues', () => {
     expect(wheres).toContainEqual(['timestamp', '>=', timestampMin]);
   });
 
+  it('keeps newest-first ordering for a bounded event log page', async () => {
+    const { knex, builderFor } = createKnex();
+    const bounds = {
+      timestampMin: new Date('2026-10-12T18:30:45.123Z'),
+      timestampMax: new Date('2026-10-19T18:30:45.123Z'),
+    };
+
+    await new TimescaleValuesRepository(knex).readValues(10, undefined, bounds);
+
+    expect(builderFor('values').orderBy).toHaveBeenCalledWith('timestamp', 'desc');
+  });
+
   it('matches context, value and url through jsonb containment', async () => {
     const { knex, whereRaws } = createKnex({ tableRows: { values: [row] } });
 
@@ -621,6 +633,80 @@ describe('TimescaleValuesRepository readValues', () => {
     expect(whereRaws[0]).toEqual(['context @> ?::jsonb', [JSON.stringify({ namespace: 'x' })]]);
     expect(whereRaws[1]).toEqual(['value @> ?::jsonb', ['{"payload": {"targetId": "target-1"}}']]);
     expect(whereRaws[2]).toEqual(['value @> ?::jsonb', ['{"payload": {"URL": "https://example.test"}}']]);
+  });
+
+  it('matches a nested payload path and scalar value through jsonb containment', async () => {
+    const { knex, whereRaws } = createKnex({ tableRows: { values: [row] } });
+
+    await new TimescaleValuesRepository(knex).readValues(10, undefined, {
+      payloadPath: 'applicant.contact.email',
+      payloadValue: 'jane@example.gov.ab.ca',
+    });
+
+    expect(whereRaws[0]).toEqual([
+      'value @> ?::jsonb',
+      [JSON.stringify({ payload: { applicant: { contact: { email: 'jane@example.gov.ab.ca' } } } })],
+    ]);
+  });
+
+  it.each([
+    ['number', 12345],
+    ['boolean', false],
+    ['null', null],
+  ])('preserves a %s payload path value', async (_description, payloadValue) => {
+    const { knex, whereRaws } = createKnex({ tableRows: { values: [row] } });
+
+    await new TimescaleValuesRepository(knex).readValues(10, undefined, {
+      payloadPath: 'application.value',
+      payloadValue,
+    });
+
+    expect(whereRaws[0]).toEqual([
+      'value @> ?::jsonb',
+      [JSON.stringify({ payload: { application: { value: payloadValue } } })],
+    ]);
+  });
+
+  it('matches a nested payload object through jsonb containment', async () => {
+    const { knex, whereRaws } = createKnex({ tableRows: { values: [row] } });
+    const payload = { applicationId: '12345', decision: { status: 'submitted' } };
+
+    await new TimescaleValuesRepository(knex).readValues(10, undefined, { payload });
+
+    expect(whereRaws[0]).toEqual(['value @> ?::jsonb', [JSON.stringify({ payload })]]);
+  });
+
+  it('combines payload containment with tenant, timestamp, context, and correlation filters', async () => {
+    const { knex, wheres, whereRaws } = createKnex({ tableRows: { values: [row] } });
+    const timestampMin = new Date('2026-10-01T00:00:00Z');
+    const timestampMax = new Date('2026-10-02T00:00:00Z');
+
+    await new TimescaleValuesRepository(knex).readValues(10, undefined, {
+      tenantId,
+      namespace: 'event-service',
+      name: 'event',
+      correlationId: 'application-12345',
+      timestampMin,
+      timestampMax,
+      context: { namespace: 'application-service', name: 'application-submitted' },
+      payload: { applicationId: '12345' },
+    });
+
+    expect(wheres[0]).toEqual([
+      {
+        tenant: tenantUrn,
+        namespace: 'event-service',
+        name: 'event',
+        correlationId: 'application-12345',
+      },
+    ]);
+    expect(wheres).toContainEqual(['timestamp', '>=', timestampMin]);
+    expect(wheres).toContainEqual(['timestamp', '<=', timestampMax]);
+    expect(whereRaws).toContainEqual([
+      'context @> ?::jsonb',
+      [JSON.stringify({ namespace: 'application-service', name: 'application-submitted' })],
+    ]);
+    expect(whereRaws).toContainEqual(['value @> ?::jsonb', [JSON.stringify({ payload: { applicationId: '12345' } })]]);
   });
 
   it('reports the page size and a null tenant', async () => {

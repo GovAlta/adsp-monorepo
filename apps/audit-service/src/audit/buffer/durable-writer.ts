@@ -1,6 +1,7 @@
 import { handleWhen, IterableBackoff, retry } from 'cockatiel';
 import type { Logger } from 'winston';
 import type { EnrichedEvent, EventOutcome } from '../types';
+import { EVENT_OUTCOME_STATUS, EVENT_OUTCOME_CODE, FAILED_EVENT_STATUS } from '../types';
 import { AuditEventStore, AuditStorageUnavailableError, AuditStoreError, FailedAuditEvent } from './store';
 
 export const WRITE_TIMEOUT_MS = 10000;
@@ -100,12 +101,15 @@ export class DurableEventWriter {
       error: error instanceof Error ? error.message : 'Unknown audit storage failure.',
       attempt_count: attempts.get(event.id) || 0,
       failed_at: new Date(),
-      status: 'open',
+      status: FAILED_EVENT_STATUS.OPEN,
     }));
     try {
       await this.executeStore(() => this.store.park(records, { signal: scope.signal }), scope.signal);
       return new Map(
-        records.map(({ id }) => [id, { status: 'rejected', code: 'storage_failed', reason: PARKED_REASON }]),
+        records.map(({ id }) => [
+          id,
+          { status: EVENT_OUTCOME_STATUS.REJECTED, code: EVENT_OUTCOME_CODE.STORAGE_FAILED, reason: PARKED_REASON },
+        ]),
       );
     } catch {
       this.recordLoss(records.length);
@@ -160,7 +164,10 @@ export class DurableEventWriter {
       this.available = false;
       throw new AuditStorageUnavailableError('Audit storage returned invalid inserted identifiers.');
     }
-    for (const { id } of events) outcomes.set(id, { status: insertedIds.has(id) ? 'accepted' : 'duplicate' });
+    for (const { id } of events)
+      outcomes.set(id, {
+        status: insertedIds.has(id) ? EVENT_OUTCOME_STATUS.ACCEPTED : EVENT_OUTCOME_STATUS.DUPLICATE,
+      });
   }
 
   private async executeStore<T>(operation: () => Promise<T>, signal: AbortSignal): Promise<T> {

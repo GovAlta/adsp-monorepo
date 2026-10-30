@@ -1,0 +1,46 @@
+/*
+ * AdspGoACalendar wraps FullCalendar's "classic" theme (skeleton.css + theme.css, imported by the component).
+ * The classic theme reads all of its colors from --fc-classic-* custom properties, so aliasing them here applies
+ * ADSP tokens without needing FullCalendar's own color palette stylesheet.
+ */
+.adsp-calendar {
+  --fc-classic-border: var(--adsp-components-calendar-border-color);
+  --fc-classic-strong-border: var(--adsp-components-calendar-border-color);
+  --fc-classic-today: var(--adsp-components-calendar-today-background);
+  --fc-classic-event: var(--adsp-components-calendar-event-background);
+  --fc-classic-event-contrast: var(--adsp-components-calendar-event-text-color);
+  --fc-classic-background-event: var(--adsp-components-calendar-holiday-background);
+  --fc-classic-button: var(--adsp-components-calendar-button-background);
+  --fc-classic-button-border: var(--adsp-components-calendar-button-background);
+  --fc-classic-button-strong: var(--adsp-components-calendar-button-hover-background);
+  --fc-classic-button-strong-border: var(--adsp-components-calendar-button-hover-background);
+  --fc-classic-button-foreground: var(--adsp-components-calendar-button-text-color);
+  font-family: var(--adsp-typography-font-family);
+}
+
+/*
+ * FullCalendar v7 dropped the old static fc-day-today/fc-daygrid-day-number classes; today's cell is marked only
+ * via aria-current="date" (theme classes are runtime-hashed). Day-grid cells hold the aria-hidden day number as a
+ * direct child of their presentation wrapper; other aria-hidden descendants (time slots, header wrapper) must not match.
+ */
+.adsp-calendar [role='cell'][aria-current='date'] > [role='presentation'] > [aria-hidden='true'] {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--goa-space-xl);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: var(--adsp-components-calendar-today-background-color);
+  color: var(--adsp-components-calendar-today-text-color);
+  font-weight: var(--adsp-components-calendar-today-font-weight);
+}
+
+/* Week and day view column headers have no separate day-number element, so highlight the whole header label. */
+.adsp-calendar [role='columnheader'][aria-current='date'] > [aria-hidden='true'] {
+  align-self: center;
+  padding: var(--goa-space-3xs) var(--goa-space-xs);
+  border-radius: var(--goa-space-m);
+  background: var(--adsp-components-calendar-today-background-color);
+  color: var(--adsp-components-calendar-today-text-color);
+  font-weight: var(--adsp-components-calendar-today-font-weight);
+}

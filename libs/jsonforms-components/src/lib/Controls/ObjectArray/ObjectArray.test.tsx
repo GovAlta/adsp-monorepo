@@ -166,12 +166,12 @@ describe('Object Array Renderer', () => {
       ],
     };
     const { baseElement } = render(getForm(data));
-  // Add a message
+    // Add a message
     await waitFor(() => {
       const nameInput = baseElement.querySelector("goa-input[testId='#/properties/name-input-0']");
       expect(nameInput).toBeInTheDocument();
     });
-     // populate Name
+    // populate Name
     const nameInput = baseElement.querySelector("goa-input[testId='#/properties/name-input-0']");
 
     expect(nameInput).toBeInTheDocument();
@@ -180,11 +180,11 @@ describe('Object Array Renderer', () => {
       nameInput!,
       new CustomEvent('_change', {
         detail: { value: 'Bob' },
-      })
+      }),
     );
     nameInput?.setAttribute('value', 'Bob');
     expect(nameInput?.getAttribute('value')).toBe('Bob');
- // populate Message
+    // populate Message
     await waitFor(() => {
       const name2 = baseElement.querySelector("goa-input[testId='#/properties/name-input-1']");
       expect(name2).toBeInTheDocument();
@@ -196,7 +196,7 @@ describe('Object Array Renderer', () => {
       name2!,
       new CustomEvent('_change', {
         detail: { value: 'Jim' },
-      })
+      }),
     );
     name2?.setAttribute('value', 'Jim');
     expect(name2?.getAttribute('value')).toBe('Jim');
@@ -210,7 +210,7 @@ describe('Object Array Renderer', () => {
       const nameInput = baseElement.querySelector("goa-input[testId='#/properties/name-input-0']");
       expect(nameInput).toBeInTheDocument();
     });
-        // populate Name
+    // populate Name
     const nameInput = baseElement.querySelector("goa-input[testId='#/properties/name-input-0']");
 
     expect(nameInput).toBeInTheDocument();
@@ -299,12 +299,12 @@ describe('Object Array Renderer', () => {
   it('can do a delete', async () => {
     const data = { messages: [{ name: 'Bob' }] };
     const { baseElement } = render(getForm(data));
-// Add a message
+    // Add a message
     await waitFor(() => {
       const deleteBtn = baseElement.querySelector("goa-icon-button[icon='trash']");
       expect(deleteBtn).toBeInTheDocument();
     });
-// Open the delete dialo
+    // Open the delete dialo
     const deleteBtn = baseElement.querySelector("goa-icon-button[icon='trash']");
     expect(deleteBtn).toBeInTheDocument();
     const shadowDeleteBtn = deleteBtn?.shadowRoot?.querySelector('button');
@@ -423,7 +423,7 @@ it('primitive control calls handleChange for add and remove', () => {
       schema={{ type: 'array', items: { type: 'string' } }}
       renderers={GoARenderers}
       cells={GoACells}
-    />
+    />,
   );
 
   const addButton = baseElement.querySelector('goa-button');
@@ -451,7 +451,7 @@ it('primitive control handles non-array data and disabled add button', () => {
       schema={{ type: 'array', items: { type: 'string' } }}
       renderers={GoARenderers}
       cells={GoACells}
-    />
+    />,
   );
 
   expect(baseElement.textContent).toContain('No item added');
@@ -474,7 +474,7 @@ it('primitive control compacts undefined items and shows empty state', async () 
       schema={{ type: 'array', items: { type: 'string' } }}
       renderers={GoARenderers}
       cells={GoACells}
-    />
+    />,
   );
 
   rerender(
@@ -488,7 +488,7 @@ it('primitive control compacts undefined items and shows empty state', async () 
       schema={{ type: 'array', items: { type: 'string' } }}
       renderers={GoARenderers}
       cells={GoACells}
-    />
+    />,
   );
 
   await waitFor(() => expect(handleChange).toHaveBeenCalledWith('files', undefined));
@@ -520,15 +520,21 @@ it('primitive file-upload array delete via array icon triggers file cleanup', ()
         renderers={GoARenderers}
         cells={GoACells}
       />
-    </ContextProvider>
+    </ContextProvider>,
   );
 
   const removeButton = baseElement.querySelector("goa-icon-button[icon='trash']");
   expect(removeButton).toBeInTheDocument();
   fireEvent(removeButton!, new CustomEvent('_click'));
 
-  expect(deleteFile).toHaveBeenCalledWith({ urn: 'urn:file-1', filename: 'test.pdf' }, 'uploadFiles.0');
-  expect(handleChange).toHaveBeenCalledWith('uploadFiles', undefined);
+  const modal = baseElement.querySelector("goa-modal[testId='delete-confirmation']");
+  expect(modal?.getAttribute('open')).toBe('true');
+  const deleteConfirm = baseElement.querySelector("goa-button[testId='delete-confirm']");
+  expect(deleteConfirm).toBeInTheDocument();
+  fireEvent(deleteConfirm!, new CustomEvent('_click'));
+  fireEvent.click(deleteConfirm!);
+
+  expect(deleteFile).toHaveBeenCalledWith({ urn: 'urn:file-1', filename: 'test.pdf' }, undefined);
 });
 
 it('renders primitive array values in review without fallback error', () => {

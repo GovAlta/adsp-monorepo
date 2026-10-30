@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    "target": "es2015",
+    "module": "commonjs",
+    "lib": ["es2017", "dom"],
+    "allowJs": true,
+    "strict": true,
+    "noImplicitAny": false,
+    "types": ["cypress"],
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "noUncheckedSideEffectImports": false,
+    "ignoreDeprecations": "5.0"
+  },
+  "include": ["**/*.ts"]
+}

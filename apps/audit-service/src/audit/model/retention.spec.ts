@@ -63,6 +63,28 @@ describe('write-time retention', () => {
     });
   });
 
+  it.each([0, 3651, 1.5])('refuses an out-of-range configured period %i instead of using defaults', async (days) => {
+    configuration.getServiceConfiguration.mockResolvedValueOnce({
+      kind: 'retentionSettings',
+      classes: { standard: { days } },
+    });
+
+    await expect(retention.getClasses('case-service', tenantId)).rejects.toMatchObject({
+      extra: { statusCode: HttpStatusCodes.SERVICE_UNAVAILABLE },
+    });
+  });
+
+  it('applies platform bounds to application-specific custom classes', async () => {
+    const bounded = new RetentionService(configuration, logger, { minDays: 30, maxDays: 730 });
+    configuration.getServiceConfiguration.mockResolvedValueOnce(null).mockResolvedValueOnce({
+      kind: 'applicationRetentionSettings',
+      application: 'case-service',
+      classes: { 'case-history': { days: 731 } },
+    });
+
+    await expect(bounded.getClasses('case-service', tenantId)).rejects.toThrow('temporarily unavailable');
+  });
+
   it.each([
     [{ kind: 'actionCatalog', application: 'case-service', actions: {} }, null],
     [null, { kind: 'retentionSettings', classes: {} }],
@@ -71,6 +93,33 @@ describe('write-time retention', () => {
     configuration.getServiceConfiguration.mockResolvedValueOnce(settings).mockResolvedValueOnce(application);
 
     await expect(retention.getClasses('case-service', tenantId)).rejects.toMatchObject({
+      extra: { statusCode: HttpStatusCodes.SERVICE_UNAVAILABLE },
+    });
+  });
+
+  it('returns only configured periods for the tenant and each application with overrides', async () => {
+    configuration.getServiceConfiguration.mockImplementation(async (name: string) => {
+      if (name === 'retention') {
+        return { kind: 'retentionSettings', classes: { standard: { days: 120 } } };
+      }
+      return name === 'retention-case-service'
+        ? { kind: 'applicationRetentionSettings', application: 'case-service', classes: { security: { days: 400 } } }
+        : null;
+    });
+
+    expect(await retention.getConfigured(tenantId, ['case-service', 'form-service'])).toEqual({
+      tenant: { standard: { days: 120 } },
+      applications: { 'case-service': { security: { days: 400 } } },
+    });
+  });
+
+  it('refuses out-of-range configured periods when listing configured retention', async () => {
+    configuration.getServiceConfiguration.mockResolvedValueOnce({
+      kind: 'retentionSettings',
+      classes: { standard: { days: 0 } },
+    });
+
+    await expect(retention.getConfigured(tenantId, [])).rejects.toMatchObject({
       extra: { statusCode: HttpStatusCodes.SERVICE_UNAVAILABLE },
     });
   });

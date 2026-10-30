@@ -1,4 +1,27 @@
-import { AuditAction, auditDefinitions } from './index';
+import { AuditAction, AuditCategories, AuditSeverities, BuiltInRetentionClasses, auditDefinitions } from './index';
+
+describe('audit classification constants', () => {
+  it('preserves the public category values', () => {
+    expect(AuditCategories).toEqual({
+      Administrative: 'administrative',
+      Runtime: 'runtime',
+      Security: 'security',
+      DataAccess: 'data-access',
+    });
+  });
+
+  it('preserves the public severity values', () => {
+    expect(AuditSeverities).toEqual({ Info: 'info', Warning: 'warning', Critical: 'critical' });
+  });
+
+  it('provides names for built-in retention classes without defining their periods', () => {
+    expect(BuiltInRetentionClasses).toEqual({
+      Standard: 'standard',
+      Security: 'security',
+      Compliance: 'compliance',
+    });
+  });
+});
 
 describe('auditDefinitions', () => {
   const action: AuditAction = {
@@ -33,6 +56,32 @@ describe('auditDefinitions', () => {
 
   it('supports deregistering all actions', () => {
     expect(auditDefinitions({})).toEqual({});
+  });
+
+  it('accepts an array of actions', () => {
+    const { name, ...definition } = action;
+
+    expect(auditDefinitions([action])).toEqual({ [name]: definition });
+    expect(() => auditDefinitions([action, action])).toThrow('Duplicate');
+  });
+
+  it('accepts shared constants without changing the catalog payload', () => {
+    const definition: AuditAction = {
+      ...action,
+      category: AuditCategories.Administrative,
+      severity: AuditSeverities.Info,
+      retentionClass: BuiltInRetentionClasses.Compliance,
+    };
+
+    expect(auditDefinitions({ UPDATE_CASE: definition })['case.update']).toMatchObject({
+      category: 'administrative',
+      severity: 'info',
+      retentionClass: 'compliance',
+    });
+  });
+
+  it('continues to accept custom retention class names', () => {
+    expect(auditDefinitions({ UPDATE_CASE: action })['case.update'].retentionClass).toBe('case-history');
   });
 
   it.each(['', 'case update', '__proto__', undefined, null])('rejects invalid action name %s', (name) => {

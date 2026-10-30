@@ -5,7 +5,7 @@ import { v4 as uuid } from 'uuid';
 import { ErrorNotification } from '@store/notifications/actions';
 import { getAccessToken } from '@store/tenant/actions';
 import { AppDispatch, RootState } from '../index';
-import { AgentConfiguration } from './model';
+import { AccessScope, AgentConfiguration } from './model';
 import axios from 'axios';
 
 export const CONNECT_AGENT_ACTION = 'agent/CONNECT_AGENT';
@@ -400,6 +400,37 @@ export function clearThread(threadId: string) {
   return { type: CLEAR_THREAD_ACTION, threadId };
 }
 
+/**
+ * Discards a conversation so a new chat starts without its context: drops its messages still waiting to be sent,
+ * removes it from the store, and optionally asks agent-service to delete it. Leave deleteOnServer off while a reply
+ * is still being saved; the thread then expires on the server on its own.
+ */
+export function discardThread(threadId: string, { deleteOnServer }: { deleteOnServer: boolean }) {
+  return async (dispatch: AppDispatch, getState: () => RootState): Promise<void> => {
+    const { agent, config } = getState();
+    const agentId = agent.threads[threadId]?.agent;
+
+    queuedMessages = queuedMessages.filter((queued) => queued.threadId !== threadId);
+    dispatch(clearThread(threadId));
+
+    if (!deleteOnServer || !agentId) {
+      return;
+    }
+
+    try {
+      const threadUrl = new URL(
+        `/agent/v1/agents/${encodeURIComponent(agentId)}/threads/${encodeURIComponent(threadId)}`,
+        config.serviceUrls?.agentServiceApiUrl || 'http://localhost:3380',
+      );
+      const token = await dispatch(getAccessToken());
+      await axios.delete(threadUrl.href, { headers: { Authorization: `Bearer ${token}` } });
+    } catch {
+      // Deliberately not shown to the user: the conversation is already cleared here, and the server deletes the
+      // thread on its own when it expires.
+    }
+  };
+}
+
 export function messageAgent(threadId: string, context: Record<string, unknown>, content: UserContent) {
   return async (dispatch: Dispatch, getState: () => RootState) => {
     const messageId = uuid();
@@ -416,6 +447,27 @@ export function messageAgent(threadId: string, context: Record<string, unknown>,
         queuedMessages.push({ threadId, messageId, agent: thread.agent, content, context });
       }
     }
+  };
+}
+
+/**
+ * Reads the Access Service environment and realm the user may inspect. The result is decided by
+ * agent-service from the user's token, without AI, so it can be shown before any chat starts.
+ */
+export function getAccessScope() {
+  return async (dispatch: AppDispatch, getState: () => RootState): Promise<AccessScope> => {
+    const { config } = getState();
+    const scopeUrl = new URL(
+      '/agent/v1/access/scope',
+      config.serviceUrls?.agentServiceApiUrl || 'http://localhost:3380',
+    );
+
+    const token = await dispatch(getAccessToken());
+    const { data } = await axios.get<AccessScope>(scopeUrl.href, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    return data;
   };
 }
 

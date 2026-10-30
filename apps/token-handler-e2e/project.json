@@ -1,0 +1,25 @@
+{
+  "name": "token-handler-e2e",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/token-handler-e2e/src",
+  "projectType": "application",
+  "tags": [],
+  "implicitDependencies": ["token-handler"],
+  "targets": {
+    "e2e": {
+      "executor": "@nx/cypress:cypress",
+      "options": {
+        "cypressConfig": "apps/token-handler-e2e/cypress.dev.config.js",
+        "devServerTarget": "token-handler:serve:development",
+        "testingType": "e2e"
+      },
+      "configurations": {
+        "production": { "devServerTarget": "token-handler:serve:production" },
+        "ci": { "devServerTarget": "token-handler:serve-static" }
+      }
+    },
+    "lint": {
+      "inputs": ["default","^default","!{projectRoot}/Dockerfile","{workspaceRoot}/eslint.config.mjs","{workspaceRoot}/tools/eslint-rules/**/*"]
+    }
+  }
+}

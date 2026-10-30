@@ -17,6 +17,8 @@ interface FormGenerationToolsProps {
 
 const outputSchema = z.object({
   complexity: z.string(),
+  planReason: z.string(),
+  documentCount: z.number(),
   total: z.number(),
   saved: z.number(),
   savedLabels: z.array(z.string()),
@@ -91,6 +93,10 @@ for a targeted edit to content that already exists.`,
 }
 
 function summarize(result: Awaited<ReturnType<typeof runFormGeneration>>): string {
+  if (!result.total) {
+    return nothingPlannedSummary(result);
+  }
+
   const lines = [`Saved ${result.saved} of ${result.total} planned steps.`];
 
   for (const label of result.recoveredLabels) {
@@ -122,6 +128,20 @@ function summarize(result: Awaited<ReturnType<typeof runFormGeneration>>): strin
     lines.push('- Every planned step was built and the form validates.');
   }
 
+  return lines.join('\n');
+}
+
+/** Nothing was planned, so nothing was saved. Say why, so the agent does not report an empty run as a success. */
+function nothingPlannedSummary(result: Awaited<ReturnType<typeof runFormGeneration>>): string {
+  const lines = ['Nothing was built and the form was not changed.'];
+  if (result.planReason) {
+    lines.push(`- Planner: ${result.planReason}`);
+  }
+  if (!result.documentCount) {
+    lines.push(
+      '- No attached document reached this request. If the user meant to attach one, tell them it did not arrive and ask them to attach it again and resend. Do not call formGenerationRun again until it is attached.',
+    );
+  }
   return lines.join('\n');
 }
 

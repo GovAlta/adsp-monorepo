@@ -67,8 +67,8 @@ export const SDK_REFERENCE: SdkSymbolDoc[] = [
       'Fixes realm to "core". options extends ServiceRegistration with: clientSecret, directoryUrl, accessServiceUrl, ' +
       'ignoreServiceAud?, configurationConverter?, combineConfiguration?, enableConfigurationInvalidation?, ' +
       'useLongConfigurationCacheTTL?, additionalExtractors?, tracing? (TracingOptions | OTLP endpoint string), ' +
-      'metrics? (MetricsOptions | OTLP endpoint string).\n\n' +
-      'Returns PlatformCapabilities: directory, tenantService, configurationService, eventService, tokenProvider, ' +
+      'metrics? (MetricsOptions | OTLP endpoint string), audit? (AuditClientOptions; immediate delivery by default).\n\n' +
+      'Returns PlatformCapabilities: directory, tenantService, configurationService, eventService, auditService, tokenProvider, ' +
       'coreStrategy, tenantStrategy, tenantHandler, configurationHandler, healthCheck, clearCached(tenantId, serviceId), ' +
       'metricsHandler, traceHandler, tracerProvider? (only if tracing enabled), meterProvider? (only if metrics enabled), logger.\n\n' +
       'Also triggers a fire-and-forget registration of roles/events/configuration schema/notifications/etc with the ' +
@@ -354,14 +354,15 @@ export const SDK_REFERENCE: SdkSymbolDoc[] = [
     module: 'audit',
     summary: 'Converts named audit action constants into definitions keyed by action name for catalog registration.',
     details:
-      'auditDefinitions(actions: Record<string, AuditAction>): Record<string, AuditActionDefinition>\n\n' +
+      'auditDefinitions(actions: Record<string, AuditAction> | AuditAction[]): Record<string, AuditActionDefinition>\n\n' +
       'Removes name from each definition and uses it as the catalog key. Throws for invalid or duplicate action names. ' +
-      'Does not register the catalog or emit audit records; pass the result through ServiceRegistration.serviceConfigurations.',
+      'Does not register the catalog or emit audit records; pass actions through ServiceRegistration.auditActions, or ' +
+      'the result through ServiceRegistration.serviceConfigurations.',
     example:
       "auditDefinitions({\n" +
       "  UPDATE_CASE: {\n" +
-      "    name: 'case.update', version: 1, category: 'administrative',\n" +
-      "    severity: 'info', retentionClass: 'compliance',\n" +
+      "    name: 'case.update', version: 1, category: AuditCategories.Administrative,\n" +
+      "    severity: AuditSeverities.Info, retentionClass: BuiltInRetentionClasses.Compliance,\n" +
       "  },\n" +
       "});",
     seeAlso: ['AuditAction', 'AuditActionDefinition', 'ServiceRegistration'],
@@ -382,13 +383,246 @@ export const SDK_REFERENCE: SdkSymbolDoc[] = [
     details:
       'interface AuditActionDefinition {\n' +
       '  version: number;\n' +
-      "  category: 'administrative' | 'runtime' | 'security' | 'data-access';\n" +
-      "  severity: 'info' | 'warning' | 'critical';\n" +
+      '  category: AuditCategory;\n' +
+      '  severity: AuditSeverity;\n' +
       '  retentionClass: string; description?: string; resourceType?: string;\n' +
       '  captureChangeSet?: boolean; forwardToSiem?: boolean;\n' +
       '  metadataSchema?: Record<string, unknown>;\n' +
       '}',
-    seeAlso: ['AuditAction', 'auditDefinitions'],
+    seeAlso: ['AuditAction', 'auditDefinitions', 'AuditCategory', 'AuditSeverity', 'BuiltInRetentionClasses'],
+  },
+  {
+    name: 'AuditCategories',
+    kind: 'const',
+    module: 'audit',
+    summary: 'Shared audit action categories used by TypeScript types and configuration validation.',
+    details:
+      "const AuditCategories = { Administrative: 'administrative', Runtime: 'runtime', " +
+      "Security: 'security', DataAccess: 'data-access' } as const;",
+    example: 'category: AuditCategories.Administrative',
+    seeAlso: ['AuditCategory', 'AuditActionDefinition'],
+  },
+  {
+    name: 'AuditCategory',
+    kind: 'type',
+    module: 'audit',
+    summary: 'String union of supported audit action categories, derived from AuditCategories.',
+    details:
+      'type AuditCategory = (typeof AuditCategories)[keyof typeof AuditCategories];\n\n' +
+      "Equivalent to 'administrative' | 'runtime' | 'security' | 'data-access'.",
+    seeAlso: ['AuditCategories', 'AuditActionDefinition'],
+  },
+  {
+    name: 'AuditSeverities',
+    kind: 'const',
+    module: 'audit',
+    summary: 'Shared audit action severity values used by TypeScript types and configuration validation.',
+    details: "const AuditSeverities = { Info: 'info', Warning: 'warning', Critical: 'critical' } as const;",
+    example: 'severity: AuditSeverities.Info',
+    seeAlso: ['AuditSeverity', 'AuditActionDefinition'],
+  },
+  {
+    name: 'AuditSeverity',
+    kind: 'type',
+    module: 'audit',
+    summary: 'String union of supported audit action severities, derived from AuditSeverities.',
+    details:
+      'type AuditSeverity = (typeof AuditSeverities)[keyof typeof AuditSeverities];\n\n' +
+      "Equivalent to 'info' | 'warning' | 'critical'.",
+    seeAlso: ['AuditSeverities', 'AuditActionDefinition'],
+  },
+  {
+    name: 'BuiltInRetentionClasses',
+    kind: 'const',
+    module: 'audit',
+    summary: 'Names of built-in audit retention classes; custom class names remain supported.',
+    details:
+      "const BuiltInRetentionClasses = { Standard: 'standard', Security: 'security', Compliance: 'compliance' } as const;\n\n" +
+      'These constants define names, not retention periods. AuditActionDefinition.retentionClass remains a string ' +
+      'so an application can use a custom class such as case-history with a configured retention period.',
+    example: 'retentionClass: BuiltInRetentionClasses.Compliance',
+    seeAlso: ['AuditActionDefinition', 'auditDefinitions'],
+  },
+  {
+    name: 'AuditService',
+    kind: 'interface',
+    module: 'audit',
+    summary:
+      "Records and queries audit events in the service's namespace; returned as auditService by initializePlatform/initializeService.",
+    details:
+      'interface AuditService {\n' +
+      '  record(action: AuditAction, details: AuditRecordDetails): Promise<AuditRecordOutcome>;\n' +
+      '  query(criteria?: AuditEventCriteria, options?: AuditQueryOptions): Promise<Results<AuditEventRecord>>;\n' +
+      '  flush(): Promise<void>;\n' +
+      '  readonly droppedEventCount: number;\n' +
+      '}\n\n' +
+      'record() sends each event immediately by default. Set options.audit.batchSize greater than 1 during initialization ' +
+      'to opt into batching (500 ms default batch interval, per tenant for core services). It retries network errors and ' +
+      '429/502/503/504 with the same eventId (honouring Retry-After), and buffers at most 1,000 events or 8 MB. ' +
+      'Await it and check the outcome: it never rejects and resolves recorded, rejected, or failed. ' +
+      'recorded confirms storage or an idempotent duplicate, not just queue admission. Non-recorded events increment ' +
+      'droppedEventCount and the audit.client.dropped_events metric. Change sets are dropped unless the action sets ' +
+      'captureChangeSet. Writes wait for auditActions registration to settle. Call flush() before shutdown if batches ' +
+      'or unawaited records remain; no separate flush is needed once all record() calls have settled. ' +
+      'Normal shutdown must still wait for in-flight application work. ' +
+      'query() uses the service token unless options.token is set, and rejects on failure.',
+    example:
+      "const outcome = await auditService.record(UPDATE_CASE, {\n" +
+      "  actor: { id: user.id, type: 'user' },\n" +
+      "  resource: { type: 'case', id: caseId },\n" +
+      "});\n" +
+      "if (outcome.status !== 'recorded') logger.warn(`Audit event not recorded: ${outcome.reason}`);",
+    seeAlso: [
+      'AuditClientOptions',
+      'AuditRecordDetails',
+      'AuditRecordOutcome',
+      'AuditEventCriteria',
+      'AuditQueryOptions',
+      'ServiceRegistration',
+    ],
+  },
+  {
+    name: 'AuditClientOptions',
+    kind: 'interface',
+    module: 'audit',
+    summary:
+      'Optional audit delivery configuration on initializeService and initializePlatform; defaults to immediate single-event writes.',
+    details:
+      'interface AuditClientOptions {\n' +
+      '  batchSize?: number; // default 1; greater than 1 enables batching\n' +
+      '  batchIntervalMs?: number; // default 500; unused for single-event delivery\n' +
+      '  maxBufferedEvents?: number; // default 1000, including in-flight and retrying events\n' +
+      '  maxBufferedBytes?: number; // default 8 MiB serialized\n' +
+      '  retryDelaysMs?: number[]; // default [200, 1000, 3000, 5000]\n' +
+      '  maxRetryAfterMs?: number; // default 30000\n' +
+      '  requestTimeoutMs?: number; // default 10000 per HTTP attempt, not a total call deadline\n' +
+      '}',
+    example: 'const options = { ...serviceOptions, audit: { batchSize: 100, batchIntervalMs: 500 } };',
+    seeAlso: ['AuditService', 'initializeService', 'initializePlatform'],
+  },
+  {
+    name: 'AuditRecordDetails',
+    kind: 'interface',
+    module: 'audit',
+    summary: 'Details of an audit event passed to AuditService.record.',
+    details:
+      'interface AuditRecordDetails {\n' +
+      '  tenantId?: AdspId; // required for core services, ignored for tenant services\n' +
+      "  status?: AuditEventStatus; // default 'success'\n" +
+      '  actor: AuditActor;\n' +
+      '  occurredAt?: Date; // default now\n' +
+      '  eventId?: string; // idempotency key, generated when omitted\n' +
+      '  resource?: AuditResource; scopeIds?: string[]; correlationId?: string; sessionId?: string;\n' +
+      '  metadata?: Record<string, unknown>;\n' +
+      '  changeSet?: AuditChangeSet; // sent only if the action sets captureChangeSet\n' +
+      '}',
+    seeAlso: ['AuditService', 'AuditActor', 'AuditResource', 'AuditChangeSet'],
+  },
+  {
+    name: 'AuditRecordOutcome',
+    kind: 'type',
+    module: 'audit',
+    summary: 'Result resolved by AuditService.record.',
+    details:
+      "type AuditRecordOutcome =\n" +
+      "  | { status: 'recorded'; eventId: string } // stored, or an idempotent duplicate\n" +
+      "  | { status: 'rejected'; eventId: string; code: string; reason: string } // refused by the service, not resent\n" +
+      "  | { status: 'failed'; eventId: string; reason: Exclude<AuditDropReason, 'rejected'>; error: string };",
+    seeAlso: ['AuditService', 'AuditDropReason'],
+  },
+  {
+    name: 'AuditDropReason',
+    kind: 'type',
+    module: 'audit',
+    summary: 'Why an audit event was not stored; also the reason attribute of audit.client.dropped_events.',
+    details:
+      "type AuditDropReason = 'rejected' | 'invalid_event' | 'buffer_full' | 'retries_exhausted' | 'request_failed' | 'invalid_response';",
+    seeAlso: ['AuditRecordOutcome'],
+  },
+  {
+    name: 'AuditEventStatus',
+    kind: 'type',
+    module: 'audit',
+    summary: 'Outcome of the audited action.',
+    details: "type AuditEventStatus = 'success' | 'failure' | 'blocked' | 'error';",
+    seeAlso: ['AuditRecordDetails'],
+  },
+  {
+    name: 'AuditActorType',
+    kind: 'type',
+    module: 'audit',
+    summary: 'Kind of actor that performed an audited action.',
+    details: "type AuditActorType = 'user' | 'service' | 'system';",
+    seeAlso: ['AuditActor'],
+  },
+  {
+    name: 'AuditActor',
+    kind: 'interface',
+    module: 'audit',
+    summary: 'Actor that performed an audited action.',
+    details: 'interface AuditActor { id: string; type: AuditActorType; name?: string; email?: string; roles?: string[]; }',
+    seeAlso: ['AuditRecordDetails', 'AuditActorType'],
+  },
+  {
+    name: 'AuditResource',
+    kind: 'interface',
+    module: 'audit',
+    summary: 'Resource an audited action applied to.',
+    details: 'interface AuditResource { type: string; id: string; name?: string; }',
+    seeAlso: ['AuditRecordDetails'],
+  },
+  {
+    name: 'AuditChangeSet',
+    kind: 'interface',
+    module: 'audit',
+    summary: 'Before and after state of a change; only sent for actions with captureChangeSet.',
+    details:
+      'interface AuditChangeSet { before?: Record<string, unknown> | null; after?: Record<string, unknown> | null; }',
+    seeAlso: ['AuditRecordDetails', 'AuditActionDefinition'],
+  },
+  {
+    name: 'AuditEventCriteria',
+    kind: 'interface',
+    module: 'audit',
+    summary: 'Filters for AuditService.query.',
+    details:
+      'interface AuditEventCriteria {\n' +
+      '  actor?: string; resourceType?: string; resourceId?: string; action?: string;\n' +
+      '  status?: AuditEventStatus; category?: AuditCategory; scope?: string;\n' +
+      '  occurredFrom?: Date | string; occurredTo?: Date | string;\n' +
+      '}',
+    seeAlso: ['AuditService', 'AuditQueryOptions'],
+  },
+  {
+    name: 'AuditQueryOptions',
+    kind: 'interface',
+    module: 'audit',
+    summary: 'Paging, namespace, tenant and token options for AuditService.query.',
+    details:
+      'interface AuditQueryOptions {\n' +
+      '  top?: number; // page size, service default 10\n' +
+      '  after?: string; // cursor from page.next\n' +
+      "  namespace?: string; // defaults to serviceId.service\n" +
+      '  tenantId?: AdspId; // core callers\n' +
+      "  token?: string; // e.g. the user's token; defaults to the service account token\n" +
+      '}',
+    seeAlso: ['AuditService', 'AuditEventCriteria'],
+  },
+  {
+    name: 'AuditEventRecord',
+    kind: 'interface',
+    module: 'audit',
+    summary: 'Stored audit event returned by AuditService.query.',
+    details:
+      'interface AuditEventRecord {\n' +
+      '  id: string; eventId: string; namespace: string; writtenBy: string;\n' +
+      '  occurredAt: string; receivedAt: string; action: string; actionVersion: number;\n' +
+      '  category: AuditCategory; status: AuditEventStatus; severity: AuditSeverity;\n' +
+      '  actor: AuditActor; resource?: AuditResource; scopeIds: string[];\n' +
+      '  correlationId?: string; sessionId?: string; changeSet?: AuditChangeSet;\n' +
+      '  metadata: Record<string, unknown>; retentionClass: string; retentionUntil: string;\n' +
+      '}',
+    seeAlso: ['AuditService', 'Results'],
   },
 
   // event
@@ -479,6 +713,14 @@ export const SDK_REFERENCE: SdkSymbolDoc[] = [
     module: 'common',
     summary: 'Security classification levels used across service configuration (e.g. FileType.securityClassification).',
     details: "enum SecurityClassifications { ProtectedA = 'protected a', ProtectedB = 'protected b', ProtectedC = 'protected c', Public = 'public' }",
+  },
+  {
+    name: 'Results',
+    kind: 'interface',
+    module: 'common',
+    summary: 'Paged results envelope returned by platform list APIs, e.g. AuditService.query.',
+    details: 'interface Results<T> { results: T[]; page: { after?: string; next?: string; size: number }; }',
+    seeAlso: ['AuditService'],
   },
 
   // push
@@ -584,12 +826,14 @@ export const SDK_REFERENCE: SdkSymbolDoc[] = [
       '  fileTypes?: FileType[];\n' +
       '  notifications?: NotificationType[];\n' +
       '  values?: ValueDefinition[];\n' +
+      '  auditActions?: Record<string, AuditAction> | AuditAction[];\n' +
       '  serviceConfigurations?: { serviceId: AdspId; configuration: Record<string, unknown> | { name: string; configuration: unknown }[] }[];\n' +
       '}\n\n' +
       'On initialization these are patched (fire-and-forget) into configuration-service (roles/config/events/etc as ' +
       'namespaced documents), tenant-service (roles), event-service (event definitions), push-service (event streams), ' +
-      'file-service (file types), notification-service (notification types), and value-service (value definitions).',
-    seeAlso: ['ServiceRole', 'initializePlatform'],
+      'file-service (file types), notification-service (notification types), value-service (value definitions), and ' +
+      'audit-service (auditActions replace the actions-<serviceId.service> catalog; duplicate names fail initialization).',
+    seeAlso: ['ServiceRole', 'initializePlatform', 'AuditAction'],
   },
   {
     name: 'ServiceRole',

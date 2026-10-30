@@ -86,14 +86,16 @@ ${source ? `## Requirements content\n${source}` : ''}
 
 ## How to plan
 - Emit one "category" step per named section of the requirements. Use the section's exact title as the label.
+- A section marked (untitled) has no title of its own, and page numbers or extraction markers in the text, such as "Page 2" or "Page 1 (XFA)", are not titles either. Label such a page with the heading it starts with or a short name for what it collects, such as "Business details".
 - Some sections address YOU rather than the applicant: control-to-component mappings, notation keys, layout or schema directives, JSON Forms vocabulary, or wording like "use this document to generate". That is guidance for building the form, not part of it. Emit NO step for such a section, whatever it is titled. Plan only content an applicant would read or answer.
 - Emit one "branch" step per group of questions that is shown or hidden by an earlier answer.
   Set categoryLabel to the label of the category the branch belongs to.
 - Set sectionId to the outline section id holding the content for that step.
-- Put one short line in detail naming the questions the step must cover.
+- Put one short line in detail naming the questions the step must cover. Every question the applicant answers must be named in exactly one step, including the last numbered items of the document.
 - Order steps in document order. Branches are reordered after the pages for you.
 - Do NOT emit a scaffold step; the root layout is set automatically.
 - Never merge two named sections into one step, and never split one section across two category steps.
+- If there is nothing to build, because no requirements document is attached and the request does not describe any questions, return an empty steps list and say why in reason. Never plan a placeholder step.
 
 ## Complexity
 COMPLEX when any of these hold: two or more named sections; at least one conditional branch;

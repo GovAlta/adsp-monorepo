@@ -13,6 +13,12 @@ const completeServiceVariables = [
     beta: true,
   },
   {
+    name: 'Audit',
+    link: 'services/audit',
+    description: 'The audit service records who did what, with configurable action catalogs and retention.',
+    beta: true,
+  },
+  {
     name: 'Cache',
     link: 'services/cache',
     description:
@@ -89,6 +95,13 @@ const completeServiceVariables = [
     beta: false,
   },
   {
+    name: 'Project Planner',
+    link: 'services/project-planner',
+    description:
+      'The project planner service helps you describe a business problem, recognises common solution patterns, and recommends which ADSP services to use.',
+    beta: true,
+  },
+  {
     name: 'Script',
     link: 'services/script',
     description:
@@ -149,6 +162,8 @@ export const defaultFeaturesVisible = {
   Value: true,
   Cache: true,
   Agent: false,
+  Audit: false,
+  'Project Planner': false,
 };
 
 export const serviceVariables = (featuresVisible = {}) => {
