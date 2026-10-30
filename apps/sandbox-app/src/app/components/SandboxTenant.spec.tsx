@@ -80,6 +80,7 @@ jest.mock('./services/AdspComponentsMain', () => ({ AdspComponentsMain: () => nu
 jest.mock('./services/adsp-components/AdspThemingExample', () => ({ AdspThemingExample: () => null }));
 jest.mock('./services/adsp-components/ADSPGoACalendarExample', () => ({ ADSPGoACalendarExample: () => null }));
 jest.mock('./services/AuditServiceMain', () => ({ AuditServiceMain: () => null }));
+jest.mock('./services/adsp-components/AdspConversationExample', () => ({ AdspConversationExample: () => null }));
 jest.mock('@core-services/app-common', () => ({
   ...jest.requireActual('@core-services/app-common'),
   Band: () => null,

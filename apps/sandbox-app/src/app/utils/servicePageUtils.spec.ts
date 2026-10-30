@@ -170,6 +170,12 @@ describe('servicePageUtils', () => {
           url: '/testTenant/services/adsp-components/adspcalendar',
           testId: 'adspCalendarExample1',
         },
+        {
+          id: 'adspConversation',
+          name: 'Conversation',
+          url: '/testTenant/services/adsp-components/conversation',
+          testId: 'adspConversation',
+        },
       ]);
     });
   });
