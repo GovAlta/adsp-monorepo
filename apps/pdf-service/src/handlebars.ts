@@ -460,7 +460,7 @@ class HandlebarsTemplateService implements TemplateService {
       }
 
       if (value === undefined || value === null || value === '') {
-        value = 'Not answered.';
+        value = '(none given)';
       }
 
       return value;
