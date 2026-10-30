@@ -144,11 +144,8 @@ export const initializeApp = async (): Promise<AuditApplication> => {
   const auditMetrics = createAuditMetrics(meter, failedEventRepository, logger);
   const repository = new PostgresEventRepository(knex, logger);
   const buffer = new AuditWriteBuffer(repository, logger, {}, meter, auditMetrics);
-  const catalogs = new CatalogService(
-    configurationService,
-    logger,
-    new ConfigurationCatalogSource(directory, tokenProvider),
-  );
+  const catalogSource = new ConfigurationCatalogSource(directory, tokenProvider);
+  const catalogs = new CatalogService(configurationService, logger, catalogSource, catalogSource);
   const retention = new RetentionService(configurationService, logger, retentionBounds);
   let stopping = false;
 

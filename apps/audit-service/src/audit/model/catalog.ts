@@ -1,9 +1,9 @@
-import { AdspId, ConfigurationService } from '@abgov/adsp-service-sdk';
+import { AdspId, AuditActionDefinition, ConfigurationService } from '@abgov/adsp-service-sdk';
 import { InvalidOperationError } from '@core-services/core-common';
 import type { Logger } from 'winston';
 import * as HttpStatusCodes from 'http-status-codes';
 import { ActionCatalog, AuditConfiguration } from '../configuration';
-import { CatalogApplicationSource } from './catalog-source';
+import { CatalogActionStore, CatalogApplicationSource } from './catalog-source';
 
 export interface CatalogListing extends ActionCatalog {
   // True when a Core catalog is registered for the application; tenants cannot change those actions.
@@ -19,12 +19,132 @@ export class CatalogUnavailableError extends InvalidOperationError {
   }
 }
 
+export class ActionConflictError extends InvalidOperationError {
+  constructor(message: string) {
+    super(message, { statusCode: HttpStatusCodes.CONFLICT });
+    Object.setPrototypeOf(this, ActionConflictError.prototype);
+  }
+}
+
+const sameName = (a: string, b: string) => a.toLowerCase() === b.toLowerCase();
+
 export class CatalogService {
+  // Tail of the queued adds per tenant and namespace.
+  private readonly pendingAdds = new Map<string, Promise<void>>();
+
   constructor(
     private readonly configuration: ConfigurationService,
     private readonly logger: Logger,
     private readonly source?: CatalogApplicationSource,
+    private readonly store?: CatalogActionStore,
   ) {}
+
+  /**
+   * Adds an action to the tenant's catalog for the namespace. Adds to the same catalog are serialised within this
+   * process because Configuration has no conditional write: concurrent read-merge-write requests can lose an
+   * action. Replicas are not coordinated, so the post-write recheck remains as a backstop.
+   */
+  async addAction(
+    namespace: string,
+    name: string,
+    definition: AuditActionDefinition,
+    tenantId: AdspId,
+    token: string,
+  ): Promise<void> {
+    const key = `${tenantId}:${namespace}`;
+    const previous = this.pendingAdds.get(key) ?? Promise.resolve();
+    const run = previous.then(() => this.addActionUnlocked(namespace, name, definition, tenantId, token));
+    const settled = run.then(
+      () => undefined,
+      () => undefined,
+    );
+    this.pendingAdds.set(key, settled);
+    try {
+      await run;
+    } finally {
+      if (this.pendingAdds.get(key) === settled) {
+        this.pendingAdds.delete(key);
+      }
+    }
+  }
+
+  /**
+   * The name is compared, case-insensitively and in full, with fresh configuration (not the SDK cache): the
+   * namespace's own catalog and every Core catalog. Core wins over tenant actions, so a clash would make the tenant
+   * action unreachable.
+   */
+  private async addActionUnlocked(
+    namespace: string,
+    name: string,
+    definition: AuditActionDefinition,
+    tenantId: AdspId,
+    token: string,
+  ): Promise<void> {
+    if (!this.source || !this.store) {
+      throw new CatalogUnavailableError();
+    }
+
+    let existing: string[] | null;
+    try {
+      const coreApplications = await this.source.listApplications();
+      if (coreApplications.includes(namespace)) {
+        throw new ActionConflictError(`Namespace "${namespace}" is a Core namespace; its actions cannot be changed.`);
+      }
+      const coreCatalogs = await Promise.all(
+        coreApplications.map(async (application) => ({
+          application,
+          names: (await this.store?.readActionNames(application)) ?? [],
+        })),
+      );
+      const core = coreCatalogs.find(({ names }) => names.some((existingName) => sameName(existingName, name)));
+      if (core) {
+        throw new ActionConflictError(`Action "${name}" already exists in the ${core.application} Core namespace.`);
+      }
+      existing = await this.store.readActionNames(namespace, tenantId);
+    } catch (err) {
+      if (err instanceof ActionConflictError) throw err;
+      this.logger.warn(`Unable to check action ${name} of ${namespace}: ${err}`, {
+        context: 'AuditCatalog',
+        tenant: tenantId.toString(),
+      });
+      throw new CatalogUnavailableError();
+    }
+
+    if (existing?.some((existingName) => sameName(existingName, name))) {
+      throw new ActionConflictError(`Action "${name}" already exists in the ${namespace} catalog.`);
+    }
+
+    await this.store.saveAction(namespace, name, definition, token, tenantId);
+    await this.resolveConcurrentAdd(namespace, name, token, tenantId);
+    // The next read must see the new action rather than the cached catalog.
+    this.configuration.clearCached?.(tenantId, 'audit-service', `actions-${namespace}`);
+  }
+
+  /**
+   * Configuration has no conditional write, so two requests can both pass the check above. Recheck after writing:
+   * if a differently-cased twin landed too, the lexicographically smaller name is kept and the other request backs out.
+   */
+  private async resolveConcurrentAdd(namespace: string, name: string, token: string, tenantId: AdspId) {
+    let names: string[] | null;
+    try {
+      names = (await this.store?.readActionNames(namespace, tenantId)) ?? null;
+    } catch (err) {
+      this.logger.warn(`Unable to recheck action ${name} of ${namespace} after writing: ${err}`, {
+        context: 'AuditCatalog',
+        tenant: tenantId.toString(),
+      });
+      return;
+    }
+
+    const twin = names?.find(
+      (existingName) => existingName !== name && sameName(existingName, name) && existingName < name,
+    );
+    if (twin) {
+      await this.store?.removeAction(namespace, name, token, tenantId);
+      this.configuration.clearCached?.(tenantId, 'audit-service', `actions-${namespace}`);
+      throw new ActionConflictError(`Action "${name}" already exists in the ${namespace} catalog.`);
+    }
+  }
 
   /**
    * Lists every catalog visible to the tenant: the tenant's own plus those registered by Core (for example the

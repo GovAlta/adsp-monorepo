@@ -95,17 +95,14 @@ export function AuditWrite() {
     }
   };
 
-  if (!canWrite) {
-    return (
-      <GoabCallout type="important" heading="Permission required" mt="l">
-        {NOT_PERMITTED}
-      </GoabCallout>
-    );
-  }
-
   return (
     <>
       <Card title="Write an audit event">
+        {(!canWrite || forbidden) && (
+          <GoabCallout type="information" mb="l">
+            {NOT_PERMITTED}
+          </GoabCallout>
+        )}
         <FormGrid>
           <GoabFormItem label="Namespace" helpText="Namespace whose action catalog defines the event's action.">
             <GoabInput name="namespace" width="100%" value={namespace} disabled onChange={() => undefined} />
@@ -127,7 +124,7 @@ export function AuditWrite() {
           <GoabTextArea name="event" rows={16} width="100%" value={body} onChange={(e) => setBody(e.value)} />
         </GoabFormItem>
         <GoabBlock gap="m" mt="xl">
-          <GoabButton type="primary" onClick={submit}>
+          <GoabButton type="primary" disabled={!canWrite || forbidden} onClick={submit}>
             Write event
           </GoabButton>
           <GoabButton type="tertiary" onClick={() => setBody(format(newEvent()))}>
@@ -135,11 +132,6 @@ export function AuditWrite() {
           </GoabButton>
         </GoabBlock>
       </Card>
-      {forbidden && (
-        <GoabCallout type="important" heading="Permission required" mt="l">
-          {NOT_PERMITTED}
-        </GoabCallout>
-      )}
       <ErrorCallout message={error} />
       {result && (
         <GoabCallout

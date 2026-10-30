@@ -1,6 +1,10 @@
 import { isAxiosError } from 'axios';
 
-export const isForbidden = (err: unknown) => isAxiosError(err) && err.response?.status === 403;
+// ADSP answers a missing role with 401 and a "not permitted" message, so that is treated like a 403.
+export const isForbidden = (err: unknown) =>
+  isAxiosError(err) &&
+  (err.response?.status === 403 ||
+    (err.response?.status === 401 && /not permitted/i.test(String(err.response?.data?.errorMessage ?? ''))));
 
 export function errorMessage(err: unknown): string {
   if (isAxiosError(err)) {

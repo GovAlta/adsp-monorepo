@@ -10,7 +10,9 @@ import {
 } from '@abgov/react-components';
 import axios from 'axios';
 import { useState } from 'react';
-import { ActionDefinition, addAction, getActions, SAMPLE_NAMESPACE } from './auditApi';
+import { useSelector } from 'react-redux';
+import { userSelector } from '../../../state';
+import { ActionDefinition, addAction, getActions, missingCatalogRoles, SAMPLE_NAMESPACE } from './auditApi';
 import { errorMessage } from './util';
 import { Card, ErrorCallout, FormGrid, Json } from './common';
 
@@ -21,6 +23,9 @@ const ACTION_NAME = /^[a-zA-Z0-9]+(?:[._:-][a-zA-Z0-9]+)*$/;
 
 export function AuditActions() {
   const namespace = SAMPLE_NAMESPACE;
+  const { user } = useSelector(userSelector);
+  const missingRoles = missingCatalogRoles(user?.roles);
+  const canAdd = missingRoles.length === 0;
   const [actions, setActions] = useState<ActionDefinition[]>();
   const [error, setError] = useState<string>();
   const [form, setForm] = useState({
@@ -59,18 +64,7 @@ export function AuditActions() {
       setError(undefined);
       setAdded(undefined);
       const { name, resourceType, description, ...rest } = form;
-      // Refresh from the service so the check covers actions added since the last load; a 404 means no catalog yet.
-      const existing = await getActions(namespace).catch((err) => {
-        if (axios.isAxiosError(err) && err.response?.status === 404) {
-          return [] as ActionDefinition[];
-        }
-        throw err;
-      });
-      // Actions are namespace-scoped and matched case-sensitively, as the audit service does.
-      if (existing.some((action) => action.name === name)) {
-        setError(`Action "${name}" already exists in the ${namespace} catalog.`);
-        return;
-      }
+      // Duplicate checks (this namespace and Core namespaces) are enforced by the audit service.
       await addAction(name, {
         version: 1,
         ...rest,
@@ -81,7 +75,11 @@ export function AuditActions() {
       setForm({ ...form, name: '' });
       setSubmitted(false);
     } catch (err) {
-      setError(errorMessage(err));
+      setError(
+        axios.isAxiosError(err) && [401, 403].includes(err.response?.status ?? 0)
+          ? 'You do not have permission to change the action catalog. This requires the audit-admin and configuration-admin roles.'
+          : errorMessage(err),
+      );
     }
   };
 
@@ -125,6 +123,12 @@ export function AuditActions() {
         ))}
       </Card>
       <Card title="Add action">
+        {!canAdd && (
+          <GoabCallout type="information" mb="l">
+            Adding actions requires the audit-admin and configuration-admin roles. Your account is missing:{' '}
+            {missingRoles.join(' and ')}.
+          </GoabCallout>
+        )}
         <FormGrid>
           <GoabFormItem label="Action name" requirement="required" error={submitted ? nameError : undefined}>
             <GoabInput
@@ -156,7 +160,7 @@ export function AuditActions() {
           />
         </GoabFormItem>
         <GoabBlock mt="xl">
-          <GoabButton type="primary" onClick={add}>
+          <GoabButton type="primary" disabled={!canAdd} onClick={add}>
             Add action
           </GoabButton>
         </GoabBlock>
