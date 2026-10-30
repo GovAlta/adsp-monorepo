@@ -36,7 +36,9 @@ export const plannedStepSchema = z.object({
 export const generationPlanSchema = z.object({
   complexity: z.enum(['SIMPLE', 'COMPLEX']),
   reason: z.string(),
-  steps: z.array(plannedStepSchema).min(1),
+  // Empty when there is nothing to build, such as no attached document and no fields described. Requiring a step made
+  // the planner invent a placeholder page, which was then saved into the form.
+  steps: z.array(plannedStepSchema),
 });
 
 const incrementShape = {
@@ -82,6 +84,10 @@ export interface StepFailure {
 
 export interface GenerationRunResult {
   complexity: FormComplexity;
+  /** The planner's explanation of the plan; the only account of why when nothing was planned. */
+  planReason: string;
+  /** Attached documents that reached the run. Zero means it built from the instruction alone. */
+  documentCount: number;
   total: number;
   saved: number;
   savedLabels: string[];

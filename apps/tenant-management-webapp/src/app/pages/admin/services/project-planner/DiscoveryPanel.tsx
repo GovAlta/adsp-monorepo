@@ -52,6 +52,8 @@ interface DiscoveryPanelProps {
   specialists?: SpecialistDefinition[];
   // Set while another section (problem statement, header, blueprint) is busy, to block this one too.
   disabled?: boolean;
+  // Set while a blueprint call that may auto-consult specialists is in flight.
+  consultingSpecialists?: boolean;
   onBusyChange?: (busy: boolean) => void;
   onChatsChanged?: () => void;
 }
@@ -77,6 +79,7 @@ export const DiscoveryPanel: FunctionComponent<DiscoveryPanelProps> = ({
   onSolutionChange,
   specialists = [],
   disabled = false,
+  consultingSpecialists = false,
   onBusyChange,
   onChatsChanged,
 }) => {
@@ -91,9 +94,19 @@ export const DiscoveryPanel: FunctionComponent<DiscoveryPanelProps> = ({
   const canSkipDiscovery = !!discovery && !discovery.ready && discovery.confidence < discovery.threshold;
   const message = draft.trim();
   const openQuestions = solution.state.questions.filter((question) => question.status === 'open');
-  const messages = [...(discovery?.messages || []), ...(solution.state.conversation || [])].sort(
+  const realMessages = [...(discovery?.messages || []), ...(solution.state.conversation || [])].sort(
     (first, second) => new Date(first.at).getTime() - new Date(second.at).getTime(),
   );
+  const [initialGreeting] = useState<ConversationMessage | undefined>(() =>
+    realMessages.length === 0 && confidence && confidence.score >= confidence.threshold
+      ? {
+          role: 'assistant',
+          content: `Your problem statement already gives me enough detail (confidence ${confidence.score}%). Reply below only if you want to add more or ask a question.`,
+          at: new Date(0).toISOString(),
+        }
+      : undefined,
+  );
+  const messages = initialGreeting ? [initialGreeting, ...realMessages] : realMessages;
   const recentMessages = messages.slice(-RECENT_MESSAGE_COUNT);
   const earlierMessages = messages.slice(0, messages.length - recentMessages.length);
   const recommendations = solution.state.blueprint?.serviceMapping || [];
@@ -202,17 +215,7 @@ export const DiscoveryPanel: FunctionComponent<DiscoveryPanelProps> = ({
             </GoabDetails>
           )}
           {recentMessages.map((m, i) => renderMessage(m, earlierMessages.length + i))}
-          {messages.length === 0 &&
-            (confidence && confidence.score >= confidence.threshold ? (
-              <GoabCallout type="information" heading="Planner" testId="discovery-empty-confident">
-                <div>
-                  Your problem statement already gives me enough detail (confidence {confidence.score}%). Reply below
-                  only if you want to add more or ask a question.
-                </div>
-              </GoabCallout>
-            ) : (
-              <p>No messages yet.</p>
-            ))}
+          {messages.length === 0 && <p>No messages yet.</p>}
         </section>
         {busy && (
           <GoabCircularProgress visible size="small" message="Asking the model — this can take up to a minute" />
@@ -273,16 +276,28 @@ export const DiscoveryPanel: FunctionComponent<DiscoveryPanelProps> = ({
         <GoabAccordion
           heading="Chat/Consult with Specialist"
           headingContent={
-            <span style={{ display: specialistsWithChatsCount > 0 ? undefined : 'none' }}>
-              {specialistsWithChatsCount > 0 &&
-                countBadge(specialistsWithChatsCount, 'specialist', 'optional-experts-count')}
-            </span>
+            consultingSpecialists ? (
+              <GoabBadge type="information" content="Consulting specialists…" testId="optional-experts-consulting" />
+            ) : (
+              <span style={{ display: specialistsWithChatsCount > 0 ? undefined : 'none' }}>
+                {specialistsWithChatsCount > 0 &&
+                  countBadge(specialistsWithChatsCount, 'specialist', 'optional-experts-count')}
+              </span>
+            )
           }
           headingType="filled"
           open={false}
           testId="optional-experts"
         >
           <p>Choose a service expert for help with this solution. Recommended services are marked.</p>
+          {consultingSpecialists && (
+            <GoabCircularProgress
+              visible
+              size="small"
+              message="The planner is consulting recommended specialists while preparing your plan…"
+              testId="specialist-auto-consult-progress"
+            />
+          )}
           {chatCountsError && (
             <GoabCallout type="important" heading="Saved chat counts unavailable" testId="specialist-chat-counts-error">
               Saved chat counts could not be loaded. You can still open any specialist.

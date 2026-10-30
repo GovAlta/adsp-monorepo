@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { ErrorNotification } from '@store/notifications/actions';
+import { ErrorNotification, SuccessNotification } from '@store/notifications/actions';
 import { getAccessToken } from '@store/tenant/actions';
 import { AppDispatch, RootState } from '@store/index';
 import {
@@ -135,7 +135,22 @@ export function usePlannerApi(): PlannerApi {
       reviewComponent: (id, order, review) =>
         request<Solution>('put', `/solutions/${id}/components/${order}/review`, { review }),
       discovery: (id, options = {}) => request<Solution>('post', `/solutions/${id}/discovery`, options),
-      blueprint: (id, options = {}) => request<Solution>('post', `/solutions/${id}/blueprint`, options),
+      blueprint: async (id, options = {}) => {
+        const result = await request<Solution>('post', `/solutions/${id}/blueprint`, options);
+        const freshlyConsulted = (result.state?.blueprint?.specialistNotes || [])
+          .filter((note) => note.source !== 'saved-consultation')
+          .map((note) => note.displayName);
+        if (freshlyConsulted.length) {
+          dispatch(
+            SuccessNotification({
+              message: `The planner automatically consulted ${freshlyConsulted.join(
+                ', ',
+              )} while preparing this plan. See the conversations in the Discovery step.`,
+            }),
+          );
+        }
+        return result;
+      },
       consult: (id, service, options) =>
         request<ConsultResult & { solution?: Solution }>('post', `/solutions/${id}/consult/${service}`, options),
       exportSolution: (id) => request<unknown>('get', `/solutions/${id}/export`),
