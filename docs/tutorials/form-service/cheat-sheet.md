@@ -1607,6 +1607,19 @@ Page steppers support these Task List and review-flow options:
     </code></pre></td>
   </tr>
   <tr>
+    <td><code>noAnswerMessage</code></td>
+    <td>Change the text shown on review pages and summaries for fields without an answer. Defaults to <code>(none given)</code>.</td>
+    <td><code>Categorization.options</code></td>
+    <td><pre><code>
+{
+  "type": "Categorization",
+  "options": {
+    "noAnswerMessage": "No response provided"
+  }
+}
+    </code></pre></td>
+  </tr>
+  <tr>
     <td><code>sectionTitle</code></td>
     <td>Group categories under a section heading on the Task List.</td>
     <td><code>Category.options</code></td>

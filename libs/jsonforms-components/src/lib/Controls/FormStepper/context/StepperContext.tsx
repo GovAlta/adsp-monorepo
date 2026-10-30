@@ -25,6 +25,7 @@ import { JsonFormContext } from '../../../Context';
 import { StepStatus } from '../../../common/Constants';
 import { NavigationOutcome, NavigationTarget, resolveNavigationTarget } from '../util/navigationTarget';
 import { isSameStepperState } from './stateEquality';
+import { getStepperPageOptions, StepperPageOptions } from '../util/stepperOptions';
 export interface JsonFormsStepperContextProviderProps {
   children: ReactNode;
   StepperProps: CategorizationStepperLayoutRendererProps & {
@@ -46,6 +47,7 @@ export interface JsonFormsStepperContextProps {
   toggleShowReviewLink: (id: number) => void;
   validatePage: (id: number) => void;
   selectNumberOfCompletedCategories: () => number;
+  selectStepperOptions: () => StepperPageOptions;
   isProvided?: boolean;
 }
 
@@ -68,8 +70,7 @@ const createStepperContextInitData = (
   const { uischema, data, schema, ajv, t, path } = props;
   const categorization = uischema as Categorization;
   const coreErrors = options?.errors;
-  const valid =
-    coreErrors != null ? coreErrors.length === 0 : ajv.validate(schema, data || {}) === true;
+  const valid = coreErrors != null ? coreErrors.length === 0 : ajv.validate(schema, data || {}) === true;
   const sourceErrors = coreErrors != null ? coreErrors : ajv.errors;
   const filteredErrors = sourceErrors && sourceErrors.filter((error) => error?.data != null);
 
@@ -248,6 +249,7 @@ export const JsonFormsStepperContextProvider = ({
       selectPath: (): string => {
         return snapshot.path;
       },
+      selectStepperOptions: () => getStepperPageOptions(uischema),
       selectCategory: (id: number) => {
         return snapshot.categories[id];
       },
@@ -269,7 +271,7 @@ export const JsonFormsStepperContextProvider = ({
         });
       },
     };
-  }, [stepperDispatch, snapshot, doValidatePage]);
+  }, [stepperDispatch, snapshot, doValidatePage, uischema]);
 
   /* istanbul ignore next */
   useEffect(() => {
@@ -504,7 +506,11 @@ let lastRequiredStringErrors: { data: unknown; schema: JsonSchema; errors: Error
  * replaced rather than mutated on a change, which makes identity a safe key.
  */
 export const getEmptyRequiredStringErrors = (data: unknown, schema: JsonSchema): ErrorObject[] => {
-  if (lastRequiredStringErrors && lastRequiredStringErrors.data === data && lastRequiredStringErrors.schema === schema) {
+  if (
+    lastRequiredStringErrors &&
+    lastRequiredStringErrors.data === data &&
+    lastRequiredStringErrors.schema === schema
+  ) {
     return lastRequiredStringErrors.errors;
   }
 

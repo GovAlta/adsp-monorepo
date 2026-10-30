@@ -526,6 +526,7 @@ describe('InputBaseTableReviewControl', () => {
     const mockGoToPage = jest.fn();
     const contextValue: JsonFormsStepperContextProps = {
       goToPage: mockGoToPage,
+      selectStepperOptions: jest.fn().mockReturnValue({ noAnswerMessage: '(none given)' }),
     } as unknown as JsonFormsStepperContextProps;
     const { baseElement } = render(
       <JsonFormsStepperContext.Provider value={contextValue}>
@@ -785,7 +786,7 @@ describe('InputBaseTableReviewControl', () => {
       </table>,
     );
 
-    expect(getByTestId('review-value-First name').textContent).toBe('Not answered.');
+    expect(getByTestId('review-value-First name').textContent).toBe('(none given)');
   });
 
   it('shows the no-answer message for null data', () => {
@@ -817,7 +818,7 @@ describe('InputBaseTableReviewControl', () => {
       </table>,
     );
 
-    expect(getByTestId('review-value-First name').textContent).toBe('Not answered.');
+    expect(getByTestId('review-value-First name').textContent).toBe('(none given)');
   });
 
   it('shows the no-answer message for empty string data', () => {
@@ -849,7 +850,7 @@ describe('InputBaseTableReviewControl', () => {
       </table>,
     );
 
-    expect(getByTestId('review-value-First name').textContent).toBe('Not answered.');
+    expect(getByTestId('review-value-First name').textContent).toBe('(none given)');
   });
 
   it('does not show the no-answer message for unchecked required boolean (shows error instead)', () => {
@@ -888,7 +889,10 @@ describe('InputBaseTableReviewControl', () => {
   it('calls onReviewChange with stepId and scope when Change button is clicked', () => {
     const onReviewChange = jest.fn();
     const mockGoToPage = jest.fn();
-    const contextValue = { goToPage: mockGoToPage } as unknown as JsonFormsStepperContextProps;
+    const contextValue = {
+      goToPage: mockGoToPage,
+      selectStepperOptions: jest.fn().mockReturnValue({ noAnswerMessage: '(none given)' }),
+    } as unknown as JsonFormsStepperContextProps;
     const scope = '#/properties/firstName';
 
     render(

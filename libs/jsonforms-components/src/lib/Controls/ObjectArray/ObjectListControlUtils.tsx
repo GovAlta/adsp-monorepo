@@ -8,7 +8,7 @@ import { ErrorObject } from 'ajv';
 import { NoneGivenTableText } from '../Inputs/style-component';
 import { humanizeAjvError } from './ListWithDetailControl';
 import { JsonSchema, UISchemaElement } from '@jsonforms/core';
-import { REQUIRED_PROPERTY_ERROR, NO_ANSWER_MESSAGE } from '../../common/Constants';
+import { REQUIRED_PROPERTY_ERROR } from '../../common/Constants';
 
 const jsonPreviewStyle: React.CSSProperties = {
   display: 'block',
@@ -151,10 +151,10 @@ export const isObjectArrayEmpty = (currentData: string) => {
   return result;
 };
 
-export const renderNoneGivenText = (data: string | undefined) => {
+export const renderNoneGivenText = (data: string | undefined, noAnswerMessage: string) => {
   return !data ? (
     <>
-      <NoneGivenTableText>{NO_ANSWER_MESSAGE}</NoneGivenTableText>
+      <NoneGivenTableText>{noAnswerMessage}</NoneGivenTableText>
       <br />
     </>
   ) : (
@@ -170,11 +170,12 @@ export const renderCellColumn = ({
   rowPath,
   element,
   isRequired,
+  noAnswerMessage,
 }: RenderCellColumnProps) => {
   const renderWarningCell = (error?: string | undefined) => {
     return (
       <HilightCellWarning>
-        {renderNoneGivenText(data)}
+        {renderNoneGivenText(data, noAnswerMessage)}
         {error && (
           <ObjectArrayWarningIconDiv>
             <GoabIcon type="warning" title="warning" size="small" theme="filled" mt="2xs"></GoabIcon>

@@ -33,4 +33,7 @@ export const getAddressLookupFieldLabel = (fieldName: string): string => {
   return ADDRESS_LOOKUP_LABELS[fieldName as keyof typeof ADDRESS_LOOKUP_LABELS] || fieldName;
 };
 
-export const NO_ANSWER_MESSAGE = 'Not answered.';
+export const NO_ANSWER_MESSAGE = '(none given)';
+export const BACK_TO_OVERVIEW_LABEL = 'Back to application overview';
+
+export const NEXT_BUTTON_LABEL = 'Next';

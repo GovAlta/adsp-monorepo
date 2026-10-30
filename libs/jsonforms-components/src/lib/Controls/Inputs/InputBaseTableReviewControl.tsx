@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import { ControlProps, UISchemaElement, JsonSchema } from '@jsonforms/core';
 import { ErrorObject } from 'ajv';
 import { withJsonFormsControlProps } from '@jsonforms/react';
@@ -15,21 +15,23 @@ import {
   getGeneratedLabelFromScope,
   controlScopeMatchesLabel,
   getLabelText,
-  getLastSegmentFromPointer,
   isNilOrEmptyValue,
 } from '../../util';
 import { humanizeAjvError } from '../ObjectArray/ListWithDetailControl';
 import { GoabFormItem } from '@abgov/react-components-ds1';
 
 import { useReviewChange } from '../FormStepper/context/useReviewChange';
+import { JsonFormsStepperContext } from '../FormStepper/context/StepperContext';
+import { getStepperPageOptions } from '../FormStepper/util/stepperOptions';
 import { BackButton } from '../FormStepper/BackButton';
 import { useShowChangeButtons } from '../../Context/ContextProvider';
 import { JsonFormsDispatch, useJsonForms } from '@jsonforms/react';
-import { NO_ANSWER_MESSAGE } from '../../common/Constants';
 
 export const GoAInputBaseTableReview = (props: ControlProps): JSX.Element | null => {
   const { data, uischema, label, schema, rootSchema, path, errors, enabled, cells, required, visible } = props;
   const reportChange = useReviewChange();
+  const stepperCtx = useContext(JsonFormsStepperContext);
+  const { noAnswerMessage } = stepperCtx?.selectStepperOptions() ?? getStepperPageOptions(undefined);
   const showChangeButtons = useShowChangeButtons();
   const jsonForms = useJsonForms();
   const reviewLabel = typeof uischema.options?.reviewLabel === 'string' ? (uischema.options.reviewLabel as string) : '';
@@ -158,7 +160,7 @@ export const GoAInputBaseTableReview = (props: ControlProps): JSX.Element | null
           uischema as UISchemaElement,
         );
       }
-    } catch (err) {
+    } catch {
       // Fallback: try to extract missing property name and create a friendly message
       if (matchedError.keyword === 'required' && matchedError.params?.missingProperty) {
         const missing = matchedError.params.missingProperty as string;
@@ -255,7 +257,7 @@ export const GoAInputBaseTableReview = (props: ControlProps): JSX.Element | null
         <ReviewValue>
           {showInlineValue ? (
             <div data-testid={`review-value-${label}`}>
-              {isValueEmpty ? <NoneGivenText>{NO_ANSWER_MESSAGE}</NoneGivenText> : (reviewText ?? '')}
+              {isValueEmpty ? <NoneGivenText>{noAnswerMessage}</NoneGivenText> : (reviewText ?? '')}
             </div>
           ) : (
             <JsonFormsDispatch

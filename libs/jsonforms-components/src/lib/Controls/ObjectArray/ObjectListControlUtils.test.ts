@@ -324,7 +324,7 @@ describe('renderNoneGivenText', () => {
     const data = undefined;
 
     // Act
-    const { container } = render(renderNoneGivenText(data) as JSX.Element);
+    const { container } = render(renderNoneGivenText(data, 'Not answered.') as JSX.Element);
 
     // Assert
     expect(container.textContent).toContain('Not answered.');
@@ -335,7 +335,7 @@ describe('renderNoneGivenText', () => {
     const data = '';
 
     // Act
-    const { container } = render(renderNoneGivenText(data) as JSX.Element);
+    const { container } = render(renderNoneGivenText(data, 'Not answered.') as JSX.Element);
 
     // Assert
     expect(container.textContent).toContain('Not answered.');
@@ -346,7 +346,7 @@ describe('renderNoneGivenText', () => {
     const data = 'Sample Text';
 
     // Act
-    const result = renderNoneGivenText(data);
+    const result = renderNoneGivenText(data, 'Not answered.');
 
     // Assert
     expect(result).toBe('Sample Text');
@@ -357,7 +357,7 @@ describe('renderNoneGivenText', () => {
     const data = '42';
 
     // Act
-    const result = renderNoneGivenText(data);
+    const result = renderNoneGivenText(data, 'Not answered.');
 
     // Assert
     expect(result).toBe('42');

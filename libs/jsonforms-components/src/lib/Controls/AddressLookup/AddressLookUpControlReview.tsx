@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import { ControlProps, UISchemaElement, JsonSchema } from '@jsonforms/core';
 import { ErrorObject } from 'ajv';
 import { AddressViews } from './AddressViews';
@@ -15,8 +15,10 @@ import {
 } from '../Inputs/style-component';
 import { GoabFormItem } from '@abgov/react-components-ds1';
 import { useJsonForms } from '@jsonforms/react';
-import { NO_ANSWER_MESSAGE, REQUIRED_PROPERTY_ERROR, getAddressLookupFieldLabel } from '../../common/Constants';
+import { REQUIRED_PROPERTY_ERROR, getAddressLookupFieldLabel } from '../../common/Constants';
 import { useShowChangeButtons } from '../../Context/ContextProvider';
+import { JsonFormsStepperContext } from '../FormStepper/context';
+import { getStepperPageOptions } from '../FormStepper/util/stepperOptions';
 
 type AddressViewProps = ControlProps;
 
@@ -31,6 +33,8 @@ export const AddressLookUpControlReview = (props: AddressViewProps): JSX.Element
 export const AddressLoopUpControlTableReview = (props: AddressViewProps): JSX.Element => {
   const { data, schema, uischema, path } = props;
   const jsonForms = useJsonForms();
+  const stepperCtx = useContext(JsonFormsStepperContext);
+  const { noAnswerMessage } = stepperCtx?.selectStepperOptions() ?? getStepperPageOptions(undefined);
 
   const stepId = uischema.options?.stepId;
   const reportChange = useReviewChange();
@@ -156,7 +160,7 @@ export const AddressLoopUpControlTableReview = (props: AddressViewProps): JSX.El
             )}
           </ReviewHeader>
           <ReviewValue>
-            {!value ? <NoneGivenText>{NO_ANSWER_MESSAGE}</NoneGivenText> : value}
+            {!value ? <NoneGivenText>{noAnswerMessage}</NoneGivenText> : value}
             {errorMessage && <GoabFormItem error={errorMessage} label=""></GoabFormItem>}
           </ReviewValue>
         </PageReviewContainer>

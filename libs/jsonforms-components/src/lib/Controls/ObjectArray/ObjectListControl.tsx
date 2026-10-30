@@ -23,7 +23,7 @@ import { ErrorObject } from 'ajv';
 import isEmpty from 'lodash/isEmpty';
 import merge from 'lodash/merge';
 import range from 'lodash/range';
-import React, { useCallback, useEffect, useReducer, useState } from 'react'; // clean-code-ignore: RULE-19 — see the note at the top of this file.
+import React, { useCallback, useContext, useEffect, useReducer, useState } from 'react'; // clean-code-ignore: RULE-19 — see the note at the top of this file.
 import { useReviewChange } from '../FormStepper/context/useReviewChange';
 import { BackButton } from '../FormStepper/BackButton';
 import { useShowChangeButtons } from '../../Context/ContextProvider';
@@ -64,8 +64,10 @@ import {
 } from './styled-components';
 import { PageReviewContainer, ReviewHeader, ReviewLabel } from '../Inputs/style-component';
 import { DataProperty } from './ObjectListControlTypes';
-import { DEFAULT_MAX_ITEMS } from '../../common/Constants';
+import { DEFAULT_MAX_ITEMS, NO_ANSWER_MESSAGE } from '../../common/Constants';
 import { GoabInputOnChangeDetail, GoabDropdownOnChangeDetail } from '@abgov/ui-components-common';
+import { JsonFormsStepperContext } from '../FormStepper/context';
+import { getStepperPageOptions } from '../FormStepper/util/stepperOptions';
 
 const GenerateRows = (
   Cell: React.ComponentType<OwnPropsOfNonEmptyCellWithDialog & HandleChangeProps>,
@@ -171,6 +173,9 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
     required: string[];
     properties?: Record<string, DataProperty>;
   }
+
+  const stepperCtx = useContext(JsonFormsStepperContext);
+  const { noAnswerMessage } = stepperCtx?.selectStepperOptions() ?? getStepperPageOptions(undefined);
 
   const element =
     (schema?.items as SchemaElement) ||
@@ -306,6 +311,7 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
                               element: key,
                               rowPath,
                               index: i,
+                              noAnswerMessage: noAnswerMessage ?? NO_ANSWER_MESSAGE,
                             })}
                           </span>
                         </div>
