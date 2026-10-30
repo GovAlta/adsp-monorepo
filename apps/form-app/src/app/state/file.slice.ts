@@ -438,10 +438,12 @@ const fileSlice = createSlice({
       .addCase(deleteFile.fulfilled, (state, { meta }) => {
         state.files[meta.arg.urn] = null;
         const propertyIdRoot = meta.arg.propertyId?.replace(/(\.\d+|\[\d+\])$/, '');
-        if (propertyIdRoot && state.metadata[propertyIdRoot]) {
-          state.metadata[propertyIdRoot] = state.metadata[propertyIdRoot].filter((f) => f.urn !== meta.arg.urn);
-          if (state.metadata[propertyIdRoot].length === 0) {
-            delete state.metadata[propertyIdRoot];
+        const keys = propertyIdRoot && state.metadata[propertyIdRoot] ? [propertyIdRoot] : Object.keys(state.metadata);
+        for (const key of keys) {
+          if (!Array.isArray(state.metadata[key])) continue;
+          state.metadata[key] = state.metadata[key].filter((f) => f?.urn !== meta.arg.urn);
+          if (state.metadata[key].length === 0) {
+            delete state.metadata[key];
           }
         }
         state.busy.loading = false;
