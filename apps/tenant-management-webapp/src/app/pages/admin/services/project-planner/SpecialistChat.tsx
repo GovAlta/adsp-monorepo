@@ -240,6 +240,26 @@ export const SpecialistChat: FunctionComponent<SpecialistChatProps> = ({
     void loadChats();
   }, [loadChats]);
 
+  const chatIdRef = useRef(chatId);
+  chatIdRef.current = chatId;
+  const solutionUpdatedOn = solution?.updatedOn;
+  const previousUpdatedOnRef = useRef(solutionUpdatedOn);
+  useEffect(() => {
+    if (previousUpdatedOnRef.current === solutionUpdatedOn) {
+      return;
+    }
+    previousUpdatedOnRef.current = solutionUpdatedOn;
+    void loadChats();
+    const openId = chatIdRef.current;
+    if (openId) {
+      api
+        .getChat(openId)
+        .then((chat) => setMessages(chat.messages))
+        .catch(() => undefined);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [solutionUpdatedOn]);
+
   const openChat = (id: string) =>
     run(async () => {
       const chat = await api.getChat(id);

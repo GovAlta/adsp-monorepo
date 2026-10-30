@@ -18,6 +18,7 @@ import ProblemStatement, { ProblemStatementUpload } from './ProblemStatement';
 import ProgressStepper from './ProgressStepper';
 import SolutionHeader from './SolutionHeader';
 import { AnalysisMode, Solution, SpecialistDefinition } from './model';
+import SpecialistConsultationPanel from './SpecialistConsultationPanel';
 import { useBusy } from './useBusy';
 
 const STEPPER_WIDTH_PX = 32;
@@ -52,10 +53,18 @@ interface GuidedStepProps {
   testId: string;
   expanded: boolean;
   onToggle: () => void;
+  headingContent?: React.ReactNode;
   children: React.ReactNode;
 }
 
-const GuidedStep: FunctionComponent<GuidedStepProps> = ({ heading, testId, expanded, onToggle, children }) => {
+const GuidedStep: FunctionComponent<GuidedStepProps> = ({
+  heading,
+  testId,
+  expanded,
+  onToggle,
+  headingContent,
+  children,
+}) => {
   const headingId = `${testId}-heading`;
   const panelId = `${testId}-content`;
 
@@ -88,6 +97,7 @@ const GuidedStep: FunctionComponent<GuidedStepProps> = ({ heading, testId, expan
           >
             <GoabIcon type={expanded ? 'chevron-down' : 'chevron-forward'} size="small" role="presentation" />
             <span>{heading}</span>
+            {headingContent}
           </button>
         </h2>
         {expanded && (
@@ -120,6 +130,7 @@ export const SolutionWorkplace: FunctionComponent<SolutionWorkplaceProps> = ({
   const [discoveryStarting, setDiscoveryStarting] = useState(false);
   const [blueprintRefreshing, setBlueprintRefreshing] = useState(false);
   const [versionsToken, setVersionsToken] = useState(0);
+  const [discoveryMessageCount, setDiscoveryMessageCount] = useState(0);
   const busyRef = useRef(false);
   const automaticActions = useRef(new Set<string>());
   const savedMode = useRef<AnalysisMode>();
@@ -424,6 +435,19 @@ export const SolutionWorkplace: FunctionComponent<SolutionWorkplaceProps> = ({
       }
     });
 
+  const specialistPanel = step === 3 && (
+    <SpecialistConsultationPanel
+      solution={solution}
+      api={api}
+      mode={mode}
+      specialists={specialists}
+      disabled={anyBusy}
+      consultingSpecialists={blueprintRefreshing}
+      onSolutionChange={updateSolution}
+      onChatsChanged={() => setVersionsToken((token) => token + 1)}
+    />
+  );
+
   return (
     <div ref={contentRef} data-testid="solution-workplace" style={{ position: 'relative' }}>
       {showPageOverlay && (
@@ -558,6 +582,15 @@ export const SolutionWorkplace: FunctionComponent<SolutionWorkplaceProps> = ({
             testId="guided-step-2"
             expanded={expandedSteps[2]}
             onToggle={() => toggleStep(2)}
+            headingContent={
+              analysis && (
+                <GoabBadge
+                  type="information"
+                  content={`${discoveryMessageCount} message${discoveryMessageCount === 1 ? '' : 's'}`}
+                  testId="discovery-message-count"
+                />
+              )
+            }
           >
             <section aria-label="Discovery conversation">
               {!analysis ? (
@@ -572,11 +605,9 @@ export const SolutionWorkplace: FunctionComponent<SolutionWorkplaceProps> = ({
                   api={api}
                   mode={mode}
                   onSolutionChange={onDiscoverySolutionChange}
-                  specialists={specialists}
                   disabled={busy || headerBusy || blueprintBusy}
-                  consultingSpecialists={blueprintRefreshing}
                   onBusyChange={setDiscoveryBusy}
-                  onChatsChanged={() => setVersionsToken((token) => token + 1)}
+                  onMessageCountChange={setDiscoveryMessageCount}
                 />
               )}
             </section>
@@ -611,6 +642,8 @@ export const SolutionWorkplace: FunctionComponent<SolutionWorkplaceProps> = ({
                       </div>
                     </GoabCallout>
                   )}
+
+                  {specialistPanel}
 
                   {blueprintRefreshing && <GoabCircularProgress visible size="small" message="Refreshing your plan" />}
 
@@ -671,6 +704,9 @@ export const SolutionWorkplace: FunctionComponent<SolutionWorkplaceProps> = ({
                   ) : (
                     <GoabCircularProgress visible size="small" message="Preparing your plan" />
                   )}
+
+                  {specialistPanel}
+
                   <GoabButton
                     type="secondary"
                     testId="project-blueprint-generate"
