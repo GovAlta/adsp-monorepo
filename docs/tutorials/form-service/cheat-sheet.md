@@ -1581,6 +1581,19 @@ Page steppers support these Task List and review-flow options:
     </code></pre></td>
   </tr>
   <tr>
+    <td><code>summaryPageTitle</code></td>
+    <td>Show a heading at the top of the summary review page. No heading is shown by default or when the form is read-only.</td>
+    <td><code>Categorization.options</code></td>
+    <td><pre><code>
+{
+  "type": "Categorization",
+  "options": {
+    "summaryPageTitle": "Review your application"
+  }
+}
+    </code></pre></td>
+  </tr>
+  <tr>
     <td><code>hideSubmit</code></td>
     <td>Hide the Submit button on the summary review page.</td>
     <td><code>Categorization.options</code></td>

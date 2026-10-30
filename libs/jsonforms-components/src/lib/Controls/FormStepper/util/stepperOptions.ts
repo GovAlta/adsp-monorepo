@@ -6,7 +6,6 @@ export interface StepperPageOptions {
   hideSummary?: boolean;
   toAppOverviewLabel?: string;
   submissionLabel?: string;
-
   noAnswerMessage?: string;
 }
 

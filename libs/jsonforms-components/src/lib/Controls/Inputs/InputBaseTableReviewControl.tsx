@@ -1,4 +1,4 @@
-import React, { useContext } from 'react';
+import React from 'react';
 import { ControlProps, UISchemaElement, JsonSchema } from '@jsonforms/core';
 import { ErrorObject } from 'ajv';
 import { withJsonFormsControlProps } from '@jsonforms/react';
@@ -21,8 +21,7 @@ import { humanizeAjvError } from '../ObjectArray/ListWithDetailControl';
 import { GoabFormItem } from '@abgov/react-components-ds1';
 
 import { useReviewChange } from '../FormStepper/context/useReviewChange';
-import { JsonFormsStepperContext } from '../FormStepper/context/StepperContext';
-import { getStepperPageOptions } from '../FormStepper/util/stepperOptions';
+import { useStepperPageOptions } from '../FormStepper/context/StepperOptionsContext';
 import { BackButton } from '../FormStepper/BackButton';
 import { useShowChangeButtons } from '../../Context/ContextProvider';
 import { JsonFormsDispatch, useJsonForms } from '@jsonforms/react';
@@ -30,8 +29,7 @@ import { JsonFormsDispatch, useJsonForms } from '@jsonforms/react';
 export const GoAInputBaseTableReview = (props: ControlProps): JSX.Element | null => {
   const { data, uischema, label, schema, rootSchema, path, errors, enabled, cells, required, visible } = props;
   const reportChange = useReviewChange();
-  const stepperCtx = useContext(JsonFormsStepperContext);
-  const { noAnswerMessage } = stepperCtx?.selectStepperOptions() ?? getStepperPageOptions(undefined);
+  const { noAnswerMessage } = useStepperPageOptions();
   const showChangeButtons = useShowChangeButtons();
   const jsonForms = useJsonForms();
   const reviewLabel = typeof uischema.options?.reviewLabel === 'string' ? (uischema.options.reviewLabel as string) : '';

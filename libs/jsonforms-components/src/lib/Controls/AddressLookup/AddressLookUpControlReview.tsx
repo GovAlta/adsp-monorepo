@@ -1,4 +1,4 @@
-import React, { useContext } from 'react';
+import React from 'react';
 import { ControlProps, UISchemaElement, JsonSchema } from '@jsonforms/core';
 import { ErrorObject } from 'ajv';
 import { AddressViews } from './AddressViews';
@@ -17,8 +17,7 @@ import { GoabFormItem } from '@abgov/react-components-ds1';
 import { useJsonForms } from '@jsonforms/react';
 import { REQUIRED_PROPERTY_ERROR, getAddressLookupFieldLabel } from '../../common/Constants';
 import { useShowChangeButtons } from '../../Context/ContextProvider';
-import { JsonFormsStepperContext } from '../FormStepper/context';
-import { getStepperPageOptions } from '../FormStepper/util/stepperOptions';
+import { useStepperPageOptions } from '../FormStepper/context/StepperOptionsContext';
 
 type AddressViewProps = ControlProps;
 
@@ -33,8 +32,7 @@ export const AddressLookUpControlReview = (props: AddressViewProps): JSX.Element
 export const AddressLoopUpControlTableReview = (props: AddressViewProps): JSX.Element => {
   const { data, schema, uischema, path } = props;
   const jsonForms = useJsonForms();
-  const stepperCtx = useContext(JsonFormsStepperContext);
-  const { noAnswerMessage } = stepperCtx?.selectStepperOptions() ?? getStepperPageOptions(undefined);
+  const { noAnswerMessage } = useStepperPageOptions();
 
   const stepId = uischema.options?.stepId;
   const reportChange = useReviewChange();
