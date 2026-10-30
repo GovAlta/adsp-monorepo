@@ -8,8 +8,11 @@ import {
   GoabFormItem,
   GoabInput,
 } from '@abgov/react-components';
+import axios from 'axios';
 import { useState } from 'react';
-import { ActionDefinition, addAction, getActions, SAMPLE_NAMESPACE } from './auditApi';
+import { useSelector } from 'react-redux';
+import { userSelector } from '../../../state';
+import { ActionDefinition, addAction, canWriteCatalog, getActions, SAMPLE_NAMESPACE } from './auditApi';
 import { errorMessage } from './util';
 import { Card, ErrorCallout, FormGrid, Json } from './common';
 
@@ -20,6 +23,8 @@ const ACTION_NAME = /^[a-zA-Z0-9]+(?:[._:-][a-zA-Z0-9]+)*$/;
 
 export function AuditActions() {
   const namespace = SAMPLE_NAMESPACE;
+  const { user } = useSelector(userSelector);
+  const canAdd = canWriteCatalog(user?.roles);
   const [actions, setActions] = useState<ActionDefinition[]>();
   const [error, setError] = useState<string>();
   const [form, setForm] = useState({
@@ -69,7 +74,11 @@ export function AuditActions() {
       setForm({ ...form, name: '' });
       setSubmitted(false);
     } catch (err) {
-      setError(errorMessage(err));
+      setError(
+        axios.isAxiosError(err) && [401, 403].includes(err.response?.status ?? 0)
+          ? 'You do not have permission to change the action catalog. This requires the configuration-admin role.'
+          : errorMessage(err),
+      );
     }
   };
 
@@ -113,6 +122,12 @@ export function AuditActions() {
         ))}
       </Card>
       <Card title="Add action">
+        {!canAdd && (
+          <GoabCallout type="information" mb="l">
+            Adding actions changes Configuration service data and requires the configuration-admin role, which your
+            account does not have.
+          </GoabCallout>
+        )}
         <FormGrid>
           <GoabFormItem label="Action name" requirement="required" error={submitted ? nameError : undefined}>
             <GoabInput
@@ -144,7 +159,7 @@ export function AuditActions() {
           />
         </GoabFormItem>
         <GoabBlock mt="xl">
-          <GoabButton type="primary" onClick={add}>
+          <GoabButton type="primary" disabled={!canAdd} onClick={add}>
             Add action
           </GoabButton>
         </GoabBlock>
