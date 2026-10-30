@@ -12,7 +12,7 @@ import axios from 'axios';
 import { useState } from 'react';
 import { useSelector } from 'react-redux';
 import { userSelector } from '../../../state';
-import { ActionDefinition, addAction, canWriteCatalog, getActions, SAMPLE_NAMESPACE } from './auditApi';
+import { ActionDefinition, addAction, getActions, missingCatalogRoles, SAMPLE_NAMESPACE } from './auditApi';
 import { errorMessage } from './util';
 import { Card, ErrorCallout, FormGrid, Json } from './common';
 
@@ -24,7 +24,8 @@ const ACTION_NAME = /^[a-zA-Z0-9]+(?:[._:-][a-zA-Z0-9]+)*$/;
 export function AuditActions() {
   const namespace = SAMPLE_NAMESPACE;
   const { user } = useSelector(userSelector);
-  const canAdd = canWriteCatalog(user?.roles);
+  const missingRoles = missingCatalogRoles(user?.roles);
+  const canAdd = missingRoles.length === 0;
   const [actions, setActions] = useState<ActionDefinition[]>();
   const [error, setError] = useState<string>();
   const [form, setForm] = useState({
@@ -76,7 +77,7 @@ export function AuditActions() {
     } catch (err) {
       setError(
         axios.isAxiosError(err) && [401, 403].includes(err.response?.status ?? 0)
-          ? 'You do not have permission to change the action catalog. This requires the configuration-admin role.'
+          ? 'You do not have permission to change the action catalog. This requires the audit-admin and configuration-admin roles.'
           : errorMessage(err),
       );
     }
@@ -124,8 +125,8 @@ export function AuditActions() {
       <Card title="Add action">
         {!canAdd && (
           <GoabCallout type="information" mb="l">
-            Adding actions changes Configuration service data and requires the configuration-admin role, which your
-            account does not have.
+            Adding actions requires the audit-admin and configuration-admin roles. Your account is missing:{' '}
+            {missingRoles.join(' and ')}.
           </GoabCallout>
         )}
         <FormGrid>

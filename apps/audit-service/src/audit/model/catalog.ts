@@ -82,9 +82,36 @@ export class CatalogService {
       throw new ActionConflictError(`Action "${name}" already exists in the ${namespace} catalog.`);
     }
 
-    await this.store.saveAction(namespace, name, definition, token, !!existing);
+    await this.store.saveAction(namespace, name, definition, token, tenantId);
+    await this.resolveConcurrentAdd(namespace, name, token, tenantId);
     // The next read must see the new action rather than the cached catalog.
     this.configuration.clearCached?.(tenantId, 'audit-service', `actions-${namespace}`);
+  }
+
+  /**
+   * Configuration has no conditional write, so two requests can both pass the check above. Recheck after writing:
+   * if a differently-cased twin landed too, the lexicographically smaller name is kept and the other request backs out.
+   */
+  private async resolveConcurrentAdd(namespace: string, name: string, token: string, tenantId: AdspId) {
+    let names: string[] | null;
+    try {
+      names = (await this.store?.readActionNames(namespace, tenantId)) ?? null;
+    } catch (err) {
+      this.logger.warn(`Unable to recheck action ${name} of ${namespace} after writing: ${err}`, {
+        context: 'AuditCatalog',
+        tenant: tenantId.toString(),
+      });
+      return;
+    }
+
+    const twin = names?.find(
+      (existingName) => existingName !== name && sameName(existingName, name) && existingName < name,
+    );
+    if (twin) {
+      await this.store?.removeAction(namespace, name, token, tenantId);
+      this.configuration.clearCached?.(tenantId, 'audit-service', `actions-${namespace}`);
+      throw new ActionConflictError(`Action "${name}" already exists in the ${namespace} catalog.`);
+    }
   }
 
   /**

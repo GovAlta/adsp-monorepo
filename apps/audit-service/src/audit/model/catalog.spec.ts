@@ -75,7 +75,7 @@ describe('CatalogService', () => {
 
   describe('addAction', () => {
     const source = { listApplications: jest.fn() };
-    const store = { readActionNames: jest.fn(), saveAction: jest.fn() };
+    const store = { readActionNames: jest.fn(), saveAction: jest.fn(), removeAction: jest.fn() };
     const adding = new CatalogService(configuration, logger, source, store);
     const definition = { version: 1, category: 'runtime', severity: 'info', retentionClass: 'standard' } as never;
     const core = { 'audit-service': ['retention.run', 'events.list'] } as Record<string, string[]>;
@@ -85,13 +85,14 @@ describe('CatalogService', () => {
       store.readActionNames.mockImplementation(async (application: string, tenant?: unknown) =>
         tenant ? ['sample-action'] : (core[application] ?? null),
       );
-      store.saveAction.mockResolvedValue(undefined);
+      store.saveAction.mockReset().mockResolvedValue(undefined);
+      store.removeAction.mockReset().mockResolvedValue(undefined);
     });
 
-    it('adds an unused name to the existing tenant catalog', async () => {
+    it('adds an unused name to the tenant catalog', async () => {
       await adding.addAction('sandbox-app', 'my-action', definition, tenantId, 'token');
 
-      expect(store.saveAction).toHaveBeenCalledWith('sandbox-app', 'my-action', definition, 'token', true);
+      expect(store.saveAction).toHaveBeenCalledWith('sandbox-app', 'my-action', definition, 'token', tenantId);
     });
 
     it('creates the catalog when the tenant has none', async () => {
@@ -101,7 +102,28 @@ describe('CatalogService', () => {
 
       await adding.addAction('sandbox-app', 'my-action', definition, tenantId, 'token');
 
-      expect(store.saveAction).toHaveBeenCalledWith('sandbox-app', 'my-action', definition, 'token', false);
+      expect(store.saveAction).toHaveBeenCalledWith('sandbox-app', 'my-action', definition, 'token', tenantId);
+    });
+
+    it('backs out when a concurrent request added the same name in a different case first', async () => {
+      store.readActionNames.mockImplementation(async (application: string, tenant?: unknown) =>
+        tenant ? (store.saveAction.mock.calls.length ? ['Alpha', 'alpha'] : []) : core[application],
+      );
+
+      await expect(adding.addAction('sandbox-app', 'alpha', definition, tenantId, 'token')).rejects.toMatchObject({
+        extra: { statusCode: HttpStatusCodes.CONFLICT },
+      });
+      expect(store.removeAction).toHaveBeenCalledWith('sandbox-app', 'alpha', 'token', tenantId);
+    });
+
+    it('keeps its action when the concurrent twin sorts after it', async () => {
+      store.readActionNames.mockImplementation(async (application: string, tenant?: unknown) =>
+        tenant ? (store.saveAction.mock.calls.length ? ['Alpha', 'alpha'] : []) : core[application],
+      );
+
+      await adding.addAction('sandbox-app', 'Alpha', definition, tenantId, 'token');
+
+      expect(store.removeAction).not.toHaveBeenCalled();
     });
 
     it.each([

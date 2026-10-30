@@ -5,11 +5,16 @@ import { getAccessToken } from '../../../state/user.slice';
 const AUDIT_SERVICE_URN = 'urn:ads:platform:audit-service:v1';
 const CONFIGURATION_SERVICE_URN = 'urn:ads:platform:configuration-service:v2';
 
-// Writing the action catalog is a Configuration service write, which only this role may perform.
+// Adding an action needs audit-admin on the audit service and a Configuration service write.
+const AUDIT_ADMIN_ROLE = 'urn:ads:platform:audit-service:audit-admin';
 const CONFIGURATION_ADMIN_ROLE = 'urn:ads:platform:configuration-service:configuration-admin';
 
-export const canWriteCatalog = (roles: string[] = store.getState().user.user?.roles ?? []) =>
-  roles.includes(CONFIGURATION_ADMIN_ROLE);
+export const missingCatalogRoles = (roles: string[] = store.getState().user.user?.roles ?? []) => [
+  ...(roles.includes(AUDIT_ADMIN_ROLE) ? [] : ['audit-admin']),
+  ...(roles.includes(CONFIGURATION_ADMIN_ROLE) ? [] : ['configuration-admin']),
+];
+
+export const canWriteCatalog = (roles?: string[]) => missingCatalogRoles(roles).length === 0;
 
 export type EventStatus = 'success' | 'failure' | 'blocked' | 'error';
 
@@ -137,7 +142,7 @@ export async function ensureActionCatalog(): Promise<boolean> {
     }
   }
 
-  if (!canWriteCatalog()) {
+  if (missingCatalogRoles().includes('configuration-admin')) {
     throw new Error(CATALOG_NOT_REGISTERED);
   }
   await patchCatalog({ operation: 'REPLACE', configuration: SAMPLE_CATALOG });
