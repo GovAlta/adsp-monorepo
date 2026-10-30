@@ -10,6 +10,7 @@ import { CategorizationStepperLayoutRendererProps } from './types';
 import { useContext, useState } from 'react';
 import { JsonFormContext } from '../../Context';
 import { BackButton } from './BackButton';
+import { BACK_TO_OVERVIEW_LABEL } from '../../common/Constants';
 
 export interface PageRenderingProps {
   categoryProps: CategorizationStepperLayoutRendererProps;
@@ -97,7 +98,7 @@ export const RenderPages = (props: PageRenderingProps): JSX.Element => {
         <div id={`${path || `goa`}-form-pages`}>
           <PageBorder>
             <BackButton
-              text={toAppOverviewLabel}
+              text={toAppOverviewLabel ?? BACK_TO_OVERVIEW_LABEL}
               link={() => {
                 handleSave();
                 goToTableOfContext();
