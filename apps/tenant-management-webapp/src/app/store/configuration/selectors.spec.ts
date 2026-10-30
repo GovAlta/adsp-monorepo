@@ -67,6 +67,14 @@ describe('configuration selectors', () => {
       expect(dataList).toEqual(['data-register/weekdays']);
     });
 
+    it('lists a register the agent created after the definitions were loaded', () => {
+      const eventTypes: RegisterConfigData = { urn: registerUrn('event types'), description: '', data: ['Concert'] };
+
+      const dataList = selectRegisterDataList(stateWith(definitions, [weekdays, eventTypes]));
+
+      expect(dataList).toContain('data-register/event types');
+    });
+
     it('returns the same list for unchanged state', () => {
       const state = stateWith(definitions, [weekdays]);
 

@@ -552,9 +552,11 @@ export const DEFAULT_PATTERNS: Record<string, MaskPattern> = {
 
 `createDefaultAjv` registers every `DEFAULT_PATTERNS` key as a JSON schema format automatically. After that, form definitions can set `"format": "accountNumber"` the same way as `phone` or `driverId`.
 
+Form service validates submitted data on the server with its own validator, so add the same pattern to `NAMED_FORMAT_PATTERNS` in `libs/core-common/src/jsonSchema/ajv.ts`. Without it, form service rejects every submission of a form that uses the format.
+
 #### Calculation Control
 
-The calculation control is rendered when the JSON schema field uses <code>"format": "computed"</code>. The expression is defined in <code>schema.description</code>, evaluated against current form data, and the result is written back to the control path automatically. The rendered field is read-only.
+The calculation control is rendered when the JSON schema field uses <code>"format": "computed"</code>. The expression is defined in <code>schema.description</code>, evaluated against current form data, and the result is written back to the control path automatically as a numeric string, such as <code>"1050"</code>. The rendered field is read-only.
 
 ##### Calculation Requirements
 

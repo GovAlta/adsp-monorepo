@@ -8,6 +8,7 @@ const defineFields = <T extends Record<string, UserFieldDefinition>>(fields: T) 
 
 export const OPTION_DEFINITIONS = defineFields({
   mainTitle: { schema: 'Main form title' },
+  summaryPageTitle: { schema: 'Summary page title' },
   enableEmail: { schema: true },
   enablePhone: { schema: true },
   placeholder: { schema: 'Please select something' },

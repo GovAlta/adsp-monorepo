@@ -4,6 +4,7 @@ import axios from 'axios';
 import { RegisterConfigData } from '@abgov/jsonforms-components';
 import { CONFIGURATION_SERVICE_ID } from '../types';
 import { getAccessToken } from '../user';
+import { ConfigurationSchema, isRegisterDefinition } from './registerDefinition';
 
 export type SchemaType = unknown;
 export type Service = string;
@@ -18,16 +19,6 @@ export interface ConfigurationDefinitionState {
   loadingRegisterData: boolean;
   errorRegisterData: string | null;
 }
-
-export type ConfigurationSchema = {
-  configurationSchema?: {
-    type?: 'array';
-    items?: {
-      type?: 'string' | 'object';
-    };
-  };
-  anonymousRead: boolean;
-};
 
 function hasMessage(err: unknown): err is { message: string } {
   return (
@@ -57,24 +48,8 @@ export const fetchRegisterData = createAsyncThunk<
     const token = await getAccessToken();
 
     const tenantConfigs = Object.entries(configuration.tenantConfigDefinitions || []);
-    const registerConfigs =
-      tenantConfigs
-        .filter(([_name, config]) => {
-          const _c = config as ConfigurationSchema;
-          return (
-            _c?.configurationSchema?.type === 'array' &&
-            (_c?.configurationSchema?.items?.type === 'string' || _c?.configurationSchema?.items?.type === 'object')
-          );
-        })
-        .map(([name]) => name) || [];
-    const dataListObject = tenantConfigs
-      .filter(([_name, config]) => {
-        const _c = config as ConfigurationSchema;
-        return (
-          _c?.configurationSchema?.type === 'array' &&
-          (_c?.configurationSchema?.items?.type === 'string' || _c?.configurationSchema?.items?.type === 'object')
-        );
-      });
+    const dataListObject = tenantConfigs.filter(([_name, config]) => isRegisterDefinition(config));
+    const registerConfigs = dataListObject.map(([name]) => name);
 
     const registerData: RegisterConfigData[] = [];
     const dataList = dataListObject.map(([name]) => name.replace(':', '/')) || [];

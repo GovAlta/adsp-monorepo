@@ -1,12 +1,15 @@
 import axios from 'axios';
 import { renderHook } from '@testing-library/react';
 import { useDispatch, useSelector } from 'react-redux';
-import { ErrorNotification } from '@store/notifications/actions';
+import { ErrorNotification, SuccessNotification } from '@store/notifications/actions';
 import { PlannerApi, usePlannerApi } from './api';
 
 jest.mock('axios', () => ({ __esModule: true, default: { request: jest.fn() } }));
 jest.mock('react-redux', () => ({ useDispatch: jest.fn(), useSelector: jest.fn() }));
-jest.mock('@store/notifications/actions', () => ({ ErrorNotification: jest.fn((payload) => ({ type: 'error', payload })) }));
+jest.mock('@store/notifications/actions', () => ({
+  ErrorNotification: jest.fn((payload) => ({ type: 'error', payload })),
+  SuccessNotification: jest.fn((payload) => ({ type: 'success', payload })),
+}));
 jest.mock('@store/tenant/actions', () => ({ getAccessToken: jest.fn(() => ({ type: 'get-access-token' })) }));
 
 type ApiCall = (api: PlannerApi) => Promise<unknown>;
@@ -190,6 +193,51 @@ describe('usePlannerApi', () => {
       await renderApi().listSolutions();
 
       expect(axiosRequest.mock.calls[0][0].headers.Authorization).toContain(accessToken);
+    });
+  });
+
+  describe('blueprint auto-consult notice', () => {
+    const note = (service: string, source: 'saved-consultation' | 'ai' | 'rules') => ({
+      service,
+      displayName: `${service} display`,
+      source,
+    });
+
+    it('notifies which specialists were freshly auto-consulted', async () => {
+      axiosRequest.mockResolvedValueOnce({
+        data: {
+          state: {
+            blueprint: { specialistNotes: [note('form-service', 'ai'), note('file-service', 'saved-consultation')] },
+          },
+        },
+      });
+
+      await renderApi().blueprint('s1');
+
+      expect(SuccessNotification).toHaveBeenCalledWith({
+        message: expect.stringContaining('form-service display'),
+      });
+      expect(SuccessNotification).not.toHaveBeenCalledWith({
+        message: expect.stringContaining('file-service display'),
+      });
+    });
+
+    it('does not notify when every consultation was reused from a saved chat', async () => {
+      axiosRequest.mockResolvedValueOnce({
+        data: { state: { blueprint: { specialistNotes: [note('file-service', 'saved-consultation')] } } },
+      });
+
+      await renderApi().blueprint('s1');
+
+      expect(SuccessNotification).not.toHaveBeenCalled();
+    });
+
+    it('does not notify when there is no blueprint yet', async () => {
+      axiosRequest.mockResolvedValueOnce({ data: { state: {} } });
+
+      await renderApi().blueprint('s1');
+
+      expect(SuccessNotification).not.toHaveBeenCalled();
     });
   });
 

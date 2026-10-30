@@ -28,11 +28,27 @@ Done when you have the plan and its version matches.
 | \`docs/{slug}-build-notes.md\` | Your working record: the current step, decisions (D-n), differences from the plan, component status, acceptance results | You, recording the user's answers |
 
 ## MCP servers
-| Server | Connect with | Use it for |
-|---|---|---|
-| adsp-sdk | stdio: \`npx -y @abgov/adsp-sdk-mcp-server\` | ADSP services, SDK, config schemas, roles |
-| goa-design-system | http: https://design-system-mcp-osp-mcp-prod.apps.aro-01.int.gov.ab.ca/mcp | GoA components, page examples and their code |
-| arch-playbook (optional) | http: https://arch-playbook-mcp-osp-mcp-prod.apps.aro-01.int.gov.ab.ca/mcp | GoA security, privacy, data, API and delivery standards |
+| Server | Connect with | Use it for | Public site if it can't connect (step 2) |
+|---|---|---|---|
+| adsp-sdk | stdio: \`npx -y @abgov/adsp-sdk-mcp-server\` | ADSP services, SDK, config schemas, roles | https://govalta.github.io/adsp-monorepo/: the Services and Node SDK pages |
+| goa-design-system | http: https://design-system-mcp-osp-mcp-prod.apps.aro-01.int.gov.ab.ca/mcp | GoA components, page examples and their code | https://design.alberta.ca/examples/ for screens, https://design.alberta.ca for components, https://design.alberta.ca/get-started/developers/setup/ to install them |
+| arch-playbook (optional) | http: https://arch-playbook-mcp-osp-mcp-prod.apps.aro-01.int.gov.ab.ca/mcp | GoA security, privacy, data, API and delivery standards | None |
+
+What each server needs:
+- adsp-sdk: Node.js with npx, and access to the npm registry. Only \`list_service_roles\` needs a
+  sign-in: \`npx @abgov/adsp-cli login --tenant "<tenant name>"\`.
+- goa-design-system and arch-playbook: the GoA network or VPN.
+
+The config goes in \`.mcp.json\` in the project folder; Copilot in VS Code and Claude Code both read it.
+\`\`\`json
+{
+  "mcpServers": {
+    "adsp-sdk": { "type": "stdio", "command": "npx", "args": ["-y", "@abgov/adsp-sdk-mcp-server"] },
+    "goa-design-system": { "type": "http", "url": "https://design-system-mcp-osp-mcp-prod.apps.aro-01.int.gov.ab.ca/mcp" },
+    "arch-playbook": { "type": "http", "url": "https://arch-playbook-mcp-osp-mcp-prod.apps.aro-01.int.gov.ab.ca/mcp" }
+  }
+}
+\`\`\`
 
 ## Guidelines
 - Build only what the plan states. The plan is read only; record every difference from it in the
@@ -41,15 +57,15 @@ Done when you have the plan and its version matches.
   and record it as D-n.
 - When the plan is silent, look it up in this order: goa-design-system, then adsp-sdk, then
   arch-playbook (Approved documents only, for security, privacy, data, API and delivery questions).
-  If none answers it, ask the user.
-- Check each ADSP or GoA claim with an MCP lookup before relying on it, and cite the lookup in the
-  build notes.
+  Use a server's public site instead if the user chose it in step 2. If none answers it, ask the user.
+- Check each ADSP or GoA claim with a lookup before relying on it, and cite the lookup in the build
+  notes.
 - Build screens from GoA Design System examples. For each screen, propose the closest example for its
   actor's product type (the plan's roles table), get the user's approval, then start from that
   example's code. If the user says they have their own designs, build from those instead.
-- Start from code published on the MCP servers: GoA example code for screens, and adsp-sdk's
-  \`get_platform_quickstart\` and \`search_sdk_reference\` examples for ADSP calls. Write code from
-  scratch only where nothing published fits.
+- Start from published code: GoA example code for screens, and adsp-sdk's \`get_platform_quickstart\`
+  and \`search_sdk_reference\` examples for ADSP calls, or the same on their public sites. Write code
+  from scratch only where nothing published fits.
 - With Keystone, create files with \`/build\`, \`/component\`, \`/route\` and \`/migration\` whenever one
   fits, instead of writing them by hand.
 - Use made-up data only. Never put real personal information, credentials or API keys in code, tests,
@@ -109,23 +125,42 @@ equivalent yourself:
 Done when \`/build\` passes, or the user has chosen option 2 or 3.
 
 ## Step 2: Connect the MCP servers
-Make one lookup on each server. If adsp-sdk or goa-design-system fails:
-- Show the error and the likely cause: Node or npx is missing for adsp-sdk, or the user is off the
-  GoA network or VPN for goa-design-system.
-- Give the config entry for this harness, and retry once the user has fixed it.
+Make one lookup on each server. If you don't have a server's tools, it has failed. If adsp-sdk or
+goa-design-system fails, find the cause yourself before asking the user:
+- Check \`.mcp.json\` in the project folder. If it is missing or lacks a server, add it from MCP servers.
+- adsp-sdk: run \`node --version\`, \`npx --version\` and \`npm view @abgov/adsp-sdk-mcp-server version\`.
+  A missing command means Node.js isn't installed. A certificate error means the GoA network's
+  certificates: set \`NODE_OPTIONS=--use-system-ca\`. Never turn off certificate checks. Any other npm
+  error means the npm registry can't be reached.
+- goa-design-system: make one request to its URL. Any HTTP response means it is reachable; a DNS
+  failure or timeout means the user is off the GoA network or VPN; a certificate error is the same
+  certificate problem as above.
 
-If it still fails, offer three options:
+Show the user what you found and how to fix each cause. Record the current step in the build notes,
+then start the servers:
+- **Copilot in VS Code:** ask the user to send any message, which starts new servers, then make the
+  lookups again. If the tools are still missing, ask the user to start each server from
+  **MCP: List Servers** → **Start Server**, restart this chat and send the command below.
+- **Claude Code:** it reads \`.mcp.json\` only when a session starts, so ask the user to restart the
+  session, approve the project's servers and send the command below.
+
+The command: \`Follow docs/planner-{slug}-harness.md and continue from docs/{slug}-build-notes.md.\`
+
+If it still fails, offer two options:
 1. Stop until both connect (recommended).
-2. Continue with the public docs: https://govalta.github.io/adsp-monorepo/ for ADSP and
-   https://design.alberta.ca for GoA. Mark every ADSP and GoA claim "unverified" in the build notes.
-3. Continue without either. Work from the plan as written and mark every claim "unverified".
+2. Use the public site of each server that failed (see MCP servers), under these rules:
+   - Install the GoA components and styles the setup page lists, and build every screen from the
+     examples page and those components.
+   - Never write your own UI in place of a GoA component, or your own code in place of an ADSP
+     service the plan names. If the public sites don't cover something, ask the user.
+   - Mark each claim taken from them "unverified" in the build notes, with its URL.
 
-With option 2 or 3, recheck the unverified claims once the servers connect, before step 5.
+With option 2, recheck the unverified claims once the servers connect, before step 5.
 
 If arch-playbook fails, tell the user (it also needs the GoA network or VPN), note it in the build
 notes, and carry on without it.
 
-Done when adsp-sdk and goa-design-system both answer a lookup, or the user has chosen option 2 or 3.
+Done when adsp-sdk and goa-design-system both answer a lookup, or the user has chosen option 2.
 
 ## Step 3: Analyze the plan
 Start the build notes with the workflows (section 7), services (section 3) and components (section 5).
@@ -149,12 +184,13 @@ Ask a question once, even when several headings list it, and don't ask again abo
 where they suggest one, offer it as an option for the user to confirm.
 
 Work through the open items a few at a time. For each, give numbered options with your
-recommendation, grounded in an MCP lookup where one applies. For a blank cell in the roles table
-(section 1), ask the user; for a blank product type, propose \`public-form\` or \`workspace\` using GoA's
-definitions from goa-design-system's \`productTypes\`. Also raise every place where an MCP lookup
-disagrees with the plan, or where two parts of the plan disagree with each other. An answer can settle
-or raise other questions; ask the new ones next. If an answer changes an earlier decision, say which
-one and ask before replacing it.
+recommendation, grounded in a lookup (see Guidelines) where one applies. For a blank cell in the roles
+table (section 1), ask the user; for a blank product type, propose \`public-form\` or \`workspace\` using
+GoA's definitions from goa-design-system's \`productTypes\`, or the workspace and public-form pages on
+https://design.alberta.ca/examples/. Also raise every place where a lookup disagrees with the plan, or
+where two parts of the plan disagree with each other. An answer can settle or raise other questions;
+ask the new ones next. If an answer changes an earlier decision, say which one and ask before replacing
+it.
 
 Then read the acceptance criteria (section 10): the checks the finished app must pass. If the plan has
 no section 10, or it says to regenerate the blueprint, offer three options:

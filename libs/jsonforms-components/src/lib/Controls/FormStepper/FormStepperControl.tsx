@@ -11,25 +11,22 @@ import {
 import { GoabButtonType } from '@abgov/ui-components-common';
 import { withJsonFormsLayoutProps, withTranslateProps } from '@jsonforms/react';
 import { withAjvProps } from '../../util/layout';
-import { FormStepperSummaryH3, RightAlignmentDiv } from './styled-components';
+import { RightAlignmentDiv } from './styled-components';
 import { JsonFormContext } from '../../Context';
 import { Visible } from '../../util';
 import { RenderStepElements, StepProps } from './RenderStepElements';
-import { CategorizationStepperLayoutRendererProps } from './types';
+import { CategorizationStepperLayoutRendererProps, FormStepperOptions } from './types';
 import { FormStepperReviewer } from './FormStepperReviewControl';
 import { JsonFormsStepperContextProvider, JsonFormsStepperContext, JsonFormsStepperContextProps } from './context';
 import { CategorizationElement } from './context/types';
 import { GoabFormStepperOnChangeDetail } from '@abgov/ui-components-common';
-export interface FormStepperOptionProps {
+export interface FormStepperOptionProps extends FormStepperOptions {
   nextButtonLabel?: string;
   nextButtonType?: GoabButtonType;
   previousButtonLabel?: string;
   previousButtonType?: GoabButtonType;
 }
 
-const summaryLabel = 'Summary';
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const FormStepper = (props: CategorizationStepperLayoutRendererProps) => {
   const formStepperCtx = useContext(JsonFormsStepperContext);
   const memoStepperProps = useMemo(
@@ -128,7 +125,6 @@ export const FormStepperView = (props: CategorizationStepperLayoutRendererProps)
               );
             })}
             <div data-testid="summary_step-content">
-              <FormStepperSummaryH3>{summaryLabel}</FormStepperSummaryH3>
               <FormStepperReviewer {...{ ...props, navigationFunc: goToPage }} />
             </div>
           </GoabPages>

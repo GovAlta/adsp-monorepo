@@ -1,4 +1,4 @@
-import { AdspId, ServiceDirectory, TokenProvider, User, EventService } from '@abgov/adsp-service-sdk';
+import { AdspId, ServiceDirectory, TokenProvider, EventService } from '@abgov/adsp-service-sdk';
 import * as hasha from 'hasha';
 import { Mastra } from '@mastra/core';
 import { Agent } from '@mastra/core/agent';
@@ -18,6 +18,7 @@ import { scheduleAgentJobs } from '../jobs';
 import { AgentModelConfiguration, getAgentModelConfiguration, getAgentModelId } from '../model/modelConfiguration';
 import { ACCESS_SERVICE_AGENT_ID } from '../model/executionLimits';
 import { createAccessServiceSupervisorOptions } from '../agents/access/supervisorOptions';
+import { withContextualInstructions } from './contextualInstructions';
 import { createAuthenticatedMcpFetch, loadKnownMcpServerSecrets, normalizeMcpServerUrl } from './mcpCredentials';
 
 function createAgentMemory(storage: LibSQLStore | PostgresStore, observationalMemoryEnabled: boolean) {
@@ -28,36 +29,6 @@ function createAgentMemory(storage: LibSQLStore | PostgresStore, observationalMe
       observationalMemory: observationalMemoryEnabled ? { model: getAgentModelConfiguration() } : false,
     },
   });
-}
-
-/**
- * Wraps agent instructions to automatically inject contextual information on each request.
- * Includes current date/time and user information to help agents with temporal awareness
- * and personalized responses. Returns a function matching Mastra's DynamicArgument signature,
- * evaluated per-request.
- */
-function withContextualInstructions(instructions: string) {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return ({ requestContext }: { requestContext: RequestContext<any> }) => {
-    const now = new Date();
-    const currentDate = now.toISOString().split('T')[0]; // YYYY-MM-DD
-    const currentDateTime = now.toISOString();
-    const dayOfWeek = now.toLocaleDateString('en-US', { weekday: 'long' });
-
-    const user = requestContext.get('user') as User | undefined;
-    const userName = user?.name || 'User';
-
-    return `Current date: ${currentDate} (${dayOfWeek})
-Current time: ${currentDateTime}
-User: ${userName}
-
-Tool call contract:
-- Before each tool call, verify required input fields and types.
-- If required input is missing, ask a concise clarifying question first.
-- Use exact schema field names and provide complete input objects.
-
-${instructions}`;
-  };
 }
 
 interface TypedToolConfiguration {
