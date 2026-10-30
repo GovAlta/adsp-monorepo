@@ -149,7 +149,7 @@ export const BlueprintViewer: FunctionComponent<BlueprintViewerProps> = ({
     <div data-testid="blueprint-viewer">
       {showControls && controls}
       <p data-testid="blueprint-generated">Plan created {formatDate(blueprint.generatedOn)}</p>
-      {blueprint.warning && (
+      {!working && blueprint.warning && (
         <GoabCallout type="important" heading="Note" mt="m" testId="blueprint-warning">
           {blueprint.warning}
         </GoabCallout>

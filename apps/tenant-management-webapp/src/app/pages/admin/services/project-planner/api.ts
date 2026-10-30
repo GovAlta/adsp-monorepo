@@ -39,7 +39,6 @@ export interface PlannerApi {
   analyze: (id: string, textOrOptions?: string | AnalyzeOptions) => Promise<Solution>;
   getAnalysisOptions: () => Promise<AnalysisOptions>;
   chat: (id: string, message: string, mode?: AnalysisMode) => Promise<Solution>;
-  answerQuestion: (id: string, questionId: string, answer: string) => Promise<Solution>;
   reviewComponent: (id: string, order: number, review: ComponentReview) => Promise<Solution>;
   discovery: (id: string, options?: DiscoveryOptions) => Promise<Solution>;
   blueprint: (id: string, options?: BlueprintOptions) => Promise<Solution>;
@@ -130,8 +129,6 @@ export function usePlannerApi(): PlannerApi {
         ),
       getAnalysisOptions: () => request<AnalysisOptions>('get', '/analysis/options'),
       chat: (id, message, mode) => request<Solution>('post', `/solutions/${id}/chat`, { message, mode }),
-      answerQuestion: (id, questionId, answer) =>
-        request<Solution>('put', `/solutions/${id}/questions/${questionId}`, { answer }),
       reviewComponent: (id, order, review) =>
         request<Solution>('put', `/solutions/${id}/components/${order}/review`, { review }),
       discovery: (id, options = {}) => request<Solution>('post', `/solutions/${id}/discovery`, options),
