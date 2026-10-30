@@ -6,3 +6,272 @@
  */
 
 @import './lib/calendar/adsp-calendar.css';
+.adsp-card {
+  box-sizing: border-box;
+  padding: var(--adsp-components-card-padding);
+  background: var(--adsp-components-card-background);
+  border: 1px solid var(--adsp-components-card-border-color);
+  border-radius: var(--adsp-components-card-border-radius);
+  color: var(--adsp-color-text-default);
+  font-family: var(--adsp-typography-font-family);
+}
+
+.adsp-card__heading {
+  margin: 0 0 var(--adsp-spacing-s);
+  color: var(--adsp-components-card-heading-color);
+  font-size: var(--adsp-typography-heading-s-font-size);
+  font-weight: var(--adsp-typography-heading-s-font-weight);
+  line-height: var(--adsp-typography-heading-s-line-height);
+}
+
+.adsp-card__body {
+  font-size: var(--adsp-typography-body-m-font-size);
+  font-weight: var(--adsp-typography-body-m-font-weight);
+  line-height: var(--adsp-typography-body-m-line-height);
+}
+
+.adsp-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--adsp-spacing-2xs);
+  padding: var(--adsp-spacing-3xs) var(--adsp-spacing-xs);
+  border: 1px solid var(--adsp-badge-status-color);
+  border-radius: var(--adsp-components-badge-border-radius);
+  color: var(--adsp-components-badge-text-color);
+  font-family: var(--adsp-typography-font-family);
+  font-size: var(--adsp-typography-body-s-font-size);
+  font-weight: var(--adsp-typography-heading-2xs-font-weight);
+  line-height: var(--adsp-typography-body-s-line-height);
+}
+
+.adsp-badge::before {
+  content: '';
+  width: var(--adsp-spacing-xs);
+  height: var(--adsp-spacing-xs);
+  border-radius: var(--adsp-border-radius-round);
+  background: var(--adsp-badge-status-color);
+}
+
+.adsp-badge--success {
+  --adsp-badge-status-color: var(--adsp-components-badge-status-color-success);
+}
+
+.adsp-badge--info {
+  --adsp-badge-status-color: var(--adsp-components-badge-status-color-info);
+}
+
+.adsp-badge--important {
+  --adsp-badge-status-color: var(--adsp-components-badge-status-color-important);
+}
+
+.adsp-badge--emergency {
+  --adsp-badge-status-color: var(--adsp-components-badge-status-color-emergency);
+}
+
+.adsp-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--adsp-spacing-2xl);
+  padding: 0 var(--adsp-spacing-m);
+  border: 2px solid transparent;
+  border-radius: var(--adsp-components-button-border-radius);
+  font-family: var(--adsp-typography-font-family);
+  font-size: var(--adsp-typography-body-m-font-size);
+  font-weight: var(--adsp-typography-heading-2xs-font-weight);
+  line-height: var(--adsp-typography-body-m-line-height);
+  cursor: pointer;
+}
+
+.adsp-button--primary {
+  background: var(--adsp-components-button-primary-background);
+  border-color: var(--adsp-components-button-primary-border-color);
+  color: var(--adsp-components-button-primary-text-color);
+}
+
+.adsp-button--primary:hover {
+  background: var(--adsp-components-button-primary-hover-background);
+  border-color: var(--adsp-components-button-primary-hover-border-color);
+  color: var(--adsp-components-button-primary-hover-text-color);
+}
+
+.adsp-button--secondary {
+  background: var(--adsp-components-button-secondary-background);
+  border-color: var(--adsp-components-button-secondary-border-color);
+  color: var(--adsp-components-button-secondary-text-color);
+}
+
+.adsp-button--secondary:hover {
+  background: var(--adsp-components-button-secondary-hover-background);
+  border-color: var(--adsp-components-button-secondary-hover-border-color);
+  color: var(--adsp-components-button-secondary-hover-text-color);
+}
+
+.adsp-button:focus-visible {
+  outline: 3px solid var(--adsp-color-interactive-focus);
+  outline-offset: 2px;
+}
+
+.adsp-button:disabled {
+  background: var(--adsp-color-interactive-disabled);
+  border-color: var(--adsp-color-interactive-disabled);
+  color: var(--adsp-color-text-disabled);
+  cursor: not-allowed;
+}
+
+.adsp-conversation {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  border: 1px solid var(--adsp-components-conversation-border-color);
+  background: var(--adsp-components-conversation-background);
+  color: var(--adsp-color-text-default);
+  font-family: var(--adsp-typography-font-family);
+}
+
+.adsp-conversation__messages {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  background: var(--adsp-components-conversation-chat-box-background);
+  color: var(--adsp-components-conversation-chat-box-text-color);
+  font-size: var(--adsp-components-conversation-chat-box-font-size);
+  padding: var(--adsp-spacing-m);
+  display: flex;
+  flex-direction: column;
+  gap: var(--adsp-spacing-xs);
+}
+
+.adsp-conversation__state {
+  color: var(--adsp-components-conversation-state-text-color);
+  font-size: var(--adsp-typography-body-s-font-size);
+  line-height: var(--adsp-typography-body-s-line-height);
+}
+
+.adsp-conversation__message {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-end;
+  gap: var(--adsp-spacing-2xs);
+  width: 100%;
+}
+
+.adsp-conversation__message-body {
+  max-width: 80%;
+  border: 1px solid transparent;
+  border-radius: var(--adsp-border-radius-xl);
+  padding: var(--adsp-spacing-s) var(--adsp-spacing-m);
+}
+
+.adsp-conversation__message[data-direction='sent'] {
+  align-self: flex-end;
+  justify-content: flex-end;
+  flex-direction: row;
+}
+
+.adsp-conversation__message[data-direction='sent'] .adsp-conversation__message-body {
+  background: var(--adsp-components-conversation-sent-background);
+  border-color: var(--adsp-components-conversation-sent-border-color);
+  color: var(--adsp-components-conversation-sent-text-color);
+}
+
+.adsp-conversation__message[data-direction='received'] {
+  align-self: flex-start;
+  justify-content: flex-start;
+  flex-direction: row;
+}
+
+.adsp-conversation__message[data-direction='received'] .adsp-conversation__message-body {
+  background: var(--adsp-components-conversation-received-background);
+  border-color: var(--adsp-components-conversation-received-border-color);
+  color: var(--adsp-components-conversation-received-text-color);
+}
+
+.adsp-conversation__message-meta {
+  margin-bottom: var(--adsp-spacing-2xs);
+  color: var(--adsp-components-conversation-metadata-text-color);
+  font-size: var(--adsp-typography-body-xs-font-size);
+  line-height: var(--adsp-typography-body-xs-line-height);
+}
+
+.adsp-conversation__message[data-direction='sent'] .adsp-conversation__message-meta {
+  color: var(--adsp-components-conversation-sent-text-color);
+  opacity: 0.92;
+}
+
+.adsp-conversation__message-content {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.adsp-conversation__message-actions {
+  display: flex;
+  align-self: flex-end;
+  --goa-icon-button-default-color: var(--adsp-color-status-emergency);
+  --goa-icon-button-default-hover-color: var(--adsp-color-status-emergency);
+  --goa-icon-button-default-hover-color-bg: color-mix(in srgb, var(--adsp-color-status-emergency) 12%, transparent);
+}
+
+.adsp-conversation__action {
+  border: 0;
+  background: transparent;
+  color: var(--adsp-components-conversation-action-text-color);
+  cursor: pointer;
+  font-size: var(--adsp-typography-body-s-font-size);
+  line-height: var(--adsp-typography-body-s-line-height);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  font-weight: 600;
+}
+
+.adsp-conversation__message[data-direction='sent'] .adsp-conversation__action {
+  color: inherit;
+}
+
+.adsp-conversation__action:hover {
+  opacity: 0.85;
+}
+
+.adsp-conversation__action:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
+}
+
+.adsp-conversation__new-messages {
+  align-self: center;
+}
+
+.adsp-conversation__composer {
+  border-top: 1px solid var(--adsp-components-conversation-composer-border-color);
+  background: var(--adsp-components-conversation-composer-background);
+  padding: var(--adsp-spacing-m);
+  display: flex;
+  flex-direction: column;
+  gap: var(--adsp-spacing-xs);
+}
+
+.adsp-conversation__composer-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--adsp-spacing-xs);
+}
+
+.adsp-conversation__composer-input {
+  resize: vertical;
+  min-height: 5rem;
+  border: 1px solid var(--adsp-components-conversation-composer-border-color);
+  border-radius: var(--adsp-border-radius-s);
+  background: var(--adsp-components-conversation-composer-background);
+  color: var(--adsp-components-conversation-composer-text-color);
+  padding: var(--adsp-spacing-s);
+  font-family: var(--adsp-typography-font-family);
+  font-size: var(--adsp-typography-body-m-font-size);
+  line-height: var(--adsp-typography-body-m-line-height);
+}
+
+.adsp-conversation__composer-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--adsp-spacing-xs);
+}

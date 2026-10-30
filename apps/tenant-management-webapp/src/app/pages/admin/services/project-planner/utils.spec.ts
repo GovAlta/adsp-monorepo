@@ -645,16 +645,90 @@ describe('utils', () => {
       );
     });
 
-    it('falls back to the public GoA and ADSP sites instead of its own UI or services', () => {
+    it('writes .mcp.json where the editor reads it', () => {
+      expect(harnessToMarkdown(solution())).toContain('at the root of the folder open in the editor');
+    });
+
+    it('treats the session-ID error as reachable and needs evidence before calling anything unreachable', () => {
       const md = harnessToMarkdown(solution());
 
-      expect(md).toContain('https://design.alberta.ca/examples/');
-      expect(md).toContain('https://design.alberta.ca/get-started/developers/setup/');
-      expect(md).toContain('https://govalta.github.io/adsp-monorepo/');
-      expect(md).toContain(
-        '- Never write your own UI in place of a GoA component, or your own code in place of an ADSP\n' +
-          '     service the plan names.',
+      expect(md).toContain('`400 Invalid or missing session ID`');
+      expect(md).toContain('- Never assume a server, site or command is unreachable.');
+      expect(md).toContain('record the command and its output in the build notes');
+    });
+
+    it('stops for the user after asking them to start the servers', () => {
+      expect(harnessToMarkdown(solution())).toContain(
+        "Then stop and wait for the user's reply. Don't write or change app code until this step is done.",
       );
+    });
+
+    it('leaves the choice of the public sites to the user and fetches them before relying on them', () => {
+      const md = harnessToMarkdown(solution());
+
+      expect(md).toContain('Never choose option 2 yourself.');
+      expect(md).toContain('First fetch the setup and examples pages');
+      expect(md).toContain('https://design.alberta.ca/examples/');
+      expect(md).toContain('https://govalta.github.io/adsp-monorepo/');
+    });
+
+    it('requires GoA components whether or not the MCP servers connect, and checks for them', () => {
+      const md = harnessToMarkdown(solution());
+
+      expect(md).toContain('- Build every screen with GoA Design System components');
+      expect(md).toContain('https://design.alberta.ca/get-started/developers/setup/');
+      expect(md).toContain("This doesn't depend on the MCP servers.");
+      expect(md).toContain('every screen takes its components from `@abgov/`');
+    });
+
+    it('needs a platform adapter for every local stub before local development is done', () => {
+      const md = harnessToMarkdown(solution());
+
+      expect(md).toContain('every stub has a platform adapter with a passing unit test');
+      expect(md).toContain('every local stub has a platform adapter (see step 4)');
+    });
+
+    describe('component setup', () => {
+      it('asks which environments to set up and how to sign in to each', () => {
+        const md = harnessToMarkdown(solution());
+
+        expect(md).toContain('Ask which environments need components set up: dev, test (UAT) or prod.');
+        expect(md).toContain('`npx @abgov/adsp-cli login --local --env <env> --tenant "<tenant name>"`');
+        expect(md).toContain('`npx @abgov/adsp-cli login --local --env <env> --realm <realm id>`');
+        expect(md).toContain('Then run `npx @abgov/adsp-cli status`');
+      });
+
+      it('helps the user triage a failed adsp-cli login', () => {
+        const md = harnessToMarkdown(solution());
+
+        expect(md).toContain("| `Tenant '<name>' not found.` |");
+        expect(md).toContain('| Keycloak shows "Client not found" |');
+        expect(md).toContain('| Keycloak shows "Invalid redirect uri" |');
+        expect(md).toContain('| `EADDRINUSE` on port 3000 |');
+        expect(md).toContain('Retry without `--local`');
+        expect(md).toContain('`did not grant the requested scope(s): adsp-cli-admin`');
+      });
+
+      it('says what the harness can do in each group and what only the user can do', () => {
+        const md = harnessToMarkdown(solution());
+
+        expect(md).toContain('| Group | What you can do | What it needs | Only the user can do |');
+        expect(md).toContain('Realm roles, client secret values |');
+        expect(md).toContain('Signing in, creating or getting access to the project, Secret values |');
+      });
+
+      it('lets the user choose who does each group, recommending the user for Keycloak', () => {
+        const md = harnessToMarkdown(solution());
+
+        expect(md).toContain('1. You do it.\n2. The user does it, with exact steps from you.\n3. A combination.');
+        expect(md).toContain("you can't do every Keycloak item, and recommend option 2");
+      });
+
+      it('asks before each item it makes, even in a group the user gave it', () => {
+        expect(harnessToMarkdown(solution())).toContain(
+          'Within a group you do, still ask before each item: say what you will create and wait for',
+        );
+      });
     });
 
     it('keeps replacement patterns in the name literal', () => {
