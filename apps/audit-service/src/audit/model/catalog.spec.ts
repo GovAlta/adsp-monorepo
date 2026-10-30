@@ -105,6 +105,25 @@ describe('CatalogService', () => {
       expect(store.saveAction).toHaveBeenCalledWith('sandbox-app', 'my-action', definition, 'token', tenantId);
     });
 
+    it('serialises concurrent adds to one catalog so the second sees the first', async () => {
+      const saved: string[] = [];
+      store.readActionNames.mockImplementation(async (application: string, tenant?: unknown) =>
+        tenant ? [...saved] : core[application],
+      );
+      store.saveAction.mockImplementation(async (_app: string, name: string) => {
+        await new Promise((resolve) => setTimeout(resolve, 5));
+        saved.push(name);
+      });
+
+      const results = await Promise.allSettled([
+        adding.addAction('sandbox-app', 'Alpha', definition, tenantId, 'token'),
+        adding.addAction('sandbox-app', 'alpha', definition, tenantId, 'token'),
+      ]);
+
+      expect(results.map(({ status }) => status)).toEqual(['fulfilled', 'rejected']);
+      expect(saved).toEqual(['Alpha']);
+    });
+
     it('backs out when a concurrent request added the same name in a different case first', async () => {
       store.readActionNames.mockImplementation(async (application: string, tenant?: unknown) =>
         tenant ? (store.saveAction.mock.calls.length ? ['Alpha', 'alpha'] : []) : core[application],

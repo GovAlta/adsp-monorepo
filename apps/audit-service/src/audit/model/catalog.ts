@@ -29,6 +29,9 @@ export class ActionConflictError extends InvalidOperationError {
 const sameName = (a: string, b: string) => a.toLowerCase() === b.toLowerCase();
 
 export class CatalogService {
+  // Tail of the queued adds per tenant and namespace.
+  private readonly pendingAdds = new Map<string, Promise<void>>();
+
   constructor(
     private readonly configuration: ConfigurationService,
     private readonly logger: Logger,
@@ -37,11 +40,40 @@ export class CatalogService {
   ) {}
 
   /**
-   * Adds an action to the tenant's catalog for the namespace. The name is compared, case-insensitively and in full,
-   * with fresh configuration (not the SDK cache): the namespace's own catalog and every Core catalog. Core wins over
-   * tenant actions, so a clash would make the tenant action unreachable.
+   * Adds an action to the tenant's catalog for the namespace. Adds to the same catalog are serialised within this
+   * process because Configuration has no conditional write: concurrent read-merge-write requests can lose an
+   * action. Replicas are not coordinated, so the post-write recheck remains as a backstop.
    */
   async addAction(
+    namespace: string,
+    name: string,
+    definition: AuditActionDefinition,
+    tenantId: AdspId,
+    token: string,
+  ): Promise<void> {
+    const key = `${tenantId}:${namespace}`;
+    const previous = this.pendingAdds.get(key) ?? Promise.resolve();
+    const run = previous.then(() => this.addActionUnlocked(namespace, name, definition, tenantId, token));
+    const settled = run.then(
+      () => undefined,
+      () => undefined,
+    );
+    this.pendingAdds.set(key, settled);
+    try {
+      await run;
+    } finally {
+      if (this.pendingAdds.get(key) === settled) {
+        this.pendingAdds.delete(key);
+      }
+    }
+  }
+
+  /**
+   * The name is compared, case-insensitively and in full, with fresh configuration (not the SDK cache): the
+   * namespace's own catalog and every Core catalog. Core wins over tenant actions, so a clash would make the tenant
+   * action unreachable.
+   */
+  private async addActionUnlocked(
     namespace: string,
     name: string,
     definition: AuditActionDefinition,
