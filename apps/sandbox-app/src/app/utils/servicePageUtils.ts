@@ -21,6 +21,12 @@ export const addJsonformsPages = (tenantName: string) => {
       url: `${prefix}/review-navigation`,
       testId: 'jsonformsReviewNavigation',
     },
+    {
+      id: 'jsonformsReviewResponsive',
+      name: 'Review layout with long values',
+      url: `${prefix}/review-responsive`,
+      testId: 'jsonformsReviewResponsive',
+    },
   ];
 
   return jsonformsPages;

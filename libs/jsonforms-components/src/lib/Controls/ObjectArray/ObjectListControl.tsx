@@ -58,6 +58,9 @@ import {
   ObjectArrayTitle,
   RequiredSpan,
   ReviewItemFrame,
+  ReviewRow,
+  ReviewRowLabel,
+  ReviewRowValue,
   TextCenter,
   ToolBarHeader,
   ListWithDetailsReviewCellDiv,
@@ -284,12 +287,8 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
                       }
 
                       return (
-                        <div
-                          key={key}
-                          style={{ display: 'flex', marginBottom: '0.5rem', alignItems: 'flex-start' }}
-                          data-testid={`#/properties/${key}-input-${i}-row`}
-                        >
-                          <strong style={{ width: '50%', flexShrink: 0 }}>
+                        <ReviewRow key={key} data-testid={`#/properties/${key}-input-${i}-row`}>
+                          <ReviewRowLabel>
                             {properties?.[key]?.title ||
                               (label !== key
                                 ? label
@@ -298,8 +297,8 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
                                     .replace(/[_-]/g, ' ')
                                     .replace(/^./, (c) => c.toUpperCase()))}
                             {isRequiredField && <RequiredSpan> (required)</RequiredSpan>} :
-                          </strong>
-                          <span style={{ marginLeft: '1rem' }} data-testid={`#/properties/${key}-input-${i}-review`}>
+                          </ReviewRowLabel>
+                          <ReviewRowValue data-testid={`#/properties/${key}-input-${i}-review`}>
                             {renderCellColumn({
                               data: isEmptyValue ? undefined : (value as unknown as string),
                               error: reviewError,
@@ -311,8 +310,8 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
                               index: i,
                               noAnswerMessage: noAnswerMessage ?? NO_ANSWER_MESSAGE,
                             })}
-                          </span>
-                        </div>
+                          </ReviewRowValue>
+                        </ReviewRow>
                       );
                     })}
                   </ReviewItemFrame>

@@ -26,6 +26,35 @@ export const ReviewItemFrame = styled.div`
   background-color: var(--goa-color-greyscale-white);
 `;
 
+export const ReviewRow = styled.div`
+  display: flex;
+  margin-bottom: 0.5rem;
+  align-items: flex-start;
+
+  @media (max-width: 479px) {
+    flex-direction: column;
+  }
+`;
+
+export const ReviewRowLabel = styled.strong`
+  width: 50%;
+  flex-shrink: 0;
+
+  @media (max-width: 479px) {
+    width: auto;
+  }
+`;
+
+export const ReviewRowValue = styled.span`
+  margin-left: 1rem;
+  min-width: 0;
+  overflow-wrap: anywhere;
+
+  @media (max-width: 479px) {
+    margin-left: 0;
+  }
+`;
+
 export const ObjectArrayTitle = styled.h3`
   margin-bottom: var(--goa-space-s);
 
