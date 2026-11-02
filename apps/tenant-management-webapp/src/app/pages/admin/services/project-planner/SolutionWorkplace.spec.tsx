@@ -113,6 +113,7 @@ const versionList = (latest = 1, unsavedChanges = false): SolutionVersionList =>
     number: latest - index,
     name: `Version ${latest - index}`,
     createdOn: '2026-03-01T10:00:00.000Z',
+    changedSections: latest - index === 1 ? [] : ['Problem statement'],
   })),
 });
 

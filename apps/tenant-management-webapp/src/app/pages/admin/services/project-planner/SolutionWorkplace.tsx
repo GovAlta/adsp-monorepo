@@ -8,6 +8,8 @@ import {
   GoabDetails,
   GoabIcon,
 } from '@abgov/react-components';
+import { useDispatch } from 'react-redux';
+import { SuccessNotification } from '@store/notifications/actions';
 import { Concepts, Hypotheses, NextSteps, PatternMatches } from './AnalysisSections';
 import { usePlannerApi } from './api';
 import BlueprintViewer from './BlueprintViewer';
@@ -117,6 +119,7 @@ export const SolutionWorkplace: FunctionComponent<SolutionWorkplaceProps> = ({
   onSolutionChanged,
 }) => {
   const api = usePlannerApi();
+  const dispatch = useDispatch();
   const [solution, setSolution] = useState<Solution>();
   const [problemDraft, setProblemDraft] = useState('');
   const [specialists, setSpecialists] = useState<SpecialistDefinition[]>([]);
@@ -151,14 +154,19 @@ export const SolutionWorkplace: FunctionComponent<SolutionWorkplaceProps> = ({
   const step2Ref = useRef<HTMLLIElement>(null);
   const step3Ref = useRef<HTMLLIElement>(null);
   const stepRefs = { 1: step1Ref, 2: step2Ref, 3: step3Ref } as const;
+  const lastKnownVersion = useRef<number>();
 
   const updateSolution = useCallback(
     (updated: Solution) => {
+      if (lastKnownVersion.current !== undefined && updated.version > lastKnownVersion.current) {
+        dispatch(SuccessNotification({ message: `Version updated to v${updated.version}.` }));
+      }
+      lastKnownVersion.current = updated.version;
       setSolution(updated);
       setProblemDraft(updated.state.problemStatement || '');
       onSolutionChanged?.();
     },
-    [onSolutionChanged],
+    [dispatch, onSolutionChanged],
   );
 
   useEffect(() => {
@@ -167,8 +175,15 @@ export const SolutionWorkplace: FunctionComponent<SolutionWorkplaceProps> = ({
     userSelectedMode.current = false;
     api
       .getSolution(solutionId)
-      .then((loaded) => {
+      .then((loaded) =>
+        api
+          .listVersions(solutionId)
+          .then((versions) => ({ loaded, baseline: versions.results.length ? versions.latest : 0 }))
+          .catch(() => ({ loaded, baseline: loaded.version })),
+      )
+      .then(({ loaded, baseline }) => {
         if (active) {
+          lastKnownVersion.current = baseline;
           setSolution(loaded);
           setProblemDraft(loaded.state.problemStatement || '');
           savedMode.current = loaded.state.analysis?.mode;
@@ -413,13 +428,16 @@ export const SolutionWorkplace: FunctionComponent<SolutionWorkplaceProps> = ({
       }
       try {
         if (problemChanged) {
-          await api.updateSolution(solution.id, { problemStatement: problemDraft });
+          await api.updateSolution(solution.id, { problemStatement: problemDraft, checkpoint: false });
         }
-        const analyzed = await api.analyze(solution.id, { mode });
+        const analyzed = await api.analyze(solution.id, { mode, checkpoint: !hasBlueprint });
         setMode(analyzed.state.analysis?.mode ?? mode);
         updateSolution(analyzed);
         if (hasBlueprint && isConfidenceSufficient(analyzed)) {
           updateSolution(await api.blueprint(solution.id, { mode: analyzed.state.analysis?.mode ?? mode }));
+        } else if (hasBlueprint) {
+          const version = await api.checkpointVersion(solution.id);
+          updateSolution({ ...analyzed, version: version.number, versionName: version.name });
         }
       } finally {
         if (hasBlueprint) {

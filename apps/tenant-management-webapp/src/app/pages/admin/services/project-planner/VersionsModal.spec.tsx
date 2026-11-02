@@ -37,8 +37,8 @@ const savedAt = (month: number, day: number, hour: number, minute: number) =>
   new Date(2026, month - 1, day, hour, minute).toISOString();
 
 const versions: SolutionVersionSummary[] = [
-  { number: 2, name: 'Pilot', createdOn: savedAt(3, 2, 14, 5) },
-  { number: 1, name: 'Version 1', createdOn: savedAt(3, 1, 0, 30) },
+  { number: 2, name: 'Pilot', createdOn: savedAt(3, 2, 14, 5), changedSections: ['Problem statement', 'Analysis'] },
+  { number: 1, name: 'Version 1', createdOn: savedAt(3, 1, 0, 30), changedSections: [] },
 ];
 
 describe('VersionsModal', () => {
@@ -77,6 +77,45 @@ describe('VersionsModal', () => {
       ['2', 'Pilot', '03-02-2026, 2:05 PM'],
       ['1', 'Version 1', '03-01-2026, 12:30 AM'],
     ]);
+  });
+
+  it('shows what changed in each version, with version 1 labelled as the initial version', () => {
+    const { container } = renderModal();
+
+    const changed = Array.from(container.querySelectorAll('tbody tr')).map(
+      (row) => row.querySelectorAll('td')[3].textContent,
+    );
+    expect(changed).toEqual(['Problem statement, Analysis', 'Initial version']);
+  });
+
+  it('truncates a long list of changed sections behind a Show more / Show fewer link', () => {
+    const longChangedSections = [
+      'Problem statement',
+      'Analysis',
+      'Discovery conversation',
+      'Specialist consultations',
+      'Overview',
+      'Architecture',
+    ];
+    const { container } = render(
+      <VersionsModal
+        open
+        solution={solution}
+        api={api}
+        versions={[{ number: 2, name: 'Pilot', createdOn: savedAt(3, 2, 14, 5), changedSections: longChangedSections }]}
+        onClose={onClose}
+        onRenamed={onRenamed}
+      />,
+    );
+
+    const cell = container.querySelectorAll('tbody td')[3];
+    expect(cell.textContent).not.toContain('Architecture');
+    expect(cell.textContent).toContain('Show more');
+
+    click(container, 'version-changed-2-toggle');
+
+    expect(cell.textContent).toContain('Architecture');
+    expect(cell.textContent).toContain('Show fewer');
   });
 
   it('renames a version with the trimmed name', async () => {

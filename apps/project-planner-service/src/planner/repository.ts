@@ -30,6 +30,7 @@ export interface SolutionVersionSummary {
   number: number;
   name: string;
   createdOn: Date;
+  changedSections: string[];
 }
 
 export interface SolutionVersion extends SolutionVersionSummary {

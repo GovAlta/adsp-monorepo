@@ -183,6 +183,7 @@ describe('planner router routes', () => {
       createdOn: new Date('2026-04-01T09:00:00.000Z'),
       contentHash: contentHash(content),
       content,
+      changedSections: [],
     }));
   });
 
@@ -1863,6 +1864,47 @@ describe('planner router routes', () => {
         const res = await analyze(buildApp(owner, true, llm), { text: vagueText, mode: 'rules' });
 
         expect(res.body.state.discovery.messages).toHaveLength(1);
+      });
+
+      it('appends a discovery status message when confidence rises significantly', async () => {
+        const stored = solutionOwnedBy('owner-1');
+        stored.state.problemStatement = aiText;
+        stored.state.discovery = {
+          messages: existingMessages,
+          confidence: 3,
+          threshold: DISCOVERY_THRESHOLD,
+          factors: DISCOVERY_FACTORS.map((f) => ({ id: f.id, label: f.label, score: 3 })),
+          ready: false,
+          mode: 'rules',
+          updatedOn: '2026-01-01T00:00:00.000Z',
+        };
+        repository.get.mockResolvedValue(stored);
+
+        const res = await analyze(buildApp(owner, true, llm), { text: aiText, mode: 'rules' });
+
+        const messages = res.body.state.discovery.messages;
+        expect(messages).toHaveLength(2);
+        expect(messages[1].content).toContain('confident so far');
+      });
+
+      it('appends a discovery status message when the rescoring mode changes from ai to rules', async () => {
+        const stored = solutionOwnedBy('owner-1');
+        stored.state.problemStatement = vagueText;
+        stored.state.discovery = {
+          messages: existingMessages,
+          confidence: 3,
+          threshold: DISCOVERY_THRESHOLD,
+          factors: DISCOVERY_FACTORS.map((f) => ({ id: f.id, label: f.label, score: 3 })),
+          ready: false,
+          mode: 'ai',
+          updatedOn: '2026-01-01T00:00:00.000Z',
+        };
+        repository.get.mockResolvedValue(stored);
+
+        const res = await analyze(buildApp(owner, true, llm), { text: vagueText, mode: 'rules' });
+
+        expect(res.body.state.discovery.mode).toBe('rules');
+        expect(res.body.state.discovery.messages).toHaveLength(2);
       });
 
       it('does not announce when there is no existing discovery conversation yet', async () => {

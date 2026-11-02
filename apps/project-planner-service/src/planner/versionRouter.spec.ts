@@ -130,7 +130,14 @@ describe('version router', () => {
     createdOn = new Date('2026-04-01T09:00:00.000Z'),
   ): SolutionVersion => {
     const content = versionContent(solution, chats);
-    return { number, name: `Version ${number}`, createdOn, contentHash: contentHash(content), content };
+    return {
+      number,
+      name: `Version ${number}`,
+      createdOn,
+      contentHash: contentHash(content),
+      content,
+      changedSections: [],
+    };
   };
 
   beforeEach(() => {
@@ -141,6 +148,7 @@ describe('version router', () => {
       createdOn: new Date('2026-04-01T09:00:00.000Z'),
       contentHash: contentHash(content),
       content,
+      changedSections: [],
     }));
   });
 

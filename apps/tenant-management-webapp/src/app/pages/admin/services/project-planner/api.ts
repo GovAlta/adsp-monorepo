@@ -46,6 +46,7 @@ export interface PlannerApi {
   exportSolution: (id: string) => Promise<unknown>;
   listVersions: (id: string) => Promise<SolutionVersionList>;
   saveVersion: (id: string) => Promise<SolutionVersionSummary>;
+  checkpointVersion: (id: string) => Promise<SolutionVersionSummary>;
   renameVersion: (id: string, number: number, name: string) => Promise<SolutionVersionSummary>;
   exportVersion: (id: string, number: number) => Promise<unknown>;
   listSpecialists: () => Promise<SpecialistDefinition[]>;
@@ -142,7 +143,7 @@ export function usePlannerApi(): PlannerApi {
             SuccessNotification({
               message: `The planner automatically consulted ${freshlyConsulted.join(
                 ', ',
-              )} while preparing this plan. See the conversations in the Discovery step.`,
+              )} while preparing this plan. See the conversations in the Proposed solution step.`,
             }),
           );
         }
@@ -153,6 +154,7 @@ export function usePlannerApi(): PlannerApi {
       exportSolution: (id) => request<unknown>('get', `/solutions/${id}/export`),
       listVersions: (id) => request<SolutionVersionList>('get', `/solutions/${id}/versions`),
       saveVersion: (id) => request<SolutionVersionSummary>('post', `/solutions/${id}/versions`),
+      checkpointVersion: (id) => request<SolutionVersionSummary>('post', `/solutions/${id}/versions/checkpoint`),
       renameVersion: (id, number, name) =>
         request<SolutionVersionSummary>('patch', `/solutions/${id}/versions/${number}`, { name }),
       exportVersion: (id, number) => request<unknown>('get', `/solutions/${id}/versions/${number}/export`),

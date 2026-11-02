@@ -28,7 +28,10 @@ const sentence = (text: string): string => {
 
 // Keeps AI text on one table row: escapes backslashes and pipes, and folds line breaks.
 const tableCell = (text: string): string =>
-  text.replace(/\\/g, '\\\\').replace(/\|/g, '\\|').replace(/\s*\n\s*/g, ' ');
+  text
+    .replace(/\\/g, '\\\\')
+    .replace(/\|/g, '\\|')
+    .replace(/\s*\n\s*/g, ' ');
 
 // Indents past the item number so two-digit items keep their details and the list keeps counting.
 const detailBullet = (order: number): string => `${' '.repeat(`${order}. `.length)}- `;
@@ -110,8 +113,11 @@ export function chatToMarkdown(chat: SpecialistChat): string {
   return out.join('\n') + '\n';
 }
 
-const versionLabel = (solution: Solution) =>
-  `${solution.version}${solution.unsavedChanges ? ' (unsaved changes)' : ''}`;
+const versionLabel = (solution: Solution) => {
+  const isDefaultName = !solution.versionName || solution.versionName === `Version ${solution.version}`;
+  const name = isDefaultName ? '' : ` (${solution.versionName})`;
+  return `${solution.version}${name}${solution.unsavedChanges ? ' (unsaved changes)' : ''}`;
+};
 
 export function solutionToMarkdown(solution: Solution): string {
   const st = solution.state;
@@ -156,7 +162,16 @@ export function solutionToMarkdown(solution: Solution): string {
   }
   const chosen = st.hypotheses[0];
   if (chosen) {
-    lines.push('## Chosen approach', '', `### ${chosen.title}`, '', chosen.rationale, '', '**Recommended services (in order)**', '');
+    lines.push(
+      '## Chosen approach',
+      '',
+      `### ${chosen.title}`,
+      '',
+      chosen.rationale,
+      '',
+      '**Recommended services (in order)**',
+      '',
+    );
     [...chosen.recommendations]
       .sort((a, b) => a.order - b.order)
       .forEach((r) => lines.push(`${r.order}. **${r.service}** — ${r.reason}`));
@@ -255,16 +270,18 @@ export function solutionToMarkdown(solution: Solution): string {
       '',
       '## 5. Components to set up',
       '',
-      ...(bp.components ?? []).filter((c) => c.review !== 'rejected').flatMap((c) => {
-        const detail = detailBullet(c.order);
-        return [
-          `${c.order}. **${c.name}** (${c.type}, ${c.service}): ${REVIEW_LABELS[c.review ?? 'not-reviewed']}. ${c.purpose}${c.dependsOn.length ? ` _Depends on:_ ${c.dependsOn.join(', ')}` : ''}`,
-          `${detail}Where: ${c.setup.where}`,
-          `${detail}How: ${c.setup.how}`,
-          `${detail}Docs: ${c.setup.docs}`,
-          ...c.openDecisions.map((d) => `${detail}Open decision: ${d}`),
-        ];
-      }),
+      ...(bp.components ?? [])
+        .filter((c) => c.review !== 'rejected')
+        .flatMap((c) => {
+          const detail = detailBullet(c.order);
+          return [
+            `${c.order}. **${c.name}** (${c.type}, ${c.service}): ${REVIEW_LABELS[c.review ?? 'not-reviewed']}. ${c.purpose}${c.dependsOn.length ? ` _Depends on:_ ${c.dependsOn.join(', ')}` : ''}`,
+            `${detail}Where: ${c.setup.where}`,
+            `${detail}How: ${c.setup.how}`,
+            `${detail}Docs: ${c.setup.docs}`,
+            ...c.openDecisions.map((d) => `${detail}Open decision: ${d}`),
+          ];
+        }),
     );
     lines.push('', '## 6. Specialist consultation notes');
     bp.specialistNotes.forEach((n) => {

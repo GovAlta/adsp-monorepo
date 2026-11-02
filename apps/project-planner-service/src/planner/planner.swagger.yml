@@ -99,6 +99,19 @@ paths:
       summary: Updates solution details, concepts, decisions (with reasons), and questions.
       parameters:
         - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                checkpoint:
+                  {
+                    type: boolean,
+                    default: true,
+                    description: Set false to skip auto-saving a version,
+                    e.g. when more calls will follow in the same action.,
+                  }
       responses:
         200: { description: Solution updated. }
     delete:
@@ -114,6 +127,21 @@ paths:
       summary: Extracts concepts, matches patterns, and generates hypotheses and next steps.
       parameters:
         - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                text: { type: string, maxLength: 20000 }
+                mode: { type: string, enum: [ai, rules] }
+                checkpoint:
+                  {
+                    type: boolean,
+                    default: true,
+                    description: Set false to skip auto-saving a version,
+                    e.g. when more calls will follow in the same action.,
+                  }
       responses:
         200: { description: Analyzed solution. }
   /planner/v1/solutions/{id}/consult/{service}:
@@ -137,7 +165,7 @@ paths:
             schema:
               type: object
               properties:
-                message: { type: string, maxLength: 5000, description: The user's reply to the planner's questions. }
+                message: { type: string, maxLength: 20000, description: The user's reply to the planner's questions. }
                 mode: { type: string, enum: [ai, rules] }
                 force: { type: boolean, description: Present the solution regardless of confidence. }
                 restart: { type: boolean, description: Clear the discovery thread and start over. }
@@ -158,6 +186,13 @@ paths:
                 mode: { type: string, enum: [ai, rules] }
                 refreshConsultations:
                   { type: boolean, description: Run fresh specialist consultations instead of reusing saved ones. }
+                checkpoint:
+                  {
+                    type: boolean,
+                    default: true,
+                    description: Set false to skip auto-saving a version,
+                    e.g. when more calls will follow in the same action.,
+                  }
       responses:
         200: { description: The solution with state.blueprint populated. }
         400: { description: The solution has no analysis yet. }
