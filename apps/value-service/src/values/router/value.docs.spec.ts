@@ -226,8 +226,8 @@ describe('value router documented behaviour', () => {
       );
     });
 
-    it('passes a bounded JSON payload containment object to the repository', async () => {
-      const payload = { applicationId: '12345', status: 'submitted' };
+    it('passes all bounded JSON payload conditions to the repository', async () => {
+      const payload = { applicationId: 'application-12345', status: 'submitted' };
       const res = await request(createApp(reader))
         .get('/value/v1/event-service/values/event')
         .query({

@@ -13,7 +13,11 @@ export const countEvents = async (
 
   // Event namespace and name are stored in the logged value's context, not its namespace/name.
   // The namespace and name that we want to search for is contained in the context object.
-  const context: Record<string, string> = { ...criteria.context };
+  const context: Record<string, string> = {
+    ...criteria.context,
+    ...(criteria.namespace ? { namespace: criteria.namespace } : {}),
+    ...(criteria.name ? { name: criteria.name } : {}),
+  };
 
   const token = await tokenProvider.getAccessToken();
   const { data } = await axios.get<{ count: number }>(valueServiceCountUrl.href, {

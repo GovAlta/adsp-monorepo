@@ -319,6 +319,19 @@ same number: its Where, How and Docs, and the open decisions the user settled in
 build notes). Walk the user through the Where and How steps as you go.
 Never fill a gap with an assumption: if the plan doesn't say where or how, or a decision is still
 open, look it up (see Guidelines) and ask the user.
+
+Before you create an ADSP component, find where the service stores it:
+- Look up the service's configuration schema with adsp-sdk's \`get_service_configuration_schema\`, and
+  read the service's docs page (\`read_adsp_doc services/<service>.md\`) for where its definitions are
+  stored. If the lookup returns nothing or fails, say so and record it in the build notes. Then check
+  the service's own list API for definitions that already exist
+  (form-service: \`GET /form/v1/definitions\`). Never assume a location.
+- If you copy the shape of an existing item from the tenant,
+  take it from one the service's own API or the tenant admin app returns today, and say which one.
+  Never copy from a shared document without first checking that the service still reads it.
+  A document whose last update is much older than the items around it may be legacy storage.
+
+Then, by the component's review status:
 - **Approved:** check whether it already exists; if it does, move on.
 - **Not reviewed:** before you start, list these by number and ask which are needed. Skip the rest.
 - **Dependencies:** if a component depends on one that is not reviewed, ask about that one first.
