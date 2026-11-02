@@ -7,13 +7,13 @@ import {
   requireBetaTesterOrAdmin,
 } from '../../middleware/authentication';
 import { logger } from '../../middleware/logger';
-import { AdspId, EventService } from '@abgov/adsp-service-sdk';
+import { AdspId, AuditService, EventService } from '@abgov/adsp-service-sdk';
 import { TenantRepository } from '../repository';
 import { NotFoundError } from '@core-services/core-common';
 import { mapTenant } from './mappers';
 import { RealmService } from '../services/realm';
 import { createkcAdminClient } from '../../keycloak';
-import { createTenant } from './tenantV2';
+import { createTenant, removeTenant } from './tenantV2';
 import { tenantDeleted } from '../events';
 import { rateLimit } from 'express-rate-limit';
 
@@ -70,6 +70,7 @@ interface TenantRouterProps {
   eventService: EventService;
   tenantRepository: TenantRepository;
   realmService: RealmService;
+  auditService: AuditService;
 }
 
 const rateLimitHandler = rateLimit({
@@ -79,7 +80,12 @@ const rateLimitHandler = rateLimit({
   legacyHeaders: false,
 });
 
-export const createTenantRouter = ({ tenantRepository, eventService, realmService }: TenantRouterProps): Router => {
+export const createTenantRouter = ({
+  tenantRepository,
+  eventService,
+  realmService,
+  auditService,
+}: TenantRouterProps): Router => {
   const tenantRouter = Router();
 
   async function getTenantByEmail(req, res, next) {
@@ -178,9 +184,7 @@ export const createTenantRouter = ({ tenantRepository, eventService, realmServic
       }
       const tenant = mapTenant(entity);
 
-      const deletedRealm = await realmService.deleteRealm(entity);
-      const deletedTenant = await entity.delete();
-      const success = deletedRealm && deletedTenant;
+      const { deletedRealm, deletedTenant, success } = await removeTenant(entity, req.user, realmService, auditService);
 
       if (success) {
         eventService.send(tenantDeleted(req.user, { ...tenant, id: AdspId.parse(tenant.id) }));
@@ -229,7 +233,7 @@ export const createTenantRouter = ({ tenantRepository, eventService, realmServic
   tenantRouter.post(
     '/',
     [requireBetaTesterOrAdmin, validationMiddleware(CreateTenantDto)],
-    createTenant(logger, tenantRepository, realmService, eventService)
+    createTenant(logger, tenantRepository, realmService, eventService, auditService),
   );
   tenantRouter.get('/:id', [validationMiddleware(GetTenantDto)], getTenant);
   tenantRouter.delete('/', [requireTenantServiceAdmin, validationMiddleware(DeleteTenantDto)], deleteTenant);
@@ -243,7 +247,7 @@ export const createTenantRouter = ({ tenantRepository, eventService, realmServic
     rateLimitHandler,
     requireTenantAdmin,
     [validationMiddleware(FindUserIdByEmailDto)],
-    findUserIdByEmailInCore
+    findUserIdByEmailInCore,
   );
   tenantRouter.get(
     '/user/default-idp',
@@ -251,14 +255,14 @@ export const createTenantRouter = ({ tenantRepository, eventService, realmServic
 
     requireTenantAdmin,
     [validationMiddleware(checkDefaultIdpDto)],
-    checkDefaultInCore
+    checkDefaultInCore,
   );
   tenantRouter.delete(
     '/user/idp',
     rateLimitHandler,
     requireTenantAdmin,
     [validationMiddleware(DeleteUserIdpDto)],
-    deleteUserIdp
+    deleteUserIdp,
   );
 
   return tenantRouter;
