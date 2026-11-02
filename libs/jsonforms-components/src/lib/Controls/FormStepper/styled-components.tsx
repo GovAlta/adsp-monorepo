@@ -71,6 +71,10 @@ export const ReviewItemSection = styled.div`
     max-width: 1600px;
   }
 `;
+export const ReviewSectionTitle = styled.h3`
+  margin-bottom: var(--goa-space-m);
+  overflow-wrap: anywhere;
+`;
 export const ReviewItemHeader = styled.div`
   display: flex;
   align-items: center;

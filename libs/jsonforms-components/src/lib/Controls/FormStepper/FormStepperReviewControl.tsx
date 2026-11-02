@@ -9,6 +9,7 @@ import {
   ReviewItemHeader,
   ReviewItemSection,
   ReviewItemTitle,
+  ReviewSectionTitle,
 } from './styled-components';
 import { withAjvProps } from '../../util/layout';
 import { GoabTable } from '@abgov/react-components-ds1';
@@ -61,6 +62,7 @@ import { GoACalloutControlTester, CalloutReviewControl } from '../../Additional/
 import { TableGroupLayoutRenderer, TableLayoutRenderer } from '../../layouts/TableLayoutRenderers';
 import { StepperOptionsProvider } from './context/StepperOptionsContext';
 import { getStepperPageOptions } from './util/stepperOptions';
+import { C } from '@fullcalendar/react/chunks/ecfc1219';
 
 const EmptyHelpContentRenderer = () => null;
 
@@ -200,6 +202,9 @@ export const FormStepperReviewer = (props: CategorizationStepperLayoutReviewRend
     return true;
   };
 
+  // A section title is shown once, before the first rendered category of that section.
+  let lastShownSectionTitle = '';
+
   return (
     <StepperOptionsProvider uischema={uischema}>
       <ReviewItem>
@@ -211,7 +216,6 @@ export const FormStepperReviewer = (props: CategorizationStepperLayoutReviewRend
           }
 
           const categoryLabel = category.label || category.i18n || 'Unknown Category';
-
           // Build visible elements list
           const elementsToRender = category.elements
             .filter((field) => hasVisibleContent(field))
@@ -231,41 +235,55 @@ export const FormStepperReviewer = (props: CategorizationStepperLayoutReviewRend
             return null;
           }
 
+          //The tasklist can have a parent section title, we want to display if it exists
+          const sectionTitle =
+            category.options?.showInTaskList === true ? String(category.options?.sectionTitle ?? '').trim() : '';
+          const showSectionTitle = sectionTitle !== '' && sectionTitle !== lastShownSectionTitle;
+          if (showSectionTitle) {
+            lastShownSectionTitle = sectionTitle;
+          }
+
           return (
-            <ReviewItemSection
-              key={categoryIndex}
-              className="jsonforms-table-review-section"
-              id={`jsonforms-table-review-section-${categoryIndex}`}
-            >
-              <ReviewItemHeader>
-                <ReviewItemTitle>{categoryLabel}</ReviewItemTitle>
-              </ReviewItemHeader>
+            <React.Fragment key={`sectionTitle_${categoryIndex}`}>
+              {showSectionTitle && (
+                <ReviewSectionTitle data-testid={`jsonforms-table-review-section-title-${categoryIndex}`}>
+                  {sectionTitle}
+                </ReviewSectionTitle>
+              )}
+              <ReviewItemSection
+                className="jsonforms-table-review-section"
+                id={`jsonforms-table-review-section-${categoryIndex}`}
+              >
+                <ReviewItemHeader>
+                  <ReviewItemTitle>{categoryLabel}</ReviewItemTitle>
+                </ReviewItemHeader>
 
-              {elementsToRender.map((element, elementIndex) => {
-                const stepperElement = {
-                  ...element,
-                  options: {
-                    ...element.options,
-                    stepId: categoryIndex,
-                  },
-                };
+                {elementsToRender.map((element, elementIndex) => {
+                  const stepperElement = {
+                    ...element,
+                    options: {
+                      ...element.options,
+                      stepId: categoryIndex,
+                    },
+                  };
 
-                return (
-                  <GoabTable width="100%" key={elementIndex} mb="m">
-                    <tbody>
-                      <JsonFormsDispatch
-                        data-testid="jsonforms-object-list-defined-elements-dispatch"
-                        schema={schema}
-                        uischema={stepperElement}
-                        enabled={enabled}
-                        renderers={GoABaseTableReviewRenderers}
-                        cells={cells}
-                      />
-                    </tbody>
-                  </GoabTable>
-                );
-              })}
-            </ReviewItemSection>
+                  return (
+                    <GoabTable width="100%" key={elementIndex} mb="m">
+                      <tbody>
+                        <JsonFormsDispatch
+                          data-testid="jsonforms-object-list-defined-elements-dispatch"
+                          schema={schema}
+                          uischema={stepperElement}
+                          enabled={enabled}
+                          renderers={GoABaseTableReviewRenderers}
+                          cells={cells}
+                        />
+                      </tbody>
+                    </GoabTable>
+                  );
+                })}
+              </ReviewItemSection>
+            </React.Fragment>
           );
         })}
       </ReviewItem>
