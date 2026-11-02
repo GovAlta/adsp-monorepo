@@ -1,21 +1,17 @@
 import {
   AdspId,
   AuditAction,
-  AuditActor,
   AuditCategories,
   AuditChangeSet,
   AuditEventStatus,
-  AuditRecordOutcome,
-  AuditService,
+  AuditRecordDetails,
   AuditSeverities,
   BuiltInRetentionClasses,
+  toAuditActor,
   User,
 } from '@abgov/adsp-service-sdk';
-import { Logger } from 'winston';
 
 const TENANT_RESOURCE_TYPE = 'tenant';
-const SERVICE_ACCOUNT_PREFIX = 'service-account-';
-const LOG_CONTEXT = { context: 'TenantAudit' };
 
 export const TenantCreatedAuditAction: AuditAction = {
   name: 'tenant.created',
@@ -67,54 +63,22 @@ export interface TenantAuditDetails {
   changeSet?: AuditChangeSet;
 }
 
-export interface TenantAuditor {
-  /**
-   * Records an audit event for a tenant operation. Never rejects; events that are not recorded are logged at warn
-   * level so the originating operation is never rolled back because of auditing.
-   */
-  record(action: AuditAction, user: User, tenant: AuditedTenant, details?: TenantAuditDetails): Promise<void>;
-}
-
-export function toAuditActor(user: User): AuditActor {
-  if (!user) {
-    return { id: 'tenant-service', type: 'system' };
-  }
-
+/**
+ * Builds the details of an audit event about a tenant. Events are recorded to the affected tenant, with the tenant as
+ * the resource and its name and realm in the metadata.
+ */
+export function toTenantAuditDetails(
+  user: User,
+  tenant: AuditedTenant,
+  { status, metadata, changeSet }: TenantAuditDetails = {},
+): AuditRecordDetails {
   return {
-    id: user.id,
-    type: user.name?.startsWith(SERVICE_ACCOUNT_PREFIX) ? 'service' : 'user',
-    name: user.name || undefined,
-    email: user.email || undefined,
-    roles: user.roles,
-  };
-}
-
-export function createTenantAuditor(logger: Logger, auditService: AuditService): TenantAuditor {
-  return {
-    record: async (action, user, tenant, { status, metadata, changeSet } = {}) => {
-      let outcome: AuditRecordOutcome;
-      try {
-        outcome = await auditService.record(action, {
-          tenantId: AdspId.parse(tenant.id),
-          status,
-          actor: toAuditActor(user),
-          resource: { type: TENANT_RESOURCE_TYPE, id: tenant.id, name: tenant.name },
-          correlationId: tenant.id,
-          metadata: { ...metadata, tenantName: tenant.name, realm: tenant.realm },
-          changeSet,
-        });
-      } catch (err) {
-        logger.warn(`Audit event ${action.name} for tenant ${tenant.id} was not recorded: ${err.message}`, LOG_CONTEXT);
-        return;
-      }
-
-      if (outcome.status !== 'recorded') {
-        const reason = outcome.status === 'rejected' ? `${outcome.code}: ${outcome.reason}` : outcome.error;
-        logger.warn(
-          `Audit event ${action.name} for tenant ${tenant.id} was ${outcome.status} (event ${outcome.eventId}). ${reason}`,
-          LOG_CONTEXT,
-        );
-      }
-    },
+    tenantId: AdspId.parse(tenant.id),
+    status,
+    actor: toAuditActor(user),
+    resource: { type: TENANT_RESOURCE_TYPE, id: tenant.id, name: tenant.name },
+    correlationId: tenant.id,
+    metadata: { ...metadata, tenantName: tenant.name, realm: tenant.realm },
+    changeSet,
   };
 }

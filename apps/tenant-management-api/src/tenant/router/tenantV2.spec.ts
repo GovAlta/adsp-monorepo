@@ -34,11 +34,16 @@ describe('createTenantV2Router', () => {
     send: jest.fn(),
   };
 
-  const auditorMock = {
+  const auditServiceMock = {
     record: jest.fn(),
+    query: jest.fn(),
+    flush: jest.fn(),
+    droppedEventCount: 0,
   };
 
   const tenantUrn = 'urn:ads:platform:tenant-service:v2:/tenants/test';
+  const tenantAudit = (resource: Record<string, unknown>, details: Record<string, unknown> = {}) =>
+    expect.objectContaining({ resource: expect.objectContaining({ type: 'tenant', ...resource }), ...details });
   const tenant: Tenant = {
     id: 'test',
     name: 'Test',
@@ -58,8 +63,8 @@ describe('createTenantV2Router', () => {
     realmServiceMock.findUserId.mockReset();
     realmServiceMock.checkUserDefaultIdpInCore.mockReset();
     eventServiceMock.send.mockReset();
-    auditorMock.record.mockReset();
-    auditorMock.record.mockResolvedValue(undefined);
+    auditServiceMock.record.mockReset();
+    auditServiceMock.record.mockResolvedValue({ status: 'recorded', eventId: 'event-1' });
   });
 
   it('can create router', () => {
@@ -68,7 +73,7 @@ describe('createTenantV2Router', () => {
       tenantRepository: repositoryMock,
       realmService: realmServiceMock as RealmService,
       eventService: eventServiceMock,
-      auditor: auditorMock,
+      auditService: auditServiceMock,
     });
     expect(router).toBeTruthy();
   });
@@ -335,7 +340,7 @@ describe('createTenantV2Router', () => {
 
   describe('deleteTenant', () => {
     it('can create handler', () => {
-      const handler = deleteTenant(realmServiceMock, repositoryMock, eventServiceMock, auditorMock);
+      const handler = deleteTenant(realmServiceMock, repositoryMock, eventServiceMock, auditServiceMock);
       expect(handler).toBeTruthy();
     });
 
@@ -348,7 +353,7 @@ describe('createTenantV2Router', () => {
         send: jest.fn(),
       };
       const next = jest.fn();
-      const handler = deleteTenant(realmServiceMock, repositoryMock, eventServiceMock, auditorMock);
+      const handler = deleteTenant(realmServiceMock, repositoryMock, eventServiceMock, auditServiceMock);
 
       const entity = new TenantEntity(repositoryMock, tenant);
       repositoryMock.get.mockResolvedValueOnce(entity);
@@ -365,11 +370,13 @@ describe('createTenantV2Router', () => {
           }),
         }),
       );
-      expect(auditorMock.record).toHaveBeenCalledTimes(1);
-      expect(auditorMock.record).toHaveBeenCalledWith(
+      expect(auditServiceMock.record).toHaveBeenCalledTimes(1);
+      expect(auditServiceMock.record).toHaveBeenCalledWith(
         expect.objectContaining({ name: 'tenant.deleted', severity: 'critical', retentionClass: 'compliance' }),
-        req.user,
-        expect.objectContaining({ id: tenantUrn, name: tenant.name, realm: tenant.realm }),
+        tenantAudit(
+          { id: tenantUrn, name: tenant.name },
+          { metadata: { tenantName: tenant.name, realm: tenant.realm } },
+        ),
       );
     });
 
@@ -382,7 +389,7 @@ describe('createTenantV2Router', () => {
         send: jest.fn(),
       };
       const next = jest.fn();
-      const handler = deleteTenant(realmServiceMock, repositoryMock, eventServiceMock, auditorMock);
+      const handler = deleteTenant(realmServiceMock, repositoryMock, eventServiceMock, auditServiceMock);
 
       const entity = new TenantEntity(repositoryMock, tenant);
       repositoryMock.get.mockResolvedValueOnce(entity);
@@ -390,7 +397,7 @@ describe('createTenantV2Router', () => {
       realmServiceMock.deleteRealm.mockResolvedValueOnce(true);
       await handler(req as unknown as Request, res as unknown as Response, next);
 
-      const [recordOrder] = auditorMock.record.mock.invocationCallOrder;
+      const [recordOrder] = auditServiceMock.record.mock.invocationCallOrder;
       expect(recordOrder).toBeLessThan(realmServiceMock.deleteRealm.mock.invocationCallOrder[0]);
       expect(recordOrder).toBeLessThan(repositoryMock.delete.mock.invocationCallOrder[0]);
     });
@@ -404,7 +411,7 @@ describe('createTenantV2Router', () => {
         send: jest.fn(),
       };
       const next = jest.fn();
-      const handler = deleteTenant(realmServiceMock, repositoryMock, eventServiceMock, auditorMock);
+      const handler = deleteTenant(realmServiceMock, repositoryMock, eventServiceMock, auditServiceMock);
 
       const entity = new TenantEntity(repositoryMock, tenant);
       repositoryMock.get.mockResolvedValueOnce(entity);
@@ -413,15 +420,16 @@ describe('createTenantV2Router', () => {
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(res.send).toHaveBeenCalledWith({ deletedRealm: false, deletedTenant: true, success: false });
-      expect(auditorMock.record).toHaveBeenCalledTimes(2);
-      expect(auditorMock.record).toHaveBeenLastCalledWith(
+      expect(auditServiceMock.record).toHaveBeenCalledTimes(2);
+      expect(auditServiceMock.record).toHaveBeenLastCalledWith(
         expect.objectContaining({ name: 'tenant.deleted' }),
-        req.user,
-        expect.objectContaining({ id: tenantUrn }),
-        {
-          status: 'failure',
-          metadata: { deletedRealm: false, deletedTenant: true },
-        },
+        tenantAudit(
+          { id: tenantUrn },
+          {
+            status: 'failure',
+            metadata: expect.objectContaining({ deletedRealm: false, deletedTenant: true }),
+          },
+        ),
       );
     });
 
@@ -434,7 +442,7 @@ describe('createTenantV2Router', () => {
         send: jest.fn(),
       };
       const next = jest.fn();
-      const handler = deleteTenant(realmServiceMock, repositoryMock, eventServiceMock, auditorMock);
+      const handler = deleteTenant(realmServiceMock, repositoryMock, eventServiceMock, auditServiceMock);
 
       const entity = new TenantEntity(repositoryMock, tenant);
       repositoryMock.get.mockResolvedValueOnce(entity);
@@ -445,11 +453,12 @@ describe('createTenantV2Router', () => {
       expect(next).toHaveBeenCalledWith(error);
       expect(res.send).not.toHaveBeenCalled();
       expect(repositoryMock.delete).not.toHaveBeenCalled();
-      expect(auditorMock.record).toHaveBeenLastCalledWith(
+      expect(auditServiceMock.record).toHaveBeenLastCalledWith(
         expect.objectContaining({ name: 'tenant.deleted' }),
-        req.user,
-        expect.objectContaining({ id: tenantUrn }),
-        { status: 'error', metadata: { error: 'Keycloak unavailable' } },
+        tenantAudit(
+          { id: tenantUrn },
+          { status: 'error', metadata: expect.objectContaining({ error: 'Keycloak unavailable' }) },
+        ),
       );
     });
 
@@ -465,7 +474,7 @@ describe('createTenantV2Router', () => {
         send: jest.fn(),
       };
       const next = jest.fn();
-      const handler = updateTenantName(loggerMock, repositoryMock, eventServiceMock, auditorMock);
+      const handler = updateTenantName(loggerMock, repositoryMock, eventServiceMock, auditServiceMock);
 
       const entity = new TenantEntity(repositoryMock, tenant);
       repositoryMock.get.mockResolvedValueOnce(entity);
@@ -473,13 +482,12 @@ describe('createTenantV2Router', () => {
 
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ name: 'new-mock-name' }));
-      expect(auditorMock.record).toHaveBeenCalledWith(
+      expect(auditServiceMock.record).toHaveBeenCalledWith(
         expect.objectContaining({ name: 'tenant.updated', captureChangeSet: true }),
-        req.user,
-        expect.objectContaining({ id: tenantUrn, name: 'new-mock-name' }),
-        {
-          changeSet: { before: { name: tenant.name }, after: { name: 'new-mock-name' } },
-        },
+        tenantAudit(
+          { id: tenantUrn, name: 'new-mock-name' },
+          { changeSet: { before: { name: tenant.name }, after: { name: 'new-mock-name' } } },
+        ),
       );
     });
 
@@ -492,7 +500,7 @@ describe('createTenantV2Router', () => {
         send: jest.fn(),
       };
       const next = jest.fn();
-      const handler = deleteTenant(realmServiceMock, repositoryMock, eventServiceMock, auditorMock);
+      const handler = deleteTenant(realmServiceMock, repositoryMock, eventServiceMock, auditServiceMock);
 
       repositoryMock.get.mockResolvedValueOnce(null);
       await handler(req as unknown as Request, res as unknown as Response, next);
@@ -503,7 +511,7 @@ describe('createTenantV2Router', () => {
 
   describe('createTenant', () => {
     it('can create handler', () => {
-      const handler = createTenant(loggerMock, repositoryMock, realmServiceMock, eventServiceMock, auditorMock);
+      const handler = createTenant(loggerMock, repositoryMock, realmServiceMock, eventServiceMock, auditServiceMock);
       expect(handler).toBeTruthy();
     });
 
@@ -520,7 +528,7 @@ describe('createTenantV2Router', () => {
         status: jest.fn().mockReturnThis(),
       };
       const next = jest.fn();
-      const handler = createTenant(loggerMock, repositoryMock, realmServiceMock, eventServiceMock, auditorMock);
+      const handler = createTenant(loggerMock, repositoryMock, realmServiceMock, eventServiceMock, auditServiceMock);
 
       repositoryMock.find.mockResolvedValueOnce([]);
       repositoryMock.find.mockResolvedValueOnce([]);
@@ -552,7 +560,7 @@ describe('createTenantV2Router', () => {
         status: jest.fn().mockReturnThis(),
       };
       const next = jest.fn();
-      const handler = createTenant(loggerMock, repositoryMock, realmServiceMock, eventServiceMock, auditorMock);
+      const handler = createTenant(loggerMock, repositoryMock, realmServiceMock, eventServiceMock, auditServiceMock);
 
       repositoryMock.find.mockResolvedValueOnce([]);
       repositoryMock.find.mockResolvedValueOnce([]);
@@ -570,12 +578,13 @@ describe('createTenantV2Router', () => {
 
       expect(realmServiceMock.createRealm).toHaveBeenCalled();
       expect(eventServiceMock.send).toHaveBeenCalled();
-      expect(auditorMock.record).toHaveBeenCalledTimes(1);
-      expect(auditorMock.record).toHaveBeenCalledWith(
+      expect(auditServiceMock.record).toHaveBeenCalledTimes(1);
+      expect(auditServiceMock.record).toHaveBeenCalledWith(
         expect.objectContaining({ name: 'tenant.created' }),
-        req.user,
-        expect.objectContaining({ id: tenantUrn, status: 'active' }),
-        { metadata: { realmProvisioning: 'new', serviceClientCount: 0 } },
+        tenantAudit(
+          { id: tenantUrn },
+          { metadata: expect.objectContaining({ realmProvisioning: 'new', serviceClientCount: 0 }) },
+        ),
       );
     });
 
@@ -592,7 +601,7 @@ describe('createTenantV2Router', () => {
         status: jest.fn().mockReturnThis(),
       };
       const next = jest.fn();
-      const handler = createTenant(loggerMock, repositoryMock, realmServiceMock, eventServiceMock, auditorMock);
+      const handler = createTenant(loggerMock, repositoryMock, realmServiceMock, eventServiceMock, auditServiceMock);
 
       repositoryMock.find.mockResolvedValueOnce([]);
       repositoryMock.find.mockResolvedValueOnce([]);
@@ -612,17 +621,18 @@ describe('createTenantV2Router', () => {
       expect(realmServiceMock.deleteRealm).toHaveBeenCalled();
       expect(repositoryMock.delete).toHaveBeenCalled();
       expect(eventServiceMock.send).not.toHaveBeenCalled();
-      expect(auditorMock.record).toHaveBeenCalledTimes(1);
-      expect(auditorMock.record).toHaveBeenCalledWith(
+      expect(auditServiceMock.record).toHaveBeenCalledTimes(1);
+      expect(auditServiceMock.record).toHaveBeenCalledWith(
         expect.objectContaining({ name: 'tenant.created' }),
-        req.user,
-        expect.objectContaining({ id: tenantUrn }),
-        {
-          status: 'failure',
-          metadata: { realmProvisioning: 'new', error: 'Keycloak unavailable' },
-        },
+        tenantAudit(
+          { id: tenantUrn },
+          {
+            status: 'failure',
+            metadata: expect.objectContaining({ realmProvisioning: 'new', error: 'Keycloak unavailable' }),
+          },
+        ),
       );
-      expect(auditorMock.record.mock.invocationCallOrder[0]).toBeLessThan(
+      expect(auditServiceMock.record.mock.invocationCallOrder[0]).toBeLessThan(
         repositoryMock.delete.mock.invocationCallOrder[0],
       );
     });
@@ -639,7 +649,7 @@ describe('createTenantV2Router', () => {
         send: jest.fn(),
       };
       const next = jest.fn();
-      const handler = createTenant(loggerMock, repositoryMock, realmServiceMock, eventServiceMock, auditorMock);
+      const handler = createTenant(loggerMock, repositoryMock, realmServiceMock, eventServiceMock, auditServiceMock);
 
       repositoryMock.find.mockResolvedValueOnce([new TenantEntity(repositoryMock, tenant)]);
 
@@ -660,7 +670,7 @@ describe('createTenantV2Router', () => {
         send: jest.fn(),
       };
       const next = jest.fn();
-      const handler = createTenant(loggerMock, repositoryMock, realmServiceMock, eventServiceMock, auditorMock);
+      const handler = createTenant(loggerMock, repositoryMock, realmServiceMock, eventServiceMock, auditServiceMock);
 
       repositoryMock.find.mockResolvedValueOnce([]);
       repositoryMock.find.mockResolvedValueOnce([new TenantEntity(repositoryMock, tenant)]);
@@ -683,7 +693,7 @@ describe('createTenantV2Router', () => {
         send: jest.fn(),
       };
       const next = jest.fn();
-      const handler = createTenant(loggerMock, repositoryMock, realmServiceMock, eventServiceMock, auditorMock);
+      const handler = createTenant(loggerMock, repositoryMock, realmServiceMock, eventServiceMock, auditServiceMock);
 
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(res.send).not.toHaveBeenCalled();
@@ -703,7 +713,7 @@ describe('createTenantV2Router', () => {
         send: jest.fn(),
       };
       const next = jest.fn();
-      const handler = createTenant(loggerMock, repositoryMock, realmServiceMock, eventServiceMock, auditorMock);
+      const handler = createTenant(loggerMock, repositoryMock, realmServiceMock, eventServiceMock, auditServiceMock);
 
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(res.send).not.toHaveBeenCalled();
@@ -724,7 +734,7 @@ describe('createTenantV2Router', () => {
         send: jest.fn(),
       };
       const next = jest.fn();
-      const handler = createTenant(loggerMock, repositoryMock, realmServiceMock, eventServiceMock, auditorMock);
+      const handler = createTenant(loggerMock, repositoryMock, realmServiceMock, eventServiceMock, auditServiceMock);
 
       repositoryMock.find.mockResolvedValueOnce([]);
       repositoryMock.find.mockResolvedValueOnce([]);
@@ -735,11 +745,12 @@ describe('createTenantV2Router', () => {
       expect(res.send).toHaveBeenCalledWith(
         expect.objectContaining({ ...tenant, id: `urn:ads:platform:tenant-service:v2:/tenants/${tenant.id}` }),
       );
-      expect(auditorMock.record).toHaveBeenCalledWith(
+      expect(auditServiceMock.record).toHaveBeenCalledWith(
         expect.objectContaining({ name: 'tenant.created' }),
-        req.user,
-        expect.objectContaining({ id: tenantUrn, realm: tenant.realm }),
-        { metadata: { realmProvisioning: 'existing' } },
+        tenantAudit(
+          { id: tenantUrn },
+          { metadata: expect.objectContaining({ realmProvisioning: 'existing', realm: tenant.realm }) },
+        ),
       );
       expect(realmServiceMock.createRealm).not.toHaveBeenCalled();
     });
@@ -757,7 +768,7 @@ describe('createTenantV2Router', () => {
         send: jest.fn(),
       };
       const next = jest.fn();
-      const handler = createTenant(loggerMock, repositoryMock, realmServiceMock, eventServiceMock, auditorMock);
+      const handler = createTenant(loggerMock, repositoryMock, realmServiceMock, eventServiceMock, auditServiceMock);
 
       repositoryMock.find.mockResolvedValueOnce([]);
       repositoryMock.find.mockResolvedValueOnce([]);
@@ -781,7 +792,7 @@ describe('createTenantV2Router', () => {
         send: jest.fn(),
       };
       const next = jest.fn();
-      const handler = createTenant(loggerMock, repositoryMock, realmServiceMock, eventServiceMock, auditorMock);
+      const handler = createTenant(loggerMock, repositoryMock, realmServiceMock, eventServiceMock, auditServiceMock);
 
       repositoryMock.find.mockResolvedValueOnce([]);
       repositoryMock.find.mockResolvedValueOnce([]);

@@ -7,13 +7,12 @@ import {
   requireBetaTesterOrAdmin,
 } from '../../middleware/authentication';
 import { logger } from '../../middleware/logger';
-import { AdspId, EventService } from '@abgov/adsp-service-sdk';
+import { AdspId, AuditService, EventService } from '@abgov/adsp-service-sdk';
 import { TenantRepository } from '../repository';
 import { NotFoundError } from '@core-services/core-common';
 import { mapTenant } from './mappers';
 import { RealmService } from '../services/realm';
 import { createkcAdminClient } from '../../keycloak';
-import { TenantAuditor } from '../audit';
 import { createTenant, removeTenant } from './tenantV2';
 import { tenantDeleted } from '../events';
 import { rateLimit } from 'express-rate-limit';
@@ -71,7 +70,7 @@ interface TenantRouterProps {
   eventService: EventService;
   tenantRepository: TenantRepository;
   realmService: RealmService;
-  auditor: TenantAuditor;
+  auditService: AuditService;
 }
 
 const rateLimitHandler = rateLimit({
@@ -85,7 +84,7 @@ export const createTenantRouter = ({
   tenantRepository,
   eventService,
   realmService,
-  auditor,
+  auditService,
 }: TenantRouterProps): Router => {
   const tenantRouter = Router();
 
@@ -185,7 +184,7 @@ export const createTenantRouter = ({
       }
       const tenant = mapTenant(entity);
 
-      const { deletedRealm, deletedTenant, success } = await removeTenant(entity, req.user, realmService, auditor);
+      const { deletedRealm, deletedTenant, success } = await removeTenant(entity, req.user, realmService, auditService);
 
       if (success) {
         eventService.send(tenantDeleted(req.user, { ...tenant, id: AdspId.parse(tenant.id) }));
@@ -234,7 +233,7 @@ export const createTenantRouter = ({
   tenantRouter.post(
     '/',
     [requireBetaTesterOrAdmin, validationMiddleware(CreateTenantDto)],
-    createTenant(logger, tenantRepository, realmService, eventService, auditor),
+    createTenant(logger, tenantRepository, realmService, eventService, auditService),
   );
   tenantRouter.get('/:id', [validationMiddleware(GetTenantDto)], getTenant);
   tenantRouter.delete('/', [requireTenantServiceAdmin, validationMiddleware(DeleteTenantDto)], deleteTenant);

@@ -28,4 +28,4 @@ Tenant service records audit events in the `tenant-service` namespace of the [au
 
 Because the audit service resolves the tenant of each event, `tenant.deleted` is recorded before the realm and tenant are removed. If the removal does not fully succeed, a further `tenant.deleted` event is recorded with `failure` or `error` status; it cannot be stored if the tenant record itself was already removed.
 
-Audit failures are logged as warnings and do not roll back the tenant operation. The tenant service account requires the `audit-writer` role of `urn:ads:platform:audit-service`.
+Audit failures are logged by the SDK and do not roll back the tenant operation. The tenant service account requires the `audit-writer` role of `urn:ads:platform:audit-service`.
