@@ -249,11 +249,23 @@ export const DraftForm: FunctionComponent<DraftFormProps> = ({
     });
     dispatch(formActions.updateFormFiles(clonedFiles));
 
-    // Mirror file removal in form data to prevent stale URN refs.
+    // Remove by URN: indexed keys in form files can drift from the compacted data array.
     const latestData = (store.getState() as AppState).form?.data || populatedData || {};
     const nextData = _.cloneDeep(latestData);
     if (propertyId) {
-      _.unset(nextData, propertyId);
+      const rootPath = normalizeFilePropertyId(propertyId);
+      const current = _.get(nextData, rootPath);
+      if (Array.isArray(current)) {
+        _.set(
+          nextData,
+          rootPath,
+          current.filter((urn) => urn !== file.urn),
+        );
+      } else if (current === file.urn) {
+        _.unset(nextData, rootPath);
+      } else if (_.get(nextData, propertyId) === file.urn) {
+        _.unset(nextData, propertyId);
+      }
     }
     onChange({ data: nextData });
   };
