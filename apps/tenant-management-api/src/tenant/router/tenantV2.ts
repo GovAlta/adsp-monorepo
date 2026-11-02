@@ -12,6 +12,13 @@ import { checkSchema } from 'express-validator';
 import { v4 as uuidv4 } from 'uuid';
 import { Logger } from 'winston';
 import { requireBetaTesterOrAdmin, requireTenantServiceAdmin } from '../../middleware/authentication';
+import {
+  TenantAuditor,
+  TenantCreatedAuditAction,
+  TenantDeletedAuditAction,
+  TenantRealmConfiguredAuditAction,
+  TenantUpdatedAuditAction,
+} from '../audit';
 import { tenantCreated, tenantDeleted, tenantNameUpdated } from '../events';
 import { Tenant, TenantEntity } from '../models';
 import { TenantRepository } from '../repository';
@@ -27,6 +34,7 @@ interface TenantRouterProps {
   tenantRepository: TenantRepository;
   realmService: RealmService;
   eventService: EventService;
+  auditor: TenantAuditor;
 }
 
 const LOG_CONTEXT = { context: 'TenantRouter' };
@@ -109,6 +117,7 @@ export function updateTenantName(
   logger: Logger,
   repository: TenantRepository,
   eventService: EventService,
+  auditor: TenantAuditor,
 ): RequestHandler {
   return async (req, res, next) => {
     try {
@@ -126,11 +135,16 @@ export function updateTenantName(
       if (!tenant) {
         throw new NotFoundError('tenant', id);
       }
+      const previousName = tenant.name;
       tenant.name = name;
       const newTenant = await repository.save(tenant);
 
       if (newTenant) {
         eventService.send(tenantNameUpdated(req.user, { ...newTenant, id: AdspId.parse(mapTenant(newTenant).id) }));
+        void auditor.record(TenantUpdatedAuditAction, user, mapTenant(tenant), {
+          operation: 'update-name',
+          changeSet: { before: { name: previousName }, after: { name } },
+        });
       }
 
       res.send(mapTenant(tenant));
@@ -141,10 +155,58 @@ export function updateTenantName(
   };
 }
 
+export interface TenantRemovalResult {
+  deletedRealm: boolean;
+  deletedTenant: boolean;
+  success: boolean;
+}
+
+/**
+ * Deletes the tenant realm and record, auditing the deletion.
+ *
+ * The audit service resolves the tenant of each event, so the deletion is recorded before the tenant is removed;
+ * a follow-up failure or error event is recorded if the removal does not fully succeed.
+ */
+export async function removeTenant(
+  entity: TenantEntity,
+  user: User,
+  realmService: RealmService,
+  auditor: TenantAuditor,
+): Promise<TenantRemovalResult> {
+  const tenant = mapTenant(entity);
+  await auditor.record(TenantDeletedAuditAction, user, tenant, { operation: 'delete' });
+
+  let deletedRealm: boolean;
+  let deletedTenant: boolean;
+  try {
+    deletedRealm = await realmService.deleteRealm(entity);
+    deletedTenant = await entity.delete();
+  } catch (err) {
+    void auditor.record(TenantDeletedAuditAction, user, tenant, {
+      operation: 'delete',
+      status: 'error',
+      metadata: { error: err.message },
+    });
+    throw err;
+  }
+
+  const success = !!(deletedRealm && deletedTenant);
+  if (!success) {
+    void auditor.record(TenantDeletedAuditAction, user, tenant, {
+      operation: 'delete',
+      status: 'failure',
+      metadata: { deletedRealm: !!deletedRealm, deletedTenant: !!deletedTenant },
+    });
+  }
+
+  return { deletedRealm, deletedTenant, success };
+}
+
 export function deleteTenant(
   realmService: RealmService,
   repository: TenantRepository,
   eventService: EventService,
+  auditor: TenantAuditor,
 ): RequestHandler {
   return async (req, res, next) => {
     try {
@@ -156,9 +218,7 @@ export function deleteTenant(
       }
       const tenant = mapTenant(entity);
 
-      const deletedRealm = await realmService.deleteRealm(entity);
-      const deletedTenant = await entity.delete();
-      const success = deletedRealm && deletedTenant;
+      const { deletedRealm, deletedTenant, success } = await removeTenant(entity, req.user, realmService, auditor);
 
       if (deletedTenant) {
         eventService.send(tenantDeleted(req.user, { ...tenant, id: AdspId.parse(tenant.id) }));
@@ -175,6 +235,7 @@ async function provisionRealm(
   clients: ServiceClient[],
   realmService: RealmService,
   eventService: EventService,
+  auditor: TenantAuditor,
   user: User,
   logger: Logger,
 ): Promise<void> {
@@ -185,11 +246,26 @@ async function provisionRealm(
     const tenant = mapTenant(entity);
     eventService.send(tenantCreated(user, { ...tenant, id: AdspId.parse(tenant.id) }));
     logger.info(`Provisioned tenant '${entity.name}' with realm '${entity.realm}'.`, LOG_CONTEXT);
+
+    await auditor.record(TenantCreatedAuditAction, user, tenant, {
+      operation: 'create',
+      metadata: { realmProvisioning: 'new' },
+    });
+    await auditor.record(TenantRealmConfiguredAuditAction, user, tenant, {
+      operation: 'provision-realm',
+      metadata: { serviceClientCount: clients.length },
+    });
   } catch (err) {
     logger.error(
       `Failed to provision tenant '${entity.name}': ${err.message}${err.responseData ? ` — KC: ${JSON.stringify(err.responseData)}` : ''}`,
       LOG_CONTEXT,
     );
+    // Recorded before the tenant record is removed, since the audit service resolves the tenant of each event.
+    await auditor.record(TenantCreatedAuditAction, user, mapTenant(entity), {
+      operation: 'create',
+      status: 'failure',
+      metadata: { realmProvisioning: 'new', error: err.message },
+    });
     try {
       await realmService.deleteRealm(entity);
     } catch (deleteErr) {
@@ -204,6 +280,7 @@ export function createTenant(
   tenantRepository: TenantRepository,
   realmService: RealmService,
   eventService: EventService,
+  auditor: TenantAuditor,
 ): RequestHandler {
   return async (req, res, next) => {
     try {
@@ -241,6 +318,10 @@ export function createTenant(
         const entity = await TenantEntity.create(tenantRepository, name, existingRealm, email);
         const tenant = mapTenant(entity);
         eventService.send(tenantCreated(user, { ...tenant, id: AdspId.parse(tenant.id) }));
+        void auditor.record(TenantCreatedAuditAction, user, tenant, {
+          operation: 'create',
+          metadata: { realmProvisioning: 'existing' },
+        });
         logger.info(`Created tenant '${name}' with existing realm '${existingRealm}' for admin ${email}.`, LOG_CONTEXT);
         res.send(tenant);
       } else {
@@ -254,7 +335,7 @@ export function createTenant(
 
         res.status(202).send(tenant);
 
-        provisionRealm(entity, clients || [], realmService, eventService, user, logger).catch((err) => {
+        provisionRealm(entity, clients || [], realmService, eventService, auditor, user, logger).catch((err) => {
           logger.error(`Unhandled error during tenant provisioning: ${err.message}`, LOG_CONTEXT);
         });
       }
@@ -270,6 +351,7 @@ export const createTenantV2Router = ({
   realmService,
   tenantRepository,
   eventService,
+  auditor,
 }: TenantRouterProps): Router => {
   const router: Router = Router();
 
@@ -323,7 +405,7 @@ export const createTenantV2Router = ({
         ['body'],
       ),
     ),
-    createTenant(logger, tenantRepository, realmService, eventService),
+    createTenant(logger, tenantRepository, realmService, eventService, auditor),
   );
 
   router.get('/tenants/:id', assertAuthenticatedHandler, getTenant(logger, tenantRepository));
@@ -331,7 +413,7 @@ export const createTenantV2Router = ({
     '/tenants/:id',
     assertAuthenticatedHandler,
     requireTenantServiceAdmin,
-    deleteTenant(realmService, tenantRepository, eventService),
+    deleteTenant(realmService, tenantRepository, eventService, auditor),
   );
 
   router.patch(
@@ -351,7 +433,7 @@ export const createTenantV2Router = ({
         ['body'],
       ),
     ),
-    updateTenantName(logger, tenantRepository, eventService),
+    updateTenantName(logger, tenantRepository, eventService, auditor),
   );
 
   return router;

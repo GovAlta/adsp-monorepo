@@ -37,6 +37,7 @@ describe('tenant routers documented behaviour', () => {
     checkUserDefaultIdpInCore: jest.fn(),
   };
   const eventServiceMock = { send: jest.fn() };
+  const auditorMock = { record: jest.fn().mockResolvedValue(undefined) };
 
   let tenants: TenantEntity[];
 
@@ -89,6 +90,7 @@ describe('tenant routers documented behaviour', () => {
         tenantRepository: repositoryMock as never,
         realmService: realmServiceMock as never,
         eventService: eventServiceMock,
+        auditor: auditorMock,
       }),
     );
     router.use(
@@ -98,6 +100,7 @@ describe('tenant routers documented behaviour', () => {
         tenantRepository: repositoryMock as never,
         realmService: realmServiceMock as never,
         eventService: eventServiceMock,
+        auditor: auditorMock,
       }),
     );
     router.use(createErrorHandler(loggerMock));

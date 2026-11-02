@@ -34,6 +34,11 @@ describe('createTenantV2Router', () => {
     send: jest.fn(),
   };
 
+  const auditorMock = {
+    record: jest.fn(),
+  };
+
+  const tenantUrn = 'urn:ads:platform:tenant-service:v2:/tenants/test';
   const tenant: Tenant = {
     id: 'test',
     name: 'Test',
@@ -53,6 +58,8 @@ describe('createTenantV2Router', () => {
     realmServiceMock.findUserId.mockReset();
     realmServiceMock.checkUserDefaultIdpInCore.mockReset();
     eventServiceMock.send.mockReset();
+    auditorMock.record.mockReset();
+    auditorMock.record.mockResolvedValue(undefined);
   });
 
   it('can create router', () => {
@@ -61,6 +68,7 @@ describe('createTenantV2Router', () => {
       tenantRepository: repositoryMock,
       realmService: realmServiceMock as RealmService,
       eventService: eventServiceMock,
+      auditor: auditorMock,
     });
     expect(router).toBeTruthy();
   });
@@ -96,7 +104,7 @@ describe('createTenantV2Router', () => {
             expect.objectContaining({ ...tenant, id: `urn:ads:platform:tenant-service:v2:/tenants/${tenant.id}` }),
           ]),
           page: expect.objectContaining({ size: 1 }),
-        })
+        }),
       );
     });
 
@@ -128,7 +136,7 @@ describe('createTenantV2Router', () => {
           nameEquals: req.query.name,
           realmEquals: req.query.realm,
           adminEmailEquals: req.query.adminEmail,
-        })
+        }),
       );
       expect(res.send).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -136,7 +144,7 @@ describe('createTenantV2Router', () => {
             expect.objectContaining({ ...tenant, id: `urn:ads:platform:tenant-service:v2:/tenants/${tenant.id}` }),
           ]),
           page: expect.objectContaining({ size: 1 }),
-        })
+        }),
       );
     });
 
@@ -166,7 +174,7 @@ describe('createTenantV2Router', () => {
             expect.objectContaining({ ...tenant, id: `urn:ads:platform:tenant-service:v2:/tenants/${tenant.id}` }),
           ]),
           page: expect.objectContaining({ size: 1 }),
-        })
+        }),
       );
     });
 
@@ -188,7 +196,7 @@ describe('createTenantV2Router', () => {
         expect.objectContaining({
           results: expect.arrayContaining([]),
           page: expect.objectContaining({ size: 0 }),
-        })
+        }),
       );
       expect(repositoryMock.find).toHaveBeenCalledWith(expect.objectContaining({ idEquals: 'tenant-321' }));
     });
@@ -237,7 +245,7 @@ describe('createTenantV2Router', () => {
       repositoryMock.get.mockResolvedValueOnce(tenant);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(res.send).toHaveBeenCalledWith(
-        expect.objectContaining({ ...tenant, id: `urn:ads:platform:tenant-service:v2:/tenants/${tenant.id}` })
+        expect.objectContaining({ ...tenant, id: `urn:ads:platform:tenant-service:v2:/tenants/${tenant.id}` }),
       );
     });
 
@@ -262,7 +270,7 @@ describe('createTenantV2Router', () => {
       repositoryMock.get.mockResolvedValueOnce(tenant);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(res.send).toHaveBeenCalledWith(
-        expect.objectContaining({ ...tenant, id: `urn:ads:platform:tenant-service:v2:/tenants/${tenant.id}` })
+        expect.objectContaining({ ...tenant, id: `urn:ads:platform:tenant-service:v2:/tenants/${tenant.id}` }),
       );
     });
 
@@ -327,7 +335,7 @@ describe('createTenantV2Router', () => {
 
   describe('deleteTenant', () => {
     it('can create handler', () => {
-      const handler = deleteTenant(realmServiceMock, repositoryMock, eventServiceMock);
+      const handler = deleteTenant(realmServiceMock, repositoryMock, eventServiceMock, auditorMock);
       expect(handler).toBeTruthy();
     });
 
@@ -340,7 +348,7 @@ describe('createTenantV2Router', () => {
         send: jest.fn(),
       };
       const next = jest.fn();
-      const handler = deleteTenant(realmServiceMock, repositoryMock, eventServiceMock);
+      const handler = deleteTenant(realmServiceMock, repositoryMock, eventServiceMock, auditorMock);
 
       const entity = new TenantEntity(repositoryMock, tenant);
       repositoryMock.get.mockResolvedValueOnce(entity);
@@ -355,7 +363,95 @@ describe('createTenantV2Router', () => {
           payload: expect.objectContaining({
             tenant: expect.objectContaining({ name: tenant.name, realm: tenant.realm, adminEmail: tenant.adminEmail }),
           }),
-        })
+        }),
+      );
+      expect(auditorMock.record).toHaveBeenCalledTimes(1);
+      expect(auditorMock.record).toHaveBeenCalledWith(
+        expect.objectContaining({ name: 'tenant.deleted', severity: 'critical', retentionClass: 'compliance' }),
+        req.user,
+        expect.objectContaining({ id: tenantUrn, name: tenant.name, realm: tenant.realm }),
+        { operation: 'delete' },
+      );
+    });
+
+    it('can record deletion before the realm and tenant are removed', async () => {
+      const req = {
+        params: { id: 'tenant-a' },
+        user: { isCore: true },
+      };
+      const res = {
+        send: jest.fn(),
+      };
+      const next = jest.fn();
+      const handler = deleteTenant(realmServiceMock, repositoryMock, eventServiceMock, auditorMock);
+
+      const entity = new TenantEntity(repositoryMock, tenant);
+      repositoryMock.get.mockResolvedValueOnce(entity);
+      repositoryMock.delete.mockResolvedValueOnce(true);
+      realmServiceMock.deleteRealm.mockResolvedValueOnce(true);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      const [recordOrder] = auditorMock.record.mock.invocationCallOrder;
+      expect(recordOrder).toBeLessThan(realmServiceMock.deleteRealm.mock.invocationCallOrder[0]);
+      expect(recordOrder).toBeLessThan(repositoryMock.delete.mock.invocationCallOrder[0]);
+    });
+
+    it('can record failure for partial deletion', async () => {
+      const req = {
+        params: { id: 'tenant-a' },
+        user: { isCore: true },
+      };
+      const res = {
+        send: jest.fn(),
+      };
+      const next = jest.fn();
+      const handler = deleteTenant(realmServiceMock, repositoryMock, eventServiceMock, auditorMock);
+
+      const entity = new TenantEntity(repositoryMock, tenant);
+      repositoryMock.get.mockResolvedValueOnce(entity);
+      repositoryMock.delete.mockResolvedValueOnce(true);
+      realmServiceMock.deleteRealm.mockResolvedValueOnce(false);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      expect(res.send).toHaveBeenCalledWith({ deletedRealm: false, deletedTenant: true, success: false });
+      expect(auditorMock.record).toHaveBeenCalledTimes(2);
+      expect(auditorMock.record).toHaveBeenLastCalledWith(
+        expect.objectContaining({ name: 'tenant.deleted' }),
+        req.user,
+        expect.objectContaining({ id: tenantUrn }),
+        {
+          operation: 'delete',
+          status: 'failure',
+          metadata: { deletedRealm: false, deletedTenant: true },
+        },
+      );
+    });
+
+    it('can record error and call next when deletion throws', async () => {
+      const req = {
+        params: { id: 'tenant-a' },
+        user: { isCore: true },
+      };
+      const res = {
+        send: jest.fn(),
+      };
+      const next = jest.fn();
+      const handler = deleteTenant(realmServiceMock, repositoryMock, eventServiceMock, auditorMock);
+
+      const entity = new TenantEntity(repositoryMock, tenant);
+      repositoryMock.get.mockResolvedValueOnce(entity);
+      const error = new Error('Keycloak unavailable');
+      realmServiceMock.deleteRealm.mockRejectedValueOnce(error);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      expect(next).toHaveBeenCalledWith(error);
+      expect(res.send).not.toHaveBeenCalled();
+      expect(repositoryMock.delete).not.toHaveBeenCalled();
+      expect(auditorMock.record).toHaveBeenLastCalledWith(
+        expect.objectContaining({ name: 'tenant.deleted' }),
+        req.user,
+        expect.objectContaining({ id: tenantUrn }),
+        { operation: 'delete', status: 'error', metadata: { error: 'Keycloak unavailable' } },
       );
     });
 
@@ -371,7 +467,7 @@ describe('createTenantV2Router', () => {
         send: jest.fn(),
       };
       const next = jest.fn();
-      const handler = updateTenantName(loggerMock, repositoryMock, eventServiceMock);
+      const handler = updateTenantName(loggerMock, repositoryMock, eventServiceMock, auditorMock);
 
       const entity = new TenantEntity(repositoryMock, tenant);
       repositoryMock.get.mockResolvedValueOnce(entity);
@@ -379,6 +475,15 @@ describe('createTenantV2Router', () => {
 
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ name: 'new-mock-name' }));
+      expect(auditorMock.record).toHaveBeenCalledWith(
+        expect.objectContaining({ name: 'tenant.updated', captureChangeSet: true }),
+        req.user,
+        expect.objectContaining({ id: tenantUrn, name: 'new-mock-name' }),
+        {
+          operation: 'update-name',
+          changeSet: { before: { name: tenant.name }, after: { name: 'new-mock-name' } },
+        },
+      );
     });
 
     it('can call next with not found', async () => {
@@ -390,7 +495,7 @@ describe('createTenantV2Router', () => {
         send: jest.fn(),
       };
       const next = jest.fn();
-      const handler = deleteTenant(realmServiceMock, repositoryMock, eventServiceMock);
+      const handler = deleteTenant(realmServiceMock, repositoryMock, eventServiceMock, auditorMock);
 
       repositoryMock.get.mockResolvedValueOnce(null);
       await handler(req as unknown as Request, res as unknown as Response, next);
@@ -401,7 +506,7 @@ describe('createTenantV2Router', () => {
 
   describe('createTenant', () => {
     it('can create handler', () => {
-      const handler = createTenant(loggerMock, repositoryMock, realmServiceMock, eventServiceMock);
+      const handler = createTenant(loggerMock, repositoryMock, realmServiceMock, eventServiceMock, auditorMock);
       expect(handler).toBeTruthy();
     });
 
@@ -418,17 +523,22 @@ describe('createTenantV2Router', () => {
         status: jest.fn().mockReturnThis(),
       };
       const next = jest.fn();
-      const handler = createTenant(loggerMock, repositoryMock, realmServiceMock, eventServiceMock);
+      const handler = createTenant(loggerMock, repositoryMock, realmServiceMock, eventServiceMock, auditorMock);
 
       repositoryMock.find.mockResolvedValueOnce([]);
       repositoryMock.find.mockResolvedValueOnce([]);
 
       req.getConfiguration.mockResolvedValueOnce([[], []]);
-      repositoryMock.save.mockResolvedValueOnce(new TenantEntity(repositoryMock, { ...tenant, status: 'provisioning' }));
+      repositoryMock.save.mockResolvedValueOnce(
+        new TenantEntity(repositoryMock, { ...tenant, status: 'provisioning' }),
+      );
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(res.status).toHaveBeenCalledWith(202);
       expect(res.send).toHaveBeenCalledWith(
-        expect.objectContaining({ id: `urn:ads:platform:tenant-service:v2:/tenants/${tenant.id}`, status: 'provisioning' })
+        expect.objectContaining({
+          id: `urn:ads:platform:tenant-service:v2:/tenants/${tenant.id}`,
+          status: 'provisioning',
+        }),
       );
     });
 
@@ -445,7 +555,7 @@ describe('createTenantV2Router', () => {
         status: jest.fn().mockReturnThis(),
       };
       const next = jest.fn();
-      const handler = createTenant(loggerMock, repositoryMock, realmServiceMock, eventServiceMock);
+      const handler = createTenant(loggerMock, repositoryMock, realmServiceMock, eventServiceMock, auditorMock);
 
       repositoryMock.find.mockResolvedValueOnce([]);
       repositoryMock.find.mockResolvedValueOnce([]);
@@ -463,6 +573,21 @@ describe('createTenantV2Router', () => {
 
       expect(realmServiceMock.createRealm).toHaveBeenCalled();
       expect(eventServiceMock.send).toHaveBeenCalled();
+      expect(auditorMock.record).toHaveBeenCalledTimes(2);
+      expect(auditorMock.record).toHaveBeenNthCalledWith(
+        1,
+        expect.objectContaining({ name: 'tenant.created' }),
+        req.user,
+        expect.objectContaining({ id: tenantUrn, status: 'active' }),
+        { operation: 'create', metadata: { realmProvisioning: 'new' } },
+      );
+      expect(auditorMock.record).toHaveBeenNthCalledWith(
+        2,
+        expect.objectContaining({ name: 'tenant.realm-configured', category: 'security', severity: 'warning' }),
+        req.user,
+        expect.objectContaining({ id: tenantUrn }),
+        { operation: 'provision-realm', metadata: { serviceClientCount: 0 } },
+      );
     });
 
     it('can clean up tenant entity on provisioning failure', async () => {
@@ -478,7 +603,7 @@ describe('createTenantV2Router', () => {
         status: jest.fn().mockReturnThis(),
       };
       const next = jest.fn();
-      const handler = createTenant(loggerMock, repositoryMock, realmServiceMock, eventServiceMock);
+      const handler = createTenant(loggerMock, repositoryMock, realmServiceMock, eventServiceMock, auditorMock);
 
       repositoryMock.find.mockResolvedValueOnce([]);
       repositoryMock.find.mockResolvedValueOnce([]);
@@ -498,6 +623,20 @@ describe('createTenantV2Router', () => {
       expect(realmServiceMock.deleteRealm).toHaveBeenCalled();
       expect(repositoryMock.delete).toHaveBeenCalled();
       expect(eventServiceMock.send).not.toHaveBeenCalled();
+      expect(auditorMock.record).toHaveBeenCalledTimes(1);
+      expect(auditorMock.record).toHaveBeenCalledWith(
+        expect.objectContaining({ name: 'tenant.created' }),
+        req.user,
+        expect.objectContaining({ id: tenantUrn }),
+        {
+          operation: 'create',
+          status: 'failure',
+          metadata: { realmProvisioning: 'new', error: 'Keycloak unavailable' },
+        },
+      );
+      expect(auditorMock.record.mock.invocationCallOrder[0]).toBeLessThan(
+        repositoryMock.delete.mock.invocationCallOrder[0],
+      );
     });
 
     it('can call next with bad request for duplicate tenant name', async () => {
@@ -512,7 +651,7 @@ describe('createTenantV2Router', () => {
         send: jest.fn(),
       };
       const next = jest.fn();
-      const handler = createTenant(loggerMock, repositoryMock, realmServiceMock, eventServiceMock);
+      const handler = createTenant(loggerMock, repositoryMock, realmServiceMock, eventServiceMock, auditorMock);
 
       repositoryMock.find.mockResolvedValueOnce([new TenantEntity(repositoryMock, tenant)]);
 
@@ -533,7 +672,7 @@ describe('createTenantV2Router', () => {
         send: jest.fn(),
       };
       const next = jest.fn();
-      const handler = createTenant(loggerMock, repositoryMock, realmServiceMock, eventServiceMock);
+      const handler = createTenant(loggerMock, repositoryMock, realmServiceMock, eventServiceMock, auditorMock);
 
       repositoryMock.find.mockResolvedValueOnce([]);
       repositoryMock.find.mockResolvedValueOnce([new TenantEntity(repositoryMock, tenant)]);
@@ -556,7 +695,7 @@ describe('createTenantV2Router', () => {
         send: jest.fn(),
       };
       const next = jest.fn();
-      const handler = createTenant(loggerMock, repositoryMock, realmServiceMock, eventServiceMock);
+      const handler = createTenant(loggerMock, repositoryMock, realmServiceMock, eventServiceMock, auditorMock);
 
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(res.send).not.toHaveBeenCalled();
@@ -576,7 +715,7 @@ describe('createTenantV2Router', () => {
         send: jest.fn(),
       };
       const next = jest.fn();
-      const handler = createTenant(loggerMock, repositoryMock, realmServiceMock, eventServiceMock);
+      const handler = createTenant(loggerMock, repositoryMock, realmServiceMock, eventServiceMock, auditorMock);
 
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(res.send).not.toHaveBeenCalled();
@@ -597,7 +736,7 @@ describe('createTenantV2Router', () => {
         send: jest.fn(),
       };
       const next = jest.fn();
-      const handler = createTenant(loggerMock, repositoryMock, realmServiceMock, eventServiceMock);
+      const handler = createTenant(loggerMock, repositoryMock, realmServiceMock, eventServiceMock, auditorMock);
 
       repositoryMock.find.mockResolvedValueOnce([]);
       repositoryMock.find.mockResolvedValueOnce([]);
@@ -606,8 +745,15 @@ describe('createTenantV2Router', () => {
       repositoryMock.save.mockResolvedValueOnce(new TenantEntity(repositoryMock, tenant));
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(res.send).toHaveBeenCalledWith(
-        expect.objectContaining({ ...tenant, id: `urn:ads:platform:tenant-service:v2:/tenants/${tenant.id}` })
+        expect.objectContaining({ ...tenant, id: `urn:ads:platform:tenant-service:v2:/tenants/${tenant.id}` }),
       );
+      expect(auditorMock.record).toHaveBeenCalledWith(
+        expect.objectContaining({ name: 'tenant.created' }),
+        req.user,
+        expect.objectContaining({ id: tenantUrn, realm: tenant.realm }),
+        { operation: 'create', metadata: { realmProvisioning: 'existing' } },
+      );
+      expect(realmServiceMock.createRealm).not.toHaveBeenCalled();
     });
 
     it('can call next with invalid operation for existing realm without admin email', async () => {
@@ -623,7 +769,7 @@ describe('createTenantV2Router', () => {
         send: jest.fn(),
       };
       const next = jest.fn();
-      const handler = createTenant(loggerMock, repositoryMock, realmServiceMock, eventServiceMock);
+      const handler = createTenant(loggerMock, repositoryMock, realmServiceMock, eventServiceMock, auditorMock);
 
       repositoryMock.find.mockResolvedValueOnce([]);
       repositoryMock.find.mockResolvedValueOnce([]);
@@ -647,7 +793,7 @@ describe('createTenantV2Router', () => {
         send: jest.fn(),
       };
       const next = jest.fn();
-      const handler = createTenant(loggerMock, repositoryMock, realmServiceMock, eventServiceMock);
+      const handler = createTenant(loggerMock, repositoryMock, realmServiceMock, eventServiceMock, auditorMock);
 
       repositoryMock.find.mockResolvedValueOnce([]);
       repositoryMock.find.mockResolvedValueOnce([]);
