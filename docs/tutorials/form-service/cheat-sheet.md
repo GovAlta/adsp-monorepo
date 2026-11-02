@@ -1581,6 +1581,19 @@ Page steppers support these Task List and review-flow options:
     </code></pre></td>
   </tr>
   <tr>
+    <td><code>summaryPageTitle</code></td>
+    <td>Show a heading at the top of the summary review page. No heading is shown by default or when the form is read-only.</td>
+    <td><code>Categorization.options</code></td>
+    <td><pre><code>
+{
+  "type": "Categorization",
+  "options": {
+    "summaryPageTitle": "Review your application"
+  }
+}
+    </code></pre></td>
+  </tr>
+  <tr>
     <td><code>hideSubmit</code></td>
     <td>Hide the Submit button on the summary review page.</td>
     <td><code>Categorization.options</code></td>
@@ -1602,6 +1615,19 @@ Page steppers support these Task List and review-flow options:
   "type": "Categorization",
   "options": {
     "toAppOverviewLabel": "Back to task list"
+  }
+}
+    </code></pre></td>
+  </tr>
+  <tr>
+    <td><code>noAnswerMessage</code></td>
+    <td>Change the text shown on review pages and summaries for fields without an answer. Defaults to <code>(none given)</code>.</td>
+    <td><code>Categorization.options</code></td>
+    <td><pre><code>
+{
+  "type": "Categorization",
+  "options": {
+    "noAnswerMessage": "No response provided"
   }
 }
     </code></pre></td>

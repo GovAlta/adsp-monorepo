@@ -3,6 +3,7 @@ import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import Ajv from 'ajv';
 import { Categorization } from '@jsonforms/core';
+import { JsonFormsContext } from '@jsonforms/react';
 import { FormStepperReviewer } from './FormStepperReviewControl';
 import { CategorizationStepperLayoutReviewRendererProps } from './types';
 
@@ -52,15 +53,14 @@ describe('FormStepperReviewer', () => {
 
   it('does not display a summary page title when the form is read only', () => {
     // Arrange
-    const props = createProps(
-      createCategorization({
-        summaryPageTitle: 'Review your application',
-        componentProps: { readOnly: true },
-      }),
-    );
+    const props = createProps(createCategorization({ summaryPageTitle: 'Review your application' }));
 
     // Act
-    render(<FormStepperReviewer {...props} />);
+    render(
+      <JsonFormsContext.Provider value={{ readonly: true, dispatch: jest.fn() }}>
+        <FormStepperReviewer {...props} />
+      </JsonFormsContext.Provider>,
+    );
 
     // Assert
     expect(screen.queryByRole('heading')).not.toBeInTheDocument();

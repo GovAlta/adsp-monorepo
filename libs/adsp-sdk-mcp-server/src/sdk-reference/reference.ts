@@ -398,7 +398,7 @@ export const SDK_REFERENCE: SdkSymbolDoc[] = [
     summary: 'Shared audit action categories used by TypeScript types and configuration validation.',
     details:
       "const AuditCategories = { Administrative: 'administrative', Runtime: 'runtime', " +
-      "Security: 'security', DataAccess: 'data-access' } as const;",
+      "Security: 'security', DataAccess: 'data-access', Diagnostic: 'diagnostic' } as const;",
     example: 'category: AuditCategories.Administrative',
     seeAlso: ['AuditCategory', 'AuditActionDefinition'],
   },
@@ -409,7 +409,7 @@ export const SDK_REFERENCE: SdkSymbolDoc[] = [
     summary: 'String union of supported audit action categories, derived from AuditCategories.',
     details:
       'type AuditCategory = (typeof AuditCategories)[keyof typeof AuditCategories];\n\n' +
-      "Equivalent to 'administrative' | 'runtime' | 'security' | 'data-access'.",
+      "Equivalent to 'administrative' | 'runtime' | 'security' | 'data-access' | 'diagnostic'.",
     seeAlso: ['AuditCategories', 'AuditActionDefinition'],
   },
   {

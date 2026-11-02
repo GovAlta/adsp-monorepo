@@ -1,8 +1,8 @@
 import React from 'react';
-import { JsonFormsDispatch } from '@jsonforms/react';
+import { JsonFormsDispatch, useJsonForms } from '@jsonforms/react';
 import { Categorization, Layout, isVisible, Scoped, UISchemaElement } from '@jsonforms/core';
 import { withJsonFormsLayoutProps, withTranslateProps } from '@jsonforms/react';
-import { CategorizationStepperLayoutReviewRendererProps, FormStepperOptions } from './types';
+import { CategorizationStepperLayoutReviewRendererProps } from './types';
 import {
   FormStepperSummaryH3,
   ReviewItem,
@@ -12,7 +12,6 @@ import {
 } from './styled-components';
 import { withAjvProps } from '../../util/layout';
 import { GoabTable } from '@abgov/react-components-ds1';
-import { FormStepperComponentProps } from './types';
 
 import { JsonFormsRendererRegistryEntry } from '@jsonforms/core';
 import { withJsonFormsControlProps } from '@jsonforms/react';
@@ -60,6 +59,8 @@ import { GoAGroupReviewLayoutTester } from '../../layouts/GroupReviewControl';
 import { HelpContentTester } from '../../Additional/HelpContent';
 import { GoACalloutControlTester, CalloutReviewControl } from '../../Additional/GoACalloutControl';
 import { TableGroupLayoutRenderer, TableLayoutRenderer } from '../../layouts/TableLayoutRenderers';
+import { StepperOptionsProvider } from './context/StepperOptionsContext';
+import { getStepperPageOptions } from './util/stepperOptions';
 
 const EmptyHelpContentRenderer = () => null;
 
@@ -174,8 +175,9 @@ export const GoABaseReviewRenderers: JsonFormsRendererRegistryEntry[] = [
 export const FormStepperReviewer = (props: CategorizationStepperLayoutReviewRendererProps): JSX.Element => {
   const { uischema, data, schema, ajv, cells, enabled } = props;
 
-  const componentProps = (uischema.options?.componentProps as FormStepperComponentProps) ?? {};
-  const { summaryPageTitle } = (uischema.options as FormStepperOptions) ?? {};
+  const jsonForms = useJsonForms();
+  // Read from the uischema directly; the provider below is not yet in scope here.
+  const { summaryPageTitle } = getStepperPageOptions(uischema);
   const categorization = uischema as Categorization;
   const categories = categorization.elements;
   const rescopeMaps = ['#/properties/albertaAddress', '#/properties/canadianAddress', '#/properties/sin'];
@@ -199,73 +201,75 @@ export const FormStepperReviewer = (props: CategorizationStepperLayoutReviewRend
   };
 
   return (
-    <ReviewItem>
-      {summaryPageTitle && !componentProps.readOnly && <FormStepperSummaryH3>{summaryPageTitle}</FormStepperSummaryH3>}
-      {categories.map((category, categoryIndex) => {
-        // Preserve index stability
-        if (!isVisible(category, data, '', ajv, undefined)) {
-          return null;
-        }
+    <StepperOptionsProvider uischema={uischema}>
+      <ReviewItem>
+        {summaryPageTitle && !jsonForms.readonly && <FormStepperSummaryH3>{summaryPageTitle}</FormStepperSummaryH3>}
+        {categories.map((category, categoryIndex) => {
+          // Preserve index stability
+          if (!isVisible(category, data, '', ajv, undefined)) {
+            return null;
+          }
 
-        const categoryLabel = category.label || category.i18n || 'Unknown Category';
+          const categoryLabel = category.label || category.i18n || 'Unknown Category';
 
-        // Build visible elements list
-        const elementsToRender = category.elements
-          .filter((field) => hasVisibleContent(field))
-          .map((e) => {
-            const layout = e as Layout;
+          // Build visible elements list
+          const elementsToRender = category.elements
+            .filter((field) => hasVisibleContent(field))
+            .map((e) => {
+              const layout = e as Layout;
 
-            if (rescopeMaps.some((scope) => layout.elements?.map((el) => (el as Scoped).scope).includes(scope))) {
-              return layout.elements;
-            }
+              if (rescopeMaps.some((scope) => layout.elements?.map((el) => (el as Scoped).scope).includes(scope))) {
+                return layout.elements;
+              }
 
-            return e;
-          })
-          .flat();
+              return e;
+            })
+            .flat();
 
-        // Do not render empty categories
-        if (elementsToRender.length === 0) {
-          return null;
-        }
+          // Do not render empty categories
+          if (elementsToRender.length === 0) {
+            return null;
+          }
 
-        return (
-          <ReviewItemSection
-            key={categoryIndex}
-            className="jsonforms-table-review-section"
-            id={`jsonforms-table-review-section-${categoryIndex}`}
-          >
-            <ReviewItemHeader>
-              <ReviewItemTitle>{categoryLabel}</ReviewItemTitle>
-            </ReviewItemHeader>
+          return (
+            <ReviewItemSection
+              key={categoryIndex}
+              className="jsonforms-table-review-section"
+              id={`jsonforms-table-review-section-${categoryIndex}`}
+            >
+              <ReviewItemHeader>
+                <ReviewItemTitle>{categoryLabel}</ReviewItemTitle>
+              </ReviewItemHeader>
 
-            {elementsToRender.map((element, elementIndex) => {
-              const stepperElement = {
-                ...element,
-                options: {
-                  ...element.options,
-                  stepId: categoryIndex,
-                },
-              };
+              {elementsToRender.map((element, elementIndex) => {
+                const stepperElement = {
+                  ...element,
+                  options: {
+                    ...element.options,
+                    stepId: categoryIndex,
+                  },
+                };
 
-              return (
-                <GoabTable width="100%" key={elementIndex} mb="m">
-                  <tbody>
-                    <JsonFormsDispatch
-                      data-testid="jsonforms-object-list-defined-elements-dispatch"
-                      schema={schema}
-                      uischema={stepperElement}
-                      enabled={enabled}
-                      renderers={GoABaseTableReviewRenderers}
-                      cells={cells}
-                    />
-                  </tbody>
-                </GoabTable>
-              );
-            })}
-          </ReviewItemSection>
-        );
-      })}
-    </ReviewItem>
+                return (
+                  <GoabTable width="100%" key={elementIndex} mb="m">
+                    <tbody>
+                      <JsonFormsDispatch
+                        data-testid="jsonforms-object-list-defined-elements-dispatch"
+                        schema={schema}
+                        uischema={stepperElement}
+                        enabled={enabled}
+                        renderers={GoABaseTableReviewRenderers}
+                        cells={cells}
+                      />
+                    </tbody>
+                  </GoabTable>
+                );
+              })}
+            </ReviewItemSection>
+          );
+        })}
+      </ReviewItem>
+    </StepperOptionsProvider>
   );
 };
 export const FormStepperReviewControl = withAjvProps(withTranslateProps(withJsonFormsLayoutProps(FormStepperReviewer)));

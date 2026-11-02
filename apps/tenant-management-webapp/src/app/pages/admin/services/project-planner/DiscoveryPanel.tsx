@@ -45,15 +45,23 @@ export const DiscoveryPanel: FunctionComponent<DiscoveryPanelProps> = ({
   const realMessages = [...(discovery?.messages || []), ...(solution.state.conversation || [])].sort(
     (first, second) => new Date(first.at).getTime() - new Date(second.at).getTime(),
   );
-  const [initialGreeting] = useState<ConversationMessage | undefined>(() =>
-    realMessages.length === 0 && confidence && confidence.score >= confidence.threshold
+  const buildGreeting = (): ConversationMessage | undefined =>
+    confidence && confidence.score >= confidence.threshold
       ? {
           role: 'assistant',
           content: `Your problem statement already gives me enough detail (confidence ${confidence.score}%). Reply below only if you want to add more or ask a question.`,
           at: new Date(0).toISOString(),
         }
-      : undefined,
+      : undefined;
+  const [initialGreeting, setInitialGreeting] = useState<ConversationMessage | undefined>(() =>
+    realMessages.length === 0 ? buildGreeting() : undefined,
   );
+  useEffect(() => {
+    if (realMessages.length === 0) {
+      setInitialGreeting(buildGreeting());
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [realMessages.length, confidence?.score, confidence?.threshold]);
   const messages = initialGreeting ? [initialGreeting, ...realMessages] : realMessages;
   const recentMessages = messages.slice(-RECENT_MESSAGE_COUNT);
   const earlierMessages = messages.slice(0, messages.length - recentMessages.length);
@@ -89,7 +97,7 @@ export const DiscoveryPanel: FunctionComponent<DiscoveryPanelProps> = ({
 
   return (
     <div data-testid="discovery-panel">
-      {discovery?.warning && (
+      {!blocked && discovery?.warning && (
         <GoabCallout type="important" emphasis="medium" heading="Note" testId="discovery-warning">
           {discovery.warning}
         </GoabCallout>

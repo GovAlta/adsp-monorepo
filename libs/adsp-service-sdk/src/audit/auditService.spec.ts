@@ -497,6 +497,84 @@ describe('AuditServiceImpl', () => {
     });
   });
 
+  describe('logging', () => {
+    let warn: jest.SpyInstance;
+    let error: jest.SpyInstance;
+
+    beforeEach(() => {
+      warn = jest.spyOn(logger, 'warn');
+      error = jest.spyOn(logger, 'error');
+    });
+
+    afterEach(() => {
+      warn.mockRestore();
+      error.mockRestore();
+    });
+
+    it('logs the action, event and tenant of an event that fails locally', async () => {
+      const eventId = '0b9f6a8e-5d8c-4f6f-9a52-7c2d1f0e4b11';
+
+      await create(false, { maxBufferedBytes: 1 }).record(action, { ...details, eventId, tenantId });
+
+      expect(warn).toHaveBeenCalledWith(
+        expect.stringContaining('Audit event case.update for case-service was not recorded (buffer_full).'),
+        expect.objectContaining({
+          context: 'AuditService',
+          action: 'case.update',
+          eventId,
+          tenant: tenantId.toString(),
+        }),
+      );
+    });
+
+    it('logs the tenant and rejected events with their action, event and code', async () => {
+      axiosMock.post.mockResolvedValueOnce(
+        accept(1, [{ index: 1, code: 'invalid_metadata', reason: 'metadata is invalid' }]),
+      );
+      const service = create(true, { batchSize: 2 });
+
+      const [, rejected] = await Promise.all([
+        service.record(action, { ...details, tenantId }),
+        service.record({ ...action, name: 'case.delete' }, { ...details, tenantId }),
+      ]);
+
+      expect(warn).toHaveBeenCalledWith('Audit service rejected 1 of 2 event(s) for case-service: invalid_metadata', {
+        context: 'AuditService',
+        tenant: tenantId.toString(),
+        rejected: [{ action: 'case.delete', eventId: rejected.eventId, code: 'invalid_metadata' }],
+      });
+    });
+
+    it('lists at most 10 rejected events in a single warning', async () => {
+      const rejections = Array.from({ length: 12 }, (_, index) => ({ index, code: 'unknown_action', reason: 'x' }));
+      axiosMock.post.mockResolvedValueOnce(accept(0, rejections));
+      const service = create(false, { batchSize: 12 });
+
+      await Promise.all(Array.from({ length: 12 }, () => service.record(action, details)));
+
+      expect(warn).toHaveBeenCalledTimes(1);
+      const [, meta] = warn.mock.calls[0];
+      expect(meta.rejected).toHaveLength(10);
+      expect(meta.rejectedOmitted).toBe(2);
+    });
+
+    it('logs the actions of a batch that cannot be delivered', async () => {
+      axiosMock.post.mockRejectedValue(httpError(400));
+      const service = create(true, { batchSize: 3 });
+
+      await Promise.all([
+        service.record(action, { ...details, tenantId }),
+        service.record(action, { ...details, tenantId }),
+        service.record({ ...action, name: 'case.delete' }, { ...details, tenantId }),
+      ]);
+
+      expect(error).toHaveBeenCalledWith(
+        expect.stringContaining('Failed to send 3 audit event(s) (case.update, case.delete) for case-service'),
+        expect.objectContaining({ tenant: tenantId.toString(), actions: ['case.update', 'case.delete'] }),
+      );
+    });
+  });
+
   describe('query', () => {
     const page = { results: [], page: { size: 0 } };
 

@@ -64,8 +64,9 @@ import {
 } from './styled-components';
 import { PageReviewContainer, ReviewHeader, ReviewLabel } from '../Inputs/style-component';
 import { DataProperty } from './ObjectListControlTypes';
-import { DEFAULT_MAX_ITEMS } from '../../common/Constants';
+import { DEFAULT_MAX_ITEMS, NO_ANSWER_MESSAGE } from '../../common/Constants';
 import { GoabInputOnChangeDetail, GoabDropdownOnChangeDetail } from '@abgov/ui-components-common';
+import { useStepperPageOptions } from '../FormStepper/context/StepperOptionsContext';
 
 const GenerateRows = (
   Cell: React.ComponentType<OwnPropsOfNonEmptyCellWithDialog & HandleChangeProps>,
@@ -171,6 +172,8 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
     required: string[];
     properties?: Record<string, DataProperty>;
   }
+
+  const { noAnswerMessage } = useStepperPageOptions();
 
   const element =
     (schema?.items as SchemaElement) ||
@@ -306,6 +309,7 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
                               element: key,
                               rowPath,
                               index: i,
+                              noAnswerMessage: noAnswerMessage ?? NO_ANSWER_MESSAGE,
                             })}
                           </span>
                         </div>

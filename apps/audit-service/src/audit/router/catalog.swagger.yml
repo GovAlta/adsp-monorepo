@@ -204,7 +204,7 @@ components:
           minimum: 1
         category:
           type: string
-          enum: [administrative, runtime, security, data-access]
+          enum: [administrative, runtime, security, data-access, diagnostic]
         severity:
           type: string
           enum: [info, warning, critical]

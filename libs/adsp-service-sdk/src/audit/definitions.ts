@@ -3,6 +3,7 @@ export const AuditCategories = {
   Runtime: 'runtime',
   Security: 'security',
   DataAccess: 'data-access',
+  Diagnostic: 'diagnostic',
 } as const;
 
 export type AuditCategory = (typeof AuditCategories)[keyof typeof AuditCategories];

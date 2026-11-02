@@ -32,6 +32,10 @@ interface SolutionWorkplaceProps {
   onSolutionChanged?: () => void;
 }
 
+export const isConfidenceSufficient = (solution: Solution): boolean =>
+  !!solution.state.discovery?.ready ||
+  (!!solution.state.confidence && solution.state.confidence.score >= solution.state.confidence.threshold);
+
 export const getGuidedStep = (solution: Solution): 1 | 2 | 3 => {
   if (solution.state.blueprint) {
     return 3;
@@ -39,10 +43,7 @@ export const getGuidedStep = (solution: Solution): 1 | 2 | 3 => {
   if (!solution.state.analysis) {
     return 1;
   }
-  if (
-    solution.state.discovery?.ready ||
-    (solution.state.confidence && solution.state.confidence.score >= solution.state.confidence.threshold)
-  ) {
+  if (isConfidenceSufficient(solution)) {
     return 3;
   }
   return 2;
@@ -397,14 +398,16 @@ export const SolutionWorkplace: FunctionComponent<SolutionWorkplaceProps> = ({
       planOutOfDateReasons.push('the problem was re-analyzed after this plan was created');
     }
   }
+  const planOutOfDateNeedsReanalysis = problemChanged || !!solution.blueprintOutOfDate;
+  const planOutOfDateCta = planOutOfDateNeedsReanalysis
+    ? 'Use Save & analyze above to refresh the analysis and plan before exporting.'
+    : 'Use Regenerate blueprint below to refresh the plan before exporting.';
+  const confidenceDroppedBelowThreshold = !!blueprint && !isConfidenceSufficient(solution);
   const onDiscoverySolutionChange = updateSolution;
 
   const handleContinue = () =>
     run(async () => {
       const hasBlueprint = !!solution.state.blueprint;
-      if (hasBlueprint && !planOutOfDate) {
-        return;
-      }
       if (hasBlueprint) {
         setBlueprintRefreshing(true);
       }
@@ -415,7 +418,7 @@ export const SolutionWorkplace: FunctionComponent<SolutionWorkplaceProps> = ({
         const analyzed = await api.analyze(solution.id, { mode });
         setMode(analyzed.state.analysis?.mode ?? mode);
         updateSolution(analyzed);
-        if (hasBlueprint) {
+        if (hasBlueprint && isConfidenceSufficient(analyzed)) {
           updateSolution(await api.blueprint(solution.id, { mode: analyzed.state.analysis?.mode ?? mode }));
         }
       } finally {
@@ -523,20 +526,23 @@ export const SolutionWorkplace: FunctionComponent<SolutionWorkplaceProps> = ({
                   <AnalysisModeToggle
                     mode={mode}
                     modes={analysisModes}
+                    disabled={anyBusy}
                     onChange={(selectedMode) => {
                       userSelectedMode.current = true;
                       setMode(selectedMode);
                     }}
                   />
                   {analysis && (
-                    <GoabBadge
-                      type="success"
-                      content={`Last run: ${analysis.mode === 'ai' ? 'AI analysis' : 'Rule-based analysis'} · ${new Date(
-                        analysis.analyzedOn,
-                      ).toLocaleString()}`}
-                      icon={false}
-                      testId="analysis-mode-badge"
-                    />
+                    <div style={{ opacity: anyBusy ? 0.5 : 1 }}>
+                      <GoabBadge
+                        type="success"
+                        content={`Last run: ${analysis.mode === 'ai' ? 'AI analysis' : 'Rule-based analysis'} · ${new Date(
+                          analysis.analyzedOn,
+                        ).toLocaleString()}`}
+                        icon={false}
+                        testId="analysis-mode-badge"
+                      />
+                    </div>
                   )}
                 </div>
                 <ProblemStatementUpload onChange={setProblemDraft} disabled={anyBusy} />
@@ -561,7 +567,7 @@ export const SolutionWorkplace: FunctionComponent<SolutionWorkplaceProps> = ({
                   The available analysis modes could not be loaded. Your current selection remains available.
                 </GoabCallout>
               )}
-              {analysis?.warning && (
+              {!anyBusy && analysis?.warning && (
                 <GoabCallout
                   type="important"
                   emphasis="medium"
@@ -583,13 +589,16 @@ export const SolutionWorkplace: FunctionComponent<SolutionWorkplaceProps> = ({
             expanded={expandedSteps[2]}
             onToggle={() => toggleStep(2)}
             headingContent={
-              analysis && (
+              analysis &&
+              (busy || discoveryStarting || discoveryBusy ? (
+                <GoabBadge type="information" content="Refreshing…" testId="discovery-updating" />
+              ) : (
                 <GoabBadge
                   type="information"
                   content={`${discoveryMessageCount} message${discoveryMessageCount === 1 ? '' : 's'}`}
                   testId="discovery-message-count"
                 />
-              )
+              ))
             }
           >
             <section aria-label="Discovery conversation">
@@ -623,25 +632,40 @@ export const SolutionWorkplace: FunctionComponent<SolutionWorkplaceProps> = ({
             <section aria-label="Proposed solution">
               {blueprint ? (
                 <>
-                  {!planOutOfDate ? (
-                    <GoabCallout type="success" heading="Solution presented" testId="plan-ready" mb="m">
-                      Refine it in the conversation or consult a specialist.
-                    </GoabCallout>
-                  ) : (
-                    <GoabCallout
-                      type="important"
-                      emphasis="high"
-                      heading="Plan out of date"
-                      testId="plan-out-of-date"
-                      mb="m"
-                    >
-                      <div>
-                        This plan no longer reflects your request because{' '}
-                        {planOutOfDateReasons.length ? planOutOfDateReasons.join(', and ') : 'the request changed'}. Use
-                        Save &amp; analyze above to refresh the analysis and plan before exporting.
-                      </div>
-                    </GoabCallout>
-                  )}
+                  {!blueprintRefreshing &&
+                    (confidenceDroppedBelowThreshold ? (
+                      <GoabCallout
+                        type="important"
+                        emphasis="high"
+                        heading="Confidence dropped below the threshold"
+                        testId="plan-confidence-dropped"
+                        mb="m"
+                      >
+                        <div>
+                          The latest analysis put confidence at {solution.state.confidence?.score}% (below the{' '}
+                          {solution.state.confidence?.threshold}% needed). Answer the open questions in Discovery (step
+                          2) to raise confidence before regenerating the plan.
+                        </div>
+                      </GoabCallout>
+                    ) : !planOutOfDate ? (
+                      <GoabCallout type="success" heading="Solution presented" testId="plan-ready" mb="m">
+                        Refine it in the conversation or consult a specialist.
+                      </GoabCallout>
+                    ) : (
+                      <GoabCallout
+                        type="important"
+                        emphasis="high"
+                        heading="Plan out of date"
+                        testId="plan-out-of-date"
+                        mb="m"
+                      >
+                        <div>
+                          This plan no longer reflects your request because{' '}
+                          {planOutOfDateReasons.length ? planOutOfDateReasons.join(', and ') : 'the request changed'}.{' '}
+                          {planOutOfDateCta}
+                        </div>
+                      </GoabCallout>
+                    ))}
 
                   {specialistPanel}
 

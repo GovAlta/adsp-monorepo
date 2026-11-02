@@ -26,7 +26,7 @@ const PAGE_SIZES = [10, 25, 50, 100];
 const DEFAULT_PAGE_SIZE = 25;
 const ANY = 'any';
 const STATUSES = ['success', 'failure', 'blocked', 'error'];
-const CATEGORIES = ['administrative', 'runtime', 'security', 'data-access'];
+const CATEGORIES = ['administrative', 'runtime', 'security', 'data-access', 'diagnostic'];
 const SEVERITIES = ['info', 'warning', 'critical'];
 
 interface Criteria extends Omit<EventQuery, 'top' | 'after'> {
