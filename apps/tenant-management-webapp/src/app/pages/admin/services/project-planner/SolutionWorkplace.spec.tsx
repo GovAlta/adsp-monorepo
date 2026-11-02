@@ -257,7 +257,7 @@ describe('SolutionWorkplace', () => {
     expect(container.querySelector('[testid="optional-experts"]')?.hasAttribute('open')).toBe(false);
   });
 
-  it('skips re-analyzing and re-generating when Save & analyze is clicked with nothing changed', async () => {
+  it('always re-analyzes on Save & analyze, even with nothing changed, so deployed fixes can be picked up', async () => {
     const planned = withPlan();
     const { container } = await setup(planned, {
       analyze: jest.fn().mockResolvedValue(planned),
@@ -266,9 +266,29 @@ describe('SolutionWorkplace', () => {
 
     click(container, 'problem-continue');
 
-    await waitFor(() => expect(container.querySelector('[testid="problem-continue"]')).not.toBeNull());
-    expect(api.analyze).not.toHaveBeenCalled();
+    await waitFor(() => expect(api.analyze).toHaveBeenCalledWith('solution-1', { mode: 'ai' }));
+    await waitFor(() => expect(api.blueprint).toHaveBeenCalledWith('solution-1', { mode: 'ai' }));
+  });
+
+  it('skips regenerating the blueprint, and shows a confidence-dropped notice, when re-analysis pushes confidence below the threshold', async () => {
+    const planned = withPlan();
+    const lowConfidenceAfterReanalysis = {
+      ...planned,
+      state: { ...planned.state, confidence: { score: 40, threshold: 50, factors: [] } },
+    };
+    const { container } = await setup(planned, {
+      analyze: jest.fn().mockResolvedValue(lowConfidenceAfterReanalysis),
+    });
+
+    click(container, 'problem-continue');
+
+    await waitFor(() => expect(api.analyze).toHaveBeenCalledWith('solution-1', { mode: 'ai' }));
+    await waitFor(() =>
+      expect(container.querySelector('[testid="plan-confidence-dropped"]')?.textContent).toContain('confidence at 40%'),
+    );
     expect(api.blueprint).not.toHaveBeenCalled();
+    expect(container.querySelector('[testid="plan-ready"]')).toBeNull();
+    expect(container.querySelector('[testid="plan-out-of-date"]')).toBeNull();
   });
 
   it('re-analyzes and regenerates the blueprint when the plan is flagged out of date', async () => {
@@ -436,7 +456,7 @@ describe('SolutionWorkplace', () => {
 
     await waitFor(() => expect(api.discovery).toHaveBeenCalledWith('solution-1', { mode: 'ai', force: true }));
     await waitFor(() => expect(api.blueprint).toHaveBeenCalledWith('solution-1', { mode: 'ai' }));
-    expect(container.querySelector('[testid="plan-ready"]')).not.toBeNull();
+    await waitFor(() => expect(container.querySelector('[testid="plan-ready"]')).not.toBeNull());
   });
 
   it('keeps the plan visible, marks it out of date, and directs users to Save & analyze', async () => {
@@ -445,6 +465,16 @@ describe('SolutionWorkplace', () => {
 
     expect(container.querySelector('[testid="update-plan"]')).toBeNull();
     expect(container.querySelector('[testid="plan-out-of-date"]')?.textContent).toContain('Save & analyze above');
+  });
+
+  it('directs users to regenerate the blueprint, not Save & analyze, when only the analysis moved ahead of the plan', async () => {
+    const reanalyzed = withPlan({ analysis: { mode: 'ai', analyzedOn: '2026-03-01T11:00:00.000Z' } });
+    const { container } = await setup(reanalyzed);
+
+    const message = container.querySelector('[testid="plan-out-of-date"]')?.textContent;
+    expect(message).toContain('the problem was re-analyzed after this plan was created');
+    expect(message).toContain('Regenerate blueprint below');
+    expect(message).not.toContain('Save & analyze above');
   });
 
   it('refreshes an existing blueprint when Save & analyze is used', async () => {

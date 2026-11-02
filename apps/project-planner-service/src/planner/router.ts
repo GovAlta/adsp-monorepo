@@ -324,33 +324,18 @@ export function createPlannerRouter({
       : { mode: 'rules', criteria: ruleAcceptanceCriteria(blueprint, state.decisions) };
   }
 
-  async function refreshConfidence(req: Request, state: SolutionState, mode?: AnalysisMode): Promise<void> {
+  function refreshConfidence(state: SolutionState): void {
     if (state.discovery) {
-      const requestedMode: AnalysisMode = mode || (llm ? 'ai' : 'rules');
       const evidence = allUserEvidence(state);
-      const { result: aiFactors, warning } = await tryAi(
-        requestedMode,
-        async (llm) => {
-          const patterns = await getPatterns(req, patternRepository);
-          const recent = [...(state.discovery?.messages || []), ...(state.conversation || [])].map(
-            ({ role, content }) => ({ role, content }),
-          );
-          const discovered = await llm.discover(state.problemStatement, recent, patterns);
-          return normalizeFactors(discovered.factors, evidence);
-        },
-        ruleFallbackWording('scoring', 'rule-based scoring'),
-      );
-      const rawFactors = aiFactors ?? ruleAssess(evidence);
       const hasOpenQuestions = state.questions.some((q) => q.status === 'open');
-      const factors = capFactors(rawFactors, hasOpenQuestions);
+      const factors = capFactors(ruleAssess(evidence), hasOpenQuestions);
       const confidence = computeConfidence(factors);
-      // The warning reflects this attempt only, so switching to rules mode clears a stale AI failure note.
       state.discovery = {
         ...state.discovery,
         factors,
         confidence,
         ready: isDiscoveryReady(factors, confidence),
-        warning,
+        warning: undefined,
       };
     }
     state.confidence = assessConfidence(state);
@@ -372,6 +357,26 @@ export function createPlannerRouter({
     return { ...withDiscovery, confidence: assessConfidence(withDiscovery) };
   }
 
+  function announceDiscoveryChange(
+    state: SolutionState,
+    priorDiscovery: NonNullable<SolutionState['discovery']>,
+  ): void {
+    const discovery = state.discovery;
+    if (!discovery || !priorDiscovery.messages.length) {
+      return;
+    }
+    const readyFlippedOff = priorDiscovery.ready && !discovery.ready;
+    const confidenceDropped = priorDiscovery.confidence - discovery.confidence >= 10;
+    if (!readyFlippedOff && !confidenceDropped) {
+      return;
+    }
+    const reply = ruleDiscoveryReply(discovery.factors, discovery.confidence, discovery.ready);
+    state.discovery = {
+      ...discovery,
+      messages: [...discovery.messages, { role: 'assistant', content: reply, at: new Date().toISOString() }],
+    };
+  }
+
   async function runAnalysis(
     req: Request,
     solution: Solution,
@@ -380,7 +385,14 @@ export function createPlannerRouter({
       mode,
       message,
       skipConfidenceRefresh,
-    }: { text: string; mode?: AnalysisMode; message?: string; skipConfidenceRefresh?: boolean },
+      announceDiscoveryUpdate,
+    }: {
+      text: string;
+      mode?: AnalysisMode;
+      message?: string;
+      skipConfidenceRefresh?: boolean;
+      announceDiscoveryUpdate?: boolean;
+    },
   ): Promise<Solution> {
     const patterns = await getPatterns(req, patternRepository);
     const requestedMode: AnalysisMode = mode || (llm ? 'ai' : 'rules');
@@ -498,10 +510,14 @@ export function createPlannerRouter({
       analysis: { mode: result.mode, model: result.model, warning, analyzedOn: now },
     };
     state.nextSteps = buildNextSteps(state);
+    const priorDiscovery = state.discovery;
     if (skipConfidenceRefresh) {
       state.confidence = assessConfidence(state);
     } else {
-      await refreshConfidence(req, state, requestedMode);
+      refreshConfidence(state);
+      if (announceDiscoveryUpdate && priorDiscovery) {
+        announceDiscoveryChange(state, priorDiscovery);
+      }
     }
     return persist(
       req,
@@ -769,7 +785,7 @@ export function createPlannerRouter({
         };
         if (problemStatement !== undefined && problemStatement !== solution.state.problemStatement) {
           state.problemStatementUpdatedOn = new Date().toISOString();
-          await refreshConfidence(req, state);
+          refreshConfidence(state);
         }
         res.send(
           await persist(
@@ -825,7 +841,7 @@ export function createPlannerRouter({
         if (!text) {
           throw new InvalidOperationError('Solution has no problem statement to analyze.');
         }
-        res.send(await runAnalysis(req, solution, { text, mode: req.body.mode }));
+        res.send(await runAnalysis(req, solution, { text, mode: req.body.mode, announceDiscoveryUpdate: true }));
       } catch (err) {
         next(err);
       }
@@ -935,53 +951,6 @@ export function createPlannerRouter({
         res.send(
           await runAnalysis(req, solution, { text: solution.state.problemStatement, mode: req.body.mode, message }),
         );
-      } catch (err) {
-        next(err);
-      }
-    },
-  );
-
-  router.put(
-    '/solutions/:id/questions/:questionId',
-    requirePlannerUser,
-    validateId,
-    createValidationHandler(param('questionId').isUUID(), body('answer').isString().isLength({ max: 5000 })),
-    getSolution(solutionRepository),
-    async (req, res, next) => {
-      try {
-        const solution = loaded(req);
-        const existing = solution.state.questions.find((q) => q.id === req.params.questionId);
-        if (!existing) {
-          throw new NotFoundError('question', req.params.questionId);
-        }
-        const answer: string = req.body.answer.trim();
-        const updatedQuestions = solution.state.questions.map((q) =>
-          q.id === existing.id
-            ? answer
-              ? { ...q, status: 'answered' as const, answer }
-              : { id: q.id, question: q.question, raisedBy: q.raisedBy, status: 'open' as const }
-            : q,
-        );
-        const questions = answer ? dedupeOpenQuestions(updatedQuestions) : updatedQuestions;
-        const state = { ...solution.state, questions };
-        state.nextSteps = buildNextSteps(state);
-        const hadOpenQuestions = solution.state.questions.some((q) => q.status === 'open');
-        const hasOpenQuestions = questions.some((q) => q.status === 'open');
-        if (state.discovery && answer) {
-          const evidence = allUserEvidence(state);
-          const factors = capFactors(
-            applyAnswerToFactors(state.discovery.factors, existing.question, answer, evidence),
-            hasOpenQuestions,
-          );
-          const confidence = computeConfidence(factors);
-          state.discovery = { ...state.discovery, factors, confidence, ready: isDiscoveryReady(factors, confidence) };
-        }
-        if (llm && answer && hadOpenQuestions && !hasOpenQuestions) {
-          await refreshConfidence(req, state, state.analysis?.mode);
-        } else {
-          state.confidence = assessConfidence(state);
-        }
-        res.send(await persist(req, { ...solution, state }, 'answer'));
       } catch (err) {
         next(err);
       }
