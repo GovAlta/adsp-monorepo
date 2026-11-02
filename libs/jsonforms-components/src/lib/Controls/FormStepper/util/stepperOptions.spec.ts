@@ -8,6 +8,7 @@ describe('getStepperPageOptions', () => {
       toAppOverviewLabel: 'Back to application overview',
       submissionLabel: 'Next',
       noAnswerMessage: '(none given)',
+      summaryPageTitle: '',
     });
   });
 
@@ -18,6 +19,7 @@ describe('getStepperPageOptions', () => {
       toAppOverviewLabel: 'Back to application overview',
       submissionLabel: 'Next',
       noAnswerMessage: '(none given)',
+      summaryPageTitle: '',
     });
   });
 
@@ -30,6 +32,7 @@ describe('getStepperPageOptions', () => {
         toAppOverviewLabel: 'Back to tasks',
         submissionLabel: 'Review',
         noAnswerMessage: 'No response provided',
+        summaryPageTitle: 'Review your application',
       },
     });
 
@@ -39,6 +42,7 @@ describe('getStepperPageOptions', () => {
       toAppOverviewLabel: 'Back to tasks',
       submissionLabel: 'Review',
       noAnswerMessage: 'No response provided',
+      summaryPageTitle: 'Review your application',
     });
   });
 });
