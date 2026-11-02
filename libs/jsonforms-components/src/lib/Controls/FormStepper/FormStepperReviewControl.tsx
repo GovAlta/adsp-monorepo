@@ -1,8 +1,8 @@
 import React from 'react';
-import { JsonFormsDispatch } from '@jsonforms/react';
+import { JsonFormsDispatch, useJsonForms } from '@jsonforms/react';
 import { Categorization, Layout, isVisible, Scoped, UISchemaElement } from '@jsonforms/core';
 import { withJsonFormsLayoutProps, withTranslateProps } from '@jsonforms/react';
-import { CategorizationStepperLayoutReviewRendererProps, FormStepperOptions } from './types';
+import { CategorizationStepperLayoutReviewRendererProps } from './types';
 import {
   FormStepperSummaryH3,
   ReviewItem,
@@ -12,7 +12,6 @@ import {
 } from './styled-components';
 import { withAjvProps } from '../../util/layout';
 import { GoabTable } from '@abgov/react-components-ds1';
-import { FormStepperComponentProps } from './types';
 
 import { JsonFormsRendererRegistryEntry } from '@jsonforms/core';
 import { withJsonFormsControlProps } from '@jsonforms/react';
@@ -61,6 +60,7 @@ import { HelpContentTester } from '../../Additional/HelpContent';
 import { GoACalloutControlTester, CalloutReviewControl } from '../../Additional/GoACalloutControl';
 import { TableGroupLayoutRenderer, TableLayoutRenderer } from '../../layouts/TableLayoutRenderers';
 import { StepperOptionsProvider } from './context/StepperOptionsContext';
+import { getStepperPageOptions } from './util/stepperOptions';
 
 const EmptyHelpContentRenderer = () => null;
 
@@ -175,8 +175,9 @@ export const GoABaseReviewRenderers: JsonFormsRendererRegistryEntry[] = [
 export const FormStepperReviewer = (props: CategorizationStepperLayoutReviewRendererProps): JSX.Element => {
   const { uischema, data, schema, ajv, cells, enabled } = props;
 
-  const componentProps = (uischema.options?.componentProps as FormStepperComponentProps) ?? {};
-  const { summaryPageTitle } = (uischema.options as FormStepperOptions) ?? {};
+  const jsonForms = useJsonForms();
+  // Read from the uischema directly; the provider below is not yet in scope here.
+  const { summaryPageTitle } = getStepperPageOptions(uischema);
   const categorization = uischema as Categorization;
   const categories = categorization.elements;
   const rescopeMaps = ['#/properties/albertaAddress', '#/properties/canadianAddress', '#/properties/sin'];
@@ -202,9 +203,7 @@ export const FormStepperReviewer = (props: CategorizationStepperLayoutReviewRend
   return (
     <StepperOptionsProvider uischema={uischema}>
       <ReviewItem>
-        {summaryPageTitle && !componentProps.readOnly && (
-          <FormStepperSummaryH3>{summaryPageTitle}</FormStepperSummaryH3>
-        )}
+        {summaryPageTitle && !jsonForms.readonly && <FormStepperSummaryH3>{summaryPageTitle}</FormStepperSummaryH3>}
         {categories.map((category, categoryIndex) => {
           // Preserve index stability
           if (!isVisible(category, data, '', ajv, undefined)) {

@@ -7,6 +7,7 @@ export interface StepperPageOptions {
   toAppOverviewLabel?: string;
   submissionLabel?: string;
   noAnswerMessage?: string;
+  summaryPageTitle?: string;
 }
 
 export const getStepperPageOptions = (uischema?: UISchemaElement): StepperPageOptions => ({
@@ -15,4 +16,5 @@ export const getStepperPageOptions = (uischema?: UISchemaElement): StepperPageOp
   toAppOverviewLabel: uischema?.options?.toAppOverviewLabel ?? BACK_TO_OVERVIEW_LABEL,
   submissionLabel: uischema?.options?.submissionLabel ?? NEXT_BUTTON_LABEL,
   noAnswerMessage: uischema?.options?.noAnswerMessage ?? NO_ANSWER_MESSAGE,
+  summaryPageTitle: uischema?.options?.summaryPageTitle ?? '',
 });
