@@ -74,6 +74,22 @@ export interface AuditEventsState {
   loading: boolean;
 }
 
+export interface AuditQueryState {
+  criteria: AuditEventCriteria;
+  applied: AuditEventCriteria;
+  searched: boolean;
+  pageSize: number;
+  page: number;
+  // The API pages by cursor, so the cursor that opens each page is remembered to allow going back.
+  cursors: (string | undefined)[];
+}
+
+export interface AuditSelectedEventState {
+  event?: AuditEventRecord;
+  loading: boolean;
+  notFound: boolean;
+}
+
 export interface AuditState {
   catalogs: AuditCatalog[];
   retention: AuditRetention;
@@ -81,7 +97,18 @@ export interface AuditState {
   loaded: boolean;
   exporting: boolean;
   events: AuditEventsState;
+  query: AuditQueryState;
+  selected: AuditSelectedEventState;
 }
+
+export const defaultAuditQuery: AuditQueryState = {
+  criteria: {},
+  applied: {},
+  searched: false,
+  pageSize: AUDIT_DEFAULT_PAGE_SIZE,
+  page: 0,
+  cursors: [undefined],
+};
 
 export const defaultAuditState: AuditState = {
   catalogs: [],
@@ -90,4 +117,6 @@ export const defaultAuditState: AuditState = {
   loaded: false,
   exporting: false,
   events: { results: [], loading: false },
+  query: defaultAuditQuery,
+  selected: { loading: false, notFound: false },
 };

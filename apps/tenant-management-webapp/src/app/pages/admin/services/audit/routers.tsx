@@ -1,11 +1,14 @@
 import React from 'react';
-import { Route, Routes } from 'react-router-dom';
+import { Navigate, Route, Routes } from 'react-router-dom';
 import { Audit } from './audit';
+import { AuditEventPage } from './eventPage';
 
 export const AuditRouter = () => {
   return (
     <Routes>
-      <Route path="/" element={<Audit />} />
+      <Route path="/events/:namespace/:id" element={<AuditEventPage />} />
+      <Route path="/:tab" element={<Audit />} />
+      <Route path="*" element={<Navigate to="overview" />} />
     </Routes>
   );
 };

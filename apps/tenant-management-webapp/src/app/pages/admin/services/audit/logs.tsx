@@ -1,5 +1,6 @@
-import React, { FunctionComponent, useEffect, useState } from 'react';
+import React, { FunctionComponent, useEffect, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
 import {
   GoabButton,
   GoabCallout,
@@ -11,8 +12,14 @@ import {
   GoabInput,
 } from '@abgov/react-components';
 import { RootState } from '@store/index';
-import { fetchAuditConfiguration, clearAuditEvents, exportAuditEvents, fetchAuditEvents } from '@store/audit/actions';
-import { AUDIT_DEFAULT_PAGE_SIZE, AUDIT_PAGE_SIZES } from '@store/audit/models';
+import {
+  fetchAuditConfiguration,
+  clearAuditEvents,
+  exportAuditEvents,
+  fetchAuditEvents,
+  setAuditQuery,
+} from '@store/audit/actions';
+import { AUDIT_PAGE_SIZES } from '@store/audit/models';
 import type { AuditEventCriteria, AuditEventRecord } from '@store/audit/models';
 import DataTable from '@components/DataTable';
 import { PageIndicator } from '@components/Indicator';
@@ -28,7 +35,6 @@ import {
   PaginationSummary,
   SearchActions,
 } from '../../event-log/styled-components';
-import { AuditEventDetails } from './eventDetails';
 
 const READER_ROLE = 'audit-reader';
 const ANY = 'any';
@@ -54,42 +60,34 @@ const FILTER_LABELS: Record<keyof AuditEventCriteria, string> = {
 
 const toIso = (value?: string) => (value ? new Date(value).toISOString() : undefined);
 
-const EventRow: FunctionComponent<{ event: AuditEventRecord }> = ({ event }) => {
-  const [showDetails, setShowDetails] = useState(false);
-  return (
-    <>
-      <tr>
-        <td>{new Date(event.occurredAt).toLocaleString()}</td>
-        <td>{event.namespace}</td>
-        <td data-testid="audit-event-action">{event.action}</td>
-        <td>{event.actor?.name || event.actor?.email || event.actor?.id}</td>
-        <td>{event.resource ? `${event.resource.type}${event.resource.id ? `/${event.resource.id}` : ''}` : ''}</td>
-        <td>{event.category}</td>
-        <td>{event.status}</td>
-        <td>
-          <GoAContextMenu>
-            <GoAContextMenuIcon
-              type={showDetails ? 'eye-off' : 'eye'}
-              title="Toggle details"
-              onClick={() => setShowDetails(!showDetails)}
-              testId="audit-event-toggle-details"
-            />
-          </GoAContextMenu>
-        </td>
-      </tr>
-      {showDetails && (
-        <tr>
-          <td colSpan={8}>
-            <AuditEventDetails event={event} />
-          </td>
-        </tr>
-      )}
-    </>
-  );
-};
+const EventRow: FunctionComponent<{ event: AuditEventRecord; onView: (event: AuditEventRecord) => void }> = ({
+  event,
+  onView,
+}) => (
+  <tr>
+    <td>{new Date(event.occurredAt).toLocaleString()}</td>
+    <td>{event.namespace}</td>
+    <td data-testid="audit-event-action">{event.action}</td>
+    <td>{event.actor?.name || event.actor?.email || event.actor?.id}</td>
+    <td>{event.resource ? `${event.resource.type}${event.resource.id ? `/${event.resource.id}` : ''}` : ''}</td>
+    <td>{event.category}</td>
+    <td>{event.status}</td>
+    <td>
+      <GoAContextMenu>
+        <GoAContextMenuIcon
+          type="eye"
+          title="View details"
+          onClick={() => onView(event)}
+          testId="audit-event-view-details"
+        />
+      </GoAContextMenu>
+    </td>
+  </tr>
+);
 
 export const AuditLogs: FunctionComponent = () => {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const hasReaderRole = useSelector((state: RootState) =>
     state.session?.resourceAccess?.['urn:ads:platform:audit-service']?.roles?.includes(READER_ROLE),
   );
@@ -97,14 +95,16 @@ export const AuditLogs: FunctionComponent = () => {
   const catalogs = useSelector((state: RootState) => state.audit.catalogs);
   const knownNamespaces = useSelector((state: RootState) => state.audit.namespaces);
   const exporting = useSelector((state: RootState) => state.audit.exporting);
-  const [criteria, setCriteria] = useState<AuditEventCriteria>({});
-  const [applied, setApplied] = useState<AuditEventCriteria>({});
+  // Query state lives in the store so the list is restored when returning from an event's detail page.
+  const { criteria, applied, searched, pageSize, page, cursors } = useSelector((state: RootState) => state.audit.query);
+  const initialQuery = useRef({ applied, cursors, page, pageSize }).current;
   const [filtersOpen, setFiltersOpen] = useState(false);
-  const [searched, setSearched] = useState(false);
-  const [pageSize, setPageSize] = useState(AUDIT_DEFAULT_PAGE_SIZE);
-  // The API pages by cursor, so the cursor that opens each page is remembered to allow going back.
-  const [page, setPage] = useState(0);
-  const [cursors, setCursors] = useState<(string | undefined)[]>([undefined]);
+
+  const setCriteria = (update: (current: AuditEventCriteria) => AuditEventCriteria) =>
+    dispatch(setAuditQuery({ criteria: update(criteria) }));
+
+  const viewEvent = (event: AuditEventRecord) =>
+    navigate(`/admin/services/audit/events/${encodeURIComponent(event.namespace)}/${encodeURIComponent(event.id)}`);
 
   const set = (key: keyof AuditEventCriteria, value?: string) =>
     setCriteria((current) => ({ ...current, [key]: value || undefined }));
@@ -155,10 +155,7 @@ export const AuditLogs: FunctionComponent = () => {
   };
 
   const loadFirstPage = (nextCriteria: AuditEventCriteria, size = pageSize) => {
-    setApplied(nextCriteria);
-    setPage(0);
-    setCursors([undefined]);
-    setSearched(true);
+    dispatch(setAuditQuery({ applied: nextCriteria, page: 0, cursors: [undefined], searched: true, pageSize: size }));
     dispatch(fetchAuditEvents(nextCriteria, undefined, size));
   };
 
@@ -172,7 +169,7 @@ export const AuditLogs: FunctionComponent = () => {
   };
 
   const reset = () => {
-    setCriteria({});
+    dispatch(setAuditQuery({ criteria: {} }));
     loadFirstPage({});
   };
 
@@ -186,26 +183,25 @@ export const AuditLogs: FunctionComponent = () => {
   };
 
   const goNext = () => {
-    setCursors([...cursors.slice(0, page + 1), next]);
-    setPage(page + 1);
+    dispatch(setAuditQuery({ cursors: [...cursors.slice(0, page + 1), next], page: page + 1 }));
     dispatch(fetchAuditEvents(applied, next, pageSize));
   };
 
   const goPrevious = () => {
-    setPage(page - 1);
+    dispatch(setAuditQuery({ page: page - 1 }));
     dispatch(fetchAuditEvents(applied, cursors[page - 1], pageSize));
   };
 
   const changePageSize = (size: number) => {
-    setPageSize(size);
     loadFirstPage(applied, size);
   };
 
   useEffect(() => {
     if (hasReaderRole) {
       dispatch(fetchAuditConfiguration());
-      dispatch(fetchAuditEvents({}, undefined, AUDIT_DEFAULT_PAGE_SIZE));
-      setSearched(true);
+      // Reopen the page the user left, if they navigated away (e.g. to an event's detail page).
+      dispatch(fetchAuditEvents(initialQuery.applied, initialQuery.cursors[initialQuery.page], initialQuery.pageSize));
+      dispatch(setAuditQuery({ searched: true }));
     }
     return () => {
       dispatch(clearAuditEvents());
@@ -500,7 +496,7 @@ export const AuditLogs: FunctionComponent = () => {
             </thead>
             <tbody>
               {results.map((event) => (
-                <EventRow key={event.id} event={event} />
+                <EventRow key={event.id} event={event} onView={viewEvent} />
               ))}
             </tbody>
           </DataTable>

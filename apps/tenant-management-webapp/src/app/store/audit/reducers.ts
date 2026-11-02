@@ -4,6 +4,10 @@ import {
   EXPORT_AUDIT_EVENTS_ACTION,
   EXPORT_AUDIT_EVENTS_DONE_ACTION,
   FETCH_AUDIT_CONFIGURATION_SUCCESS_ACTION,
+  FETCH_AUDIT_EVENT_ACTION,
+  FETCH_AUDIT_EVENT_FAILED_ACTION,
+  FETCH_AUDIT_EVENT_SUCCESS_ACTION,
+  SET_AUDIT_QUERY_ACTION,
   FETCH_AUDIT_EVENTS_ACTION,
   FETCH_AUDIT_EVENTS_FAILED_ACTION,
   FETCH_AUDIT_EVENTS_SUCCESS_ACTION,
@@ -27,6 +31,14 @@ export default function (state: AuditState = defaultAuditState, action: AuditAct
       };
     case FETCH_AUDIT_EVENTS_FAILED_ACTION:
       return { ...state, events: { ...state.events, loading: false } };
+    case SET_AUDIT_QUERY_ACTION:
+      return { ...state, query: { ...state.query, ...action.query } };
+    case FETCH_AUDIT_EVENT_ACTION:
+      return { ...state, selected: { loading: true, notFound: false } };
+    case FETCH_AUDIT_EVENT_SUCCESS_ACTION:
+      return { ...state, selected: { event: action.event, loading: false, notFound: false } };
+    case FETCH_AUDIT_EVENT_FAILED_ACTION:
+      return { ...state, selected: { loading: false, notFound: action.notFound } };
     case CLEAR_AUDIT_EVENTS_ACTION:
       return { ...state, events: defaultAuditState.events };
     case EXPORT_AUDIT_EVENTS_ACTION:
