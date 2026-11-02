@@ -128,6 +128,8 @@ export function countEventLogEvents(
     const user = req.user;
     const tenant = req.tenant;
     const {
+      namespace,
+      name,
       timestampMin: timestampMinValue,
       timestampMax: timestampMaxValue,
       correlationId,
@@ -146,6 +148,8 @@ export function countEventLogEvents(
       const end = startBenchmark(req, 'operation-handler-time');
 
       const count = await countEvents(directory, tokenProvider, tenant.id, {
+        ...(namespace ? { namespace: namespace as string } : {}),
+        ...(name ? { name: name as string } : {}),
         timestampMin: timestampMinValue ? new Date(timestampMinValue as string) : null,
         timestampMax: timestampMaxValue ? new Date(timestampMaxValue as string) : null,
         correlationId: correlationId as string,
@@ -169,6 +173,16 @@ export const createEventRouter = ({ logger, eventService, directory, tokenProvid
     createValidationHandler(
       ...checkSchema(
         {
+          namespace: {
+            optional: true,
+            isString: true,
+            isLength: { options: { min: 1, max: 50 } },
+          },
+          name: {
+            optional: true,
+            isString: true,
+            isLength: { options: { min: 1, max: 50 } },
+          },
           timestampMin: {
             optional: true,
             isISO8601: true,
