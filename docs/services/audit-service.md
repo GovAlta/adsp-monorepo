@@ -185,16 +185,14 @@ router.patch('/cases/:id', async (req, res, next) => {
   try {
     const updated = await updateCase(req.params.id, req.body);
 
-    const outcome = await auditService.record(
+    // The SDK logs any event that is not recorded; no outcome handling is needed here.
+    await auditService.record(
       ACTIONS.UPDATE_CASE,
       auditDetailsFromRequest(req, {
         resource: { type: 'case', id: updated.id },
         metadata: { reason: req.body.reason },
       }),
     );
-    if (outcome.status !== 'recorded') {
-      logger.warn('Audit event was not confirmed recorded', { outcome });
-    }
 
     res.send(updated);
   } catch (err) {
@@ -206,8 +204,31 @@ router.patch('/cases/:id', async (req, res, next) => {
 await auditService.record(ACTIONS.UPDATE_CASE, { tenantId, actor: toAuditActor(user), resource });
 ```
 
-Choose a failure policy per action: the example above logs and continues, whereas a compliance
-action may need to fail the request or queue the event for recovery.
+When the operation must not succeed without its audit record, check the outcome and fail the
+request instead:
+
+```typescript
+router.post('/cases/:id/close', async (req, res, next) => {
+  try {
+    const closed = await closeCase(req.params.id);
+
+    const outcome = await auditService.record(
+      ACTIONS.UPDATE_CASE,
+      auditDetailsFromRequest(req, {
+        resource: { type: 'case', id: closed.id },
+        metadata: { reason: 'Case closed' },
+      }),
+    );
+    if (outcome.status !== 'recorded') {
+      throw new Error(`Audit event ${outcome.eventId} was not recorded.`);
+    }
+
+    res.send(closed);
+  } catch (err) {
+    next(err);
+  }
+});
+```
 
 ### Event content and delivery
 
@@ -220,7 +241,10 @@ To capture changes, set `captureChangeSet: true` on the action and add
 Otherwise the SDK drops the change set before sending. Record only necessary data; never include
 credentials or unnecessary personal information.
 
-**Always await `record()` and inspect its outcome.** It does not reject to report write failures.
+`record()` never rejects. The SDK logs every event that is not recorded, with its action, event ID
+and tenant: rejections and local failures at `warn`, delivery failures at `error`. Inspect the
+outcome only when the operation needs a different policy, such as failing the request or resending
+with the same `eventId`.
 
 | Outcome | Meaning | Response |
 | --- | --- | --- |
