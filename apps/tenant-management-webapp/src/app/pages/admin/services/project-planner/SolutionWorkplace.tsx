@@ -175,15 +175,9 @@ export const SolutionWorkplace: FunctionComponent<SolutionWorkplaceProps> = ({
     userSelectedMode.current = false;
     api
       .getSolution(solutionId)
-      .then((loaded) =>
-        api
-          .listVersions(solutionId)
-          .then((versions) => ({ loaded, baseline: versions.results.length ? versions.latest : 0 }))
-          .catch(() => ({ loaded, baseline: loaded.version })),
-      )
-      .then(({ loaded, baseline }) => {
+      .then((loaded) => {
         if (active) {
-          lastKnownVersion.current = baseline;
+          lastKnownVersion.current = loaded.version;
           setSolution(loaded);
           setProblemDraft(loaded.state.problemStatement || '');
           savedMode.current = loaded.state.analysis?.mode;

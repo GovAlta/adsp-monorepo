@@ -2159,7 +2159,7 @@ describe('planner router routes', () => {
         ['empty', { message: '' }],
         ['whitespace only', { message: '   ' }],
         ['not a string', { message: 42 }],
-        ['too long', { message: 'x'.repeat(5001) }],
+        ['too long', { message: 'x'.repeat(20001) }],
         ['with an invalid mode', { message: 'Hello', mode: 'bogus' }],
       ])('returns 400 when the message is %s', async (_name, body) => {
         const res = await chat(buildApp(owner, true, llm), body);
@@ -2928,14 +2928,15 @@ describe('planner router routes', () => {
         expect(versionRepository.create).toHaveBeenCalledWith(tenantId, SOLUTION_ID, versionContent(saved, []));
       });
 
-      it('leaves saving a regenerated blueprint to the user', async () => {
+      it('auto-saves another version when regenerating the blueprint changes the content', async () => {
         const first = await blueprint(buildApp(owner, true, llm));
         repository.get.mockResolvedValue(first.body);
         versionRepository.create.mockClear();
 
         await blueprint(buildApp(owner, true, llm));
 
-        expect(versionRepository.create).not.toHaveBeenCalled();
+        const saved: Solution = repository.save.mock.calls[repository.save.mock.calls.length - 1][0];
+        expect(versionRepository.create).toHaveBeenCalledWith(tenantId, SOLUTION_ID, versionContent(saved, []));
       });
 
       it('merges the ai overview into the blueprint', async () => {

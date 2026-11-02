@@ -26,14 +26,20 @@ const hash = function (value) {
     .digest('hex');
 };
 
-const withoutAnalyzedOn = function (content) {
-  return content.state.analysis
+const withoutVolatileTimestamps = function (content) {
+  const withoutAnalysis = content.state.analysis
     ? { ...content, state: { ...content.state, analysis: { ...content.state.analysis, analyzedOn: undefined } } }
     : content;
+  return withoutAnalysis.state.blueprint
+    ? {
+        ...withoutAnalysis,
+        state: { ...withoutAnalysis.state, blueprint: { ...withoutAnalysis.state.blueprint, generatedOn: undefined } },
+      }
+    : withoutAnalysis;
 };
 
 const contentHash = function (content) {
-  return hash(withoutAnalyzedOn(content));
+  return hash(withoutVolatileTimestamps(content));
 };
 
 const omitConsultedOn = function (note) {
@@ -59,7 +65,7 @@ const SECTIONS = {
   Status: (c) => c.status,
   'Problem statement': (c) => c.state.problemStatement,
   Analysis: (c) => ({
-    analysis: withoutAnalyzedOn(c).state.analysis,
+    analysis: withoutVolatileTimestamps(c).state.analysis,
     patternMatches: c.state.patternMatches,
     confidence: c.state.confidence,
   }),

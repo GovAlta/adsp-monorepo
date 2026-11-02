@@ -54,12 +54,19 @@ const hash = (value: unknown): string =>
     .update(JSON.stringify(canonical(value)))
     .digest('hex');
 
-const withoutAnalyzedOn = (content: VersionContent): VersionContent =>
-  content.state.analysis
+const withoutVolatileTimestamps = (content: VersionContent): VersionContent => {
+  const withoutAnalysis = content.state.analysis
     ? { ...content, state: { ...content.state, analysis: { ...content.state.analysis, analyzedOn: undefined } } }
     : content;
+  return withoutAnalysis.state.blueprint
+    ? {
+        ...withoutAnalysis,
+        state: { ...withoutAnalysis.state, blueprint: { ...withoutAnalysis.state.blueprint, generatedOn: undefined } },
+      }
+    : withoutAnalysis;
+};
 
-export const contentHash = (content: VersionContent): string => hash(withoutAnalyzedOn(content));
+export const contentHash = (content: VersionContent): string => hash(withoutVolatileTimestamps(content));
 
 const omitConsultedOn = (note: SpecialistNote): Omit<SpecialistNote, 'consultedOn'> => {
   const { consultedOn: _consultedOn, ...rest } = note;
@@ -83,7 +90,7 @@ const SECTIONS: Record<string, (content: VersionContent) => unknown> = {
   Status: (c) => c.status,
   'Problem statement': (c) => c.state.problemStatement,
   Analysis: (c) => ({
-    analysis: withoutAnalyzedOn(c).state.analysis,
+    analysis: withoutVolatileTimestamps(c).state.analysis,
     patternMatches: c.state.patternMatches,
     confidence: c.state.confidence,
   }),

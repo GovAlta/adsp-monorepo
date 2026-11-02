@@ -112,7 +112,7 @@ describe('VersionsModal', () => {
     expect(cell.textContent).not.toContain('Architecture');
     expect(cell.textContent).toContain('Show more');
 
-    click(container, 'version-changed-2-toggle');
+    fireEvent.click(goa(container, 'version-changed-2-toggle'));
 
     expect(cell.textContent).toContain('Architecture');
     expect(cell.textContent).toContain('Show fewer');
