@@ -70,6 +70,10 @@ export const ReviewItemSection = styled.div`
   .element-style {
     max-width: 1600px;
   }
+
+  @media (max-width: 639px) {
+    padding: var(--goa-space-l) var(--goa-space-m);
+  }
 `;
 export const ReviewSectionTitle = styled.h3`
   margin-bottom: var(--goa-space-m);
@@ -144,6 +148,10 @@ export const PageRenderPaddingBottom = styled.div`
 
 export const PageBorder = styled.div`
   padding: var(--goa-space-m) var(--goa-space-3xl);
+
+  @media (max-width: 639px) {
+    padding: var(--goa-space-m) var(--goa-space-xs);
+  }
 `;
 
 export const TableReviewItemSection = styled.div`
