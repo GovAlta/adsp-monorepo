@@ -75,6 +75,10 @@ export const ReviewItemSection = styled.div`
     padding: var(--goa-space-l) var(--goa-space-m);
   }
 `;
+export const ReviewSectionTitle = styled.h3`
+  margin-bottom: var(--goa-space-m);
+  overflow-wrap: anywhere;
+`;
 export const ReviewItemHeader = styled.div`
   display: flex;
   align-items: center;
