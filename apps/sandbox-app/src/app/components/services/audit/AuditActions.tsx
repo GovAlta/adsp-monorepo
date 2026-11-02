@@ -16,7 +16,7 @@ import { ActionDefinition, addAction, getActions, missingCatalogRoles, SAMPLE_NA
 import { errorMessage } from './util';
 import { Card, ErrorCallout, FormGrid, Json } from './common';
 
-const CATEGORIES = ['administrative', 'runtime', 'security', 'data-access'];
+const CATEGORIES = ['administrative', 'runtime', 'security', 'data-access', 'diagnostic'];
 const SEVERITIES = ['info', 'warning', 'critical'];
 const RETENTION_CLASSES = ['standard', 'security', 'compliance'];
 const ACTION_NAME = /^[a-zA-Z0-9]+(?:[._:-][a-zA-Z0-9]+)*$/;
