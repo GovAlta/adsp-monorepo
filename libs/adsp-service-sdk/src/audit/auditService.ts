@@ -50,6 +50,8 @@ const DEFAULT_OPTIONS: Required<AuditClientOptions> = {
 // Rate limiting, storage unavailability and gateway errors; network errors and timeouts have no response.
 const TRANSIENT_STATUSES = new Set([429, 502, 503, 504]);
 const NAMESPACE_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+// Bounds the rejected events listed in a single warning so large batches do not flood logs.
+const MAX_LOGGED_REJECTIONS = 10;
 
 interface AuditEventPayload {
   eventId: string;
@@ -86,6 +88,12 @@ interface TenantQueue {
 }
 
 type FailureReason = Exclude<AuditDropReason, 'rejected'>;
+
+interface FailureContext {
+  action?: string;
+  eventId: string;
+  tenantId?: AdspId;
+}
 
 class DeliveryError extends Error {
   constructor(
@@ -192,9 +200,10 @@ export class AuditServiceImpl implements AuditService {
 
   record(action: AuditAction, details: AuditRecordDetails): Promise<AuditRecordOutcome> {
     const eventId = details?.eventId || randomUUID();
+    const context: FailureContext = { action: action?.name, eventId, tenantId: details?.tenantId };
     if (this.isCore && !details?.tenantId) {
       return Promise.resolve(
-        this.fail(eventId, 'invalid_event', 'tenantId is required to record an audit event from a core service.'),
+        this.fail(context, 'invalid_event', 'tenantId is required to record an audit event from a core service.'),
       );
     }
 
@@ -205,14 +214,14 @@ export class AuditServiceImpl implements AuditService {
       // Serializing here also fails unserializable details (e.g. circular metadata) for this event only.
       size = Buffer.byteLength(JSON.stringify(event));
     } catch (err) {
-      return Promise.resolve(this.fail(eventId, 'invalid_event', describeError(err)));
+      return Promise.resolve(this.fail(context, 'invalid_event', describeError(err)));
     }
 
     const { maxBufferedEvents, maxBufferedBytes } = this.options;
     if (this.buffered >= maxBufferedEvents || this.bufferedBytes + size > maxBufferedBytes) {
       return Promise.resolve(
         this.fail(
-          eventId,
+          context,
           'buffer_full',
           `Audit buffer is full (${this.buffered} of ${maxBufferedEvents} events, ` +
             `${this.bufferedBytes} + ${size} of ${maxBufferedBytes} bytes).`,
@@ -313,14 +322,19 @@ export class AuditServiceImpl implements AuditService {
         tenantId,
         batch.map(({ event }) => event),
       );
-      outcomes = this.toOutcomes(batch, response);
+      outcomes = this.toOutcomes(tenantId, batch, response);
     } catch (err) {
       const reason: FailureReason = err instanceof DeliveryError ? err.reason : 'request_failed';
       const error = describeError(err);
-      this.logger.error(`Failed to send ${batch.length} audit event(s) for ${this.namespace} (${reason}). ${error}`, {
-        ...this.LOG_CONTEXT,
-        tenant: tenantId?.toString(),
-      });
+      const actions = [...new Set(batch.map(({ event }) => event.action))];
+      this.logger.error(
+        `Failed to send ${batch.length} audit event(s) (${actions.join(', ')}) for ${this.namespace} (${reason}). ${error}`,
+        {
+          ...this.LOG_CONTEXT,
+          tenant: tenantId?.toString(),
+          actions,
+        },
+      );
       outcomes = batch.map(({ event }) => ({ status: 'failed', eventId: event.eventId, reason, error }));
     } finally {
       this.buffered -= batch.length;
@@ -376,13 +390,27 @@ export class AuditServiceImpl implements AuditService {
     }
   }
 
-  private toOutcomes(batch: PendingEvent[], { rejected }: WriteEventsResponse): AuditRecordOutcome[] {
+  private toOutcomes(
+    tenantId: AdspId | undefined,
+    batch: PendingEvent[],
+    { rejected }: WriteEventsResponse,
+  ): AuditRecordOutcome[] {
     const rejections = new Map(rejected.map((item) => [item.index, item]));
     if (rejections.size) {
+      const details = [...rejections.values()].slice(0, MAX_LOGGED_REJECTIONS).map(({ index, code }) => ({
+        action: batch[index].event.action,
+        eventId: batch[index].event.eventId,
+        code,
+      }));
       this.logger.warn(
         `Audit service rejected ${rejections.size} of ${batch.length} event(s) for ${this.namespace}: ` +
           [...new Set(rejected.map(({ code }) => code))].join(', '),
-        this.LOG_CONTEXT,
+        {
+          ...this.LOG_CONTEXT,
+          tenant: tenantId?.toString(),
+          rejected: details,
+          ...(rejections.size > details.length ? { rejectedOmitted: rejections.size - details.length } : {}),
+        },
       );
     }
 
@@ -394,8 +422,17 @@ export class AuditServiceImpl implements AuditService {
     });
   }
 
-  private fail(eventId: string, reason: FailureReason, error: string): AuditRecordOutcome {
-    this.logger.warn(`Audit event for ${this.namespace} was not recorded (${reason}). ${error}`, this.LOG_CONTEXT);
+  private fail(
+    { action, eventId, tenantId }: FailureContext,
+    reason: FailureReason,
+    error: string,
+  ): AuditRecordOutcome {
+    this.logger.warn(`Audit event ${action} for ${this.namespace} was not recorded (${reason}). ${error}`, {
+      ...this.LOG_CONTEXT,
+      tenant: tenantId?.toString(),
+      action,
+      eventId,
+    });
     this.countDropped(reason);
     return { status: 'failed', eventId, reason, error };
   }

@@ -169,6 +169,46 @@ const history = await auditService.query(
 Core callers must pass this `AdspId` in **record details** and **query options**, as shown above.
 Tenant applications use the same calls but omit `tenantId`.
 
+### Record from an authenticated request
+
+In an Express handler behind SDK authentication, `auditDetailsFromRequest(req, details)` sets
+`actor` from `req.user` and `tenantId` from `req.tenant` (or the user's tenant). Values passed in
+`details` take precedence; for example, a Core service acting on a different tenant passes that
+tenant's `tenantId`. `toAuditActor(user)` converts a user on its own: Keycloak service accounts
+(`service-account-*`) become `service` actors, other users `user` actors. Both throw when there is
+no user and no explicit actor, so events are never attributed to an unknown actor.
+
+```typescript
+import { auditDetailsFromRequest, toAuditActor } from '@abgov/adsp-service-sdk';
+
+router.patch('/cases/:id', async (req, res, next) => {
+  try {
+    const updated = await updateCase(req.params.id, req.body);
+
+    const outcome = await auditService.record(
+      ACTIONS.UPDATE_CASE,
+      auditDetailsFromRequest(req, {
+        resource: { type: 'case', id: updated.id },
+        metadata: { reason: req.body.reason },
+      }),
+    );
+    if (outcome.status !== 'recorded') {
+      logger.warn('Audit event was not confirmed recorded', { outcome });
+    }
+
+    res.send(updated);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Outside a request, for example in a queue consumer:
+await auditService.record(ACTIONS.UPDATE_CASE, { tenantId, actor: toAuditActor(user), resource });
+```
+
+Choose a failure policy per action: the example above logs and continues, whereas a compliance
+action may need to fail the request or queue the event for recovery.
+
 ### Event content and delivery
 
 `record()` supplies a UUID `eventId`, the current `occurredAt`, and business `status: 'success'`

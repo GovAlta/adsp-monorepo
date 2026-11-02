@@ -8,6 +8,8 @@ import { AuditClientOptions, AuditServiceImpl } from './auditService';
 export { auditDefinitions, AuditCategories, AuditSeverities, BuiltInRetentionClasses } from './definitions';
 export type { AuditAction, AuditActionDefinition, AuditCategory, AuditSeverity } from './definitions';
 export type { AuditClientOptions } from './auditService';
+export { auditDetailsFromRequest, toAuditActor } from './helpers';
+export type { AuditRequestContext, AuditRequestRecordDetails } from './helpers';
 export type {
   AuditActor,
   AuditActorType,
