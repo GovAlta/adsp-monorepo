@@ -154,7 +154,6 @@ const outcome = await auditService.record(ACTIONS.UPDATE_CASE, {
 });
 
 if (outcome.status !== 'recorded') {
-  logger.error('Audit event was not confirmed recorded', { outcome });
   throw new Error(`Audit write failed: ${outcome.status}`);
 }
 
