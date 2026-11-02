@@ -9,6 +9,8 @@ export const uiSchema = {
     hideSummary: true,
     hideProgress: true,
     showNavButtons: true,
+    summaryPageTitle: 'Review your answers',
+    noAnswerMessage: 'Not answered.',
   },
   elements: [
     {
@@ -46,8 +48,7 @@ export const uiSchema = {
                 componentProps: {
                   type: 'important',
                   maxWidth: '800px',
-                  heading:
-                    'Not sure if your dispute is about a monetary sanction or a chargeback?',
+                  heading: 'Not sure if your dispute is about a monetary sanction or a chargeback?',
                   message:
                     'The CDRT can hear disputes about monetary sanctions, but not about chargebacks. If your dispute is only about a chargeback, the CDRT may refuse your application. Monetary sanctions are enforcement tools, such as fines, used by condominium corporations for non-compliance with bylaws. Chargebacks are fees billed back to recover costs paid by a condominium corporation.',
                 },
@@ -137,8 +138,7 @@ export const uiSchema = {
             },
             {
               type: 'Control',
-              scope:
-                '#/properties/applicantContactDetails/properties/firstName',
+              scope: '#/properties/applicantContactDetails/properties/firstName',
               options: {
                 componentProps: {
                   width: '50ch',
@@ -147,8 +147,7 @@ export const uiSchema = {
             },
             {
               type: 'Control',
-              scope:
-                '#/properties/applicantContactDetails/properties/middleName',
+              scope: '#/properties/applicantContactDetails/properties/middleName',
               options: {
                 componentProps: {
                   width: '50ch',
@@ -166,8 +165,7 @@ export const uiSchema = {
             },
             {
               type: 'Control',
-              scope:
-                '#/properties/applicantContactDetails/properties/condoCorporationName',
+              scope: '#/properties/applicantContactDetails/properties/condoCorporationName',
               label: 'Corporation name, if applicable',
               options: {
                 componentProps: {
@@ -186,8 +184,7 @@ export const uiSchema = {
             },
             {
               type: 'Control',
-              scope:
-                '#/properties/applicantContactDetails/properties/telephone',
+              scope: '#/properties/applicantContactDetails/properties/telephone',
               options: {
                 help: 'Enter a domestic or international phone number.',
                 componentProps: {
@@ -198,8 +195,7 @@ export const uiSchema = {
             },
             {
               type: 'ListWithDetail',
-              scope:
-                '#/properties/applicantContactDetails/properties/additionalApplicants',
+              scope: '#/properties/applicantContactDetails/properties/additionalApplicants',
               options: {
                 addButtonType: 'secondary',
                 itemLabel: 'Applicant',
@@ -238,8 +234,7 @@ export const uiSchema = {
                         },
                         {
                           type: 'Control',
-                          scope:
-                            '#/properties/alternateOrganizationBusinessName',
+                          scope: '#/properties/alternateOrganizationBusinessName',
                           label: 'Organization or business name',
                           options: {
                             componentProps: {
@@ -291,8 +286,7 @@ export const uiSchema = {
     },
     {
       type: 'Category',
-      label:
-        'What is the physical address of the condominium unit involved in the dispute?',
+      label: 'What is the physical address of the condominium unit involved in the dispute?',
       options: {
         sectionTitle: 'The parties',
         showInTaskList: true,
@@ -305,10 +299,7 @@ export const uiSchema = {
               type: 'HelpContent',
               options: {
                 markdown: true,
-                help: [
-                  '##  What is the physical address of the condominium unit involved in the dispute?',
-                  '<br/>',
-                ],
+                help: ['##  What is the physical address of the condominium unit involved in the dispute?', '<br/>'],
               },
             },
             {
@@ -320,8 +311,7 @@ export const uiSchema = {
             },
             {
               type: 'Control',
-              scope:
-                '#/properties/applicantContactDetails/properties/applicantPhysicalAddress/properties/addressLine1',
+              scope: '#/properties/applicantContactDetails/properties/applicantPhysicalAddress/properties/addressLine1',
               label: 'Address line 1',
               options: {
                 help: 'For example, house number and street name',
@@ -332,8 +322,7 @@ export const uiSchema = {
             },
             {
               type: 'Control',
-              scope:
-                '#/properties/applicantContactDetails/properties/applicantPhysicalAddress/properties/addressLine2',
+              scope: '#/properties/applicantContactDetails/properties/applicantPhysicalAddress/properties/addressLine2',
               label: 'Address line 2',
               options: {
                 help: 'For example, apartment, suite, unit, building, floor, etc.',
@@ -344,8 +333,7 @@ export const uiSchema = {
             },
             {
               type: 'Control',
-              scope:
-                '#/properties/applicantContactDetails/properties/applicantPhysicalAddress/properties/city',
+              scope: '#/properties/applicantContactDetails/properties/applicantPhysicalAddress/properties/city',
               label: 'City',
               options: {
                 componentProps: {
@@ -366,8 +354,7 @@ export const uiSchema = {
             },
             {
               type: 'Control',
-              scope:
-                '#/properties/applicantContactDetails/properties/applicantPhysicalAddress/properties/country',
+              scope: '#/properties/applicantContactDetails/properties/applicantPhysicalAddress/properties/country',
               label: 'Country',
               options: {
                 componentProps: {
@@ -401,8 +388,7 @@ export const uiSchema = {
             {
               type: 'ListWithDetail',
               label: 'Mailing address',
-              scope:
-                '#/properties/applicantContactDetails/properties/additionalMailAddress',
+              scope: '#/properties/applicantContactDetails/properties/additionalMailAddress',
               options: {
                 addButtonText: 'Add mailing address',
                 addButtonType: 'secondary',
@@ -517,8 +503,7 @@ export const uiSchema = {
             {
               type: 'Control',
               label: 'First name',
-              scope:
-                '#/properties/otherPartyDisputeDetails/properties/otherPartyPrimaryFirstName',
+              scope: '#/properties/otherPartyDisputeDetails/properties/otherPartyPrimaryFirstName',
               options: {
                 componentProps: {
                   width: '50ch',
@@ -528,8 +513,7 @@ export const uiSchema = {
             {
               type: 'Control',
               label: 'Last name',
-              scope:
-                '#/properties/otherPartyDisputeDetails/properties/otherPartyPrimaryLastName',
+              scope: '#/properties/otherPartyDisputeDetails/properties/otherPartyPrimaryLastName',
               options: {
                 componentProps: {
                   width: '50ch',
@@ -539,8 +523,7 @@ export const uiSchema = {
             {
               type: 'Control',
               label: 'Condominium corporation name',
-              scope:
-                '#/properties/otherPartyDisputeDetails/properties/otherPartyPrimaryCondoCorporationName',
+              scope: '#/properties/otherPartyDisputeDetails/properties/otherPartyPrimaryCondoCorporationName',
               options: {
                 componentProps: {
                   width: '50ch',
@@ -550,8 +533,7 @@ export const uiSchema = {
             {
               type: 'Control',
               label: 'Email',
-              scope:
-                '#/properties/otherPartyDisputeDetails/properties/otherPartyPrimaryEmail',
+              scope: '#/properties/otherPartyDisputeDetails/properties/otherPartyPrimaryEmail',
               options: {
                 componentProps: {
                   width: '50ch',
@@ -561,8 +543,7 @@ export const uiSchema = {
             {
               type: 'Control',
               label: 'Telephone',
-              scope:
-                '#/properties/otherPartyDisputeDetails/properties/otherPartyPrimaryTelephone',
+              scope: '#/properties/otherPartyDisputeDetails/properties/otherPartyPrimaryTelephone',
               options: {
                 componentProps: {
                   type: 'tel',
@@ -572,8 +553,7 @@ export const uiSchema = {
             },
             {
               type: 'ListWithDetail',
-              scope:
-                '#/properties/otherPartyDisputeDetails/properties/additionalRespondents',
+              scope: '#/properties/otherPartyDisputeDetails/properties/additionalRespondents',
               label: 'Additional respondents',
               options: {
                 addButtonType: 'secondary',
@@ -658,8 +638,7 @@ export const uiSchema = {
         sectionTitle: 'The parties',
         showInTaskList: true,
       },
-      label:
-        "What is the mailing address of the person or organization you're having the dispute with?",
+      label: "What is the mailing address of the person or organization you're having the dispute with?",
       elements: [
         {
           type: 'VerticalLayout',
@@ -678,8 +657,7 @@ export const uiSchema = {
             },
             {
               type: 'Control',
-              scope:
-                '#/properties/primaryRespondentMailAddress/properties/addressLine1',
+              scope: '#/properties/primaryRespondentMailAddress/properties/addressLine1',
               options: {
                 help: 'For example, house number and street name',
                 componentProps: {
@@ -689,8 +667,7 @@ export const uiSchema = {
             },
             {
               type: 'Control',
-              scope:
-                '#/properties/primaryRespondentMailAddress/properties/addressLine2',
+              scope: '#/properties/primaryRespondentMailAddress/properties/addressLine2',
               options: {
                 help: 'For example, apartment, suite, unit, building, floor, etc.',
                 componentProps: {
@@ -700,8 +677,7 @@ export const uiSchema = {
             },
             {
               type: 'Control',
-              scope:
-                '#/properties/primaryRespondentMailAddress/properties/city',
+              scope: '#/properties/primaryRespondentMailAddress/properties/city',
               options: {
                 componentProps: {
                   width: '50ch',
@@ -710,8 +686,7 @@ export const uiSchema = {
             },
             {
               type: 'Control',
-              scope:
-                '#/properties/primaryRespondentMailAddress/properties/provinceState',
+              scope: '#/properties/primaryRespondentMailAddress/properties/provinceState',
               label: 'Province or state',
               options: {
                 componentProps: {
@@ -721,8 +696,7 @@ export const uiSchema = {
             },
             {
               type: 'Control',
-              scope:
-                '#/properties/primaryRespondentMailAddress/properties/country',
+              scope: '#/properties/primaryRespondentMailAddress/properties/country',
               options: {
                 componentProps: {
                   width: '40ch',
@@ -731,8 +705,7 @@ export const uiSchema = {
             },
             {
               type: 'Control',
-              scope:
-                '#/properties/primaryRespondentMailAddress/properties/postalCodeZip',
+              scope: '#/properties/primaryRespondentMailAddress/properties/postalCodeZip',
               label: 'Postal or zip code',
               options: {
                 componentProps: {
@@ -848,16 +821,12 @@ export const uiSchema = {
               type: 'HelpContent',
               options: {
                 markdown: true,
-                help: [
-                  '## What are the representative’s contact details?',
-                  '<br/>',
-                ],
+                help: ['## What are the representative’s contact details?', '<br/>'],
               },
             },
             {
               type: 'Control',
-              scope:
-                '#/properties/representativeContactInformation/properties/primaryFirstName',
+              scope: '#/properties/representativeContactInformation/properties/primaryFirstName',
               label: 'First name',
               options: {
                 componentProps: {
@@ -868,8 +837,7 @@ export const uiSchema = {
             {
               type: 'Control',
               label: 'Last name',
-              scope:
-                '#/properties/representativeContactInformation/properties/primaryLastName',
+              scope: '#/properties/representativeContactInformation/properties/primaryLastName',
               options: {
                 componentProps: {
                   width: '50ch',
@@ -878,8 +846,7 @@ export const uiSchema = {
             },
             {
               type: 'Control',
-              scope:
-                '#/properties/representativeContactInformation/properties/primaryOrganizationBusinessName',
+              scope: '#/properties/representativeContactInformation/properties/primaryOrganizationBusinessName',
               label: 'Organization or business name',
               options: {
                 componentProps: {
@@ -889,8 +856,7 @@ export const uiSchema = {
             },
             {
               type: 'Control',
-              scope:
-                '#/properties/representativeContactInformation/properties/primaryEmail',
+              scope: '#/properties/representativeContactInformation/properties/primaryEmail',
               label: 'Email',
               options: {
                 componentProps: {
@@ -901,8 +867,7 @@ export const uiSchema = {
             {
               type: 'Control',
               label: 'Phone',
-              scope:
-                '#/properties/representativeContactInformation/properties/primaryPhone',
+              scope: '#/properties/representativeContactInformation/properties/primaryPhone',
               options: {
                 componentProps: {
                   type: 'tel',
@@ -941,16 +906,12 @@ export const uiSchema = {
               type: 'HelpContent',
               options: {
                 markdown: true,
-                help: [
-                  '## What is the representative’s mailing address',
-                  '<br/>',
-                ],
+                help: ['## What is the representative’s mailing address', '<br/>'],
               },
             },
             {
               type: 'Control',
-              scope:
-                '#/properties/representatitiveMailAddress/properties/addressLine1',
+              scope: '#/properties/representatitiveMailAddress/properties/addressLine1',
               label: 'Address line 1',
               options: {
                 help: 'For example, house number and street name',
@@ -961,8 +922,7 @@ export const uiSchema = {
             },
             {
               type: 'Control',
-              scope:
-                '#/properties/representatitiveMailAddress/properties/addressLine2',
+              scope: '#/properties/representatitiveMailAddress/properties/addressLine2',
               label: 'Address line 2',
               options: {
                 help: 'For example, apartment, suite, unit, building, floor, etc.',
@@ -983,8 +943,7 @@ export const uiSchema = {
             },
             {
               type: 'Control',
-              scope:
-                '#/properties/representatitiveMailAddress/properties/provinceState',
+              scope: '#/properties/representatitiveMailAddress/properties/provinceState',
               label: 'Province',
               options: {
                 componentProps: {
@@ -994,8 +953,7 @@ export const uiSchema = {
             },
             {
               type: 'Control',
-              scope:
-                '#/properties/representatitiveMailAddress/properties/country',
+              scope: '#/properties/representatitiveMailAddress/properties/country',
               label: 'Country',
               options: {
                 componentProps: {
@@ -1005,8 +963,7 @@ export const uiSchema = {
             },
             {
               type: 'Control',
-              scope:
-                '#/properties/representatitiveMailAddress/properties/postalCodeZip',
+              scope: '#/properties/representatitiveMailAddress/properties/postalCodeZip',
               label: 'Postal or zip code',
               options: {
                 componentProps: {
@@ -1033,16 +990,12 @@ export const uiSchema = {
               type: 'HelpContent',
               options: {
                 markdown: true,
-                help: [
-                  '## When did the applicant first become aware of this dispute?',
-                  '<br/>',
-                ],
+                help: ['## When did the applicant first become aware of this dispute?', '<br/>'],
               },
             },
             {
               type: 'Control',
-              scope:
-                '#/properties/whenDidIssueHappen/properties/whenWasIssueDate',
+              scope: '#/properties/whenDidIssueHappen/properties/whenWasIssueDate',
               label: 'Dispute date',
               options: {
                 componentProps: {
@@ -1106,8 +1059,7 @@ export const uiSchema = {
                   maxWidth: '75ch',
                   emphasis: 'low',
                   mt: 'l',
-                  heading:
-                    'Make sure your application is complete and accurate',
+                  heading: 'Make sure your application is complete and accurate',
                   message:
                     'When submitting your application, it is your responsibility to ensure the information you provide is complete and accurate. For the full requirements and responsibilities when making an application, refer to the <a href="https://www.alberta.ca/system/files/cdrt-policies-and-procedures.pdf" target="_blank">CDRT\'s policies and procedures</a>.',
                 },
@@ -1115,8 +1067,7 @@ export const uiSchema = {
             },
             {
               type: 'Control',
-              scope:
-                '#/properties/describeDispute/properties/disputeDescription',
+              scope: '#/properties/describeDispute/properties/disputeDescription',
               label: 'Dispute description.',
               options: {
                 multi: true,
@@ -1158,8 +1109,7 @@ export const uiSchema = {
             },
             {
               type: 'Control',
-              scope:
-                '#/properties/describeDispute/properties/resultOfApplication',
+              scope: '#/properties/describeDispute/properties/resultOfApplication',
               label: 'Desired outcome.',
               options: {
                 multi: true,

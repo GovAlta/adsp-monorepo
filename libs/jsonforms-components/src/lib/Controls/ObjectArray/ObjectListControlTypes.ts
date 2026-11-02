@@ -75,7 +75,7 @@ export interface NonEmptyRowComponentProps {
   schema: JsonSchema;
   rootSchema?: JsonSchema;
   rowPath: string;
-  // eslint-disable-next-line
+
   errors?: ErrorObject[];
   enabled: boolean;
   renderers?: JsonFormsRendererRegistryEntry[];
@@ -134,4 +134,5 @@ export interface RenderCellColumnProps {
   rowPath: string;
   index: number;
   element: string;
+  noAnswerMessage: string;
 }
