@@ -7,6 +7,7 @@ describe('audit classification constants', () => {
       Runtime: 'runtime',
       Security: 'security',
       DataAccess: 'data-access',
+      Diagnostic: 'diagnostic',
     });
   });
 

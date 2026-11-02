@@ -32,7 +32,7 @@ import { AuditEventDetails } from './eventDetails';
 
 const READER_ROLE = 'audit-reader';
 const ANY = 'any';
-const CATEGORIES = ['administrative', 'runtime', 'security', 'data-access'];
+const CATEGORIES = ['administrative', 'runtime', 'security', 'data-access', 'diagnostic'];
 const STATUSES = ['success', 'failure', 'blocked', 'error'];
 const SEVERITIES = ['info', 'warning', 'critical'];
 

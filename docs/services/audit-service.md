@@ -211,10 +211,14 @@ separate. Only trusted deployment identities should publish catalogs; Configurat
 permissions do not enforce application-level write isolation.
 
 Each definition requires a positive integer `version`, `category` (`administrative`, `runtime`,
-`security`, `data-access`), `severity` (`info`, `warning`, `critical`) and a kebab-case
+`security`, `data-access`, `diagnostic`), `severity` (`info`, `warning`, `critical`) and a kebab-case
 `retentionClass`. Optional fields include `description`, `resourceType`, `metadataSchema`,
 `captureChangeSet` and `forwardToSiem`. Both flags default to false; SIEM forwarding is a separate
 capability. Shared Core definitions win over tenant definitions with the same action name.
+
+The `diagnostic` category is for debugging-oriented records (as opposed to audit records of who did
+what). Applications register diagnostic actions in their own catalog like any other category, and
+the events are filterable with `category=diagnostic` when reading or exporting.
 
 ### Register without the SDK
 
