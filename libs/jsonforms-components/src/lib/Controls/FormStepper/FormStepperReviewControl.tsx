@@ -62,7 +62,6 @@ import { GoACalloutControlTester, CalloutReviewControl } from '../../Additional/
 import { TableGroupLayoutRenderer, TableLayoutRenderer } from '../../layouts/TableLayoutRenderers';
 import { StepperOptionsProvider } from './context/StepperOptionsContext';
 import { getStepperPageOptions } from './util/stepperOptions';
-import { C } from '@fullcalendar/react/chunks/ecfc1219';
 
 const EmptyHelpContentRenderer = () => null;
 
