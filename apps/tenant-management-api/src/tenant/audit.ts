@@ -48,21 +48,10 @@ export const TenantUpdatedAuditAction: AuditAction = {
   description: 'Tenant metadata is updated.',
 };
 
-export const TenantRealmConfiguredAuditAction: AuditAction = {
-  name: 'tenant.realm-configured',
-  version: 1,
-  category: AuditCategories.Security,
-  severity: AuditSeverities.Warning,
-  retentionClass: BuiltInRetentionClasses.Security,
-  resourceType: TENANT_RESOURCE_TYPE,
-  description: 'Keycloak realm settings are configured for a tenant.',
-};
-
 export const TenantAuditActions: AuditAction[] = [
   TenantCreatedAuditAction,
   TenantDeletedAuditAction,
   TenantUpdatedAuditAction,
-  TenantRealmConfiguredAuditAction,
 ];
 
 export interface AuditedTenant {

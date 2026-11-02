@@ -62,11 +62,6 @@ describe('tenant audit', () => {
           retentionClass: 'compliance',
           captureChangeSet: true,
         }),
-        'tenant.realm-configured': expect.objectContaining({
-          category: 'security',
-          severity: 'warning',
-          retentionClass: 'security',
-        }),
       });
     });
   });

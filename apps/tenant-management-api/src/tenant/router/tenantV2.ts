@@ -12,13 +12,7 @@ import { checkSchema } from 'express-validator';
 import { v4 as uuidv4 } from 'uuid';
 import { Logger } from 'winston';
 import { requireBetaTesterOrAdmin, requireTenantServiceAdmin } from '../../middleware/authentication';
-import {
-  TenantAuditor,
-  TenantCreatedAuditAction,
-  TenantDeletedAuditAction,
-  TenantRealmConfiguredAuditAction,
-  TenantUpdatedAuditAction,
-} from '../audit';
+import { TenantAuditor, TenantCreatedAuditAction, TenantDeletedAuditAction, TenantUpdatedAuditAction } from '../audit';
 import { tenantCreated, tenantDeleted, tenantNameUpdated } from '../events';
 import { Tenant, TenantEntity } from '../models';
 import { TenantRepository } from '../repository';
@@ -249,11 +243,7 @@ async function provisionRealm(
 
     await auditor.record(TenantCreatedAuditAction, user, tenant, {
       operation: 'create',
-      metadata: { realmProvisioning: 'new' },
-    });
-    await auditor.record(TenantRealmConfiguredAuditAction, user, tenant, {
-      operation: 'provision-realm',
-      metadata: { serviceClientCount: clients.length },
+      metadata: { realmProvisioning: 'new', serviceClientCount: clients.length },
     });
   } catch (err) {
     logger.error(

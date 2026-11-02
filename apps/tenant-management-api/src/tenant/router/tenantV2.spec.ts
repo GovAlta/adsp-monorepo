@@ -573,20 +573,12 @@ describe('createTenantV2Router', () => {
 
       expect(realmServiceMock.createRealm).toHaveBeenCalled();
       expect(eventServiceMock.send).toHaveBeenCalled();
-      expect(auditorMock.record).toHaveBeenCalledTimes(2);
-      expect(auditorMock.record).toHaveBeenNthCalledWith(
-        1,
+      expect(auditorMock.record).toHaveBeenCalledTimes(1);
+      expect(auditorMock.record).toHaveBeenCalledWith(
         expect.objectContaining({ name: 'tenant.created' }),
         req.user,
         expect.objectContaining({ id: tenantUrn, status: 'active' }),
-        { operation: 'create', metadata: { realmProvisioning: 'new' } },
-      );
-      expect(auditorMock.record).toHaveBeenNthCalledWith(
-        2,
-        expect.objectContaining({ name: 'tenant.realm-configured', category: 'security', severity: 'warning' }),
-        req.user,
-        expect.objectContaining({ id: tenantUrn }),
-        { operation: 'provision-realm', metadata: { serviceClientCount: 0 } },
+        { operation: 'create', metadata: { realmProvisioning: 'new', serviceClientCount: 0 } },
       );
     });
 

@@ -25,7 +25,6 @@ Tenant service records audit events in the `tenant-service` namespace of the [au
 | tenant.created | administrative | info | compliance | A tenant is created with an existing realm, or a new realm is provisioned for it. A failed provisioning is recorded with `failure` status. |
 | tenant.deleted | administrative | critical | compliance | A tenant is deleted. |
 | tenant.updated | administrative | info | compliance | A tenant is renamed. The change set captures the name before and after. |
-| tenant.realm-configured | security | warning | security | The Keycloak realm of a new tenant is provisioned. |
 
 Because the audit service resolves the tenant of each event, `tenant.deleted` is recorded before the realm and tenant are removed. If the removal does not fully succeed, a further `tenant.deleted` event is recorded with `failure` or `error` status; it cannot be stored if the tenant record itself was already removed.
 
