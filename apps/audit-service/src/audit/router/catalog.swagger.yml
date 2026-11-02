@@ -116,6 +116,42 @@ paths:
           description: No action catalog is registered for this namespace (neither Core nor the tenant supplied one). Register the namespace's actions in the audit-service configuration (actions-<application>) and retry. Configuration HTTP or converter failures handled by the SDK can also produce this response.
         '503':
           description: A propagated SDK error or application-name consistency failure. Retry; do not re-register actions.
+    post:
+      tags:
+        - Action catalogs
+      summary: Add an action to the caller's tenant catalog for a namespace.
+      description: |
+        Requires audit-admin; the caller's token is forwarded to the configuration service, so configuration write
+        permission is also required. The name is compared in full and case-insensitively with fresh configuration, not
+        the cache: 409 when it already exists in the namespace, when the namespace is a Core namespace, or when it
+        exists in any Core namespace. Partial matches (for example a `.succeeded` suffix) are not conflicts.
+      parameters:
+        - in: path
+          name: namespace
+          required: true
+          schema:
+            type: string
+            maxLength: 40
+            pattern: '^[a-z0-9]+(?:-[a-z0-9]+)*$'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuditAction'
+      responses:
+        '201':
+          description: The action was added.
+        '400':
+          description: Invalid action definition or missing tenant context.
+        '401':
+          description: Missing or invalid bearer token.
+        '403':
+          description: Missing `audit-admin` role.
+        '409':
+          description: The action name conflicts with the namespace's own catalog or a Core namespace.
+        '503':
+          description: Catalogs could not be checked. Retry.
 components:
   schemas:
     RetentionClasses:

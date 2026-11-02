@@ -168,6 +168,7 @@ describe('GET /audit/v1/:namespace/actions', () => {
       { path: '/actions', roles: [AuditServiceRoles.Reader] },
       { path: '/retention', roles: [AuditServiceRoles.Reader] },
       { path: '/:namespace/actions', roles: [AuditServiceRoles.Reader] },
+      { path: '/:namespace/actions', roles: [AuditServiceRoles.Admin] },
       { path: '/events/export', roles: [AuditServiceRoles.Reader] },
       { path: '/:namespace/events/export', roles: [AuditServiceRoles.Reader] },
       { path: '/events', roles: [AuditServiceRoles.Reader] },

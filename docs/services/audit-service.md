@@ -269,6 +269,22 @@ Resolve `urn:ads:platform:audit-service:v1` through the target environment's Dir
 The SDK handles discovery automatically. For full schemas, follow the service root's
 `_links.docs.href` to its OpenAPI document (`/swagger/docs/v1`).
 
+### Adding an action
+
+```http
+POST /audit/v1/{namespace}/actions
+Authorization: Bearer <token with audit-admin>
+Content-Type: application/json
+
+{ "name": "case.update", "version": 1, "category": "runtime", "severity": "info", "retentionClass": "standard" }
+```
+
+Adds the action to the caller's tenant catalog (`actions-<namespace>`, created if missing). The caller's token is
+forwarded to the configuration service, so configuration write permission is required as well. The name is compared
+in full and case-insensitively with the namespace's own catalog and every Core catalog, read directly from the
+configuration service rather than the cache. `409` is returned when the name already exists in either, or when the
+namespace is itself a Core namespace; `503` when the check cannot be made, in which case nothing is written.
+
 ### Write an event
 
 Use a bearer token with the Audit audience and `audit-writer`. Replace the placeholders with

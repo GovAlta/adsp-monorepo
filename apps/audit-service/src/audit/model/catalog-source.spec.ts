@@ -55,4 +55,28 @@ describe('ConfigurationCatalogSource', () => {
       expect.objectContaining({ params: expect.objectContaining({ tenantId: tenantId.toString() }) }),
     );
   });
+
+  describe('saveAction', () => {
+    const definition = { version: 1, category: 'runtime', severity: 'info', retentionClass: 'standard' } as never;
+
+    it('updates the catalog of the resolved tenant', async () => {
+      axiosMock.patch.mockResolvedValue({ data: {} });
+
+      await source.saveAction('case-service', 'case.create', definition, 'token', tenantId);
+
+      const [url, body] = axiosMock.patch.mock.calls[0];
+      expect(new URL(url).searchParams.get('tenantId')).toBe(tenantId.toString());
+      expect(url).toContain('v2/configuration/audit-service/actions-case-service');
+      expect(body).toMatchObject({ operation: 'UPDATE', update: { actions: { 'case.create': definition } } });
+    });
+
+    it.each([401, 403])('maps a %s from configuration to an unauthorized error', async (status) => {
+      axiosMock.patch.mockRejectedValue({ response: { status } });
+      axiosMock.isAxiosError.mockReturnValue(true);
+
+      await expect(
+        source.saveAction('case-service', 'case.create', definition, 'token', tenantId),
+      ).rejects.toMatchObject({ extra: { statusCode: 401 } });
+    });
+  });
 });
