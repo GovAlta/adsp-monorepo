@@ -729,6 +729,23 @@ describe('utils', () => {
           'Within a group you do, still ask before each item: say what you will create and wait for',
         );
       });
+
+      it('finds where each ADSP component is stored from the schema, the docs and the live API', () => {
+        const md = harnessToMarkdown(solution());
+
+        expect(md).toContain("adsp-sdk's `get_service_configuration_schema`");
+        expect(md).toContain('`read_adsp_doc services/<service>.md`');
+        expect(md).toContain('(form-service: `GET /form/v1/definitions`). Never assume a location.');
+      });
+
+      it('copies the shape of an existing item only from one the service reads today', () => {
+        const md = harnessToMarkdown(solution());
+
+        expect(md).toContain("take it from one the service's own API or the tenant admin app returns today");
+        expect(md).toContain(
+          'A document whose last update is much older than the items around it may be legacy storage.',
+        );
+      });
     });
 
     it('keeps replacement patterns in the name literal', () => {
