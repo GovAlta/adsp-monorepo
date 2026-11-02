@@ -370,7 +370,6 @@ describe('createTenantV2Router', () => {
         expect.objectContaining({ name: 'tenant.deleted', severity: 'critical', retentionClass: 'compliance' }),
         req.user,
         expect.objectContaining({ id: tenantUrn, name: tenant.name, realm: tenant.realm }),
-        { operation: 'delete' },
       );
     });
 
@@ -420,7 +419,6 @@ describe('createTenantV2Router', () => {
         req.user,
         expect.objectContaining({ id: tenantUrn }),
         {
-          operation: 'delete',
           status: 'failure',
           metadata: { deletedRealm: false, deletedTenant: true },
         },
@@ -451,7 +449,7 @@ describe('createTenantV2Router', () => {
         expect.objectContaining({ name: 'tenant.deleted' }),
         req.user,
         expect.objectContaining({ id: tenantUrn }),
-        { operation: 'delete', status: 'error', metadata: { error: 'Keycloak unavailable' } },
+        { status: 'error', metadata: { error: 'Keycloak unavailable' } },
       );
     });
 
@@ -480,7 +478,6 @@ describe('createTenantV2Router', () => {
         req.user,
         expect.objectContaining({ id: tenantUrn, name: 'new-mock-name' }),
         {
-          operation: 'update-name',
           changeSet: { before: { name: tenant.name }, after: { name: 'new-mock-name' } },
         },
       );
@@ -578,7 +575,7 @@ describe('createTenantV2Router', () => {
         expect.objectContaining({ name: 'tenant.created' }),
         req.user,
         expect.objectContaining({ id: tenantUrn, status: 'active' }),
-        { operation: 'create', metadata: { realmProvisioning: 'new', serviceClientCount: 0 } },
+        { metadata: { realmProvisioning: 'new', serviceClientCount: 0 } },
       );
     });
 
@@ -621,7 +618,6 @@ describe('createTenantV2Router', () => {
         req.user,
         expect.objectContaining({ id: tenantUrn }),
         {
-          operation: 'create',
           status: 'failure',
           metadata: { realmProvisioning: 'new', error: 'Keycloak unavailable' },
         },
@@ -743,7 +739,7 @@ describe('createTenantV2Router', () => {
         expect.objectContaining({ name: 'tenant.created' }),
         req.user,
         expect.objectContaining({ id: tenantUrn, realm: tenant.realm }),
-        { operation: 'create', metadata: { realmProvisioning: 'existing' } },
+        { metadata: { realmProvisioning: 'existing' } },
       );
       expect(realmServiceMock.createRealm).not.toHaveBeenCalled();
     });

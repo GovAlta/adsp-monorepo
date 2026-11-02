@@ -93,7 +93,6 @@ describe('tenant audit', () => {
       const auditor = createTenantAuditor(loggerMock, auditServiceMock as AuditService);
 
       await auditor.record(TenantCreatedAuditAction, user, tenant, {
-        operation: 'create',
         metadata: { realmProvisioning: 'new' },
       });
 
@@ -105,7 +104,7 @@ describe('tenant audit', () => {
         actor: toAuditActor(user),
         resource: { type: 'tenant', id: tenant.id, name: tenant.name },
         correlationId: tenant.id,
-        metadata: { realmProvisioning: 'new', tenantName: tenant.name, realm: tenant.realm, operation: 'create' },
+        metadata: { realmProvisioning: 'new', tenantName: tenant.name, realm: tenant.realm },
         changeSet: undefined,
       });
       expect(loggerMock.warn).not.toHaveBeenCalled();
@@ -117,7 +116,6 @@ describe('tenant audit', () => {
       const changeSet = { before: { name: 'Old' }, after: { name: 'Test' } };
 
       await auditor.record(TenantUpdatedAuditAction, user, tenant, {
-        operation: 'update-name',
         status: 'failure',
         changeSet,
       });
@@ -137,9 +135,7 @@ describe('tenant audit', () => {
       });
       const auditor = createTenantAuditor(loggerMock, auditServiceMock as AuditService);
 
-      await expect(
-        auditor.record(TenantDeletedAuditAction, user, tenant, { operation: 'delete' }),
-      ).resolves.toBeUndefined();
+      await expect(auditor.record(TenantDeletedAuditAction, user, tenant)).resolves.toBeUndefined();
       expect(loggerMock.warn).toHaveBeenCalledWith(
         expect.stringContaining('tenant.deleted'),
         expect.objectContaining({ context: 'TenantAudit' }),
@@ -156,9 +152,7 @@ describe('tenant audit', () => {
       });
       const auditor = createTenantAuditor(loggerMock, auditServiceMock as AuditService);
 
-      await expect(
-        auditor.record(TenantDeletedAuditAction, user, tenant, { operation: 'delete' }),
-      ).resolves.toBeUndefined();
+      await expect(auditor.record(TenantDeletedAuditAction, user, tenant)).resolves.toBeUndefined();
       expect(loggerMock.warn).toHaveBeenCalledWith(expect.stringContaining('status 503'), expect.anything());
     });
 
@@ -166,9 +160,7 @@ describe('tenant audit', () => {
       auditServiceMock.record.mockRejectedValueOnce(new Error('Unexpected'));
       const auditor = createTenantAuditor(loggerMock, auditServiceMock as AuditService);
 
-      await expect(
-        auditor.record(TenantDeletedAuditAction, user, tenant, { operation: 'delete' }),
-      ).resolves.toBeUndefined();
+      await expect(auditor.record(TenantDeletedAuditAction, user, tenant)).resolves.toBeUndefined();
       expect(loggerMock.warn).toHaveBeenCalledWith(expect.stringContaining('Unexpected'), expect.anything());
     });
 
@@ -176,7 +168,7 @@ describe('tenant audit', () => {
       const auditor = createTenantAuditor(loggerMock, auditServiceMock as AuditService);
 
       await expect(
-        auditor.record(TenantDeletedAuditAction, user, { ...tenant, id: 'not-a-urn' }, { operation: 'delete' }),
+        auditor.record(TenantDeletedAuditAction, user, { ...tenant, id: 'not-a-urn' }),
       ).resolves.toBeUndefined();
       expect(auditServiceMock.record).not.toHaveBeenCalled();
       expect(loggerMock.warn).toHaveBeenCalled();

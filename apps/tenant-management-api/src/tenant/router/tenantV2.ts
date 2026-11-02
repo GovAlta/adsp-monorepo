@@ -136,7 +136,6 @@ export function updateTenantName(
       if (newTenant) {
         eventService.send(tenantNameUpdated(req.user, { ...newTenant, id: AdspId.parse(mapTenant(newTenant).id) }));
         void auditor.record(TenantUpdatedAuditAction, user, mapTenant(tenant), {
-          operation: 'update-name',
           changeSet: { before: { name: previousName }, after: { name } },
         });
       }
@@ -168,7 +167,7 @@ export async function removeTenant(
   auditor: TenantAuditor,
 ): Promise<TenantRemovalResult> {
   const tenant = mapTenant(entity);
-  await auditor.record(TenantDeletedAuditAction, user, tenant, { operation: 'delete' });
+  await auditor.record(TenantDeletedAuditAction, user, tenant);
 
   let deletedRealm: boolean;
   let deletedTenant: boolean;
@@ -177,7 +176,6 @@ export async function removeTenant(
     deletedTenant = await entity.delete();
   } catch (err) {
     void auditor.record(TenantDeletedAuditAction, user, tenant, {
-      operation: 'delete',
       status: 'error',
       metadata: { error: err.message },
     });
@@ -187,7 +185,6 @@ export async function removeTenant(
   const success = !!(deletedRealm && deletedTenant);
   if (!success) {
     void auditor.record(TenantDeletedAuditAction, user, tenant, {
-      operation: 'delete',
       status: 'failure',
       metadata: { deletedRealm: !!deletedRealm, deletedTenant: !!deletedTenant },
     });
@@ -242,7 +239,6 @@ async function provisionRealm(
     logger.info(`Provisioned tenant '${entity.name}' with realm '${entity.realm}'.`, LOG_CONTEXT);
 
     await auditor.record(TenantCreatedAuditAction, user, tenant, {
-      operation: 'create',
       metadata: { realmProvisioning: 'new', serviceClientCount: clients.length },
     });
   } catch (err) {
@@ -252,7 +248,6 @@ async function provisionRealm(
     );
     // Recorded before the tenant record is removed, since the audit service resolves the tenant of each event.
     await auditor.record(TenantCreatedAuditAction, user, mapTenant(entity), {
-      operation: 'create',
       status: 'failure',
       metadata: { realmProvisioning: 'new', error: err.message },
     });
@@ -309,7 +304,6 @@ export function createTenant(
         const tenant = mapTenant(entity);
         eventService.send(tenantCreated(user, { ...tenant, id: AdspId.parse(tenant.id) }));
         void auditor.record(TenantCreatedAuditAction, user, tenant, {
-          operation: 'create',
           metadata: { realmProvisioning: 'existing' },
         });
         logger.info(`Created tenant '${name}' with existing realm '${existingRealm}' for admin ${email}.`, LOG_CONTEXT);

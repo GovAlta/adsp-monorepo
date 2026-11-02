@@ -62,7 +62,6 @@ export interface AuditedTenant {
 }
 
 export interface TenantAuditDetails {
-  operation: string;
   status?: AuditEventStatus;
   metadata?: Record<string, unknown>;
   changeSet?: AuditChangeSet;
@@ -73,7 +72,7 @@ export interface TenantAuditor {
    * Records an audit event for a tenant operation. Never rejects; events that are not recorded are logged at warn
    * level so the originating operation is never rolled back because of auditing.
    */
-  record(action: AuditAction, user: User, tenant: AuditedTenant, details: TenantAuditDetails): Promise<void>;
+  record(action: AuditAction, user: User, tenant: AuditedTenant, details?: TenantAuditDetails): Promise<void>;
 }
 
 export function toAuditActor(user: User): AuditActor {
@@ -92,7 +91,7 @@ export function toAuditActor(user: User): AuditActor {
 
 export function createTenantAuditor(logger: Logger, auditService: AuditService): TenantAuditor {
   return {
-    record: async (action, user, tenant, { operation, status, metadata, changeSet }) => {
+    record: async (action, user, tenant, { status, metadata, changeSet } = {}) => {
       let outcome: AuditRecordOutcome;
       try {
         outcome = await auditService.record(action, {
@@ -101,7 +100,7 @@ export function createTenantAuditor(logger: Logger, auditService: AuditService):
           actor: toAuditActor(user),
           resource: { type: TENANT_RESOURCE_TYPE, id: tenant.id, name: tenant.name },
           correlationId: tenant.id,
-          metadata: { ...metadata, tenantName: tenant.name, realm: tenant.realm, operation },
+          metadata: { ...metadata, tenantName: tenant.name, realm: tenant.realm },
           changeSet,
         });
       } catch (err) {
