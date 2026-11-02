@@ -154,7 +154,6 @@ const outcome = await auditService.record(ACTIONS.UPDATE_CASE, {
 });
 
 if (outcome.status !== 'recorded') {
-  logger.error('Audit event was not confirmed recorded', { outcome });
   throw new Error(`Audit write failed: ${outcome.status}`);
 }
 
@@ -169,6 +168,67 @@ const history = await auditService.query(
 Core callers must pass this `AdspId` in **record details** and **query options**, as shown above.
 Tenant applications use the same calls but omit `tenantId`.
 
+### Record from an authenticated request
+
+In an Express handler behind SDK authentication, `auditDetailsFromRequest(req, details)` sets
+`actor` from `req.user` and `tenantId` from `req.tenant` (or the user's tenant). Values passed in
+`details` take precedence; for example, a Core service acting on a different tenant passes that
+tenant's `tenantId`. `toAuditActor(user)` converts a user on its own: Keycloak service accounts
+(`service-account-*`) become `service` actors, other users `user` actors. Both throw when there is
+no user and no explicit actor, so events are never attributed to an unknown actor.
+
+```typescript
+import { auditDetailsFromRequest, toAuditActor } from '@abgov/adsp-service-sdk';
+
+router.patch('/cases/:id', async (req, res, next) => {
+  try {
+    const updated = await updateCase(req.params.id, req.body);
+
+    // The SDK logs any event that is not recorded; no outcome handling is needed here.
+    await auditService.record(
+      ACTIONS.UPDATE_CASE,
+      auditDetailsFromRequest(req, {
+        resource: { type: 'case', id: updated.id },
+        metadata: { reason: req.body.reason },
+      }),
+    );
+
+    res.send(updated);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Outside a request, for example in a queue consumer:
+await auditService.record(ACTIONS.UPDATE_CASE, { tenantId, actor: toAuditActor(user), resource });
+```
+
+When the operation must not succeed without its audit record, check the outcome and fail the
+request instead:
+
+```typescript
+router.post('/cases/:id/close', async (req, res, next) => {
+  try {
+    const closed = await closeCase(req.params.id);
+
+    const outcome = await auditService.record(
+      ACTIONS.UPDATE_CASE,
+      auditDetailsFromRequest(req, {
+        resource: { type: 'case', id: closed.id },
+        metadata: { reason: 'Case closed' },
+      }),
+    );
+    if (outcome.status !== 'recorded') {
+      throw new Error(`Audit event ${outcome.eventId} was not recorded.`);
+    }
+
+    res.send(closed);
+  } catch (err) {
+    next(err);
+  }
+});
+```
+
 ### Event content and delivery
 
 `record()` supplies a UUID `eventId`, the current `occurredAt`, and business `status: 'success'`
@@ -180,7 +240,10 @@ To capture changes, set `captureChangeSet: true` on the action and add
 Otherwise the SDK drops the change set before sending. Record only necessary data; never include
 credentials or unnecessary personal information.
 
-**Always await `record()` and inspect its outcome.** It does not reject to report write failures.
+`record()` never rejects. The SDK logs every event that is not recorded, with its action, event ID
+and tenant: rejections and local failures at `warn`, delivery failures at `error`. Inspect the
+outcome only when the operation needs a different policy, such as failing the request or resending
+with the same `eventId`.
 
 | Outcome | Meaning | Response |
 | --- | --- | --- |
