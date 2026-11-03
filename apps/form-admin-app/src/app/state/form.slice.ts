@@ -21,7 +21,7 @@ import {
 } from './types';
 import { getAccessToken } from './user.slice';
 import { AdspId } from '../../lib/adspId';
-import { downloadFile, FileMetadata, findFile, loadFileMetadata } from './file.slice';
+import { downloadFile, FileMetadata, findFile, isFileUrn, loadFileMetadata } from './file.slice';
 import { getResourcesTags, getTaggedResources } from './directory.slice';
 
 export const FORM_FEATURE_KEY = 'form';
@@ -398,7 +398,7 @@ export const loadForm = createAsyncThunk(
       const fileUrns = new Set(Object.values(extractFileReferences(data.data)).flat());
       await Promise.all([...fileUrns].map((urn) => dispatch(loadFileMetadata(urn))));
       const formSubmissionUrn = `urn:ads:platform:form-service:v1:/forms/${data.id}${
-        data.submission ? `/submissions/${data.submission ? data.submission.id : ''}` : ''
+        data.submission ? `/submissions/${data.submission.id}` : ''
       }`;
 
       dispatch(findFormPdf(formSubmissionUrn));
@@ -996,21 +996,27 @@ export const formSelector = createSelector(
   },
 );
 
-const FILE_URN_PREFIX = 'urn:ads:platform:file-service:';
+const joinPath = (parent: string, key: string | number) => (parent ? `${parent}.${key}` : `${key}`);
 
 // Keys are JSON Forms control paths (e.g. `items.0.file`); multi-file array entries are grouped under the array path.
-export function extractFileReferences(value: unknown, path = '', refs: Record<string, string[]> = {}) {
-  if (typeof value === 'string') {
-    const urns = value.split(';').filter((urn) => urn.startsWith(FILE_URN_PREFIX));
-    if (urns.length > 0) {
-      const root = path.replace(/\.\d+$/, '');
-      refs[root] = [...(refs[root] || []), ...urns];
+export function extractFileReferences(data: unknown): Record<string, string[]> {
+  const refs: Record<string, string[]> = {};
+
+  const visit = (value: unknown, path: string) => {
+    if (typeof value === 'string') {
+      const urns = value.split(';').filter(isFileUrn);
+      if (urns.length > 0) {
+        const controlPath = path.replace(/\.\d+$/, '');
+        refs[controlPath] = [...(refs[controlPath] ?? []), ...urns];
+      }
+    } else if (Array.isArray(value)) {
+      value.forEach((entry, index) => visit(entry, joinPath(path, index)));
+    } else if (value && typeof value === 'object') {
+      Object.entries(value).forEach(([key, entry]) => visit(entry, joinPath(path, key)));
     }
-  } else if (Array.isArray(value)) {
-    value.forEach((entry, index) => extractFileReferences(entry, path ? `${path}.${index}` : `${index}`, refs));
-  } else if (value && typeof value === 'object') {
-    Object.entries(value).forEach(([key, entry]) => extractFileReferences(entry, path ? `${path}.${key}` : key, refs));
-  }
+  };
+
+  visit(data, '');
   return refs;
 }
 
@@ -1021,7 +1027,7 @@ export const formFilesSelector = createSelector(
     Object.entries(extractFileReferences(form?.data)).reduce(
       (files, [path, urns]) => ({
         ...files,
-        [path]: urns.map((urn) => metadata[urn]).filter((file) => !!file),
+        [path]: urns.map((urn) => metadata[urn]).filter((file): file is FileMetadata => !!file),
       }),
       {},
     ),

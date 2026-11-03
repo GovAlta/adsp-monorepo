@@ -1,4 +1,14 @@
-import { getFileServicePath } from './file.slice';
+import { getFileServicePath, isFileUrn } from './file.slice';
+
+describe('isFileUrn', () => {
+  it('returns true for a file service urn', () => {
+    expect(isFileUrn('urn:ads:platform:file-service:v1:/files/abc')).toBe(true);
+  });
+
+  it('returns false for a urn of another service', () => {
+    expect(isFileUrn('urn:ads:platform:task-service:v1:/tasks/1')).toBe(false);
+  });
+});
 
 describe('getFileServicePath', () => {
   it('returns the file resource path without a leading slash', () => {

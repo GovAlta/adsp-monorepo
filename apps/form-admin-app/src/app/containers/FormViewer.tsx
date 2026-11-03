@@ -2,7 +2,7 @@ import { ContextProviderFactory, GoAReviewRenderers } from '@abgov/jsonforms-com
 import { JsonSchema, UISchemaElement } from '@jsonforms/core';
 import { JsonForms } from '@jsonforms/react';
 import { FunctionComponent, useCallback } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch } from 'react-redux';
 import { LoadingIndicator } from '../components/LoadingIndicator';
 import { AppDispatch, downloadFile, FileMetadata } from '../state';
 
@@ -19,7 +19,7 @@ export const FormViewer: FunctionComponent<SubmittedFormProps> = ({ dataSchema, 
   const dispatch = useDispatch<AppDispatch>();
 
   const downloadFileHandler = useCallback(
-    async (file) => {
+    async (file: FileMetadata) => {
       const element = document.createElement('a');
       const { file: dataUrl, metadata } = await dispatch(downloadFile(file.urn)).unwrap();
       element.href = dataUrl;
