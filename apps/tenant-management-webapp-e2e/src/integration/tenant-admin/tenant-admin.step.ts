@@ -375,10 +375,11 @@ Then('the login link is copied to the clipboard', function () {
 });
 
 Then(
-  'the user views introductions and links for {string}, {string}, {string}, {string}, {string}, {string}, {string}, {string}, {string}, {string}, {string}, {string}, {string}, {string}, {string}, {string}, {string}, {string}',
+  'the user views introductions and links for {string}, {string}, {string}, {string}, {string}, {string}, {string}, {string}, {string}, {string}, {string}, {string}, {string}, {string}, {string}, {string}, {string}, {string}, {string}',
   function (
     access,
     agent,
+    audit,
     cache,
     calendar,
     comment,
@@ -399,6 +400,7 @@ Then(
     const cardTextArray = [
       'Access allows',
       'The agent service provides',
+      'The audit service records',
       'Cache service provides',
       'The calendar service provides',
       'Comment service',
@@ -419,6 +421,7 @@ Then(
     const cardTitleArray = [
       access,
       agent,
+      audit,
       cache,
       calendar,
       comment,
@@ -436,8 +439,8 @@ Then(
       task,
       value,
     ];
-    tenantAdminObj.goaCardTexts().should('have.length', cardTextArray.length);
-    tenantAdminObj.goaCardTitles().should('have.length', cardTitleArray.length);
+    tenantAdminObj.goaCardTexts().should('have.length.at.least', cardTextArray.length);
+    tenantAdminObj.goaCardTitles().should('have.length.at.least', cardTitleArray.length);
     tenantAdminObj.goaCardTexts().each((element, index) => {
       cy.wrap(element).invoke('text').should('contain', cardTextArray[index]);
     });

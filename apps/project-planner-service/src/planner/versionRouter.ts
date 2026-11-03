@@ -1,5 +1,5 @@
 import { AdspId, EventService } from '@abgov/adsp-service-sdk';
-import { createValidationHandler, InvalidOperationError, NotFoundError } from '@core-services/core-common';
+import { createValidationHandler, NotFoundError } from '@core-services/core-common';
 import { Router } from 'express';
 import { body, param } from 'express-validator';
 import { getSolution, getTenantId, loaded, requirePlannerUser } from './access';
@@ -18,6 +18,7 @@ interface VersionRouterProps {
 
 interface ExportDetails {
   version: number;
+  versionName?: string;
   unsavedChanges: boolean;
   lastUpdated: Date;
   updatedOn: Date;
@@ -93,6 +94,7 @@ export function createVersionRouter({
         const details = unsavedChanges
           ? {
               version: latest?.number ?? solution.version,
+              versionName: latest?.name,
               unsavedChanges,
               lastUpdated: solution.updatedOn,
               initial: !latest,
@@ -100,6 +102,7 @@ export function createVersionRouter({
             }
           : {
               version: latest.number,
+              versionName: latest.name,
               unsavedChanges,
               lastUpdated: latest.createdOn,
               ...(await versionChanges(tenantId, solution.id, latest)),
@@ -135,7 +138,7 @@ export function createVersionRouter({
   );
 
   router.post(
-    '/solutions/:id/versions',
+    '/solutions/:id/versions/checkpoint',
     requirePlannerUser,
     validateId,
     getSolution(solutionRepository),
@@ -145,10 +148,11 @@ export function createVersionRouter({
         const solution = loaded(req);
         const { content, latest, unsavedChanges } = await savedStatus(tenantId, solution);
         if (!unsavedChanges) {
-          throw new InvalidOperationError(`No changes since version ${latest.number}.`);
+          res.send(summary(latest));
+          return;
         }
         const version = await solutionVersionRepository.create(tenantId, solution.id, content);
-        res.status(201).send(summary(version));
+        res.send(summary(version));
         eventService.send(solutionUpdated(req.user, solution, 'version-saved'));
       } catch (err) {
         next(err);
@@ -199,6 +203,7 @@ export function createVersionRouter({
         res.send(
           exportBody(solution, version.content, {
             version: version.number,
+            versionName: version.name,
             unsavedChanges: false,
             lastUpdated: version.createdOn,
             updatedOn: version.createdOn,

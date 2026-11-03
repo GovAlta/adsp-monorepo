@@ -3,6 +3,7 @@ import { GoabButton, GoabButtonGroup, GoabIconButton, GoabInput, GoabModal, Goab
 import styled from 'styled-components';
 import { PlannerApi } from './api';
 import { Solution, SolutionVersionSummary } from './model';
+import { ExpandableText } from './SpecialistChat';
 import { useBusy } from './useBusy';
 import { download, harnessToMarkdown, safeName, solutionToMarkdown } from './utils';
 
@@ -13,6 +14,9 @@ const fmtTimestamp = (iso: string) => {
   const meridiem = date.getHours() < 12 ? 'AM' : 'PM';
   return `${pad(date.getMonth() + 1)}-${pad(date.getDate())}-${date.getFullYear()}, ${hour}:${pad(date.getMinutes())} ${meridiem}`;
 };
+
+const changedSummary = (version: SolutionVersionSummary) =>
+  version.number === 1 ? 'Initial version' : version.changedSections.join(', ') || 'No changes';
 
 const Scroll = styled.div`
   max-height: 60vh;
@@ -31,6 +35,19 @@ const NameEditor = styled.div`
   flex-direction: column;
   gap: 0.5rem;
 `;
+
+const Timestamp = styled.span`
+  white-space: nowrap;
+`;
+
+const NameText = styled.span`
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+`;
+
+const CHANGED_SECTIONS_PREVIEW_LIMIT = 60;
 
 interface VersionsModalProps {
   open: boolean;
@@ -101,98 +118,122 @@ export const VersionsModal: FunctionComponent<VersionsModalProps> = ({
       }
     >
       <Scroll data-testid="versions-scroll">
-        <GoabTable width="100%" testId="versions-table">
-          <thead>
-            <tr>
-              <th>Version</th>
-              <th>Name</th>
-              <th>Timestamp</th>
-              <th>Export</th>
-            </tr>
-          </thead>
-          <tbody>
-            {versions.map((version) => (
-              <tr key={version.number}>
-                <td>{version.number}</td>
-                <td>
-                  {editing === version.number ? (
-                    <NameEditor>
-                      <GoabInput
-                        name="versionName"
-                        value={name}
-                        maxLength={100}
-                        testId="version-name-input"
-                        ariaLabel={`Name for version ${version.number}`}
-                        onChange={(detail) => setName(detail.value)}
-                      />
-                      <GoabButtonGroup alignment="end" gap="compact" testId="version-name-actions">
-                        <GoabButton
-                          size="compact"
-                          type="tertiary"
-                          testId="version-name-cancel"
+        {versions.length === 0 ? (
+          <p data-testid="versions-empty">
+            No saved versions yet. A version is saved automatically each time you make a change.
+          </p>
+        ) : (
+          <GoabTable width="100%" testId="versions-table">
+            <colgroup>
+              <col style={{ width: '70px' }} />
+              <col style={{ width: '210px' }} />
+              <col style={{ width: '150px' }} />
+              <col />
+              <col style={{ width: '150px' }} />
+            </colgroup>
+            <thead>
+              <tr>
+                <th>Version</th>
+                <th>Name</th>
+                <th>Timestamp</th>
+                <th>What changed</th>
+                <th>Export</th>
+              </tr>
+            </thead>
+            <tbody>
+              {versions.map((version) => (
+                <tr key={version.number}>
+                  <td>{version.number}</td>
+                  <td>
+                    {editing === version.number ? (
+                      <NameEditor>
+                        <GoabInput
+                          name="versionName"
+                          value={name}
+                          width="180px"
+                          maxLength={100}
+                          testId="version-name-input"
+                          ariaLabel={`Name for version ${version.number}`}
+                          onChange={(detail) => setName(detail.value)}
+                        />
+                        <GoabButtonGroup alignment="end" gap="compact" testId="version-name-actions">
+                          <GoabButton
+                            size="compact"
+                            type="tertiary"
+                            testId="version-name-cancel"
+                            disabled={working}
+                            onClick={() => setEditing(undefined)}
+                          >
+                            Cancel
+                          </GoabButton>
+                          <GoabButton
+                            size="compact"
+                            testId="version-name-save"
+                            disabled={working}
+                            onClick={() => saveName(version.number)}
+                          >
+                            Save
+                          </GoabButton>
+                        </GoabButtonGroup>
+                      </NameEditor>
+                    ) : (
+                      <Cell style={{ flexWrap: 'nowrap' }}>
+                        <NameText title={version.name}>{version.name}</NameText>
+                        <GoabIconButton
+                          icon="pencil"
+                          size="small"
+                          title="Rename version"
+                          ariaLabel={`Rename version ${version.number}`}
+                          testId={`rename-version-${version.number}`}
                           disabled={working}
-                          onClick={() => setEditing(undefined)}
-                        >
-                          Cancel
-                        </GoabButton>
-                        <GoabButton
-                          size="compact"
-                          testId="version-name-save"
-                          disabled={working}
-                          onClick={() => saveName(version.number)}
-                        >
-                          Save
-                        </GoabButton>
-                      </GoabButtonGroup>
-                    </NameEditor>
-                  ) : (
-                    <Cell>
-                      {version.name}
+                          onClick={() => startRename(version)}
+                        />
+                      </Cell>
+                    )}
+                  </td>
+                  <td>
+                    <Timestamp>{fmtTimestamp(version.createdOn)}</Timestamp>
+                  </td>
+                  <td>
+                    <ExpandableText
+                      content={changedSummary(version)}
+                      previewLimit={CHANGED_SECTIONS_PREVIEW_LIMIT}
+                      testId={`version-changed-${version.number}-toggle`}
+                    />
+                  </td>
+                  <td>
+                    <Cell role="group" aria-label={`Export version ${version.number}`} style={{ flexWrap: 'nowrap' }}>
                       <GoabIconButton
-                        icon="pencil"
-                        size="small"
-                        title="Rename version"
-                        ariaLabel={`Rename version ${version.number}`}
-                        testId={`rename-version-${version.number}`}
+                        icon="download"
+                        title="Download JSON"
+                        ariaLabel={`Download version ${version.number} as JSON`}
+                        testId={`version-json-${version.number}`}
                         disabled={working}
-                        onClick={() => startRename(version)}
+                        onClick={() => exportJson(version.number)}
+                      />
+                      <GoabIconButton
+                        icon="document-text"
+                        title="Download report (.md)"
+                        ariaLabel={`Download version ${version.number} report`}
+                        testId={`version-report-${version.number}`}
+                        disabled={working}
+                        onClick={() => exportReport(version.number)}
+                      />
+                      <GoabIconButton
+                        icon="code-download"
+                        title="Download harness instructions"
+                        ariaLabel={`Download version ${version.number} harness instructions`}
+                        testId={`version-harness-${version.number}`}
+                        disabled={working}
+                        onClick={() => exportHarness(version.number)}
                       />
                     </Cell>
-                  )}
-                </td>
-                <td>{fmtTimestamp(version.createdOn)}</td>
-                <td>
-                  <Cell role="group" aria-label={`Export version ${version.number}`}>
-                    <GoabIconButton
-                      icon="download"
-                      title="Download JSON"
-                      ariaLabel={`Download version ${version.number} as JSON`}
-                      testId={`version-json-${version.number}`}
-                      disabled={working}
-                      onClick={() => exportJson(version.number)}
-                    />
-                    <GoabIconButton
-                      icon="document-text"
-                      title="Download report (.md)"
-                      ariaLabel={`Download version ${version.number} report`}
-                      testId={`version-report-${version.number}`}
-                      disabled={working}
-                      onClick={() => exportReport(version.number)}
-                    />
-                    <GoabIconButton
-                      icon="code-download"
-                      title="Download harness instructions"
-                      ariaLabel={`Download version ${version.number} harness instructions`}
-                      testId={`version-harness-${version.number}`}
-                      disabled={working}
-                      onClick={() => exportHarness(version.number)}
-                    />
-                  </Cell>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </GoabTable>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </GoabTable>
+        )}
       </Scroll>
     </GoabModal>
   );
