@@ -1626,275 +1626,6 @@ describe('planner router routes', () => {
     });
   });
 
-  describe('PUT /solutions/:id/questions/:questionId', () => {
-    const QUESTION_ID = '8c1d5e2a-3b4f-4a6d-9e7c-1f2a3b4c5d6e';
-    const answerQuestion = (body: object = { answer: 'The director' }, user: User = owner, questionId = QUESTION_ID) =>
-      request(buildApp(user)).put(`/planner/v1/solutions/${SOLUTION_ID}/questions/${questionId}`).send(body);
-
-    beforeEach(() => {
-      const stored = solutionOwnedBy('owner-1');
-      stored.state.questions = [
-        { id: QUESTION_ID, question: 'Who approves?', raisedBy: 'ai', status: 'answered', answer: 'Old answer' },
-        { id: 'other-id', question: 'How many users?', raisedBy: 'planner', status: 'open' },
-      ];
-      repository.get.mockResolvedValue(stored);
-    });
-
-    it('marks the question as answered with the trimmed answer', async () => {
-      const res = await answerQuestion({ answer: '  The director  ' });
-
-      expect(res.body.state.questions[0]).toEqual({
-        id: QUESTION_ID,
-        question: 'Who approves?',
-        raisedBy: 'ai',
-        status: 'answered',
-        answer: 'The director',
-      });
-    });
-
-    it('leaves other questions untouched', async () => {
-      const res = await answerQuestion();
-
-      expect(res.body.state.questions[1]).toEqual({
-        id: 'other-id',
-        question: 'How many users?',
-        raisedBy: 'planner',
-        status: 'open',
-      });
-    });
-
-    it.each([
-      ['empty', ''],
-      ['whitespace only', '   '],
-    ])('reopens the question when the answer is %s', async (_name, answer) => {
-      const res = await answerQuestion({ answer });
-
-      expect(res.body.state.questions[0]).toEqual({
-        id: QUESTION_ID,
-        question: 'Who approves?',
-        raisedBy: 'ai',
-        status: 'open',
-      });
-    });
-
-    it('sends a solution-updated event with the answer operation', async () => {
-      await answerQuestion();
-
-      expect(eventService.send).toHaveBeenCalledWith(
-        expect.objectContaining({ payload: expect.objectContaining({ operation: 'answer' }) }),
-      );
-    });
-
-    it('does not bump the version on a plain edit', async () => {
-      const res = await answerQuestion();
-
-      expect(res.body.version).toBe(1);
-    });
-
-    it('returns 404 for an unknown question', async () => {
-      const res = await answerQuestion({ answer: 'x' }, owner, '11111111-2222-4333-8444-555555555555');
-
-      expect(res.status).toBe(404);
-    });
-
-    it.each([
-      ['missing', {}],
-      ['not a string', { answer: 7 }],
-      ['too long', { answer: 'x'.repeat(5001) }],
-    ])('returns 400 when the answer is %s', async (_name, body) => {
-      const res = await answerQuestion(body);
-
-      expect(res.status).toBe(400);
-    });
-
-    it('returns 400 for a malformed question id', async () => {
-      const res = await answerQuestion({ answer: 'x' }, owner, 'not-a-uuid');
-
-      expect(res.status).toBe(400);
-    });
-
-    it('returns 403 for a user who does not own the solution', async () => {
-      const res = await answerQuestion({ answer: 'x' }, stranger);
-
-      expect(res.status).toBe(403);
-    });
-  });
-
-  describe('PUT /solutions/:id/questions/:questionId (confidence rescoring)', () => {
-    const QUESTION_ID = '8c1d5e2a-3b4f-4a6d-9e7c-1f2a3b4c5d6e';
-    const OTHER_QUESTION_ID = '11111111-2222-4333-8444-555555555555';
-    const DUPLICATE_QUESTION_ID = '22222222-3333-4444-8555-666666666666';
-    const answerQuestion = (
-      body: object = { answer: 'Each renewal is reviewed and approved before moving to the next stage.' },
-    ) => request(buildApp(owner)).put(`/planner/v1/solutions/${SOLUTION_ID}/questions/${QUESTION_ID}`).send(body);
-    const storedWith = (
-      factorScores: Partial<Record<string, number>>,
-      extraQuestions: Solution['state']['questions'] = [],
-    ) => {
-      const stored = solutionOwnedBy('owner-1');
-      stored.state.questions = [
-        {
-          id: QUESTION_ID,
-          question: 'Does the clerk review each case before approval?',
-          raisedBy: 'ai',
-          status: 'open',
-        },
-        ...extraQuestions,
-      ];
-      stored.state.discovery = {
-        messages: [],
-        confidence: 50,
-        threshold: DISCOVERY_THRESHOLD,
-        factors: DISCOVERY_FACTORS.map((f) => ({ id: f.id, label: f.label, score: factorScores[f.id] ?? 95 })),
-        ready: false,
-        mode: 'ai',
-        updatedOn: '2026-01-01T00:00:00.000Z',
-      };
-      repository.get.mockResolvedValue(stored);
-      return stored;
-    };
-
-    it('bumps only the factor the question and answer are relevant to, starting from the AI baseline', async () => {
-      storedWith({ process: 20 });
-
-      const res = await answerQuestion();
-
-      const byId = (id: string) => res.body.state.discovery.factors.find((f: { id: string }) => f.id === id).score;
-      expect(byId('process')).toBe(80);
-      DISCOVERY_FACTORS.filter((f) => f.id !== 'process').forEach((f) => expect(byId(f.id)).toBe(95));
-    });
-
-    it('always moves the relevant factor a little, even with a vague answer, since the question itself is relevant', async () => {
-      storedWith({ process: 60 });
-
-      const res = await answerQuestion({ answer: 'No further detail.' });
-
-      const process = res.body.state.discovery.factors.find((f: { id: string }) => f.id === 'process');
-      expect(process.score).toBe(65);
-    });
-
-    it('never lowers an unrelated factor', async () => {
-      storedWith({});
-
-      const res = await answerQuestion();
-
-      const unrelated = res.body.state.discovery.factors.find((f: { id: string }) => f.id === 'communication');
-      expect(unrelated.score).toBe(95);
-    });
-
-    it('caps every factor and the overall confidence below 100% while questions remain open', async () => {
-      storedWith({}, [
-        {
-          id: OTHER_QUESTION_ID,
-          question: 'Who approves grants above the delegated limit?',
-          raisedBy: 'ai',
-          status: 'open',
-        },
-      ]);
-
-      const res = await answerQuestion();
-
-      expect(res.body.state.discovery.factors.every((f: { score: number }) => f.score <= 90)).toBe(true);
-      expect(res.body.state.discovery.confidence).toBeLessThanOrEqual(90);
-    });
-
-    it('does not cap a factor above 90% once no questions remain open', async () => {
-      storedWith({ process: 95 });
-
-      const res = await answerQuestion();
-
-      expect(res.body.state.discovery.factors.find((f: { id: string }) => f.id === 'process').score).toBe(100);
-    });
-
-    it('replaces the incremental bump with a full AI re-score once the last open question closes, when an llm is configured', async () => {
-      storedWith({ process: 20 });
-      const llm = {
-        model: 'GOA-Default',
-        analyze: jest.fn(),
-        discover: jest.fn().mockResolvedValue({
-          reply: 'Understood.',
-          factors: DISCOVERY_FACTORS.map((f) => ({ id: f.id, score: 100 })),
-          model: 'GOA-Default',
-        }),
-        blueprint: jest.fn(),
-        acceptanceCriteria: jest.fn(),
-        consult: jest.fn(),
-        converse: jest.fn(),
-      };
-
-      const res = await request(buildApp(owner, true, llm))
-        .put(`/planner/v1/solutions/${SOLUTION_ID}/questions/${QUESTION_ID}`)
-        .send({ answer: 'Each renewal is reviewed and approved before moving to the next stage.' });
-
-      expect(llm.discover).toHaveBeenCalled();
-      expect(res.body.state.discovery.factors.every((f: { score: number }) => f.score === 100)).toBe(true);
-    });
-
-    it('does not trigger a full re-score when a question other than the last one is answered', async () => {
-      storedWith({ process: 20 }, [
-        {
-          id: OTHER_QUESTION_ID,
-          question: 'Who approves grants above the delegated limit?',
-          raisedBy: 'ai',
-          status: 'open',
-        },
-      ]);
-      const llm = {
-        model: 'GOA-Default',
-        analyze: jest.fn(),
-        discover: jest.fn(),
-        blueprint: jest.fn(),
-        acceptanceCriteria: jest.fn(),
-        consult: jest.fn(),
-        converse: jest.fn(),
-      };
-
-      await request(buildApp(owner, true, llm))
-        .put(`/planner/v1/solutions/${SOLUTION_ID}/questions/${QUESTION_ID}`)
-        .send({ answer: 'Each renewal is reviewed and approved before moving to the next stage.' });
-
-      expect(llm.discover).not.toHaveBeenCalled();
-    });
-
-    it('prunes a differently-worded duplicate open question once a similar one is answered (regression)', async () => {
-      const stored = solutionOwnedBy('owner-1');
-      stored.state.questions = [
-        {
-          id: QUESTION_ID,
-          question: 'Do permits expire, and if so, is there a renewal process?',
-          raisedBy: 'ai',
-          status: 'open',
-        },
-        {
-          id: DUPLICATE_QUESTION_ID,
-          question: 'Do these permits expire after a certain period, or do they need to be renewed annually?',
-          raisedBy: 'ai',
-          status: 'open',
-        },
-      ];
-      repository.get.mockResolvedValue(stored);
-
-      const res = await answerQuestion({
-        answer:
-          "Permits expire at the end of each month and staff must renew. The clerk can revoke a permit if it's misused.",
-      });
-
-      expect(res.body.state.questions.some((q: { id: string }) => q.id === DUPLICATE_QUESTION_ID)).toBe(false);
-    });
-
-    it('does not rescore when discovery has not started', async () => {
-      const stored = solutionOwnedBy('owner-1');
-      stored.state.questions = [
-        { id: QUESTION_ID, question: 'When does a permit need to be renewed?', raisedBy: 'ai', status: 'open' },
-      ];
-      repository.get.mockResolvedValue(stored);
-
-      const res = await answerQuestion();
-
-      expect(res.body.state.discovery).toBeUndefined();
-    });
-  });
-
   describe('PUT /solutions/:id/components/:order/review', () => {
     const reviewComponent = (body: object = { review: 'approved' }, user: User = owner, order: number | string = 2) =>
       request(buildApp(user)).put(`/planner/v1/solutions/${SOLUTION_ID}/components/${order}/review`).send(body);
@@ -2061,7 +1792,7 @@ describe('planner router routes', () => {
     });
 
     describe('POST /solutions/:id/analyze (confidence rescoring)', () => {
-      it('clears a stale AI discovery warning once Save & analyze runs in rules mode', async () => {
+      it('clears a stale AI discovery warning once Save & analyze runs, since rescoring no longer calls AI', async () => {
         const stored = solutionOwnedBy('owner-1');
         stored.state.problemStatement = aiText;
         stored.state.discovery = {
@@ -2076,30 +1807,104 @@ describe('planner router routes', () => {
         };
         repository.get.mockResolvedValue(stored);
 
-        const res = await analyze(buildApp(owner, true, llm), { text: aiText, mode: 'rules' });
+        const res = await analyze(buildApp(owner, true, llm), { text: aiText, mode: 'ai' });
 
         expect(res.body.state.discovery.warning).toBeUndefined();
+        expect(llm.discover).not.toHaveBeenCalled();
+      });
+    });
+
+    describe('POST /solutions/:id/analyze (discovery status announcement)', () => {
+      const vagueText = 'Short vague idea.';
+      const existingMessages = [
+        {
+          role: 'assistant' as const,
+          content: 'I have a complete understanding so far.',
+          at: '2026-01-01T00:00:00.000Z',
+        },
+      ];
+
+      it('appends a discovery status message when confidence drops significantly', async () => {
+        const stored = solutionOwnedBy('owner-1');
+        stored.state.problemStatement = vagueText;
+        stored.state.discovery = {
+          messages: existingMessages,
+          confidence: 90,
+          threshold: DISCOVERY_THRESHOLD,
+          factors: DISCOVERY_FACTORS.map((f) => ({ id: f.id, label: f.label, score: 90 })),
+          ready: true,
+          mode: 'rules',
+          updatedOn: '2026-01-01T00:00:00.000Z',
+        };
+        repository.get.mockResolvedValue(stored);
+
+        const res = await analyze(buildApp(owner, true, llm), { text: vagueText, mode: 'rules' });
+
+        const messages = res.body.state.discovery.messages;
+        expect(messages).toHaveLength(2);
+        expect(messages[1].role).toBe('assistant');
+        expect(messages[1].content).toContain('confident so far');
       });
 
-      it('sets a fresh warning when this attempt itself fails in AI mode', async () => {
+      it('does not append a status message when nothing meaningfully changed', async () => {
+        const stored = solutionOwnedBy('owner-1');
+        stored.state.problemStatement = vagueText;
+        stored.state.discovery = {
+          messages: existingMessages,
+          confidence: 3,
+          threshold: DISCOVERY_THRESHOLD,
+          factors: DISCOVERY_FACTORS.map((f) => ({ id: f.id, label: f.label, score: 3 })),
+          ready: false,
+          mode: 'rules',
+          updatedOn: '2026-01-01T00:00:00.000Z',
+        };
+        repository.get.mockResolvedValue(stored);
+
+        const res = await analyze(buildApp(owner, true, llm), { text: vagueText, mode: 'rules' });
+
+        expect(res.body.state.discovery.messages).toHaveLength(1);
+      });
+
+      it('does not announce when there is no existing discovery conversation yet', async () => {
+        const stored = solutionOwnedBy('owner-1');
+        stored.state.problemStatement = vagueText;
+        stored.state.discovery = {
+          messages: [],
+          confidence: 90,
+          threshold: DISCOVERY_THRESHOLD,
+          factors: DISCOVERY_FACTORS.map((f) => ({ id: f.id, label: f.label, score: 90 })),
+          ready: true,
+          mode: 'rules',
+          updatedOn: '2026-01-01T00:00:00.000Z',
+        };
+        repository.get.mockResolvedValue(stored);
+
+        const res = await analyze(buildApp(owner, true, llm), { text: vagueText, mode: 'rules' });
+
+        expect(res.body.state.discovery.messages).toHaveLength(0);
+      });
+
+      it('uses a rule-based reply and never calls llm.discover, since rescoring no longer uses AI', async () => {
         const stored = solutionOwnedBy('owner-1');
         stored.state.problemStatement = aiText;
         stored.state.discovery = {
-          messages: [],
-          confidence: 40,
+          messages: existingMessages,
+          confidence: 90,
           threshold: DISCOVERY_THRESHOLD,
-          factors: DISCOVERY_FACTORS.map((f) => ({ id: f.id, label: f.label, score: 40 })),
-          ready: false,
+          factors: DISCOVERY_FACTORS.map((f) => ({ id: f.id, label: f.label, score: 90 })),
+          ready: true,
           mode: 'ai',
           updatedOn: '2026-01-01T00:00:00.000Z',
         };
         repository.get.mockResolvedValue(stored);
         llm.analyze.mockResolvedValueOnce(aiAnalysis);
-        llm.discover.mockRejectedValueOnce(new Error('Model request failed (HTTP 429)'));
 
         const res = await analyze(buildApp(owner, true, llm), { text: aiText, mode: 'ai' });
 
-        expect(res.body.state.discovery.warning).toContain('AI scoring failed');
+        const messages = res.body.state.discovery.messages;
+        expect(messages).toHaveLength(2);
+        expect(messages[1].content).toContain('confident so far');
+        expect(llm.discover).not.toHaveBeenCalled();
       });
     });
 

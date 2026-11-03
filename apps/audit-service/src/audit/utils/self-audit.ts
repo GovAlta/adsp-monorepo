@@ -1,4 +1,4 @@
-import { AdspId } from '@abgov/adsp-service-sdk';
+import { AdspId, toAuditActor } from '@abgov/adsp-service-sdk';
 import { randomUUID } from 'crypto';
 import type { Request } from 'express';
 import type { Logger } from 'winston';
@@ -24,9 +24,6 @@ interface SelfAuditorOptions {
 }
 
 const MAX_CORRELATION_ID_LENGTH = 128;
-
-// Keycloak names service account users with this prefix.
-const SERVICE_ACCOUNT_PREFIX = 'service-account-';
 
 /**
  * Records reads of the audit trail as events in the service's own namespace.
@@ -67,13 +64,7 @@ export class SelfAuditor {
         occurredAt: now.toISOString(),
         action,
         status,
-        actor: {
-          id: user.id,
-          type: user.name?.startsWith(SERVICE_ACCOUNT_PREFIX) ? ('service' as const) : ('user' as const),
-          name: user.name || undefined,
-          email: user.email || undefined,
-          roles: user.roles,
-        },
+        actor: toAuditActor(user),
         ...(correlationId ? { correlationId } : {}),
         metadata: { endpoint, resultCount, ...(filters && Object.keys(filters).length ? { filters } : {}) },
       };

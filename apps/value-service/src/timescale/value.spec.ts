@@ -667,9 +667,9 @@ describe('TimescaleValuesRepository readValues', () => {
     ]);
   });
 
-  it('matches a nested payload object through jsonb containment', async () => {
+  it('requires every payload condition through JSONB containment', async () => {
     const { knex, whereRaws } = createKnex({ tableRows: { values: [row] } });
-    const payload = { applicationId: '12345', decision: { status: 'submitted' } };
+    const payload = { applicationId: 'application-12345', decision: { status: 'submitted' } };
 
     await new TimescaleValuesRepository(knex).readValues(10, undefined, { payload });
 

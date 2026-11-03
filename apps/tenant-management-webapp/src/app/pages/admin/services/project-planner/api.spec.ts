@@ -130,13 +130,6 @@ describe('usePlannerApi', () => {
         { message: 'hi', mode: 'ai' },
       ],
       [
-        'answers a question',
-        (api) => api.answerQuestion('s1', 'q1', 'Yes'),
-        'put',
-        '/solutions/s1/questions/q1',
-        { answer: 'Yes' },
-      ],
-      [
         'reviews a component',
         (api) => api.reviewComponent('s1', 2, 'approved'),
         'put',

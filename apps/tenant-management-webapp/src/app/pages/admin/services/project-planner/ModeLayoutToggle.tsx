@@ -50,9 +50,10 @@ interface AnalysisModeToggleProps {
   mode: AnalysisMode;
   modes: AnalysisMode[];
   onChange: (mode: AnalysisMode) => void;
+  disabled?: boolean;
 }
 
-export const AnalysisModeToggle: FunctionComponent<AnalysisModeToggleProps> = ({ mode, modes, onChange }) => (
+export const AnalysisModeToggle: FunctionComponent<AnalysisModeToggleProps> = ({ mode, modes, onChange, disabled }) => (
   <ToggleGroup
     label="Analysis mode"
     items={[
@@ -61,7 +62,7 @@ export const AnalysisModeToggle: FunctionComponent<AnalysisModeToggleProps> = ({
     ]}
     value={mode}
     onChange={onChange}
-    isDisabled={(id) => !modes.includes(id)}
+    isDisabled={(id) => disabled || !modes.includes(id)}
     testIdPrefix="analysis-mode"
   />
 );

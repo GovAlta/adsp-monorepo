@@ -5,6 +5,17 @@ import { getAccessToken } from '../../../state/user.slice';
 const AUDIT_SERVICE_URN = 'urn:ads:platform:audit-service:v1';
 const CONFIGURATION_SERVICE_URN = 'urn:ads:platform:configuration-service:v2';
 
+// Adding an action needs audit-admin on the audit service and a Configuration service write.
+const AUDIT_ADMIN_ROLE = 'urn:ads:platform:audit-service:audit-admin';
+const CONFIGURATION_ADMIN_ROLE = 'urn:ads:platform:configuration-service:configuration-admin';
+
+export const missingCatalogRoles = (roles: string[] = store.getState().user.user?.roles ?? []) => [
+  ...(roles.includes(AUDIT_ADMIN_ROLE) ? [] : ['audit-admin']),
+  ...(roles.includes(CONFIGURATION_ADMIN_ROLE) ? [] : ['configuration-admin']),
+];
+
+export const canWriteCatalog = (roles?: string[]) => missingCatalogRoles(roles).length === 0;
+
 export type EventStatus = 'success' | 'failure' | 'blocked' | 'error';
 
 export interface AuditEventInput {
@@ -116,6 +127,9 @@ export const SAMPLE_CATALOG = {
   },
 };
 
+export const CATALOG_NOT_REGISTERED =
+  'The sandbox action catalog is not registered yet, and registering it requires the configuration-admin role. Ask a user with that role to open this page once.';
+
 // Registers the sample's action catalog as audit-service configuration (actions-<namespace>) when it is missing.
 // Returns true if the catalog was created. Creating it requires the configuration-admin role.
 export async function ensureActionCatalog(): Promise<boolean> {
@@ -128,6 +142,9 @@ export async function ensureActionCatalog(): Promise<boolean> {
     }
   }
 
+  if (missingCatalogRoles().includes('configuration-admin')) {
+    throw new Error(CATALOG_NOT_REGISTERED);
+  }
   await patchCatalog({ operation: 'REPLACE', configuration: SAMPLE_CATALOG });
   return true;
 }
@@ -143,12 +160,10 @@ export interface NewAction {
   forwardToSiem?: boolean;
 }
 
-// Adds (or overwrites) one action in the sample namespace's catalog. Requires the configuration-admin role.
+// Adds one action to the sample namespace's catalog. The audit service rejects names that already exist in the
+// namespace or in a Core namespace (409). Requires audit-admin and the configuration-admin role.
 export const addAction = (name: string, action: NewAction) =>
-  patchCatalog({
-    operation: 'UPDATE',
-    update: { kind: 'actionCatalog', application: SAMPLE_NAMESPACE, actions: { [name]: action } },
-  });
+  request<unknown>('post', `/${encodeURIComponent(SAMPLE_NAMESPACE)}/actions`, { data: { name, ...action } });
 
 async function patchCatalog(body: unknown) {
   const configurationUrl = getServiceUrl(CONFIGURATION_SERVICE_URN);

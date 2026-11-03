@@ -147,6 +147,22 @@ components:
       Event logging is provided via the value service, but consumers of this API do not need to call the value
       service directly.
     parameters:
+      - name: namespace
+        description: Namespace of the logged events to count.
+        in: query
+        required: false
+        schema:
+          type: string
+          minLength: 1
+          maxLength: 50
+      - name: name
+        description: Name of the logged events to count.
+        in: query
+        required: false
+        schema:
+          type: string
+          minLength: 1
+          maxLength: 50
       - name: timestampMin
         description: Inclusive minimum value of the event timestamp.
         in: query

@@ -46,7 +46,13 @@ export const ReviewHeader = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: var(--goa-space-s);
   width: 100%;
+
+  /* Lets the Change link drop under a long label instead of widening the review. */
+  @media (max-width: 639px) {
+    flex-wrap: wrap;
+  }
 `;
 
 export const ReviewLabel = styled.div`
@@ -54,6 +60,8 @@ export const ReviewLabel = styled.div`
   font-size: var(--goa-font-size-4);
   line-height: var(--goa-line-height-3);
   color: var(--goa-color-text-default);
+  overflow-wrap: break-word;
+  min-width: 0;
 `;
 
 export const ReviewValue = styled.div`
@@ -61,6 +69,8 @@ export const ReviewValue = styled.div`
   color: var(--goa-color-text-default);
   font-size: var(--goa-font-size-4);
   line-height: var(--goa-line-height-3);
+  /* Review rows are table cells, which can't shrink below their longest word (a URL or email). */
+  overflow-wrap: anywhere;
 `;
 
 //Check and unchecked are different heights otherwise
