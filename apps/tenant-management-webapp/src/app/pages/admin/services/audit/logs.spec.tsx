@@ -170,7 +170,10 @@ describe('AuditLogs', () => {
     const toggle = (el: HTMLElement) => el.querySelector("goa-button[testId='audit-filters-toggle']");
 
     it('is disabled when there are no audit logs and no filters applied', () => {
-      const { baseElement } = renderLogs(state(['audit-reader']));
+      const { store, baseElement } = renderLogs(state(['audit-reader']));
+      act(() => {
+        store.dispatch(fetchAuditEventsSuccess([], undefined, false));
+      });
       expect(toggle(baseElement)).toHaveAttribute('disabled', 'true');
     });
 
