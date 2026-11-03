@@ -18,7 +18,7 @@ const METHODS: (keyof PlannerApi)[] = [
   'consult',
   'exportSolution',
   'listVersions',
-  'saveVersion',
+  'checkpointVersion',
   'renameVersion',
   'exportVersion',
   'listSpecialists',

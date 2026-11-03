@@ -1,5 +1,6 @@
 import React from 'react';
 import { fireEvent, render, waitFor } from '@testing-library/react';
+import { useDispatch } from 'react-redux';
 import { SolutionWorkplace, getGuidedStep } from './SolutionWorkplace';
 import { usePlannerApi } from './api';
 import { expectNoA11yViolations } from './testing/axe';
@@ -8,6 +9,7 @@ import { download } from './utils';
 import { Solution, SolutionBlueprint, SolutionVersionList, SpecialistDefinition } from './model';
 
 jest.mock('./api', () => ({ usePlannerApi: jest.fn() }));
+jest.mock('react-redux', () => ({ useDispatch: jest.fn() }));
 jest.mock('./utils', () => ({ ...jest.requireActual('./utils'), download: jest.fn() }));
 
 const goa = (container: HTMLElement, testId: string) =>
@@ -113,6 +115,7 @@ const versionList = (latest = 1, unsavedChanges = false): SolutionVersionList =>
     number: latest - index,
     name: `Version ${latest - index}`,
     createdOn: '2026-03-01T10:00:00.000Z',
+    changedSections: latest - index === 1 ? [] : ['Problem statement'],
   })),
 });
 
@@ -129,6 +132,7 @@ describe('SolutionWorkplace', () => {
       ...overrides,
     });
     (usePlannerApi as jest.Mock).mockReturnValue(api);
+    (useDispatch as jest.Mock).mockReturnValue(jest.fn());
     const view = render(<SolutionWorkplace solutionId="solution-1" onBack={onBack} />);
     await waitFor(() => expect(view.container.querySelector('[data-testid="solution-workplace"]')).not.toBeNull());
     await waitFor(() => expect(api.listSpecialists).toHaveBeenCalled());
@@ -266,7 +270,7 @@ describe('SolutionWorkplace', () => {
 
     click(container, 'problem-continue');
 
-    await waitFor(() => expect(api.analyze).toHaveBeenCalledWith('solution-1', { mode: 'ai' }));
+    await waitFor(() => expect(api.analyze).toHaveBeenCalledWith('solution-1', { mode: 'ai', checkpoint: false }));
     await waitFor(() => expect(api.blueprint).toHaveBeenCalledWith('solution-1', { mode: 'ai' }));
   });
 
@@ -278,11 +282,14 @@ describe('SolutionWorkplace', () => {
     };
     const { container } = await setup(planned, {
       analyze: jest.fn().mockResolvedValue(lowConfidenceAfterReanalysis),
+      checkpointVersion: jest
+        .fn()
+        .mockResolvedValue({ number: 2, name: 'Version 2', createdOn: '2026-03-02T10:00:00.000Z' }),
     });
 
     click(container, 'problem-continue');
 
-    await waitFor(() => expect(api.analyze).toHaveBeenCalledWith('solution-1', { mode: 'ai' }));
+    await waitFor(() => expect(api.analyze).toHaveBeenCalledWith('solution-1', { mode: 'ai', checkpoint: false }));
     await waitFor(() =>
       expect(container.querySelector('[testid="plan-confidence-dropped"]')?.textContent).toContain('confidence at 40%'),
     );
@@ -301,7 +308,7 @@ describe('SolutionWorkplace', () => {
 
     click(container, 'problem-continue');
 
-    await waitFor(() => expect(api.analyze).toHaveBeenCalledWith('solution-1', { mode: 'ai' }));
+    await waitFor(() => expect(api.analyze).toHaveBeenCalledWith('solution-1', { mode: 'ai', checkpoint: false }));
     await waitFor(() => expect(api.blueprint).toHaveBeenCalledWith('solution-1', { mode: 'ai' }));
   });
 
@@ -359,7 +366,7 @@ describe('SolutionWorkplace', () => {
     click(container, 'problem-continue');
 
     await waitFor(() => expect(api.blueprint).toHaveBeenCalledTimes(1));
-    expect(api.analyze).toHaveBeenCalledWith('solution-1', { mode: 'ai' });
+    expect(api.analyze).toHaveBeenCalledWith('solution-1', { mode: 'ai', checkpoint: true });
     expect(api.blueprint).toHaveBeenCalledWith('solution-1', { mode: 'rules' });
     expect(api.discovery).not.toHaveBeenCalled();
     expect(goa(container, 'analysis-mode-rules').getAttribute('type')).toBe('primary');
@@ -489,7 +496,7 @@ describe('SolutionWorkplace', () => {
     click(container, 'problem-continue');
 
     await waitFor(() => expect(api.blueprint).toHaveBeenCalledWith('solution-1', { mode: 'ai' }));
-    expect(api.analyze).toHaveBeenCalledWith('solution-1', { mode: 'ai' });
+    expect(api.analyze).toHaveBeenCalledWith('solution-1', { mode: 'ai', checkpoint: false });
   });
 
   it('downloads JSON and the markdown report', async () => {
@@ -536,38 +543,6 @@ describe('SolutionWorkplace', () => {
     click(container, 'download-harness');
 
     await waitFor(() => expect(goa(container, 'download-harness').getAttribute('disabled')).toBe('true'));
-  });
-
-  it('shows the latest saved version and blocks saving when nothing has changed', async () => {
-    const { container } = await setup(undefined, { listVersions: jest.fn().mockResolvedValue(versionList(3)) });
-
-    await waitFor(() => expect(goa(container, 'solution-version').getAttribute('content')).toBe('v3'));
-    expect(goa(container, 'save-version').getAttribute('disabled')).toBe('true');
-  });
-
-  it('saves a version when there are unsaved changes', async () => {
-    const { container } = await setup(undefined, {
-      listVersions: jest.fn().mockResolvedValueOnce(versionList(1, true)).mockResolvedValue(versionList(2)),
-      saveVersion: jest.fn().mockResolvedValue({ number: 2, name: 'Version 2', createdOn: '2026-03-02T10:00:00.000Z' }),
-    });
-    await waitFor(() => expect(goa(container, 'save-version').getAttribute('disabled')).toBeNull());
-
-    click(container, 'save-version');
-
-    await waitFor(() => expect(goa(container, 'solution-version').getAttribute('content')).toBe('v2'));
-    expect(api.saveVersion).toHaveBeenCalledWith('solution-1');
-  });
-
-  it('refreshes the version status when saving fails', async () => {
-    const { container } = await setup(undefined, {
-      listVersions: jest.fn().mockResolvedValueOnce(versionList(1, true)).mockResolvedValue(versionList(2)),
-      saveVersion: jest.fn().mockRejectedValue(new Error('conflict')),
-    });
-    await waitFor(() => expect(goa(container, 'save-version').getAttribute('disabled')).toBeNull());
-
-    click(container, 'save-version');
-
-    await waitFor(() => expect(goa(container, 'solution-version').getAttribute('content')).toBe('v2'));
   });
 
   it('opens the saved versions', async () => {
