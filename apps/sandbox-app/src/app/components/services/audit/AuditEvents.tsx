@@ -192,6 +192,15 @@ export function AuditEvents() {
     };
   }, [criteria.namespace]);
 
+  // Filters only make sense when logs exist; an empty result caused by applied filters must stay filterable.
+  const noLogs = !!events && !events.length && !loading && !error && page === 0 && !Object.values(applied).some(Boolean);
+
+  useEffect(() => {
+    if (noLogs) {
+      setFiltersOpen(false);
+    }
+  }, [noLogs]);
+
   const badges = (Object.keys(FILTER_LABELS) as (keyof Criteria)[])
     .filter((key) => applied[key])
     .map((key) => ({
@@ -256,6 +265,7 @@ export function AuditEvents() {
           type="secondary"
           leadingIcon="filter"
           trailingIcon={filtersOpen ? 'chevron-back' : 'chevron-forward'}
+          disabled={noLogs}
           onClick={() => setFiltersOpen((open) => !open)}
           testId="audit-filters-toggle"
         >
@@ -355,7 +365,9 @@ export function AuditEvents() {
 
       <ErrorCallout message={error} />
       {loading && !events?.length && <GoabSpinner type="infinite" size="large" />}
-      {!loading && events && !events.length && !error && page === 0 && <p>No audit events match the filters.</p>}
+      {!loading && events && !events.length && !error && page === 0 && (
+        <p>{noLogs ? 'No audit events found.' : 'No audit events match the filters.'}</p>
+      )}
       {!loading && events && !events.length && !error && page > 0 && (
         // The API returns a cursor for every full page, so the last page can be empty; keep a way back.
         <div style={{ ...rowStyle, marginTop: '1rem' }}>

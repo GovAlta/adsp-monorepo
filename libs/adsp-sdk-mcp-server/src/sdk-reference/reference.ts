@@ -479,6 +479,7 @@ export const SDK_REFERENCE: SdkSymbolDoc[] = [
       'AuditEventCriteria',
       'AuditQueryOptions',
       'ServiceRegistration',
+      'auditDetailsFromRequest',
     ],
   },
   {
@@ -516,7 +517,61 @@ export const SDK_REFERENCE: SdkSymbolDoc[] = [
       '  metadata?: Record<string, unknown>;\n' +
       '  changeSet?: AuditChangeSet; // sent only if the action sets captureChangeSet\n' +
       '}',
-    seeAlso: ['AuditService', 'AuditActor', 'AuditResource', 'AuditChangeSet'],
+    seeAlso: ['AuditService', 'AuditActor', 'AuditResource', 'AuditChangeSet', 'auditDetailsFromRequest'],
+  },
+  {
+    name: 'auditDetailsFromRequest',
+    kind: 'function',
+    module: 'audit',
+    summary:
+      'Builds AuditRecordDetails for an authenticated request, defaulting the actor and tenant from the request.',
+    details:
+      'auditDetailsFromRequest(req: AuditRequestContext, details?: AuditRequestRecordDetails): AuditRecordDetails\n\n' +
+      'actor defaults to toAuditActor(req.user); tenantId defaults to req.tenant?.id ?? req.user?.tenantId. ' +
+      'Explicit details.actor and details.tenantId take precedence, e.g. the tenantId of a different target tenant ' +
+      'when a core service acts on it. Throws when no actor is provided and the request has no user, so events are ' +
+      'never attributed to an unknown actor.',
+    example:
+      'await auditService.record(\n' +
+      '  ACTIONS.UPDATE_CASE,\n' +
+      '  auditDetailsFromRequest(req, {\n' +
+      "    resource: { type: 'case', id: updated.id },\n" +
+      '    metadata: { reason: req.body.reason },\n' +
+      '  }),\n' +
+      ');',
+    seeAlso: ['toAuditActor', 'AuditRequestContext', 'AuditRequestRecordDetails', 'AuditRecordDetails', 'AuditService'],
+  },
+  {
+    name: 'toAuditActor',
+    kind: 'function',
+    module: 'audit',
+    summary: 'Converts an authenticated user into the AuditActor of an audit event.',
+    details:
+      'toAuditActor(user: User): AuditActor\n\n' +
+      "Keycloak service accounts (username starting with service-account-) become 'service' actors; other users " +
+      "become 'user' actors. Maps id, name, email, and roles from the user. Throws when there is no user.",
+    example:
+      '// Outside a request, for example in a queue consumer:\n' +
+      'await auditService.record(ACTIONS.UPDATE_CASE, { tenantId, actor: toAuditActor(user), resource });',
+    seeAlso: ['AuditActor', 'User', 'auditDetailsFromRequest'],
+  },
+  {
+    name: 'AuditRequestContext',
+    kind: 'interface',
+    module: 'audit',
+    summary:
+      'Request context used by auditDetailsFromRequest; an Express request authenticated by the SDK satisfies it.',
+    details: 'interface AuditRequestContext { user?: User; tenant?: { id: AdspId }; }',
+    seeAlso: ['auditDetailsFromRequest', 'User'],
+  },
+  {
+    name: 'AuditRequestRecordDetails',
+    kind: 'type',
+    module: 'audit',
+    summary:
+      'AuditRecordDetails with an optional actor, which defaults to the request user in auditDetailsFromRequest.',
+    details: "type AuditRequestRecordDetails = Omit<AuditRecordDetails, 'actor'> & { actor?: AuditActor };",
+    seeAlso: ['auditDetailsFromRequest', 'AuditRecordDetails', 'AuditActor'],
   },
   {
     name: 'AuditRecordOutcome',
@@ -561,7 +616,7 @@ export const SDK_REFERENCE: SdkSymbolDoc[] = [
     module: 'audit',
     summary: 'Actor that performed an audited action.',
     details: 'interface AuditActor { id: string; type: AuditActorType; name?: string; email?: string; roles?: string[]; }',
-    seeAlso: ['AuditRecordDetails', 'AuditActorType'],
+    seeAlso: ['AuditRecordDetails', 'AuditActorType', 'toAuditActor'],
   },
   {
     name: 'AuditResource',

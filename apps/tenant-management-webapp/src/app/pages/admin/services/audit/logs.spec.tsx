@@ -166,6 +166,29 @@ describe('AuditLogs', () => {
     expect(exported).not.toHaveProperty('includePersonalInfo');
   });
 
+  describe('filters button', () => {
+    const toggle = (el: HTMLElement) => el.querySelector("goa-button[testId='audit-filters-toggle']");
+
+    it('is disabled when there are no audit logs and no filters applied', () => {
+      const { baseElement } = renderLogs(state(['audit-reader']));
+      expect(toggle(baseElement)).toHaveAttribute('disabled', 'true');
+    });
+
+    it('is enabled when audit logs exist', () => {
+      const results = [{ id: '1', namespace: 'form-app', action: 'submit', occurredAt: '2026-01-01T00:00:00Z' }];
+      const { baseElement } = renderLogs(state(['audit-reader'], { events: { results, loading: false } }));
+      expect(toggle(baseElement)).not.toHaveAttribute('disabled', 'true');
+    });
+
+    it('stays enabled when applied filters return no results', () => {
+      const { baseElement } = renderLogs(state(['audit-reader']));
+      const action = baseElement.querySelector("goa-input[name='audit-action']");
+      fireEvent(action, new CustomEvent('_change', { detail: { name: 'audit-action', value: 'submit' } }));
+      fireEvent(baseElement.querySelector("goa-button[testId='audit-search']"), new CustomEvent('_click'));
+      expect(toggle(baseElement)).not.toHaveAttribute('disabled', 'true');
+    });
+  });
+
   it('shows a removable chip for each applied filter', () => {
     const { store, baseElement } = renderLogs(state(['audit-reader']));
     const action = baseElement.querySelector("goa-input[name='audit-action']");

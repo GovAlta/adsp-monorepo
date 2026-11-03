@@ -196,6 +196,16 @@ export const AuditLogs: FunctionComponent = () => {
     loadFirstPage(applied, size);
   };
 
+  // Filters only make sense when logs exist; an empty result caused by applied filters must stay filterable.
+  const noLogs =
+    searched && !loading && page === 0 && results.length === 0 && !Object.values(applied).some(Boolean);
+
+  useEffect(() => {
+    if (noLogs) {
+      setFiltersOpen(false);
+    }
+  }, [noLogs]);
+
   useEffect(() => {
     if (hasReaderRole) {
       dispatch(fetchAuditConfiguration());
@@ -246,6 +256,7 @@ export const AuditLogs: FunctionComponent = () => {
             type="secondary"
             leadingIcon="filter"
             trailingIcon={filtersOpen ? 'chevron-back' : 'chevron-forward'}
+            disabled={noLogs}
             onClick={() => setFiltersOpen((open) => !open)}
             testId="audit-filters-toggle"
           >

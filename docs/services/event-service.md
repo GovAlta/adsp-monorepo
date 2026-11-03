@@ -149,7 +149,8 @@ const response = await fetch(`${valueServiceUrl}/value/v1/event-service/values/e
 Unquoted values that are valid JSON scalars are matched using their JSON type, so `123`, `true`, and `null` match
 a number, boolean, and null respectively. JSON-quote a string that would otherwise parse as another scalar type.
 
-Use `payload` for JSON containment. The event payload may have additional properties beyond those supplied:
+Use `payload` for JSON containment. When the object contains multiple conditions, every condition must match
+(`AND`). The event payload may have additional properties beyond those supplied:
 
 ```typescript
 const parameters = new URLSearchParams({
@@ -160,7 +161,8 @@ const parameters = new URLSearchParams({
 ```
 
 The two payload search forms cannot be combined. They can be combined with the existing tenant, event context,
-correlation ID, and timestamp filters. Payload searches use JSONB containment without an additional payload index.
+correlation ID, and timestamp filters; all filters are combined using `AND`. Payload searches use JSONB containment
+without an additional payload index.
 
 ### Count events in the event log
 

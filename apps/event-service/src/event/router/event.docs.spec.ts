@@ -212,6 +212,30 @@ describe('event router documented behaviour', () => {
       );
     });
 
+    it.each([
+      ['namespace', 'application-events'],
+      ['name', 'user-registration'],
+    ])('counts events with the optional %s filter', async (parameter, value) => {
+      countEventsMock.mockResolvedValueOnce(3);
+
+      const res = await request(createApp(reader, true)).get(`/event/v1/events/count?${parameter}=${value}`);
+
+      expect(res.status).toBe(200);
+      expect(countEventsMock).toHaveBeenCalledWith(
+        directoryMock,
+        tokenProviderMock,
+        tenantId,
+        expect.objectContaining({ [parameter]: value }),
+      );
+    });
+
+    it.each(['namespace', 'name'])('responds 400 when %s is empty', async (parameter) => {
+      const res = await request(createApp(reader, true)).get(`/event/v1/events/count?${parameter}=`);
+
+      expect(res.status).toBe(400);
+      expect(countEventsMock).not.toHaveBeenCalled();
+    });
+
     it('responds 400 when context is not valid JSON', async () => {
       const res = await request(createApp(reader, true)).get('/event/v1/events/count?context=not-json');
       expect(res.status).toBe(400);
