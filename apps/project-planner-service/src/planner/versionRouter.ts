@@ -1,5 +1,5 @@
 import { AdspId, EventService } from '@abgov/adsp-service-sdk';
-import { createValidationHandler, InvalidOperationError, NotFoundError } from '@core-services/core-common';
+import { createValidationHandler, NotFoundError } from '@core-services/core-common';
 import { Router } from 'express';
 import { body, param } from 'express-validator';
 import { getSolution, getTenantId, loaded, requirePlannerUser } from './access';
@@ -131,28 +131,6 @@ export function createVersionRouter({
           unsavedChanges,
           results: await solutionVersionRepository.list(tenantId, solution.id),
         });
-      } catch (err) {
-        next(err);
-      }
-    },
-  );
-
-  router.post(
-    '/solutions/:id/versions',
-    requirePlannerUser,
-    validateId,
-    getSolution(solutionRepository),
-    async (req, res, next) => {
-      try {
-        const tenantId = getTenantId(req);
-        const solution = loaded(req);
-        const { content, latest, unsavedChanges } = await savedStatus(tenantId, solution);
-        if (!unsavedChanges) {
-          throw new InvalidOperationError(`No changes since version ${latest.number}.`);
-        }
-        const version = await solutionVersionRepository.create(tenantId, solution.id, content);
-        res.status(201).send(summary(version));
-        eventService.send(solutionUpdated(req.user, solution, 'version-saved'));
       } catch (err) {
         next(err);
       }

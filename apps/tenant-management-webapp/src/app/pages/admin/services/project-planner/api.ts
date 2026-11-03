@@ -45,7 +45,6 @@ export interface PlannerApi {
   consult: (id: string, service: string, options?: ConsultOptions) => Promise<ConsultResult & { solution?: Solution }>;
   exportSolution: (id: string) => Promise<unknown>;
   listVersions: (id: string) => Promise<SolutionVersionList>;
-  saveVersion: (id: string) => Promise<SolutionVersionSummary>;
   checkpointVersion: (id: string) => Promise<SolutionVersionSummary>;
   renameVersion: (id: string, number: number, name: string) => Promise<SolutionVersionSummary>;
   exportVersion: (id: string, number: number) => Promise<unknown>;
@@ -153,7 +152,6 @@ export function usePlannerApi(): PlannerApi {
         request<ConsultResult & { solution?: Solution }>('post', `/solutions/${id}/consult/${service}`, options),
       exportSolution: (id) => request<unknown>('get', `/solutions/${id}/export`),
       listVersions: (id) => request<SolutionVersionList>('get', `/solutions/${id}/versions`),
-      saveVersion: (id) => request<SolutionVersionSummary>('post', `/solutions/${id}/versions`),
       checkpointVersion: (id) => request<SolutionVersionSummary>('post', `/solutions/${id}/versions/checkpoint`),
       renameVersion: (id, number, name) =>
         request<SolutionVersionSummary>('patch', `/solutions/${id}/versions/${number}`, { name }),

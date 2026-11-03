@@ -1,6 +1,5 @@
 import { adspId } from '@abgov/adsp-service-sdk';
 import type { EventService, User } from '@abgov/adsp-service-sdk';
-import { InvalidOperationError } from '@core-services/core-common';
 import * as express from 'express';
 import type { Request } from 'express';
 import * as request from 'supertest';
@@ -386,9 +385,9 @@ describe('version router', () => {
     });
   });
 
-  describe('POST /solutions/:id/versions', () => {
-    const saveVersion = (user: User = owner) =>
-      request(buildApp(user)).post(`/planner/v1/solutions/${SOLUTION_ID}/versions`);
+  describe('POST /solutions/:id/versions/checkpoint', () => {
+    const checkpoint = (user: User = owner) =>
+      request(buildApp(user)).post(`/planner/v1/solutions/${SOLUTION_ID}/versions/checkpoint`);
 
     beforeEach(() => {
       repository.get.mockResolvedValue(solutionOwnedBy('owner-1'));
@@ -400,40 +399,31 @@ describe('version router', () => {
       chatRepository.findBySolution.mockResolvedValueOnce(chats);
       versionRepository.latest.mockResolvedValueOnce(savedVersion(1, { ...solution, name: 'Old' }));
 
-      await saveVersion();
+      await checkpoint();
 
       expect(versionRepository.create).toHaveBeenCalledWith(tenantId, SOLUTION_ID, versionContent(solution, chats));
     });
 
-    it('responds 201 with the version summary', async () => {
-      const res = await saveVersion();
+    it('responds with the new version summary', async () => {
+      const res = await checkpoint();
 
-      expect(res.status).toBe(201);
+      expect(res.status).toBe(200);
       expect(res.body).toEqual({ number: 1, name: 'Version 1', createdOn: '2026-04-01T09:00:00.000Z' });
     });
 
-    it('returns 400 when nothing changed since the latest version', async () => {
-      versionRepository.latest.mockResolvedValueOnce(savedVersion(2, solutionOwnedBy('owner-1')));
+    it('silently returns the latest version when nothing changed, instead of erroring', async () => {
+      const latest = savedVersion(2, solutionOwnedBy('owner-1'));
+      versionRepository.latest.mockResolvedValueOnce(latest);
 
-      const res = await saveVersion();
+      const res = await checkpoint();
 
-      expect(res.status).toBe(400);
-      expect(res.body.error).toBe('No changes since version 2.');
+      expect(res.status).toBe(200);
+      expect(res.body).toEqual({ number: 2, name: 'Version 2', createdOn: latest.createdOn.toISOString() });
       expect(versionRepository.create).not.toHaveBeenCalled();
     });
 
-    it('returns 409 when another save took the version number first', async () => {
-      versionRepository.create.mockRejectedValueOnce(
-        new InvalidOperationError('Version 2 was saved by another request.', { statusCode: 409 }),
-      );
-
-      const res = await saveVersion();
-
-      expect(res.status).toBe(409);
-    });
-
     it('sends a version-saved update event', async () => {
-      await saveVersion();
+      await checkpoint();
 
       expect(eventService.send).toHaveBeenCalledWith(
         expect.objectContaining({ payload: expect.objectContaining({ operation: 'version-saved' }) }),
@@ -441,7 +431,7 @@ describe('version router', () => {
     });
 
     it('returns 403 for a user who does not own the solution', async () => {
-      const res = await saveVersion(stranger);
+      const res = await checkpoint(stranger);
 
       expect(res.status).toBe(403);
       expect(versionRepository.create).not.toHaveBeenCalled();

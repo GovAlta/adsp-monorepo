@@ -64,7 +64,6 @@ describe('usePlannerApi', () => {
       ],
       ['exports a solution', (api) => api.exportSolution('s1'), 'get', '/solutions/s1/export'],
       ['lists solution versions', (api) => api.listVersions('s1'), 'get', '/solutions/s1/versions'],
-      ['saves a solution version', (api) => api.saveVersion('s1'), 'post', '/solutions/s1/versions'],
       ['exports a solution version', (api) => api.exportVersion('s1', 2), 'get', '/solutions/s1/versions/2/export'],
       ['lists specialists', (api) => api.listSpecialists(), 'get', '/specialists'],
       [
