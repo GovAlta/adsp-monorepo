@@ -12,7 +12,7 @@ interface SubmittedFormProps {
   dataSchema: JsonSchema;
   uiSchema: UISchemaElement;
   data: Record<string, unknown>;
-  files: Record<string, FileMetadata>;
+  files: Record<string, FileMetadata[]>;
 }
 
 export const FormViewer: FunctionComponent<SubmittedFormProps> = ({ dataSchema, uiSchema, data, files }) => {

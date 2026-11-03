@@ -395,25 +395,8 @@ export const loadForm = createAsyncThunk(
         params: { includeData: true },
       });
 
-      if (data.files) {
-        const dataFiles: Record<string, string> = {};
-
-        for (const fileKey of Object.keys(data.files)) {
-          Object.entries(data.data).forEach(([path, value]) => {
-            const rootKeyPath = fileKey.slice(0, fileKey.lastIndexOf('.'));
-            if (path === rootKeyPath) {
-              dataFiles[path] = value as string;
-              // the return of the files from endpoint is AdspId object, we need to change it to urn string.
-              data.files[fileKey] = value as string;
-            }
-          });
-        }
-
-        const fileLoadPromises = Object.values(dataFiles).flatMap((urns) =>
-          urns.split(';').map((urn) => dispatch(loadFileMetadata(urn as string))),
-        );
-        await Promise.all(fileLoadPromises);
-      }
+      const fileUrns = new Set(Object.values(extractFileReferences(data.data)).flat());
+      await Promise.all([...fileUrns].map((urn) => dispatch(loadFileMetadata(urn))));
       const formSubmissionUrn = `urn:ads:platform:form-service:v1:/forms/${data.id}${
         data.submission ? `/submissions/${data.submission ? data.submission.id : ''}` : ''
       }`;
@@ -1013,24 +996,35 @@ export const formSelector = createSelector(
   },
 );
 
+const FILE_URN_PREFIX = 'urn:ads:platform:file-service:';
+
+// Keys are JSON Forms control paths (e.g. `items.0.file`); multi-file array entries are grouped under the array path.
+export function extractFileReferences(value: unknown, path = '', refs: Record<string, string[]> = {}) {
+  if (typeof value === 'string') {
+    const urns = value.split(';').filter((urn) => urn.startsWith(FILE_URN_PREFIX));
+    if (urns.length > 0) {
+      const root = path.replace(/\.\d+$/, '');
+      refs[root] = [...(refs[root] || []), ...urns];
+    }
+  } else if (Array.isArray(value)) {
+    value.forEach((entry, index) => extractFileReferences(entry, path ? `${path}.${index}` : `${index}`, refs));
+  } else if (value && typeof value === 'object') {
+    Object.entries(value).forEach(([key, entry]) => extractFileReferences(entry, path ? `${path}.${key}` : key, refs));
+  }
+  return refs;
+}
+
 export const formFilesSelector = createSelector(
   formSelector,
   (state: AppState) => state.file.metadata,
-  ({ form }, metadata) =>
-    Object.entries(form?.files || {})
-      .filter(([key, urn]) => typeof urn === 'string')
-      .reduce((files, [key, urn]) => {
-        const root = key.slice(0, key.lastIndexOf('.'));
-        const fileItems = urn
-          ?.split(';')
-          .map((u) => metadata[u])
-          .filter((f) => f !== undefined);
-
-        return {
-          ...files,
-          [root]: fileItems,
-        };
-      }, {}),
+  ({ form }, metadata): Record<string, FileMetadata[]> =>
+    Object.entries(extractFileReferences(form?.data)).reduce(
+      (files, [path, urns]) => ({
+        ...files,
+        [path]: urns.map((urn) => metadata[urn]).filter((file) => !!file),
+      }),
+      {},
+    ),
 );
 
 export const submissionSelector = createSelector(

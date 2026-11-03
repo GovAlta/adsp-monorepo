@@ -1,6 +1,8 @@
 import { AppState } from './store';
 import {
   countActiveFilters,
+  extractFileReferences,
+  formFilesSelector,
   formFilterCountSelector,
   getDefaultFormCriteria,
   resolveResultTotal,
@@ -44,6 +46,66 @@ describe('formFilterCountSelector', () => {
     >[0];
 
     expect(formFilterCountSelector(state)).toBe(2);
+  });
+});
+
+describe('extractFileReferences', () => {
+  const urn = (id: string) => `urn:ads:platform:file-service:v1:/files/${id}`;
+
+  it('returns no references when there is no data', () => {
+    expect(extractFileReferences(undefined)).toEqual({});
+  });
+
+  it('keys a top level file by its property name', () => {
+    expect(extractFileReferences({ attachment: urn('a'), title: 'x' })).toEqual({ attachment: [urn('a')] });
+  });
+
+  it('keys a nested file by its control path', () => {
+    expect(extractFileReferences({ nested: { evidence: urn('a') } })).toEqual({ 'nested.evidence': [urn('a')] });
+  });
+
+  it('keys files in an array of objects by their indexed path', () => {
+    expect(extractFileReferences({ items: [{ file: urn('a') }, { file: urn('b') }] })).toEqual({
+      'items.0.file': [urn('a')],
+      'items.1.file': [urn('b')],
+    });
+  });
+
+  it('groups a multi-file array under the array path', () => {
+    expect(extractFileReferences({ documents: [urn('a'), urn('b')] })).toEqual({ documents: [urn('a'), urn('b')] });
+  });
+
+  it('splits semicolon delimited file references', () => {
+    expect(extractFileReferences({ documents: `${urn('a')};${urn('b')}` })).toEqual({
+      documents: [urn('a'), urn('b')],
+    });
+  });
+
+  it('ignores urns of other services', () => {
+    expect(extractFileReferences({ task: 'urn:ads:platform:task-service:v1:/tasks/1' })).toEqual({});
+  });
+});
+
+describe('formFilesSelector', () => {
+  const urn = 'urn:ads:platform:file-service:v1:/files/a';
+
+  it('maps file references in the form data to loaded metadata', () => {
+    const metadata = { urn, filename: 'a.pdf' };
+    const state = {
+      form: { forms: { f1: { data: { attachment: urn } } }, selectedForm: 'f1', results: { forms: ['f1'] } },
+      file: { metadata: { [urn]: metadata } },
+    } as unknown as AppState;
+
+    expect(formFilesSelector(state)).toEqual({ attachment: [metadata] });
+  });
+
+  it('omits files whose metadata is not loaded', () => {
+    const state = {
+      form: { forms: { f1: { data: { attachment: urn } } }, selectedForm: 'f1', results: { forms: ['f1'] } },
+      file: { metadata: {} },
+    } as unknown as AppState;
+
+    expect(formFilesSelector(state)).toEqual({ attachment: [] });
   });
 });
 

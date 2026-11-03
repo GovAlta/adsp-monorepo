@@ -14,18 +14,21 @@ export interface FileMetadata {
 }
 
 const FILE_SERVICE_ID = 'urn:ads:platform:file-service';
-async function getFileMetadata(fileServiceUrl: string, urn: string): Promise<FileMetadata> {
+
+export function getFileServicePath(urn: string): string {
   if (!AdspId.isAdspId(urn) || !urn.startsWith(FILE_SERVICE_ID)) {
     throw new Error('Specified urn is not recognized as a file URN.');
   }
 
+  return urn.substring(FILE_SERVICE_ID.length + 4).replace(/^\/+/, '');
+}
+
+async function getFileMetadata(fileServiceUrl: string, urn: string): Promise<FileMetadata> {
+  const filePath = getFileServicePath(urn);
   const token = await getAccessToken();
-  const { data } = await axios.get<FileMetadata>(
-    new URL(`/file/v1/${urn.substring(FILE_SERVICE_ID.length + 4)}`, fileServiceUrl).href,
-    {
-      headers: { Authorization: `Bearer ${token}` },
-    }
-  );
+  const { data } = await axios.get<FileMetadata>(new URL(`/file/v1/${filePath}`, fileServiceUrl).href, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
 
   return data;
 }
@@ -69,7 +72,7 @@ export const downloadFile = createAsyncThunk(
       if (!file) {
         const token = await getAccessToken();
         const { data, headers } = await axios.get(
-          new URL(`/file/v1/${urn.substring(FILE_SERVICE_ID.length + 4)}/download`, fileServiceUrl).href,
+          new URL(`/file/v1/${getFileServicePath(urn)}/download`, fileServiceUrl).href,
           {
             responseType: 'blob',
             headers: { Authorization: `Bearer ${token}` },
