@@ -19,7 +19,7 @@ export const FormViewer: FunctionComponent<SubmittedFormProps> = ({ dataSchema, 
   const dispatch = useDispatch<AppDispatch>();
 
   const downloadFileHandler = useCallback(
-    async (file: FileMetadata) => {
+    async (file) => {
       const element = document.createElement('a');
       const { file: dataUrl, metadata } = await dispatch(downloadFile(file.urn)).unwrap();
       element.href = dataUrl;
