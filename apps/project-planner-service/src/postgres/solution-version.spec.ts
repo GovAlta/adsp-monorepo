@@ -34,8 +34,16 @@ describe('PostgresSolutionVersionRepository', () => {
     createdOn: new Date('2026-03-01T00:00:00.000Z'),
     contentHash: 'hash',
     content,
+    changedSections: [],
   };
-  const version = { number: 2, name: 'Version 2', createdOn: record.createdOn, contentHash: 'hash', content };
+  const version = {
+    number: 2,
+    name: 'Version 2',
+    createdOn: record.createdOn,
+    contentHash: 'hash',
+    content,
+    changedSections: [],
+  };
 
   const query = (...methods: string[]) => {
     const mock = Object.fromEntries(methods.map((method) => [method, jest.fn()]));
@@ -52,16 +60,18 @@ describe('PostgresSolutionVersionRepository', () => {
   describe('list', () => {
     it('lists the solution versions newest first, without their content', async () => {
       const q = query('select', 'where', 'orderBy');
-      q.orderBy.mockResolvedValueOnce([{ number: 1, name: 'Version 1', createdOn: record.createdOn }]);
+      q.orderBy.mockResolvedValueOnce([
+        { number: 1, name: 'Version 1', createdOn: record.createdOn, changedSections: [] },
+      ]);
       knexMock.mockReturnValueOnce(q);
 
       const result = await repository.list(tenantId, 'solution-1');
 
       expect([q.select.mock.calls[0], q.where.mock.calls[0], q.orderBy.mock.calls[0], result]).toEqual([
-        ['number', 'name', 'createdOn'],
+        ['number', 'name', 'createdOn', 'changedSections'],
         [{ tenant, solutionId: 'solution-1' }],
         ['number', 'desc'],
-        [{ number: 1, name: 'Version 1', createdOn: record.createdOn }],
+        [{ number: 1, name: 'Version 1', createdOn: record.createdOn, changedSections: [] }],
       ]);
     });
   });
@@ -107,19 +117,23 @@ describe('PostgresSolutionVersionRepository', () => {
   });
 
   describe('create', () => {
-    let maxQuery, insertQuery, solutionQuery, trx: jest.Mock;
+    let previousQuery, insertQuery, solutionQuery, trx: jest.Mock;
 
     beforeEach(() => {
-      maxQuery = query('where', 'max', 'first');
+      previousQuery = query('where', 'orderBy', 'first');
       insertQuery = query('insert', 'returning');
       solutionQuery = query('where', 'update');
-      trx = jest.fn().mockReturnValueOnce(maxQuery).mockReturnValueOnce(insertQuery).mockReturnValueOnce(solutionQuery);
+      trx = jest
+        .fn()
+        .mockReturnValueOnce(previousQuery)
+        .mockReturnValueOnce(insertQuery)
+        .mockReturnValueOnce(solutionQuery);
       knexMock.transaction = jest.fn((work) => work(trx));
       insertQuery.returning.mockResolvedValueOnce([record]);
     });
 
     it('numbers the version one past the latest and names it after its number', async () => {
-      maxQuery.first.mockResolvedValueOnce({ max: 1 });
+      previousQuery.first.mockResolvedValueOnce({ number: 1, content });
 
       await repository.create(tenantId, 'solution-1', content);
 
@@ -131,11 +145,12 @@ describe('PostgresSolutionVersionRepository', () => {
         createdOn: expect.any(Date),
         contentHash: contentHash(content),
         content: JSON.stringify(content),
+        changedSections: JSON.stringify([]),
       });
     });
 
     it('starts at version 1 when the solution has none', async () => {
-      maxQuery.first.mockResolvedValueOnce({ max: null });
+      previousQuery.first.mockResolvedValueOnce(undefined);
 
       await repository.create(tenantId, 'solution-1', content);
 
@@ -143,7 +158,7 @@ describe('PostgresSolutionVersionRepository', () => {
     });
 
     it('records the new number as the solution version in the same transaction', async () => {
-      maxQuery.first.mockResolvedValueOnce({ max: 1 });
+      previousQuery.first.mockResolvedValueOnce({ number: 1, content });
 
       await repository.create(tenantId, 'solution-1', content);
 
@@ -154,14 +169,16 @@ describe('PostgresSolutionVersionRepository', () => {
     });
 
     it('returns the saved version', async () => {
-      maxQuery.first.mockResolvedValueOnce({ max: 1 });
+      previousQuery.first.mockResolvedValueOnce({ number: 1, content });
 
       expect(await repository.create(tenantId, 'solution-1', content)).toEqual(version);
     });
 
     it('reports a conflict when someone else saved the same number first', async () => {
-      maxQuery.first.mockResolvedValueOnce({ max: 1 });
-      insertQuery.returning.mockReset().mockRejectedValueOnce(Object.assign(new Error('duplicate key'), { code: '23505' }));
+      previousQuery.first.mockResolvedValueOnce({ number: 1, content });
+      insertQuery.returning
+        .mockReset()
+        .mockRejectedValueOnce(Object.assign(new Error('duplicate key'), { code: '23505' }));
 
       const error = await repository.create(tenantId, 'solution-1', content).catch((err) => err);
 
@@ -169,7 +186,7 @@ describe('PostgresSolutionVersionRepository', () => {
     });
 
     it('rethrows other database errors', async () => {
-      maxQuery.first.mockResolvedValueOnce({ max: 1 });
+      previousQuery.first.mockResolvedValueOnce({ number: 1, content });
       insertQuery.returning.mockReset().mockRejectedValueOnce(new Error('connection lost'));
 
       await expect(repository.create(tenantId, 'solution-1', content)).rejects.toThrow('connection lost');

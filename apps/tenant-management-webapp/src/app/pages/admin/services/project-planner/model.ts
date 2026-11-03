@@ -80,6 +80,7 @@ export interface Solution {
   createdByName: string;
   updatedOn: string;
   version: number;
+  versionName?: string;
   unsavedChanges?: boolean;
   lastUpdated?: string;
   changedSections?: string[];
@@ -92,6 +93,7 @@ export interface SolutionVersionSummary {
   number: number;
   name: string;
   createdOn: string;
+  changedSections: string[];
 }
 
 export interface SolutionVersionList {
@@ -424,11 +426,13 @@ export interface SolutionUpdate {
   name?: string;
   description?: string;
   problemStatement?: string;
+  checkpoint?: boolean;
 }
 
 export interface AnalyzeOptions {
   text?: string;
   mode?: AnalysisMode;
+  checkpoint?: boolean;
 }
 
 export interface DiscoveryOptions {
@@ -441,6 +445,7 @@ export interface DiscoveryOptions {
 export interface BlueprintOptions {
   mode?: AnalysisMode;
   refreshConsultations?: boolean;
+  checkpoint?: boolean;
 }
 
 export interface ConsultOptions {

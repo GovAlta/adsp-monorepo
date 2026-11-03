@@ -70,14 +70,18 @@ const TextLink = styled.button`
 
 const TEXT_PREVIEW_LIMIT = 400;
 
-export const ExpandableText: FunctionComponent<{ content: string; testId?: string }> = ({ content, testId }) => {
+export const ExpandableText: FunctionComponent<{ content: string; previewLimit?: number; testId?: string }> = ({
+  content,
+  previewLimit = TEXT_PREVIEW_LIMIT,
+  testId,
+}) => {
   const [expanded, setExpanded] = useState(false);
-  if (content.length <= TEXT_PREVIEW_LIMIT) {
+  if (content.length <= previewLimit) {
     return <Text>{content}</Text>;
   }
   return (
     <>
-      <Text>{expanded ? content : `${content.slice(0, TEXT_PREVIEW_LIMIT)}…`}</Text>
+      <Text>{expanded ? content : `${content.slice(0, previewLimit)}…`}</Text>
       <TextLink type="button" data-testid={testId} onClick={() => setExpanded(!expanded)}>
         {expanded ? 'Show fewer' : 'Show more'}
       </TextLink>

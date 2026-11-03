@@ -68,6 +68,9 @@ export const SolutionHeader: FunctionComponent<SolutionHeaderProps> = ({
   const [showVersions, setShowVersions] = useState(false);
   const [working, attempt] = useBusy();
   const blocked = working || disabled;
+  const latestVersion = versions?.results?.[0];
+  const versionName =
+    latestVersion && latestVersion.name !== `Version ${latestVersion.number}` ? latestVersion.name : undefined;
 
   useEffect(() => {
     onBusyChange?.(working);
@@ -93,14 +96,6 @@ export const SolutionHeader: FunctionComponent<SolutionHeaderProps> = ({
     attempt(async () => {
       onSolutionChange(await api.updateSolution(solution.id, { name: name.trim() }));
       setRenaming(false);
-    });
-  const saveVersion = () =>
-    attempt(async () => {
-      try {
-        await api.saveVersion(solution.id);
-      } finally {
-        await loadVersions();
-      }
     });
   const fetchExport = async () => (await api.exportSolution(solution.id)) as Partial<Solution>;
   const exportJson = () =>
@@ -181,7 +176,7 @@ export const SolutionHeader: FunctionComponent<SolutionHeaderProps> = ({
               <GoabBadge type="information" content={solution.status} icon={false} />
               <GoabBadge
                 type="information"
-                content={`v${versions?.latest ?? solution.version}`}
+                content={`v${versions?.latest ?? solution.version}${versionName ? ` · ${versionName}` : ''}`}
                 icon={false}
                 testId="solution-version"
               />
@@ -189,14 +184,6 @@ export const SolutionHeader: FunctionComponent<SolutionHeaderProps> = ({
           )}
         </LeftGroup>
         <Row role="group" aria-label={hideExports ? 'Versions and delete' : 'Versions, export and delete'}>
-          <GoabButton
-            size="compact"
-            testId="save-version"
-            disabled={blocked || !versions?.unsavedChanges}
-            onClick={saveVersion}
-          >
-            Save version
-          </GoabButton>
           <GoabButton size="compact" type="secondary" testId="open-versions" onClick={() => setShowVersions(true)}>
             Versions
           </GoabButton>
