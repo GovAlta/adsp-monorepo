@@ -20,6 +20,11 @@ import type {
 } from './types';
 
 export interface AuditClientOptions {
+  /**
+   * Records events when true; when false, `record()` sends nothing and resolves `disabled`. Defaults to the
+   * `AUDIT_ENABLED` environment variable, and to true when it is unset.
+   */
+  enabled?: boolean;
   /** Events per request. Defaults to 1 (immediate delivery); set greater than 1 to opt into batching. */
   batchSize?: number;
   /** Longest an event waits in a partial batch. Defaults to 500 ms; unused when batchSize is 1. */
@@ -36,7 +41,9 @@ export interface AuditClientOptions {
   requestTimeoutMs?: number;
 }
 
-const DEFAULT_OPTIONS: Required<AuditClientOptions> = {
+type DeliveryOptions = Required<Omit<AuditClientOptions, 'enabled'>>;
+
+const DEFAULT_OPTIONS: DeliveryOptions = {
   batchSize: 1,
   batchIntervalMs: 500,
   // Bounds memory if the audit service is unavailable: events can be up to ~33 KB (16 KiB metadata and change set).
@@ -52,6 +59,11 @@ const TRANSIENT_STATUSES = new Set([429, 502, 503, 504]);
 const NAMESPACE_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 // Bounds the rejected events listed in a single warning so large batches do not flood logs.
 const MAX_LOGGED_REJECTIONS = 10;
+const AUDIT_ENABLED_ENV = 'AUDIT_ENABLED';
+
+function isEnabledByEnvironment(): boolean {
+  return !/^\s*(false|0)\s*$/i.test(process.env[AUDIT_ENABLED_ENV] ?? '');
+}
 
 interface AuditEventPayload {
   eventId: string;
@@ -157,7 +169,8 @@ export class AuditServiceImpl implements AuditService {
   private readonly LOG_CONTEXT = { context: 'AuditService' };
 
   private readonly namespace: string;
-  private readonly options: Required<AuditClientOptions>;
+  private readonly enabled: boolean;
+  private readonly options: DeliveryOptions;
   private readonly ready: Promise<void>;
   private readonly droppedCounter: Counter;
   private readonly queues = new Map<string, TenantQueue>();
@@ -175,10 +188,15 @@ export class AuditServiceImpl implements AuditService {
     {
       ready,
       meterProvider,
+      enabled,
       ...options
     }: AuditClientOptions & { ready?: Promise<unknown>; meterProvider?: MeterProvider } = {},
   ) {
     this.namespace = serviceId.service;
+    this.enabled = enabled ?? isEnabledByEnvironment();
+    if (!this.enabled) {
+      this.logger.info(`Audit recording is disabled for ${this.namespace}; events are not sent.`, this.LOG_CONTEXT);
+    }
     this.options = { ...DEFAULT_OPTIONS, ...options };
     // Sending waits for action registration to settle, so the first events are not rejected as unknown actions.
     this.ready = ready
@@ -200,6 +218,9 @@ export class AuditServiceImpl implements AuditService {
 
   record(action: AuditAction, details: AuditRecordDetails): Promise<AuditRecordOutcome> {
     const eventId = details?.eventId || randomUUID();
+    if (!this.enabled) {
+      return Promise.resolve({ status: 'disabled', eventId });
+    }
     const context: FailureContext = { action: action?.name, eventId, tenantId: details?.tenantId };
     if (this.isCore && !details?.tenantId) {
       return Promise.resolve(
@@ -342,8 +363,10 @@ export class AuditServiceImpl implements AuditService {
     }
 
     outcomes.forEach((outcome, index) => {
-      if (outcome.status !== 'recorded') {
-        this.countDropped(outcome.status === 'rejected' ? 'rejected' : outcome.reason);
+      if (outcome.status === 'rejected') {
+        this.countDropped('rejected');
+      } else if (outcome.status === 'failed') {
+        this.countDropped(outcome.reason);
       }
       batch[index].settle(outcome);
     });
