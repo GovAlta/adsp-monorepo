@@ -23,13 +23,7 @@ jest.mock('@abgov/react-components', () => ({
       <div>{children}</div>
     </section>
   ),
-  GoabIconButton: ({
-    title,
-    onClick,
-  }: {
-    title?: string;
-    onClick?: () => void;
-  }) => (
+  GoabIconButton: ({ title, onClick }: { title?: string; onClick?: () => void }) => (
     <button type="button" aria-label={title} onClick={onClick}>
       icon
     </button>
@@ -176,7 +170,11 @@ describe('InternalAdspConversation', () => {
 
   test('renders delete action outside the message bubble container', () => {
     render(
-      <InternalAdspConversation topic="topic-a" messages={[{ ...messages[0], canDelete: true }]} onDelete={jest.fn()} />,
+      <InternalAdspConversation
+        topic="topic-a"
+        messages={[{ ...messages[0], canDelete: true }]}
+        onDelete={jest.fn()}
+      />,
     );
 
     const deleteButton = screen.getByRole('button', { name: 'Delete message 2' });
@@ -204,6 +202,12 @@ describe('InternalAdspConversation', () => {
     render(<InternalAdspConversation topic="topic-a" messages={[]} height="300px" testId="conversation" />);
 
     expect(screen.getByTestId('conversation')).toHaveStyle({ height: '300px' });
+  });
+
+  test('applies the default height on root when none is given', () => {
+    render(<InternalAdspConversation topic="topic-a" messages={[]} testId="conversation" />);
+
+    expect(screen.getByTestId('conversation')).toHaveStyle({ height: '40rem' });
   });
 
   test('applies component theme override variables', () => {

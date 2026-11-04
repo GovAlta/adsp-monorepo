@@ -44,6 +44,8 @@ export interface AdspConversationProps {
   onDelete?: (messageId: string | number) => void | Promise<void>;
 }
 
+const DEFAULT_HEIGHT = '40rem';
+
 function toTimestamp(value: Date | string): number {
   return value instanceof Date ? value.getTime() : new Date(value).getTime();
 }
@@ -56,7 +58,7 @@ function formatTimestamp(value: Date | string): string {
 export function InternalAdspConversation({
   topic,
   typeId,
-  height,
+  height = DEFAULT_HEIGHT,
   maxMessageLength = 400,
   includeNotifications = false,
   themeOverrides,
@@ -148,13 +150,8 @@ export function InternalAdspConversation({
     }
   };
 
-  // An explicit height sizes the list via flex, so lift the default max-height cap.
-  const resolvedStyle = height
-    ? { ...themeStyle, height, '--adsp-conversation-messages-max-height': 'none' }
-    : themeStyle;
-
   return (
-    <section className="adsp-conversation" style={resolvedStyle} data-testid={testId}>
+    <section className="adsp-conversation" style={{ ...themeStyle, height }} data-testid={testId}>
       <div className="adsp-conversation__messages" ref={listRef} role="log" aria-live="polite" aria-busy={loading}>
         {error ? (
           <p className="adsp-conversation__state" role="alert">

@@ -11,8 +11,8 @@ const highContrastTheme: AdspTheme = {
   color: { ...standard.color, text: { ...standard.color.text, default: '#000000' } },
 };
 
-const greenPrimaryButtons: AdspThemeOverrides = {
-  components: { button: { primary: { background: '#00703c' } } },
+const greenSentMessages: AdspThemeOverrides = {
+  components: { conversation: { sentBackground: '#00703c' } },
 };
 
 const withProvider =
@@ -65,7 +65,7 @@ describe('useAdspTheme', () => {
     // Arrange
     const overridesOnParent = ({ children }: { children: ReactNode }) => (
       <AdspThemeProvider theme={highContrastTheme}>
-        <AdspThemeProvider overrides={greenPrimaryButtons}>{children}</AdspThemeProvider>
+        <AdspThemeProvider overrides={greenSentMessages}>{children}</AdspThemeProvider>
       </AdspThemeProvider>
     );
 
@@ -79,14 +79,14 @@ describe('useAdspTheme', () => {
   test('applies the overrides to the theme in scope', () => {
     // Arrange
     const withOverrides = ({ children }: { children: ReactNode }) => (
-      <AdspThemeProvider overrides={greenPrimaryButtons}>{children}</AdspThemeProvider>
+      <AdspThemeProvider overrides={greenSentMessages}>{children}</AdspThemeProvider>
     );
 
     // Act
     const { result } = renderHook(() => useAdspTheme(), { wrapper: withOverrides });
 
     // Assert
-    expect(result.current.components.button.primary.background).toBe('#00703c');
+    expect(result.current.components.conversation.sentBackground).toBe('#00703c');
   });
 });
 
@@ -101,15 +101,15 @@ describe('useAdspThemeStyle', () => {
 
   test('adds instance overrides for the named component', () => {
     // Act
-    const { result } = renderHook(() => useAdspThemeStyle('button', { primary: { background: '#00703c' } }));
+    const { result } = renderHook(() => useAdspThemeStyle('conversation', { sentBackground: '#00703c' }));
 
     // Assert
-    expect(result.current).toHaveProperty(['--adsp-components-button-primary-background'], '#00703c');
+    expect(result.current).toHaveProperty(['--adsp-components-conversation-sent-background'], '#00703c');
   });
 
   test('keeps the theme properties alongside instance overrides', () => {
     // Act
-    const { result } = renderHook(() => useAdspThemeStyle('button', { primary: { background: '#00703c' } }));
+    const { result } = renderHook(() => useAdspThemeStyle('conversation', { sentBackground: '#00703c' }));
 
     // Assert
     expect(result.current).toHaveProperty(['--adsp-color-text-default'], 'var(--goa-color-text-default)');
