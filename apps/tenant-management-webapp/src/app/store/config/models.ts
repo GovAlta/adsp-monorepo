@@ -20,6 +20,7 @@ export interface ServiceUrls {
   eventServiceApiUrl: string;
   notificationServiceUrl: string;
   taskWebApp: string;
+  projectPlannerWebApp?: string;
   keycloakUrl: string;
   tenantManagementApi: string;
   tenantManagementWebApp?: string;

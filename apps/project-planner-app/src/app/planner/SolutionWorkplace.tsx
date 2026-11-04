@@ -20,6 +20,7 @@ import ProblemStatement, { ProblemStatementUpload } from './ProblemStatement';
 import ProgressStepper from './ProgressStepper';
 import SolutionHeader from './SolutionHeader';
 import { AnalysisMode, Solution, SpecialistDefinition } from './model';
+import { measureScrollLayout, spaceToScrollToTop } from './scrollSpace';
 import SpecialistConsultationPanel from './SpecialistConsultationPanel';
 import { useBusy } from './useBusy';
 
@@ -310,19 +311,15 @@ export const SolutionWorkplace: FunctionComponent<SolutionWorkplaceProps> = ({
       if (!step3Ref.current) {
         return;
       }
-      const step3Top = step3Ref.current.getBoundingClientRect().top + window.scrollY;
-      setBottomSpacerHeight((previousSpacer) => {
-        const documentHeightWithoutSpacer = document.documentElement.scrollHeight - previousSpacer;
-        const contentAfterStep3Top = documentHeightWithoutSpacer - step3Top;
-        return Math.max(0, window.innerHeight - contentAfterStep3Top);
-      });
+      const step3 = step3Ref.current;
+      setBottomSpacerHeight((previousSpacer) => spaceToScrollToTop(measureScrollLayout(step3, previousSpacer)));
     };
     updateBottomSpacer();
     window.addEventListener('resize', updateBottomSpacer);
     let resizeObserver: ResizeObserver | undefined;
-    if (typeof ResizeObserver !== 'undefined') {
+    if (typeof ResizeObserver !== 'undefined' && contentRef.current) {
       resizeObserver = new ResizeObserver(updateBottomSpacer);
-      resizeObserver.observe(document.body);
+      resizeObserver.observe(contentRef.current);
     }
     return () => {
       window.removeEventListener('resize', updateBottomSpacer);
