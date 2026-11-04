@@ -556,6 +556,32 @@ export const SDK_REFERENCE: SdkSymbolDoc[] = [
     seeAlso: ['AuditActor', 'User', 'auditDetailsFromRequest'],
   },
   {
+    name: 'createAuditService',
+    kind: 'function',
+    module: 'audit',
+    summary:
+      "Creates an AuditService client for another application's namespace, e.g. a core service bridging that application's events.",
+    details:
+      'createAuditService(options: {\n' +
+      '  isCore: boolean; logger: Logger; directory: ServiceDirectory; tokenProvider: TokenProvider;\n' +
+      '  serviceId: AdspId; // namespace is serviceId.service\n' +
+      '  ready?: Promise<unknown>; meterProvider?: MeterProvider;\n' +
+      '} & AuditClientOptions): AuditService\n\n' +
+      'Use the auditService from initializeService or initializePlatform for your own namespace. auditActions only ' +
+      'registers the caller catalog, so register the bridged catalog through serviceConfigurations. Core clients ' +
+      'require tenantId on every record; writtenBy is still the calling client, which needs audit-writer.',
+    example:
+      'const accessAudit = createAuditService({\n' +
+      '  isCore: true,\n' +
+      '  logger,\n' +
+      '  directory,\n' +
+      '  tokenProvider,\n' +
+      '  serviceId: adspId`urn:ads:platform:access-service`,\n' +
+      '});\n' +
+      'await accessAudit.record(USER_DELETED, { tenantId, actor, resource });',
+    seeAlso: ['AuditService', 'AuditClientOptions', 'initializePlatform'],
+  },
+  {
     name: 'AuditRequestContext',
     kind: 'interface',
     module: 'audit',
