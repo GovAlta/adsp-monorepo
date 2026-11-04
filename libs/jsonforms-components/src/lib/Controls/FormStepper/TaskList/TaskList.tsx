@@ -64,7 +64,7 @@ function updateCompletion(group: CategoryState[], index: number): CategoryState 
 
   const relevant = group.slice(index, endIndex + 1);
 
-  // A task is "completed" iff:
+  // A task is "completed" if:
   // - the main row itself isCompleted, AND
   // - every detail page that is currently visible is also completed.
 

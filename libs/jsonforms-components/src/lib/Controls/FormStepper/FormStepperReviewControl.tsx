@@ -1,6 +1,6 @@
 import React from 'react';
 import { JsonFormsDispatch, useJsonForms } from '@jsonforms/react';
-import { Categorization, Layout, isVisible, Scoped, UISchemaElement } from '@jsonforms/core';
+import { Categorization, Layout, isVisible, Scoped, UISchemaElement, Category } from '@jsonforms/core';
 import { withJsonFormsLayoutProps, withTranslateProps } from '@jsonforms/react';
 import { CategorizationStepperLayoutReviewRendererProps } from './types';
 import {
@@ -215,6 +215,10 @@ export const FormStepperReviewer = (props: CategorizationStepperLayoutReviewRend
           }
 
           const categoryLabel = category.label || category.i18n || 'Unknown Category';
+
+          const shouldHide = (cat: Categorization | Category) =>
+            cat?.options?.showInTaskList === false || category.options?.showInTaskList === undefined;
+
           // Build visible elements list
           const elementsToRender = category.elements
             .filter((field) => hasVisibleContent(field))
@@ -229,8 +233,8 @@ export const FormStepperReviewer = (props: CategorizationStepperLayoutReviewRend
             })
             .flat();
 
-          // Do not render empty categories
-          if (elementsToRender.length === 0) {
+          // Do not render empty categories or showInTaskList is false or undefined
+          if (elementsToRender.length === 0 || shouldHide(category)) {
             return null;
           }
 
