@@ -1,0 +1,28 @@
+{
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "allowJs": false,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "strict": false,
+    "baseUrl": "./src",
+    "paths": {
+      "@components/*": ["app/components/*"],
+      "@icons/*": ["assets/icons/*"],
+      "@store/*": ["app/store/*"],
+      "@style/*": ["../../../libs/stylesheets/scss/src/lib/*"]
+    },
+    "ignoreDeprecations": "5.0"
+  },
+  "files": [],
+  "include": [],
+  "references": [
+    {
+      "path": "./tsconfig.app.json"
+    },
+    {
+      "path": "./tsconfig.spec.json"
+    }
+  ],
+  "extends": "../../tsconfig.base.json"
+}

@@ -45,7 +45,6 @@ export interface ServiceUrls {
   formAppApiUrl: string;
   agentServiceApiUrl: string;
   auditServiceApiUrl?: string;
-  projectPlannerServiceApiUrl: string;
   tokenHandlerApiUrl?: string;
 }
 
