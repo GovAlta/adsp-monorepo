@@ -63,6 +63,24 @@ describe('AuditEventPage', () => {
     expect(baseElement.querySelector("goa-callout[testId='audit-event-not-found']")).toBeInTheDocument();
   });
 
+  it('matches the event id case-insensitively', () => {
+    const { getByTestId } = renderPage(['audit-reader'], {
+      event: { ...event, id: 'E1' },
+      loading: false,
+      notFound: false,
+    });
+    expect(getByTestId('audit-event-section-event')).toHaveTextContent('submit');
+  });
+
+  it('shows not found when the loaded event does not match the requested id', () => {
+    const { baseElement } = renderPage(['audit-reader'], {
+      event: { ...event, id: 'other' },
+      loading: false,
+      notFound: false,
+    });
+    expect(baseElement.querySelector("goa-callout[testId='audit-event-not-found']")).toBeInTheDocument();
+  });
+
   it('requires the audit-reader role', () => {
     const { store, baseElement } = renderPage([], { loading: false, notFound: false });
     expect(baseElement.querySelector("goa-callout[testId='audit-role-callout']")).toBeInTheDocument();

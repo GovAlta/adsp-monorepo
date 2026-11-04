@@ -124,8 +124,8 @@ function ChangeSet({ before, after }: { before?: unknown; after?: unknown }) {
                 </tr>
               </thead>
               <tbody>
-                {visible.map((entry) => (
-                  <tr key={entry.path} style={{ borderBottom: '1px solid #ddd' }}>
+                {visible.map((entry, index) => (
+                  <tr key={`${index}:${entry.path}`} style={{ borderBottom: '1px solid #ddd' }}>
                     <td style={cellStyle}>
                       <span
                         style={{

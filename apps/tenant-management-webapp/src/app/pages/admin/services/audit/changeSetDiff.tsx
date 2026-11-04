@@ -87,8 +87,8 @@ export const ChangeSetDiff: FunctionComponent<{ before?: unknown; after?: unknow
                 </tr>
               </thead>
               <tbody>
-                {visible.map((entry: ChangeEntry) => (
-                  <tr key={entry.path} data-kind={entry.kind}>
+                {visible.map((entry: ChangeEntry, index) => (
+                  <tr key={`${index}:${entry.path}`} data-kind={entry.kind}>
                     <th scope="row">
                       <Badge $kind={entry.kind} aria-label={LABELS[entry.kind]}>
                         {SYMBOLS[entry.kind] || '='}

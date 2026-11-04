@@ -16,6 +16,24 @@ describe('diffChangeSet', () => {
     ]);
   });
 
+  it('keeps a literal dotted key distinct from a nested path', () => {
+    const before = { 'profile.email': 'old@example.com', profile: { email: 'stable@example.com' } };
+    const after = { 'profile.email': 'new@example.com', profile: { email: 'stable@example.com' } };
+
+    const changed = diffChangeSet(before, after).filter((entry) => entry.kind !== 'unchanged');
+    expect(changed).toEqual([
+      { path: 'profile.email', kind: 'changed', before: 'old@example.com', after: 'new@example.com' },
+    ]);
+  });
+
+  it('does not report an empty or null parent as removed when it becomes populated', () => {
+    expect(diffChangeSet({ tags: [] }, { tags: ['a'] })).toEqual([{ path: 'tags[0]', kind: 'added', after: 'a' }]);
+    expect(diffChangeSet({ address: null }, { address: { city: 'Edmonton' } })).toEqual([
+      { path: 'address.city', kind: 'added', after: 'Edmonton' },
+    ]);
+    expect(diffChangeSet({ tags: ['a'] }, { tags: [] })).toEqual([{ path: 'tags[0]', kind: 'removed', before: 'a' }]);
+  });
+
   it('treats a missing side as all added or all removed', () => {
     expect(diffChangeSet(undefined, { a: 1 })).toEqual([{ path: 'a', kind: 'added', after: 1 }]);
     expect(diffChangeSet({ a: 1 }, undefined)).toEqual([{ path: 'a', kind: 'removed', before: 1 }]);

@@ -7,36 +7,75 @@ export interface ChangeEntry {
   after?: unknown;
 }
 
+type Segment = string | number;
+
+interface Leaf {
+  segments: Segment[];
+  value: unknown;
+}
+
 const isContainer = (value: unknown): value is Record<string, unknown> | unknown[] =>
   typeof value === 'object' && value !== null;
 
-// Flattens nested objects and arrays to dotted paths; empty containers are kept as leaves.
-const flatten = (value: unknown, prefix = '', result: Map<string, unknown> = new Map()) => {
+const isEmptyLeaf = (value: unknown) => value === null || (isContainer(value) && Object.keys(value).length === 0);
+
+const formatPath = (segments: Segment[]) =>
+  segments.reduce<string>(
+    (path, segment) => (typeof segment === 'number' ? `${path}[${segment}]` : path ? `${path}.${segment}` : segment),
+    '',
+  );
+
+// Flattens nested objects and arrays to leaves keyed by their path segments, so that a literal key
+// such as "a.b" cannot collide with a nested a -> b. Empty containers and null are kept as leaves.
+const flatten = (value: unknown, segments: Segment[] = [], result: Map<string, Leaf> = new Map()) => {
   if (isContainer(value) && Object.keys(value).length > 0) {
     Object.entries(value).forEach(([key, child]) =>
-      flatten(child, Array.isArray(value) ? `${prefix}[${key}]` : prefix ? `${prefix}.${key}` : key, result),
+      flatten(child, [...segments, Array.isArray(value) ? Number(key) : key], result),
     );
-  } else if (prefix) {
-    result.set(prefix, value);
+  } else if (segments.length > 0) {
+    result.set(JSON.stringify(segments), { segments, value });
   }
   return result;
+};
+
+// An empty/null leaf that the other side populates with children is not a removal; the children carry the change.
+const dropReplacedLeaves = (leaves: Map<string, Leaf>, other: Map<string, Leaf>) => {
+  leaves.forEach((leaf, key) => {
+    if (!isEmptyLeaf(leaf.value)) {
+      return;
+    }
+    const prefix = key.slice(0, -1);
+    if (Array.from(other.keys()).some((otherKey) => otherKey.startsWith(`${prefix},`))) {
+      leaves.delete(key);
+    }
+  });
 };
 
 export const diffChangeSet = (before: unknown, after: unknown): ChangeEntry[] => {
   const left = flatten(before);
   const right = flatten(after);
-  const paths = Array.from(new Set([...left.keys(), ...right.keys()])).sort((a, b) => a.localeCompare(b));
+  dropReplacedLeaves(left, right);
+  dropReplacedLeaves(right, left);
 
-  return paths.map((path) => {
-    const inBefore = left.has(path);
-    const inAfter = right.has(path);
-    if (inBefore && !inAfter) {
-      return { path, kind: 'removed', before: left.get(path) };
+  const entries = new Map<string, string>();
+  [...left.values(), ...right.values()].forEach(({ segments }) =>
+    entries.set(JSON.stringify(segments), formatPath(segments)),
+  );
+  const keys = Array.from(entries.keys()).sort(
+    (a, b) => entries.get(a).localeCompare(entries.get(b)) || a.localeCompare(b),
+  );
+
+  return keys.map((key) => {
+    const path = entries.get(key);
+    const l = left.get(key);
+    const r = right.get(key);
+    if (l && !r) {
+      return { path, kind: 'removed', before: l.value };
     }
-    if (!inBefore && inAfter) {
-      return { path, kind: 'added', after: right.get(path) };
+    if (!l && r) {
+      return { path, kind: 'added', after: r.value };
     }
-    const unchanged = JSON.stringify(left.get(path)) === JSON.stringify(right.get(path));
-    return { path, kind: unchanged ? 'unchanged' : 'changed', before: left.get(path), after: right.get(path) };
+    const unchanged = JSON.stringify(l.value) === JSON.stringify(r.value);
+    return { path, kind: unchanged ? 'unchanged' : 'changed', before: l.value, after: r.value };
   });
 };

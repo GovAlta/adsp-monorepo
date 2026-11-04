@@ -33,7 +33,8 @@ export const AuditEventPage: FunctionComponent = () => {
     }
   }, [event]);
 
-  const showEvent = event && event.id === id;
+  const showEvent = !!event && event.id?.toLowerCase() === id?.toLowerCase();
+  const eventMissing = notFound || (!!event && !showEvent);
 
   return (
     <Page>
@@ -56,7 +57,7 @@ export const AuditEventPage: FunctionComponent = () => {
           </GoabCallout>
         )}
         {hasReaderRole && loading && <PageIndicator />}
-        {hasReaderRole && !loading && notFound && (
+        {hasReaderRole && !loading && eventMissing && (
           <GoabCallout heading="Audit event not found" type="important" testId="audit-event-not-found">
             <p>The audit event does not exist, or has been removed under its retention policy.</p>
           </GoabCallout>

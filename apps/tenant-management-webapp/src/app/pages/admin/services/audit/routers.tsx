@@ -8,7 +8,7 @@ export const AuditRouter = () => {
     <Routes>
       <Route path="/events/:namespace/:id" element={<AuditEventPage />} />
       <Route path="/:tab" element={<Audit />} />
-      <Route path="*" element={<Navigate to="overview" />} />
+      <Route path="*" element={<Navigate to="overview" replace />} />
     </Routes>
   );
 };
