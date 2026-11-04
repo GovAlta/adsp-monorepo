@@ -45,7 +45,7 @@ const Layout: FunctionComponent<{ children: ReactNode }> = ({ children }) => {
   const session = useSelector((state: RootState) => state.session);
 
   return (
-    <>
+    <ScrollContainer id="app-scroll-container">
       <GoabMicrositeHeader type="beta" />
       <GoabAppHeader url="/" heading="Project planner">
         {session.authenticated && (
@@ -57,7 +57,7 @@ const Layout: FunctionComponent<{ children: ReactNode }> = ({ children }) => {
       <Notifications />
       <Content>{children}</Content>
       <GoabAppFooter />
-    </>
+    </ScrollContainer>
   );
 };
 
@@ -119,7 +119,20 @@ export function App() {
 
 export default App;
 
+// The shared global styles set html { overflow: hidden }, so the page scrolls in here instead, as in tenant admin.
+const ScrollContainer = styled.div`
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+`;
+
+// Fills the space left by the header and footer, so a short page has the footer at the bottom of the window.
 const Content = styled.main`
-  min-height: 60vh;
+  flex: 1 0 auto;
   padding: var(--goa-space-l) 0;
 `;

@@ -52,6 +52,7 @@ export function* fetchConfig(): SagaIterator {
           tenantManagementApi: entryMapping['tenant-service'],
           subscriberWebApp: entryMapping['subscriber-app'],
           taskWebApp: entryMapping['task-app'],
+          projectPlannerWebApp: entryMapping['project-planner-app'],
           accessManagementApi: `${entryMapping['access-service']}/auth`,
           fileApi: entryMapping['file-service'],
           serviceStatusApiUrl: entryMapping['status-service'],
