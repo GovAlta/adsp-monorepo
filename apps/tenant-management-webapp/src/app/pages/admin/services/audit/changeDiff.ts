@@ -19,11 +19,14 @@ const isContainer = (value: unknown): value is Record<string, unknown> | unknown
 
 const isEmptyLeaf = (value: unknown) => value === null || (isContainer(value) && Object.keys(value).length === 0);
 
+// Keys containing "." or brackets are quoted, e.g. ["a.b"], so they read differently from a nested a -> b.
 const formatPath = (segments: Segment[]) =>
-  segments.reduce<string>(
-    (path, segment) => (typeof segment === 'number' ? `${path}[${segment}]` : path ? `${path}.${segment}` : segment),
-    '',
-  );
+  segments.reduce<string>((path, segment) => {
+    if (typeof segment === 'number') {
+      return `${path}[${segment}]`;
+    }
+    return /[.[\]]/.test(segment) ? `${path}[${JSON.stringify(segment)}]` : path ? `${path}.${segment}` : segment;
+  }, '');
 
 // Flattens nested objects and arrays to leaves keyed by their path segments, so that a literal key
 // such as "a.b" cannot collide with a nested a -> b. Empty containers and null are kept as leaves.

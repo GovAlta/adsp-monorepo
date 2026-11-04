@@ -20,9 +20,17 @@ describe('diffChangeSet', () => {
     const before = { 'profile.email': 'old@example.com', profile: { email: 'stable@example.com' } };
     const after = { 'profile.email': 'new@example.com', profile: { email: 'stable@example.com' } };
 
-    const changed = diffChangeSet(before, after).filter((entry) => entry.kind !== 'unchanged');
-    expect(changed).toEqual([
-      { path: 'profile.email', kind: 'changed', before: 'old@example.com', after: 'new@example.com' },
+    const entries = diffChangeSet(before, after);
+    expect(entries.map((entry) => [entry.path, entry.kind])).toEqual([
+      ['["profile.email"]', 'changed'],
+      ['profile.email', 'unchanged'],
+    ]);
+  });
+
+  it('quotes keys containing brackets in the displayed path', () => {
+    expect(diffChangeSet({}, { 'a[0]': 1, list: [{ 'x.y': 2 }] }).map((entry) => entry.path)).toEqual([
+      '["a[0]"]',
+      'list[0]["x.y"]',
     ]);
   });
 
