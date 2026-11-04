@@ -9,16 +9,16 @@ describe('access service audit actions', () => {
   });
 
   it.each([
-    ['user.created', 'info'],
-    ['user.updated', 'info'],
-    ['user.deleted', 'critical'],
-    ['user.role-assigned', 'warning'],
-    ['user.role-removed', 'warning'],
-    ['service-account.created', 'warning'],
-    ['service-account.credential-rotated', 'critical'],
-    ['service-account.deleted', 'critical'],
-    ['realm.configuration-changed', 'critical'],
-    ['user.login-failed', 'warning'],
+    ['access.user.created', 'info'],
+    ['access.user.updated', 'info'],
+    ['access.user.deleted', 'critical'],
+    ['access.user.role-assigned', 'warning'],
+    ['access.user.role-removed', 'warning'],
+    ['access.service-account.created', 'warning'],
+    ['access.service-account.credential-rotated', 'critical'],
+    ['access.service-account.deleted', 'critical'],
+    ['access.realm.configuration-changed', 'critical'],
+    ['access.user.login-failed', 'warning'],
   ])('registers %s with %s severity', (action, severity) => {
     expect(catalog[action]?.severity).toBe(severity);
   });
@@ -36,16 +36,16 @@ describe('access service audit actions', () => {
   });
 
   it.each([
-    ['user.created', 'user'],
-    ['user.deleted', 'user'],
-    ['user.role-assigned', 'user'],
-    ['service-account.credential-rotated', 'service-account'],
-    ['realm.configuration-changed', 'realm'],
+    ['access.user.created', 'user'],
+    ['access.user.deleted', 'user'],
+    ['access.user.role-assigned', 'user'],
+    ['access.service-account.credential-rotated', 'service-account'],
+    ['access.realm.configuration-changed', 'realm'],
   ])('requires %s records to have a %s resource', (action, resourceType) => {
     expect(catalog[action].resourceType).toBe(resourceType);
   });
 
   it('does not require a resource for a failed login of an unknown user', () => {
-    expect(catalog['user.login-failed'].resourceType).toBeUndefined();
+    expect(catalog['access.user.login-failed'].resourceType).toBeUndefined();
   });
 });

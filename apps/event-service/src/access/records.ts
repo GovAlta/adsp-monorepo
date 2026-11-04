@@ -141,21 +141,25 @@ const ADMIN_RULES = new Map<string, AdminRule>([
   ['UPDATE-REALM', { action: RealmConfigurationChangedAuditAction, path: ANY_PATH, describe: describeRealm }],
 ]);
 
-// Only the attempted username is read from login details; other details can include credentials.
-const toLoginFailedRecord: UserEventRule = ({ id, realmId, userId, clientId, sessionId, error, details }) => {
-  const username = stringField(details, 'username');
-  return {
-    action: UserLoginFailedAuditAction,
-    details: {
-      eventId: id,
-      status: 'failure',
-      actor: { id: userId || username || 'unknown', type: 'user', name: username },
-      resource: userId ? { type: AccessResourceTypes.User, id: userId } : undefined,
-      sessionId: sessionId || undefined,
-      metadata: { realm: realmId, clientId, reason: error },
-    },
-  };
-};
+// Keycloak limits usernames and client IDs to 255 characters, but failed logins carry whatever the caller typed.
+const MAX_SUBMITTED_LENGTH = 255;
+const UNKNOWN_ACTOR_ID = 'unknown';
+
+const bounded = (value: string | null | undefined) => (value ? value.slice(0, MAX_SUBMITTED_LENGTH) : undefined);
+
+// Only the attempted username is read from login details; other details can include credentials. The username is
+// never the actor ID, since anyone can submit it and the ID is indexed by the audit service.
+const toLoginFailedRecord: UserEventRule = ({ id, realmId, userId, clientId, sessionId, error, details }) => ({
+  action: UserLoginFailedAuditAction,
+  details: {
+    eventId: id,
+    status: 'failure',
+    actor: { id: userId || UNKNOWN_ACTOR_ID, type: 'user', name: bounded(stringField(details, 'username')) },
+    resource: userId ? { type: AccessResourceTypes.User, id: userId } : undefined,
+    sessionId: sessionId || undefined,
+    metadata: { realm: realmId, clientId: bounded(clientId), reason: error },
+  },
+});
 
 const USER_EVENT_RULES = new Map<string, UserEventRule>([['LOGIN_ERROR', toLoginFailedRecord]]);
 
@@ -179,9 +183,14 @@ function isUserEventPayload(payload: unknown): payload is AccessUserEventPayload
 }
 
 // Admin events carry no event ID, so a name-based UUID (RFC 9562 v8 from SHA-256) makes redelivered events idempotent.
-function toAdminEventId(event: DomainEvent, resourcePath: string, actorId: string): string {
+// The recorded content is part of the name, so distinct changes in the same millisecond, such as two role grants, differ.
+function toAdminEventId(event: DomainEvent, resourcePath: string, actorId: string, content: AdminRecordContent): string {
   const hash = createHash('sha256')
-    .update([event.tenantId, event.name, event.timestamp.toISOString(), resourcePath, actorId].join('|'))
+    .update(
+      [event.tenantId, event.name, event.timestamp.toISOString(), resourcePath, actorId, JSON.stringify(content)].join(
+        '|',
+      ),
+    )
     .digest('hex');
   const variant = ((parseInt(hash.substring(16, 18), 16) & 0x3f) | 0x80).toString(16);
   return [
@@ -210,7 +219,7 @@ function toAdminRecord(event: DomainEvent, rule: AdminRule): AccessAuditRecord |
   return {
     action: rule.action,
     details: {
-      eventId: toAdminEventId(event, resourcePath, userId),
+      eventId: toAdminEventId(event, resourcePath, userId, content),
       actor: { id: userId, type: 'user' },
       resource: content.resource,
       metadata: {

@@ -25,70 +25,70 @@ const securityAction = (
 });
 
 export const UserCreatedAuditAction = securityAction(
-  'user.created',
+  'access.user.created',
   AuditSeverities.Info,
   'A user is created in the tenant realm.',
   AccessResourceTypes.User,
 );
 
 export const UserUpdatedAuditAction = securityAction(
-  'user.updated',
+  'access.user.updated',
   AuditSeverities.Info,
   'A user is updated in the tenant realm.',
   AccessResourceTypes.User,
 );
 
 export const UserDeletedAuditAction = securityAction(
-  'user.deleted',
+  'access.user.deleted',
   AuditSeverities.Critical,
   'A user is deleted from the tenant realm.',
   AccessResourceTypes.User,
 );
 
 export const UserRoleAssignedAuditAction = securityAction(
-  'user.role-assigned',
+  'access.user.role-assigned',
   AuditSeverities.Warning,
   'Client roles are assigned to a user.',
   AccessResourceTypes.User,
 );
 
 export const UserRoleRemovedAuditAction = securityAction(
-  'user.role-removed',
+  'access.user.role-removed',
   AuditSeverities.Warning,
   'Client roles are removed from a user.',
   AccessResourceTypes.User,
 );
 
 export const ServiceAccountCreatedAuditAction = securityAction(
-  'service-account.created',
+  'access.service-account.created',
   AuditSeverities.Warning,
   'A client is created in the tenant realm.',
   AccessResourceTypes.ServiceAccount,
 );
 
 export const ServiceAccountCredentialRotatedAuditAction = securityAction(
-  'service-account.credential-rotated',
+  'access.service-account.credential-rotated',
   AuditSeverities.Critical,
   'The secret of a client is regenerated.',
   AccessResourceTypes.ServiceAccount,
 );
 
 export const ServiceAccountDeletedAuditAction = securityAction(
-  'service-account.deleted',
+  'access.service-account.deleted',
   AuditSeverities.Critical,
   'A client is deleted from the tenant realm.',
   AccessResourceTypes.ServiceAccount,
 );
 
 export const RealmConfigurationChangedAuditAction = securityAction(
-  'realm.configuration-changed',
+  'access.realm.configuration-changed',
   AuditSeverities.Critical,
   'The configuration of the tenant realm is changed.',
   AccessResourceTypes.Realm,
 );
 
 export const UserLoginFailedAuditAction = securityAction(
-  'user.login-failed',
+  'access.user.login-failed',
   AuditSeverities.Warning,
   'A sign in attempt to the tenant realm fails.',
 );

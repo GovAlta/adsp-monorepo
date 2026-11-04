@@ -54,7 +54,7 @@ describe('createAccessAuditJob', () => {
     await createJob()(userDeleted, done);
 
     expect(record).toHaveBeenCalledWith(
-      expect.objectContaining({ name: 'user.deleted', severity: 'critical' }),
+      expect.objectContaining({ name: 'access.user.deleted', severity: 'critical' }),
       expect.objectContaining({ tenantId }),
     );
   });

@@ -78,26 +78,26 @@ describe('toAccessAuditRecord', () => {
 
   describe('admin events', () => {
     it.each([
-      ['CREATE-USER', `users/${userId}`, userRepresentation, 'user.created'],
-      ['UPDATE-USER', `users/${userId}`, userRepresentation, 'user.updated'],
-      ['DELETE-USER', `users/${userId}`, null, 'user.deleted'],
+      ['CREATE-USER', `users/${userId}`, userRepresentation, 'access.user.created'],
+      ['UPDATE-USER', `users/${userId}`, userRepresentation, 'access.user.updated'],
+      ['DELETE-USER', `users/${userId}`, null, 'access.user.deleted'],
       [
         'CREATE-CLIENT_ROLE_MAPPING',
         `users/${userId}/role-mappings/clients/${clientUuid}`,
         roleRepresentation,
-        'user.role-assigned',
+        'access.user.role-assigned',
       ],
       [
         'DELETE-CLIENT_ROLE_MAPPING',
         `users/${userId}/role-mappings/clients/${clientUuid}`,
         roleRepresentation,
-        'user.role-removed',
+        'access.user.role-removed',
       ],
-      ['CREATE-CLIENT', `clients/${clientUuid}`, clientRepresentation, 'service-account.created'],
-      ['DELETE-CLIENT', `clients/${clientUuid}`, null, 'service-account.deleted'],
-      ['ACTION-CLIENT', `clients/${clientUuid}/client-secret`, null, 'service-account.credential-rotated'],
-      ['UPDATE-REALM', null, '{"realm":"test-tenant-realm"}', 'realm.configuration-changed'],
-      ['UPDATE-REALM', 'events/config', '{"eventsEnabled":true}', 'realm.configuration-changed'],
+      ['CREATE-CLIENT', `clients/${clientUuid}`, clientRepresentation, 'access.service-account.created'],
+      ['DELETE-CLIENT', `clients/${clientUuid}`, null, 'access.service-account.deleted'],
+      ['ACTION-CLIENT', `clients/${clientUuid}/client-secret`, null, 'access.service-account.credential-rotated'],
+      ['UPDATE-REALM', null, '{"realm":"test-tenant-realm"}', 'access.realm.configuration-changed'],
+      ['UPDATE-REALM', 'events/config', '{"eventsEnabled":true}', 'access.realm.configuration-changed'],
     ])('records %s on %s as %s', (name, resourcePath, representation, action) => {
       const event = adminEvent(name, { resourcePath, representation });
 
@@ -293,6 +293,18 @@ describe('toAccessAuditRecord', () => {
       expect(later.details.eventId).not.toBe(first.details.eventId);
     });
 
+    it('gives distinct role changes in the same millisecond different event IDs', () => {
+      const path = `users/${userId}/role-mappings/clients/${clientUuid}`;
+      const first = toAccessAuditRecord(
+        adminEvent('DELETE-CLIENT_ROLE_MAPPING', { resourcePath: path, representation: '[{"name":"audit-admin"}]' }),
+      );
+      const second = toAccessAuditRecord(
+        adminEvent('DELETE-CLIENT_ROLE_MAPPING', { resourcePath: path, representation: '[{"name":"audit-writer"}]' }),
+      );
+
+      expect(second.details.eventId).not.toBe(first.details.eventId);
+    });
+
     it('identifies admin events with a UUID', () => {
       const event = adminEvent('DELETE-USER', { resourcePath: `users/${userId}` });
 
@@ -308,7 +320,7 @@ describe('toAccessAuditRecord', () => {
 
       const record = toAccessAuditRecord(event);
 
-      expect(record).toMatchObject({ action: { name: 'user.login-failed' }, details: { status: 'failure' } });
+      expect(record).toMatchObject({ action: { name: 'access.user.login-failed' }, details: { status: 'failure' } });
     });
 
     it('identifies the record by the Keycloak event ID', () => {
@@ -319,12 +331,24 @@ describe('toAccessAuditRecord', () => {
       expect(record.details.eventId).toBe('3e2d1c0b-9a8f-4e7d-8c6b-5a4f3e2d1c0b');
     });
 
-    it('records the attempted username as the actor of an unknown user', () => {
+    it('names the actor of an unknown user by the attempted username without using it as the ID', () => {
       const event = userEvent('LOGIN_ERROR');
 
       const record = toAccessAuditRecord(event);
 
-      expect(record.details.actor).toEqual({ id: 'jordan.tester', type: 'user', name: 'jordan.tester' });
+      expect(record.details.actor).toEqual({ id: 'unknown', type: 'user', name: 'jordan.tester' });
+    });
+
+    it('truncates an oversized attempted username and client ID', () => {
+      const event = userEvent('LOGIN_ERROR', {
+        clientId: 'c'.repeat(3000),
+        details: { username: 'u'.repeat(3000) },
+      });
+
+      const record = toAccessAuditRecord(event);
+
+      expect(record.details.actor).toEqual({ id: 'unknown', type: 'user', name: 'u'.repeat(255) });
+      expect(record.details.metadata.clientId).toBe('c'.repeat(255));
     });
 
     it('records no resource for an unknown user', () => {
