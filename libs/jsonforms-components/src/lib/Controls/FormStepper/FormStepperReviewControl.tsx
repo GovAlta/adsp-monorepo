@@ -216,8 +216,7 @@ export const FormStepperReviewer = (props: CategorizationStepperLayoutReviewRend
 
           const categoryLabel = category.label || category.i18n || 'Unknown Category';
 
-          const shouldHide = (cat: Categorization | Category) =>
-            cat?.options?.showInTaskList === false || category.options?.showInTaskList === undefined;
+          const isInTaskList = (cat: Categorization | Category) => cat?.options?.showInTaskList !== false;
 
           // Build visible elements list
           const elementsToRender = category.elements
@@ -234,13 +233,15 @@ export const FormStepperReviewer = (props: CategorizationStepperLayoutReviewRend
             .flat();
 
           // Do not render empty categories or showInTaskList is false or undefined
-          if (elementsToRender.length === 0 || shouldHide(category)) {
+          if (elementsToRender.length === 0 || !isInTaskList(category)) {
             return null;
           }
 
           //The tasklist can have a parent section title, we want to display if it exists
           const sectionTitle =
-            category.options?.showInTaskList === true ? String(category.options?.sectionTitle ?? '').trim() : '';
+            category.options?.showInTaskList === true || category.options?.showInTaskList === undefined
+              ? String(category.options?.sectionTitle ?? '').trim()
+              : '';
           const showSectionTitle = sectionTitle !== '' && sectionTitle !== lastShownSectionTitle;
           if (showSectionTitle) {
             lastShownSectionTitle = sectionTitle;

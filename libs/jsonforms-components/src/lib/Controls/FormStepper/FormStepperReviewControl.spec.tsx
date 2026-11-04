@@ -107,7 +107,7 @@ describe('FormStepperReviewer', () => {
       expect(screen.queryByText('Applicant')).not.toBeInTheDocument();
     });
 
-    it('does not display a category when showInTaskList is not configured', () => {
+    it('displays a category when showInTaskList is not configured', () => {
       // Arrange
       const props = createProps(createCategorizationWith([createCategory('Applicant', {})]));
 
@@ -115,10 +115,10 @@ describe('FormStepperReviewer', () => {
       render(<FormStepperReviewer {...props} />);
 
       // Assert
-      expect(screen.queryByText('Applicant')).not.toBeInTheDocument();
+      expect(screen.getByText('Applicant')).toBeInTheDocument();
     });
 
-    it('displays only the categories shown in the task list', () => {
+    it('displays only the categories not hidden from the task list', () => {
       // Arrange
       const props = createProps(
         createCategorizationWith([
@@ -132,7 +132,7 @@ describe('FormStepperReviewer', () => {
       render(<FormStepperReviewer {...props} />);
 
       // Assert
-      expect(screen.getAllByText(/Applicant|Internal review|Employer/)).toHaveLength(1);
+      expect(screen.getAllByText(/Applicant|Internal review|Employer/)).toHaveLength(2);
     });
 
     it('does not display a category with no visible content', () => {
