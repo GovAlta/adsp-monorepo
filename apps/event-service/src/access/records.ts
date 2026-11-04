@@ -178,16 +178,16 @@ function isUserEventPayload(payload: unknown): payload is AccessUserEventPayload
   return isString(id) && isString(realmId);
 }
 
-// Admin events carry no event ID, so a name-based (v5 layout) UUID makes redelivered events idempotent.
+// Admin events carry no event ID, so a name-based UUID (RFC 9562 v8 from SHA-256) makes redelivered events idempotent.
 function toAdminEventId(event: DomainEvent, resourcePath: string, actorId: string): string {
-  const hash = createHash('sha1')
+  const hash = createHash('sha256')
     .update([event.tenantId, event.name, event.timestamp.toISOString(), resourcePath, actorId].join('|'))
     .digest('hex');
   const variant = ((parseInt(hash.substring(16, 18), 16) & 0x3f) | 0x80).toString(16);
   return [
     hash.substring(0, 8),
     hash.substring(8, 12),
-    `5${hash.substring(13, 16)}`,
+    `8${hash.substring(13, 16)}`,
     `${variant}${hash.substring(18, 20)}`,
     hash.substring(20, 32),
   ].join('-');
