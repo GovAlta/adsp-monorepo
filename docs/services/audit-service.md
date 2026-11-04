@@ -168,6 +168,34 @@ const history = await auditService.query(
 Core callers must pass this `AdspId` in **record details** and **query options**, as shown above.
 Tenant applications use the same calls but omit `tenantId`.
 
+#### Record another application's events
+
+A Core service that bridges events from another application, such as Keycloak events forwarded
+for the access service, can record them in that application's namespace. Create a separate client
+with `createAuditService`; the namespace is the `service` part of `serviceId`. `auditActions` only
+registers the caller's own catalog, so register the bridged application's catalog through the
+`serviceConfigurations` initialization option, using the `actions-<application>` document shown in
+**Register without the SDK** below.
+
+```typescript
+import { adspId, createAuditService } from '@abgov/adsp-service-sdk';
+
+const accessAudit = createAuditService({
+  isCore: true,
+  logger,
+  directory,
+  tokenProvider,
+  serviceId: adspId`urn:ads:platform:access-service`,
+  meterProvider,
+});
+
+await accessAudit.record(USER_DELETED, { tenantId, actor, resource });
+```
+
+The client writes as a Core writer, so every record needs an explicit `tenantId` taken from the
+bridged event. `writtenBy` is still the calling service's client (for example
+`urn:ads:platform:event-service`), which needs the `audit-writer` role.
+
 ### Record from an authenticated request
 
 In an Express handler behind SDK authentication, `auditDetailsFromRequest(req, details)` sets
