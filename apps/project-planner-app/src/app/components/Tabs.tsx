@@ -31,7 +31,7 @@ function Tabs(props: TabsProps): JSX.Element {
   }
 
   useEffect(() => {
-    if (props.activeIndex !== null) setActiveTabIndex(props.activeIndex);
+    if (typeof props.activeIndex === 'number') setActiveTabIndex(props.activeIndex);
   }, [props.activeIndex]);
 
   const filteredChildren = Children.toArray(props.children).filter((child) => child !== null);
