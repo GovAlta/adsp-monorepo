@@ -168,6 +168,34 @@ const history = await auditService.query(
 Core callers must pass this `AdspId` in **record details** and **query options**, as shown above.
 Tenant applications use the same calls but omit `tenantId`.
 
+#### Record another application's events
+
+A Core service that bridges events from another application, such as Keycloak events forwarded
+for the access service, can record them in that application's namespace. Create a separate client
+with `createAuditService`; the namespace is the `service` part of `serviceId`. `auditActions` only
+registers the caller's own catalog, so register the bridged application's catalog through the
+`serviceConfigurations` initialization option, using the `actions-<application>` document shown in
+**Register without the SDK** below.
+
+```typescript
+import { adspId, createAuditService } from '@abgov/adsp-service-sdk';
+
+const accessAudit = createAuditService({
+  isCore: true,
+  logger,
+  directory,
+  tokenProvider,
+  serviceId: adspId`urn:ads:platform:access-service`,
+  meterProvider,
+});
+
+await accessAudit.record(USER_DELETED, { tenantId, actor, resource });
+```
+
+The client writes as a Core writer, so every record needs an explicit `tenantId` taken from the
+bridged event. `writtenBy` is still the calling service's client (for example
+`urn:ads:platform:event-service`), which needs the `audit-writer` role.
+
 ### Record from an authenticated request
 
 In an Express handler behind SDK authentication, `auditDetailsFromRequest(req, details)` sets
@@ -248,8 +276,19 @@ with the same `eventId`.
 | Outcome | Meaning | Response |
 | --- | --- | --- |
 | `recorded` | A committed audit row or an existing idempotent duplicate was confirmed. | Continue. |
-| `rejected` | The service returned a per-event `code` and `reason`. | Investigate; the SDK does not resubmit it automatically. |
+| `rejected` | The service returned a per-event `code` and `reason`, or recording is turned off (`code: 'audit_disabled'`) and nothing was sent. | Investigate; the SDK does not resubmit it automatically. |
 | `failed` | Delivery failed or could not be confirmed; includes `reason` and `error`. | Apply an explicit recovery policy; the event may already be stored. |
+
+### Turn audit recording off
+
+Audit recording is on by default. Set the environment variable `AUDIT_ENABLED=false` (or `0`) to
+turn it off for every SDK audit client in the process, including clients from `createAuditService`.
+Each `record()` then resolves `{ status: 'rejected', eventId, code: 'audit_disabled', reason }`
+without contacting Audit Service, and the event is not counted as dropped. Any other value, or no
+value, leaves recording on. To decide in code instead, pass `audit: { enabled: false }` to either
+initializer or `enabled: false` to `createAuditService`; the option takes precedence over the
+variable. Action catalogs are still registered and `query()` still works, so turning recording back
+on needs only a restart.
 
 The SDK sends events immediately by default. It retries network errors, timeouts and HTTP
 429/502/503/504 with the same IDs. For application-level retries, preserve the original event,
