@@ -236,4 +236,61 @@ describe('InternalAdspConversation', () => {
     expect(screen.getByText('Max 500 characters.')).toBeInTheDocument();
     expect(screen.getByLabelText('Message')).toHaveAttribute('maxLength', '500');
   });
+
+  describe('scroll to latest', () => {
+    const SCROLL_HEIGHT = 1000;
+    let scrollHeightSpy: jest.SpyInstance;
+
+    beforeEach(() => {
+      scrollHeightSpy = jest.spyOn(HTMLElement.prototype, 'scrollHeight', 'get').mockReturnValue(SCROLL_HEIGHT);
+    });
+
+    afterEach(() => {
+      scrollHeightSpy.mockRestore();
+    });
+
+    const newMessage = (direction: AdspConversationMessage['direction']): AdspConversationMessage => ({
+      id: 3,
+      direction,
+      sender: direction === 'sent' ? 'Applicant' : 'Reviewer',
+      timestamp: '2026-01-02T10:02:00.000Z',
+      content: 'Third message',
+    });
+
+    test('scrolls to the bottom on initial render', () => {
+      render(<InternalAdspConversation topic="topic-a" messages={messages} />);
+
+      expect(screen.getByRole('log').scrollTop).toBe(SCROLL_HEIGHT);
+    });
+
+    test.each(['received', 'sent'] as const)('scrolls to the bottom when a new %s message arrives', (direction) => {
+      const { rerender } = render(<InternalAdspConversation topic="topic-a" messages={messages} />);
+      const log = screen.getByRole('log');
+      log.scrollTop = 0;
+
+      rerender(<InternalAdspConversation topic="topic-a" messages={[...messages, newMessage(direction)]} />);
+
+      expect(log.scrollTop).toBe(SCROLL_HEIGHT);
+    });
+
+    test('does not scroll when messages are unchanged', () => {
+      const { rerender } = render(<InternalAdspConversation topic="topic-a" messages={messages} />);
+      const log = screen.getByRole('log');
+      log.scrollTop = 0;
+
+      rerender(<InternalAdspConversation topic="topic-a" messages={[...messages]} />);
+
+      expect(log.scrollTop).toBe(0);
+    });
+
+    test('scrolls to the bottom once messages finish loading', () => {
+      const { rerender } = render(<InternalAdspConversation topic="topic-a" messages={messages} loading={true} />);
+      const log = screen.getByRole('log');
+      log.scrollTop = 0;
+
+      rerender(<InternalAdspConversation topic="topic-a" messages={messages} loading={false} />);
+
+      expect(log.scrollTop).toBe(SCROLL_HEIGHT);
+    });
+  });
 });

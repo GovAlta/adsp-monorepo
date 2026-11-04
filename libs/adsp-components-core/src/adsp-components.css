@@ -132,6 +132,7 @@
 .adsp-conversation__messages {
   flex: 1 1 auto;
   min-height: 0;
+  max-height: var(--adsp-conversation-messages-max-height, 30rem);
   overflow-y: auto;
   background: var(--adsp-components-conversation-chat-box-background);
   color: var(--adsp-components-conversation-chat-box-text-color);
@@ -235,10 +236,6 @@
 .adsp-conversation__action:focus-visible {
   outline: 2px solid currentColor;
   outline-offset: 2px;
-}
-
-.adsp-conversation__new-messages {
-  align-self: center;
 }
 
 .adsp-conversation__composer {
