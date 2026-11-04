@@ -20,7 +20,8 @@ import {
   getNamespaces,
 } from './auditApi';
 import { downloadCsv, errorMessage, exportErrorMessage } from './util';
-import { ErrorCallout, Json, STATUS_BADGE } from './common';
+import { ErrorCallout, STATUS_BADGE } from './common';
+import { EventDetails } from './EventDetails';
 
 const PAGE_SIZES = [10, 25, 50, 100];
 const DEFAULT_PAGE_SIZE = 25;
@@ -59,58 +60,6 @@ const rowStyle = {
   gap: '1rem',
   marginTop: '1rem',
 };
-
-function Field({ label, value }: { label: string; value?: string | number | null }) {
-  return value === undefined || value === null || value === '' ? null : (
-    <div>
-      <strong>{label}:</strong> {value}
-    </div>
-  );
-}
-
-function EventDetails({ event }: { event: StoredAuditEvent }) {
-  const { actor, resource, changeSet, metadata } = event;
-  return (
-    <div>
-      <Field label="Event ID" value={event.id} />
-      <Field label="Correlation ID" value={event.correlationId} />
-      <Field label="Session ID" value={event.sessionId} />
-      <Field label="Severity" value={event.severity} />
-      <Field label="Scope" value={event.scopeIds?.join(', ')} />
-      <Field label="Actor ID" value={actor?.id} />
-      <Field label="Actor type" value={actor?.type} />
-      <Field label="Actor name" value={actor?.name} />
-      <Field label="Actor email" value={actor?.email} />
-      <Field label="Actor roles" value={actor?.roles?.join(', ')} />
-      <Field label="Resource type" value={resource?.type} />
-      <Field label="Resource ID" value={resource?.id} />
-      <Field label="Resource name" value={resource?.name} />
-      <Field label="Retention class" value={event.retentionClass} />
-      <Field
-        label="Retained until"
-        value={event.retentionUntil ? new Date(event.retentionUntil).toLocaleString() : undefined}
-      />
-      {changeSet?.before && (
-        <>
-          <strong>Change set: before</strong>
-          <Json value={changeSet.before} />
-        </>
-      )}
-      {changeSet?.after && (
-        <>
-          <strong>Change set: after</strong>
-          <Json value={changeSet.after} />
-        </>
-      )}
-      {metadata && Object.keys(metadata).length > 0 && (
-        <>
-          <strong>Metadata</strong>
-          <Json value={metadata} />
-        </>
-      )}
-    </div>
-  );
-}
 
 export function AuditEvents() {
   const [criteria, setCriteria] = useState<Criteria>({});

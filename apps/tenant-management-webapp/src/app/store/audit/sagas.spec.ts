@@ -1,17 +1,21 @@
 import { expectSaga } from 'redux-saga-test-plan';
 import axios from 'axios';
 import { getAccessToken } from '../tenant/sagas';
+import { ERROR_NOTIFICATION } from '../notifications/actions';
 import { downloadFile } from './export';
 import {
   exportAuditEvents,
   fetchAuditConfiguration,
+  fetchAuditEvent,
   fetchAuditEvents,
   toCatalogs,
 } from './sagas';
 import {
   FETCH_AUDIT_CONFIGURATION_SUCCESS_ACTION,
+  FETCH_AUDIT_EVENT_FAILED_ACTION,
   FETCH_AUDIT_EVENTS_SUCCESS_ACTION,
   exportAuditEvents as exportAuditEventsAction,
+  fetchAuditEvent as fetchAuditEventAction,
   fetchAuditEvents as fetchAuditEventsAction,
 } from './actions';
 
@@ -55,6 +59,28 @@ describe('audit sagas', () => {
     expect(calls).toEqual([`${baseUrl}/audit/v1/form-app/events?top=25&status=failure&after=cursor`]);
     const success = effects.put.map((e) => e.payload.action).find((a) => a.type === FETCH_AUDIT_EVENTS_SUCCESS_ACTION);
     expect(success).toMatchObject({ next: 'n2', append: false });
+  });
+
+  it.each([404, 400])('treats a %i response for one audit event as not found', async (status) => {
+    const { effects } = await expectSaga(fetchAuditEvent, fetchAuditEventAction('form-app', 'bad id'))
+      .withState({ config: { serviceUrls: { auditServiceApiUrl: baseUrl } } })
+      .provide({
+        call(effect, next) {
+          if (effect.fn === getAccessToken) {
+            return 'token';
+          }
+          if (effect.fn === axios.get) {
+            expect(effect.args[0]).toBe(`${baseUrl}/audit/v1/form-app/events/bad%20id`);
+            throw { isAxiosError: true, response: { status } };
+          }
+          return next();
+        },
+      })
+      .run();
+
+    const failed = effects.put.map((e) => e.payload.action).find((a) => a.type === FETCH_AUDIT_EVENT_FAILED_ACTION);
+    expect(failed).toMatchObject({ notFound: true });
+    expect(effects.put.some((e) => e.payload.action.type === ERROR_NOTIFICATION)).toBe(false);
   });
 
   it('downloads the CSV built by the server from the export route', async () => {
