@@ -20,6 +20,7 @@ export const environment = envalid.cleanEnv(
     AMQP_CONSUMER_PRIORITY: envalid.num({ default: 0 }),
     PORT: envalid.num({ default: 3334 }),
     TRUSTED_PROXY: envalid.str({ default: 'uniquelocal' }),
+    ACCESS_AUDIT_LOGIN_FAILURES_PER_MINUTE: envalid.num({ default: 60 }),
   },
   {
     reporter: ({ errors }) => {
