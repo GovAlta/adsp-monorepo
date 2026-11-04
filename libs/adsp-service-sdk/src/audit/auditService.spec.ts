@@ -80,13 +80,18 @@ describe('AuditServiceImpl', () => {
         else process.env.AUDIT_ENABLED = original;
       });
 
-      it('sends nothing and resolves disabled when AUDIT_ENABLED is false', async () => {
+      it('sends nothing and rejects with audit_disabled when AUDIT_ENABLED is false', async () => {
         process.env.AUDIT_ENABLED = 'false';
         const service = create();
 
         const outcome = await service.record(action, { ...details, eventId: '6f0c2f1c-1a2b-4c3d-8e9f-0a1b2c3d4e5f' });
 
-        expect(outcome).toEqual({ status: 'disabled', eventId: '6f0c2f1c-1a2b-4c3d-8e9f-0a1b2c3d4e5f' });
+        expect(outcome).toEqual({
+          status: 'rejected',
+          eventId: '6f0c2f1c-1a2b-4c3d-8e9f-0a1b2c3d4e5f',
+          code: 'audit_disabled',
+          reason: 'Audit recording is disabled.',
+        });
         expect(axiosMock.post).not.toHaveBeenCalled();
         expect(service.droppedEventCount).toBe(0);
       });
@@ -111,12 +116,12 @@ describe('AuditServiceImpl', () => {
         expect(outcome.status).toBe('recorded');
       });
 
-      it('resolves disabled when the enabled option is false', async () => {
+      it('rejects with audit_disabled when the enabled option is false', async () => {
         delete process.env.AUDIT_ENABLED;
 
         const outcome = await create(true, { enabled: false }).record(action, details);
 
-        expect(outcome.status).toBe('disabled');
+        expect(outcome).toMatchObject({ status: 'rejected', code: 'audit_disabled' });
         expect(axiosMock.post).not.toHaveBeenCalled();
       });
     });

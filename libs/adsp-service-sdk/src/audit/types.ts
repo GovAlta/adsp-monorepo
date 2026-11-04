@@ -60,16 +60,15 @@ export type AuditDropReason =
  * Result of recording an event.
  *
  * - `recorded`: the service stored the event, or had already stored an event with the same `eventId`.
- * - `rejected`: the service refused the event (e.g. unknown action or invalid metadata); it is not resent.
+ * - `rejected`: the service refused the event (e.g. unknown action or invalid metadata); it is not resent. A client
+ *   with audit recording disabled also rejects every event, with code `audit_disabled`, without sending it.
  * - `failed`: the event could not be delivered, e.g. the buffer was full or retries were exhausted.
  *   Delivery may still have succeeded if a response was lost, which a resend with the same `eventId` resolves.
- * - `disabled`: audit recording is turned off (`AUDIT_ENABLED=false` or `audit.enabled: false`); nothing was sent.
  */
 export type AuditRecordOutcome =
   | { status: 'recorded'; eventId: string }
   | { status: 'rejected'; eventId: string; code: string; reason: string }
-  | { status: 'failed'; eventId: string; reason: Exclude<AuditDropReason, 'rejected'>; error: string }
-  | { status: 'disabled'; eventId: string };
+  | { status: 'failed'; eventId: string; reason: Exclude<AuditDropReason, 'rejected'>; error: string };
 
 export interface AuditEventCriteria {
   actor?: string;

@@ -77,7 +77,12 @@ describe('createAccessAuditJob', () => {
   });
 
   it('acknowledges the event when audit recording is disabled so the queue does not back up', async () => {
-    record.mockResolvedValue({ status: 'disabled', eventId: 'event-id' });
+    record.mockResolvedValue({
+      status: 'rejected',
+      eventId: 'event-id',
+      code: 'audit_disabled',
+      reason: 'Audit recording is disabled.',
+    });
     const done = jest.fn();
 
     await createJob()(userDeleted, done);

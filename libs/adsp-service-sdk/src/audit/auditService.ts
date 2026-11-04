@@ -21,8 +21,8 @@ import type {
 
 export interface AuditClientOptions {
   /**
-   * Records events when true; when false, `record()` sends nothing and resolves `disabled`. Defaults to the
-   * `AUDIT_ENABLED` environment variable, and to true when it is unset.
+   * Records events when true; when false, `record()` sends nothing and resolves `rejected` with code
+   * `audit_disabled`. Defaults to the `AUDIT_ENABLED` environment variable, and to true when it is unset.
    */
   enabled?: boolean;
   /** Events per request. Defaults to 1 (immediate delivery); set greater than 1 to opt into batching. */
@@ -60,6 +60,7 @@ const NAMESPACE_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 // Bounds the rejected events listed in a single warning so large batches do not flood logs.
 const MAX_LOGGED_REJECTIONS = 10;
 const AUDIT_ENABLED_ENV = 'AUDIT_ENABLED';
+const AUDIT_DISABLED_CODE = 'audit_disabled';
 
 function isEnabledByEnvironment(): boolean {
   return !/^\s*(false|0)\s*$/i.test(process.env[AUDIT_ENABLED_ENV] ?? '');
@@ -219,7 +220,12 @@ export class AuditServiceImpl implements AuditService {
   record(action: AuditAction, details: AuditRecordDetails): Promise<AuditRecordOutcome> {
     const eventId = details?.eventId || randomUUID();
     if (!this.enabled) {
-      return Promise.resolve({ status: 'disabled', eventId });
+      return Promise.resolve({
+        status: 'rejected',
+        eventId,
+        code: AUDIT_DISABLED_CODE,
+        reason: 'Audit recording is disabled.',
+      });
     }
     const context: FailureContext = { action: action?.name, eventId, tenantId: details?.tenantId };
     if (this.isCore && !details?.tenantId) {
@@ -363,10 +369,8 @@ export class AuditServiceImpl implements AuditService {
     }
 
     outcomes.forEach((outcome, index) => {
-      if (outcome.status === 'rejected') {
-        this.countDropped('rejected');
-      } else if (outcome.status === 'failed') {
-        this.countDropped(outcome.reason);
+      if (outcome.status !== 'recorded') {
+        this.countDropped(outcome.status === 'rejected' ? 'rejected' : outcome.reason);
       }
       batch[index].settle(outcome);
     });

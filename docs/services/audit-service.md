@@ -276,19 +276,19 @@ with the same `eventId`.
 | Outcome | Meaning | Response |
 | --- | --- | --- |
 | `recorded` | A committed audit row or an existing idempotent duplicate was confirmed. | Continue. |
-| `rejected` | The service returned a per-event `code` and `reason`. | Investigate; the SDK does not resubmit it automatically. |
+| `rejected` | The service returned a per-event `code` and `reason`, or recording is turned off (`code: 'audit_disabled'`) and nothing was sent. | Investigate; the SDK does not resubmit it automatically. |
 | `failed` | Delivery failed or could not be confirmed; includes `reason` and `error`. | Apply an explicit recovery policy; the event may already be stored. |
-| `disabled` | Audit recording is turned off; nothing was sent. | Continue, unless the operation must not succeed without an audit record. |
 
 ### Turn audit recording off
 
 Audit recording is on by default. Set the environment variable `AUDIT_ENABLED=false` (or `0`) to
 turn it off for every SDK audit client in the process, including clients from `createAuditService`.
-Each `record()` then resolves `{ status: 'disabled', eventId }` without contacting Audit Service, and
-the event is not counted as dropped. Any other value, or no value, leaves recording on. To decide in
-code instead, pass `audit: { enabled: false }` to either initializer or `enabled: false` to
-`createAuditService`; the option takes precedence over the variable. Action catalogs are still
-registered and `query()` still works, so turning recording back on needs only a restart.
+Each `record()` then resolves `{ status: 'rejected', eventId, code: 'audit_disabled', reason }`
+without contacting Audit Service, and the event is not counted as dropped. Any other value, or no
+value, leaves recording on. To decide in code instead, pass `audit: { enabled: false }` to either
+initializer or `enabled: false` to `createAuditService`; the option takes precedence over the
+variable. Action catalogs are still registered and `query()` still works, so turning recording back
+on needs only a restart.
 
 The SDK sends events immediately by default. It retries network errors, timeouts and HTTP
 429/502/503/504 with the same IDs. For application-level retries, preserve the original event,

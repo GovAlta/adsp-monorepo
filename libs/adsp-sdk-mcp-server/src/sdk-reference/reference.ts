@@ -490,7 +490,7 @@ export const SDK_REFERENCE: SdkSymbolDoc[] = [
       'Optional audit delivery configuration on initializeService and initializePlatform; defaults to immediate single-event writes.',
     details:
       'interface AuditClientOptions {\n' +
-      '  enabled?: boolean; // default from AUDIT_ENABLED env var, true when unset; false sends nothing\n' +
+      '  enabled?: boolean; // default from AUDIT_ENABLED env var, true when unset; false rejects every record with code audit_disabled\n' +
       '  batchSize?: number; // default 1; greater than 1 enables batching\n' +
       '  batchIntervalMs?: number; // default 500; unused for single-event delivery\n' +
       '  maxBufferedEvents?: number; // default 1000, including in-flight and retrying events\n' +
@@ -608,9 +608,8 @@ export const SDK_REFERENCE: SdkSymbolDoc[] = [
     details:
       "type AuditRecordOutcome =\n" +
       "  | { status: 'recorded'; eventId: string } // stored, or an idempotent duplicate\n" +
-      "  | { status: 'rejected'; eventId: string; code: string; reason: string } // refused by the service, not resent\n" +
-      "  | { status: 'failed'; eventId: string; reason: Exclude<AuditDropReason, 'rejected'>; error: string }\n" +
-      "  | { status: 'disabled'; eventId: string }; // AUDIT_ENABLED=false or audit.enabled false; nothing sent",
+      "  | { status: 'rejected'; eventId: string; code: string; reason: string } // refused by the service, or code audit_disabled when recording is off; not resent\n" +
+      "  | { status: 'failed'; eventId: string; reason: Exclude<AuditDropReason, 'rejected'>; error: string };",
     seeAlso: ['AuditService', 'AuditDropReason'],
   },
   {
