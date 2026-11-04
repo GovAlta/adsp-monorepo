@@ -120,7 +120,8 @@ export async function createDataRegisterTools({ directory, logger }: DataRegiste
   const dataRegisterListTool = createTool({
     id: 'list-data-registers',
     description:
-      'List existing data registers for the tenant. Returns names, descriptions, and URNs of all available registers.',
+      'List existing data registers for the tenant. Returns names, descriptions, and URNs of all available registers. ' +
+      'Registers can change outside this chat, so call this each time you need the list instead of reusing it from earlier messages.',
     inputSchema: z.object({}),
     outputSchema: z.object({
       registers: z.array(
@@ -231,7 +232,8 @@ export async function createDataRegisterTools({ directory, logger }: DataRegiste
   const dataRegisterGetTool = createTool({
     id: 'get-data-register',
     description:
-      'Retrieve the current values of a specific data register by name. Use this to inspect register contents before making changes.',
+      'Retrieve the current values of a data register by name. ' +
+      'Registers can change outside this chat, so call this each time you need the values instead of reusing them from earlier messages.',
     inputSchema: z.object({
       name: z.string().describe('The name of the register to retrieve (e.g. "weekdays", "event-types").'),
     }),
