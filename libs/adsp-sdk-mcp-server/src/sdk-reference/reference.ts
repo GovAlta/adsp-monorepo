@@ -490,6 +490,7 @@ export const SDK_REFERENCE: SdkSymbolDoc[] = [
       'Optional audit delivery configuration on initializeService and initializePlatform; defaults to immediate single-event writes.',
     details:
       'interface AuditClientOptions {\n' +
+      '  enabled?: boolean; // default from AUDIT_ENABLED env var, true when unset; false rejects every record with code audit_disabled\n' +
       '  batchSize?: number; // default 1; greater than 1 enables batching\n' +
       '  batchIntervalMs?: number; // default 500; unused for single-event delivery\n' +
       '  maxBufferedEvents?: number; // default 1000, including in-flight and retrying events\n' +
@@ -556,6 +557,32 @@ export const SDK_REFERENCE: SdkSymbolDoc[] = [
     seeAlso: ['AuditActor', 'User', 'auditDetailsFromRequest'],
   },
   {
+    name: 'createAuditService',
+    kind: 'function',
+    module: 'audit',
+    summary:
+      "Creates an AuditService client for another application's namespace, e.g. a core service bridging that application's events.",
+    details:
+      'createAuditService(options: {\n' +
+      '  isCore: boolean; logger: Logger; directory: ServiceDirectory; tokenProvider: TokenProvider;\n' +
+      '  serviceId: AdspId; // namespace is serviceId.service\n' +
+      '  ready?: Promise<unknown>; meterProvider?: MeterProvider;\n' +
+      '} & AuditClientOptions): AuditService\n\n' +
+      'Use the auditService from initializeService or initializePlatform for your own namespace. auditActions only ' +
+      'registers the caller catalog, so register the bridged catalog through serviceConfigurations. Core clients ' +
+      'require tenantId on every record; writtenBy is still the calling client, which needs audit-writer.',
+    example:
+      'const accessAudit = createAuditService({\n' +
+      '  isCore: true,\n' +
+      '  logger,\n' +
+      '  directory,\n' +
+      '  tokenProvider,\n' +
+      '  serviceId: adspId`urn:ads:platform:access-service`,\n' +
+      '});\n' +
+      'await accessAudit.record(USER_DELETED, { tenantId, actor, resource });',
+    seeAlso: ['AuditService', 'AuditClientOptions', 'initializePlatform'],
+  },
+  {
     name: 'AuditRequestContext',
     kind: 'interface',
     module: 'audit',
@@ -581,7 +608,7 @@ export const SDK_REFERENCE: SdkSymbolDoc[] = [
     details:
       "type AuditRecordOutcome =\n" +
       "  | { status: 'recorded'; eventId: string } // stored, or an idempotent duplicate\n" +
-      "  | { status: 'rejected'; eventId: string; code: string; reason: string } // refused by the service, not resent\n" +
+      "  | { status: 'rejected'; eventId: string; code: string; reason: string } // refused by the service, or code audit_disabled when recording is off; not resent\n" +
       "  | { status: 'failed'; eventId: string; reason: Exclude<AuditDropReason, 'rejected'>; error: string };",
     seeAlso: ['AuditService', 'AuditDropReason'],
   },

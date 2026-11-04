@@ -73,6 +73,58 @@ describe('AuditServiceImpl', () => {
   });
 
   describe('record', () => {
+    describe('enabled flag', () => {
+      const original = process.env.AUDIT_ENABLED;
+      afterEach(() => {
+        if (original === undefined) delete process.env.AUDIT_ENABLED;
+        else process.env.AUDIT_ENABLED = original;
+      });
+
+      it('sends nothing and rejects with audit_disabled when AUDIT_ENABLED is false', async () => {
+        process.env.AUDIT_ENABLED = 'false';
+        const service = create();
+
+        const outcome = await service.record(action, { ...details, eventId: '6f0c2f1c-1a2b-4c3d-8e9f-0a1b2c3d4e5f' });
+
+        expect(outcome).toEqual({
+          status: 'rejected',
+          eventId: '6f0c2f1c-1a2b-4c3d-8e9f-0a1b2c3d4e5f',
+          code: 'audit_disabled',
+          reason: 'Audit recording is disabled.',
+        });
+        expect(axiosMock.post).not.toHaveBeenCalled();
+        expect(service.droppedEventCount).toBe(0);
+      });
+
+      it.each([undefined, '', 'true', '1'])('records when AUDIT_ENABLED is %p', async (value) => {
+        if (value === undefined) delete process.env.AUDIT_ENABLED;
+        else process.env.AUDIT_ENABLED = value;
+        axiosMock.post.mockResolvedValueOnce(accept(1));
+
+        const outcome = await create().record(action, details);
+
+        expect(outcome.status).toBe('recorded');
+        expect(axiosMock.post).toHaveBeenCalledTimes(1);
+      });
+
+      it('lets the enabled option override AUDIT_ENABLED', async () => {
+        process.env.AUDIT_ENABLED = 'false';
+        axiosMock.post.mockResolvedValueOnce(accept(1));
+
+        const outcome = await create(false, { enabled: true }).record(action, details);
+
+        expect(outcome.status).toBe('recorded');
+      });
+
+      it('rejects with audit_disabled when the enabled option is false', async () => {
+        delete process.env.AUDIT_ENABLED;
+
+        const outcome = await create(true, { enabled: false }).record(action, details);
+
+        expect(outcome).toMatchObject({ status: 'rejected', code: 'audit_disabled' });
+        expect(axiosMock.post).not.toHaveBeenCalled();
+      });
+    });
     it('sends each event immediately by default without a batch timer or flush', async () => {
       jest.useFakeTimers();
       axiosMock.post.mockResolvedValue(accept(1));

@@ -44,13 +44,12 @@ Look for `Database migrations upped to latest.` in the log.
 
 ### 4. Open the UI
 
-The planner UI lives in the tenant management webapp. Add this to `apps/tenant-management-webapp/.local.env`:
+The planner UI is its own app, `apps/project-planner-app`. Its local environment
+(`src/environments/environment.ts`) already points at the planner service on http://localhost:3381.
 
-```
-NX_PUBLIC_PROJECT_PLANNER_SERVICE_URL=http://localhost:3381
-```
-
-Then run `npx nx serve tenant-management-webapp` and go to http://localhost:4200. If the key was picked up, AI analysis is available as an option.
+Run `npx nx serve project-planner-app` and go to http://localhost:4300. Sign-in needs a public client
+`urn:ads:platform:project-planner-app` in the realm that environment file names, with
+`http://localhost:4300/*` as a redirect URI. If the key was picked up, AI analysis is available as an option.
 
 ### Troubleshooting
 

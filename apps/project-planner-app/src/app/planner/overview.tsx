@@ -1,6 +1,6 @@
 import React, { FunctionComponent } from 'react';
 import { GoabButton } from '@abgov/react-components';
-import { NoPaddingH2 } from '@components/AppHeader';
+import { NoPaddingH2 } from '../styled-components';
 
 interface PlannerOverviewProps {
   onStart: () => void;

@@ -9,7 +9,13 @@ export class AmqpEventSubscriberService
   extends AmqpWorkQueueService<DomainEvent>
   implements DomainEventSubscriberService
 {
-  constructor(queue: string, logger: Logger, connection: AmqpConnectionManager, consumerOptions: Options.Consume = {}) {
+  constructor(
+    queue: string,
+    logger: Logger,
+    connection: AmqpConnectionManager,
+    consumerOptions: Options.Consume = {},
+    private readonly bindingKey = '#',
+  ) {
     super(queue, logger, connection, consumerOptions);
   }
 
@@ -29,6 +35,6 @@ export class AmqpEventSubscriberService
   protected async assertQueueConfiguration(channel: ConfirmChannel): Promise<void> {
     await super.assertQueueConfiguration(channel);
     await channel.assertExchange('domain-events', 'topic');
-    await channel.bindQueue(this.queue, 'domain-events', '#');
+    await channel.bindQueue(this.queue, 'domain-events', this.bindingKey);
   }
 }
