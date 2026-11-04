@@ -76,6 +76,15 @@ describe('createAccessAuditJob', () => {
     expect(done).toHaveBeenCalledWith();
   });
 
+  it('acknowledges the event when audit recording is disabled so the queue does not back up', async () => {
+    record.mockResolvedValue({ status: 'disabled', eventId: 'event-id' });
+    const done = jest.fn();
+
+    await createJob()(userDeleted, done);
+
+    expect(done).toHaveBeenCalledWith();
+  });
+
   it('fails the event when the record is not delivered so it is retried', async () => {
     record.mockResolvedValue({ status: 'failed', eventId: 'event-id', reason: 'retries_exhausted', error: 'Timeout.' });
     const done = jest.fn();

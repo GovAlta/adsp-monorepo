@@ -51,6 +51,8 @@ Login failures are limited to 60 records per tenant per minute (event service `A
 
 Successful logins, token issuance, logouts, client updates, realm role mappings, group membership, password resets and federated identity links are not recorded.
 
+Set `AUDIT_ENABLED=false` on event service to turn recording off. Access events are then still consumed and acknowledged, so the queue does not back up, but no audit records are written. See [turn audit recording off](audit-service.md#turn-audit-recording-off).
+
 ## Concepts
 
 <!-- tags: [keycloak] -->
