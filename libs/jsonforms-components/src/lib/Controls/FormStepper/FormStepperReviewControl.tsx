@@ -232,7 +232,7 @@ export const FormStepperReviewer = (props: CategorizationStepperLayoutReviewRend
             })
             .flat();
 
-          // Do not render empty categories or showInTaskList is false or undefined
+          // Do not render empty categories or showInTaskList is false
           if (elementsToRender.length === 0 || !isInTaskList(category)) {
             return null;
           }
