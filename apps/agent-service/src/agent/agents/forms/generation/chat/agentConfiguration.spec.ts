@@ -192,6 +192,14 @@ describe('formGenerationAgent', () => {
     expect(instructions).toContain('NEVER call dataRegisterUpdateTool without first retrieving current values');
   });
 
+  it('instructs never to answer from memory about data registers', () => {
+    const instructions = formGenerationAgent.instructions;
+    expect(instructions).toContain('NEVER answer from memory about data registers.');
+    expect(instructions).toContain('Answering questions about registers (MANDATORY flow)');
+    expect(instructions).toContain('even if the answer already appears earlier in the chat');
+    expect(instructions).toContain('Do this even if its entries appear earlier in the chat');
+  });
+
   it('retains core instruction sections alongside examples', () => {
     const instructions = formGenerationAgent.instructions;
     // Session workflow
