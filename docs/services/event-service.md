@@ -36,6 +36,10 @@ In the tenant management app, the Event log page initially searches **Last 7 day
 
 Select a period and click **Search** to apply it along with any other filters. Start and end date/time controls display the selected period in Mountain Time. They are disabled for predefined periods and editable for **Custom**, initially filled with the selected period. The end must be later than the start. **Reset** clears other filters and immediately searches Last 7 days again. Removing the date range chip clears the selected period and searches without a lower date limit, retaining other applied filters. Pagination pins an upper timestamp at search time so new events do not shift the result pages or count. Search is disabled when no criteria are selected. An empty result displays **No Events Found**.
 
+### Access service audit
+
+Event service also records security-sensitive `access-service` (Keycloak) events in the [audit service](audit-service.md). See [access service audit actions](access-service.md#audit-actions).
+
 ## Code examples
 
 ### Configure an event definition
