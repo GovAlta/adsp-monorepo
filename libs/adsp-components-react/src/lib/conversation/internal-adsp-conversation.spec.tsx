@@ -23,13 +23,7 @@ jest.mock('@abgov/react-components', () => ({
       <div>{children}</div>
     </section>
   ),
-  GoabIconButton: ({
-    title,
-    onClick,
-  }: {
-    title?: string;
-    onClick?: () => void;
-  }) => (
+  GoabIconButton: ({ title, onClick }: { title?: string; onClick?: () => void }) => (
     <button type="button" aria-label={title} onClick={onClick}>
       icon
     </button>
@@ -176,7 +170,11 @@ describe('InternalAdspConversation', () => {
 
   test('renders delete action outside the message bubble container', () => {
     render(
-      <InternalAdspConversation topic="topic-a" messages={[{ ...messages[0], canDelete: true }]} onDelete={jest.fn()} />,
+      <InternalAdspConversation
+        topic="topic-a"
+        messages={[{ ...messages[0], canDelete: true }]}
+        onDelete={jest.fn()}
+      />,
     );
 
     const deleteButton = screen.getByRole('button', { name: 'Delete message 2' });
@@ -204,6 +202,12 @@ describe('InternalAdspConversation', () => {
     render(<InternalAdspConversation topic="topic-a" messages={[]} height="300px" testId="conversation" />);
 
     expect(screen.getByTestId('conversation')).toHaveStyle({ height: '300px' });
+  });
+
+  test('applies the default height on root when none is given', () => {
+    render(<InternalAdspConversation topic="topic-a" messages={[]} testId="conversation" />);
+
+    expect(screen.getByTestId('conversation')).toHaveStyle({ height: '40rem' });
   });
 
   test('applies component theme override variables', () => {
@@ -235,5 +239,62 @@ describe('InternalAdspConversation', () => {
 
     expect(screen.getByText('Max 500 characters.')).toBeInTheDocument();
     expect(screen.getByLabelText('Message')).toHaveAttribute('maxLength', '500');
+  });
+
+  describe('scroll to latest', () => {
+    const SCROLL_HEIGHT = 1000;
+    let scrollHeightSpy: jest.SpyInstance;
+
+    beforeEach(() => {
+      scrollHeightSpy = jest.spyOn(HTMLElement.prototype, 'scrollHeight', 'get').mockReturnValue(SCROLL_HEIGHT);
+    });
+
+    afterEach(() => {
+      scrollHeightSpy.mockRestore();
+    });
+
+    const newMessage = (direction: AdspConversationMessage['direction']): AdspConversationMessage => ({
+      id: 3,
+      direction,
+      sender: direction === 'sent' ? 'Applicant' : 'Reviewer',
+      timestamp: '2026-01-02T10:02:00.000Z',
+      content: 'Third message',
+    });
+
+    test('scrolls to the bottom on initial render', () => {
+      render(<InternalAdspConversation topic="topic-a" messages={messages} />);
+
+      expect(screen.getByRole('log').scrollTop).toBe(SCROLL_HEIGHT);
+    });
+
+    test.each(['received', 'sent'] as const)('scrolls to the bottom when a new %s message arrives', (direction) => {
+      const { rerender } = render(<InternalAdspConversation topic="topic-a" messages={messages} />);
+      const log = screen.getByRole('log');
+      log.scrollTop = 0;
+
+      rerender(<InternalAdspConversation topic="topic-a" messages={[...messages, newMessage(direction)]} />);
+
+      expect(log.scrollTop).toBe(SCROLL_HEIGHT);
+    });
+
+    test('does not scroll when messages are unchanged', () => {
+      const { rerender } = render(<InternalAdspConversation topic="topic-a" messages={messages} />);
+      const log = screen.getByRole('log');
+      log.scrollTop = 0;
+
+      rerender(<InternalAdspConversation topic="topic-a" messages={[...messages]} />);
+
+      expect(log.scrollTop).toBe(0);
+    });
+
+    test('scrolls to the bottom once messages finish loading', () => {
+      const { rerender } = render(<InternalAdspConversation topic="topic-a" messages={messages} loading={true} />);
+      const log = screen.getByRole('log');
+      log.scrollTop = 0;
+
+      rerender(<InternalAdspConversation topic="topic-a" messages={messages} loading={false} />);
+
+      expect(log.scrollTop).toBe(SCROLL_HEIGHT);
+    });
   });
 });

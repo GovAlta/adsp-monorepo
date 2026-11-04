@@ -20,6 +20,7 @@ export interface ADSPConversationProps {
   typeId?: string;
   topic?: string;
   currentUserId?: string;
+  height?: string;
   maxMessageLength?: number;
   canSend?: boolean;
   canDelete?: boolean;
@@ -40,6 +41,7 @@ export function ADSPConversation({
   typeId,
   topic,
   currentUserId,
+  height,
   maxMessageLength,
   canSend,
   canDelete = true,
@@ -116,6 +118,7 @@ export function ADSPConversation({
         <InternalAdspConversation
           topic={resolvedTopic}
           typeId={typeId}
+          height={height}
           maxMessageLength={maxMessageLength}
           messages={messages as AdspConversationMessage[]}
           loading={loading}

@@ -44,14 +44,10 @@ export interface AdspConversationProps {
   onDelete?: (messageId: string | number) => void | Promise<void>;
 }
 
-const SCROLL_TO_LATEST_THRESHOLD = 80;
+const DEFAULT_HEIGHT = '40rem';
 
 function toTimestamp(value: Date | string): number {
   return value instanceof Date ? value.getTime() : new Date(value).getTime();
-}
-
-function isNearBottom(container: HTMLElement): boolean {
-  return container.scrollHeight - container.scrollTop - container.clientHeight <= SCROLL_TO_LATEST_THRESHOLD;
 }
 
 function formatTimestamp(value: Date | string): string {
@@ -62,7 +58,7 @@ function formatTimestamp(value: Date | string): string {
 export function InternalAdspConversation({
   topic,
   typeId,
-  height,
+  height = DEFAULT_HEIGHT,
   maxMessageLength = 400,
   includeNotifications = false,
   themeOverrides,
@@ -84,7 +80,6 @@ export function InternalAdspConversation({
   const [internalDraft, setInternalDraft] = useState('');
   const [isSending, setIsSending] = useState(false);
   const [sendError, setSendError] = useState<string>();
-  const [hasNewMessages, setHasNewMessages] = useState(false);
   const listRef = useRef<HTMLDivElement>(null);
   const previousLatestMessageId = useRef<string | number | null>(null);
 
@@ -115,29 +110,20 @@ export function InternalAdspConversation({
     }
 
     listRef.current.scrollTop = listRef.current.scrollHeight;
-    setHasNewMessages(false);
   };
 
   useLayoutEffect(() => {
-    if (!listRef.current) {
+    // Messages aren't rendered while loading, so wait until they are before scrolling.
+    if (loading) {
       return;
     }
 
-    const latestMessage = sortedMessages[sortedMessages.length - 1];
-    const latestId = latestMessage?.id ?? null;
-    const changed = latestId !== previousLatestMessageId.current;
-    const nearBottom = isNearBottom(listRef.current);
-
-    if (!previousLatestMessageId.current) {
+    const latestId = sortedMessages[sortedMessages.length - 1]?.id ?? null;
+    if (latestId !== previousLatestMessageId.current) {
       scrollToLatest();
-    } else if (changed && nearBottom) {
-      scrollToLatest();
-    } else if (changed) {
-      setHasNewMessages(true);
+      previousLatestMessageId.current = latestId;
     }
-
-    previousLatestMessageId.current = latestId;
-  }, [sortedMessages]);
+  }, [sortedMessages, loading]);
 
   const handleSend = async (event?: { preventDefault?: () => void }) => {
     event?.preventDefault?.();
@@ -164,10 +150,8 @@ export function InternalAdspConversation({
     }
   };
 
-  const resolvedStyle = height ? { ...themeStyle, height } : themeStyle;
-
   return (
-    <section className="adsp-conversation" style={resolvedStyle} data-testid={testId}>
+    <section className="adsp-conversation" style={{ ...themeStyle, height }} data-testid={testId}>
       <div className="adsp-conversation__messages" ref={listRef} role="log" aria-live="polite" aria-busy={loading}>
         {error ? (
           <p className="adsp-conversation__state" role="alert">
@@ -203,14 +187,6 @@ export function InternalAdspConversation({
           })
         ) : (
           <p className="adsp-conversation__state">{emptyText}</p>
-        )}
-
-        {hasNewMessages && !loading && !error && (
-          <div className="adsp-conversation__new-messages" role="status">
-            <button type="button" className="adsp-button adsp-button--secondary" onClick={scrollToLatest}>
-              New messages
-            </button>
-          </div>
         )}
       </div>
 
