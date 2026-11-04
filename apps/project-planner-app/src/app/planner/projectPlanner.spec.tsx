@@ -1,10 +1,12 @@
 import React from 'react';
 import { fireEvent, render } from '@testing-library/react';
+import { useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
 import { ProjectPlanner } from './projectPlanner';
 
 const mockNavigate = jest.fn();
 jest.mock('react-router-dom', () => ({ useNavigate: () => mockNavigate, useParams: jest.fn() }));
+jest.mock('react-redux', () => ({ useSelector: jest.fn() }));
 jest.mock('./overview', () => ({
   PlannerOverview: ({ onStart }: { onStart: () => void }) => (
     <button data-testid="overview-content" onClick={onStart}>
@@ -19,8 +21,43 @@ jest.mock('./patterns', () => ({ Patterns: () => <div data-testid="patterns-cont
 describe('ProjectPlanner', () => {
   const useParamsMock = useParams as jest.Mock;
 
+  const withRoles = (roles: string[]) =>
+    (useSelector as jest.Mock).mockImplementation((selector) =>
+      selector({ session: { resourceAccess: { 'urn:ads:platform:project-planner-service': { roles } } } }),
+    );
+
+  beforeEach(() => {
+    withRoles(['planner-user']);
+  });
+
   afterEach(() => {
     jest.resetAllMocks();
+  });
+
+  it('shows the patterns tab to planner admins', () => {
+    withRoles(['planner-admin']);
+    useParamsMock.mockReturnValue({ tab: 'overview' });
+
+    const { getByText } = render(<ProjectPlanner />);
+
+    expect(getByText('Patterns')).toBeTruthy();
+  });
+
+  it('hides the patterns tab from users who are not planner admins', () => {
+    useParamsMock.mockReturnValue({ tab: 'overview' });
+
+    const { queryByText } = render(<ProjectPlanner />);
+
+    expect(queryByText('Patterns')).toBeNull();
+  });
+
+  it('shows the overview instead of patterns to users who are not planner admins', () => {
+    useParamsMock.mockReturnValue({ tab: 'patterns' });
+
+    const { getByTestId, queryByTestId } = render(<ProjectPlanner />);
+
+    expect(getByTestId('overview-content')).toBeTruthy();
+    expect(queryByTestId('patterns-content')).toBeNull();
   });
 
   it('shows the page title', () => {
@@ -75,6 +112,7 @@ describe('ProjectPlanner', () => {
   });
 
   it('shows the patterns tab when the route tab is patterns', () => {
+    withRoles(['planner-admin']);
     useParamsMock.mockReturnValue({ tab: 'patterns' });
 
     const { getByTestId } = render(<ProjectPlanner />);
