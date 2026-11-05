@@ -18,7 +18,7 @@ export function toCssVariables(theme: AdspTheme): AdspCssVariables {
   return variables;
 }
 
-// Names match toCssVariables: ('button', { borderRadius }) -> --adsp-components-button-border-radius.
+// Names match toCssVariables: ('conversation', { sentBackground }) -> --adsp-components-conversation-sent-background.
 export function toComponentCssVariables<K extends keyof AdspThemeComponents>(
   component: K,
   overrides: AdspComponentThemeOverrides<K>,

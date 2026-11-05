@@ -52,6 +52,7 @@ export function* fetchConfig(): SagaIterator {
           tenantManagementApi: entryMapping['tenant-service'],
           subscriberWebApp: entryMapping['subscriber-app'],
           taskWebApp: entryMapping['task-app'],
+          projectPlannerWebApp: entryMapping['project-planner-app'],
           accessManagementApi: `${entryMapping['access-service']}/auth`,
           fileApi: entryMapping['file-service'],
           serviceStatusApiUrl: entryMapping['status-service'],
@@ -75,7 +76,6 @@ export function* fetchConfig(): SagaIterator {
           formAppApiUrl: entryMapping['form-service'],
           agentServiceApiUrl: getAgentServiceUrl(entryMapping),
           auditServiceApiUrl: entryMapping['audit-service'],
-          projectPlannerServiceApiUrl: getProjectPlannerServiceUrl(data, entryMapping),
           tokenHandlerApiUrl: entryMapping['token-handler'],
         },
         featureFlags: { ...defaultFeaturesVisible, ...data.featureFlags },
@@ -128,12 +128,3 @@ const getAgentServiceUrl = (entryMapping): string => {
   return process.env.NX_AGENT_SERVICE_PROXY === 'true' ? window.location.origin : entryMapping['agent-service'];
 };
 
-// Set NX_PUBLIC_PROJECT_PLANNER_SERVICE_URL in .local.env to point at a locally running planner service.
-// Otherwise config.json serviceUrls.projectPlannerServiceUrl, then the directory entry.
-const getProjectPlannerServiceUrl = (data, entryMapping): string => {
-  return (
-    process.env.NX_PUBLIC_PROJECT_PLANNER_SERVICE_URL ||
-    data.serviceUrls.projectPlannerServiceUrl ||
-    entryMapping['project-planner-service']
-  );
-};

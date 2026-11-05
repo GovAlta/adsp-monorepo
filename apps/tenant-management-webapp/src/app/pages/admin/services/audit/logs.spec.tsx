@@ -1,37 +1,68 @@
 import React from 'react';
-import { fireEvent, render } from '@testing-library/react';
+import { act, fireEvent, render } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { Provider } from 'react-redux';
-import configureStore from 'redux-mock-store';
+import { Action, AnyAction, Middleware, applyMiddleware, combineReducers, createStore } from 'redux';
+import { MemoryRouter } from 'react-router-dom';
+import auditReducer from '@store/audit/reducers';
+import { fetchAuditEventsSuccess } from '@store/audit/actions';
 import { AuditLogs } from './logs';
 
+const mockNavigate = jest.fn();
+jest.mock('react-router-dom', () => ({
+  ...jest.requireActual('react-router-dom'),
+  useNavigate: () => mockNavigate,
+}));
+
 const state = (roles: string[], extra: Record<string, unknown> = {}) => ({
-  session: { resourceAccess: { 'urn:ads:platform:audit-service': { roles } } },
+  session: { indicator: { show: false }, resourceAccess: { 'urn:ads:platform:audit-service': { roles } } },
   audit: {
     catalogs: [],
     namespaces: [],
     retention: { tenant: {}, applications: {} },
     loaded: false,
+    exporting: false,
     events: { results: [], loading: false },
+    query: { criteria: {}, applied: {}, searched: false, pageSize: 30, page: 0, cursors: [undefined] },
+    selected: { loading: false, notFound: false },
     ...extra,
   },
 });
 
+// A real store, so query state round-trips through the reducer; getActions mirrors redux-mock-store.
+const createTestStore = (storeState: ReturnType<typeof state>) => {
+  const actions: AnyAction[] = [];
+  const recorder: Middleware = () => (next) => (action: unknown) => {
+    actions.push(action as AnyAction);
+    return next(action as Action);
+  };
+  const store = createStore(
+    combineReducers({ session: (s = storeState.session) => s, audit: auditReducer }),
+    storeState,
+    applyMiddleware(recorder),
+  );
+  return Object.assign(store, { getActions: () => actions });
+};
+
 const renderLogs = (storeState: ReturnType<typeof state>) => {
-  const store = configureStore([])(storeState);
+  const store = createTestStore(storeState);
   const utils = render(
     <Provider store={store}>
-      <AuditLogs />
+      <MemoryRouter>
+        <AuditLogs />
+      </MemoryRouter>
     </Provider>,
   );
   return { store, ...utils };
 };
 
 describe('AuditLogs', () => {
+  beforeEach(() => mockNavigate.mockClear());
+
   it('asks for the audit-reader role when it is missing', () => {
     const { store, baseElement } = renderLogs(state([]));
     expect(baseElement.querySelector("goa-callout[testId='audit-role-callout']")).toBeInTheDocument();
-    expect(store.getActions()).toEqual([]);
+    expect(store.getActions().filter((a) => a.type.startsWith('audit/')).length).toBe(0);
   });
 
   it('loads catalogs and the first page of events for readers', () => {
@@ -39,7 +70,37 @@ describe('AuditLogs', () => {
     expect(store.getActions().map((a) => a.type)).toEqual([
       'audit/FETCH_AUDIT_CONFIGURATION_ACTION',
       'audit/FETCH_AUDIT_EVENTS_ACTION',
+      'audit/SET_AUDIT_QUERY_ACTION',
     ]);
+  });
+
+  it('reopens the page the user left when returning to the list', () => {
+    const query = {
+      criteria: { action: 'submit' },
+      applied: { action: 'submit' },
+      searched: true,
+      pageSize: 10,
+      page: 1,
+      cursors: [undefined, 'c2'],
+    };
+    const { store } = renderLogs(state(['audit-reader'], { query }));
+    expect(store.getActions()[1]).toMatchObject({
+      type: 'audit/FETCH_AUDIT_EVENTS_ACTION',
+      criteria: { action: 'submit' },
+      after: 'c2',
+      top: 10,
+    });
+  });
+
+  it('opens the event detail page instead of expanding the row', () => {
+    const results = [{ id: 'e/1', namespace: 'form-app', action: 'submit', occurredAt: '2026-01-01T00:00:00Z' }];
+    const { baseElement } = renderLogs(state(['audit-reader'], { events: { results, loading: false } }));
+    fireEvent(
+      baseElement.querySelector("goa-icon-button[testId='audit-event-view-details']"),
+      new CustomEvent('_click'),
+    );
+    expect(mockNavigate).toHaveBeenCalledWith('/admin/services/audit/events/form-app/e%2F1');
+    expect(baseElement.querySelector("[data-testid='audit-event-details']")).toBeNull();
   });
 
   it('only enables the resource ID once a resource type is entered', () => {
@@ -109,7 +170,10 @@ describe('AuditLogs', () => {
     const toggle = (el: HTMLElement) => el.querySelector("goa-button[testId='audit-filters-toggle']");
 
     it('is disabled when there are no audit logs and no filters applied', () => {
-      const { baseElement } = renderLogs(state(['audit-reader']));
+      const { store, baseElement } = renderLogs(state(['audit-reader']));
+      act(() => {
+        store.dispatch(fetchAuditEventsSuccess([], undefined, false));
+      });
       expect(toggle(baseElement)).toHaveAttribute('disabled', 'true');
     });
 
@@ -169,19 +233,15 @@ describe('AuditLogs', () => {
     });
 
     it('keeps Previous available when a later page comes back empty', () => {
-      const { baseElement, rerender } = paged();
+      const { baseElement, store } = paged();
       fireEvent(baseElement.querySelector("goa-button[testId='audit-next']"), new CustomEvent('_click'));
-
-      const empty = configureStore([])(state(['audit-reader'], { events: { results: [], loading: false } }));
-      rerender(
-        <Provider store={empty}>
-          <AuditLogs />
-        </Provider>,
-      );
+      act(() => {
+        store.dispatch(fetchAuditEventsSuccess([], undefined, false));
+      });
       expect(baseElement).toHaveTextContent('No more events.');
 
       fireEvent(baseElement.querySelector("goa-button[testId='audit-previous']"), new CustomEvent('_click'));
-      expect(empty.getActions().pop()).toMatchObject({ top: 30 });
+      expect(store.getActions().pop()).toMatchObject({ top: 30 });
     });
 
     it('restarts from the first page when the page size changes', () => {

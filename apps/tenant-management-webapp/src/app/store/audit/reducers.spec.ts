@@ -4,9 +4,13 @@ import {
   exportAuditEvents,
   exportAuditEventsDone,
   fetchAuditConfigurationSuccess,
+  fetchAuditEvent,
+  fetchAuditEventFailed,
+  fetchAuditEventSuccess,
   fetchAuditEvents,
   fetchAuditEventsFailed,
   fetchAuditEventsSuccess,
+  setAuditQuery,
 } from './actions';
 import { defaultAuditState } from './models';
 import type { AuditEventRecord } from './models';
@@ -14,6 +18,22 @@ import type { AuditEventRecord } from './models';
 const event = (id: string) => ({ id, namespace: 'form-app', action: 'submit' }) as AuditEventRecord;
 
 describe('audit reducer', () => {
+  it('merges partial query updates so the list can be restored', () => {
+    const state = reducer(defaultAuditState, setAuditQuery({ page: 2, cursors: [undefined, 'a', 'b'] }));
+    expect(state.query).toMatchObject({ page: 2, cursors: [undefined, 'a', 'b'], pageSize: 30, applied: {} });
+  });
+
+  it('tracks the selected event through fetch, success and not found', () => {
+    let state = reducer(defaultAuditState, fetchAuditEvent('form-app', '1'));
+    expect(state.selected).toEqual({ loading: true, notFound: false });
+
+    state = reducer(state, fetchAuditEventSuccess(event('1')));
+    expect(state.selected).toEqual({ event: event('1'), loading: false, notFound: false });
+
+    state = reducer(state, fetchAuditEventFailed(true));
+    expect(state.selected).toEqual({ loading: false, notFound: true });
+  });
+
   it('stores catalogs and retention and marks them loaded', () => {
     const catalogs = [{ application: 'form-app', isCore: false, actions: [] }];
     const retention = { tenant: { standard: { days: 30 } }, applications: {} };

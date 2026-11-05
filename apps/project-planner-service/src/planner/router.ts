@@ -84,7 +84,7 @@ import {
   SpecialistStatus,
   StoredChatMessage,
 } from './types';
-import { versionContent } from './versioning';
+import { contentHash, versionContent } from './versioning';
 import { createVersionRouter } from './versionRouter';
 
 interface PlannerRouterProps {
@@ -273,10 +273,23 @@ export function createPlannerRouter({
     }
   }
 
-  async function persist(req: Request, solution: Solution, operation: string) {
+  async function persist(req: Request, solution: Solution, operation: string, checkpoint = true) {
     const saved = await solutionRepository.save({ ...solution, updatedOn: new Date() });
     eventService.send(solutionUpdated(req.user, saved, operation));
-    return saved;
+    return checkpoint ? autoSaveVersion(req, saved) : saved;
+  }
+
+  async function autoSaveVersion(req: Request, solution: Solution): Promise<Solution> {
+    const tenantId = getTenantId(req);
+    const chats = await specialistChatRepository.findBySolution(tenantId, solution.id);
+    const content = versionContent(solution, chats);
+    const latest = await solutionVersionRepository.latest(tenantId, solution.id);
+    if (latest && latest.contentHash === contentHash(content)) {
+      return solution;
+    }
+    const version = await solutionVersionRepository.create(tenantId, solution.id, content);
+    eventService.send(solutionUpdated(req.user, solution, 'version-saved'));
+    return { ...solution, version: version.number };
   }
 
   // An undefined result means the caller should fall back to rule-based output.
@@ -335,6 +348,7 @@ export function createPlannerRouter({
         factors,
         confidence,
         ready: isDiscoveryReady(factors, confidence),
+        mode: 'rules',
         warning: undefined,
       };
     }
@@ -365,9 +379,10 @@ export function createPlannerRouter({
     if (!discovery || !priorDiscovery.messages.length) {
       return;
     }
-    const readyFlippedOff = priorDiscovery.ready && !discovery.ready;
-    const confidenceDropped = priorDiscovery.confidence - discovery.confidence >= 10;
-    if (!readyFlippedOff && !confidenceDropped) {
+    const readyChanged = priorDiscovery.ready !== discovery.ready;
+    const confidenceChanged = Math.abs(priorDiscovery.confidence - discovery.confidence) >= 10;
+    const modeChanged = priorDiscovery.mode !== discovery.mode;
+    if (!readyChanged && !confidenceChanged && !modeChanged) {
       return;
     }
     const reply = ruleDiscoveryReply(discovery.factors, discovery.confidence, discovery.ready);
@@ -386,12 +401,14 @@ export function createPlannerRouter({
       message,
       skipConfidenceRefresh,
       announceDiscoveryUpdate,
+      checkpoint,
     }: {
       text: string;
       mode?: AnalysisMode;
       message?: string;
       skipConfidenceRefresh?: boolean;
       announceDiscoveryUpdate?: boolean;
+      checkpoint?: boolean;
     },
   ): Promise<Solution> {
     const patterns = await getPatterns(req, patternRepository);
@@ -523,6 +540,7 @@ export function createPlannerRouter({
       req,
       { ...solution, status: solution.status === 'draft' ? 'analyzed' : solution.status, state },
       message ? 'chat' : 'analyze',
+      checkpoint ?? true,
     );
   }
 
@@ -754,6 +772,7 @@ export function createPlannerRouter({
       body('concepts.*.name').optional().isString().notEmpty(),
       body('decisions').optional().isArray(),
       body('questions').optional().isArray(),
+      body('checkpoint').optional().isBoolean(),
     ),
     getSolution(solutionRepository),
     async (req, res, next) => {
@@ -798,6 +817,7 @@ export function createPlannerRouter({
               state,
             },
             'update',
+            req.body.checkpoint ?? true,
           ),
         );
       } catch (err) {
@@ -832,6 +852,7 @@ export function createPlannerRouter({
     createValidationHandler(
       body('text').optional().isString().isLength({ max: 20000 }),
       body('mode').optional().isIn(['ai', 'rules']),
+      body('checkpoint').optional().isBoolean(),
     ),
     getSolution(solutionRepository),
     async (req, res, next) => {
@@ -841,7 +862,14 @@ export function createPlannerRouter({
         if (!text) {
           throw new InvalidOperationError('Solution has no problem statement to analyze.');
         }
-        res.send(await runAnalysis(req, solution, { text, mode: req.body.mode, announceDiscoveryUpdate: true }));
+        res.send(
+          await runAnalysis(req, solution, {
+            text,
+            mode: req.body.mode,
+            announceDiscoveryUpdate: true,
+            checkpoint: req.body.checkpoint,
+          }),
+        );
       } catch (err) {
         next(err);
       }
@@ -853,7 +881,7 @@ export function createPlannerRouter({
     requirePlannerUser,
     validateId,
     createValidationHandler(
-      body('message').optional().isString().trim().isLength({ min: 1, max: 5000 }),
+      body('message').optional().isString().trim().isLength({ min: 1, max: 20000 }),
       body('mode').optional().isIn(['ai', 'rules']),
       body('force').optional().isBoolean(),
       body('restart').optional().isBoolean(),
@@ -940,7 +968,7 @@ export function createPlannerRouter({
     requirePlannerUser,
     validateId,
     createValidationHandler(
-      body('message').isString().trim().isLength({ min: 1, max: 5000 }),
+      body('message').isString().trim().isLength({ min: 1, max: 20000 }),
       body('mode').optional().isIn(['ai', 'rules']),
     ),
     getSolution(solutionRepository),
@@ -1093,12 +1121,12 @@ export function createPlannerRouter({
     createValidationHandler(
       body('mode').optional().isIn(['ai', 'rules']),
       body('refreshConsultations').optional().isBoolean(),
+      body('checkpoint').optional().isBoolean(),
     ),
     getSolution(solutionRepository),
     async (req, res, next) => {
       try {
         const solution = loaded(req);
-        const isFirstBlueprint = !solution.state.blueprint;
         const hypothesis = solution.state.hypotheses[0];
         if (!hypothesis) {
           throw new InvalidOperationError('Analyze the problem before generating a blueprint.');
@@ -1191,12 +1219,8 @@ export function createPlannerRouter({
           req,
           { ...solution, state: { ...working.state, blueprint: { ...blueprint, acceptance } } },
           'blueprint',
+          req.body.checkpoint ?? true,
         );
-        if (isFirstBlueprint) {
-          const tenantId = getTenantId(req);
-          const savedChats = await specialistChatRepository.findBySolution(tenantId, saved.id);
-          await solutionVersionRepository.create(tenantId, saved.id, versionContent(saved, savedChats));
-        }
         res.send(saved);
       } catch (err) {
         next(err);

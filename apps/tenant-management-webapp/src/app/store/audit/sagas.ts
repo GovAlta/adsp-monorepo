@@ -9,10 +9,14 @@ import {
   EXPORT_AUDIT_EVENTS_ACTION,
   ExportAuditEventsAction,
   FETCH_AUDIT_CONFIGURATION_ACTION,
+  FETCH_AUDIT_EVENT_ACTION,
   FETCH_AUDIT_EVENTS_ACTION,
+  FetchAuditEventAction,
   FetchAuditEventsAction,
   exportAuditEventsDone,
   fetchAuditConfigurationSuccess,
+  fetchAuditEventFailed,
+  fetchAuditEventSuccess,
   fetchAuditEventsFailed,
   fetchAuditEventsSuccess,
 } from './actions';
@@ -128,6 +132,37 @@ export function* fetchAuditEvents(action: FetchAuditEventsAction): SagaIterator 
   }
 }
 
+export function* fetchAuditEvent(action: FetchAuditEventAction): SagaIterator {
+  const auditBaseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.auditServiceApiUrl);
+  const token: string = yield call(getAccessToken);
+
+  if (!auditBaseUrl || !token) {
+    if (!auditBaseUrl) {
+      yield put(ErrorNotification({ message: 'Audit service is not registered in the platform directory.' }));
+    }
+    yield put(fetchAuditEventFailed());
+    return;
+  }
+
+  try {
+    const { data } = yield call(
+      axios.get,
+      `${auditBaseUrl}/audit/v1/${encodeURIComponent(action.namespace)}/events/${encodeURIComponent(action.id)}`,
+      { headers: { Authorization: `Bearer ${token}` } },
+    );
+    yield put(fetchAuditEventSuccess(data));
+  } catch (err) {
+    // The API validates the id as a UUID (400), so a malformed id in the URL means there is no such event.
+    const status = axios.isAxiosError(err) ? err.response?.status : undefined;
+    if (status === 404 || status === 400) {
+      yield put(fetchAuditEventFailed(true));
+    } else {
+      yield put(ErrorNotification({ error: err }));
+      yield put(fetchAuditEventFailed());
+    }
+  }
+}
+
 // Error bodies arrive as Blobs when responseType is 'blob'; unwrap them so the notification shows the server message.
 async function readBlobError(err: unknown): Promise<unknown> {
   const response = (err as { response?: { data?: unknown; status?: number } })?.response;
@@ -173,4 +208,5 @@ export function* watchAuditSagas(): Generator {
   yield takeLatest(EXPORT_AUDIT_EVENTS_ACTION, exportAuditEvents);
   yield takeLatest(FETCH_AUDIT_CONFIGURATION_ACTION, fetchAuditConfiguration);
   yield takeLatest(FETCH_AUDIT_EVENTS_ACTION, fetchAuditEvents);
+  yield takeLatest(FETCH_AUDIT_EVENT_ACTION, fetchAuditEvent);
 }

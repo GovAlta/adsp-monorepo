@@ -1,3 +1,5 @@
+import type { ServiceUrls } from './app/store/config/models';
+
 const completeServiceVariables = [
   {
     name: 'Access',
@@ -95,13 +97,6 @@ const completeServiceVariables = [
     beta: false,
   },
   {
-    name: 'Project Planner',
-    link: 'services/project-planner',
-    description:
-      'The project planner service helps you describe a business problem, recognises common solution patterns, and recommends which ADSP services to use.',
-    beta: true,
-  },
-  {
     name: 'Script',
     link: 'services/script',
     description:
@@ -173,4 +168,16 @@ export const serviceVariables = (featuresVisible = {}) => {
       return mergedFeaturesVisible[adminF.name];
     })
     .sort((a, b) => a.name.localeCompare(b.name));
+};
+
+// Services with their own app: the sidebar links out to them instead of an admin page.
+const externalServiceLinks: { name: string; urlKey: keyof ServiceUrls; beta: boolean }[] = [
+  { name: 'Project Planner', urlKey: 'projectPlannerWebApp', beta: true },
+];
+
+export const externalServices = (featuresVisible = {}, serviceUrls: Partial<ServiceUrls> = {}) => {
+  const mergedFeaturesVisible = { ...defaultFeaturesVisible, ...featuresVisible };
+  return externalServiceLinks
+    .filter(({ name, urlKey }) => mergedFeaturesVisible[name] && serviceUrls[urlKey])
+    .map(({ name, urlKey, beta }) => ({ name, url: serviceUrls[urlKey], beta }));
 };

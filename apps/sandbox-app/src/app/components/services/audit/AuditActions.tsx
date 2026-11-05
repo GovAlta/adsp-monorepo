@@ -2,6 +2,7 @@ import {
   GoabBlock,
   GoabButton,
   GoabCallout,
+  GoabCheckbox,
   GoabDetails,
   GoabDropdown,
   GoabDropdownItem,
@@ -35,6 +36,7 @@ export function AuditActions() {
     retentionClass: 'standard',
     resourceType: '',
     description: '',
+    captureChangeSet: false,
   });
   const [added, setAdded] = useState<string>();
   const [submitted, setSubmitted] = useState(false);
@@ -159,6 +161,13 @@ export function AuditActions() {
             onChange={(e) => setForm({ ...form, description: e.value })}
           />
         </GoabFormItem>
+        <GoabCheckbox
+          name="captureChangeSet"
+          mt="xl"
+          text="Capture change set (store before/after on events written with this action)"
+          checked={form.captureChangeSet}
+          onChange={(e) => setForm({ ...form, captureChangeSet: e.checked })}
+        />
         <GoabBlock mt="xl">
           <GoabButton type="primary" disabled={!canAdd} onClick={add}>
             Add action

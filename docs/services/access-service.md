@@ -17,6 +17,44 @@ Access tokens issued by tenant realms are recognized by platform services and se
 <!-- tags: [keycloak] -->
 Access service roles are defined by Keycloak. Realm management related roles can be found under the `realm-management` client. Refer to keycloak documentation for specifics.
 
+## Audit actions
+
+Security-sensitive changes in a tenant realm and failed logins are recorded in the `access-service` namespace of the [audit service](audit-service.md), in the tenant of the realm. Keycloak is not modified: the `adsp-event-listener` forwards Keycloak events as `access-service` domain events, and [event service](event-service.md) records the audited ones. All actions are version 1, in the `security` category and the `security` retention class (365 days by default).
+
+| action | severity | resource type | recorded when |
+|:-|:-|:-|:-|
+| access.user.created | info | user | A user is created. |
+| access.user.updated | info | user | A user is updated. |
+| access.user.deleted | critical | user | A user is deleted. |
+| access.user.role-assigned | warning | user | Client roles are assigned to a user. |
+| access.user.role-removed | warning | user | Client roles are removed from a user. |
+| access.service-account.created | warning | service-account | A client is created. |
+| access.service-account.credential-rotated | critical | service-account | The secret of a client is regenerated. |
+| access.service-account.deleted | critical | service-account | A client is deleted. |
+| access.realm.configuration-changed | critical | realm | The realm settings, including its event settings, are updated. |
+| access.user.login-failed | warning | user, when known | A login attempt fails (`LOGIN_ERROR`). Recorded with `failure` status. |
+
+Every client is recorded as a `service-account` resource, since a deleted client cannot be told apart from other clients. Resources are identified by their Keycloak ID: users are named by username and created clients by client ID when available. Realm resources use the realm ID of the event.
+
+The actor of an admin action is the administrator's Keycloak user ID. Its metadata includes `realm`, `operationType`, `resourcePath` and `actorRealm` (the administrator's realm); role changes add the `roles` names and the `clientId` (Keycloak client ID) of the roles. The actor of a failed login is the user. When Keycloak does not know the user, the actor ID is `unknown` and the attempted username, truncated to 255 characters, is the actor name. Its metadata includes `realm`, `clientId` (also truncated to 255 characters) and the Keycloak error as `reason`.
+
+Action names start with `access.` so they do not take generic names such as `user.created` from tenant catalogs. Audit Service rejects a tenant action whose name matches any Core action.
+
+Records never include the Keycloak representation itself, regenerated client secrets, IP addresses, or login details other than the username.
+
+### Prerequisites
+
+- The `adsp-event-listener` is enabled in the tenant realm, with **Save admin events** and **Include representation** turned on, and `LOGIN_ERROR` in the enabled event types.
+- The Core `urn:ads:platform:event-service` service account has the `audit-writer` role of `urn:ads:platform:audit-service`.
+
+### Limits and exclusions
+
+Login failures are limited to 60 records per tenant per minute (event service `ACCESS_AUDIT_LOGIN_FAILURES_PER_MINUTE`). Further failures in that minute are dropped, and event service logs a warning with the number dropped. Other actions are not limited.
+
+Successful logins, token issuance, logouts, client updates, realm role mappings, group membership, password resets and federated identity links are not recorded.
+
+Set `AUDIT_ENABLED=false` on event service to turn recording off. Access events are then still consumed and acknowledged, so the queue does not back up, but no audit records are written. See [turn audit recording off](audit-service.md#turn-audit-recording-off).
+
 ## Concepts
 
 <!-- tags: [keycloak] -->

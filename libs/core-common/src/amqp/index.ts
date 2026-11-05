@@ -15,14 +15,20 @@ interface AmqpServiceProps {
   consumerOptions?: Options.Consume
 }
 
+interface AmqpEventServiceProps extends AmqpServiceProps {
+  /** Topic pattern of the domain events to receive; defaults to all events. */
+  bindingKey?: string;
+}
+
 export const createAmqpEventService = async ({
   queue,
   AMQP_HOST,
   AMQP_USER,
   AMQP_PASSWORD,
   logger,
-  consumerOptions
-}: AmqpServiceProps): Promise<AmqpEventSubscriberService> => {
+  consumerOptions,
+  bindingKey,
+}: AmqpEventServiceProps): Promise<AmqpEventSubscriberService> => {
   const connection = connect({
     heartbeat: 160,
     hostname: AMQP_HOST,
@@ -30,7 +36,7 @@ export const createAmqpEventService = async ({
     password: AMQP_PASSWORD,
   });
 
-  const service = new AmqpEventSubscriberService(queue, logger, connection, consumerOptions);
+  const service = new AmqpEventSubscriberService(queue, logger, connection, consumerOptions, bindingKey);
   await service.connect();
 
   logger.info(`Connected to RabbitMQ as event service at: ${AMQP_HOST}`);

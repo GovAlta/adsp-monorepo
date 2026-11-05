@@ -9,11 +9,19 @@ import { FetchTenant } from '@store/tenant/actions';
 
 import { scrollAppToTop } from '@lib/scrollAppToTop';
 
-import { serviceVariables } from '../../../featureFlag';
+import { externalServices, serviceVariables } from '../../../featureFlag';
 import { GoabSideMenu } from '@abgov/react-components';
 
 interface SidebarProps {
   type: 'mobile' | 'desktop';
+}
+
+interface MenuService {
+  name: string;
+  link?: string;
+  url?: string;
+  beta?: boolean;
+  alpha?: boolean;
 }
 
 export const alphaBadge = () => {
@@ -46,6 +54,11 @@ const Sidebar = ({ type }: SidebarProps) => {
       dispatch(FetchTenant(realm));
     }
   }, [realm, authenticated, dispatch]);
+
+  const menuServices: MenuService[] = [
+    ...serviceVariables(config.featureFlags),
+    ...externalServices(config.featureFlags, config.serviceUrls),
+  ].sort((a, b) => a.name.localeCompare(b.name));
 
   return (
     <>
@@ -110,20 +123,34 @@ const Sidebar = ({ type }: SidebarProps) => {
                 </>
               )}
               {hasAdminRole &&
-                serviceVariables(config.featureFlags).map((service, index) => (
-                  <NavLink
-                    key={index}
-                    to={service.link}
-                    onClick={scrollAppToTop}
-                    className={({ isActive }) => (isActive ? 'current' : '')}
-                    title={service.name}
-                    data-testid={`menu-${service.name.toLowerCase()}`}
-                  >
-                    <span>{service.name}</span>
-                    {service.beta && betaBadge(service.name)}
-                    {service.alpha && alphaBadge()}
-                  </NavLink>
-                ))}
+                menuServices.map((service, index) =>
+                  service.url ? (
+                    <a
+                      key={index}
+                      href={service.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      title={service.name}
+                      data-testid={`menu-${service.name.toLowerCase()}`}
+                    >
+                      <span>{service.name}</span>
+                      {service.beta && betaBadge(service.name)}
+                    </a>
+                  ) : (
+                    <NavLink
+                      key={index}
+                      to={service.link}
+                      onClick={scrollAppToTop}
+                      className={({ isActive }) => (isActive ? 'current' : '')}
+                      title={service.name}
+                      data-testid={`menu-${service.name.toLowerCase()}`}
+                    >
+                      <span>{service.name}</span>
+                      {service.beta && betaBadge(service.name)}
+                      {service.alpha && alphaBadge()}
+                    </NavLink>
+                  ),
+                )}
             </>
           )}
         </GoabSideMenu>

@@ -3,11 +3,10 @@
 `@abgov/adsp-components-core` is the framework-independent foundation of the ADSP application components. It holds everything that is the same no matter which UI framework renders a component:
 
 - the `AdspTheme` contract and the themes applications select from (`AdspThemes`)
-- component tokens for each component, such as `AdspButtonTheme` and `AdspCardTheme`
+- component tokens for each component, such as `AdspCalendarTheme` and `AdspConversationTheme`
 - `createAdspTheme()`, which derives a customized theme from an existing one
 - `toCssVariables()` and `toComponentCssVariables()`, which turn a theme or a component's overrides into `--adsp-*` CSS custom properties
 - `adsp-components.css`, the stylesheet for every ADSP component
-- shared types such as `AdspBadgeType` and `AdspButtonVariant`
 
 It contains no React, Angular or Vue code. Lint fails if a file here imports one of them.
 
@@ -30,15 +29,15 @@ It contains no React, Angular or Vue code. Lint fails if a file here imports one
 How a value reaches the screen:
 
 ```
-AdspThemes.standard.color.surface.card           = 'var(--goa-color-surface-card)'     base role
-AdspThemes.standard.components.card.background   = 'var(--adsp-color-surface-card)'    component token
+AdspThemes.standard.color.border.default                    = 'var(--goa-color-greyscale-200)'     base role
+AdspThemes.standard.components.conversation.borderColor     = 'var(--adsp-color-border-default)'   component token
         │ toCssVariables(theme)
         ▼
---adsp-color-surface-card: var(--goa-color-surface-card)
---adsp-components-card-background: var(--adsp-color-surface-card)   both set on each ADSP component's root
+--adsp-color-border-default: var(--goa-color-greyscale-200)
+--adsp-components-conversation-border-color: var(--adsp-color-border-default)   both set on each ADSP component's root
         │ adsp-components.css
         ▼
-.adsp-card { background: var(--adsp-components-card-background); }
+.adsp-conversation { border: 1px solid var(--adsp-components-conversation-border-color); }
 ```
 
 Because components read the theme only through `--adsp-*` properties, one stylesheet works in every framework. Each framework adapter only has to:
@@ -67,12 +66,12 @@ An `AdspTheme` is presentation policy for the whole ADSP component family. A the
 | `typography`   | `fontFamily`, plus `heading` (`2xs`–`2xl`) and `body` (`xs`–`l`) scales of `{ fontSize, fontWeight, lineHeight }` |
 | `spacing`      | The GoA spacing scale, `none`–`4xl`                                                               |
 | `borderRadius` | The GoA radius scale, `none`–`3xl` and `round`                                                    |
-| `components`   | Component tokens, one section per component: `badge`, `button`, `card`                            |
+| `components`   | Component tokens, one section per component: `calendar`, `conversation`                           |
 
 There are two layers:
 
 - **Base roles** (`color`, `typography`, `spacing`, `borderRadius`) reference GoA tokens.
-- **Component tokens** (`components.*`) default to aliases of the base roles, for example `components.card.background = 'var(--adsp-color-surface-card)'`. Changing a base role restyles every component that uses it, unless a component token is overridden.
+- **Component tokens** (`components.*`) default to aliases of the base roles, for example `components.conversation.borderColor = 'var(--adsp-color-border-default)'`. Changing a base role restyles every component that uses it, unless a component token is overridden.
 
 ## Customizing: three levels
 
@@ -89,7 +88,7 @@ import { AdspThemes, createAdspTheme } from '@abgov/adsp-components-core';
 
 export const brandTheme = createAdspTheme(AdspThemes.standard, {
   name: 'brand',
-  components: { button: { borderRadius: '0', primary: { background: 'var(--adsp-color-status-success)' } } },
+  components: { conversation: { sentBackground: 'var(--adsp-color-status-success)' } },
 });
 ```
 
@@ -118,11 +117,11 @@ This function flattens a theme into custom properties, converting each path to k
 | `color.surface.card`                   | `--adsp-color-surface-card`                  |
 | `typography.heading.s.fontSize`        | `--adsp-typography-heading-s-font-size`      |
 | `borderRadius.round`                   | `--adsp-border-radius-round`                 |
-| `components.button.primary.background` | `--adsp-components-button-primary-background` |
+| `components.conversation.sentBackground` | `--adsp-components-conversation-sent-background` |
 
 The result is cached per theme object. Treat these property names as public API: renaming one breaks every stylesheet that reads it.
 
-`toComponentCssVariables(component, overrides)` uses the same naming for one component's instance overrides. For example, `('button', { borderRadius: '0' })` gives `--adsp-components-button-border-radius: 0`. Framework adapters set the result on that instance's root element, after the theme's own properties.
+`toComponentCssVariables(component, overrides)` uses the same naming for one component's instance overrides. For example, `('conversation', { sentBackground: '#0050a0' })` gives `--adsp-components-conversation-sent-background: #0050a0`. Framework adapters set the result on that instance's root element, after the theme's own properties.
 
 ## Adding a component
 
