@@ -25,6 +25,13 @@ import { useStepperPageOptions } from '../FormStepper/context/StepperOptionsCont
 import { BackButton } from '../FormStepper/BackButton';
 import { useShowChangeButtons } from '../../Context/ContextProvider';
 import { JsonFormsDispatch, useJsonForms } from '@jsonforms/react';
+import { FileUploaderReview } from '../FileUploader/FileUploaderControl';
+
+const isFileUrnSchema = (schema: JsonSchema | undefined): boolean => {
+  if (schema?.format === 'file-urn') return true;
+  const items = schema?.items as JsonSchema | undefined;
+  return schema?.type === 'array' && !Array.isArray(items) && items?.format === 'file-urn';
+};
 
 export const GoAInputBaseTableReview = (props: ControlProps): JSX.Element | null => {
   const { data, uischema, label, schema, rootSchema, path, errors, enabled, cells, required, visible } = props;
@@ -253,7 +260,11 @@ export const GoAInputBaseTableReview = (props: ControlProps): JSX.Element | null
           )}
         </ReviewHeader>
         <ReviewValue>
-          {showInlineValue ? (
+          {isFileUrnSchema(schema) && !isNilOrEmptyValue(data, true) ? (
+            <div data-testid={`review-value-${label}`}>
+              <FileUploaderReview {...props} label="" required={false} />
+            </div>
+          ) : showInlineValue ? (
             <div data-testid={`review-value-${label}`}>
               {isValueEmpty ? <NoneGivenText>{noAnswerMessage}</NoneGivenText> : (reviewText ?? '')}
             </div>
