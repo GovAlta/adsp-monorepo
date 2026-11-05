@@ -1229,6 +1229,7 @@ When('the user enters {string} in the email field in Edit email information moda
 
 When('clicks Save button in Edit email information modal', function () {
   notificationsObj.notificationOverviewEmailInformationModalSaveBtn().shadow().find('button').click({ force: true });
+  cy.wait(2000); // Wait for 2 seconds to allow the new email information to show up
 });
 
 Then('the user views {string} in the Edit email information modal', function (errorMsg) {
