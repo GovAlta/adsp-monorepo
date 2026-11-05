@@ -57,6 +57,14 @@ describe('AppContent', () => {
     expect(container.querySelector('goa-circular-progress')).not.toBeNull();
   });
 
+  it('scrolls the page in its own container, since the global styles stop the document scrolling', () => {
+    renderWith(signedIn(['planner-user']));
+
+    const scrollContainer = document.getElementById('app-scroll-container');
+    expect(scrollContainer).not.toBeNull();
+    expect(getComputedStyle(scrollContainer as Element).overflow).toBe('auto');
+  });
+
   it('offers sign-in through GoA SSO when nobody is signed in', () => {
     const { container } = renderWith({ initialized: true, authenticated: false });
 

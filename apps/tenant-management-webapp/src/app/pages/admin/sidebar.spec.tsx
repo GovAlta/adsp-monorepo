@@ -86,4 +86,44 @@ describe('Sidebar', () => {
 
     expect(getByTestId('menu-task').querySelector('img')).toHaveAttribute('alt', 'Task beta');
   });
+
+  describe('project planner link', () => {
+    const renderWithPlanner = (projectPlannerWebApp?: string) =>
+      render(
+        <Provider
+          store={mockStore({
+            ...initialState,
+            config: { featureFlags: { Task: true, 'Project Planner': true }, serviceUrls: { projectPlannerWebApp } },
+          })}
+        >
+          <MemoryRouter>
+            <Sidebar type="desktop" />
+          </MemoryRouter>
+        </Provider>,
+      );
+
+    it('opens the planner app in a new tab', () => {
+      const { getByTestId } = renderWithPlanner('https://planner.example');
+
+      const link = getByTestId('menu-project planner');
+      expect(link).toHaveAttribute('href', 'https://planner.example');
+      expect(link).toHaveAttribute('target', '_blank');
+      expect(link).toHaveAttribute('rel', 'noopener noreferrer');
+    });
+
+    it('sits in name order among the services, with its beta badge', () => {
+      const { getByTestId } = renderWithPlanner('https://planner.example');
+
+      const link = getByTestId('menu-project planner');
+      expect(link.previousElementSibling).toHaveAttribute('data-testid', 'menu-pdf');
+      expect(link.nextElementSibling).toHaveAttribute('data-testid', 'menu-script');
+      expect(link.querySelector('img')).toHaveAttribute('alt', 'Project Planner beta');
+    });
+
+    it('is left out when the planner app URL is unknown', () => {
+      const { queryByTestId } = renderWithPlanner(undefined);
+
+      expect(queryByTestId('menu-project planner')).toBeNull();
+    });
+  });
 });
