@@ -1,7 +1,8 @@
-import { AdspId, TokenProvider } from '@abgov/adsp-service-sdk';
+import { AdspId, AuditService, TokenProvider } from '@abgov/adsp-service-sdk';
 import { Logger } from 'winston';
 import { FileRepository } from '../repository';
 import { EventService, TenantService, ConfigurationService } from '@abgov/adsp-service-sdk';
+import { FileDeletedAuditAction, FileServiceJobAuditActor, toFileAuditDetails } from '../audit';
 import { ServiceConfiguration } from '../configuration';
 import { fileDeleted } from '../events';
 
@@ -14,6 +15,7 @@ interface DeleteJobProps {
   logger: Logger;
   fileRepository: FileRepository;
   eventService: EventService;
+  auditService: AuditService;
   tenantService: TenantService;
   configurationService: ConfigurationService;
 }
@@ -35,6 +37,7 @@ export function createDeleteOldFilesJob({
   tenantService,
   tokenProvider,
   eventService,
+  auditService,
 }: DeleteJobProps) {
   return async (): Promise<void> => {
     try {
@@ -50,7 +53,7 @@ export function createDeleteOldFilesJob({
           const configuration = await configurationService.getConfiguration<ServiceConfiguration, ServiceConfiguration>(
             serviceId,
             token,
-            tenant.id
+            tenant.id,
           );
 
           return await Promise.all(
@@ -60,7 +63,7 @@ export function createDeleteOldFilesJob({
                 const retention = fileType.rules?.retention?.deleteInDays;
                 if (!retention) {
                   logger.info(
-                    `There is no file retention for file type ${fileType.id} - skip the file retention check.`
+                    `There is no file retention for file type ${fileType.id} - skip the file retention check.`,
                   );
                   return;
                 }
@@ -73,11 +76,11 @@ export function createDeleteOldFilesJob({
                     typeEquals: fileType.id,
                   });
                   logger.info(
-                    `Found ${results?.length} files with last accessed before ${beforeLastAccessed} in file type ${fileType.id}.`
+                    `Found ${results?.length} files with last accessed before ${beforeLastAccessed} in file type ${fileType.id}.`,
                   );
                   for (const file of results) {
                     logger.info(
-                      `File ${file.filename} of ${fileType.id} from tenant ${tenant.id} with lastAccessed ${file.lastAccessed} will be deleted.`
+                      `File ${file.filename} of ${fileType.id} from tenant ${tenant.id} with lastAccessed ${file.lastAccessed} will be deleted.`,
                     );
 
                     if (!file.deleted) {
@@ -86,6 +89,13 @@ export function createDeleteOldFilesJob({
                         if (result.deleted) {
                           numberDeleted++;
                           eventService.send(fileDeleted(apiId, jobUser, result));
+                          void auditService.record(
+                            FileDeletedAuditAction,
+                            toFileAuditDetails(FileServiceJobAuditActor, result, {
+                              reason: 'retention',
+                              retentionDays: retention,
+                            }),
+                          );
                         }
                       } catch (err) {
                         logger.error(`Error deleting file with ID: ${file.id}. ${err}`);
@@ -96,9 +106,9 @@ export function createDeleteOldFilesJob({
                   after = page.next;
                 } while (after);
               }
-            })
+            }),
           );
-        })
+        }),
       );
 
       logger.info(`Completed file delete job and deleted ${numberDeleted} files.`);

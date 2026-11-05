@@ -57,6 +57,7 @@ const storageProviderMock = new Mock<FileStorageProvider>();
 const mockScanJob = jest.fn();
 const mockDeleteJob = jest.fn();
 
+const auditServiceMock = { record: jest.fn(), query: jest.fn(), flush: jest.fn(), droppedEventCount: 0 };
 const eventServiceMock = {
   send: jest.fn(),
 };
@@ -90,6 +91,7 @@ describe('applyFileMiddleware', () => {
       scanService: scanServiceMock.object(),
       queueService: queueServiceMock,
       eventService: eventServiceMock,
+      auditService: auditServiceMock,
       tenantService: tenantServiceMock,
       configurationService: configurationServiceMock,
       tokenProvider: tokenProviderMock,

@@ -53,9 +53,17 @@ export const createMetaDefenderScan = ({ host, port }: ScanProps): ScanService =
         result = await scanRequest(file);
       }
 
+      const infected = result && result.scan_all_result_i !== 0;
+      const threats: string[] = infected
+        ? Object.values<{ threat_found?: string }>(result.scan_details || {})
+            .map((detail) => detail?.threat_found)
+            .filter((threat) => !!threat)
+        : [];
+
       return {
         scanned: !!result,
-        infected: result && result.scan_all_result_i !== 0,
+        infected,
+        threats: threats.length ? [...new Set(threats)] : undefined,
       };
     },
   };
