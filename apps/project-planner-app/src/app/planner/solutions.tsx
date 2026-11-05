@@ -62,6 +62,11 @@ const CreateButtonSlot = styled.div`
   margin-left: auto;
 `;
 
+const EmptyStateCell = styled.td`
+  text-align: center;
+  padding: 2rem 1rem;
+`;
+
 // Reserves space for everything above/below the table (header, tabs, top row, table header, pagination)
 // plus a one-row safety margin so the last row never gets clipped by the viewport.
 const RESERVED_HEIGHT_PX = 560;
@@ -220,33 +225,56 @@ export const Solutions: FunctionComponent<SolutionsProps> = ({ selectedId, onSel
       </TopRow>
 
       {!solutions && <GoabCircularProgress visible message="Loading solutions..." size="small" />}
-      {solutions?.length === 0 && <p data-testid="no-solutions">No solutions yet. Create one to get started.</p>}
-      {solutions &&
-        solutions.length > 0 &&
-        (sorted.length === 0 ? (
-          <p data-testid="no-solutions-match">No solutions match &quot;{search}&quot;.</p>
-        ) : (
-          <GoabTable
-            width="100%"
-            testId="solutions-list"
-            onSort={(detail) => setSortDirection(detail.sortDir === 1 ? 'asc' : 'desc')}
-          >
-            <thead>
+      {solutions && solutions.length === 0 && (
+        <GoabTable width="100%" testId="solutions-list">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Status</th>
+              <th>Created by</th>
+              <th>Updated</th>
+              <th>Version</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <EmptyStateCell colSpan={6} data-testid="no-solutions">
+                No solutions yet. Create one to get started.
+              </EmptyStateCell>
+            </tr>
+          </tbody>
+        </GoabTable>
+      )}
+      {solutions && solutions.length > 0 && (
+        <GoabTable
+          width="100%"
+          testId="solutions-list"
+          onSort={(detail) => setSortDirection(detail.sortDir === 1 ? 'asc' : 'desc')}
+        >
+          <thead>
+            <tr>
+              <th>
+                <GoabTableSortHeader name="name" direction={sortDirection} data-testid="sort-name">
+                  Name
+                </GoabTableSortHeader>
+              </th>
+              <th>Status</th>
+              <th>Created by</th>
+              <th>Updated</th>
+              <th>Version</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {sorted.length === 0 ? (
               <tr>
-                <th>
-                  <GoabTableSortHeader name="name" direction={sortDirection} data-testid="sort-name">
-                    Name
-                  </GoabTableSortHeader>
-                </th>
-                <th>Status</th>
-                <th>Created by</th>
-                <th>Updated</th>
-                <th>Version</th>
-                <th></th>
+                <EmptyStateCell colSpan={6} data-testid="no-solutions-match">
+                  No solutions match &quot;{search}&quot;.
+                </EmptyStateCell>
               </tr>
-            </thead>
-            <tbody>
-              {paged.map((solution) => (
+            ) : (
+              paged.map((solution) => (
                 <tr key={solution.id}>
                   <td>
                     <NameButton
@@ -290,10 +318,11 @@ export const Solutions: FunctionComponent<SolutionsProps> = ({ selectedId, onSel
                     />
                   </td>
                 </tr>
-              ))}
-            </tbody>
-          </GoabTable>
-        ))}
+              ))
+            )}
+          </tbody>
+        </GoabTable>
+      )}
 
       <ConfirmDelete
         open={!!deleting}

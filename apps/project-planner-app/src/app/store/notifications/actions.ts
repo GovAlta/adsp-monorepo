@@ -23,12 +23,12 @@ export type ActionTypes = ErrorNotificationAction | SuccessNotificationAction | 
 
 export const ErrorNotification = (payload: Notification): ErrorNotificationAction => ({
   type: ERROR_NOTIFICATION,
-  payload: { ...payload, type: MessageType.error },
+  payload: { ...payload, id: payload.id ?? crypto.randomUUID(), type: MessageType.error },
 });
 
 export const SuccessNotification = (payload: Notification): SuccessNotificationAction => ({
   type: SUCCESS_NOTIFICATION,
-  payload: { ...payload, type: MessageType.success },
+  payload: { ...payload, id: payload.id ?? crypto.randomUUID(), type: MessageType.success },
 });
 
 export const DismissNotification = (payload: Notification): DismissNotificationAction => ({

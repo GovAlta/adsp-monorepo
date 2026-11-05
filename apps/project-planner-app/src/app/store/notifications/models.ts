@@ -4,6 +4,7 @@ export enum MessageType {
 }
 
 export interface Notification {
+  id?: string;
   message: string;
   type?: MessageType;
 }
