@@ -1,5 +1,6 @@
 import {
   AdspId,
+  AuditService,
   benchmark,
   DomainEvent,
   EventService,
@@ -22,6 +23,14 @@ import validator from 'validator';
 import { Logger } from 'winston';
 import { FileRepository } from '../repository';
 import { createUpload } from './upload';
+import {
+  FileDeletedAuditAction,
+  FileDownloadedAuditAction,
+  FileUnsafeDownloadedAuditAction,
+  FileUploadedAuditAction,
+  toFileAuditActor,
+  toFileAuditDetails,
+} from '../audit';
 import { fileDeleted, fileUploaded } from '../events';
 import { ServiceConfiguration } from '../configuration';
 import { FileStorageProvider } from '../storage';
@@ -35,6 +44,7 @@ interface FileRouterProps {
   storageProvider: FileStorageProvider;
   fileRepository: FileRepository;
   eventService: EventService;
+  auditService: AuditService;
 }
 
 export const getTypes: RequestHandler = async (req, res, next) => {
@@ -104,7 +114,12 @@ export function getFiles(apiId: AdspId, repository: FileRepository): RequestHand
   };
 }
 
-export function uploadFile(apiId: AdspId, logger: Logger, eventService: EventService): RequestHandler {
+export function uploadFile(
+  apiId: AdspId,
+  logger: Logger,
+  eventService: EventService,
+  auditService: AuditService,
+): RequestHandler {
   return async (req, res, next) => {
     try {
       const user = req.user;
@@ -121,6 +136,8 @@ export function uploadFile(apiId: AdspId, logger: Logger, eventService: EventSer
       res.send(mappedFile);
 
       eventService.send(fileUploaded(apiId, user, fileEntity));
+      // Recorded on upload even though the virus scan is pending; the scan result is recorded separately.
+      void auditService.record(FileUploadedAuditAction, toFileAuditDetails(toFileAuditActor(user), fileEntity));
 
       logger.info(
         `File '${fileEntity.filename}' (ID: ${fileEntity.id}) uploaded by user '${user.name}' (ID: ${user.id}).`,
@@ -184,7 +201,7 @@ type Range = {
   },
 ];
 
-export function downloadFile(logger: Logger): RequestHandler {
+export function downloadFile(logger: Logger, auditService: AuditService): RequestHandler {
   return async (req, res, next) => {
     try {
       const end = startBenchmark(req, 'operation-handler-time');
@@ -209,6 +226,16 @@ export function downloadFile(logger: Logger): RequestHandler {
       }
 
       const stream = await fileEntity.readFile(user, fileStart, fileEnd);
+      // A file that is not scanned can only be read here with unsafe=true, i.e. the virus scan is bypassed.
+      void auditService.record(
+        fileEntity.scanned ? FileDownloadedAuditAction : FileUnsafeDownloadedAuditAction,
+        toFileAuditDetails(
+          toFileAuditActor(user),
+          fileEntity,
+          length !== fileEntity.size ? { range: { start: fileStart, end: fileEnd } } : {},
+        ),
+      );
+
       stream.on('end', () => {
         logger.debug(`Ending streaming of file '${fileEntity.filename}' (ID: ${fileEntity.id}) from source.`, {
           context: 'file-router',
@@ -280,7 +307,12 @@ function isSupportedVideoType(mimeType: string): boolean {
   return mimeType === 'video/mp4' || mimeType === 'video/x-msvideo' || mimeType === 'video/quicktime';
 }
 
-export function deleteFile(apiId: AdspId, logger: Logger, eventService: EventService): RequestHandler {
+export function deleteFile(
+  apiId: AdspId,
+  logger: Logger,
+  eventService: EventService,
+  auditService: AuditService,
+): RequestHandler {
   return async (req, res, next) => {
     try {
       const end = startBenchmark(req, 'operation-handler-time');
@@ -288,7 +320,7 @@ export function deleteFile(apiId: AdspId, logger: Logger, eventService: EventSer
       const user = req.user;
       const fileEntity = req.fileEntity;
       await fileEntity.markForDeletion(user);
-      sendFileDeletedEvent(apiId, logger, eventService, user, fileEntity);
+      sendFileDeletedEvent(apiId, logger, eventService, auditService, user, fileEntity);
 
       end();
       res.send({ deleted: fileEntity.deleted });
@@ -339,6 +371,7 @@ function sendFileDeletedEvent(
   apiId: AdspId,
   logger: Logger,
   eventService: EventService,
+  auditService: AuditService,
   user: User,
   fileEntity: FileEntity,
 ) {
@@ -353,12 +386,14 @@ function sendFileDeletedEvent(
   );
 
   eventService.send(fileDeleted(apiId, user, fileEntity));
+  void auditService.record(FileDeletedAuditAction, toFileAuditDetails(toFileAuditActor(user), fileEntity));
 }
 
 export function deleteFiles(
   apiId: AdspId,
   logger: Logger,
   eventService: EventService,
+  auditService: AuditService,
   repository: FileRepository,
 ): RequestHandler {
   return async (req, res, next) => {
@@ -379,7 +414,7 @@ export function deleteFiles(
         }
 
         await fileEntity.markForDeletion(user);
-        sendFileDeletedEvent(apiId, logger, eventService, user, fileEntity);
+        sendFileDeletedEvent(apiId, logger, eventService, auditService, user, fileEntity);
         results.push({ id: fileEntity.id, deleted: fileEntity.deleted });
       }
 
@@ -391,7 +426,12 @@ export function deleteFiles(
   };
 }
 
-export function fileOperation(apiId: AdspId, logger: Logger, eventService: EventService): RequestHandler {
+export function fileOperation(
+  apiId: AdspId,
+  logger: Logger,
+  eventService: EventService,
+  auditService: AuditService,
+): RequestHandler {
   return async (req, res, next) => {
     try {
       const end = startBenchmark(req, 'operation-handler-time');
@@ -416,6 +456,10 @@ export function fileOperation(apiId: AdspId, logger: Logger, eventService: Event
           const copy = await fileEntity.copy(user, filename, fileType, recordId);
           result = mapFile(apiId, copy);
           event = fileUploaded(apiId, user, copy);
+          void auditService.record(
+            FileUploadedAuditAction,
+            toFileAuditDetails(toFileAuditActor(user), copy, { sourceFileId: fileEntity.id }),
+          );
 
           logger.info(
             `File '${fileEntity.filename}' (ID: ${fileEntity.id}) copied to '${copy.filename}' (ID: ${copy.id}) by ` +
@@ -450,6 +494,7 @@ export const createFileRouter = ({
   storageProvider,
   fileRepository,
   eventService,
+  auditService,
 }: FileRouterProps): Router => {
   const upload = createUpload({ logger, storageProvider, fileRepository });
   const fileRouter = Router();
@@ -487,7 +532,12 @@ export const createFileRouter = ({
     ),
     getFiles(apiId, fileRepository),
   );
-  fileRouter.post('/files', assertAuthenticatedHandler, upload.single('file'), uploadFile(apiId, logger, eventService));
+  fileRouter.post(
+    '/files',
+    assertAuthenticatedHandler,
+    upload.single('file'),
+    uploadFile(apiId, logger, eventService, auditService),
+  );
   fileRouter.delete(
     '/files',
     assertAuthenticatedHandler,
@@ -507,7 +557,7 @@ export const createFileRouter = ({
           return true;
         }),
     ),
-    deleteFiles(apiId, logger, eventService, fileRepository),
+    deleteFiles(apiId, logger, eventService, auditService, fileRepository),
   );
 
   fileRouter.get(
@@ -521,7 +571,7 @@ export const createFileRouter = ({
     assertAuthenticatedHandler,
     createValidationHandler(param('fileId').isUUID()),
     getFile(fileRepository),
-    deleteFile(apiId, logger, eventService),
+    deleteFile(apiId, logger, eventService, auditService),
   );
   fileRouter.post(
     '/files/:fileId',
@@ -534,7 +584,7 @@ export const createFileRouter = ({
       body('recordId').optional({ nullable: true }).isString(),
     ),
     getFile(fileRepository),
-    fileOperation(apiId, logger, eventService),
+    fileOperation(apiId, logger, eventService, auditService),
   );
 
   fileRouter.get(
@@ -545,7 +595,7 @@ export const createFileRouter = ({
       query('embed').optional().isBoolean(),
     ),
     getFile(fileRepository),
-    downloadFile(logger),
+    downloadFile(logger, auditService),
   );
 
   return fileRouter;

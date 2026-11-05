@@ -40,6 +40,7 @@ export const createClamScan = ({ host, port }: ScanProps): ScanService => {
       return {
         scanned: true,
         infected: scan.isInfected,
+        threats: scan.isInfected ? scan.viruses : undefined,
       };
     },
   };
