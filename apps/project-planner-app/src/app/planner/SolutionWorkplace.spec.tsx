@@ -1,6 +1,6 @@
 import React from 'react';
 import { fireEvent, render, waitFor } from '@testing-library/react';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { SolutionWorkplace, getGuidedStep } from './SolutionWorkplace';
 import { usePlannerApi } from './api';
 import { expectNoA11yViolations } from './testing/axe';
@@ -9,7 +9,7 @@ import { download } from './utils';
 import { Solution, SolutionBlueprint, SolutionVersionList, SpecialistDefinition } from './model';
 
 jest.mock('./api', () => ({ usePlannerApi: jest.fn() }));
-jest.mock('react-redux', () => ({ useDispatch: jest.fn() }));
+jest.mock('react-redux', () => ({ useDispatch: jest.fn(), useSelector: jest.fn() }));
 jest.mock('./utils', () => ({ ...jest.requireActual('./utils'), download: jest.fn() }));
 
 const goa = (container: HTMLElement, testId: string) =>
@@ -133,6 +133,7 @@ describe('SolutionWorkplace', () => {
     });
     (usePlannerApi as jest.Mock).mockReturnValue(api);
     (useDispatch as jest.Mock).mockReturnValue(jest.fn());
+    (useSelector as jest.Mock).mockReturnValue(0);
     const view = render(<SolutionWorkplace solutionId="solution-1" onBack={onBack} />);
     await waitFor(() => expect(view.container.querySelector('[data-testid="solution-workplace"]')).not.toBeNull());
     await waitFor(() => expect(api.listSpecialists).toHaveBeenCalled());

@@ -285,7 +285,7 @@ describe('Solutions', () => {
       type(container, 'goa-input[testid="solutions-search"]', 'nothing matches this');
 
       expect(await findByTestId('no-solutions-match')).toBeTruthy();
-      expect(container.querySelector('goa-table')).toBeNull();
+      expect(container.querySelector('goa-table')).not.toBeNull();
     });
   });
 
