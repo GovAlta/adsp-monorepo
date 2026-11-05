@@ -11,6 +11,7 @@ export * from './types';
 export * from './model';
 export * from './repository';
 export * from './events';
+export * from './audit';
 
 export const applyConfigurationMiddleware = async (
   app: Application,
