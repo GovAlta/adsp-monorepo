@@ -2,7 +2,7 @@ import { UpdateIndicator } from '@store/session/actions';
 import { RootState } from '../index';
 import { select, call, put, takeLatest, all } from 'redux-saga/effects';
 import axios from 'axios';
-import { Feedback } from './models';
+import { Feedback, FeedbackSearchCriteria } from './models';
 import {
   DELETE_FEEDBACK_SITE_ACTION,
   DeleteFeedbackSiteAction,
@@ -28,7 +28,29 @@ import { SagaIterator } from 'redux-saga';
 import moment from 'moment';
 import { ErrorNotification } from '@store/notifications/actions';
 
-function* fetchFeedbacks(payload: FetchFeedbacksAction) {
+// Mirrors the value service cursor (core-common encodeNext): a base64 encoded row offset.
+const toOffsetCursor = (offset: number): string => btoa(`${offset}`);
+
+// Extends the selected end date so feedback received on that day is included.
+const toTimestampMax = (endDate: string): string => {
+  const timestampMax = new Date(endDate);
+  timestampMax.setUTCHours(25, 59, 59, 999);
+  return timestampMax.toISOString();
+};
+
+// The value service count endpoint takes the same filters, so the total always matches the pages.
+const toFeedbackQuery = (site: string, { startDate, endDate }: FeedbackSearchCriteria): Record<string, string> => ({
+  context: JSON.stringify({ site }),
+  ...(startDate && endDate && { timestampMin: startDate, timestampMax: toTimestampMax(endDate) }),
+});
+
+export function* fetchFeedbacks({
+  feedback,
+  searchCriteria,
+  page,
+  pageSize,
+  includeTotal,
+}: FetchFeedbacksAction): SagaIterator {
   yield put(
     UpdateIndicator({
       show: true,
@@ -37,46 +59,31 @@ function* fetchFeedbacks(payload: FetchFeedbacksAction) {
   );
   const configBaseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.valueServiceApiUrl);
   const token: string = yield call(getAccessToken);
-  const next = payload.next ? payload.next : '';
-  const contextData = encodeURI(JSON.stringify({ site: payload.feedback.url }));
-  const isWithTimestamp = payload.searchCriteria.startDate && payload.searchCriteria.endDate;
-  if (isWithTimestamp) {
-    const setEndDateEod = new Date(payload.searchCriteria.endDate);
-    setEndDateEod.setUTCHours(25, 59, 59, 999);
-    payload.searchCriteria.endDate = setEndDateEod.toISOString();
-  }
-  const url = `${configBaseUrl}/value/v1/feedback-service/values/feedback?context=${contextData}&top=10&after=${next}${
-    isWithTimestamp
-      ? `&timestampMin=${payload.searchCriteria.startDate}&timestampMax=${payload.searchCriteria.endDate}`
-      : ''
-  }`;
-  const headers = {
-    headers: { Authorization: `Bearer ${token}` },
-  };
 
   if (configBaseUrl && token) {
+    const feedbackUrl = `${configBaseUrl}/value/v1/feedback-service/values/feedback`;
+    const query = toFeedbackQuery(feedback.url, searchCriteria);
+    const headers = { Authorization: `Bearer ${token}` };
+
     try {
-      const response = yield call(axios.get, url, headers);
-      const feedbacks = response.data['feedback-service'].feedback;
-      yield put(
-        getFeedbacksSuccess(incrementRatingValue(feedbacks), response.data.page.after, response.data.page.next)
-      );
-      yield put(
-        UpdateIndicator({
-          show: false,
-        })
-      );
-      if (payload.resolve) {
-        payload.resolve(feedbacks);
-      }
+      const [{ data }, countResponse] = yield all([
+        call(axios.get, feedbackUrl, {
+          headers,
+          params: { ...query, top: pageSize, after: toOffsetCursor((page - 1) * pageSize) },
+        }),
+        includeTotal ? call(axios.get, `${feedbackUrl}/count`, { headers, params: query }) : null,
+      ]);
+      const feedbacks = data['feedback-service'].feedback;
+      yield put(getFeedbacksSuccess(incrementRatingValue(feedbacks), page, pageSize, countResponse?.data.count));
     } catch (error) {
       yield put({ type: 'FETCH_FEEDBACKS_FAILURE', error });
-      yield put(UpdateIndicator({ show: false }));
+      yield put(ErrorNotification({ message: 'Failed to load feedback.', error }));
     }
   }
+  yield put(UpdateIndicator({ show: false }));
 }
 
-function* exportFeedbacks(payload: ExportFeedbacksAction) {
+export function* exportFeedbacks(payload: ExportFeedbacksAction) {
   yield put(
     UpdateIndicator({
       show: true,
@@ -102,7 +109,9 @@ function* exportFeedbacks(payload: ExportFeedbacksAction) {
       while (hasMoreData) {
         const url = `${configBaseUrl}/value/v1/feedback-service/values/feedback?context=${contextData}${
           payload.searchCriteria.startDate && payload.searchCriteria.endDate
-            ? `&timestampMin=${payload.searchCriteria.startDate}&timestampMax=${payload.searchCriteria.endDate}`
+            ? `&timestampMin=${payload.searchCriteria.startDate}&timestampMax=${toTimestampMax(
+                payload.searchCriteria.endDate
+              )}`
             : ''
         }&top=${pageSize}${nextPage !== '' ? `&after=${nextPage}` : ''}`;
 

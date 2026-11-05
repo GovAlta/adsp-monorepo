@@ -51,12 +51,22 @@ export interface FeedbackMetrics {
   momLowestRatingPercent?: number | null;
 }
 
+export const FEEDBACK_PAGE_SIZES = [10, 25, 50, 100];
+export const DEFAULT_FEEDBACK_PAGE_SIZE = 25;
+
+export interface FeedbackPage {
+  // One based.
+  page: number;
+  pageSize: number;
+  total: number;
+}
+
 export interface FeedbackState {
   sites: FeedbackSite[];
   feedbacks: Feedback[];
   exportData: Feedback[];
   isLoading: boolean;
-  nextEntries: string;
+  page: FeedbackPage | null;
   metrics: FeedbackMetrics;
 }
 

@@ -16,7 +16,7 @@ export const initialState: FeedbackState = {
   sites: [],
   exportData: [],
   isLoading: false,
-  nextEntries: null,
+  page: null,
   metrics: {},
 };
 
@@ -25,13 +25,12 @@ function feedbackReducer(state: FeedbackState = initialState, action: FeedbackAc
     case FETCH_FEEDBACKS_SUCCESS_ACTION: {
       return {
         ...state,
-        feedbacks:
-          action.after && action.after !== ''
-            ? [...state.feedbacks, ...action.payload]
-            : action.payload
-            ? action.payload
-            : state.feedbacks,
-        nextEntries: action.next,
+        feedbacks: action.payload,
+        page: {
+          page: action.page,
+          pageSize: action.pageSize,
+          total: action.total ?? state.page?.total ?? 0,
+        },
       };
     }
     case EXPORT_FEEDBACKS_SUCCESS_ACTION: {

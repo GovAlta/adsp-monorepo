@@ -1,8 +1,15 @@
 import { expectSaga } from 'redux-saga-test-plan';
 import axios from 'axios';
-import { fetchFeedbackMetrics } from './sagas';
+import { exportFeedbacks, fetchFeedbackMetrics, fetchFeedbacks } from './sagas';
 import { getAccessToken } from '@store/tenant/sagas';
-import { FETCH_FEEDBACK_METRICS_SUCCESS_ACTION } from './actions';
+import { UpdateIndicator } from '@store/session/actions';
+import { ERROR_NOTIFICATION } from '@store/notifications/actions';
+import {
+  exportFeedbacks as exportFeedbacksAction,
+  FETCH_FEEDBACK_METRICS_SUCCESS_ACTION,
+  FETCH_FEEDBACKS_SUCCESS_ACTION,
+  getFeedbacks,
+} from './actions';
 
 const storeState = {
   config: { serviceUrls: { valueServiceApiUrl: 'http://mock-value-service.com' } },
@@ -30,10 +37,9 @@ const metricsFrom = (data: Record<string, unknown>) =>
       },
     })
     .run()
-    .then(({ effects }) =>
-      effects.put
-        .map((e) => e.payload.action)
-        .find((a) => a.type === FETCH_FEEDBACK_METRICS_SUCCESS_ACTION)?.metrics,
+    .then(
+      ({ effects }) =>
+        effects.put.map((e) => e.payload.action).find((a) => a.type === FETCH_FEEDBACK_METRICS_SUCCESS_ACTION)?.metrics
     );
 
 describe('fetchFeedbackMetrics', () => {
@@ -89,5 +95,150 @@ describe('fetchFeedbackMetrics', () => {
 
     expect(metrics.averageRating).toBeNull();
     expect(metrics.lowestRating).toBeNull();
+  });
+});
+
+describe('fetchFeedbacks', () => {
+  const site = { url: 'https://site.example', allowAnonymous: true };
+  const searchCriteria = { startDate: '2025-01-01T00:00:00.000Z', endDate: '2025-06-30T00:00:00.000Z' };
+  const feedbackUrl = 'http://mock-value-service.com/value/v1/feedback-service/values/feedback';
+  const filterParams = {
+    context: JSON.stringify({ site: site.url }),
+    timestampMin: searchCriteria.startDate,
+    // The selected end day is extended so feedback received on that day is included.
+    timestampMax: '2025-07-01T01:59:59.999Z',
+  };
+  const pageResponse = (ratingValues: number[]) => ({
+    data: {
+      'feedback-service': {
+        feedback: ratingValues.map((ratingValue) => ({ value: { rating: 'good', ratingValue } })),
+      },
+    },
+  });
+  const axiosGet = jest.fn();
+  const providers = {
+    call(effect, next) {
+      if (effect.fn === getAccessToken) {
+        return 'mock-token';
+      }
+      if (effect.fn === axios.get) {
+        return axiosGet(...effect.args);
+      }
+      return next();
+    },
+  };
+  const run = (action: ReturnType<typeof getFeedbacks>) =>
+    expectSaga(fetchFeedbacks, action).withState(storeState).provide(providers).run();
+
+  afterEach(() => {
+    axiosGet.mockReset();
+  });
+
+  it('reads the first page and the total for a new search', async () => {
+    axiosGet.mockImplementation((url: string) =>
+      Promise.resolve(url.endsWith('/count') ? { data: { count: 60 } } : pageResponse([3, 4]))
+    );
+
+    const { effects } = await run(getFeedbacks(site, { ...searchCriteria }, 1, 25, true));
+
+    expect(axiosGet).toHaveBeenCalledWith(
+      feedbackUrl,
+      expect.objectContaining({ params: { ...filterParams, top: 25, after: btoa('0') } })
+    );
+    expect(axiosGet).toHaveBeenCalledWith(`${feedbackUrl}/count`, expect.objectContaining({ params: filterParams }));
+    const success = effects.put.map((e) => e.payload.action).find((a) => a.type === FETCH_FEEDBACKS_SUCCESS_ACTION);
+    expect(success).toMatchObject({ page: 1, pageSize: 25, total: 60 });
+    // Ratings are stored 0-based and shown 1-based.
+    expect(success.payload.map((f) => f.value.ratingValue)).toEqual([4, 5]);
+  });
+
+  it('reads an intermediate page from its row offset without recounting', async () => {
+    axiosGet.mockResolvedValue(pageResponse([2]));
+
+    const { effects } = await run(getFeedbacks(site, { ...searchCriteria }, 2, 25));
+
+    expect(axiosGet).toHaveBeenCalledTimes(1);
+    expect(axiosGet).toHaveBeenCalledWith(
+      feedbackUrl,
+      expect.objectContaining({ params: { ...filterParams, top: 25, after: btoa('25') } })
+    );
+    const success = effects.put.map((e) => e.payload.action).find((a) => a.type === FETCH_FEEDBACKS_SUCCESS_ACTION);
+    expect(success).toMatchObject({ page: 2, pageSize: 25, total: undefined });
+  });
+
+  it('reads the last page from its row offset at the selected page size', async () => {
+    axiosGet.mockResolvedValue(pageResponse([1]));
+
+    await run(getFeedbacks(site, { ...searchCriteria }, 6, 10));
+
+    expect(axiosGet).toHaveBeenCalledWith(
+      feedbackUrl,
+      expect.objectContaining({ params: { ...filterParams, top: 10, after: btoa('50') } })
+    );
+  });
+
+  it('reports an empty page and a total of zero when nothing matches', async () => {
+    axiosGet.mockImplementation((url: string) =>
+      Promise.resolve(url.endsWith('/count') ? { data: { count: 0 } } : pageResponse([]))
+    );
+
+    const { effects } = await run(getFeedbacks(site, { ...searchCriteria }, 1, 25, true));
+
+    const success = effects.put.map((e) => e.payload.action).find((a) => a.type === FETCH_FEEDBACKS_SUCCESS_ACTION);
+    expect(success).toMatchObject({ payload: [], page: 1, total: 0 });
+  });
+
+  it('does not move the selected end date on each page request', async () => {
+    axiosGet.mockResolvedValue(pageResponse([1]));
+    const criteria = { ...searchCriteria };
+
+    await run(getFeedbacks(site, criteria, 2, 25));
+    await run(getFeedbacks(site, criteria, 3, 25));
+
+    expect(criteria.endDate).toBe(searchCriteria.endDate);
+    expect(axiosGet.mock.calls.map(([, config]) => config.params.timestampMax)).toEqual([
+      filterParams.timestampMax,
+      filterParams.timestampMax,
+    ]);
+  });
+
+  it('notifies of the failure and clears the loading indicator when a page cannot be read', async () => {
+    axiosGet.mockRejectedValue(new Error('request failed'));
+
+    const { effects } = await run(getFeedbacks(site, { ...searchCriteria }, 2, 25));
+
+    const actions = effects.put.map((e) => e.payload.action);
+    expect(actions.find((a) => a.type === FETCH_FEEDBACKS_SUCCESS_ACTION)).toBeUndefined();
+    expect(actions).toContainEqual(expect.objectContaining({ type: ERROR_NOTIFICATION }));
+    expect(actions[actions.length - 1]).toEqual(UpdateIndicator({ show: false }));
+  });
+});
+
+describe('exportFeedbacks', () => {
+  it('exports up to the end of the selected end day, matching the listed feedback', async () => {
+    const axiosGet = jest.fn().mockResolvedValue({ data: { 'feedback-service': { feedback: [] }, page: {} } });
+
+    await expectSaga(
+      exportFeedbacks,
+      exportFeedbacksAction(
+        { site: 'https://site.example' },
+        { startDate: '2025-01-01T00:00:00.000Z', endDate: '2025-06-30T00:00:00.000Z' }
+      )
+    )
+      .withState(storeState)
+      .provide({
+        call(effect, next) {
+          if (effect.fn === getAccessToken) {
+            return 'mock-token';
+          }
+          if (effect.fn === axios.get) {
+            return axiosGet(...effect.args);
+          }
+          return next();
+        },
+      })
+      .run();
+
+    expect(axiosGet.mock.calls[0][0]).toContain('&timestampMax=2025-07-01T01:59:59.999Z');
   });
 });
