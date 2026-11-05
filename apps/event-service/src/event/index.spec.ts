@@ -1,7 +1,7 @@
 import * as express from 'express';
 import { Application } from 'express';
 import { adspId } from '@abgov/adsp-service-sdk';
-import { createEventRouter } from './router';
+import { createDefinitionRouter, createEventRouter } from './router';
 import { Logger } from 'winston';
 import { createJobs } from './job';
 
@@ -64,6 +64,13 @@ const directoryServiceMock = {
   getResourceUrl: jest.fn(),
 };
 
+const auditServiceMock = {
+  record: jest.fn(),
+  query: jest.fn(),
+  flush: jest.fn(),
+  droppedEventCount: 0,
+};
+
 const mockApp: Application = express();
 
 describe('applyEventMiddleware', () => {
@@ -80,6 +87,7 @@ describe('applyEventMiddleware', () => {
       tokenProvider: tokenProviderMock,
       configurationService: configurationServiceMock,
       eventService: eventServiceMock,
+      auditService: auditServiceMock,
     };
 
     const result = applyEventMiddleware(mockApp, props);
@@ -87,13 +95,32 @@ describe('applyEventMiddleware', () => {
     const routerProps = { eventService: props.eventService, logger: props.logger };
     const slicedProps = { ...props };
     delete slicedProps.eventService;
+    delete slicedProps.auditService;
     const jobsProps = { ...slicedProps, events: props.eventService.getItems() };
 
     expect(createEventRouter).toHaveBeenCalledWith(expect.objectContaining(routerProps));
     expect(createEventRouter).toHaveBeenCalledWith(
       expect.objectContaining({ directory: props.directory, tokenProvider: props.tokenProvider }),
     );
+    expect(createDefinitionRouter).toHaveBeenCalledWith(expect.objectContaining({ recordAudit: expect.any(Function) }));
     expect(createJobs).toHaveBeenCalledWith(expect.objectContaining(jobsProps));
     expect(result).toBe(mockApp);
+  });
+
+  it('does not audit sending events', () => {
+    applyEventMiddleware(mockApp, {
+      serviceId: adspId`urn:ads:platform:event-service`,
+      logger,
+      directory: directoryServiceMock,
+      tokenProvider: tokenProviderMock,
+      configurationService: configurationServiceMock,
+      eventService: eventServiceMock,
+      auditService: auditServiceMock,
+    });
+
+    const [eventRouterProps] = (createEventRouter as jest.Mock).mock.calls.at(-1);
+    expect(Object.values(eventRouterProps)).not.toContain(auditServiceMock);
+    expect(eventRouterProps).not.toHaveProperty('recordAudit');
+    expect(createJobs).toHaveBeenLastCalledWith(expect.not.objectContaining({ auditService: expect.anything() }));
   });
 });

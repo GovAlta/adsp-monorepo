@@ -25,7 +25,14 @@ import { promisify } from 'util';
 import { environment } from './environments/environment';
 import { createEventService } from './amqp';
 import { ACCESS_SERVICE_ID, AccessAuditActions, createAccessAuditJob, LoginFailureLimiter } from './access';
-import { applyEventMiddleware, configurationSchema, EventServiceRoles, Namespace, NamespaceEntity } from './event';
+import {
+  applyEventMiddleware,
+  configurationSchema,
+  EventServiceAuditActions,
+  EventServiceRoles,
+  Namespace,
+  NamespaceEntity,
+} from './event';
 
 const logger = createLogger('event-service', environment.LOG_LEVEL);
 
@@ -62,6 +69,7 @@ const initializeApp = async (): Promise<express.Application> => {
     tokenProvider,
     configurationHandler,
     configurationService,
+    auditService,
     clearCached,
     healthCheck,
     metricsHandler,
@@ -107,6 +115,7 @@ const initializeApp = async (): Promise<express.Application> => {
         ...coreConfig,
       }),
       useLongConfigurationCacheTTL: true,
+      auditActions: EventServiceAuditActions,
       serviceConfigurations: [
         {
           serviceId: adspId`urn:ads:platform:audit-service`,
@@ -213,6 +222,7 @@ const initializeApp = async (): Promise<express.Application> => {
     tokenProvider,
     configurationService,
     eventService,
+    auditService,
   });
 
   const swagger = JSON.parse(await promisify(readFile)(`${__dirname}/swagger.json`, 'utf8'));
