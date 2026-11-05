@@ -8,6 +8,7 @@ import {
   EventServiceAuditActions,
   getChangedFields,
   toEventDefinitionAuditDetails,
+  toUpdateChangeSet,
 } from './audit';
 import type { EventDefinition } from './types';
 
@@ -50,8 +51,14 @@ describe('event definition audit', () => {
       });
     });
 
-    it('does not capture change sets', () => {
-      expect(EventServiceAuditActions.some((action) => action.captureChangeSet)).toBe(false);
+    it('captures change sets of updates and deletions only', () => {
+      expect(
+        Object.fromEntries(EventServiceAuditActions.map(({ name, captureChangeSet }) => [name, !!captureChangeSet])),
+      ).toEqual({
+        'event-definition.created': false,
+        'event-definition.updated': true,
+        'event-definition.deleted': true,
+      });
     });
   });
 
@@ -59,7 +66,7 @@ describe('event definition audit', () => {
     it('builds details with the definition as the resource', () => {
       expect(
         toEventDefinitionAuditDetails(user, tenantId, 'application-events', 'user-registration', {
-          namespaceCreated: true,
+          metadata: { namespaceCreated: true },
         }),
       ).toEqual({
         tenantId,
@@ -81,10 +88,32 @@ describe('event definition audit', () => {
 
     it('does not let metadata override the namespace and name', () => {
       const details = toEventDefinitionAuditDetails(user, tenantId, 'application-events', 'user-registration', {
-        namespace: 'other',
-        name: 'other',
+        metadata: { namespace: 'other', name: 'other' },
       });
       expect(details.metadata).toEqual({ namespace: 'application-events', name: 'user-registration' });
+    });
+
+    it('includes the change set', () => {
+      const changeSet = { before: { description: 'Old' }, after: { description: 'New' } };
+      const details = toEventDefinitionAuditDetails(user, tenantId, 'application-events', 'user-registration', {
+        changeSet,
+      });
+      expect(details.changeSet).toEqual(changeSet);
+      expect(details.metadata).not.toHaveProperty('changeSetOmitted');
+    });
+
+    it('omits a change set over the size limit', () => {
+      const details = toEventDefinitionAuditDetails(user, tenantId, 'application-events', 'user-registration', {
+        metadata: { namespaceDeleted: false },
+        changeSet: { before: { payloadSchema: { description: 'x'.repeat(16 * 1024) } }, after: null },
+      });
+      expect(details.changeSet).toBeUndefined();
+      expect(details.metadata).toEqual({
+        namespace: 'application-events',
+        name: 'user-registration',
+        namespaceDeleted: false,
+        changeSetOmitted: true,
+      });
     });
   });
 
@@ -119,6 +148,30 @@ describe('event definition audit', () => {
     });
   });
 
+  describe('toUpdateChangeSet', () => {
+    const before = { name: 'user-registration', description: 'Old', payloadSchema: { type: 'object' } };
+
+    it('includes only the changed fields', () => {
+      const after = { ...before, description: 'New' };
+      expect(toUpdateChangeSet(before, after, ['description'])).toEqual({
+        before: { description: 'Old' },
+        after: { description: 'New' },
+      });
+    });
+
+    it('leaves out fields missing on one side', () => {
+      const after = { name: before.name, payloadSchema: before.payloadSchema } as unknown as EventDefinition;
+      expect(toUpdateChangeSet(before, after, ['description'])).toEqual({
+        before: { description: 'Old' },
+        after: {},
+      });
+    });
+
+    it('returns undefined when nothing changed', () => {
+      expect(toUpdateChangeSet(before, before, [])).toBeUndefined();
+    });
+  });
+
   describe('createEventDefinitionAuditRecorder', () => {
     const auditServiceMock = { record: jest.fn(), query: jest.fn(), flush: jest.fn(), droppedEventCount: 0 };
     const loggerMock = { warn: jest.fn() };
@@ -132,13 +185,13 @@ describe('event definition audit', () => {
 
     it('records the action with the definition details', () => {
       recordAudit(EventDefinitionDeletedAuditAction, user, tenantId, 'application-events', 'user-registration', {
-        namespaceDeleted: true,
+        metadata: { namespaceDeleted: true },
       });
 
       expect(auditServiceMock.record).toHaveBeenCalledWith(
         EventDefinitionDeletedAuditAction,
         toEventDefinitionAuditDetails(user, tenantId, 'application-events', 'user-registration', {
-          namespaceDeleted: true,
+          metadata: { namespaceDeleted: true },
         }),
       );
     });

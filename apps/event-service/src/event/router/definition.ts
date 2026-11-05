@@ -16,6 +16,7 @@ import {
   EventDefinitionDeletedAuditAction,
   EventDefinitionUpdatedAuditAction,
   getChangedFields,
+  toUpdateChangeSet,
 } from '../audit';
 import { EventServiceConfigurationRoles, EventServiceRoles } from '../role';
 import type { EventDefinition, Namespace } from '../types';
@@ -168,7 +169,7 @@ export function createDefinition(
 
       const updated = await client.updateEntry(tenantId, namespace, mergeDefinition(tenant, namespace, definition));
       recordAudit(EventDefinitionCreatedAuditAction, req.user, tenantId, namespace, definition.name, {
-        namespaceCreated: !tenant?.[namespace],
+        metadata: { namespaceCreated: !tenant?.[namespace] },
       });
       res.send(toDefinitionResponse(namespace, getDefinition(updated, namespace, definition.name), false));
     } catch (err) {
@@ -199,8 +200,10 @@ export function updateDefinition(
       assertValidJsonSchema(validationService, namespace, definition);
 
       const updated = await client.updateEntry(tenantId, namespace, mergeDefinition(tenant, namespace, definition));
+      const changedFields = getChangedFields(existing, definition);
       recordAudit(EventDefinitionUpdatedAuditAction, req.user, tenantId, namespace, name, {
-        changedFields: getChangedFields(existing, definition),
+        metadata: { changedFields },
+        changeSet: toUpdateChangeSet(existing, definition, changedFields),
       });
       res.send(toDefinitionResponse(namespace, getDefinition(updated, namespace, name), false));
     } catch (err) {
@@ -220,7 +223,8 @@ export function deleteDefinition(
       assertUserCanAdminister(req.user, tenantId, 'delete event definition');
 
       const tenant = await client.getTenantConfiguration(tenantId);
-      if (!getDefinition(tenant, namespace, name)) {
+      const existing = getDefinition(tenant, namespace, name);
+      if (!existing) {
         throw new NotFoundError('event definition', `${namespace}:${name}`);
       }
 
@@ -232,7 +236,10 @@ export function deleteDefinition(
         await client.updateEntry(tenantId, namespace, remaining);
       }
 
-      recordAudit(EventDefinitionDeletedAuditAction, req.user, tenantId, namespace, name, { namespaceDeleted });
+      recordAudit(EventDefinitionDeletedAuditAction, req.user, tenantId, namespace, name, {
+        metadata: { namespaceDeleted },
+        changeSet: { before: { ...existing }, after: null },
+      });
       res.send({ deleted: true });
     } catch (err) {
       next(err);

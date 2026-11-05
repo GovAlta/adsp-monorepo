@@ -161,7 +161,25 @@ describe('definition router audit', () => {
         actor: expectedActor,
         resource: { type: 'event-definition', id: 'application-events:user-registration' },
         metadata: { namespace: 'application-events', name: 'user-registration', changedFields: ['description'] },
+        changeSet: { before: { description: 'A user registered' }, after: { description: 'Updated' } },
       });
+    });
+
+    it('records the changed payload schema in the change set', async () => {
+      const payloadSchema = { type: 'object', properties: { id: { type: 'string' } } };
+      await handler(
+        createRequest({ user: admin, params, body: { description: definition.description, payloadSchema } }),
+        res as unknown as Response,
+        next,
+      );
+
+      expect(auditServiceMock.record).toHaveBeenCalledWith(
+        EventDefinitionUpdatedAuditAction,
+        expect.objectContaining({
+          metadata: { namespace: 'application-events', name: 'user-registration', changedFields: ['payloadSchema'] },
+          changeSet: { before: { payloadSchema: definition.payloadSchema }, after: { payloadSchema } },
+        }),
+      );
     });
 
     it('records an update without changes', async () => {
@@ -181,6 +199,7 @@ describe('definition router audit', () => {
           metadata: { namespace: 'application-events', name: 'user-registration', changedFields: [] },
         }),
       );
+      expect(auditServiceMock.record.mock.calls[0][1].changeSet).toBeUndefined();
     });
 
     it('records nothing for a missing definition', async () => {
@@ -220,8 +239,28 @@ describe('definition router audit', () => {
         actor: expectedActor,
         resource: { type: 'event-definition', id: 'application-events:user-registration' },
         metadata: { namespace: 'application-events', name: 'user-registration', namespaceDeleted: true },
+        changeSet: { before: definition, after: null },
       });
       expect(EventDefinitionDeletedAuditAction.severity).toBe('warning');
+    });
+
+    it('omits the change set of a deleted definition over the size limit', async () => {
+      const large = { ...definition, payloadSchema: { type: 'object', description: 'x'.repeat(16 * 1024) } };
+      clientMock.getTenantConfiguration.mockResolvedValueOnce({
+        'application-events': { name: 'application-events', definitions: { 'user-registration': large } },
+      });
+
+      await handler(createRequest({ user: admin, params }), res as unknown as Response, next);
+
+      expect(next).not.toHaveBeenCalled();
+      const [, details] = auditServiceMock.record.mock.calls[0];
+      expect(details.changeSet).toBeUndefined();
+      expect(details.metadata).toEqual({
+        namespace: 'application-events',
+        name: 'user-registration',
+        namespaceDeleted: true,
+        changeSetOmitted: true,
+      });
     });
 
     it('records event-definition.deleted when other definitions remain', async () => {
