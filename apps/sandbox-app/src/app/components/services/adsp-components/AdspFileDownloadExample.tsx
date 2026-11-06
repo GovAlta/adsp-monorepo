@@ -147,7 +147,7 @@ export const AdspFileDownloadExample = () => {
         </GoabText>
 
         {!client ? (
-          <GoabText size="body-m" testId="file-service-unavailable">
+          <GoabText size="body-m" data-testid="file-service-unavailable">
             The File service URL isn't available from the directory yet.
           </GoabText>
         ) : (

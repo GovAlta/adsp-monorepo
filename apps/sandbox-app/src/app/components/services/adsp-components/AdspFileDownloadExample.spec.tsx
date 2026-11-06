@@ -53,7 +53,9 @@ describe('AdspFileDownloadExample', () => {
     render(<AdspFileDownloadExample />);
 
     // Assert
-    expect(screen.getByText("The File service URL isn't available from the directory yet.")).toBeInTheDocument();
+    expect(screen.getByTestId('file-service-unavailable')).toHaveTextContent(
+      "The File service URL isn't available from the directory yet.",
+    );
     expect(global.fetch).not.toHaveBeenCalled();
   });
 
