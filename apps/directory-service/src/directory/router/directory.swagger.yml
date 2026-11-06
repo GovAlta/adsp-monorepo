@@ -56,6 +56,21 @@ components:
                 items:
                   $ref: '#/components/schemas/Link'
 
+'/directory/v2/namespaces':
+  post:
+    tags:
+      - Directory
+    description: >
+      Create the directory namespace of the current user's tenant. The namespace name is the tenant name in kebab
+      case. Requires the directory-admin role.
+    responses:
+      201:
+        description: Namespace created.
+      400:
+        description: The namespace of the tenant already exists.
+      403:
+        description: User does not have the directory-admin role.
+
 '/directory/v2/namespaces/{namespace}/entries':
   get:
     tags:
@@ -279,6 +294,41 @@ components:
         description: Unauthorized
 
 '/directory/v2/namespaces/{namespace}/services/{service}/apis/{api}':
+  get:
+    tags:
+      - Directory
+    description: Fetch the directory entry of the specified service API.
+    parameters:
+      - name: namespace
+        description: namespace of the directory entry
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: service
+        description: name of the service
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: api
+        description: name of the service API
+        in: path
+        required: true
+        schema:
+          type: string
+    responses:
+      200:
+        description: Directory entry of the service API.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DirectoryEntry'
+      400:
+        description: Bad request
+      404:
+        description: Service API not found in the namespace.
+
   patch:
     tags:
       - Directory
