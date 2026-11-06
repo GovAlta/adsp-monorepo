@@ -33,12 +33,13 @@ import {
   ResourceResolutionFailedDefinition,
   ResourceDeletedDefinition,
   TagDeletedDefinition,
+  DirectoryAuditActions,
 } from './directory';
 import { createDirectoryQueueService } from './amqp';
 
 const logger = createLogger('directory-service', environment.LOG_LEVEL);
 
-const initializeApp = async (): Promise<express.Application> => {
+const initializeApp = async () => {
   const app = express();
 
   app.use(compression());
@@ -63,6 +64,7 @@ const initializeApp = async (): Promise<express.Application> => {
   const {
     coreStrategy,
     eventService,
+    auditService,
     healthCheck,
     tenantStrategy,
     tenantService,
@@ -108,6 +110,8 @@ const initializeApp = async (): Promise<express.Application> => {
         ResourceDeletedDefinition,
         TagDeletedDefinition,
       ],
+      auditActions: DirectoryAuditActions,
+      audit: { enabled: environment.DIRECTORY_AUDIT_ENABLED },
       configuration: {
         description: 'Resource types for resolving browse name and description for tagged resources.',
         schema: configurationSchema,
@@ -255,6 +259,7 @@ const initializeApp = async (): Promise<express.Application> => {
     tokenProvider,
     tenantService,
     eventService,
+    auditService,
     configurationService,
     queueService,
   });
@@ -299,14 +304,33 @@ const initializeApp = async (): Promise<express.Application> => {
   const errorHandler = createErrorHandler(logger);
   app.use(errorHandler);
 
-  return app;
+  return { app, auditService };
 };
 
-initializeApp().then((app) => {
+initializeApp().then(({ app, auditService }) => {
   const port = environment.PORT || 3331;
 
   const server = app.listen(port, () => {
     logger.info(`Listening at http://localhost:${port}`);
   });
   server.on('error', (err) => logger.error(`Error encountered in server: ${err}`));
+
+  // Stop accepting requests, then deliver any buffered audit events before the process exits.
+  let stopping = false;
+  const shutdown = async () => {
+    if (stopping) return;
+    stopping = true;
+    // Fallback in case the flush or close hangs.
+    setTimeout(() => process.exit(1), 15000).unref();
+    server.close();
+    try {
+      await auditService.flush();
+      process.exit(0);
+    } catch (err) {
+      logger.error(`Error encountered flushing audit events on shutdown: ${err}`);
+      process.exit(1);
+    }
+  };
+  process.once('SIGTERM', shutdown);
+  process.once('SIGINT', shutdown);
 });
