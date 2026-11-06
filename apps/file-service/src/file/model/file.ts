@@ -1,5 +1,5 @@
 import { AdspId, isAllowedUser, User } from '@abgov/adsp-service-sdk';
-import { UnauthorizedError, InvalidOperationError } from '@core-services/core-common';
+import { UnauthorizedError, InvalidOperationError, InvalidValueError } from '@core-services/core-common';
 import { Readable } from 'stream';
 import { File, FileRecord, NewFile, ServiceUserRoles, UserInfo } from '../types';
 import { FileRepository } from '../repository';
@@ -33,7 +33,7 @@ export class FileEntity implements File {
     user: User,
     type: FileTypeEntity,
     values: NewFile,
-    content: Readable
+    content: Readable,
   ): Promise<FileEntity> {
     if (!type.canUpdateFile(user)) {
       throw new UnauthorizedError('User not authorized to create file.');
@@ -50,6 +50,10 @@ export class FileEntity implements File {
 
     const fileTypeDetector = new FileTypeDetector(logger, content);
     const result = await fileTypeDetector.detect();
+
+    if (!type.allowedFileTypes.includes(result.fileType.ext)) {
+      throw new InvalidValueError(`file type`, `Invalid file type extension`);
+    }
 
     if (result.fileType?.mime) {
       entity.mimeType = result.fileType.mime;
@@ -70,7 +74,7 @@ export class FileEntity implements File {
     private storageProvider: FileStorageProvider,
     private repository: FileRepository,
     public type: FileTypeEntity,
-    values: (NewFile & { createdBy: UserInfo; created: Date }) | FileRecord
+    values: (NewFile & { createdBy: UserInfo; created: Date }) | FileRecord,
   ) {
     this.recordId = values.recordId;
     this.filename = values.filename;

@@ -4,7 +4,7 @@ import { Logger } from 'winston';
 
 interface CustomConcatStream {
   fileStream: Readable;
-  fileType: { mime: string };
+  fileType: { mime: string; ext: string };
 }
 
 export class FileTypeDetector {
@@ -21,6 +21,7 @@ export class FileTypeDetector {
 
     const response = (await this.createCustomConcatStream(this.content)) as CustomConcatStream;
     const fileType = response.fileType;
+
     const end = Date.now();
 
     this.logger.debug('File type as determined: ' + fileType?.mime);
@@ -32,7 +33,6 @@ export class FileTypeDetector {
   private createCustomConcatStream(readableStream) {
     return new Promise((resolve, reject) => {
       const customStream = new Readable({
-        //eslint-disable-next-line
         read() {},
       });
 

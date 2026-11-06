@@ -11,6 +11,7 @@ export interface FileTypeItem {
   name: string;
   updateRoles: string[];
   readRoles: string[];
+  allowedFileTypes?: string[];
   anonymousRead: boolean;
   hasFile?: boolean;
   securityClassification?: string;
@@ -30,6 +31,7 @@ export const FileTypeDefault: FileTypeItem = {
   anonymousRead: false,
   hasFile: false,
   securityClassification: SecurityClassification.ProtectedA,
+  allowedFileTypes: [],
 };
 
 export const FileTypeDefaultOnEdit: FileTypeItem = {
@@ -40,6 +42,7 @@ export const FileTypeDefaultOnEdit: FileTypeItem = {
   anonymousRead: false,
   hasFile: false,
   securityClassification: '',
+  allowedFileTypes: [],
 };
 
 export interface Result {

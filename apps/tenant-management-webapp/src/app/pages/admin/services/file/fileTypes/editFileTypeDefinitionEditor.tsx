@@ -68,6 +68,7 @@ export const EditFileTypeDefinitionEditor = (): JSX.Element => {
   const [saveModal, setSaveModal] = useState({ visible: false, closeEditor: false });
   const [initialFileType, setInitialFileType] = useState<FileTypeItem>(FileTypeDefault);
   const [fileType, setFileType] = useState<FileTypeItem>(FileTypeDefaultOnEdit);
+  const [allowedFileTypesText, setAllowedFileTypesText] = useState<string>('');
   const { fetchKeycloakRolesState } = useSelector((state: RootState) => ({
     fetchKeycloakRolesState: state.session.indicator?.details[FETCH_KEYCLOAK_SERVICE_ROLES] || '',
   }));
@@ -109,10 +110,16 @@ export const EditFileTypeDefinitionEditor = (): JSX.Element => {
       const selectedFileType = foundFileType;
       setFileType(selectedFileType);
       setInitialFileType(selectedFileType);
+      setAllowedFileTypesText((selectedFileType.allowedFileTypes || []).join(', '));
       //For backwards compatibility
       if (!foundFileType?.securityClassification || foundFileType?.securityClassification === undefined) {
         fileType.securityClassification = '';
       }
+
+      if (!foundFileType.allowedFileTypes || foundFileType?.allowedFileTypes === undefined) {
+        fileType.allowedFileTypes = [];
+      }
+
       const isCalloutOpen =
         foundFileType.anonymousRead &&
         foundFileType.securityClassification !== SecurityClassification.Public &&
@@ -131,6 +138,10 @@ export const EditFileTypeDefinitionEditor = (): JSX.Element => {
       if (!foundFileType?.securityClassification || foundFileType?.securityClassification === undefined) {
         fileType.securityClassification = '';
       }
+      if (!foundFileType.allowedFileTypes || foundFileType?.allowedFileTypes === undefined) {
+        fileType.allowedFileTypes = [];
+      }
+
       const isCalloutOpen =
         fileType.anonymousRead &&
         fileType.securityClassification !== SecurityClassification.Public &&
@@ -219,7 +230,8 @@ export const EditFileTypeDefinitionEditor = (): JSX.Element => {
               <MakePublicPadding>
                 <DropDownZIndex>
                   <GoabFormItem label="Select a security classification">
-                    <GoabDropdown size="compact"
+                    <GoabDropdown
+                      size="compact"
                       name="securityClassifications"
                       width="25rem"
                       value={fileType?.securityClassification}
@@ -247,7 +259,8 @@ export const EditFileTypeDefinitionEditor = (): JSX.Element => {
                     </GoabDropdown>
                   </GoabFormItem>
                   <div style={{ paddingTop: '0.625rem' }}>
-                    <GoabCheckbox size="compact"
+                    <GoabCheckbox
+                      size="compact"
                       checked={fileType?.anonymousRead}
                       name="file-type-anonymousRead-checkbox"
                       testId="file-type-anonymousRead-checkbox"
@@ -282,6 +295,30 @@ export const EditFileTypeDefinitionEditor = (): JSX.Element => {
                   </FileTypeEditorWarningCalloutWrapper>
                 )}
               </MakePublicPadding>
+              <GoabFormItem
+                mb={'m'}
+                label="Allowed file types"
+                helpText="Comma-separated list, for example: application/pdf, image/png"
+              >
+                <GoabInput
+                  size="compact"
+                  name="allowed-file-types"
+                  testId="allowed-file-types-input"
+                  aria-label="goa-input-allowed-file-types"
+                  value={allowedFileTypesText}
+                  width="25rem"
+                  onChange={(detail: GoabInputOnChangeDetail) => {
+                    setAllowedFileTypesText(detail.value);
+                    setFileType({
+                      ...fileType,
+                      allowedFileTypes: detail.value
+                        .split(',')
+                        .map((value) => value.trim())
+                        .filter((value) => value.length > 0),
+                    });
+                  }}
+                />
+              </GoabFormItem>
               <GoabFormItem label="">
                 <RetentionPolicyLabel>Retention policy</RetentionPolicyLabel>
                 <GoabTooltip
@@ -291,7 +328,8 @@ export const EditFileTypeDefinitionEditor = (): JSX.Element => {
                   <GoabIcon type="information-circle" ariaLabel="Retention policy"></GoabIcon>
                 </GoabTooltip>
                 <RetentionPolicyWrapper>
-                  <GoabCheckbox size="compact"
+                  <GoabCheckbox
+                    size="compact"
                     name="retentionActive"
                     key="retention-period-active-checkbox"
                     checked={fileType?.rules?.retention?.active === true}
@@ -313,7 +351,8 @@ export const EditFileTypeDefinitionEditor = (): JSX.Element => {
                   <RetentionPeriodText>Enter retention period</RetentionPeriodText>
                 </RetentionPolicyWrapper>
               </GoabFormItem>
-              <GoabInput size="compact"
+              <GoabInput
+                size="compact"
                 onChange={(detail: GoabInputOnChangeDetail) => {
                   if (parseInt(detail.value) > 0) {
                     setFileType({
