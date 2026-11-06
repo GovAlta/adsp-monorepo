@@ -188,6 +188,12 @@ describe('servicePageUtils', () => {
           url: '/testTenant/services/adsp-components/conversation',
           testId: 'adspConversation',
         },
+        {
+          id: 'adspFileDownload',
+          name: 'File download',
+          url: '/testTenant/services/adsp-components/file-download',
+          testId: 'adspFileDownload',
+        },
       ]);
     });
   });

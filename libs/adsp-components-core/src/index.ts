@@ -5,3 +5,4 @@ export * from './lib/theme/css-variables';
 export * from './lib/calendar';
 export type { AdspConversationTheme } from './lib/conversation/conversationTheme';
 export * from './lib/conversation';
+export * from './lib/file';
