@@ -20,7 +20,11 @@ export const createServiceMetricRollupJob =
     logger: Logger,
     mappings: ServiceMetricRollupMapping[] = serviceMetricRollupMappings
   ) =>
-  async (range = getTrailingCompletedDayRange(3), criteria?: ServiceMetricRollupCriteria): Promise<number> => {
+  async (
+    range = getTrailingCompletedDayRange(3),
+    criteria?: ServiceMetricRollupCriteria,
+    onTenantRollups?: (rollupsByTenant: Record<string, number>) => void
+  ): Promise<number> => {
     const knownTenantServices = await repository.getKnownTenantServices(mappings, criteria);
 
     if (knownTenantServices.length === 0) {
@@ -29,17 +33,20 @@ export const createServiceMetricRollupJob =
     }
 
     const rollups = [];
+    const rollupsByTenant: Record<string, number> = {};
     for (const day of getDays(range.start, range.end)) {
       for (const { tenant, service } of knownTenantServices) {
         const mapping = mappings.find((candidate) => candidate.service === service);
         if (mapping) {
           rollups.push(await repository.readRollup(day, tenant, mapping));
+          rollupsByTenant[tenant] = (rollupsByTenant[tenant] ?? 0) + 1;
         }
       }
     }
 
     await repository.upsertRollups(rollups);
     logger.info(`Stored ${rollups.length} service metric rollup record(s).`);
+    onTenantRollups?.(rollupsByTenant);
     return rollups.length;
   };
 

@@ -93,6 +93,19 @@ The job is off by default. Set `SERVICE_METRIC_ROLLUP_JOB_ENABLED=true` to run i
 
 A rollup can also be run on demand with `POST /value/v1/service-metric-rollups/run` and the `value-writer` role. The body can set `start` and `end` dates, which default to the trailing days. Core users can set `tenantId` or leave it out to roll up all tenants; tenant users always roll up their own tenant. The current partial day and future days are rejected.
 
+## Audit
+
+Value service records audit events for administrative changes through the [audit service](audit-service.md), under the `value-service` namespace. Each record includes the actor and the affected resource.
+
+| Action | Category | Severity | Retention | Recorded when |
+|---|---|---|---|---|
+| `value-definition.created` | administrative | info | compliance | A value definition is created. |
+| `value-definition.updated` | administrative | info | compliance | A definition is updated; metadata lists the changed fields. |
+| `value-definition.deleted` | administrative | warning | compliance | A value definition is deleted. |
+| `service-metric-rollup.triggered` | runtime | info | standard | A rollup is triggered manually via the API. A rollup across all tenants records one event per tenant rolled up. |
+
+Value writes, the scheduled rollup job and read operations are not audited. Set `VALUE_AUDIT_ENABLED=false` to disable audit recording for the service; when unset, the SDK `AUDIT_ENABLED` setting applies (enabled by default).
+
 ## Code examples
 
 ### Write a value

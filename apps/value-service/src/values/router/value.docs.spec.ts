@@ -84,6 +84,7 @@ describe('value router documented behaviour', () => {
         serviceMetricRollupRepository: {} as never,
         serviceMetricRollupTrailingDays: 7,
         eventService: eventServiceMock,
+        auditService: { record: jest.fn().mockResolvedValue({}), flush: jest.fn() } as never,
       }),
     );
     app.use(createErrorHandler(loggerMock));
