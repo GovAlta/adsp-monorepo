@@ -17,6 +17,7 @@ describe('configuration audit', () => {
 
   beforeEach(() => {
     auditService.record.mockReset();
+    (logger.warn as jest.Mock).mockClear();
     auditService.record.mockResolvedValue({ status: 'recorded', eventId: 'event-1' });
   });
 
@@ -166,6 +167,23 @@ describe('configuration audit', () => {
 
     await new Promise(process.nextTick);
     expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining('was not recorded'), expect.anything());
+  });
+
+  it('does not log when auditing is disabled', async () => {
+    auditService.record.mockResolvedValue({
+      status: 'rejected',
+      eventId: 'event-1',
+      code: 'audit_disabled',
+      reason: 'disabled',
+    });
+    auditConfiguration(auditService, logger, ConfigurationUpdatedAuditAction, user, {
+      namespace: 'platform',
+      name: 'test',
+      tenantId,
+    });
+
+    await new Promise(process.nextTick);
+    expect(logger.warn).not.toHaveBeenCalled();
   });
 
   it('does not throw when the actor cannot be resolved', () => {
