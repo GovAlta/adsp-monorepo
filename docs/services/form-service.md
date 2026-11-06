@@ -94,7 +94,7 @@ Operations that an intake application performs for an anonymous applicant are re
 
 Reading forms, submissions or form data (other than by access code) is not audited. Submission disposition and notes are not audited. Denied and failed operations are not recorded. Changes to form definitions are not recorded by form service, since form definitions are managed in the [configuration service](configuration-service.md); audit records of those changes are in the `configuration-service` namespace.
 
-Draft data is saved frequently, so form service sends audit events in batches of up to 100 events and delivers buffered events on shutdown. Audit failures are logged by the SDK and do not fail the form operation. The form service account requires the `audit-writer` role of `urn:ads:platform:audit-service`.
+Draft data is saved frequently, so form service sends audit events in batches of up to 100 events. On shutdown, it waits for in-flight requests to complete and then delivers the buffered events before exiting. Audit failures are logged by the SDK and do not fail the form operation. The form service account requires the `audit-writer` role of `urn:ads:platform:audit-service`.
 
 Audit recording is on by default. Set the environment variable `FORM_AUDIT_ENABLED=false` on form service to turn it off, or `true` to turn it on regardless of the SDK `AUDIT_ENABLED` variable, which applies when `FORM_AUDIT_ENABLED` is not set. The action catalog is still registered while recording is off, so turning it back on needs only a restart.
 

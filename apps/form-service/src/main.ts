@@ -57,7 +57,7 @@ import {
   createMessageNotificationJob,
   FormAuditActions,
 } from './form';
-import { createRepositories } from './mongo';
+import { closeRepositories, createRepositories } from './mongo';
 import { createNotificationService } from './notification';
 import { createFileService } from './file';
 import { createQueueTaskService } from './task';
@@ -65,6 +65,7 @@ import { createCommentService } from './comment';
 import { isFormDefinition } from './utils';
 import { createPdfService } from './pdf';
 import { createCalendarService } from './calendar';
+import { createShutdownHandler } from './shutdown';
 
 const logger = createLogger('form-service', environment.LOG_LEVEL);
 
@@ -100,6 +101,7 @@ const initializeApp = async () => {
     metricsHandler,
     healthCheck,
     traceHandler,
+    shutdownTelemetry,
   } = await initializePlatform(
     {
       serviceId,
@@ -374,10 +376,10 @@ const initializeApp = async () => {
   const errorHandler = createErrorHandler(logger);
   app.use(errorHandler);
 
-  return { app, auditService };
+  return { app, auditService, shutdownTelemetry };
 };
 
-initializeApp().then(({ app, auditService }) => {
+initializeApp().then(({ app, auditService, shutdownTelemetry }) => {
   const port = environment.PORT || 3343;
 
   const server = app.listen(port, () => {
@@ -385,22 +387,13 @@ initializeApp().then(({ app, auditService }) => {
   });
   server.on('error', (err) => logger.error(`Error encountered in server: ${err}`));
 
-  // Stop accepting requests, then deliver any buffered audit events before the process exits.
-  let stopping = false;
-  const shutdown = async () => {
-    if (stopping) return;
-    stopping = true;
-    // Fallback in case the flush or close hangs.
-    setTimeout(() => process.exit(1), 15000).unref();
-    server.close();
-    try {
-      await auditService.flush();
-      process.exit(0);
-    } catch (err) {
-      logger.error(`Error encountered flushing audit events on shutdown: ${err}`);
-      process.exit(1);
-    }
-  };
+  const shutdown = createShutdownHandler({
+    server,
+    auditService,
+    shutdownTelemetry,
+    closeDatabase: closeRepositories,
+    logger,
+  });
   process.once('SIGTERM', shutdown);
   process.once('SIGINT', shutdown);
 });
