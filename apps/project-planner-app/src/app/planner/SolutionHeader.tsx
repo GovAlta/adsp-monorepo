@@ -46,6 +46,7 @@ interface SolutionHeaderProps {
   onBack?: () => void;
   hideExports?: boolean;
   disabled?: boolean;
+  canDelete?: boolean;
   onBusyChange?: (busy: boolean) => void;
   // Bumped when something outside the solution record changes, such as a specialist chat.
   versionsToken?: number;
@@ -58,6 +59,7 @@ export const SolutionHeader: FunctionComponent<SolutionHeaderProps> = ({
   onBack,
   hideExports = false,
   disabled = false,
+  canDelete = true,
   onBusyChange,
   versionsToken,
 }) => {
@@ -71,6 +73,11 @@ export const SolutionHeader: FunctionComponent<SolutionHeaderProps> = ({
   const latestVersion = versions?.results?.[0];
   const versionName =
     latestVersion && latestVersion.name !== `Version ${latestVersion.number}` ? latestVersion.name : undefined;
+  const actionGroupParts = ['Versions', ...(!hideExports ? ['export'] : []), ...(canDelete ? ['delete'] : [])];
+  const actionGroupLabel =
+    actionGroupParts.length > 2
+      ? `${actionGroupParts.slice(0, -1).join(', ')} and ${actionGroupParts[actionGroupParts.length - 1]}`
+      : actionGroupParts.join(' and ');
 
   useEffect(() => {
     onBusyChange?.(working);
@@ -183,7 +190,7 @@ export const SolutionHeader: FunctionComponent<SolutionHeaderProps> = ({
             </Row>
           )}
         </LeftGroup>
-        <Row role="group" aria-label={hideExports ? 'Versions and delete' : 'Versions, export and delete'}>
+        <Row role="group" aria-label={actionGroupLabel}>
           <GoabButton size="compact" type="secondary" testId="open-versions" onClick={() => setShowVersions(true)}>
             Versions
           </GoabButton>
@@ -215,15 +222,17 @@ export const SolutionHeader: FunctionComponent<SolutionHeaderProps> = ({
               />
             </>
           )}
-          <GoabIconButton
-            icon="trash"
-            variant="destructive"
-            title="Delete solution"
-            ariaLabel="Delete solution"
-            testId="delete-solution"
-            disabled={blocked}
-            onClick={() => setConfirmDelete(true)}
-          />
+          {canDelete && (
+            <GoabIconButton
+              icon="trash"
+              variant="destructive"
+              title="Delete solution"
+              ariaLabel="Delete solution"
+              testId="delete-solution"
+              disabled={blocked}
+              onClick={() => setConfirmDelete(true)}
+            />
+          )}
         </Row>
       </Bar>
       <ConfirmDelete

@@ -11,7 +11,9 @@ import {
   GoabTable,
   GoabTableSortHeader,
 } from '@abgov/react-components';
+import { useSelector } from 'react-redux';
 import styled from 'styled-components';
+import { selectUserId } from '@store/session/selectors';
 import { usePlannerApi } from './api';
 import { ConfirmDelete } from './ConfirmDelete';
 import { Solution } from './model';
@@ -175,6 +177,9 @@ export const Solutions: FunctionComponent<SolutionsProps> = ({ selectedId, onSel
     }
   };
 
+  const userId = useSelector(selectUserId);
+  const canDelete = (solution: Solution) => !solution.createdById || solution.createdById === userId;
+
   return (
     <section aria-label="Solutions">
       <TopRow>
@@ -308,14 +313,16 @@ export const Solutions: FunctionComponent<SolutionsProps> = ({ selectedId, onSel
                       testId={`export-report-solution-${solution.id}`}
                       onClick={() => exportReport(solution)}
                     />
-                    <GoabIconButton
-                      icon="trash"
-                      variant="destructive"
-                      title="Delete solution"
-                      ariaLabel={`Delete ${solution.name}`}
-                      testId={`delete-solution-${solution.id}`}
-                      onClick={() => setDeleting(solution)}
-                    />
+                    {canDelete(solution) && (
+                      <GoabIconButton
+                        icon="trash"
+                        variant="destructive"
+                        title="Delete solution"
+                        ariaLabel={`Delete ${solution.name}`}
+                        testId={`delete-solution-${solution.id}`}
+                        onClick={() => setDeleting(solution)}
+                      />
+                    )}
                   </td>
                 </tr>
               ))

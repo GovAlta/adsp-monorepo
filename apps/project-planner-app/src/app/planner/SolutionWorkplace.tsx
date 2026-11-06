@@ -10,6 +10,7 @@ import {
 } from '@abgov/react-components';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@store/index';
+import { selectUserId } from '@store/session/selectors';
 import { SuccessNotification } from '@store/notifications/actions';
 import { Concepts, Hypotheses, NextSteps, PatternMatches } from './AnalysisSections';
 import { usePlannerApi } from './api';
@@ -123,6 +124,7 @@ export const SolutionWorkplace: FunctionComponent<SolutionWorkplaceProps> = ({
   const api = usePlannerApi();
   const dispatch = useDispatch();
   const notificationCount = useSelector((state: RootState) => state.notifications.notifications.length);
+  const userId = useSelector(selectUserId);
   const [solution, setSolution] = useState<Solution>();
   const [problemDraft, setProblemDraft] = useState('');
   const [specialists, setSpecialists] = useState<SpecialistDefinition[]>([]);
@@ -494,6 +496,7 @@ export const SolutionWorkplace: FunctionComponent<SolutionWorkplaceProps> = ({
         api={api}
         onSolutionChange={updateSolution}
         disabled={busy || discoveryBusy || blueprintBusy}
+        canDelete={!solution.createdById || solution.createdById === userId}
         onBusyChange={setHeaderBusy}
         versionsToken={versionsToken}
         onBack={

@@ -1243,12 +1243,10 @@ describe('planner router routes', () => {
       expect(eventService.send).not.toHaveBeenCalled();
     });
 
-    it('allows an admin to delete another user solution', async () => {
-      repository.delete.mockResolvedValueOnce(true);
-
+    it('does not let an admin delete another user solution', async () => {
       const res = await remove(admin);
 
-      expect(res.status).toBe(200);
+      expect(res.status).toBe(403);
     });
 
     it('returns 403 for a non-owner without admin role', async () => {
