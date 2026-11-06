@@ -32,25 +32,28 @@ export const FeedbackPagination: FunctionComponent<FeedbackPaginationProps> = ({
   return (
     <PaginationRow>
       <PaginationSummary>
-        <PageSizeSelector>
-          <span>Show</span>
-          {/* Native, because the non-native dropdown renders its chevron as an unlabelled role="img" icon. */}
-          <GoabDropdown
-            name="feedback-page-size"
-            ariaLabel="Responses per page"
-            native
-            value={`${pageSize}`}
-            size="compact"
-            width="9ch"
-            testId="feedback-page-size"
-            onChange={(detail) => onPageSize(Number(detail.value))}
-          >
-            {FEEDBACK_PAGE_SIZES.map((size) => (
-              <GoabDropdownItem key={size} value={`${size}`} label={`${size}`} />
-            ))}
-          </GoabDropdown>
-          <span>per page</span>
-        </PageSizeSelector>
+        {/* Choosing a page size only matters once the responses no longer fit on the smallest page. */}
+        {total > FEEDBACK_PAGE_SIZES[0] && (
+          <PageSizeSelector>
+            <span>Show</span>
+            {/* Native, because the non-native dropdown renders its chevron as an unlabelled role="img" icon. */}
+            <GoabDropdown
+              name="feedback-page-size"
+              ariaLabel="Responses per page"
+              native
+              value={`${pageSize}`}
+              size="compact"
+              width="9ch"
+              testId="feedback-page-size"
+              onChange={(detail) => onPageSize(Number(detail.value))}
+            >
+              {FEEDBACK_PAGE_SIZES.map((size) => (
+                <GoabDropdownItem key={size} value={`${size}`} label={`${size}`} />
+              ))}
+            </GoabDropdown>
+            <span>per page</span>
+          </PageSizeSelector>
+        )}
         <span data-testid="feedback-result-count" aria-live="polite">
           {`Showing ${first.toLocaleString()}–${last.toLocaleString()} of ${total.toLocaleString()} ${
             total === 1 ? 'response' : 'responses'

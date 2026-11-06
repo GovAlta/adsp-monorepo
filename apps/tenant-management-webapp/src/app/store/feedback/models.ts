@@ -51,8 +51,8 @@ export interface FeedbackMetrics {
   momLowestRatingPercent?: number | null;
 }
 
-export const FEEDBACK_PAGE_SIZES = [10, 25, 50, 100];
-export const DEFAULT_FEEDBACK_PAGE_SIZE = 25;
+export const FEEDBACK_PAGE_SIZES = [10, 20, 50, 100];
+export const DEFAULT_FEEDBACK_PAGE_SIZE = 20;
 
 export interface FeedbackPage {
   // One based.

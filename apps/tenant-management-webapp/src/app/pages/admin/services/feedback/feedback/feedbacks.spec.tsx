@@ -30,7 +30,7 @@ describe('Feedbacks Components', () => {
       tenant: { name: 'autotest' },
       feedback: {
         sites: [newSite, { url: 'http://testsite.com', allowAnonymous: true, views: [] }],
-        page: { page: 1, pageSize: 25, total: 60 },
+        page: { page: 1, pageSize: 20, total: 60 },
 
         feedbacks: [
           {
@@ -110,7 +110,7 @@ describe('Feedbacks Components', () => {
       </Provider>
     );
     selectSite(baseElement);
-    expect(getFeedbacksMock).toHaveBeenLastCalledWith(newSite, expect.any(Object), 1, 25, true);
+    expect(getFeedbacksMock).toHaveBeenLastCalledWith(newSite, expect.any(Object), 1, 20, true);
   });
 
   describe('pagination', () => {
@@ -151,7 +151,7 @@ describe('Feedbacks Components', () => {
 
       fireEvent.change(screen.getByTestId('feedback-pagination-page'), { target: { value: '3' } });
 
-      expect(getFeedbacksMock).toHaveBeenLastCalledWith(newSite, expect.any(Object), 3, 25);
+      expect(getFeedbacksMock).toHaveBeenLastCalledWith(newSite, expect.any(Object), 3, 20);
     });
 
     it('returns to page 1 at the new size when the page size changes', () => {
@@ -205,7 +205,7 @@ describe('Feedbacks Components', () => {
         newSite,
         expect.objectContaining({ startDate: new Date('2024-01-01').toISOString() }),
         1,
-        25,
+        20,
         true
       );
     });
@@ -225,7 +225,7 @@ describe('Feedbacks Components', () => {
         expect.objectContaining({ url: 'http://testsite.com' }),
         expect.any(Object),
         1,
-        25,
+        20,
         true
       );
     });
@@ -263,7 +263,7 @@ describe('Feedbacks Components', () => {
     store = mockStore({
       feedback: {
         sites: [newSite],
-        page: { page: 1, pageSize: 25, total: 0 },
+        page: { page: 1, pageSize: 20, total: 0 },
 
         feedbacks: [],
         isLoading: false,
