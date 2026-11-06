@@ -207,9 +207,6 @@ export const addService =
       if (result === 'exists') {
         return res.sendStatus(HttpStatusCodes.CONFLICT);
       }
-      if (!result) {
-        return res.sendStatus(HttpStatusCodes.CREATED);
-      }
       const serviceEvent = entry;
       eventService.send(entryUpdated(user, namespace, serviceEvent, '', url));
       auditDirectory(
@@ -244,9 +241,6 @@ export const addServiceApi =
       if (result === 'exists') {
         return res.sendStatus(HttpStatusCodes.CONFLICT);
       }
-      if (!result) {
-        return res.sendStatus(HttpStatusCodes.CREATED);
-      }
       eventService.send(entryUpdated(user, namespace, service, api, url));
       auditDirectory(
         auditService,
@@ -268,7 +262,7 @@ const addEntry = async (
   entry: string,
   url: string,
   directoryRepository: DirectoryRepository
-): Promise<Service | 'exists' | null> => {
+): Promise<Service | 'exists'> => {
   const result = await directoryRepository.getDirectories(namespace);
 
   const mappingService = {
@@ -278,7 +272,7 @@ const addEntry = async (
   if (!result) {
     const directory = { name: namespace, services: [mappingService] };
     await directoryRepository.update(directory);
-    return null;
+    return mappingService;
   }
   const services = result.services;
   const isExist = services.find((x) => x.service === entry);

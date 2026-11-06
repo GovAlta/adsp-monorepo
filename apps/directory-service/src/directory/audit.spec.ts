@@ -73,7 +73,7 @@ describe('audit', () => {
       expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining('oh noes'), expect.anything());
     });
 
-    it('does not log when auditing is disabled', async () => {
+    it('does not log when the SDK rejects the record', async () => {
       auditService.record.mockResolvedValueOnce({
         status: 'rejected',
         eventId: 'event-1',

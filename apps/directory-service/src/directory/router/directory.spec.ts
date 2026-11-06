@@ -710,6 +710,18 @@ describe('router', () => {
         expect.objectContaining({ resource: { type: 'entry', id: 'urn:ads:platform:added-service' } })
       );
     });
+    it('audits the first service added to a new namespace', async () => {
+      repositoryMock.getDirectories.mockResolvedValueOnce(null);
+      repositoryMock.update.mockResolvedValueOnce(null);
+      const res = { status: jest.fn(), json: jest.fn() };
+      auditServiceMock.record.mockClear();
+      await handler(req, res as unknown as Response, next);
+      expect(res.status).toHaveBeenCalledWith(HttpStatusCodes.CREATED);
+      expect(auditServiceMock.record).toHaveBeenCalledWith(
+        expect.objectContaining({ name: 'entry.created' }),
+        expect.objectContaining({ resource: { type: 'entry', id: 'urn:ads:platform:added-service' } })
+      );
+    });
     it('returns 409 when the service entry already exists', async () => {
       const testDirectory = {
         name: 'platform',
