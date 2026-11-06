@@ -37,7 +37,13 @@ import { RootState } from '@store/index';
 import { FileTypeDefault, FileTypeDefaultOnEdit, FileTypeItem } from '@store/file/models';
 import { SecurityClassification } from '@store/common/models';
 import { useValidators } from '@lib/validation/useValidators';
-import { badCharsCheck, duplicateNameCheck, isNotEmptyCheck, wordMaxLengthCheck } from '@lib/validation/checkInput';
+import {
+  allowedFileTypesCheck,
+  badCharsCheck,
+  duplicateNameCheck,
+  isNotEmptyCheck,
+  wordMaxLengthCheck,
+} from '@lib/validation/checkInput';
 import { ConfigServiceRole } from '@store/access/models';
 import { ClientRoleTable } from '@components/RoleTable';
 import { SaveFormModal } from '@components/saveModal';
@@ -158,7 +164,7 @@ export const EditFileTypeDefinitionEditor = (): JSX.Element => {
       close();
     }
   }, [saveModal]); // eslint-disable-line react-hooks/exhaustive-deps
-  const { validators } = useValidators(
+  const { errors, validators } = useValidators(
     'name',
     'name',
     badCharsCheck,
@@ -166,6 +172,7 @@ export const EditFileTypeDefinitionEditor = (): JSX.Element => {
     isNotEmptyCheck('name'),
   )
     .add('duplicated', 'name', duplicateNameCheck(fileTypeNames, 'File type'))
+    .add('allowedFileTypes', 'allowedFileTypes', allowedFileTypesCheck)
     .build();
 
   let elements = [{ roleNames: roleNames, clientId: '', currentElements: null }];
@@ -298,7 +305,8 @@ export const EditFileTypeDefinitionEditor = (): JSX.Element => {
               <GoabFormItem
                 mb={'m'}
                 label="Allowed file types"
-                helpText="Comma-separated list, for example: application/pdf, image/png"
+                error={errors?.['allowedFileTypes']}
+                helpText="Comma-separated list of extensions, for example: .pdf, .png"
               >
                 <GoabInput
                   size="compact"
@@ -308,6 +316,7 @@ export const EditFileTypeDefinitionEditor = (): JSX.Element => {
                   value={allowedFileTypesText}
                   width="25rem"
                   onChange={(detail: GoabInputOnChangeDetail) => {
+                    validators['allowedFileTypes'].check(detail.value);
                     setAllowedFileTypesText(detail.value);
                     setFileType({
                       ...fileType,
