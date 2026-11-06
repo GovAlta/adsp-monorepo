@@ -45,6 +45,8 @@ Changes to file types are not recorded by file service, since file types are man
 
 Downloads can be high volume, so file service sends audit events in batches of up to 100 events. Audit failures are logged by the SDK and do not fail the file operation. The file service account requires the `audit-writer` role of `urn:ads:platform:audit-service`.
 
+Audit recording is on by default. Set the environment variable `FILE_AUDIT_ENABLED=false` on file service to turn it off, or `true` to turn it on regardless of the SDK `AUDIT_ENABLED` variable, which applies when `FILE_AUDIT_ENABLED` is not set. The action catalog is still registered while recording is off, so turning it back on needs only a restart.
+
 ## Code examples
 ### Configure a file type
 File types are configured using the [configuration service](configuration-service.md). Note that new configuration may take up to 15 mins to apply.
