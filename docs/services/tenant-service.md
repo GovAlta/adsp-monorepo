@@ -15,7 +15,8 @@ client `urn:ads:platform:tenant-service`
 
 | name | description |
 |:-|:-|
-| tenant-admin | Administrator role for tenant service. This role grants a user access to  tenant administration. It is also a composite role that includes roles for configuration of other platform services. |
+| tenant-admin | Administrator role for tenant service. This role grants a user access to tenant administration. It is also a composite role that includes roles for configuration of other platform services. |
+| platform-service | Service role for backend services that read tenants. |
 
 ## Audit actions
 Tenant service records audit events in the `tenant-service` namespace of the [audit service](audit-service.md). Records are written to the affected tenant, with the tenant as the resource (`{ type: 'tenant', id: <tenant URN> }`) and the tenant name and realm in the metadata.
