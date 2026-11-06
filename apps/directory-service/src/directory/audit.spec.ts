@@ -73,6 +73,18 @@ describe('audit', () => {
       expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining('oh noes'), expect.anything());
     });
 
+    it('does not log when auditing is disabled', async () => {
+      auditService.record.mockResolvedValueOnce({
+        status: 'rejected',
+        eventId: 'event-1',
+        code: 'audit_disabled',
+        reason: 'disabled',
+      });
+      auditDirectory(auditService as unknown as AuditService, logger, EntryCreatedAuditAction, user, tenantId, details);
+      await new Promise(process.nextTick);
+      expect(logger.warn).not.toHaveBeenCalled();
+    });
+
     it('does not throw when recording throws synchronously', () => {
       auditService.record.mockImplementationOnce(() => {
         throw new Error('sync');

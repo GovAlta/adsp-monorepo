@@ -183,6 +183,10 @@ export function auditDirectory(
         ...(changeSet ? { changeSet } : {}),
       })
       .then((outcome) => {
+        if (outcome.status === 'rejected' && outcome.code === 'audit_disabled') {
+          return;
+        }
+
         if (outcome.status !== 'recorded') {
           warn(`not recorded (${outcome.status})`);
         }
