@@ -1,4 +1,4 @@
-// eslint-disable-next-line @typescript-eslint/no-var-requires
 const nxPreset = require('../../jest.preset.js');
+const mongoDbPreset = require('@shelf/jest-mongodb/jest-preset');
 
-module.exports = { ...nxPreset };
+module.exports = { ...mongoDbPreset, ...nxPreset };

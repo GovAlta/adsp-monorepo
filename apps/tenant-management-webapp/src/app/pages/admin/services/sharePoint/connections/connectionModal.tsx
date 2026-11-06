@@ -1,252 +1,224 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import { GoabButton, GoabButtonGroup, GoabModal, GoabInput, GoabFormItem } from '@abgov/react-components';
-import { useSelector } from 'react-redux';
+import { GoabInputOnChangeDetail } from '@abgov/ui-components-common';
+import { useDispatch, useSelector } from 'react-redux';
 import { useValidators } from '@lib/validation/useValidators';
 import { duplicateNameCheck, isNotEmptyCheck } from '@lib/validation/checkInput';
-import { RootState } from '@store/index';
 import { areObjectsEqual } from '@lib/objectUtil';
-import { SharepointConnection } from '@store/sharePoint/actions';
-import { GoabInputOnChangeDetail } from '@abgov/ui-components-common';
-import { ConnectionPadding } from '../styled-components';
 import { toKebabName } from '@lib/kebabName';
+import { RootState } from '@store/index';
+import { fetchSharepointCredentialStatus, SharepointConnection } from '@store/sharePoint/actions';
+import { defaultConnection } from '@store/sharePoint/model';
+import { ConnectionPadding, SiteIdParts } from '../styled-components';
+import { FieldLabel } from '../fieldLabel';
+import { siteIdCheck, splitSiteId } from './siteId';
 
 interface ConnectionModalProps {
   connectionId: string | undefined;
-  onCancel?: () => void;
-  onSave: (connection: SharepointConnection) => void;
   open: boolean;
+  onCancel: () => void;
+  onSave: (connection: SharepointConnection, clientSecret?: string) => void;
 }
 
-export const ConnectionModal = ({ connectionId, onCancel, onSave, open }: ConnectionModalProps): JSX.Element => {
-  const isNew = !((connectionId?.length ?? 0) > 0);
-  const initialValue = useSelector((state: RootState) => state.sharepoint?.connections[connectionId]);
-  const realmId = useSelector((state: RootState) => state.session.realm);
+type ConnectionField = 'name' | 'entraTenantId' | 'clientId' | 'siteId';
 
-  const [connection, setConnection] = useState<SharepointConnection>(
-    () =>
-      initialValue || {
-        id: '',
-        name: '',
-        tenantId: realmId,
-        siteId: '',
-        listId: '',
-        clientId: '',
-      },
+const HINTS: Record<ConnectionField | 'clientSecret', string> = {
+  name: 'A name for this connection, usually the SharePoint site it points to. ADSP turns it into the connection ID that destinations refer to.',
+  entraTenantId:
+    "The Microsoft Entra directory (tenant) ID of the organization that owns the SharePoint site. It's on the Overview page of your app registration in Entra, labelled Directory (tenant) ID.",
+  clientId:
+    'The Application (client) ID of the app registration your team requested for ADSP. The site owner must grant this app write access to the site (Sites.Selected).',
+  siteId:
+    'The Microsoft Graph site ID: host name, site collection ID and site ID separated by commas. Paste the "id" value returned by GET https://graph.microsoft.com/v1.0/sites/{host}:/sites/{site-name}.',
+  clientSecret:
+    "The client secret value of the app registration. ADSP stores it encrypted and it can't be viewed again. Leave this blank to keep the current secret, and replace it before it expires.",
+};
+
+export const ConnectionModal = ({ connectionId, open, onCancel, onSave }: ConnectionModalProps): JSX.Element => {
+  const dispatch = useDispatch();
+  const isNew = !connectionId;
+  const initialValue = useSelector((state: RootState) =>
+    connectionId ? state.sharepoint?.connections[connectionId] : undefined,
   );
-
-  const scrollPaneRef = useRef<HTMLDivElement>(null);
+  const credentialStatus = useSelector((state: RootState) =>
+    connectionId ? state.sharepoint?.credentialStatus[connectionId] : undefined,
+  );
+  const connections = useSelector((state: RootState) => state.sharepoint?.connections || {});
+  const [connection, setConnection] = useState<SharepointConnection>(initialValue || defaultConnection);
+  const [clientSecret, setClientSecret] = useState('');
 
   useEffect(() => {
-    if (initialValue) {
-      setConnection(initialValue);
+    if (connectionId) {
+      dispatch(fetchSharepointCredentialStatus(connectionId));
     }
-  }, [initialValue]);
+  }, [dispatch, connectionId]);
 
-  const title = isNew ? 'Add connection' : 'Edit connection';
-
-  const connections = useSelector((state: RootState) => {
-    return state?.sharepoint?.connections;
-  });
-
-  const connectionIds = Object.values(connections).map((x) => x.id);
-
-  const { errors, validators } = useValidators('clientId', 'clientId', isNotEmptyCheck('clientId'))
-    .add('duplicate', 'name', duplicateNameCheck(connectionIds, 'connection'))
-    .add('siteId', 'siteId', isNotEmptyCheck('siteId'))
-    .add('listId', 'listId', isNotEmptyCheck('listId'))
-    .add('tenantId', 'tenantId', isNotEmptyCheck('tenantId'))
+  const { errors, validators } = useValidators('name', 'name', isNotEmptyCheck('name'))
+    .add('duplicate', 'name', duplicateNameCheck(isNew ? Object.keys(connections) : [], 'connection'))
+    .add('entraTenantId', 'entraTenantId', isNotEmptyCheck('Entra tenant ID'))
+    .add('clientId', 'clientId', isNotEmptyCheck('client ID'))
+    .add('siteId', 'siteId', isNotEmptyCheck('Site ID'), siteIdCheck)
     .build();
 
-  const validateField = (field: string, value: string) => {
+  const update = (field: ConnectionField, value: string) => {
+    const fieldValue = field === 'siteId' ? value.trim() : value;
+    const id = field === 'name' && isNew ? toKebabName(value) : undefined;
+    setConnection((current) => ({ ...current, [field]: fieldValue, ...(id !== undefined ? { id } : {}) }));
     validators.remove(field);
-    const validations = { [field]: value };
-
-    validations[field] = value;
-
-    validators.checkAll(validations);
+    validators.checkAll({ [field]: fieldValue, ...(id !== undefined ? { duplicate: id } : {}) });
   };
 
-  const validationCheck = () => {
-    const validations = {
+  const save = () => {
+    const valid = validators.checkAll({
+      name: connection.name,
+      entraTenantId: connection.entraTenantId,
       clientId: connection.clientId,
-      tenantId: connection.tenantId,
       siteId: connection.siteId,
-      listId: connection.listId,
-    };
-
-    if (!validators.checkAll(validations)) {
+      ...(isNew ? { duplicate: connection.id } : {}),
+    });
+    if (!valid) {
       return;
     }
-
-    onSave(connection);
-    if (onCancel) {
-      onCancel();
-    }
+    onSave(connection, clientSecret || undefined);
     validators.clear();
+    onCancel();
   };
 
-  const handleCancelClick = () => {
-    setConnection(initialValue);
-    validators.clear();
-    if (onCancel) {
-      onCancel();
-    }
-  };
+  const site = splitSiteId(connection.siteId);
+
+  const unchanged = !clientSecret && !!initialValue && areObjectsEqual(connection, initialValue);
+  const secretStatus = isNew
+    ? undefined
+    : credentialStatus?.isSet
+      ? `A secret is set${
+          credentialStatus.updatedAt ? ` (updated ${new Date(credentialStatus.updatedAt).toLocaleString()})` : ''
+        }. Leave this blank to keep it.`
+      : 'No secret is set.';
+
+  const input = (
+    key: ConnectionField,
+    label: string,
+    name: string,
+    value: string,
+    onChange: (value: string) => void,
+    error?: string,
+    details?: React.ReactNode,
+  ) => (
+    <ConnectionPadding>
+      <FieldLabel label={label} hint={HINTS[key]} />
+      <GoabFormItem label="" error={error}>
+        <GoabInput
+          size="compact"
+          type="text"
+          name={name}
+          testId={name}
+          value={value}
+          width="100%"
+          onChange={(detail: GoabInputOnChangeDetail) => onChange(detail.value)}
+        />
+      </GoabFormItem>
+      {details}
+    </ConnectionPadding>
+  );
 
   return (
     <GoabModal
       testId="add-connection-modal"
       open={open}
-      heading={title}
+      heading={isNew ? 'Add connection' : 'Edit connection'}
       actions={
         <GoabButtonGroup alignment="end">
-          <GoabButton size="compact" type={'secondary'} testId="connection-modal-cancel" onClick={handleCancelClick}>
+          <GoabButton
+            size="compact"
+            type="secondary"
+            testId="connection-modal-cancel"
+            onClick={() => {
+              validators.clear();
+              onCancel();
+            }}
+          >
             Cancel
           </GoabButton>
           <GoabButton
             size="compact"
             type="primary"
             testId="connection-modal-save"
-            disabled={
-              !connection?.clientId ||
-              !connection?.tenantId ||
-              !connection?.siteId ||
-              !connection?.listId ||
-              validators.haveErrors() ||
-              areObjectsEqual(connection, initialValue)
-            }
-            onClick={validationCheck}
+            disabled={validators.haveErrors() || unchanged}
+            onClick={save}
           >
             Save
           </GoabButton>
         </GoabButtonGroup>
       }
     >
-      <div
-        ref={scrollPaneRef}
-        className="roles-scroll-pane"
-        style={{ overflowY: 'auto', maxHeight: '70vh', padding: '0 3px 0 3px' }}
-      >
-        <ConnectionPadding>
-          <GoabFormItem error={errors?.['name']} label="Sharepoint connection name" mb="s">
-            <GoabInput size="compact"
-              type="text"
-              name="form-definition-name"
-              value={connection.name}
-              testId="form-definition-name"
-              aria-label="form-definition-name"
-              width="100%"
-              onChange={(detail: GoabInputOnChangeDetail) => {
-                const validations = {
-                  name: detail.value,
-                };
-
-                if (isNew) {
-                  validators.remove('name');
-                  validations['duplicate'] = detail.value;
-
-                  if (!validators.checkAll(validations)) {
-                    return;
-                  }
-                }
-
-                if (connection.id.length > 0) {
-                  validators.remove('name');
-
-                  validators.checkAll(validations);
-                }
-
-                setConnection(
-                  !isNew
-                    ? { ...connection, name: detail.value }
-                    : { ...connection, name: detail.value, id: toKebabName(detail.value) },
-                );
-              }}
-              onBlur={() => {
-                const validations = {
-                  name: connection.name,
-                };
-                if (isNew) {
-                  validations['duplicate'] = connection.name;
-                }
-                validators.checkAll(validations);
-              }}
-            />
-          </GoabFormItem>
-          <GoabFormItem label="Definition ID" mb="s">
-            <GoabInput size="compact"
-              name="form-definition-id"
-              value={connection?.id}
-              testId="form-definition-id"
-              disabled={true}
-              width="100%"
-              onChange={() => {}}
-            />
-          </GoabFormItem>
-          <GoabFormItem error={errors?.['tenantId']} label="Tenant ID">
-            <GoabInput size="compact"
-              type="text"
-              name="name"
-              value={connection?.tenantId}
-              testId={`connection-modal-name-input`}
-              aria-label="name"
-              width="100%"
-              onChange={(detail: GoabInputOnChangeDetail) => {
-                setConnection({ ...connection, tenantId: detail.value });
-              }}
-              onBlur={() => validateField('tenantId', connection?.tenantId || '')}
-            />
-          </GoabFormItem>
-        </ConnectionPadding>
-        <ConnectionPadding>
-          <GoabFormItem error={errors?.['siteId']} label="SharePoint site ID">
-            <GoabInput size="compact"
-              type="text"
-              name="name"
-              value={connection?.siteId}
-              testId={`connection-modal-name-input`}
-              aria-label="name"
-              width="100%"
-              onChange={(detail: GoabInputOnChangeDetail) => {
-                setConnection({ ...connection, siteId: detail.value });
-              }}
-              onBlur={() => validateField('siteId', connection?.siteId || '')}
-            />
-          </GoabFormItem>
-        </ConnectionPadding>
-        <ConnectionPadding>
-          <GoabFormItem error={errors?.['listId']} label="SharePoint list ID">
-            <GoabInput size="compact"
-              type="text"
-              name="name"
-              value={connection?.listId}
-              testId={`connection-modal-name-input`}
-              aria-label="name"
-              width="100%"
-              onChange={(detail: GoabInputOnChangeDetail) => {
-                setConnection({ ...connection, listId: detail.value });
-              }}
-              onBlur={() => validateField('listId', connection?.listId || '')}
-            />
-          </GoabFormItem>
-        </ConnectionPadding>
-        <ConnectionPadding>
-          <GoabFormItem error={errors?.['clientId']} label="Client ID">
-            <GoabInput size="compact"
-              type="text"
-              name="name"
-              value={connection?.clientId}
-              testId={`connection-modal-name-input`}
-              aria-label="name"
-              width="100%"
-              onChange={(detail: GoabInputOnChangeDetail) => {
-                setConnection({ ...connection, clientId: detail.value });
-              }}
-              onBlur={() => validateField('clientId', connection?.clientId || '')}
-            />
-          </GoabFormItem>
-        </ConnectionPadding>
-      </div>
+      {input(
+        'name',
+        'Connection name',
+        'connection-name',
+        connection.name,
+        (value) => update('name', value),
+        errors?.['name'] || errors?.['duplicate'],
+      )}
+      <ConnectionPadding>
+        <GoabFormItem label="Connection ID">
+          <GoabInput
+            size="compact"
+            name="connection-id"
+            value={connection.id}
+            disabled={true}
+            width="100%"
+            onChange={() => undefined}
+          />
+        </GoabFormItem>
+      </ConnectionPadding>
+      {input(
+        'entraTenantId',
+        'Entra tenant ID',
+        'entra-tenant-id',
+        connection.entraTenantId,
+        (value) => update('entraTenantId', value),
+        errors?.['entraTenantId'],
+      )}
+      {input(
+        'clientId',
+        'Client ID',
+        'client-id',
+        connection.clientId,
+        (value) => update('clientId', value),
+        errors?.['clientId'],
+      )}
+      {input(
+        'siteId',
+        'SharePoint site ID',
+        'site-id',
+        connection.siteId,
+        (value) => update('siteId', value),
+        errors?.['siteId'],
+        !errors?.['siteId'] && site.webId && (
+          <SiteIdParts>
+            <dt>Host name</dt>
+            <dd>{site.host}</dd>
+            <dt>Site collection ID</dt>
+            <dd>{site.siteCollectionId}</dd>
+            <dt>Site ID</dt>
+            <dd>{site.webId}</dd>
+          </SiteIdParts>
+        ),
+      )}
+      <ConnectionPadding>
+        <FieldLabel label="Client secret" hint={HINTS.clientSecret} />
+        <GoabFormItem label="" helpText={secretStatus}>
+          <GoabInput
+            size="compact"
+            type="password"
+            name="client-secret"
+            testId="client-secret"
+            value={clientSecret}
+            width="100%"
+            onChange={(detail: GoabInputOnChangeDetail) => setClientSecret(detail.value)}
+          />
+        </GoabFormItem>
+      </ConnectionPadding>
     </GoabModal>
   );
 };

@@ -1,5 +1,3 @@
-// sharepoint/saga.ts
-
 import axios from 'axios';
 import { SagaIterator } from '@redux-saga/core';
 import { call, put, select, takeEvery } from 'redux-saga/effects';
@@ -9,146 +7,189 @@ import { ErrorNotification } from '@store/notifications/actions';
 import { getAccessToken } from '@store/tenant/sagas';
 import {
   DELETE_SHAREPOINT_CONNECTION_ACTION,
+  DELETE_SHAREPOINT_DESTINATION_ACTION,
   DeleteSharepointConnectionAction,
-  deleteSharepointConnectionSuccess,
-  FETCH_SHAREPOINT_CONNECTIONS_ACTION,
-  FetchSharepointConnectionsAction,
-  fetchSharepointConnectionsSuccess,
+  DeleteSharepointDestinationAction,
+  FETCH_SHAREPOINT_CONFIGURATION_ACTION,
+  FETCH_SHAREPOINT_CREDENTIAL_STATUS_ACTION,
+  fetchSharepointConfigurationSuccess,
+  FetchSharepointCredentialStatusAction,
+  fetchSharepointCredentialStatusSuccess,
+  SharepointConfiguration,
   SharepointConnection,
+  SharepointDestination,
+  TEST_SHAREPOINT_DESTINATION_ACTION,
+  TestSharepointDestinationAction,
+  testSharepointDestinationSuccess,
   UPDATE_SHAREPOINT_CONNECTION_ACTION,
+  UPDATE_SHAREPOINT_DESTINATION_ACTION,
+  updateSharepointConfigurationSuccess,
   UpdateSharepointConnectionAction,
-  updateSharepointConnectionSuccess,
+  UpdateSharepointDestinationAction,
 } from './actions';
 
-const SHAREPOINT_CONFIGURATION_PATH = 'sharepoint-service';
+const CONFIGURATION_PATH = 'configuration/v2/configuration/platform/test-sharepoint-service';
 
-interface LatestSharepointConfiguration {
-  configuration?: Record<string, SharepointConnection>;
+const selectConfigurationUrl = (state: RootState) =>
+  `${state.config.serviceUrls?.configurationServiceApiUrl}/${CONFIGURATION_PATH}`;
+const selectSharepointApiUrl = (path: string) => (state: RootState) =>
+  `${state.config.serviceUrls?.sharepointServiceApiUrl}/sharepoint/v1${path}`;
+const credentialPath = (connectionId: string) => `/connections/${encodeURIComponent(connectionId)}/credentials`;
+
+export const toSharepointConfiguration = (raw?: Partial<SharepointConfiguration>): SharepointConfiguration => ({
+  connections: raw?.connections || {},
+  destinations: raw?.destinations || {},
+});
+
+const without = <T>(items: Record<string, T>, id: string): Record<string, T> =>
+  Object.fromEntries(Object.entries(items).filter(([key]) => key !== id));
+
+export function* patchSharepointConfiguration(
+  body:
+    | { operation: 'UPDATE'; update: Partial<SharepointConfiguration> }
+    | { operation: 'REPLACE'; configuration: SharepointConfiguration },
+): SagaIterator {
+  const url: string = yield select(selectConfigurationUrl);
+  const token: string = yield call(getAccessToken);
+  const { data } = yield call(axios.patch, url, body, {
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+  });
+  yield put(updateSharepointConfigurationSuccess(toSharepointConfiguration(data?.latest?.configuration)));
 }
 
-export function* fetchSharepointConfiguration(_action: FetchSharepointConnectionsAction): SagaIterator {
-  yield put(
-    UpdateIndicator({
-      show: true,
-      message: 'Loading...',
-    }),
-  );
+// Configuration Service UPDATE merges nested objects, so removing an entry needs a REPLACE of the whole document.
+function* replaceSharepointConfiguration(change: Partial<SharepointConfiguration>): SagaIterator {
+  const current: SharepointConfiguration = yield select((state: RootState) => ({
+    connections: state.sharepoint.connections,
+    destinations: state.sharepoint.destinations,
+  }));
+  yield call(patchSharepointConfiguration, { operation: 'REPLACE', configuration: { ...current, ...change } });
+}
 
-  const baseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl);
-  const token: string = yield call(getAccessToken);
-
+export function* fetchSharepointConfigurationSaga(): SagaIterator {
+  yield put(UpdateIndicator({ show: true, message: 'Loading...' }));
   try {
-    const url = `${baseUrl}/configuration/v2/configuration/platform/${SHAREPOINT_CONFIGURATION_PATH}`;
-    const { data } = yield call(axios.get, url, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-
-    const latest: LatestSharepointConfiguration = data?.latest || data || {};
-    const connections = latest.configuration || {};
-
-    yield put(fetchSharepointConnectionsSuccess(connections));
+    const url: string = yield select(selectConfigurationUrl);
+    const token: string = yield call(getAccessToken);
+    const { data } = yield call(axios.get, url, { headers: { Authorization: `Bearer ${token}` } });
+    const latest = data?.latest || data || {};
+    yield put(fetchSharepointConfigurationSuccess(toSharepointConfiguration(latest.configuration)));
   } catch (err) {
     yield put(ErrorNotification({ error: err }));
   } finally {
-    yield put(
-      UpdateIndicator({
-        show: false,
-      }),
-    );
+    yield put(UpdateIndicator({ show: false }));
   }
 }
 
-export function* updateSharepointConnection({ payload }: UpdateSharepointConnectionAction): SagaIterator {
-  const connection = { [payload.id]: { ...payload } };
-  yield put(
-    UpdateIndicator({
-      show: true,
-      message: 'Saving...',
-    }),
-  );
-
-  const baseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl);
-  const token: string = yield call(getAccessToken);
-
+export function* updateSharepointConnectionSaga({
+  payload: { connection, clientSecret },
+}: UpdateSharepointConnectionAction): SagaIterator {
+  yield put(UpdateIndicator({ show: true, message: 'Saving...' }));
   try {
-    const body = {
+    const connections: Record<string, SharepointConnection> = yield select(
+      (state: RootState) => state.sharepoint.connections,
+    );
+    yield call(patchSharepointConfiguration, {
       operation: 'UPDATE',
-      update: { ...connection },
-    };
-
-    const url = `${baseUrl}/configuration/v2/configuration/platform/${SHAREPOINT_CONFIGURATION_PATH}`;
-
-    const {
-      data: { latest },
-    } = yield call(axios.patch, url, body, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
+      update: { connections: { ...connections, [connection.id]: connection } },
     });
 
-    yield put(
-      updateSharepointConnectionSuccess({
-        ...latest.configuration,
-      }),
-    );
+    if (clientSecret) {
+      const url: string = yield select(selectSharepointApiUrl(credentialPath(connection.id)));
+      const token: string = yield call(getAccessToken);
+      const { data } = yield call(axios.put, url, { clientSecret }, { headers: { Authorization: `Bearer ${token}` } });
+      yield put(fetchSharepointCredentialStatusSuccess(connection.id, data));
+    }
   } catch (err) {
     yield put(ErrorNotification({ error: err }));
   } finally {
-    yield put(
-      UpdateIndicator({
-        show: false,
-      }),
-    );
+    yield put(UpdateIndicator({ show: false }));
   }
 }
 
-export function* deleteSharepointConnection(action: DeleteSharepointConnectionAction): SagaIterator {
-  yield put(
-    UpdateIndicator({
-      show: true,
-      message: 'Saving...',
-    }),
-  );
-
-  const baseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl);
-  const token: string = yield call(getAccessToken);
-  const existingConnections: Record<string, SharepointConnection> = yield select(
-    (state: RootState) => state.sharepoint?.connections || [],
-  );
-
+export function* deleteSharepointConnectionSaga({ id }: DeleteSharepointConnectionAction): SagaIterator {
+  yield put(UpdateIndicator({ show: true, message: 'Saving...' }));
   try {
-    const updatedConnections = { ...existingConnections };
-    delete updatedConnections[action.id];
+    const url: string = yield select(selectSharepointApiUrl(credentialPath(id)));
+    const token: string = yield call(getAccessToken);
+    yield call(axios.delete, url, { headers: { Authorization: `Bearer ${token}` } });
 
-    const body = {
-      operation: 'REPLACE',
-      configuration: updatedConnections,
-    };
-
-    const url = `${baseUrl}/configuration/v2/configuration/platform/${SHAREPOINT_CONFIGURATION_PATH}`;
-
-    yield call(axios.patch, url, body, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-    });
-
-    yield put(deleteSharepointConnectionSuccess(updatedConnections));
+    const connections: Record<string, SharepointConnection> = yield select(
+      (state: RootState) => state.sharepoint.connections,
+    );
+    yield call(replaceSharepointConfiguration, { connections: without(connections, id) });
   } catch (err) {
     yield put(ErrorNotification({ error: err }));
   } finally {
+    yield put(UpdateIndicator({ show: false }));
+  }
+}
+
+export function* updateSharepointDestinationSaga({ payload }: UpdateSharepointDestinationAction): SagaIterator {
+  yield put(UpdateIndicator({ show: true, message: 'Saving...' }));
+  try {
+    const destinations: Record<string, SharepointDestination> = yield select(
+      (state: RootState) => state.sharepoint.destinations,
+    );
+    yield call(patchSharepointConfiguration, {
+      operation: 'UPDATE',
+      update: { destinations: { ...destinations, [payload.id]: payload } },
+    });
+  } catch (err) {
+    yield put(ErrorNotification({ error: err }));
+  } finally {
+    yield put(UpdateIndicator({ show: false }));
+  }
+}
+
+export function* deleteSharepointDestinationSaga({ id }: DeleteSharepointDestinationAction): SagaIterator {
+  yield put(UpdateIndicator({ show: true, message: 'Saving...' }));
+  try {
+    const destinations: Record<string, SharepointDestination> = yield select(
+      (state: RootState) => state.sharepoint.destinations,
+    );
+    yield call(replaceSharepointConfiguration, { destinations: without(destinations, id) });
+  } catch (err) {
+    yield put(ErrorNotification({ error: err }));
+  } finally {
+    yield put(UpdateIndicator({ show: false }));
+  }
+}
+
+export function* fetchSharepointCredentialStatusSaga({ id }: FetchSharepointCredentialStatusAction): SagaIterator {
+  try {
+    const url: string = yield select(selectSharepointApiUrl(credentialPath(id)));
+    const token: string = yield call(getAccessToken);
+    const { data } = yield call(axios.get, url, { headers: { Authorization: `Bearer ${token}` } });
+    yield put(fetchSharepointCredentialStatusSuccess(id, data));
+  } catch (err) {
+    yield put(ErrorNotification({ error: err }));
+  }
+}
+
+export function* testSharepointDestinationSaga({ id, data }: TestSharepointDestinationAction): SagaIterator {
+  try {
+    const url: string = yield select(selectSharepointApiUrl(`/destinations/${encodeURIComponent(id)}/test`));
+    const token: string = yield call(getAccessToken);
+    const { data: result } = yield call(axios.post, url, data, { headers: { Authorization: `Bearer ${token}` } });
+    yield put(testSharepointDestinationSuccess(id, result));
+  } catch (err) {
+    const status = err?.response?.status;
     yield put(
-      UpdateIndicator({
-        show: false,
+      testSharepointDestinationSuccess(id, {
+        ok: false,
+        errorCode: status ? `adsp:http-${status}` : 'adsp:unreachable',
       }),
     );
   }
 }
 
 export function* watchSharepointSagas(): Generator {
-  yield takeEvery(FETCH_SHAREPOINT_CONNECTIONS_ACTION, fetchSharepointConfiguration);
-  yield takeEvery(UPDATE_SHAREPOINT_CONNECTION_ACTION, updateSharepointConnection);
-  yield takeEvery(DELETE_SHAREPOINT_CONNECTION_ACTION, deleteSharepointConnection);
+  yield takeEvery(FETCH_SHAREPOINT_CONFIGURATION_ACTION, fetchSharepointConfigurationSaga);
+  yield takeEvery(UPDATE_SHAREPOINT_CONNECTION_ACTION, updateSharepointConnectionSaga);
+  yield takeEvery(DELETE_SHAREPOINT_CONNECTION_ACTION, deleteSharepointConnectionSaga);
+  yield takeEvery(UPDATE_SHAREPOINT_DESTINATION_ACTION, updateSharepointDestinationSaga);
+  yield takeEvery(DELETE_SHAREPOINT_DESTINATION_ACTION, deleteSharepointDestinationSaga);
+  yield takeEvery(FETCH_SHAREPOINT_CREDENTIAL_STATUS_ACTION, fetchSharepointCredentialStatusSaga);
+  yield takeEvery(TEST_SHAREPOINT_DESTINATION_ACTION, testSharepointDestinationSaga);
 }
