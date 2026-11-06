@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { useSelector } from 'react-redux';
 import { AdspFileDownloadExample, MISSING_FILE_ID } from './AdspFileDownloadExample';
@@ -10,7 +10,9 @@ const mockFileDownload = jest.fn(
     <div data-testid={props.testId ?? `download-${props.fileId}`} data-file-id={props.fileId} />
   ),
 );
-const mockProvider = jest.fn(({ children }: { client: unknown; children: React.ReactNode }) => <>{children}</>);
+const mockProvider = jest.fn(({ children }: { client: unknown; children: React.ReactNode }) => (
+  <div data-testid="file-client-provider">{children}</div>
+));
 
 jest.mock('react-redux', () => ({
   useSelector: jest.fn(),
@@ -85,9 +87,22 @@ describe('AdspFileDownloadExample', () => {
     // Arrange, Act
     render(<AdspFileDownloadExample />);
 
+    // Assert: the side by side tab also lists files, so look in the showcase table's row.
+    const tableRow = (await screen.findAllByText('Photo.png'))
+      .map((element) => element.closest('tr'))
+      .find((row): row is HTMLTableRowElement => !!row);
+    expect(within(tableRow as HTMLElement).getByTestId(`download-${listedFiles[1].id}`)).toBeInTheDocument();
+  });
+
+  test('has a side by side tab that downloads the picked file', async () => {
+    // Arrange, Act
+    render(<AdspFileDownloadExample />);
+
     // Assert
-    expect(await screen.findByTestId(`download-${listedFiles[1].id}`)).toBeInTheDocument();
-    expect(screen.getByText('Photo.png')).toBeInTheDocument();
+    expect(await screen.findByTestId('side-by-side-minimal-download')).toHaveAttribute(
+      'data-file-id',
+      listedFiles[0].id,
+    );
   });
 
   test('shows the missing file and not permitted examples', async () => {

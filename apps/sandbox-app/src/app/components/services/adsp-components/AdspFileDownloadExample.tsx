@@ -8,17 +8,20 @@ import {
   GoabDropdownItem,
   GoabFormItem,
   GoabInput,
+  GoabTab,
   GoabTable,
+  GoabTabs,
   GoabText,
 } from '@abgov/react-components';
 import { FileClient } from '@abgov/adsp-components-core';
 import { AdspFileClientProvider, GoAFileDownload } from '@abgov/adsp-components-react';
 import { directorySelector, getAccessToken } from '../../../state';
 import { ServiceContainer } from '../../styled-components';
+import { AdspFileDownloadSideBySide, MISSING_FILE_ID } from './AdspFileDownloadSideBySide';
+
+export { MISSING_FILE_ID };
 
 const FILE_SERVICE_ID = 'urn:ads:platform:file-service';
-// A valid UUID that no file has, so File service answers 404.
-export const MISSING_FILE_ID = '00000000-0000-4000-8000-000000000000';
 
 interface ListedFile {
   id: string;
@@ -197,82 +200,93 @@ export const AdspFileDownloadExample = () => {
               </GoabText>
             )}
 
-            {exampleFileId && (
-              <>
+            <GoabTabs initialTab={1} navigation="none" testId="adsp-file-download-tabs">
+              <GoabTab heading="Showcase">
+                {exampleFileId && (
+                  <>
+                    <Example
+                      heading="Default"
+                      description="Only the file ID: the component shows the filename and size from File service."
+                      code={DEFAULT_USAGE}
+                    >
+                      <GoAFileDownload fileId={exampleFileId} testId="example-default" />
+                    </Example>
+
+                    <Example
+                      heading="Your own trigger"
+                      description="Pass any button or link as the child. The component handles the download; the file isn't looked up until it's clicked."
+                      code={CUSTOM_TRIGGER_USAGE}
+                    >
+                      <GoAFileDownload fileId={exampleFileId} testId="example-custom">
+                        <GoabButton type="secondary" leadingIcon="download">
+                          Download
+                        </GoabButton>
+                      </GoAFileDownload>
+                    </Example>
+                  </>
+                )}
+
+                {files.length > 0 && (
+                  <Example
+                    heading="In a file list"
+                    description="A download action per row, without a metadata request per row."
+                    code={LIST_USAGE}
+                  >
+                    <GoabTable width="100%" mt="m" testId="example-list">
+                      <thead>
+                        <tr>
+                          <th>File</th>
+                          <th>Type</th>
+                          <th>Action</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {files.map((file) => (
+                          <tr key={file.id}>
+                            <td>{file.filename}</td>
+                            <td>{file.typeName}</td>
+                            <td>
+                              <GoAFileDownload fileId={file.id}>
+                                <GoabButton type="tertiary" size="compact">
+                                  Download
+                                </GoabButton>
+                              </GoAFileDownload>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </GoabTable>
+                  </Example>
+                )}
+
                 <Example
-                  heading="Default"
-                  description="Only the file ID: the component shows the filename and size from File service."
-                  code={DEFAULT_USAGE}
+                  heading="Missing file"
+                  description="File service answers 404, so the component says the file doesn't exist."
+                  code={MISSING_USAGE}
                 >
-                  <GoAFileDownload fileId={exampleFileId} testId="example-default" />
+                  <GoAFileDownload fileId={MISSING_FILE_ID} testId="example-missing" />
                 </Example>
 
                 <Example
-                  heading="Your own trigger"
-                  description="Pass any button or link as the child. The component handles the download; the file isn't looked up until it's clicked."
-                  code={CUSTOM_TRIGGER_USAGE}
+                  heading="Download not permitted by the application"
+                  description="With canDownload={false} the component renders nothing, so there is nothing to see here. A user File service refuses sees a permission message instead: enter the ID of a file whose type you can't read."
+                  code={NO_PERMISSION_USAGE}
                 >
-                  <GoAFileDownload fileId={exampleFileId} testId="example-custom">
-                    <GoabButton type="secondary" leadingIcon="download">
-                      Download
-                    </GoabButton>
-                  </GoAFileDownload>
+                  <GoAFileDownload
+                    fileId={exampleFileId || MISSING_FILE_ID}
+                    canDownload={false}
+                    testId="example-denied"
+                  />
                 </Example>
-              </>
-            )}
 
-            {files.length > 0 && (
-              <Example
-                heading="In a file list"
-                description="A download action per row, without a metadata request per row."
-                code={LIST_USAGE}
-              >
-                <GoabTable width="100%" mt="m" testId="example-list">
-                  <thead>
-                    <tr>
-                      <th>File</th>
-                      <th>Type</th>
-                      <th>Action</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {files.map((file) => (
-                      <tr key={file.id}>
-                        <td>{file.filename}</td>
-                        <td>{file.typeName}</td>
-                        <td>
-                          <GoAFileDownload fileId={file.id}>
-                            <GoabButton type="tertiary" size="compact">
-                              Download
-                            </GoabButton>
-                          </GoAFileDownload>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </GoabTable>
-              </Example>
-            )}
-
-            <Example
-              heading="Missing file"
-              description="File service answers 404, so the component says the file doesn't exist."
-              code={MISSING_USAGE}
-            >
-              <GoAFileDownload fileId={MISSING_FILE_ID} testId="example-missing" />
-            </Example>
-
-            <Example
-              heading="Download not permitted by the application"
-              description="With canDownload={false} the component renders nothing, so there is nothing to see here. A user File service refuses sees a permission message instead: enter the ID of a file whose type you can't read."
-              code={NO_PERMISSION_USAGE}
-            >
-              <GoAFileDownload fileId={exampleFileId || MISSING_FILE_ID} canDownload={false} testId="example-denied" />
-            </Example>
-
-            <GoabDetails heading="Application setup" mt="xl">
-              <pre>{APPLICATION_SETUP}</pre>
-            </GoabDetails>
+                <GoabDetails heading="Application setup" mt="xl">
+                  <pre>{APPLICATION_SETUP}</pre>
+                </GoabDetails>
+              </GoabTab>
+              <GoabTab heading="Side by side">
+                <AdspFileDownloadSideBySide fileId={exampleFileId} files={files} />
+              </GoabTab>
+            </GoabTabs>
           </AdspFileClientProvider>
         )}
       </GoabContainer>
