@@ -8,9 +8,11 @@ export const environment = envalid.cleanEnv(
   process.env,
   {
     KEYCLOAK_ROOT_URL: envalid.str({ default: 'https://access.adsp-dev.gov.ab.ca' }),
+    DIRECTORY_URL: envalid.str({ default: 'http://localhost:3331' }),
     LOG_LEVEL: envalid.str({ default: 'debug' }),
     PORT: envalid.num({ default: 3350 }),
     CLIENT_ID: envalid.str({ default: 'urn:ads:platform:sharepoint-service' }),
+    CLIENT_SECRET: envalid.str({ default: '' }),
   },
   {
     reporter: ({ errors }) => {
