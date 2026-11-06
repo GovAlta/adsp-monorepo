@@ -38,11 +38,15 @@ Sign in, then open **Services → ADSP components → Theming**, or go to `/<ten
 
 ## Files
 
-| File                          | Purpose                                                                                |
-| ----------------------------- | -------------------------------------------------------------------------------------- |
-| `AdspThemingExample.tsx`      | The demo page                                                                          |
-| `AdspThemingExample.spec.tsx` | Covers theme switching, the precedence table, and that GoA elements are unaffected     |
-| `highContrastDemoTheme.ts`    | A theme-level customization built with `createAdspTheme`, used to show theme switching |
+| File                               | Purpose                                                                                                                     |
+| ---------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| `AdspThemingExample.tsx`           | The demo page                                                                                                               |
+| `AdspThemingExample.spec.tsx`      | Covers theme switching, the precedence table, and that GoA elements are unaffected                                          |
+| `highContrastDemoTheme.ts`         | A theme-level customization built with `createAdspTheme`, used to show theme switching                                      |
+| `AdspFileDownloadExample.tsx`      | File download page: default control, custom trigger, file list, missing file, `canDownload={false}`, with the code for each |
+| `AdspFileDownloadExample.spec.tsx` | Covers the client setup, file list and each example                                                                         |
+
+The file download page (`/<tenant>/services/adsp-components/file-download`) lists files the signed-in user can read in the tenant. To see the permission and pending-scan messages, enter the ID of a file whose type you can't read, or of a file uploaded moments ago.
 
 The ADSP stylesheet is loaded once, in `src/app/app.tsx`, next to the GoA stylesheets. The landing page that links here is `../AdspComponentsMain.tsx`.
 
