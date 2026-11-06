@@ -1,10 +1,7 @@
 import type { UserMessage } from '@core-services/app-common';
-import type { StoredAgentMessage } from '@store/agent/model';
+import type { StoredAgentMessage } from './model';
 
 type ChatMessage = UserMessage | StoredAgentMessage;
-
-/** Questions after which the chat suggests starting a new one, since older context can make answers drift. */
-export const LONG_CONVERSATION_QUESTION_COUNT = 10;
 
 /**
  * Whether the agent has not finished replying: the last message is the user's, or an agent reply is still streaming.
@@ -23,8 +20,4 @@ export function mayStillBeSavingReply(messages: ChatMessage[]): boolean {
   return (
     isAwaitingReply(messages) || messages.some((message) => message.from === 'agent' && message.interrupted === true)
   );
-}
-
-export function countQuestions(messages: ChatMessage[]): number {
-  return messages.filter((message) => message.from === 'user' && !message.local).length;
 }

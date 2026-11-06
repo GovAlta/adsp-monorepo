@@ -22,6 +22,15 @@ import {
 import { getAgentExecutionLimits } from './executionLimits';
 import { AgentModelConfiguration, getAgentProviderOptions } from './modelConfiguration';
 import { abortExecution, STREAM_ERROR_CODES } from './streamAbort';
+import {
+  ConversationStatus,
+  getConversationStatus,
+  MemoryStatus,
+  MessageHistory,
+  USAGE_RECORDER_KEY,
+  UsageRecorder,
+  usesObservationalMemory,
+} from './conversationUsage';
 import { deleteThreadAndWorkspace } from './threadDeletion';
 
 type ThreadMetadataRecord = {
@@ -46,6 +55,8 @@ type ThreadMemoryAccessor = {
     metadata: Record<string, unknown>;
   }) => Promise<unknown>;
   saveThread?: (args: { thread: ThreadMetadataRecord }) => Promise<unknown>;
+  getMergedThreadConfig?: () => { lastMessages?: number | false; observationalMemory?: unknown };
+  recall?: (args: { threadId: string; resourceId?: string; perPage?: number }) => Promise<{ total: number }>;
 };
 
 type AgentWithOptionalMemory<TAgentId extends string = string, TTools extends ToolsInput = ToolsInput> = Agent<
@@ -385,15 +396,57 @@ export class AgentBroker<TAgentId extends string = string, TTools extends ToolsI
     }
   }
 
+  /**
+   * Streams the agent's reply. A usage recorder, when given, collects model calls that tools make outside the agent's
+   * own usage; it is set after the client context so a client cannot supply its own.
+   */
   public async stream(
     user: User,
     threadId: string,
     input: CoreUserMessage | CoreUserMessage[],
     context: Record<string, unknown> = {},
+    usageRecorder?: UsageRecorder,
   ) {
     const requestContext = await this.prepareAgentRequest(user, threadId, input, context);
+    if (usageRecorder) {
+      requestContext.set(USAGE_RECORDER_KEY, usageRecorder);
+    }
 
     return this.agent.stream(input, this.getExecutionOptions(requestContext, user, threadId, true));
+  }
+
+  /**
+   * Whether the user's conversation has grown long enough that the agent may miss earlier details, after a reply that
+   * took up contextTokens of the model's context window.
+   */
+  public async getConversationStatus(
+    user: User,
+    threadId: string,
+    { contextTokens, memoryStatus }: { contextTokens: number; memoryStatus?: MemoryStatus },
+  ): Promise<ConversationStatus> {
+    return getConversationStatus({
+      contextTokens,
+      contextWindowTokens: environment.AGENT_MODEL_CONTEXT_TOKENS,
+      memoryStatus,
+      history: await this.getMessageHistory(user, threadId),
+    });
+  }
+
+  // Observational memory reports on itself in the stream. Without it, the agent reads only the most recent
+  // lastMessages, so older messages drop out once the thread holds more than that.
+  private async getMessageHistory(user: User, threadId: string): Promise<MessageHistory | undefined> {
+    const memory = await this.agent.getMemory?.();
+    const config = memory?.getMergedThreadConfig?.();
+    if (
+      !memory?.recall ||
+      typeof config?.lastMessages !== 'number' ||
+      usesObservationalMemory(config.observationalMemory)
+    ) {
+      return undefined;
+    }
+
+    const { total } = await memory.recall({ threadId, resourceId: user.id, perPage: 1 });
+    return { storedMessages: total, lastMessages: config.lastMessages };
   }
 
   public async generate(

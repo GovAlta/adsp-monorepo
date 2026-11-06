@@ -1,12 +1,15 @@
 import {
+  AGENT_CONVERSATION_STATUS_ACTION,
   AGENT_RESPONSE_ACTION,
   AgentActionTypes,
+  CLEAR_THREAD_ACTION,
   CONNECT_AGENT_SUCCESS_ACTION,
   MESSAGE_AGENT_ACTION,
   START_THREAD_ACTION,
 } from './actions';
 import reducer from './reducers';
-import { AgentMessage } from './models';
+import { AgentMessage } from '@core-services/app-common';
+import { AgentState } from './model';
 
 const THREAD_ID = 'thread-1';
 const MESSAGE_ID = 'message-1';
@@ -21,13 +24,13 @@ function responseAction(chunk: unknown, done = false): AgentActionTypes {
   } as AgentActionTypes;
 }
 
-function reduceAll(actions: AgentActionTypes[]) {
+function reduceAll(actions: AgentActionTypes[]): AgentState {
   const started = [
     { type: START_THREAD_ACTION, threadId: THREAD_ID, agent: 'formGenerationAgent' },
     { type: MESSAGE_AGENT_ACTION, threadId: THREAD_ID, messageId: 'user-1', context: {}, content: 'build a form' },
-  ].reduce((state, action) => reducer(state, action as AgentActionTypes), undefined);
+  ].reduce<AgentState>((state, action) => reducer(state, action as AgentActionTypes), undefined);
 
-  return actions.reduce((state, action) => reducer(state, action), started);
+  return actions.reduce<AgentState>((state, action) => reducer(state, action), started);
 }
 
 describe('agent reducer response chunks', () => {
@@ -91,5 +94,60 @@ describe('agent reducer reconnect', () => {
 
     expect(state.messages[MESSAGE_ID]).toMatchObject({ streaming: false, content: 'Complete' });
     expect(state.messages[MESSAGE_ID]).not.toHaveProperty('interrupted');
+  });
+});
+
+describe('agent reducer usage and conversation status', () => {
+  const usage = {
+    contextTokens: 36000,
+    contextWindowTokens: 256000,
+    totalTokens: 111000,
+    outputTokens: 1400,
+    modelCalls: 3,
+  };
+  const longStatus = {
+    contextTokens: 36000,
+    contextWindowTokens: 256000,
+    state: 'notice',
+    reason: 'summarised',
+  } as const;
+
+  function statusAction(threadId = THREAD_ID): AgentActionTypes {
+    return { type: AGENT_CONVERSATION_STATUS_ACTION, threadId, status: longStatus };
+  }
+
+  it('keeps the usage of a finished reply on the reply', () => {
+    // Arrange
+    const done = { ...responseAction(undefined, true), usage } as AgentActionTypes;
+
+    // Act
+    const state = reduceAll([responseAction({ type: 'text-delta', payload: { text: 'Three clients.' } }), done]);
+
+    // Assert
+    expect((state.messages[MESSAGE_ID] as AgentMessage).usage).toEqual(usage);
+  });
+
+  it('keeps the conversation status of a thread', () => {
+    // Act
+    const state = reduceAll([statusAction()]);
+
+    // Assert
+    expect(state.conversationStatus[THREAD_ID]).toEqual(longStatus);
+  });
+
+  it('ignores the conversation status of a thread it no longer tracks', () => {
+    // Act
+    const state = reduceAll([statusAction('discarded-thread')]);
+
+    // Assert
+    expect(state.conversationStatus['discarded-thread']).toBeUndefined();
+  });
+
+  it('drops the conversation status with its thread', () => {
+    // Act
+    const state = reduceAll([statusAction(), { type: CLEAR_THREAD_ACTION, threadId: THREAD_ID } as AgentActionTypes]);
+
+    // Assert
+    expect(state.conversationStatus[THREAD_ID]).toBeUndefined();
   });
 });

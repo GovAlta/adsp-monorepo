@@ -45,6 +45,7 @@ import { useDebounce } from '@lib/useDebounce';
 import { selectPdfTemplateById, selectCorePdfTemplateById } from '@store/pdf/selectors';
 import { CustomLoader } from '@components/CustomLoader';
 import { FullPagePane } from '@components/FullPagePane';
+import { AgentChatStatusBar } from '@components/AgentChatStatusBar';
 import useWindowDimensions from '@lib/useWindowDimensions';
 import { v4 as uuid } from 'uuid';
 
@@ -89,7 +90,7 @@ export const TemplateEditor = ({
   const dispatch = useDispatch<AppDispatch>();
 
   const { height } = useWindowDimensions();
-  const [threadId] = useState(uuid());
+  const [threadId, setThreadId] = useState(() => uuid());
 
   const thread = useSelector((state: RootState) => threadSelector(state, threadId));
   const messages = useSelector((state: RootState) => messagesSelector(state, threadId));
@@ -420,12 +421,22 @@ export const TemplateEditor = ({
                 >
                   <div style={{ height: height - 400 }}>
                     <AgentChat
+                      key={threadId}
                       threadId={threadId}
                       context={{ pdfDefinitionId: tmpTemplate.id }}
                       messages={messages}
                       disabled={!agentConnected || !thread}
                       onSend={handleAgentSend}
                       onAttachmentUpload={handleAttachmentUpload}
+                      showUsage
+                      status={
+                        <AgentChatStatusBar
+                          threadId={threadId}
+                          onReset={() => setThreadId(uuid())}
+                          keptContent="Your template isn’t changed."
+                          testId="pdf-editor-agent"
+                        />
+                      }
                     />
                   </div>
                 </Tab>

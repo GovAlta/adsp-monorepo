@@ -6,6 +6,7 @@ import type { GenerationLog } from '../run/log';
 import type { GenerationAgents } from './agents';
 import { planFormGeneration } from './planner';
 import { generationPlanSchema } from '../types';
+import { UsageRecorder } from '../../../../model/conversationUsage';
 
 describe('planFormGeneration', () => {
   const generate = jest.fn();
@@ -77,5 +78,29 @@ describe('planFormGeneration', () => {
     const result = await plan();
 
     expect(result.categoryLabels).toEqual(['Business details', 'Authorized representative']);
+  });
+
+  it('records the planner call in the usage recorder', async () => {
+    // Arrange
+    const usage = new UsageRecorder();
+    generate.mockResolvedValue({
+      object: { complexity: 'SIMPLE', reason: 'One page', steps: [] },
+      totalUsage: { inputTokens: 21000, outputTokens: 1400, totalTokens: 22400 },
+      steps: [{}],
+    });
+
+    // Act
+    await planFormGeneration({
+      agents,
+      requirement: 'Build this form',
+      documents: [],
+      current: { rootType: 'VerticalLayout', categoryLabels: [], propertyCount: 0 },
+      variant: 'pages',
+      log,
+      usage,
+    });
+
+    // Assert
+    expect(usage.total).toEqual({ inputTokens: 21000, outputTokens: 1400, totalTokens: 22400, modelCalls: 1 });
   });
 });

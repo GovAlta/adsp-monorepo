@@ -1,3 +1,4 @@
+import { createOpenAICompatible } from '@ai-sdk/openai-compatible';
 import type { AgentExecutionOptions } from '@mastra/core/agent';
 import { environment } from '../../environments/environment';
 import { FORM_GENERATION_AGENT_ID } from './executionLimits';
@@ -17,15 +18,20 @@ export function getAgentModelId(agentId?: string, modelConfig?: AgentModelConfig
     : environment.MODEL;
 }
 
+/**
+ * The model for an agent. An OpenAI-compatible endpoint is built here rather than by Mastra's model router, because
+ * the router leaves out stream_options.include_usage, so the endpoint reports no token usage on streamed replies.
+ */
 export function getAgentModelConfiguration(modelId = environment.MODEL, modelConfig?: AgentModelConfiguration) {
   return environment.MODEL_URL
-    ? {
-        providerId: 'openai',
-        modelId,
-        url: environment.MODEL_URL,
+    ? createOpenAICompatible({
+        name: 'openai',
+        baseURL: environment.MODEL_URL,
         apiKey: environment.MODEL_API_KEY,
-        ...(modelConfig?.headers ? { defaultHeaders: modelConfig.headers } : {}),
-      }
+        headers: modelConfig?.headers,
+        includeUsage: true,
+        supportsStructuredOutputs: true,
+      }).chatModel(modelId)
     : modelId;
 }
 

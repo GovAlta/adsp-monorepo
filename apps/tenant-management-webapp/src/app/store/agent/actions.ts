@@ -1,4 +1,4 @@
-import { UserContent } from '@core-services/app-common';
+import { AgentUsage, ConversationStatus, UserContent } from '@core-services/app-common';
 import { Dispatch } from 'redux';
 import { io, Socket } from 'socket.io-client';
 import { v4 as uuid } from 'uuid';
@@ -6,6 +6,7 @@ import { ErrorNotification } from '@store/notifications/actions';
 import { getAccessToken } from '@store/tenant/actions';
 import { AppDispatch, RootState } from '../index';
 import { AccessScope, AgentConfiguration } from './model';
+import { mayStillBeSavingReply } from './chatState';
 import axios from 'axios';
 
 export const CONNECT_AGENT_ACTION = 'agent/CONNECT_AGENT';
@@ -17,6 +18,7 @@ export const START_THREAD_ACTION = 'agent/START_THREAD';
 export const CLEAR_THREAD_ACTION = 'agent/CLEAR_THREAD';
 export const MESSAGE_AGENT_ACTION = 'agent/MESSAGE_AGENT';
 export const AGENT_RESPONSE_ACTION = 'agent/AGENT_RESPONSE';
+export const AGENT_CONVERSATION_STATUS_ACTION = 'agent/CONVERSATION_STATUS';
 
 export const GET_AGENTS_ACTION = 'agent/GET_AGENTS';
 export const GET_AGENTS_SUCCESS_ACTION = 'agent/GET_AGENTS_SUCCESS';
@@ -178,7 +180,15 @@ export interface AgentResponseAction {
     | ErrorChunk
     | TripwireChunk;
   output?: unknown;
+  /** What the reply used, on the done response when the model provider reports it. */
+  usage?: AgentUsage;
   done: boolean;
+}
+
+export interface AgentConversationStatusAction {
+  type: typeof AGENT_CONVERSATION_STATUS_ACTION;
+  threadId: string;
+  status: ConversationStatus;
 }
 
 export interface GetAgentsAction {
@@ -234,6 +244,7 @@ export type AgentActionTypes =
   | ClearThreadAction
   | MessageAgentAction
   | AgentResponseAction
+  | AgentConversationStatusAction
   | GetAgentsAction
   | GetAgentsSuccessAction
   | UpdateAgentAction
@@ -263,15 +274,22 @@ let queuedMessages: QueuedMessage[] = [];
 
 // Throttle stream chunk dispatches to one batch per animation frame to prevent
 // "Maximum update depth exceeded" when chunks arrive faster than React can render.
-let pendingChunks: Array<{ threadId: string; messageId: string; chunk: unknown; output?: unknown; done: boolean }> = [];
+let pendingChunks: Array<{
+  threadId: string;
+  messageId: string;
+  chunk: unknown;
+  output?: unknown;
+  usage?: AgentUsage;
+  done: boolean;
+}> = [];
 let rafId: number | null = null;
 
 function flushStreamChunks(dispatch: Dispatch) {
   const chunks = pendingChunks;
   pendingChunks = [];
   rafId = null;
-  for (const { threadId, messageId, chunk, output, done } of chunks) {
-    dispatch({ type: AGENT_RESPONSE_ACTION, threadId, messageId, chunk, output, done });
+  for (const { threadId, messageId, chunk, output, usage, done } of chunks) {
+    dispatch({ type: AGENT_RESPONSE_ACTION, threadId, messageId, chunk, output, usage, done });
   }
 }
 
@@ -360,17 +378,27 @@ export function connectAgent() {
     });
 
     socket.on('stream', (message) => {
-      const { threadId, messageId, chunk, output, done } = message;
+      const { threadId, messageId, chunk, output, usage, done } = message;
       // Heartbeat chunks are keep-alive signals to prevent proxy timeouts; ignore them.
       if (chunk?.type === 'heartbeat') {
         return;
       }
       // Batch chunk dispatches to one per animation frame to avoid overwhelming React.
-      pendingChunks.push({ threadId, messageId, chunk, output, done });
+      pendingChunks.push({ threadId, messageId, chunk, output, usage, done });
       if (rafId === null) {
         rafId = requestAnimationFrame(() => flushStreamChunks(dispatch));
       }
     });
+    socket.on(
+      'conversation-status',
+      ({ threadId, contextTokens, contextWindowTokens, state, reason, messageLimit }) => {
+        dispatch({
+          type: AGENT_CONVERSATION_STATUS_ACTION,
+          threadId,
+          status: { contextTokens, contextWindowTokens, state, reason, messageLimit },
+        });
+      },
+    );
     socket.on('error', (err) => {
       dispatch(ErrorNotification({ message: err }));
     });
@@ -428,6 +456,19 @@ export function discardThread(threadId: string, { deleteOnServer }: { deleteOnSe
       // Deliberately not shown to the user: the conversation is already cleared here, and the server deletes the
       // thread on its own when it expires.
     }
+  };
+}
+
+/**
+ * Discards a conversation when the user resets the chat. It is deleted on the server unless a reply may still be being
+ * saved to it; it then expires on its own.
+ */
+export function resetThread(threadId: string) {
+  return (dispatch: AppDispatch, getState: () => RootState): Promise<void> => {
+    const { threadMessages, messages } = getState().agent;
+    const threadHistory = (threadMessages[threadId] ?? []).map((messageId) => messages[messageId]).filter(Boolean);
+
+    return dispatch(discardThread(threadId, { deleteOnServer: !mayStillBeSavingReply(threadHistory) }));
   };
 }
 
