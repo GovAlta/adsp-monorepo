@@ -13,6 +13,7 @@ import {
   loadSolution,
   requirePlannerAdmin,
   requirePlannerUser,
+  requireSolutionOwner,
 } from './access';
 import { acceptanceReferences, checkedAcceptanceCriteria, ruleAcceptanceCriteria } from './acceptance';
 import {
@@ -831,6 +832,7 @@ export function createPlannerRouter({
     requirePlannerUser,
     validateId,
     getSolution(solutionRepository),
+    requireSolutionOwner,
     async (req, res, next) => {
       try {
         const solution = loaded(req);
