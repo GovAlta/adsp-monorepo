@@ -113,7 +113,7 @@ export const actionCatalogSchema = {
           forwardToSiem: { type: 'boolean' },
           metadataSchema: { type: 'object', $ref: 'http://json-schema.org/draft-07/schema#' },
         },
-        required: ['version', 'category', 'severity', 'retentionClass'],
+        required: ['version', 'category', 'severity'],
         additionalProperties: false,
       },
     },

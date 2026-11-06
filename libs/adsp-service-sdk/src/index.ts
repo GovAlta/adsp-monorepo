@@ -21,7 +21,9 @@ export {
   AuditCategories,
   AuditSeverities,
   BuiltInRetentionClasses,
+  DefaultCategoryRetentionClasses,
   createAuditService,
+  resolveRetentionClass,
   toAuditActor,
 } from './audit';
 export type {
