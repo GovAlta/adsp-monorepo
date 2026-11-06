@@ -1,6 +1,7 @@
-import { AdspId, EventService } from '@abgov/adsp-service-sdk';
+import { AdspId, AuditService, EventService } from '@abgov/adsp-service-sdk';
 import { DateTime, Duration } from 'luxon';
 import { Logger } from 'winston';
+import { FormLockedAuditAction, FormServiceJobAuditActor, recordFormAudit, toFormAuditDetails } from '../audit';
 import { formLocked } from '../events';
 import { FormRepository } from '../repository';
 import { FormStatus } from '../types';
@@ -12,10 +13,11 @@ interface LockJobProps {
   logger: Logger;
   repository: FormRepository;
   eventService: EventService;
+  auditService: AuditService;
 }
 
 const MAX_STALE_AGE = Duration.fromISO('P15D');
-export function createLockJob({ apiId, logger, repository, eventService }: LockJobProps) {
+export function createLockJob({ apiId, logger, repository, eventService, auditService }: LockJobProps) {
   return async (): Promise<void> => {
     try {
       logger.debug('Starting form lock job...');
@@ -30,10 +32,17 @@ export function createLockJob({ apiId, logger, repository, eventService }: LockJ
         });
 
         for (const result of results) {
+          const { lastAccessed } = result;
           const { locked } = await result.lock(jobUser);
           numberLocked++;
           eventService.send(
-            formLocked(apiId, jobUser, result, DateTime.fromJSDate(locked).plus(MAX_LOCKED_AGE).toJSDate())
+            formLocked(apiId, jobUser, result, DateTime.fromJSDate(locked).plus(MAX_LOCKED_AGE).toJSDate()),
+          );
+          recordFormAudit(auditService, logger, FormLockedAuditAction, () =>
+            toFormAuditDetails(FormServiceJobAuditActor, result, {
+              reason: 'inactivity',
+              lastAccessed: lastAccessed?.toISOString() ?? null,
+            }),
           );
         }
 

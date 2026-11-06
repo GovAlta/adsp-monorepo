@@ -4,6 +4,11 @@ import * as HttpStatusCodes from 'http-status-codes';
 import * as express from 'express';
 import { Request, Response } from 'express';
 import * as request from 'supertest';
+import {
+  DataRegisterCreatedAuditAction,
+  DataRegisterDeletedAuditAction,
+  DataRegisterUpdatedAuditAction,
+} from '../audit';
 import { DataRegisterClient } from '../dataRegisterClient';
 import { ConfigurationServiceRoles, FormServiceRoles } from '../roles';
 import {
@@ -29,6 +34,7 @@ describe('register router', () => {
   const client = clientMock as unknown as DataRegisterClient;
 
   const loggerMock = { info: jest.fn(), warn: jest.fn(), error: jest.fn(), debug: jest.fn() };
+  const auditServiceMock = { record: jest.fn(), query: jest.fn(), flush: jest.fn(), droppedEventCount: 0 };
 
   const register = {
     namespace: 'data-register',
@@ -58,7 +64,7 @@ describe('register router', () => {
   });
 
   it('can create router', () => {
-    expect(createRegisterRouter({ client, logger: loggerMock as never })).toBeTruthy();
+    expect(createRegisterRouter({ client, logger: loggerMock as never, auditService: auditServiceMock })).toBeTruthy();
   });
 
   describe('REGISTER_NAME_PATTERN', () => {
@@ -209,10 +215,11 @@ describe('register router', () => {
       const res = createRes();
       const next = jest.fn();
 
-      await createRegister(client, loggerMock as never)(req, res, next);
+      await createRegister(client, loggerMock as never, auditServiceMock)(req, res, next);
 
       expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedUserError));
       expect(clientMock.create).not.toHaveBeenCalled();
+      expect(auditServiceMock.record).not.toHaveBeenCalled();
     });
 
     it('sends 201 with the created register', async () => {
@@ -221,12 +228,19 @@ describe('register router', () => {
       const res = createRes();
       const next = jest.fn();
 
-      await createRegister(client, loggerMock as never)(req, res, next);
+      await createRegister(client, loggerMock as never, auditServiceMock)(req, res, next);
 
       expect(clientMock.create).toHaveBeenCalledWith(tenantId, req.body);
       expect(res.status).toHaveBeenCalledWith(HttpStatusCodes.CREATED);
       expect(res.send).toHaveBeenCalledWith(register);
       expect(next).not.toHaveBeenCalled();
+      expect(auditServiceMock.record).toHaveBeenCalledWith(DataRegisterCreatedAuditAction, {
+        tenantId,
+        actor: expect.objectContaining({ id: 'admin', type: 'user', name: 'Admin' }),
+        resource: { type: 'data-register', id: 'weekdays', name: 'weekdays' },
+        correlationId: 'weekdays',
+        metadata: { name: 'weekdays', entryCount: 1 },
+      });
     });
 
     it('logs the acting user on success', async () => {
@@ -234,7 +248,7 @@ describe('register router', () => {
       const req = createReq({ body: { name: 'weekdays' } });
       const res = createRes();
 
-      await createRegister(client, loggerMock as never)(req, res, jest.fn());
+      await createRegister(client, loggerMock as never, auditServiceMock)(req, res, jest.fn());
 
       expect(loggerMock.info).toHaveBeenCalledWith(
         expect.stringContaining('created by Admin'),
@@ -250,10 +264,11 @@ describe('register router', () => {
       const res = createRes();
       const next = jest.fn();
 
-      await createRegister(client, loggerMock as never)(req, res, next);
+      await createRegister(client, loggerMock as never, auditServiceMock)(req, res, next);
 
       expect(next).toHaveBeenCalledWith(expect.any(InvalidOperationError));
       expect(res.send).not.toHaveBeenCalled();
+      expect(auditServiceMock.record).not.toHaveBeenCalled();
     });
   });
 
@@ -267,7 +282,7 @@ describe('register router', () => {
       const res = createRes();
       const next = jest.fn();
 
-      await updateRegister(client, loggerMock as never)(req, res, next);
+      await updateRegister(client, loggerMock as never, auditServiceMock)(req, res, next);
 
       expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedUserError));
       expect(clientMock.update).not.toHaveBeenCalled();
@@ -280,10 +295,19 @@ describe('register router', () => {
       const res = createRes();
       const next = jest.fn();
 
-      await updateRegister(client, loggerMock as never)(req, res, next);
+      await updateRegister(client, loggerMock as never, auditServiceMock)(req, res, next);
 
       expect(clientMock.update).toHaveBeenCalledWith(tenantId, 'weekdays', req.body);
       expect(res.send).toHaveBeenCalledWith(updated);
+      expect(auditServiceMock.record).toHaveBeenCalledWith(
+        DataRegisterUpdatedAuditAction,
+        expect.objectContaining({
+          tenantId,
+          actor: expect.objectContaining({ id: 'admin' }),
+          resource: { type: 'data-register', id: 'weekdays', name: 'weekdays' },
+          metadata: { name: 'weekdays', updatedFields: ['description'], entryCount: 1 },
+        }),
+      );
     });
 
     it('calls next with the client error when the register is not found', async () => {
@@ -292,9 +316,10 @@ describe('register router', () => {
       const res = createRes();
       const next = jest.fn();
 
-      await updateRegister(client, loggerMock as never)(req, res, next);
+      await updateRegister(client, loggerMock as never, auditServiceMock)(req, res, next);
 
       expect(next).toHaveBeenCalledWith(expect.any(NotFoundError));
+      expect(auditServiceMock.record).not.toHaveBeenCalled();
     });
   });
 
@@ -307,7 +332,7 @@ describe('register router', () => {
       const res = createRes();
       const next = jest.fn();
 
-      await deleteRegister(client, loggerMock as never)(req, res, next);
+      await deleteRegister(client, loggerMock as never, auditServiceMock)(req, res, next);
 
       expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedUserError));
       expect(clientMock.delete).not.toHaveBeenCalled();
@@ -319,11 +344,19 @@ describe('register router', () => {
       const res = createRes();
       const next = jest.fn();
 
-      await deleteRegister(client, loggerMock as never)(req, res, next);
+      await deleteRegister(client, loggerMock as never, auditServiceMock)(req, res, next);
 
       expect(clientMock.delete).toHaveBeenCalledWith(tenantId, 'weekdays');
       expect(res.sendStatus).toHaveBeenCalledWith(HttpStatusCodes.NO_CONTENT);
       expect(next).not.toHaveBeenCalled();
+      expect(auditServiceMock.record).toHaveBeenCalledWith(
+        DataRegisterDeletedAuditAction,
+        expect.objectContaining({
+          tenantId,
+          resource: { type: 'data-register', id: 'weekdays', name: 'weekdays' },
+          metadata: { name: 'weekdays' },
+        }),
+      );
     });
 
     it('calls next with the client error when neither part of the register exists', async () => {
@@ -332,9 +365,10 @@ describe('register router', () => {
       const res = createRes();
       const next = jest.fn();
 
-      await deleteRegister(client, loggerMock as never)(req, res, next);
+      await deleteRegister(client, loggerMock as never, auditServiceMock)(req, res, next);
 
       expect(next).toHaveBeenCalledWith(expect.any(NotFoundError));
+      expect(auditServiceMock.record).not.toHaveBeenCalled();
     });
   });
 
@@ -348,7 +382,7 @@ describe('register router', () => {
         req.tenant = { id: tenantId } as never;
         next();
       });
-      app.use(createRegisterRouter({ client, logger: loggerMock as never }));
+      app.use(createRegisterRouter({ client, logger: loggerMock as never, auditService: auditServiceMock }));
       app.use(createErrorHandler(loggerMock as never));
       return app;
     };
@@ -376,7 +410,9 @@ describe('register router', () => {
     });
 
     it('rejects an update of a register name outside the allowed pattern', async () => {
-      const res = await request(buildApp()).patch('/registers/weekdays!').send({ entries: ['Monday'] });
+      const res = await request(buildApp())
+        .patch('/registers/weekdays!')
+        .send({ entries: ['Monday'] });
 
       expect(res.status).toBe(HttpStatusCodes.BAD_REQUEST);
       expect(clientMock.update).not.toHaveBeenCalled();
@@ -420,7 +456,10 @@ describe('register router', () => {
         ],
         [
           'PATCH /registers/:name',
-          (app) => request(app).patch('/registers/weekdays').send({ entries: ['Monday'] }),
+          (app) =>
+            request(app)
+              .patch('/registers/weekdays')
+              .send({ entries: ['Monday'] }),
           'update',
           HttpStatusCodes.OK,
         ],

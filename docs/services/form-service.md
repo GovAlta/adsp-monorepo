@@ -68,6 +68,36 @@ Registers are returned as `{ namespace: 'data-register', name, description, entr
 
 Form service does not emit its own events for data registers. Configuration service emits `configuration-updated` and `configuration-deleted` for the underlying configuration.
 
+## Audit actions
+Form service records audit events in the `form-service` namespace of the [audit service](audit-service.md). Records are written to the tenant of the form, submission or data register. Form records use the form as the resource (`{ type: 'form', id: <form ID> }`) and correlation ID, with the form `definitionId`, `status` (after the operation), `anonymousApplicant` and `dryRun` in the metadata. Form data and applicant details are never recorded. All actions are version 1.
+
+| action | category | severity | retention class | recorded when |
+|:-|:-|:-|:-|:-|
+| form.created | administrative | info | compliance | A draft form is created, with `hasApplicant` in the metadata. |
+| form.data-updated | data-access | info | compliance | Form data is written, including data sent when creating a form. Only `fileCount` is recorded about the data. |
+| form.submitted | administrative | info | compliance | A form is submitted, including when it is created with `submit: true`, with the `submissionId` if a submission record is created. |
+| form.locked | administrative | warning | compliance | The draft expiry job locks an inactive draft, with `reason: 'inactivity'` and `lastAccessed` in the metadata. |
+| form.unlocked | administrative | warning | compliance | An administrator unlocks a locked form, with the previous `locked` time in the metadata. |
+| form.set-to-draft | administrative | warning | compliance | A submitted form is set back to draft. |
+| form.archived | administrative | info | compliance | A form is archived. |
+| form.deleted | administrative | warning | compliance | A form and its files are deleted through the API, or by the draft expiry job (with `reason: 'lock-expired'` and the `locked` time in the metadata). |
+| form.access-code-sent | security | info | security | An access code is sent to the applicant of a form, with the notification `channels` types in the metadata. |
+| form.accessed-with-code | security | info | security | Form data is read using a verified access code. |
+| submission.deleted | administrative | warning | compliance | A form submission is deleted. The resource is `{ type: 'submission', id: <submission ID> }` and the correlation ID is the form ID. |
+| data-register.created | administrative | info | standard | A data register is created, with its `entryCount`. |
+| data-register.updated | administrative | info | standard | A data register is updated, with the `updatedFields` and the `entryCount`. |
+| data-register.deleted | administrative | warning | standard | A data register is deleted. |
+
+Data register records use `{ type: 'data-register', id: <name>, name: <name> }` as the resource and the register name as the correlation ID. Configuration service also records `configuration.updated` and `configuration.deleted` for the underlying configuration, attributed to the form service account; the form service records identify the user who made the change.
+
+Operations that an intake application performs for an anonymous applicant are recorded with the actor `{ id: 'anonymous-applicant', type: 'user', name: 'Anonymous applicant' }` and the intake application's service account ID as `callerId` in the metadata. The draft expiry job is recorded with the system actor `form-service-job`. Other operations are recorded with the signed-in user or service account.
+
+Reading forms, submissions or form data (other than by access code) is not audited. Submission disposition and notes are not audited. Denied and failed operations are not recorded. Changes to form definitions are not recorded by form service, since form definitions are managed in the [configuration service](configuration-service.md); audit records of those changes are in the `configuration-service` namespace.
+
+Draft data is saved frequently, so form service sends audit events in batches of up to 100 events and delivers buffered events on shutdown. Audit failures are logged by the SDK and do not fail the form operation. The form service account requires the `audit-writer` role of `urn:ads:platform:audit-service`.
+
+Audit recording is on by default. Set the environment variable `FORM_AUDIT_ENABLED=false` on form service to turn it off, or `true` to turn it on regardless of the SDK `AUDIT_ENABLED` variable, which applies when `FORM_AUDIT_ENABLED` is not set. The action catalog is still registered while recording is off, so turning it back on needs only a restart.
+
 ## Code examples
 ### Create a draft form for an anonymous applicant
 ```typescript

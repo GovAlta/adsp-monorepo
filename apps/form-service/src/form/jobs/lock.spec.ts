@@ -1,6 +1,7 @@
 import { adspId, Channel } from '@abgov/adsp-service-sdk';
 import { ValidationService } from '@core-services/core-common';
 import { Logger } from 'winston';
+import { FormLockedAuditAction, FormServiceJobAuditActor } from '../audit';
 import { CalendarService } from '../calendar';
 import { FormDefinitionEntity, FormEntity } from '../model';
 import { FormStatus } from '../types';
@@ -26,6 +27,13 @@ describe('lock', () => {
 
   const eventServiceMock = {
     send: jest.fn(),
+  };
+
+  const auditServiceMock = {
+    record: jest.fn(),
+    query: jest.fn(),
+    flush: jest.fn(),
+    droppedEventCount: 0,
   };
 
   const notificationServiceMock = {
@@ -100,6 +108,7 @@ describe('lock', () => {
   );
 
   beforeEach(() => {
+    auditServiceMock.record.mockReset();
     repositoryMock.find.mockReset();
     repositoryMock.delete.mockReset();
     notificationServiceMock.unsubscribe.mockReset();
@@ -111,6 +120,7 @@ describe('lock', () => {
       logger: loggerMock,
       repository: repositoryMock,
       eventService: eventServiceMock,
+      auditService: auditServiceMock,
     });
 
     expect(job).toBeTruthy();
@@ -122,6 +132,7 @@ describe('lock', () => {
       logger: loggerMock,
       repository: repositoryMock,
       eventService: eventServiceMock,
+      auditService: auditServiceMock,
     });
 
     repositoryMock.find.mockResolvedValueOnce({ results: [form], page: { next: 'nextPage' } });
@@ -139,6 +150,21 @@ describe('lock', () => {
       }),
     );
     expect(repositoryMock.save).toHaveBeenCalledTimes(1);
+    expect(auditServiceMock.record).toHaveBeenCalledTimes(1);
+    expect(auditServiceMock.record).toHaveBeenCalledWith(
+      FormLockedAuditAction,
+      expect.objectContaining({
+        tenantId,
+        actor: FormServiceJobAuditActor,
+        resource: { type: 'form', id: form.id },
+        metadata: expect.objectContaining({
+          definitionId: 'my-test-form',
+          status: FormStatus.Locked,
+          anonymousApplicant: true,
+          reason: 'inactivity',
+        }),
+      }),
+    );
   });
 
   it('can handle repository error', async () => {
@@ -147,11 +173,13 @@ describe('lock', () => {
       logger: loggerMock,
       repository: repositoryMock,
       eventService: eventServiceMock,
+      auditService: auditServiceMock,
     });
 
     repositoryMock.find.mockRejectedValueOnce(new Error('oh noes!'));
 
     await job();
     expect(repositoryMock.find).toHaveBeenCalledTimes(1);
+    expect(auditServiceMock.record).not.toHaveBeenCalled();
   });
 });

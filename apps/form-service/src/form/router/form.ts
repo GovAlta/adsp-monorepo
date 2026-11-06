@@ -1,5 +1,7 @@
 import {
   AdspId,
+  AuditAction,
+  AuditService,
   DomainEvent,
   EventService,
   isAllowedUser,
@@ -24,6 +26,21 @@ import { FileService } from '../../file';
 import { NotificationService } from '../../notification';
 import { QueueTaskService } from '../../task';
 import { CommentService } from '../comment';
+import {
+  FormAccessCodeSentAuditAction,
+  FormAccessedWithCodeAuditAction,
+  FormArchivedAuditAction,
+  FormCreatedAuditAction,
+  FormDataUpdatedAuditAction,
+  FormDeletedAuditAction,
+  FormSetToDraftAuditAction,
+  FormSubmittedAuditAction,
+  FormUnlockedAuditAction,
+  SubmissionDeletedAuditAction,
+  recordFormAudit,
+  toFormOperationAuditDetails,
+  toSubmissionDeletedAuditDetails,
+} from '../audit';
 import {
   formArchived,
   formCreated,
@@ -285,6 +302,7 @@ export function createForm(
   fileService: FileService,
   queueTaskService: QueueTaskService,
   pdfService: PdfService,
+  auditService: AuditService,
 ): RequestHandler {
   return async (req, res, next) => {
     try {
@@ -344,6 +362,23 @@ export function createForm(
 
       eventService.send(event);
 
+      // Each step of the create request is recorded in order: created, then data written, then submitted.
+      recordFormAudit(auditService, logger, FormCreatedAuditAction, () =>
+        toFormOperationAuditDetails(user, form, { status: FormStatus.Draft, hasApplicant: !!form.applicant }),
+      );
+      if (data) {
+        recordFormAudit(auditService, logger, FormDataUpdatedAuditAction, () =>
+          toFormOperationAuditDetails(user, form, {
+            status: FormStatus.Draft,
+            fileCount: Object.keys(form.files || {}).length,
+          }),
+        );
+      }
+      if (submit === true) {
+        recordFormAudit(auditService, logger, FormSubmittedAuditAction, () =>
+          toFormOperationAuditDetails(user, form, { submissionId: formSubmission?.id ?? null }),
+        );
+      }
       if (submit && form.definition.customSubmissionEvent?.namespace && form.definition.customSubmissionEvent?.name) {
         const customEvent = customFormSubmitted(apiId, user, form, formSubmission, dryRun);
         await sendCustomEvent(directory, tokenProvider, logger, customEvent);
@@ -459,6 +494,8 @@ export function deleteFormSubmission(
   apiId: AdspId,
   eventService: EventService,
   submissionRepository: FormSubmissionRepository,
+  logger: Logger,
+  auditService: AuditService,
 ): RequestHandler {
   return async (req, res, next) => {
     try {
@@ -479,6 +516,9 @@ export function deleteFormSubmission(
 
       if (deleted) {
         eventService.send(submissionDeleted(apiId, user, formSubmission));
+        recordFormAudit(auditService, logger, SubmissionDeletedAuditAction, () =>
+          toSubmissionDeletedAuditDetails(user, formSubmission),
+        );
       }
 
       end();
@@ -616,7 +656,11 @@ export function deleteFormSubmissionNote(
   };
 }
 
-export function accessForm(logger: Logger, notificationService: NotificationService): RequestHandler {
+export function accessForm(
+  logger: Logger,
+  notificationService: NotificationService,
+  auditService: AuditService,
+): RequestHandler {
   return async (req, res, next) => {
     try {
       const end = startBenchmark(req, 'operation-handler-time');
@@ -638,6 +682,13 @@ export function accessForm(logger: Logger, notificationService: NotificationServ
       end();
       res.send(mapFormData(result));
 
+      // Reads are not audited, except access by code since the code grants data access to the caller.
+      if (code) {
+        recordFormAudit(auditService, logger, FormAccessedWithCodeAuditAction, () =>
+          toFormOperationAuditDetails(user, result),
+        );
+      }
+
       logger.info(`Accessed form with ID: ${form.id} (definition ID: ${form.definition.id}) data.`, {
         context: 'FormRouter',
         tenantId: form.tenantId.toString,
@@ -649,7 +700,7 @@ export function accessForm(logger: Logger, notificationService: NotificationServ
   };
 }
 
-export function updateFormData(logger: Logger, fileService: FileService): RequestHandler {
+export function updateFormData(logger: Logger, fileService: FileService, auditService: AuditService): RequestHandler {
   return async (req, res, next) => {
     try {
       const end = startBenchmark(req, 'operation-handler-time');
@@ -668,6 +719,10 @@ export function updateFormData(logger: Logger, fileService: FileService): Reques
 
       end();
       res.send(mapFormData(result));
+
+      recordFormAudit(auditService, logger, FormDataUpdatedAuditAction, () =>
+        toFormOperationAuditDetails(user, result, { fileCount: Object.keys(result.files || {}).length }),
+      );
 
       logger.info(`Updated form with ID: ${form.id} (definition ID: ${form.definition.id}) data.`, {
         context: 'FormRouter',
@@ -694,6 +749,7 @@ export function formOperation(
   queueTaskService: QueueTaskService,
   submissionRepository: FormSubmissionRepository,
   pdfService: PdfService,
+  auditService: AuditService,
 ): RequestHandler {
   return async (req, res, next) => {
     try {
@@ -718,15 +774,25 @@ export function formOperation(
       let result: FormEntityWithJobId = null;
       let formSubmissionResult: FormSubmissionEntity = null;
       let event: DomainEvent = null;
+      let auditAction: AuditAction = null;
+      // Captured before the operation, since operations update the form in place.
+      const auditMetadata: Record<string, unknown> = { previousStatus: form.status };
 
       switch (request.operation) {
         case SEND_CODE_OPERATION: {
           result = await form.sendCode(user, notificationService);
+          // A code is only sent when the form has an applicant.
+          if (result.applicant) {
+            auditAction = FormAccessCodeSentAuditAction;
+            auditMetadata.channels = result.applicant.channels?.map(({ channel }) => channel) ?? [];
+          }
           break;
         }
         case UNLOCK_FORM_OPERATION: {
+          auditMetadata.locked = form.locked?.toISOString() ?? null;
           result = await form.unlock(user);
           event = formUnlocked(apiId, user, result);
+          auditAction = FormUnlockedAuditAction;
           break;
         }
         case SUBMIT_FORM_OPERATION: {
@@ -744,16 +810,20 @@ export function formOperation(
           }
           formSubmissionResult = submission;
           event = formSubmitted(apiId, user, result, submission, dryRun);
+          auditAction = FormSubmittedAuditAction;
+          auditMetadata.submissionId = submission?.id ?? null;
           break;
         }
         case SET_TO_DRAFT_FORM_OPERATION: {
           result = await form.setToDraft(user);
           event = formSetToDraft(apiId, user, result);
+          auditAction = FormSetToDraftAuditAction;
           break;
         }
         case ARCHIVE_FORM_OPERATION: {
           result = await form.archive(user, notificationService);
           event = formArchived(apiId, user, result);
+          auditAction = FormArchivedAuditAction;
           break;
         }
         default:
@@ -767,6 +837,13 @@ export function formOperation(
         : mapForm(apiId, result);
 
       res.send(mappedResult);
+
+      if (auditAction) {
+        recordFormAudit(auditService, logger, auditAction, () =>
+          toFormOperationAuditDetails(user, result, auditMetadata),
+        );
+      }
+
       if (event) {
         eventService.send(event);
 
@@ -800,6 +877,7 @@ export function deleteForm(
   eventService: EventService,
   fileService: FileService,
   notificationService: NotificationService,
+  auditService: AuditService,
 ): RequestHandler {
   return async (req, res, next) => {
     try {
@@ -819,6 +897,9 @@ export function deleteForm(
       end();
       res.send({ deleted });
       eventService.send(formDeleted(apiId, user, form));
+      if (deleted) {
+        recordFormAudit(auditService, logger, FormDeletedAuditAction, () => toFormOperationAuditDetails(user, form));
+      }
 
       logger.info(`Deleted form with ID: ${form.id} (definition ID: ${form.definition?.id}).`, {
         context: 'FormRouter',
@@ -868,6 +949,7 @@ interface FormRouterProps {
   directory: ServiceDirectory;
   tokenProvider: TokenProvider;
   eventService: EventService;
+  auditService: AuditService;
   notificationService: NotificationService;
   queueTaskService: QueueTaskService;
   fileService: FileService;
@@ -883,6 +965,7 @@ export function createFormRouter({
   directory,
   tokenProvider,
   eventService,
+  auditService,
   notificationService,
   queueTaskService,
   fileService,
@@ -936,6 +1019,7 @@ export function createFormRouter({
       fileService,
       queueTaskService,
       pdfService,
+      auditService,
     ),
   );
 
@@ -970,6 +1054,7 @@ export function createFormRouter({
       queueTaskService,
       submissionRepository,
       pdfService,
+      auditService,
     ),
   );
   router.delete(
@@ -977,7 +1062,7 @@ export function createFormRouter({
     assertAuthenticatedHandler,
     createValidationHandler(param('formId').isUUID()),
     getForm(repository),
-    deleteForm(apiId, logger, eventService, fileService, notificationService),
+    deleteForm(apiId, logger, eventService, fileService, notificationService, auditService),
   );
 
   router.get(
@@ -988,14 +1073,14 @@ export function createFormRouter({
       query('code').optional().isString().isLength({ min: 1, max: 10 }),
     ),
     getForm(repository),
-    accessForm(logger, notificationService),
+    accessForm(logger, notificationService, auditService),
   );
   router.put(
     '/forms/:formId/data',
     assertAuthenticatedHandler,
     createValidationHandler(param('formId').isUUID(), body('data').exists().isObject()),
     getForm(repository),
-    updateFormData(logger, fileService),
+    updateFormData(logger, fileService, auditService),
   );
 
   router.get(
@@ -1022,7 +1107,7 @@ export function createFormRouter({
     '/submissions/:submissionId',
     assertAuthenticatedHandler,
     createValidationHandler(param('submissionId').isUUID()),
-    deleteFormSubmission(apiId, eventService, submissionRepository),
+    deleteFormSubmission(apiId, eventService, submissionRepository, logger, auditService),
   );
 
   router.get(

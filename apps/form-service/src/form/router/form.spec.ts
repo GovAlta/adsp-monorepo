@@ -183,6 +183,13 @@ describe('form router', () => {
     generateFormPdf: jest.fn(),
   };
 
+  const auditServiceMock = {
+    record: jest.fn(),
+    query: jest.fn(),
+    flush: jest.fn(),
+    droppedEventCount: 0,
+  };
+
   const tenantServiceMock = {
     getTenants: jest.fn(),
     getTenant: jest.fn(),
@@ -270,6 +277,7 @@ describe('form router', () => {
     axiosMock.get.mockClear();
     axiosMock.patch.mockClear();
 
+    auditServiceMock.record.mockReset();
     repositoryMock.save.mockClear();
     repositoryMock.get.mockReset();
     repositoryMock.delete.mockReset();
@@ -309,6 +317,7 @@ describe('form router', () => {
       commentService: commentServiceMock,
       submissionRepository: repositoryMock,
       pdfService: pdfServiceMock,
+      auditService: auditServiceMock,
     });
     expect(router).toBeTruthy();
   });
@@ -944,6 +953,7 @@ describe('form router', () => {
         fileServiceMock,
         queueTaskServiceMock,
         pdfServiceMock,
+        auditServiceMock,
       );
       expect(handler).toBeTruthy();
     });
@@ -983,6 +993,7 @@ describe('form router', () => {
         fileServiceMock,
         queueTaskServiceMock,
         pdfServiceMock,
+        auditServiceMock,
       );
       await handler(req as unknown as Request, res as unknown as Response, next);
 
@@ -1025,6 +1036,7 @@ describe('form router', () => {
         fileServiceMock,
         queueTaskServiceMock,
         pdfServiceMock,
+        auditServiceMock,
       );
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(res.send).not.toHaveBeenCalled();
@@ -1066,6 +1078,7 @@ describe('form router', () => {
         fileServiceMock,
         queueTaskServiceMock,
         pdfServiceMock,
+        auditServiceMock,
       );
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(res.send).not.toHaveBeenCalled();
@@ -1108,6 +1121,7 @@ describe('form router', () => {
         fileServiceMock,
         queueTaskServiceMock,
         pdfServiceMock,
+        auditServiceMock,
       );
       await handler(req as unknown as Request, res as unknown as Response, next);
 
@@ -1155,6 +1169,7 @@ describe('form router', () => {
         fileServiceMock,
         queueTaskServiceMock,
         pdfServiceMock,
+        auditServiceMock,
       );
       await handler(req as unknown as Request, res as unknown as Response, next);
 
@@ -1202,6 +1217,7 @@ describe('form router', () => {
         fileServiceMock,
         queueTaskServiceMock,
         pdfServiceMock,
+        auditServiceMock,
       );
       await handler(req as unknown as Request, res as unknown as Response, next);
 
@@ -1250,6 +1266,7 @@ describe('form router', () => {
         fileServiceMock,
         queueTaskServiceMock,
         pdfServiceMock,
+        auditServiceMock,
       );
       await handler(req as unknown as Request, res as unknown as Response, next);
 
@@ -1300,6 +1317,7 @@ describe('form router', () => {
         fileServiceMock,
         queueTaskServiceMock,
         pdfServiceMock,
+        auditServiceMock,
       );
       await handler(req as unknown as Request, res as unknown as Response, next);
 
@@ -1431,7 +1449,7 @@ describe('form router', () => {
 
   describe('accessForm', () => {
     it('can create handler', () => {
-      const handler = accessForm(logger, notificationServiceMock);
+      const handler = accessForm(logger, notificationServiceMock, auditServiceMock);
       expect(handler).toBeTruthy();
     });
 
@@ -1450,7 +1468,7 @@ describe('form router', () => {
       const res = { send: jest.fn() };
       const next = jest.fn();
 
-      const handler = accessForm(logger, notificationServiceMock);
+      const handler = accessForm(logger, notificationServiceMock, auditServiceMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(res.send).toHaveBeenCalled();
     });
@@ -1472,7 +1490,7 @@ describe('form router', () => {
 
       notificationServiceMock.verifyCode.mockResolvedValueOnce(true);
 
-      const handler = accessForm(logger, notificationServiceMock);
+      const handler = accessForm(logger, notificationServiceMock, auditServiceMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(notificationServiceMock.verifyCode).toHaveBeenCalled();
       expect(res.send).toHaveBeenCalled();
@@ -1493,7 +1511,7 @@ describe('form router', () => {
       const res = { send: jest.fn() };
       const next = jest.fn();
 
-      const handler = accessForm(logger, notificationServiceMock);
+      const handler = accessForm(logger, notificationServiceMock, auditServiceMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(res.send).not.toHaveBeenCalled();
       expect(next).toBeCalledWith(expect.any(UnauthorizedUserError));
@@ -1521,7 +1539,7 @@ describe('form router', () => {
       const res = { send: jest.fn() };
       const next = jest.fn();
 
-      const handler = updateFormData(logger, fileServiceMock);
+      const handler = updateFormData(logger, fileServiceMock, auditServiceMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(repositoryMock.save).toHaveBeenCalledWith(entity);
       expect(res.send).toHaveBeenCalled();
@@ -1547,7 +1565,7 @@ describe('form router', () => {
       const res = { send: jest.fn() };
       const next = jest.fn();
 
-      const handler = updateFormData(logger, fileServiceMock);
+      const handler = updateFormData(logger, fileServiceMock, auditServiceMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(req.form.files.attachment?.toString()).toBe('urn:ads:platform:file-service:v1:/files/test');
@@ -1586,7 +1604,7 @@ describe('form router', () => {
       const res = { send: jest.fn() };
       const next = jest.fn();
 
-      const handler = updateFormData(logger, fileServiceMock);
+      const handler = updateFormData(logger, fileServiceMock, auditServiceMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(fileServiceMock.delete).toHaveBeenCalledTimes(1);
@@ -1610,7 +1628,7 @@ describe('form router', () => {
       const res = { send: jest.fn() };
       const next = jest.fn();
 
-      const handler = updateFormData(logger, fileServiceMock);
+      const handler = updateFormData(logger, fileServiceMock, auditServiceMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(res.send).not.toHaveBeenCalled();
       expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedUserError));
@@ -1619,7 +1637,14 @@ describe('form router', () => {
 
   describe('deleteForm', () => {
     it('can create handler', () => {
-      const handler = deleteForm(apiId, logger, eventServiceMock, fileServiceMock, notificationServiceMock);
+      const handler = deleteForm(
+        apiId,
+        logger,
+        eventServiceMock,
+        fileServiceMock,
+        notificationServiceMock,
+        auditServiceMock,
+      );
       expect(handler).toBeTruthy();
     });
 
@@ -1639,7 +1664,14 @@ describe('form router', () => {
 
       repositoryMock.delete.mockResolvedValueOnce(true);
 
-      const handler = deleteForm(apiId, logger, eventServiceMock, fileServiceMock, notificationServiceMock);
+      const handler = deleteForm(
+        apiId,
+        logger,
+        eventServiceMock,
+        fileServiceMock,
+        notificationServiceMock,
+        auditServiceMock,
+      );
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(repositoryMock.delete).toHaveBeenCalledWith(entity);
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ deleted: true }));
@@ -1660,7 +1692,14 @@ describe('form router', () => {
       const res = { send: jest.fn() };
       const next = jest.fn();
 
-      const handler = deleteForm(apiId, logger, eventServiceMock, fileServiceMock, notificationServiceMock);
+      const handler = deleteForm(
+        apiId,
+        logger,
+        eventServiceMock,
+        fileServiceMock,
+        notificationServiceMock,
+        auditServiceMock,
+      );
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(res.send).not.toHaveBeenCalled();
       expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedUserError));
@@ -1679,6 +1718,7 @@ describe('form router', () => {
         queueTaskServiceMock,
         repositoryMock,
         pdfServiceMock,
+        auditServiceMock,
       );
       expect(handler).toBeTruthy();
     });
@@ -1710,6 +1750,7 @@ describe('form router', () => {
         queueTaskServiceMock,
         repositoryMock,
         pdfServiceMock,
+        auditServiceMock,
       );
       await handler(req as unknown as Request, res as unknown as Response, next);
 
@@ -1745,6 +1786,7 @@ describe('form router', () => {
         queueTaskServiceMock,
         repositoryMock,
         pdfServiceMock,
+        auditServiceMock,
       );
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ status: FormStatus.Submitted }));
@@ -1779,6 +1821,7 @@ describe('form router', () => {
         queueTaskServiceMock,
         repositoryMock,
         pdfServiceMock,
+        auditServiceMock,
       );
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ status: FormStatus.Submitted }));
@@ -1821,6 +1864,7 @@ describe('form router', () => {
         queueTaskServiceMock,
         repositoryMock,
         pdfServiceMock,
+        auditServiceMock,
       );
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(res.send).toHaveBeenCalledWith(
@@ -1859,6 +1903,7 @@ describe('form router', () => {
         queueTaskServiceMock,
         repositoryMock,
         pdfServiceMock,
+        auditServiceMock,
       );
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(repositoryMock.save).toHaveBeenCalledWith(entity);
@@ -1890,6 +1935,7 @@ describe('form router', () => {
         queueTaskServiceMock,
         repositoryMock,
         pdfServiceMock,
+        auditServiceMock,
       );
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(repositoryMock.save).toHaveBeenCalledWith(entity);
@@ -1938,6 +1984,7 @@ describe('form router', () => {
         queueTaskServiceMock,
         repositoryMock,
         pdfServiceMock,
+        auditServiceMock,
       );
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(repositoryMock.save).toHaveBeenCalledWith(locked);
@@ -1969,6 +2016,7 @@ describe('form router', () => {
         queueTaskServiceMock,
         repositoryMock,
         pdfServiceMock,
+        auditServiceMock,
       );
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(res.send).not.toHaveBeenCalled();
@@ -2118,7 +2166,7 @@ describe('form router', () => {
     };
 
     it('can create handler getFormSubmission', () => {
-      const handler = deleteFormSubmission(apiId, eventServiceMock, formSubmissionMock);
+      const handler = deleteFormSubmission(apiId, eventServiceMock, formSubmissionMock, logger, auditServiceMock);
       expect(handler).toBeTruthy();
     });
 
@@ -2136,7 +2184,7 @@ describe('form router', () => {
       formSubmissionMock.get.mockResolvedValueOnce(formSubmissionEntity);
       formSubmissionMock.delete.mockResolvedValueOnce(true);
 
-      const handler = deleteFormSubmission(apiId, eventServiceMock, formSubmissionMock);
+      const handler = deleteFormSubmission(apiId, eventServiceMock, formSubmissionMock, logger, auditServiceMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ deleted: true }));
@@ -2155,7 +2203,7 @@ describe('form router', () => {
       const next = jest.fn();
       formSubmissionMock.get.mockResolvedValueOnce(null);
 
-      const handler = deleteFormSubmission(apiId, eventServiceMock, formSubmissionMock);
+      const handler = deleteFormSubmission(apiId, eventServiceMock, formSubmissionMock, logger, auditServiceMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ deleted: false }));
@@ -2178,7 +2226,7 @@ describe('form router', () => {
       const res = { send: jest.fn() };
       const next = jest.fn();
 
-      const handler = deleteFormSubmission(apiId, eventServiceMock, formSubmissionMock);
+      const handler = deleteFormSubmission(apiId, eventServiceMock, formSubmissionMock, logger, auditServiceMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(res.send).not.toHaveBeenCalled();

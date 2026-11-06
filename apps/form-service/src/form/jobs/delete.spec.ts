@@ -1,6 +1,7 @@
 import { adspId, Channel } from '@abgov/adsp-service-sdk';
 import { ValidationService } from '@core-services/core-common';
 import { Logger } from 'winston';
+import { FormDeletedAuditAction, FormServiceJobAuditActor } from '../audit';
 import { CalendarService } from '../calendar';
 import { FormDefinitionEntity, FormEntity } from '../model';
 import { FormStatus } from '../types';
@@ -26,6 +27,13 @@ describe('delete', () => {
 
   const eventServiceMock = {
     send: jest.fn(),
+  };
+
+  const auditServiceMock = {
+    record: jest.fn(),
+    query: jest.fn(),
+    flush: jest.fn(),
+    droppedEventCount: 0,
   };
 
   const fileServiceMock = {
@@ -103,6 +111,7 @@ describe('delete', () => {
   );
 
   beforeEach(() => {
+    auditServiceMock.record.mockReset();
     repositoryMock.find.mockReset();
     repositoryMock.delete.mockReset();
     notificationServiceMock.unsubscribe.mockReset();
@@ -115,6 +124,7 @@ describe('delete', () => {
       logger: loggerMock,
       repository: repositoryMock,
       eventService: eventServiceMock,
+      auditService: auditServiceMock,
       fileService: fileServiceMock,
       notificationService: notificationServiceMock,
     });
@@ -128,6 +138,7 @@ describe('delete', () => {
       logger: loggerMock,
       repository: repositoryMock,
       eventService: eventServiceMock,
+      auditService: auditServiceMock,
       fileService: fileServiceMock,
       notificationService: notificationServiceMock,
     });
@@ -142,6 +153,16 @@ describe('delete', () => {
     expect(notificationServiceMock.unsubscribe).toHaveBeenCalledTimes(1);
     expect(fileServiceMock.delete).toHaveBeenCalledTimes(1);
     expect(eventServiceMock.send).toHaveBeenCalledTimes(1);
+    expect(auditServiceMock.record).toHaveBeenCalledTimes(1);
+    expect(auditServiceMock.record).toHaveBeenCalledWith(
+      FormDeletedAuditAction,
+      expect.objectContaining({
+        tenantId,
+        actor: FormServiceJobAuditActor,
+        resource: { type: 'form', id: form.id },
+        metadata: expect.objectContaining({ reason: 'lock-expired' }),
+      }),
+    );
   });
 
   it('can handle repository error', async () => {
@@ -150,6 +171,7 @@ describe('delete', () => {
       logger: loggerMock,
       repository: repositoryMock,
       eventService: eventServiceMock,
+      auditService: auditServiceMock,
       fileService: fileServiceMock,
       notificationService: notificationServiceMock,
     });
@@ -166,6 +188,7 @@ describe('delete', () => {
       logger: loggerMock,
       repository: repositoryMock,
       eventService: eventServiceMock,
+      auditService: auditServiceMock,
       fileService: fileServiceMock,
       notificationService: notificationServiceMock,
     });
@@ -177,5 +200,6 @@ describe('delete', () => {
 
     await job();
     expect(repositoryMock.find).toHaveBeenCalledTimes(2);
+    expect(auditServiceMock.record).not.toHaveBeenCalled();
   });
 });
