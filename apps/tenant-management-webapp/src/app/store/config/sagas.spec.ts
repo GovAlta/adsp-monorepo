@@ -42,3 +42,51 @@ describe('fetchConfig', () => {
     expect((await fetchServiceUrls()).projectPlannerWebApp).toBe('https://planner.example');
   });
 });
+
+const entries = [{ service: 'tenant-service', url: 'https://tenant-service.example' }];
+const sharepointEntry = { service: 'test-sharepoint-service', url: 'https://sharepoint-service.example' };
+
+const runConfig = async () => {
+  const { effects } = await expectSaga(fetchConfig).withState({ config: {} }).run();
+  const [action] = effects.put.map((e) => e.payload.action);
+  expect(action.type).toBe(FETCH_CONFIG_SUCCESS_ACTION);
+  return action.payload;
+};
+
+describe('fetchConfig sharepoint url and feature flags', () => {
+  const originalEnv = process.env;
+
+  beforeEach(() => {
+    process.env = { ...originalEnv };
+    delete process.env.NX_PUBLIC_SHAREPOINT_SERVICE_URL;
+    delete process.env.NX_PUBLIC_FEATURE_FLAGS;
+  });
+
+  afterEach(() => {
+    process.env = originalEnv;
+    jest.resetAllMocks();
+  });
+
+  it('uses the sharepoint service directory entry', async () => {
+    mockDirectory([...entries, sharepointEntry]);
+    expect((await runConfig()).serviceUrls.sharepointServiceApiUrl).toBe('https://sharepoint-service.example');
+  });
+
+  it('uses NX_PUBLIC_SHAREPOINT_SERVICE_URL when set', async () => {
+    process.env.NX_PUBLIC_SHAREPOINT_SERVICE_URL = 'http://localhost:3350';
+    mockDirectory([...entries, sharepointEntry]);
+    expect((await runConfig()).serviceUrls.sharepointServiceApiUrl).toBe('http://localhost:3350');
+  });
+
+  it('applies NX_PUBLIC_FEATURE_FLAGS over config.json', async () => {
+    process.env.NX_PUBLIC_FEATURE_FLAGS = '{"SharePoint":true}';
+    mockDirectory(entries);
+    expect((await runConfig()).featureFlags.SharePoint).toBe(true);
+  });
+
+  it('ignores malformed NX_PUBLIC_FEATURE_FLAGS', async () => {
+    process.env.NX_PUBLIC_FEATURE_FLAGS = 'not json';
+    mockDirectory(entries);
+    expect((await runConfig()).featureFlags.SharePoint).toBe(false);
+  });
+});
