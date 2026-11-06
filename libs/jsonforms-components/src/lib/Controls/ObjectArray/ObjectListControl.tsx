@@ -61,6 +61,7 @@ import {
   ReviewRow,
   ReviewRowLabel,
   ReviewRowValue,
+  TableScrollContainer,
   TextCenter,
   ToolBarHeader,
   ListWithDetailsReviewCellDiv,
@@ -526,25 +527,27 @@ const NonEmptyRowComponent = ({
             </div>
           </div>
         ) : (
-          <GoabContainer>
-            <div>
+          <TableScrollContainer>
+            <GoabContainer>
               <div>
-                {GenerateRows(
-                  NonEmptyCell,
-                  schema,
-                  childPath,
-                  enabled,
-                  openDeleteDialog,
-                  handleChange,
-                  cells,
-                  uischema,
-                  isInReview,
-                  count,
-                  data,
-                )}
+                <div>
+                  {GenerateRows(
+                    NonEmptyCell,
+                    schema,
+                    childPath,
+                    enabled,
+                    openDeleteDialog,
+                    handleChange,
+                    cells,
+                    uischema,
+                    isInReview,
+                    count,
+                    data,
+                  )}
+                </div>
               </div>
-            </div>
-          </GoabContainer>
+            </GoabContainer>
+          </TableScrollContainer>
         )
       ) : null}
     </div>
