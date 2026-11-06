@@ -41,6 +41,11 @@ Resource types are configuration that tell the directory how to resolve the name
 ### Tag
 Tags are simple string labels that can be associated to resources, and can be used to represent categories and projects.
 
+## Audit
+Directory service records an audit event when entries (services and APIs), namespaces, tags, or tagged resources are created, changed, or deleted. Reads and bootstrap seeding are not audited. Audit failures are logged by the SDK and do not fail the directory operation. The directory service account requires the `audit-writer` role of `urn:ads:platform:audit-service`.
+
+Audit recording is on by default. Set the environment variable `DIRECTORY_AUDIT_ENABLED=false` on directory service to turn it off, or `true` to turn it on regardless of the SDK `AUDIT_ENABLED` variable, which applies when `DIRECTORY_AUDIT_ENABLED` is not set. The action catalog is still registered while recording is off, so turning it back on needs only a restart.
+
 ## Code examples
 
 ### Reading the directory

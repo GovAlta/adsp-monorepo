@@ -157,6 +157,10 @@ export function auditConfiguration(
     void auditService
       .record(action, details)
       .then((outcome) => {
+        if (outcome.status === 'rejected' && outcome.code === 'audit_disabled') {
+          return;
+        }
+
         if (outcome.status !== 'recorded') {
           logger.warn(`Audit event ${action.name} for ${namespace}:${name} was not recorded (${outcome.status}).`, {
             context: 'configuration-audit',

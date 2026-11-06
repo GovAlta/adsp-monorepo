@@ -26,6 +26,11 @@ Configuration stores values represented by a json object at a particular namespa
 ### Revision
 Revisions are specific snapshots of *configuration*. Updates to configuration values are applied to the latest revision and the current value is captured in a snapshot when a new revision is created. This can be used to version lock configuration for consumers; the configured application should request a specific revision use deployment parameterization mechanisms, like environment variables, to allow for updating to later revisions.
 
+## Audit
+Configuration service records audit events when configuration is updated or deleted, revisions are created, the active revision is set, and configuration definitions change. Audit failures are logged by the SDK and do not fail the configuration operation. The configuration service account requires the `audit-writer` role of `urn:ads:platform:audit-service`.
+
+Audit recording is on by default. Set the environment variable `CONFIGURATION_AUDIT_ENABLED=false` on configuration service to turn it off, or `true` to turn it on regardless of the SDK `AUDIT_ENABLED` variable, which applies when `CONFIGURATION_AUDIT_ENABLED` is not set. The action catalog is still registered while recording is off, so turning it back on needs only a restart.
+
 ## Code examples
 ### Read a revision of configuration
 ```typescript

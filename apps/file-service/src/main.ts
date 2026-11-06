@@ -93,7 +93,7 @@ async function initializeApp(): Promise<{ app: express.Application; auditService
       events: [FileUploadedDefinition, FileDeletedDefinition, FileScannedDefinition],
       auditActions: FileAuditActions,
       // Downloads are potentially high volume, so audit events are sent in batches.
-      audit: { batchSize: 100 },
+      audit: { batchSize: 100, enabled: environment.FILE_AUDIT_ENABLED },
       clientSecret: environment.CLIENT_SECRET,
       accessServiceUrl,
       directoryUrl: new URL(environment.DIRECTORY_URL),

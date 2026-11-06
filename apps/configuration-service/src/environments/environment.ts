@@ -20,6 +20,8 @@ export const environment = envalid.cleanEnv(
     MONGO_PASSWORD: envalid.str({ default: '' }),
     PORT: envalid.num({ default: 3337 }),
     TRUSTED_PROXY: envalid.str({ default: 'uniquelocal' }),
+    // Unset falls back to the SDK AUDIT_ENABLED variable, which defaults to on.
+    CONFIGURATION_AUDIT_ENABLED: envalid.bool({ default: undefined }),
   },
   {
     reporter: ({ errors }) => {

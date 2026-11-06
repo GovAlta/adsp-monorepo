@@ -28,7 +28,7 @@ const eventService = {
 } as unknown as EventService;
 
 const devUser = {
-  id: 'local-dev-user',
+  id: process.env.LOCAL_USER_ID || 'local-dev-user',
   name: 'Local Dev',
   email: 'dev@example.com',
   tenantId,
