@@ -56,6 +56,23 @@ components:
               type: string
             size:
               type: number
+    FeedbackSummary:
+      type: object
+      properties:
+        totalResponses:
+          type: number
+          example: 247
+        averageRating:
+          type: number
+          nullable: true
+          example: 3.8
+        responsesWithComments:
+          type: number
+          example: 38
+        responsesWithIssues:
+          type: number
+          example: 21
+      required: [totalResponses, averageRating, responsesWithComments, responsesWithIssues]
 
 /feedback/v1/feedback:
   post:
@@ -147,6 +164,45 @@ components:
         description: Request is not valid.
       401:
         description: User not authorized to request feedback entries.
+
+/feedback/v1/feedback/summary:
+  get:
+    tags:
+      - Feedback
+    description: Summarizes all feedback matching a site and optional time period.
+    parameters:
+      - name: site
+        description: Site for which to summarize feedback entries.
+        in: query
+        required: true
+        schema:
+          type: string
+          example: https://adsp.alberta.ca
+      - name: start
+        description: Include feedback entered on or after this timestamp.
+        in: query
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: end
+        description: Include feedback entered on or before this timestamp.
+        in: query
+        required: false
+        schema:
+          type: string
+          format: date-time
+    responses:
+      200:
+        description: Feedback summary successfully retrieved.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FeedbackSummary'
+      400:
+        description: Request is not valid.
+      401:
+        description: User not authorized to request a feedback summary.
 
 /feedback/v1/script/adspFeedback.js:
   get:

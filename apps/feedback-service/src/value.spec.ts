@@ -118,7 +118,7 @@ describe('Value Service', () => {
         expect.objectContaining({
           headers: expect.objectContaining({ Authorization: 'Bearer token' }),
           params: expect.objectContaining({ tenantId: tenantId.toString() }),
-        })
+        }),
       );
     });
 
@@ -156,7 +156,7 @@ describe('Value Service', () => {
         expect.objectContaining({
           headers: expect.objectContaining({ Authorization: 'Bearer token' }),
           params: expect.objectContaining({ tenantId: tenantId.toString() }),
-        })
+        }),
       );
     });
 
@@ -205,7 +205,7 @@ describe('Value Service', () => {
         expect.objectContaining({
           headers: expect.objectContaining({ Authorization: 'Bearer token' }),
           params: expect.objectContaining({ tenantId: tenantId.toString() }),
-        })
+        }),
       );
 
       const expectedFeedback = expected['feedback-service'].feedback[0];
@@ -240,8 +240,126 @@ describe('Value Service', () => {
         service.readValues(tenantId, {
           site: 'http://test.org}',
           top: 10,
-        })
+        }),
       ).rejects.toThrow(Error);
+    });
+  });
+
+  describe('Read summary', () => {
+    it('aggregates counts and a converted weighted rating across every metric page', async () => {
+      const service = createValueService({
+        logger: loggerMock,
+        directory: directoryMock,
+        tokenProvider: tokenProviderMock,
+      });
+      axiosMock.get
+        .mockResolvedValueOnce({ data: { count: 247 } })
+        .mockResolvedValueOnce({ data: { count: 38 } })
+        .mockResolvedValueOnce({ data: { count: 21 } })
+        .mockResolvedValueOnce({
+          data: {
+            'http://test.org:rating': { values: [{ sum: '550', count: '200' }] },
+            page: { next: 'next-rating-page' },
+          },
+        })
+        .mockResolvedValueOnce({
+          data: { 'http://test.org:rating': { values: [{ sum: '141', count: '47' }] }, page: {} },
+        });
+
+      const summary = await service.readSummary(tenantId, {
+        site: 'http://test.org',
+        start: '2025-05-27T00:00:00.000Z',
+        end: '2025-06-27T23:59:59.999Z',
+      });
+
+      expect(summary).toEqual({
+        totalResponses: 247,
+        averageRating: 3.8,
+        responsesWithComments: 38,
+        responsesWithIssues: 21,
+      });
+      expect(axiosMock.get).toHaveBeenCalledWith(
+        expect.stringContaining('/v1/feedback-service/values/feedback/count'),
+        expect.objectContaining({
+          params: expect.objectContaining({
+            tenantId: tenantId.toString(),
+            context: JSON.stringify({ site: 'http://test.org' }),
+            timestampMin: '2025-05-27T00:00:00.000Z',
+            timestampMax: '2025-06-27T23:59:59.999Z',
+          }),
+        }),
+      );
+      expect(axiosMock.get).toHaveBeenLastCalledWith(
+        expect.stringContaining('/metrics'),
+        expect.objectContaining({
+          params: expect.objectContaining({
+            after: 'next-rating-page',
+            criteria: expect.stringContaining('http://test.org:rating'),
+          }),
+        }),
+      );
+    });
+
+    it('counts comments and issues using the same site and date filters', async () => {
+      const service = createValueService({
+        logger: loggerMock,
+        directory: directoryMock,
+        tokenProvider: tokenProviderMock,
+      });
+      axiosMock.get
+        .mockResolvedValueOnce({ data: { count: 4 } })
+        .mockResolvedValueOnce({ data: { count: 3 } })
+        .mockResolvedValueOnce({ data: { count: 2 } })
+        .mockResolvedValueOnce({
+          data: { 'https://service.alberta.ca:rating': { values: [{ sum: '8', count: '4' }] }, page: {} },
+        });
+
+      await service.readSummary(tenantId, {
+        site: 'https://service.alberta.ca',
+        start: '2025-06-01T00:00:00.000Z',
+        end: '2025-06-30T23:59:59.999Z',
+      });
+
+      expect(axiosMock.get).toHaveBeenCalledWith(
+        expect.stringContaining('/count'),
+        expect.objectContaining({
+          params: expect.objectContaining({
+            context: JSON.stringify({ site: 'https://service.alberta.ca', includesComment: true }),
+            timestampMin: '2025-06-01T00:00:00.000Z',
+            timestampMax: '2025-06-30T23:59:59.999Z',
+          }),
+        }),
+      );
+      expect(axiosMock.get).toHaveBeenCalledWith(
+        expect.stringContaining('/count'),
+        expect.objectContaining({
+          params: expect.objectContaining({
+            context: JSON.stringify({ site: 'https://service.alberta.ca', includesTechnicalIssue: true }),
+          }),
+        }),
+      );
+    });
+
+    it('returns an empty summary when no feedback matches', async () => {
+      const service = createValueService({
+        logger: loggerMock,
+        directory: directoryMock,
+        tokenProvider: tokenProviderMock,
+      });
+      axiosMock.get
+        .mockResolvedValueOnce({ data: { count: 0 } })
+        .mockResolvedValueOnce({ data: { count: 0 } })
+        .mockResolvedValueOnce({ data: { count: 0 } })
+        .mockResolvedValueOnce({ data: { 'http://test.org:rating': { values: [] }, page: {} } });
+
+      const summary = await service.readSummary(tenantId, { site: 'http://test.org' });
+
+      expect(summary).toEqual({
+        totalResponses: 0,
+        averageRating: null,
+        responsesWithComments: 0,
+        responsesWithIssues: 0,
+      });
     });
   });
 });
