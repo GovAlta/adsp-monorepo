@@ -97,14 +97,14 @@ describe('subscription router documented behaviour', () => {
   let subscribers: Record<string, SubscriberEntity>;
   let subscriptions: SubscriptionEntity[];
 
-  function createApp(currentUser: User | null): Express {
+  function createApp(currentUser: User | null, hasTenant = true): Express {
     const server = express();
     server.use(documented.middleware);
     server.use(express.json());
     server.use((req, _res, next) => {
       req.user = currentUser;
       req.isAuthenticated = (() => !!currentUser) as typeof req.isAuthenticated;
-      req.tenant = { id: tenantId } as typeof req.tenant;
+      req.tenant = hasTenant ? ({ id: tenantId } as typeof req.tenant) : undefined;
       req.getConfiguration = jest.fn().mockResolvedValue(configuration);
       next();
     });
@@ -316,6 +316,14 @@ describe('subscription router documented behaviour', () => {
         .send({ id: otherSubscriberId });
       expect(res.status).toBe(404);
     });
+
+    it('responds 403 when updating an existing subscription the user is not permitted to change', async () => {
+      subscribe('admin-only', otherSubscriberId);
+      const res = await request(createApp(applicant))
+        .post('/subscription/v1/types/admin-only/subscriptions')
+        .send({ id: otherSubscriberId, criteria: {} });
+      expect(res.status).toBe(403);
+    });
   });
 
   describe('GET /types/:type/subscriptions/:subscriber', () => {
@@ -339,6 +347,13 @@ describe('subscription router documented behaviour', () => {
       const res = await request(createApp(admin)).get('/subscription/v1/types/admin-only/subscriptions/not-an-id');
       expect(res.status).toBe(400);
       expect(res.body.errorMessage).toBe('Validation failed with error(s): subscriber (params) - Invalid value');
+    });
+
+    it('responds 404 for an unknown type', async () => {
+      const res = await request(createApp(admin)).get(
+        `/subscription/v1/types/unknown/subscriptions/${otherSubscriberId}`,
+      );
+      expect(res.status).toBe(404);
     });
   });
 
@@ -387,6 +402,13 @@ describe('subscription router documented behaviour', () => {
         .send({ criteria: {} });
       expect(res.status).toBe(403);
     });
+
+    it('responds 401 when creating a subscription the user is not permitted to create', async () => {
+      const res = await request(createApp(applicant))
+        .post(`/subscription/v1/types/self-service/subscriptions/${otherSubscriberId}`)
+        .send({ criteria: {} });
+      expect(res.status).toBe(401);
+    });
   });
 
   describe('DELETE /types/:type/subscriptions/:subscriber', () => {
@@ -404,6 +426,18 @@ describe('subscription router documented behaviour', () => {
       );
       expect(res.status).toBe(401);
       expect(repositoryMock.deleteSubscriptions).not.toHaveBeenCalled();
+    });
+
+    it('responds 400 for a subscriber that is not a subscriber ID', async () => {
+      const res = await request(createApp(admin)).delete('/subscription/v1/types/self-service/subscriptions/not-an-id');
+      expect(res.status).toBe(400);
+    });
+
+    it('responds 404 for an unknown type', async () => {
+      const res = await request(createApp(admin)).delete(
+        `/subscription/v1/types/unknown/subscriptions/${otherSubscriberId}`,
+      );
+      expect(res.status).toBe(404);
     });
   });
 
@@ -425,6 +459,22 @@ describe('subscription router documented behaviour', () => {
         `/subscription/v1/types/self-service/subscriptions/${otherSubscriberId}/criteria?criteria=${criteria}`,
       );
       expect(res.status).toBe(403);
+    });
+
+    it('responds 400 when the criteria is missing', async () => {
+      subscribe('self-service', applicantSubscriberId, [{ correlationId: 'form-1' }]);
+      const res = await request(createApp(applicant)).delete(
+        `/subscription/v1/types/self-service/subscriptions/${applicantSubscriberId}/criteria`,
+      );
+      expect(res.status).toBe(400);
+    });
+
+    it('responds 404 for an unknown type', async () => {
+      const criteria = encodeURIComponent(JSON.stringify({ correlationId: 'form-1' }));
+      const res = await request(createApp(admin)).delete(
+        `/subscription/v1/types/unknown/subscriptions/${otherSubscriberId}/criteria?criteria=${criteria}`,
+      );
+      expect(res.status).toBe(404);
     });
   });
 
@@ -518,6 +568,36 @@ describe('subscription router documented behaviour', () => {
     it('responds 404 for an unknown subscriber', async () => {
       const res = await request(createApp(admin)).get(`/subscription/v1/subscribers/${unknownSubscriberId}`);
       expect(res.status).toBe(404);
+    });
+
+    it.each([
+      [
+        'update',
+        (agent: request.SuperTest<request.Test>) =>
+          agent.patch(`/subscription/v1/subscribers/${unknownSubscriberId}`).send({ addressAs: 'Changed' }),
+      ],
+      [
+        'run an operation on',
+        (agent: request.SuperTest<request.Test>) =>
+          agent.post(`/subscription/v1/subscribers/${unknownSubscriberId}`).send({ operation: 'send-code' }),
+      ],
+      [
+        'delete',
+        (agent: request.SuperTest<request.Test>) => agent.delete(`/subscription/v1/subscribers/${unknownSubscriberId}`),
+      ],
+      [
+        'get subscriptions of',
+        (agent: request.SuperTest<request.Test>) =>
+          agent.get(`/subscription/v1/subscribers/${unknownSubscriberId}/subscriptions`),
+      ],
+    ])('responds 404 when trying to %s an unknown subscriber', async (_operation, send) => {
+      const res = await send(request(createApp(admin)));
+      expect(res.status).toBe(404);
+    });
+
+    it('responds 400 when deleting a subscriber that is not a subscriber ID', async () => {
+      const res = await request(createApp(admin)).delete('/subscription/v1/subscribers/not-an-id');
+      expect(res.status).toBe(400);
     });
 
     it('responds 400 for a subscriber that is not a subscriber ID', async () => {
@@ -784,6 +864,11 @@ describe('subscription router documented behaviour', () => {
       const res = await request(createApp(admin)).delete('/subscription/v1/types/platform-type');
       expect(res.status).toBe(404);
     });
+
+    it('responds 400 for a type ID longer than 50 characters', async () => {
+      const res = await request(createApp(admin)).delete(`/subscription/v1/types/${'a'.repeat(51)}`);
+      expect(res.status).toBe(400);
+    });
   });
 
   describe('GET and PATCH /contact', () => {
@@ -796,6 +881,11 @@ describe('subscription router documented behaviour', () => {
     it('responds 403 to get without subscription-admin', async () => {
       const res = await request(createApp(plain)).get('/subscription/v1/contact');
       expect(res.status).toBe(403);
+    });
+
+    it('responds 400 to get without a tenant context', async () => {
+      const res = await request(createApp(admin, false)).get('/subscription/v1/contact');
+      expect(res.status).toBe(400);
     });
 
     it('updates the contact', async () => {
