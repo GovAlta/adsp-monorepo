@@ -30,7 +30,7 @@ describe('delete', () => {
   };
 
   const auditServiceMock = {
-    record: jest.fn(),
+    record: jest.fn().mockResolvedValue({ status: 'recorded', eventId: 'event' }),
     query: jest.fn(),
     flush: jest.fn(),
     droppedEventCount: 0,
@@ -111,7 +111,7 @@ describe('delete', () => {
   );
 
   beforeEach(() => {
-    auditServiceMock.record.mockReset();
+    auditServiceMock.record.mockClear();
     repositoryMock.find.mockReset();
     repositoryMock.delete.mockReset();
     notificationServiceMock.unsubscribe.mockReset();

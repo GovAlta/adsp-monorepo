@@ -27,6 +27,7 @@ import { NotificationService } from '../../notification';
 import { QueueTaskService } from '../../task';
 import { CommentService } from '../comment';
 import {
+  DATA_UPDATED_AUDIT_WINDOW_MS,
   FormAccessCodeSentAuditAction,
   FormAccessedWithCodeAuditAction,
   FormArchivedAuditAction,
@@ -37,6 +38,7 @@ import {
   FormSubmittedAuditAction,
   FormUnlockedAuditAction,
   SubmissionDeletedAuditAction,
+  createAuditThrottle,
   recordFormAudit,
   toFormOperationAuditDetails,
   toSubmissionDeletedAuditDetails,
@@ -700,7 +702,12 @@ export function accessForm(
   };
 }
 
-export function updateFormData(logger: Logger, fileService: FileService, auditService: AuditService): RequestHandler {
+export function updateFormData(
+  logger: Logger,
+  fileService: FileService,
+  auditService: AuditService,
+  shouldAuditDataUpdate: (key: string) => boolean = createAuditThrottle(DATA_UPDATED_AUDIT_WINDOW_MS),
+): RequestHandler {
   return async (req, res, next) => {
     try {
       const end = startBenchmark(req, 'operation-handler-time');
@@ -720,9 +727,12 @@ export function updateFormData(logger: Logger, fileService: FileService, auditSe
       end();
       res.send(mapFormData(result));
 
-      recordFormAudit(auditService, logger, FormDataUpdatedAuditAction, () =>
-        toFormOperationAuditDetails(user, result, { fileCount: Object.keys(result.files || {}).length }),
-      );
+      // Drafts are autosaved as the applicant types, so only the first write per form and caller in the window is recorded.
+      if (shouldAuditDataUpdate(`${result.tenantId}:${result.id}:${user.id}`)) {
+        recordFormAudit(auditService, logger, FormDataUpdatedAuditAction, () =>
+          toFormOperationAuditDetails(user, result, { fileCount: Object.keys(result.files || {}).length }),
+        );
+      }
 
       logger.info(`Updated form with ID: ${form.id} (definition ID: ${form.definition.id}) data.`, {
         context: 'FormRouter',

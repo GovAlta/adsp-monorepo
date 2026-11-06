@@ -2,6 +2,7 @@ import { adspId, auditDefinitions, User } from '@abgov/adsp-service-sdk';
 import { Logger } from 'winston';
 import {
   AnonymousApplicantAuditActor,
+  createAuditThrottle,
   FormAuditActions,
   FormCreatedAuditAction,
   FormServiceJobAuditActor,
@@ -38,7 +39,12 @@ describe('form audit', () => {
   const admin = { tenantId, id: 'admin', name: 'Admin', roles: [FormServiceRoles.Admin], isCore: false } as User;
 
   const logger = { warn: jest.fn() } as unknown as Logger;
-  const auditService = { record: jest.fn(), query: jest.fn(), flush: jest.fn(), droppedEventCount: 0 };
+  const auditService = {
+    record: jest.fn().mockResolvedValue({ status: 'recorded', eventId: 'event' }),
+    query: jest.fn(),
+    flush: jest.fn(),
+    droppedEventCount: 0,
+  };
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -56,7 +62,7 @@ describe('form audit', () => {
       'form.data-updated': expect.objectContaining({
         category: 'data-access',
         severity: 'info',
-        retentionClass: 'compliance',
+        retentionClass: 'standard',
       }),
       'form.submitted': expect.objectContaining({
         category: 'administrative',
@@ -219,12 +225,50 @@ describe('form audit', () => {
       expect(logger.warn).not.toHaveBeenCalled();
     });
 
+    it('logs a rejected record instead of leaving it unhandled', async () => {
+      auditService.record.mockRejectedValueOnce(new Error('oh noes!'));
+
+      recordFormAudit(auditService, logger, FormCreatedAuditAction, () =>
+        toFormAuditDetails(FormServiceJobAuditActor, form),
+      );
+      await new Promise(process.nextTick);
+
+      expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining('oh noes!'), expect.any(Object));
+    });
+
     it('logs instead of throwing when details cannot be built', () => {
       expect(() =>
         recordFormAudit(auditService, logger, FormCreatedAuditAction, () => toFormOperationAuditDetails(null, form)),
       ).not.toThrow();
       expect(auditService.record).not.toHaveBeenCalled();
       expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining('form.created'), expect.any(Object));
+    });
+  });
+
+  describe('createAuditThrottle', () => {
+    it('allows a key once per window', () => {
+      let now = 0;
+      const shouldRecord = createAuditThrottle(1000, () => now);
+
+      expect(shouldRecord('a')).toBe(true);
+      now = 999;
+      expect(shouldRecord('a')).toBe(false);
+      expect(shouldRecord('b')).toBe(true);
+      now = 1000;
+      expect(shouldRecord('a')).toBe(true);
+      now = 1500;
+      expect(shouldRecord('a')).toBe(false);
+    });
+
+    it('evicts the oldest keys when over the maximum entries', () => {
+      const shouldRecord = createAuditThrottle(1000, () => 0, 2);
+
+      expect(shouldRecord('a')).toBe(true);
+      expect(shouldRecord('b')).toBe(true);
+      expect(shouldRecord('c')).toBe(true);
+      // 'a' was evicted to stay within 2 entries, so it is allowed again.
+      expect(shouldRecord('a')).toBe(true);
+      expect(shouldRecord('c')).toBe(false);
     });
   });
 });

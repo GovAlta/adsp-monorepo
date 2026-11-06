@@ -184,7 +184,7 @@ describe('form router', () => {
   };
 
   const auditServiceMock = {
-    record: jest.fn(),
+    record: jest.fn().mockResolvedValue({ status: 'recorded', eventId: 'event' }),
     query: jest.fn(),
     flush: jest.fn(),
     droppedEventCount: 0,
@@ -277,7 +277,7 @@ describe('form router', () => {
     axiosMock.get.mockClear();
     axiosMock.patch.mockClear();
 
-    auditServiceMock.record.mockReset();
+    auditServiceMock.record.mockClear();
     repositoryMock.save.mockClear();
     repositoryMock.get.mockReset();
     repositoryMock.delete.mockReset();

@@ -34,9 +34,10 @@ export const FormDataUpdatedAuditAction: AuditAction = {
   version: 1,
   category: AuditCategories.DataAccess,
   severity: AuditSeverities.Info,
-  retentionClass: BuiltInRetentionClasses.Compliance,
+  retentionClass: BuiltInRetentionClasses.Standard,
   resourceType: FORM_RESOURCE_TYPE,
-  description: 'Form data (applicant input) is written. The data itself is not recorded.',
+  description:
+    'Form data (applicant input) is written. Recorded at most once per form and caller in 15 minutes; the data itself is not recorded.',
 };
 
 export const FormSubmittedAuditAction: AuditAction = {
@@ -270,7 +271,8 @@ export function toDataRegisterAuditDetails(
 
 /**
  * Records an audit event without blocking or failing the operation. The SDK logs events that are not recorded and
- * treats a disabled audit client as a silent no-op, so only errors building the details are logged here.
+ * treats a disabled audit client as a silent no-op, so only errors building the details are logged here. The SDK
+ * documents that record() never rejects; a rejection is still caught so it can't become an unhandled rejection.
  */
 export function recordFormAudit(
   auditService: AuditService,
@@ -278,9 +280,49 @@ export function recordFormAudit(
   action: AuditAction,
   getDetails: () => AuditRecordDetails,
 ): void {
-  try {
-    void auditService.record(action, getDetails());
-  } catch (err) {
+  const warn = (err: unknown) =>
     logger.warn(`Failed to record audit event ${action.name}: ${err}`, { context: 'form-audit' });
+
+  try {
+    auditService.record(action, getDetails()).catch(warn);
+  } catch (err) {
+    warn(err);
   }
+}
+
+/** Form data updates are audited at most once per form and caller in this window, since drafts are autosaved. */
+export const DATA_UPDATED_AUDIT_WINDOW_MS = 15 * 60 * 1000;
+const MAX_THROTTLE_ENTRIES = 10000;
+
+/**
+ * Creates an in-memory throttle that allows a key once per window. Each service instance throttles independently.
+ * Returns true if an event for the key should be recorded, and starts a new window for the key when it does.
+ */
+export function createAuditThrottle(
+  windowMs: number,
+  now: () => number = Date.now,
+  maxEntries = MAX_THROTTLE_ENTRIES,
+): (key: string) => boolean {
+  // Map iteration follows insertion order, and keys are re-inserted when recorded, so the oldest entries come first.
+  const lastRecorded = new Map<string, number>();
+
+  return (key: string) => {
+    const current = now();
+    const last = lastRecorded.get(key);
+    if (last !== undefined && current - last < windowMs) {
+      return false;
+    }
+
+    lastRecorded.delete(key);
+    lastRecorded.set(key, current);
+
+    for (const [oldKey, recorded] of lastRecorded) {
+      if (lastRecorded.size <= maxEntries && current - recorded < windowMs) {
+        break;
+      }
+      lastRecorded.delete(oldKey);
+    }
+
+    return true;
+  };
 }

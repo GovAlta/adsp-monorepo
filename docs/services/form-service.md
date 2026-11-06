@@ -74,7 +74,7 @@ Form service records audit events in the `form-service` namespace of the [audit 
 | action | category | severity | retention class | recorded when |
 |:-|:-|:-|:-|:-|
 | form.created | administrative | info | compliance | A draft form is created, with `hasApplicant` in the metadata. |
-| form.data-updated | data-access | info | compliance | Form data is written, including data sent when creating a form. Only `fileCount` is recorded about the data. |
+| form.data-updated | data-access | info | standard | Form data is written, including data sent when creating a form. Drafts are autosaved as the applicant types, so updates are recorded at most once per form and caller in 15 minutes (tracked by each service instance). Only `fileCount` is recorded about the data. |
 | form.submitted | administrative | info | compliance | A form is submitted, including when it is created with `submit: true`, with the `submissionId` if a submission record is created. |
 | form.locked | administrative | warning | compliance | The draft expiry job locks an inactive draft, with `reason: 'inactivity'` and `lastAccessed` in the metadata. |
 | form.unlocked | administrative | warning | compliance | An administrator unlocks a locked form, with the previous `locked` time in the metadata. |

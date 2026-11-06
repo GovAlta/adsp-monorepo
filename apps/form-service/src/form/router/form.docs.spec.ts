@@ -132,7 +132,12 @@ describe('form routers documented behaviour', () => {
         directory: directoryMock as never,
         tokenProvider: tokenProviderMock,
         eventService: eventServiceMock,
-        auditService: { record: jest.fn(), query: jest.fn(), flush: jest.fn(), droppedEventCount: 0 },
+        auditService: {
+          record: jest.fn().mockResolvedValue({ status: 'recorded', eventId: 'event' }),
+          query: jest.fn(),
+          flush: jest.fn(),
+          droppedEventCount: 0,
+        },
         notificationService: null,
         queueTaskService: null,
         fileService: null,

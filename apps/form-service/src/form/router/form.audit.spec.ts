@@ -4,6 +4,8 @@ import { Request, Response } from 'express';
 import { Logger } from 'winston';
 import {
   AnonymousApplicantAuditActor,
+  DATA_UPDATED_AUDIT_WINDOW_MS,
+  createAuditThrottle,
   FormAccessCodeSentAuditAction,
   FormAccessedWithCodeAuditAction,
   FormArchivedAuditAction,
@@ -92,7 +94,12 @@ describe('form router audit', () => {
   const fileService = { delete: jest.fn() };
   const queueTaskService = { createTask: jest.fn() };
   const pdfService = { generateFormPdf: jest.fn() };
-  const auditService = { record: jest.fn(), query: jest.fn(), flush: jest.fn(), droppedEventCount: 0 };
+  const auditService = {
+    record: jest.fn().mockResolvedValue({ status: 'recorded', eventId: 'event' }),
+    query: jest.fn(),
+    flush: jest.fn(),
+    droppedEventCount: 0,
+  };
 
   const createHandler = createForm(
     apiId,
@@ -236,6 +243,38 @@ describe('form router audit', () => {
       FormStatus.Submitted,
     ]);
     expect(JSON.stringify(auditService.record.mock.calls)).not.toContain('my-sin-123');
+  });
+
+  it('records form data updates once per form and caller in the throttle window', async () => {
+    let now = 0;
+    const handler = updateFormData(
+      logger,
+      fileService,
+      auditService,
+      createAuditThrottle(DATA_UPDATED_AUDIT_WINDOW_MS, () => now),
+    );
+    const form = aForm();
+    const otherForm = aForm({ id: 'form-2' });
+    const update = (target: FormEntity) =>
+      handler(
+        { user: intakeApp, body: { data: { field: 'value' } }, form: target } as unknown as Request,
+        createRes(),
+        jest.fn(),
+      );
+
+    await update(form);
+    now = DATA_UPDATED_AUDIT_WINDOW_MS - 1;
+    await update(form);
+    await update(otherForm);
+    now = DATA_UPDATED_AUDIT_WINDOW_MS;
+    await update(form);
+
+    expect(repository.save).toHaveBeenCalledTimes(4);
+    expect(auditService.record.mock.calls.map(([, details]) => details.resource.id)).toEqual([
+      'form-1',
+      'form-2',
+      'form-1',
+    ]);
   });
 
   it('records nothing when form creation is not authorized', async () => {

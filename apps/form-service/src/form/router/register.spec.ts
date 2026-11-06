@@ -34,7 +34,12 @@ describe('register router', () => {
   const client = clientMock as unknown as DataRegisterClient;
 
   const loggerMock = { info: jest.fn(), warn: jest.fn(), error: jest.fn(), debug: jest.fn() };
-  const auditServiceMock = { record: jest.fn(), query: jest.fn(), flush: jest.fn(), droppedEventCount: 0 };
+  const auditServiceMock = {
+    record: jest.fn().mockResolvedValue({ status: 'recorded', eventId: 'event' }),
+    query: jest.fn(),
+    flush: jest.fn(),
+    droppedEventCount: 0,
+  };
 
   const register = {
     namespace: 'data-register',
