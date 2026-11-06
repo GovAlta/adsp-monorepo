@@ -1,4 +1,4 @@
-import { AgentMessage, UserMessage } from '@core-services/app-common';
+import { AgentMessage, ConversationStatus, UserMessage } from '@core-services/app-common';
 
 interface Thread {
   id: string;
@@ -60,6 +60,8 @@ export interface AgentState {
   threads: Record<string, Thread>;
   threadMessages: Record<string, string[]>;
   messages: Record<string, UserMessage | StoredAgentMessage>;
+  /** Conversation status that agent-service sent after each thread's last reply, by thread ID. */
+  conversationStatus: Record<string, ConversationStatus>;
   agents: Record<string, AgentConfiguration>;
   availableTools: ToolDescription[];
   editor: {

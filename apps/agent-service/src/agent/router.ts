@@ -6,7 +6,7 @@ import { v4 as uuid } from 'uuid';
 import { Logger } from 'winston';
 import { ServiceRoles } from './roles';
 import { AgentServiceConfiguration } from './configuration';
-import { AgentBroker } from './model';
+import { AgentBroker, MemoryStatus, readMemoryStatus, readReplyUsage, ReplyUsage, UsageRecorder } from './model';
 import { CoreUserMessage } from '@mastra/core/llm';
 import { environment } from '../environments/environment';
 import { resolveAccessScope } from './agents/access/discovery/scope';
@@ -61,6 +61,44 @@ function emitMappedStreamError(
     done: true,
   });
   return true;
+}
+
+// Usage is informational, so a provider that reports none, or fails to, never costs the user the reply.
+async function readUsage(
+  logger: Logger,
+  result: Parameters<typeof readReplyUsage>[0],
+  toolUsage: UsageRecorder,
+  meta: { agent: string; threadId: string },
+): Promise<ReplyUsage | undefined> {
+  try {
+    return await readReplyUsage(result, toolUsage, environment.AGENT_MODEL_CONTEXT_TOKENS);
+  } catch (err) {
+    logger.warn(`Unable to read token usage for agent ${meta.agent} in thread ${meta.threadId}.`, {
+      context: 'AgentRouter',
+      error: err instanceof Error ? err.message : String(err),
+    });
+    return undefined;
+  }
+}
+
+/** Tells the user's client whether the conversation has grown long enough that the agent may miss earlier details. */
+async function emitConversationStatus(
+  socket: Socket,
+  logger: Logger,
+  broker: AgentBroker,
+  user: User,
+  meta: { agent: string; threadId: string },
+  reply: { contextTokens: number; memoryStatus?: MemoryStatus },
+): Promise<void> {
+  try {
+    const status = await broker.getConversationStatus(user, meta.threadId, reply);
+    socket.emit('conversation-status', { agent: meta.agent, threadId: meta.threadId, ...status });
+  } catch (err) {
+    logger.warn(`Unable to work out the conversation status for agent ${meta.agent} in thread ${meta.threadId}.`, {
+      context: 'AgentRouter',
+      error: err instanceof Error ? err.message : String(err),
+    });
+  }
 }
 
 interface ToolChunk {
@@ -302,6 +340,7 @@ export function onIoConnection(logger: Logger) {
 
             // Thread memory and input processors (such as prompt injection detection) run before the stream starts.
             const requestStartTime = Date.now();
+            const toolUsage = new UsageRecorder();
             const result = await aiAgent.stream(
               user,
               threadId,
@@ -310,6 +349,7 @@ export function onIoConnection(logger: Logger) {
                 content: userContent,
               },
               context,
+              toolUsage,
             );
             const replyId = uuid();
 
@@ -327,6 +367,8 @@ export function onIoConnection(logger: Logger) {
                 });
               }
             }, 15_000);
+            // Observational memory reports its token counts before each model call; the last report is the current one.
+            let memoryStatus: MemoryStatus | undefined;
             try {
               if (rawChunks === true) {
                 const projector = await aiAgent.createProjector(user, threadId);
@@ -350,6 +392,7 @@ export function onIoConnection(logger: Logger) {
                 };
 
                 for await (const chunk of result.fullStream) {
+                  memoryStatus = readMemoryStatus(chunk) ?? memoryStatus;
                   if (!FORWARDABLE_CHUNK_TYPES.has(chunk.type)) {
                     continue;
                   }
@@ -424,13 +467,19 @@ export function onIoConnection(logger: Logger) {
                 },
               );
 
+              const usage = await readUsage(logger, result, toolUsage, streamMeta);
               socket.emit('stream', {
                 agent,
                 threadId,
                 messageId: replyId,
                 replyTo: messageId,
                 output,
+                ...(usage ? { usage } : {}),
                 done: true,
+              });
+              await emitConversationStatus(socket, logger, aiAgent, user, streamMeta, {
+                contextTokens: usage?.contextTokens ?? 0,
+                memoryStatus,
               });
             } catch (err) {
               if (!emitMappedStreamError(socket, streamMeta, err)) {
