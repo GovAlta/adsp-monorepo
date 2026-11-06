@@ -9,8 +9,9 @@ import { RegisterDataType } from '../../Context/register';
 import { callout } from '../../Additional/GoACalloutControl';
 import { JsonFormsRegisterContext, RegisterConfig } from '../../Context/register';
 import _ from 'lodash';
-import { GoabDropdown, GoabDropdownItem } from '@abgov/react-components-ds1';
+import { GoabDropdownItem } from '@abgov/react-components-ds1';
 import { GoabDropdownOnChangeDetail } from '@abgov/ui-components-common';
+import { FluidDropdown } from '../../Components/FluidDropdown';
 type EnumSelectProps = EnumCellProps & WithClassname & TranslateProps & WithInputProps & ControlProps;
 
 function expectsObjectValue(schema: ControlProps['schema']): boolean {
@@ -89,7 +90,7 @@ export const EnumSelect = (props: EnumSelectProps): JSX.Element => {
       {error.length > 0 ? (
         callout({ message: error })
       ) : (
-        <GoabDropdown
+        <FluidDropdown
           name={`jsonforms-${path}-dropdown`}
           value={typeof data === 'object' ? _.get(data, valuePath) : data}
           disabled={!enabled}
@@ -129,7 +130,7 @@ export const EnumSelect = (props: EnumSelectProps): JSX.Element => {
               />
             );
           })}
-        </GoabDropdown>
+        </FluidDropdown>
       )}
     </div>
   );
