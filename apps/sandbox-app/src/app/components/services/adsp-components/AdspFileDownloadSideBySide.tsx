@@ -1,5 +1,6 @@
 import React from 'react';
 import { GoabButton, GoabText } from '@abgov/react-components';
+import type { IFileClient } from '@abgov/adsp-components-core';
 import { GoAFileDownload } from '@abgov/adsp-components-react';
 
 // A valid UUID that no file has, so File service answers 404.
@@ -12,6 +13,7 @@ export interface SideBySideFile {
 }
 
 interface AdspFileDownloadSideBySideProps {
+  client: IFileClient;
   /** The file the single-file examples download; empty until one is picked. */
   fileId: string;
   files: SideBySideFile[];
@@ -19,29 +21,24 @@ interface AdspFileDownloadSideBySideProps {
 
 const MINIMAL_CODE = `import { useMemo } from 'react';
 import { FileClient } from '@abgov/adsp-components-core';
-import { AdspFileClientProvider, GoAFileDownload } from '@abgov/adsp-components-react';
+import { GoAFileDownload } from '@abgov/adsp-components-react';
 
-// Once, at the root of the app
-function Root() {
+// fileServiceUrl: from the ADSP directory (urn:ads:platform:file-service)
+// getAccessToken: your app's sign-in, returning the user's token
+// file.id: from your app's data, such as a submission's uploaded files
+function SupportingDocument({ file }) {
   const client = useMemo(
     () => new FileClient({ serviceUrl: fileServiceUrl, getAccessToken }),
     [fileServiceUrl],
   );
 
-  return (
-    <AdspFileClientProvider client={client}>
-      <App />
-    </AdspFileClientProvider>
-  );
-}
-
-// Anywhere inside the app
-<GoAFileDownload fileId={file.id} />`;
+  return <GoAFileDownload client={client} fileId={file.id} />;
+}`;
 
 const OWN_BUTTON_CODE = `import { GoabButton } from '@abgov/react-components';
 import { GoAFileDownload } from '@abgov/adsp-components-react';
 
-<GoAFileDownload fileId={file.id}>
+<GoAFileDownload client={client} fileId={file.id}>
   <GoabButton type="secondary" leadingIcon="download">
     Download
   </GoabButton>
@@ -49,10 +46,11 @@ import { GoAFileDownload } from '@abgov/adsp-components-react';
 
 const LINK_LIST_CODE = `import { GoAFileDownload } from '@abgov/adsp-components-react';
 
+// files: [{ id, filename }] from your app's data
 <ul>
   {files.map((file) => (
     <li key={file.id}>
-      <GoAFileDownload fileId={file.id}>
+      <GoAFileDownload client={client} fileId={file.id}>
         <a href={\`#\${file.id}\`}>{file.filename}</a>
       </GoAFileDownload>
     </li>
@@ -66,8 +64,8 @@ const fileTheme = {
   errorTextColor: '#6a1b9a',
 };
 
-<GoAFileDownload fileId={file.id} themeOverrides={fileTheme} />
-<GoAFileDownload fileId={missingFileId} themeOverrides={fileTheme} />`;
+<GoAFileDownload client={client} fileId={file.id} themeOverrides={fileTheme} />
+<GoAFileDownload client={client} fileId={missingFileId} themeOverrides={fileTheme} />`;
 
 // Defined once so the override object keeps its identity across renders.
 const FILE_THEME = {
@@ -119,23 +117,27 @@ const SideBySide = ({
 
 const PickAFile = () => <GoabText size="body-s">Pick a tenant file above to see this example.</GoabText>;
 
-export const AdspFileDownloadSideBySide = ({ fileId, files }: AdspFileDownloadSideBySideProps) => {
+export const AdspFileDownloadSideBySide = ({ client, fileId, files }: AdspFileDownloadSideBySideProps) => {
   const linkFiles = files.slice(0, LINK_LIST_SIZE);
 
   return (
     <>
       <GoabText size="body-m" mt="m">
-        Each example shows the component on the left and all the code it needs on the right. Examples 2 to 4 assume the
-        provider from example 1.
+        Each example shows the component on the left and the code for it on the right. Examples 2 to 4 use the client
+        created in example 1.
       </GoabText>
 
       <SideBySide
-        heading="1. Minimal: just the file ID"
-        description="Create a File service client once and provide it. After that, a download needs only the file ID; the filename and size come from File service."
+        heading="1. Minimal: a client and a file ID"
+        description="Create a File service client with your app's sign-in, then pass it with the file ID. The filename and size come from File service."
         code={MINIMAL_CODE}
         testId="side-by-side-minimal"
       >
-        {fileId ? <GoAFileDownload fileId={fileId} testId="side-by-side-minimal-download" /> : <PickAFile />}
+        {fileId ? (
+          <GoAFileDownload client={client} fileId={fileId} testId="side-by-side-minimal-download" />
+        ) : (
+          <PickAFile />
+        )}
       </SideBySide>
 
       <SideBySide
@@ -145,7 +147,7 @@ export const AdspFileDownloadSideBySide = ({ fileId, files }: AdspFileDownloadSi
         testId="side-by-side-own-button"
       >
         {fileId ? (
-          <GoAFileDownload fileId={fileId} testId="side-by-side-own-button-download">
+          <GoAFileDownload client={client} fileId={fileId} testId="side-by-side-own-button-download">
             <GoabButton type="secondary" leadingIcon="download">
               Download
             </GoabButton>
@@ -165,7 +167,7 @@ export const AdspFileDownloadSideBySide = ({ fileId, files }: AdspFileDownloadSi
           <ul>
             {linkFiles.map((file) => (
               <li key={file.id}>
-                <GoAFileDownload fileId={file.id}>
+                <GoAFileDownload client={client} fileId={file.id}>
                   <a href={`#${file.id}`}>{file.filename}</a>
                 </GoAFileDownload>
               </li>
@@ -183,12 +185,22 @@ export const AdspFileDownloadSideBySide = ({ fileId, files }: AdspFileDownloadSi
         testId="side-by-side-themed"
       >
         {fileId ? (
-          <GoAFileDownload fileId={fileId} themeOverrides={FILE_THEME} testId="side-by-side-themed-download" />
+          <GoAFileDownload
+            client={client}
+            fileId={fileId}
+            themeOverrides={FILE_THEME}
+            testId="side-by-side-themed-download"
+          />
         ) : (
           <PickAFile />
         )}
         <div style={{ marginTop: '1rem' }}>
-          <GoAFileDownload fileId={MISSING_FILE_ID} themeOverrides={FILE_THEME} testId="side-by-side-themed-missing" />
+          <GoAFileDownload
+            client={client}
+            fileId={MISSING_FILE_ID}
+            themeOverrides={FILE_THEME}
+            testId="side-by-side-themed-missing"
+          />
         </div>
       </SideBySide>
     </>

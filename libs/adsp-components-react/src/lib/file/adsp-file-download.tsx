@@ -2,7 +2,6 @@ import { cloneElement, isValidElement } from 'react';
 import { GoabButton } from '@abgov/react-components';
 import { formatFileSize, getFileErrorMessage } from '@abgov/adsp-components-core';
 import { useAdspThemeStyle } from '../theme/adsp-theme-provider';
-import { useAdspFileClient } from './adsp-file-client-provider';
 import { useFileDownload } from './useFileDownload';
 import type { AdspFileDownloadProps, AdspFileDownloadTriggerProps } from './types';
 
@@ -15,21 +14,14 @@ export const AdspFileDownload = ({
   testId,
 }: AdspFileDownloadProps) => {
   const themeStyle = useAdspThemeStyle('fileDownload', themeOverrides);
-  const contextClient = useAdspFileClient();
-  const resolvedClient = client ?? contextClient;
   const trigger = isValidElement<AdspFileDownloadTriggerProps>(children) ? children : null;
 
+  // Without permission, the hook gets no client, so nothing is requested.
   const { file, loading, downloading, ready, error, download, retry } = useFileDownload(
-    canDownload ? resolvedClient : undefined,
+    canDownload ? client : undefined,
     fileId,
     { loadMetadata: !trigger },
   );
-
-  if (!resolvedClient) {
-    throw new Error(
-      'AdspFileDownload needs a file client: pass the client prop or render it inside an AdspFileClientProvider.',
-    );
-  }
 
   if (!canDownload) {
     return null;

@@ -10,8 +10,8 @@ export interface AdspFileDownloadTriggerProps {
 export interface AdspFileDownloadProps {
   /** ID of the File service file to download. */
   fileId: string;
-  /** Defaults to the client from the nearest AdspFileClientProvider. */
-  client?: IFileClient;
+  /** Loads and downloads the file, usually a FileClient from core. Create it once or memoize it. */
+  client: IFileClient;
   /**
    * Whether the application allows the current user to download files. False renders nothing and sends no request.
    * File service still authorizes every request, so true only means "try".

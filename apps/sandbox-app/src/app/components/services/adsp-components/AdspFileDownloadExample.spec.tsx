@@ -2,17 +2,15 @@ import React from 'react';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { useSelector } from 'react-redux';
+import { FileClient } from '@abgov/adsp-components-core';
 import { AdspFileDownloadExample, MISSING_FILE_ID } from './AdspFileDownloadExample';
 import { directorySelector, getAccessToken } from '../../../state';
 
 const mockFileDownload = jest.fn(
-  (props: { fileId: string; testId?: string; canDownload?: boolean; children?: unknown }) => (
+  (props: { client: unknown; fileId: string; testId?: string; canDownload?: boolean; children?: unknown }) => (
     <div data-testid={props.testId ?? `download-${props.fileId}`} data-file-id={props.fileId} />
   ),
 );
-const mockProvider = jest.fn(({ children }: { client: unknown; children: React.ReactNode }) => (
-  <div data-testid="file-client-provider">{children}</div>
-));
 
 jest.mock('react-redux', () => ({
   useSelector: jest.fn(),
@@ -25,7 +23,6 @@ jest.mock('../../../state', () => ({
 
 jest.mock('@abgov/adsp-components-react', () => ({
   GoAFileDownload: (props) => mockFileDownload(props),
-  AdspFileClientProvider: (props) => mockProvider(props),
 }));
 
 const fileServiceUrl = 'https://file-service.test';
@@ -61,7 +58,7 @@ describe('AdspFileDownloadExample', () => {
     expect(global.fetch).not.toHaveBeenCalled();
   });
 
-  test('loads tenant files with the user token and provides a file client', async () => {
+  test('loads tenant files with the user token', async () => {
     // Arrange, Act
     render(<AdspFileDownloadExample />);
 
@@ -71,7 +68,17 @@ describe('AdspFileDownloadExample', () => {
         headers: { Authorization: 'Bearer token-abc' },
       }),
     );
-    expect(mockProvider).toHaveBeenCalledWith(expect.objectContaining({ client: expect.anything() }));
+  });
+
+  test('passes every download the same File service client', async () => {
+    // Arrange, Act
+    render(<AdspFileDownloadExample />);
+    await screen.findByTestId('example-default');
+
+    // Assert
+    const clients = mockFileDownload.mock.calls.map(([props]) => props.client);
+    expect(clients[0]).toBeInstanceOf(FileClient);
+    expect(new Set(clients).size).toBe(1);
   });
 
   test('shows the default and custom trigger examples for the first file', async () => {

@@ -4,7 +4,13 @@ import '@testing-library/jest-dom';
 import { AdspFileDownloadSideBySide, MISSING_FILE_ID } from './AdspFileDownloadSideBySide';
 
 const mockFileDownload = jest.fn(
-  (props: { fileId: string; testId?: string; themeOverrides?: unknown; children?: React.ReactNode }) => (
+  (props: {
+    client: unknown;
+    fileId: string;
+    testId?: string;
+    themeOverrides?: unknown;
+    children?: React.ReactNode;
+  }) => (
     <div data-testid={props.testId ?? `download-${props.fileId}`} data-file-id={props.fileId}>
       {props.children}
     </div>
@@ -15,6 +21,7 @@ jest.mock('@abgov/adsp-components-react', () => ({
   GoAFileDownload: (props) => mockFileDownload(props),
 }));
 
+const client = { getFile: jest.fn(), downloadFile: jest.fn() };
 const fileId = 'a217db73-0c29-4fbd-b576-49d049f855a6';
 const files = [
   { id: fileId, filename: 'Annual report.pdf' },
@@ -30,7 +37,7 @@ describe('AdspFileDownloadSideBySide', () => {
 
   test('shows four examples, each with its result and its code', () => {
     // Arrange, Act
-    render(<AdspFileDownloadSideBySide fileId={fileId} files={files} />);
+    render(<AdspFileDownloadSideBySide client={client} fileId={fileId} files={files} />);
 
     // Assert
     ['minimal', 'own-button', 'link-list', 'themed'].forEach((name) => {
@@ -40,20 +47,31 @@ describe('AdspFileDownloadSideBySide', () => {
     });
   });
 
-  test('downloads the picked file with only its ID in the minimal example', () => {
+  test('downloads the picked file with the client and its ID in the minimal example', () => {
     // Arrange, Act
-    render(<AdspFileDownloadSideBySide fileId={fileId} files={files} />);
+    render(<AdspFileDownloadSideBySide client={client} fileId={fileId} files={files} />);
 
     // Assert
     expect(screen.getByTestId('side-by-side-minimal-download')).toHaveAttribute('data-file-id', fileId);
     expect(
-      within(screen.getByTestId('side-by-side-minimal')).getByText(/<GoAFileDownload fileId=\{file.id\} \/>/),
+      within(screen.getByTestId('side-by-side-minimal')).getByText(
+        /<GoAFileDownload client=\{client\} fileId=\{file.id\} \/>/,
+      ),
     ).toBeInTheDocument();
+  });
+
+  test('passes the client to every download', () => {
+    // Arrange, Act
+    render(<AdspFileDownloadSideBySide client={client} fileId={fileId} files={files} />);
+
+    // Assert
+    expect(mockFileDownload.mock.calls.length).toBeGreaterThan(0);
+    mockFileDownload.mock.calls.forEach(([props]) => expect(props.client).toBe(client));
   });
 
   test('passes a GoA button as the trigger in the own button example', () => {
     // Arrange, Act
-    render(<AdspFileDownloadSideBySide fileId={fileId} files={files} />);
+    render(<AdspFileDownloadSideBySide client={client} fileId={fileId} files={files} />);
 
     // Assert
     expect(within(screen.getByTestId('side-by-side-own-button-download')).getByText('Download')).toBeInTheDocument();
@@ -61,7 +79,7 @@ describe('AdspFileDownloadSideBySide', () => {
 
   test('lists the first three files as links', () => {
     // Arrange, Act
-    render(<AdspFileDownloadSideBySide fileId={fileId} files={files} />);
+    render(<AdspFileDownloadSideBySide client={client} fileId={fileId} files={files} />);
 
     // Assert
     const example = within(screen.getByTestId('side-by-side-link-list'));
@@ -72,7 +90,7 @@ describe('AdspFileDownloadSideBySide', () => {
 
   test('themes both a downloadable file and a missing one so the overrides are visible', () => {
     // Arrange, Act
-    render(<AdspFileDownloadSideBySide fileId={fileId} files={files} />);
+    render(<AdspFileDownloadSideBySide client={client} fileId={fileId} files={files} />);
 
     // Assert
     expect(screen.getByTestId('side-by-side-themed-missing')).toHaveAttribute('data-file-id', MISSING_FILE_ID);
@@ -86,7 +104,7 @@ describe('AdspFileDownloadSideBySide', () => {
 
   test('asks for a file to be picked before showing the single-file examples', () => {
     // Arrange, Act
-    render(<AdspFileDownloadSideBySide fileId="" files={[]} />);
+    render(<AdspFileDownloadSideBySide client={client} fileId="" files={[]} />);
 
     // Assert
     expect(screen.getAllByText('Pick a tenant file above to see this example.')).toHaveLength(3);

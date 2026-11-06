@@ -1,4 +1,3 @@
-export * from './adsp-file-client-provider';
 export * from './adsp-file-download';
 export * from './useFileDownload';
 export type { AdspFileDownloadProps, AdspFileDownloadTriggerProps } from './types';

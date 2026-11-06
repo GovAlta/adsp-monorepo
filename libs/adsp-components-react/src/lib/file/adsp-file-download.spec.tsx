@@ -3,7 +3,6 @@ import '@testing-library/jest-dom';
 import { GoabButton } from '@abgov/react-components';
 import { FileServiceError, type FileMetadata, type IFileClient } from '@abgov/adsp-components-core';
 import { AdspFileDownload, GoAFileDownload } from './adsp-file-download';
-import { AdspFileClientProvider } from './adsp-file-client-provider';
 import { AdspThemeProvider } from '../theme/adsp-theme-provider';
 import { saveFile } from './saveFile';
 
@@ -248,38 +247,16 @@ describe('AdspFileDownload', () => {
   });
 
   describe('client and permission', () => {
-    test('uses the client from AdspFileClientProvider when no client prop is given', async () => {
+    test('is also exported as GoAFileDownload, the name the design uses', async () => {
       // Arrange
       const client = createClient();
 
       // Act
-      render(
-        <AdspFileClientProvider client={client}>
-          <GoAFileDownload fileId={fileId} />
-        </AdspFileClientProvider>,
-      );
+      render(<GoAFileDownload client={client} fileId={fileId} />);
 
       // Assert
       expect(await screen.findByText('Annual report.pdf')).toBeInTheDocument();
       expect(client.getFile).toHaveBeenCalledWith(fileId);
-    });
-
-    test('prefers the client prop over the provider', async () => {
-      // Arrange
-      const providerClient = createClient();
-      const propClient = createClient();
-
-      // Act
-      render(
-        <AdspFileClientProvider client={providerClient}>
-          <AdspFileDownload client={propClient} fileId={fileId} />
-        </AdspFileClientProvider>,
-      );
-
-      // Assert
-      await screen.findByText('Annual report.pdf');
-      expect(propClient.getFile).toHaveBeenCalled();
-      expect(providerClient.getFile).not.toHaveBeenCalled();
     });
 
     test('renders nothing and sends no request when the application says the user cannot download', () => {
@@ -294,15 +271,20 @@ describe('AdspFileDownload', () => {
       expect(client.getFile).not.toHaveBeenCalled();
     });
 
-    test('throws a clear error when there is no client', () => {
+    test('sends no download request when the application says the user cannot download', () => {
       // Arrange
-      jest.spyOn(console, 'error').mockImplementation(() => undefined);
+      const client = createClient();
 
-      // Act, Assert
-      expect(() => render(<AdspFileDownload fileId={fileId} />)).toThrow(
-        'AdspFileDownload needs a file client: pass the client prop or render it inside an AdspFileClientProvider.',
+      // Act
+      render(
+        <AdspFileDownload client={client} fileId={fileId} canDownload={false}>
+          <button type="button">Download</button>
+        </AdspFileDownload>,
       );
-      jest.restoreAllMocks();
+
+      // Assert
+      expect(screen.queryByText('Download')).not.toBeInTheDocument();
+      expect(client.downloadFile).not.toHaveBeenCalled();
     });
   });
 

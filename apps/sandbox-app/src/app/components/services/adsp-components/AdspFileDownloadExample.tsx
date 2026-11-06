@@ -14,7 +14,7 @@ import {
   GoabText,
 } from '@abgov/react-components';
 import { FileClient } from '@abgov/adsp-components-core';
-import { AdspFileClientProvider, GoAFileDownload } from '@abgov/adsp-components-react';
+import { GoAFileDownload } from '@abgov/adsp-components-react';
 import { directorySelector, getAccessToken } from '../../../state';
 import { ServiceContainer } from '../../styled-components';
 import { AdspFileDownloadSideBySide, MISSING_FILE_ID } from './AdspFileDownloadSideBySide';
@@ -31,21 +31,19 @@ interface ListedFile {
 
 const APPLICATION_SETUP = `import { useMemo } from 'react';
 import { FileClient } from '@abgov/adsp-components-core';
-import { AdspFileClientProvider } from '@abgov/adsp-components-react';
+import { GoAFileDownload } from '@abgov/adsp-components-react';
 
-// Once, near the top of the app. Create the client once: a new client reloads every file.
+// Create the client once and pass it to each GoAFileDownload: a new client on every render reloads the file.
 const client = useMemo(
   () => new FileClient({ serviceUrl: fileServiceUrl, getAccessToken }),
   [fileServiceUrl],
 );
 
-<AdspFileClientProvider client={client}>
-  <App />
-</AdspFileClientProvider>`;
+<GoAFileDownload client={client} fileId={file.id} />`;
 
-const DEFAULT_USAGE = `<GoAFileDownload fileId={file.id} />`;
+const DEFAULT_USAGE = `<GoAFileDownload client={client} fileId={file.id} />`;
 
-const CUSTOM_TRIGGER_USAGE = `<GoAFileDownload fileId={file.id}>
+const CUSTOM_TRIGGER_USAGE = `<GoAFileDownload client={client} fileId={file.id}>
   <GoabButton type="secondary" leadingIcon="download">
     Download
   </GoabButton>
@@ -55,17 +53,17 @@ const LIST_USAGE = `{files.map((file) => (
   <tr key={file.id}>
     <td>{file.filename}</td>
     <td>
-      <GoAFileDownload fileId={file.id}>
+      <GoAFileDownload client={client} fileId={file.id}>
         <GoabButton type="tertiary" size="compact">Download</GoabButton>
       </GoAFileDownload>
     </td>
   </tr>
 ))}`;
 
-const MISSING_USAGE = `<GoAFileDownload fileId="${MISSING_FILE_ID}" />`;
+const MISSING_USAGE = `<GoAFileDownload client={client} fileId="${MISSING_FILE_ID}" />`;
 
 const NO_PERMISSION_USAGE = `// The application decides the user can't download; nothing renders and nothing is requested.
-<GoAFileDownload fileId={file.id} canDownload={false} />`;
+<GoAFileDownload client={client} fileId={file.id} canDownload={false} />`;
 
 const Example = ({
   heading,
@@ -154,7 +152,7 @@ export const AdspFileDownloadExample = () => {
             The File service URL isn't available from the directory yet.
           </GoabText>
         ) : (
-          <AdspFileClientProvider client={client}>
+          <>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(16rem, 1fr))', gap: '1rem' }}>
               <GoabFormItem label="Tenant file" labelSize="compact" helpText="Files you can read in this tenant.">
                 <GoabDropdown
@@ -206,10 +204,10 @@ export const AdspFileDownloadExample = () => {
                   <>
                     <Example
                       heading="Default"
-                      description="Only the file ID: the component shows the filename and size from File service."
+                      description="Only the client and the file ID: the component shows the filename and size from File service."
                       code={DEFAULT_USAGE}
                     >
-                      <GoAFileDownload fileId={exampleFileId} testId="example-default" />
+                      <GoAFileDownload client={client} fileId={exampleFileId} testId="example-default" />
                     </Example>
 
                     <Example
@@ -217,7 +215,7 @@ export const AdspFileDownloadExample = () => {
                       description="Pass any button or link as the child. The component handles the download; the file isn't looked up until it's clicked."
                       code={CUSTOM_TRIGGER_USAGE}
                     >
-                      <GoAFileDownload fileId={exampleFileId} testId="example-custom">
+                      <GoAFileDownload client={client} fileId={exampleFileId} testId="example-custom">
                         <GoabButton type="secondary" leadingIcon="download">
                           Download
                         </GoabButton>
@@ -246,7 +244,7 @@ export const AdspFileDownloadExample = () => {
                             <td>{file.filename}</td>
                             <td>{file.typeName}</td>
                             <td>
-                              <GoAFileDownload fileId={file.id}>
+                              <GoAFileDownload client={client} fileId={file.id}>
                                 <GoabButton type="tertiary" size="compact">
                                   Download
                                 </GoabButton>
@@ -264,7 +262,7 @@ export const AdspFileDownloadExample = () => {
                   description="File service answers 404, so the component says the file doesn't exist."
                   code={MISSING_USAGE}
                 >
-                  <GoAFileDownload fileId={MISSING_FILE_ID} testId="example-missing" />
+                  <GoAFileDownload client={client} fileId={MISSING_FILE_ID} testId="example-missing" />
                 </Example>
 
                 <Example
@@ -273,6 +271,7 @@ export const AdspFileDownloadExample = () => {
                   code={NO_PERMISSION_USAGE}
                 >
                   <GoAFileDownload
+                    client={client}
                     fileId={exampleFileId || MISSING_FILE_ID}
                     canDownload={false}
                     testId="example-denied"
@@ -284,10 +283,10 @@ export const AdspFileDownloadExample = () => {
                 </GoabDetails>
               </GoabTab>
               <GoabTab heading="Side by side">
-                <AdspFileDownloadSideBySide fileId={exampleFileId} files={files} />
+                <AdspFileDownloadSideBySide client={client} fileId={exampleFileId} files={files} />
               </GoabTab>
             </GoabTabs>
-          </AdspFileClientProvider>
+          </>
         )}
       </GoabContainer>
     </ServiceContainer>

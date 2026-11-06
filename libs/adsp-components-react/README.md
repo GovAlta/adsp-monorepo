@@ -149,31 +149,27 @@ The hook `AdspGoACalendar` uses to load data. It returns `{ calendarEvents, load
 
 #### `AdspFileDownload` (also exported as `GoAFileDownload`)
 
-Downloads a File service file. With only `fileId`, it shows the filename and size from File service as a tertiary download button. It shows progress while downloading and explains a missing file, a permission failure, an infected file or a pending virus scan, with **Try again** where trying again can help.
+Downloads a File service file. With only `client` and `fileId`, it shows the filename and size from File service as a tertiary download button. It shows progress while downloading and explains a missing file, a permission failure, an infected file or a pending virus scan, with **Try again** where trying again can help.
 
 ```tsx
 import { useMemo } from 'react';
 import { FileClient } from '@abgov/adsp-components-core';
-import { AdspFileClientProvider, GoAFileDownload } from '@abgov/adsp-components-react';
+import { GoAFileDownload } from '@abgov/adsp-components-react';
 
-// Once, near the top of the app.
+// Create the client once or memoize it: a new client on every render reloads the file.
 const client = useMemo(() => new FileClient({ serviceUrl, getAccessToken }), [serviceUrl]);
-<AdspFileClientProvider client={client}>
-  <App />
-</AdspFileClientProvider>;
 
-// Anywhere below it.
-<GoAFileDownload fileId={file.id} />;
+<GoAFileDownload client={client} fileId={file.id} />;
 
-<GoAFileDownload fileId={file.id}>
+<GoAFileDownload client={client} fileId={file.id}>
   <GoabButton type="secondary">Download</GoabButton>
 </GoAFileDownload>;
 ```
 
 | Prop             | Type                                          | Description                                                                                                                                                       |
 | ---------------- | --------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `client`         | `IFileClient`                                 | Loads and downloads the file, usually a `FileClient` from core built with the app's `getAccessToken`. Create it once or memoize it.                                |
 | `fileId`         | `string`                                      | ID of the File service file.                                                                                                                                      |
-| `client`         | `IFileClient`                                 | Usually a `FileClient` from core. Defaults to the client from the nearest `AdspFileClientProvider`; with neither, the component throws.                            |
 | `canDownload`    | `boolean`                                     | Whether the application lets the current user download. `false` renders nothing and sends no request. Defaults to `true`; File service still authorizes the download. |
 | `children`       | `ReactElement`                                | A trigger to use in place of the default control, such as a `GoabButton` or a link. The component sets its `onClick`, and `disabled` while downloading. Metadata isn't loaded up front, so a list of files doesn't send a request per row. |
 | `themeOverrides` | `AdspComponentThemeOverrides<'fileDownload'>` | File download tokens for this instance only.                                                                                                                      |
@@ -190,10 +186,6 @@ Things to know:
 - **Permissions.** There is no shared ADSP permission resolver yet, so the application passes `canDownload`. With the default control, File service's answer to the metadata request also tells the component before any click whether the user may download: a 403 shows a permission message instead of the button.
 - **The file is held in memory** as a `Blob` before the browser saves it, because a plain link can't send the user's token. See the [core File client README](../adsp-components-core/src/lib/file/README.md).
 - **Pending scans aren't bypassed.** The component never sends `unsafe=true`.
-
-#### `AdspFileClientProvider` and `useAdspFileClient()`
-
-`AdspFileClientProvider` makes a file client available to File service components below it; `useAdspFileClient()` reads it. Create the client once or memoize it.
 
 #### `useFileDownload(client, fileId, { loadMetadata })`
 
