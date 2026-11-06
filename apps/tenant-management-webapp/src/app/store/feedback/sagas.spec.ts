@@ -1,6 +1,12 @@
 import { expectSaga } from 'redux-saga-test-plan';
 import axios from 'axios';
-import { exportFeedbacks, fetchFeedbackMetrics, fetchFeedbacks } from './sagas';
+import {
+  exportFeedbacks,
+  fetchFeedbackMetrics,
+  fetchFeedbacks,
+  fetchFeedbackSummary,
+  normalizeFeedbackDateRange,
+} from './sagas';
 import { getAccessToken } from '@store/tenant/sagas';
 import { UpdateIndicator } from '@store/session/actions';
 import { ERROR_NOTIFICATION } from '@store/notifications/actions';
@@ -8,7 +14,9 @@ import {
   exportFeedbacks as exportFeedbacksAction,
   FETCH_FEEDBACK_METRICS_SUCCESS_ACTION,
   FETCH_FEEDBACKS_SUCCESS_ACTION,
+  FETCH_FEEDBACK_SUMMARY_SUCCESS_ACTION,
   getFeedbacks,
+  getFeedbackSummary,
 } from './actions';
 
 const storeState = {
@@ -39,7 +47,7 @@ const metricsFrom = (data: Record<string, unknown>) =>
     .run()
     .then(
       ({ effects }) =>
-        effects.put.map((e) => e.payload.action).find((a) => a.type === FETCH_FEEDBACK_METRICS_SUCCESS_ACTION)?.metrics
+        effects.put.map((e) => e.payload.action).find((a) => a.type === FETCH_FEEDBACK_METRICS_SUCCESS_ACTION)?.metrics,
     );
 
 describe('fetchFeedbackMetrics', () => {
@@ -136,14 +144,14 @@ describe('fetchFeedbacks', () => {
 
   it('reads the first page and the total for a new search', async () => {
     axiosGet.mockImplementation((url: string) =>
-      Promise.resolve(url.endsWith('/count') ? { data: { count: 60 } } : pageResponse([3, 4]))
+      Promise.resolve(url.endsWith('/count') ? { data: { count: 60 } } : pageResponse([3, 4])),
     );
 
     const { effects } = await run(getFeedbacks(site, { ...searchCriteria }, 1, 25, true));
 
     expect(axiosGet).toHaveBeenCalledWith(
       feedbackUrl,
-      expect.objectContaining({ params: { ...filterParams, top: 25, after: btoa('0') } })
+      expect.objectContaining({ params: { ...filterParams, top: 25, after: btoa('0') } }),
     );
     expect(axiosGet).toHaveBeenCalledWith(`${feedbackUrl}/count`, expect.objectContaining({ params: filterParams }));
     const success = effects.put.map((e) => e.payload.action).find((a) => a.type === FETCH_FEEDBACKS_SUCCESS_ACTION);
@@ -160,7 +168,7 @@ describe('fetchFeedbacks', () => {
     expect(axiosGet).toHaveBeenCalledTimes(1);
     expect(axiosGet).toHaveBeenCalledWith(
       feedbackUrl,
-      expect.objectContaining({ params: { ...filterParams, top: 25, after: btoa('25') } })
+      expect.objectContaining({ params: { ...filterParams, top: 25, after: btoa('25') } }),
     );
     const success = effects.put.map((e) => e.payload.action).find((a) => a.type === FETCH_FEEDBACKS_SUCCESS_ACTION);
     expect(success).toMatchObject({ page: 2, pageSize: 25, total: undefined });
@@ -173,13 +181,13 @@ describe('fetchFeedbacks', () => {
 
     expect(axiosGet).toHaveBeenCalledWith(
       feedbackUrl,
-      expect.objectContaining({ params: { ...filterParams, top: 10, after: btoa('50') } })
+      expect.objectContaining({ params: { ...filterParams, top: 10, after: btoa('50') } }),
     );
   });
 
   it('reports an empty page and a total of zero when nothing matches', async () => {
     axiosGet.mockImplementation((url: string) =>
-      Promise.resolve(url.endsWith('/count') ? { data: { count: 0 } } : pageResponse([]))
+      Promise.resolve(url.endsWith('/count') ? { data: { count: 0 } } : pageResponse([])),
     );
 
     const { effects } = await run(getFeedbacks(site, { ...searchCriteria }, 1, 25, true));
@@ -214,6 +222,52 @@ describe('fetchFeedbacks', () => {
   });
 });
 
+describe('fetchFeedbackSummary', () => {
+  it('requests the summary for the selected site and normalized date range', async () => {
+    const action = getFeedbackSummary('https://service.alberta.ca', {
+      startDate: '2026-10-01T00:00:00.000Z',
+      endDate: '2026-10-31T00:00:00.000Z',
+    });
+    const summary = {
+      totalResponses: 247,
+      averageRating: 3.8,
+      responsesWithComments: 38,
+      responsesWithIssues: 21,
+    };
+
+    await expectSaga(fetchFeedbackSummary, action)
+      .withState({ config: { serviceUrls: { feedbackServiceUrl: 'https://feedback-service.example' } } })
+      .provide({
+        call(effect, next) {
+          if (effect.fn === getAccessToken) {
+            return 'mock-token';
+          }
+          if (effect.fn === axios.get) {
+            expect(effect.args[0]).toContain('/feedback/v1/feedback/summary?');
+            expect(effect.args[0]).toContain('site=https%3A%2F%2Fservice.alberta.ca');
+            expect(effect.args[0]).toContain('end=2026-10-31T23%3A59%3A59.999Z');
+            return { data: summary };
+          }
+          return next();
+        },
+      })
+      .put({ type: FETCH_FEEDBACK_SUMMARY_SUCCESS_ACTION, summary })
+      .run();
+  });
+
+  it('normalizes the end date to the end of the selected UTC day', () => {
+    const range = normalizeFeedbackDateRange({
+      startDate: '2026-10-01T00:00:00.000Z',
+      endDate: '2026-10-31T00:00:00.000Z',
+    });
+
+    expect(range).toEqual({
+      start: '2026-10-01T00:00:00.000Z',
+      end: '2026-10-31T23:59:59.999Z',
+    });
+  });
+});
+
 describe('exportFeedbacks', () => {
   it('exports up to the end of the selected end day, matching the listed feedback', async () => {
     const axiosGet = jest.fn().mockResolvedValue({ data: { 'feedback-service': { feedback: [] }, page: {} } });
@@ -222,8 +276,8 @@ describe('exportFeedbacks', () => {
       exportFeedbacks,
       exportFeedbacksAction(
         { site: 'https://site.example' },
-        { startDate: '2025-01-01T00:00:00.000Z', endDate: '2025-06-30T00:00:00.000Z' }
-      )
+        { startDate: '2025-01-01T00:00:00.000Z', endDate: '2025-06-30T00:00:00.000Z' },
+      ),
     )
       .withState(storeState)
       .provide({
