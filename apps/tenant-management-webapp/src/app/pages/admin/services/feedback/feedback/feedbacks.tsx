@@ -4,6 +4,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import styled from 'styled-components';
 import { RootState } from '@store/index';
 import { FeedbackListTable } from './feedbacksTable';
+import { FeedbackSummary, FeedbackSummaryLoading } from './feedbackSummary';
 import { renderNoItem } from '@components/NoItem';
 import {
   GoabBadge,
@@ -17,7 +18,13 @@ import {
   GoabSkeleton,
 } from '@abgov/react-components';
 import { DEFAULT_FEEDBACK_PAGE_SIZE, FeedbackSearchCriteria, getDefaultSearchCriteria } from '@store/feedback/models';
-import { exportFeedbacks, getFeedbackSites, getFeedbacks } from '@store/feedback/actions';
+import {
+  clearFeedbackSummary,
+  exportFeedbacks,
+  getFeedbackSites,
+  getFeedbacks,
+  getFeedbackSummary,
+} from '@store/feedback/actions';
 import { FeedbackPagination } from './feedbackPagination';
 import { ExportDates, FeedbackFilterError, FeedbackFilterErrorWrapper, ProgressWrapper } from '../styled-components';
 import { transformedData } from '../ratings';
@@ -37,6 +44,7 @@ export const FeedbacksList = (): JSX.Element => {
   const tenantName = useSelector((state: RootState) => state.tenant?.name);
   const indicator = useSelector((state: RootState) => state.session?.indicator);
   const feedbackPage = useSelector((state: RootState) => state.feedback.page);
+  const summary = useSelector((state: RootState) => state.feedback.summary);
 
   const [selectedSite, setSelectedSite] = useState('');
   const [searchCriteria, setSearchCriteria] = useState(getDefaultSearchCriteria);
@@ -60,6 +68,19 @@ export const FeedbacksList = (): JSX.Element => {
 
   const isSearchCriteriaValid = (criteria: FeedbackSearchCriteria) =>
     new Date(criteria.startDate) <= new Date(criteria.endDate);
+
+  useEffect(() => {
+    if (
+      selectedSiteData &&
+      searchCriteria.startDate &&
+      searchCriteria.endDate &&
+      isSearchCriteriaValid(searchCriteria)
+    ) {
+      dispatch(getFeedbackSummary(selectedSiteData.url, searchCriteria));
+    } else {
+      dispatch(clearFeedbackSummary());
+    }
+  }, [dispatch, searchCriteria, selectedSiteData]);
 
   const onPage = (page: number) => {
     dispatch(getFeedbacks(selectedSiteData, searchCriteria, page, pageSize));
@@ -190,6 +211,7 @@ export const FeedbacksList = (): JSX.Element => {
             </GoabButton>
           </GoabButtonGroup>
 
+          {summary ? <FeedbackSummary summary={summary} /> : <FeedbackSummaryLoading />}
           {!indicator.show && feedbacks.length === 0 && renderNoItem('feedbacks')}
           {feedbacks.length > 0 && (
             <>
@@ -242,6 +264,10 @@ export const FeedbacksList = (): JSX.Element => {
         </ProgressWrapper>
       )}
 
+      {!expandView &&
+        selectedSite &&
+        !showDateError &&
+        (summary ? <FeedbackSummary summary={summary} /> : <FeedbackSummaryLoading />)}
       {!indicator.show && selectedSite && feedbacks.length === 0 && renderNoItem('feedbacks')}
 
       {selectedSite && feedbacks.length > 0 && (
