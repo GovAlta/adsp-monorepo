@@ -1,4 +1,5 @@
-import { adspId, UnauthorizedUserError } from '@abgov/adsp-service-sdk';
+import { adspId, AuditService, UnauthorizedUserError } from '@abgov/adsp-service-sdk';
+import { ServiceMetricRollupTriggeredAuditAction } from '../audit';
 import { InvalidOperationError, NotFoundError } from '@core-services/core-common';
 import { Request, Response } from 'express';
 import { Logger } from 'winston';
@@ -53,7 +54,14 @@ describe('event router', () => {
     send: jest.fn(),
   };
 
+  const auditServiceMock = {
+    record: jest.fn(),
+    flush: jest.fn(),
+  } as unknown as AuditService & { record: jest.Mock };
+
   beforeEach(() => {
+    auditServiceMock.record.mockReset();
+    auditServiceMock.record.mockResolvedValue({ status: 'recorded' });
     repositoryMock.readValues.mockReset();
     repositoryMock.countValues.mockReset();
     repositoryMock.readMetrics.mockReset();
@@ -216,6 +224,7 @@ describe('event router', () => {
       serviceMetricRollupRepository: serviceMetricRollupRepositoryMock,
       serviceMetricRollupTrailingDays: 3,
       eventService: eventServiceMock,
+      auditService: auditServiceMock,
     });
 
     expect(router).toBeTruthy();
@@ -257,7 +266,7 @@ describe('event router', () => {
         distinct_resources: 1,
       });
 
-      const handler = runServiceMetricRollup(loggerMock, serviceMetricRollupRepositoryMock, 3);
+      const handler = runServiceMetricRollup(loggerMock, serviceMetricRollupRepositoryMock, 3, auditServiceMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(serviceMetricRollupRepositoryMock.upsertRollups).toHaveBeenCalledWith([
@@ -271,6 +280,50 @@ describe('event router', () => {
         start: '2026-08-23',
         end: '2026-08-23',
         tenant: null,
+        rollups: 1,
+      });
+    });
+
+    it('audits a core rollup across all tenants once per tenant', async () => {
+      const otherTenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/other`;
+      const req = {
+        user: { id: 'test-writer', name: 'Test Writer', isCore: true, roles: [ServiceUserRoles.Writer] },
+        body: { start: '2026-08-23', end: '2026-08-23' },
+      };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+      const rollup = {
+        day: new Date('2026-08-23T00:00:00.000Z'),
+        service: 'pdf-service',
+        initiated: 0,
+        succeeded: 0,
+        failure_events: 0,
+        unreconciled: 0,
+        duration_sum: 0,
+        duration_count: 0,
+        duration_max: 0,
+        distinct_resources: 0,
+      };
+
+      serviceMetricRollupRepositoryMock.getKnownTenantServices.mockResolvedValueOnce([
+        { tenant: tenantId.toString(), service: 'pdf-service' },
+        { tenant: otherTenantId.toString(), service: 'pdf-service' },
+      ]);
+      serviceMetricRollupRepositoryMock.readRollup
+        .mockResolvedValueOnce({ ...rollup, tenant: tenantId.toString() })
+        .mockResolvedValueOnce({ ...rollup, tenant: otherTenantId.toString() });
+      auditServiceMock.record.mockClear();
+
+      const handler = runServiceMetricRollup(loggerMock, serviceMetricRollupRepositoryMock, 3, auditServiceMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      expect(auditServiceMock.record).toHaveBeenCalledTimes(2);
+      expect(auditServiceMock.record.mock.calls.map(([, details]) => details.tenantId.toString())).toEqual([
+        tenantId.toString(),
+        otherTenantId.toString(),
+      ]);
+      expect(auditServiceMock.record.mock.calls[0][1].metadata).toMatchObject({
+        tenant: tenantId.toString(),
         rollups: 1,
       });
     });
@@ -311,7 +364,7 @@ describe('event router', () => {
         distinct_resources: 1,
       });
 
-      const handler = runServiceMetricRollup(loggerMock, serviceMetricRollupRepositoryMock, 3);
+      const handler = runServiceMetricRollup(loggerMock, serviceMetricRollupRepositoryMock, 3, auditServiceMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(serviceMetricRollupRepositoryMock.getKnownTenantServices).toHaveBeenCalledWith(expect.any(Array), {
@@ -323,6 +376,11 @@ describe('event router', () => {
         tenant: tenantId.toString(),
         rollups: 1,
       });
+      expect(auditServiceMock.record).toHaveBeenCalledWith(
+        ServiceMetricRollupTriggeredAuditAction,
+        expect.objectContaining({ actor: expect.objectContaining({ id: 'test-writer' }) }),
+      );
+      expect(auditServiceMock.record.mock.calls[0][1].tenantId.toString()).toBe(tenantId.toString());
     });
 
     it('can run rollup for a specified tenant as core writer', async () => {
@@ -361,7 +419,7 @@ describe('event router', () => {
         distinct_resources: 1,
       });
 
-      const handler = runServiceMetricRollup(loggerMock, serviceMetricRollupRepositoryMock, 3);
+      const handler = runServiceMetricRollup(loggerMock, serviceMetricRollupRepositoryMock, 3, auditServiceMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(serviceMetricRollupRepositoryMock.getKnownTenantServices).toHaveBeenCalledWith(expect.any(Array), {
@@ -394,7 +452,7 @@ describe('event router', () => {
       };
       const next = jest.fn();
 
-      const handler = runServiceMetricRollup(loggerMock, serviceMetricRollupRepositoryMock, 3);
+      const handler = runServiceMetricRollup(loggerMock, serviceMetricRollupRepositoryMock, 3, auditServiceMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(res.send).not.toHaveBeenCalled();
@@ -420,7 +478,7 @@ describe('event router', () => {
       };
       const next = jest.fn();
 
-      const handler = runServiceMetricRollup(loggerMock, serviceMetricRollupRepositoryMock, 3);
+      const handler = runServiceMetricRollup(loggerMock, serviceMetricRollupRepositoryMock, 3, auditServiceMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(res.send).not.toHaveBeenCalled();
