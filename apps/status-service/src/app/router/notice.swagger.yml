@@ -55,13 +55,13 @@ components:
           description: The total number of items in the list.
           type: number
           example: 231
-responses:
-  BadRequest:
-    description: Bad request
-  Unauthorized:
-    description: Unauthorized
-  InternalServerError:
-    description: Internal server error
+  responses:
+    BadRequest:
+      description: Bad request
+    Unauthorized:
+      description: Unauthorized
+    InternalServerError:
+      description: Internal server error
 
 /notice/v1/notices:
   get:
