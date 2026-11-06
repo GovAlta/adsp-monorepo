@@ -18,6 +18,10 @@ interface MongoRepositoryProps {
   notificationService: NotificationService;
 }
 
+export const closeRepositories = async (): Promise<void> => {
+  await connection.close();
+};
+
 export const createRepositories = ({
   MONGO_URI,
   MONGO_DB,

@@ -18,7 +18,12 @@ import {
 } from '@abgov/adsp-service-sdk';
 import type { User } from '@abgov/adsp-service-sdk';
 // clean-code-ignore: RULE-19 — service bootstrap; the routers, jobs and types it wires are covered by their own specs.
-import { createLogger, createErrorHandler, AjvValidationService, createAmqpEventService } from '@core-services/core-common';
+import {
+  createLogger,
+  createErrorHandler,
+  AjvValidationService,
+  createAmqpEventService,
+} from '@core-services/core-common';
 import { environment } from './environments/environment';
 import {
   applyFormMiddleware,
@@ -50,8 +55,9 @@ import {
   FormMessageNotificationType,
   FormMessageReviewerNotificationType,
   createMessageNotificationJob,
+  FormAuditActions,
 } from './form';
-import { createRepositories } from './mongo';
+import { closeRepositories, createRepositories } from './mongo';
 import { createNotificationService } from './notification';
 import { createFileService } from './file';
 import { createQueueTaskService } from './task';
@@ -59,10 +65,11 @@ import { createCommentService } from './comment';
 import { isFormDefinition } from './utils';
 import { createPdfService } from './pdf';
 import { createCalendarService } from './calendar';
+import { createShutdownHandler } from './shutdown';
 
 const logger = createLogger('form-service', environment.LOG_LEVEL);
 
-const initializeApp = async (): Promise<express.Application> => {
+const initializeApp = async () => {
   const app = express();
 
   app.use(compression());
@@ -84,6 +91,7 @@ const initializeApp = async (): Promise<express.Application> => {
     tenantStrategy,
     tenantHandler,
     eventService,
+    auditService,
     directory,
     tenantService,
     tokenProvider,
@@ -93,6 +101,7 @@ const initializeApp = async (): Promise<express.Application> => {
     metricsHandler,
     healthCheck,
     traceHandler,
+    shutdownTelemetry,
   } = await initializePlatform(
     {
       serviceId,
@@ -150,6 +159,9 @@ const initializeApp = async (): Promise<express.Application> => {
         FormMessageForwardedDefinition,
       ],
       eventStreams: [SubmittedFormPdfUpdatesStream, FormQuestionUpdatesStream],
+      auditActions: FormAuditActions,
+      // Draft data is saved as applicants type, so audit events are sent in batches; flushed on shutdown.
+      audit: { batchSize: 100, enabled: environment.FORM_AUDIT_ENABLED },
       notifications: [FormStatusNotificationType, FormMessageNotificationType, FormMessageReviewerNotificationType],
       values: [ServiceMetricsValueDefinition],
       serviceConfigurations: [
@@ -326,6 +338,7 @@ const initializeApp = async (): Promise<express.Application> => {
     directory,
     tokenProvider,
     eventService,
+    auditService,
     tenantService,
     notificationService,
     fileService,
@@ -363,14 +376,24 @@ const initializeApp = async (): Promise<express.Application> => {
   const errorHandler = createErrorHandler(logger);
   app.use(errorHandler);
 
-  return app;
+  return { app, auditService, shutdownTelemetry };
 };
 
-initializeApp().then((app) => {
+initializeApp().then(({ app, auditService, shutdownTelemetry }) => {
   const port = environment.PORT || 3343;
 
   const server = app.listen(port, () => {
     logger.info(`Listening at http://localhost:${port}`);
   });
   server.on('error', (err) => logger.error(`Error encountered in server: ${err}`));
+
+  const shutdown = createShutdownHandler({
+    server,
+    auditService,
+    shutdownTelemetry,
+    closeDatabase: closeRepositories,
+    logger,
+  });
+  process.once('SIGTERM', shutdown);
+  process.once('SIGINT', shutdown);
 });
