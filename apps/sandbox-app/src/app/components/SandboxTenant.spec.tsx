@@ -72,6 +72,7 @@ jest.mock('./services/feedback/FeedbackCSSLeak', () => ({ FeedbackCSSLeak: () =>
 jest.mock('./services/jsonforms/JsonformsExampleOne', () => ({ JsonformsExampleOne: () => null }));
 jest.mock('./services/jsonforms/JsonformsExternalNavigation', () => ({ JsonformsExternalNavigation: () => null }));
 jest.mock('./services/jsonforms/JsonformsReviewNavigation', () => ({ JsonformsReviewNavigation: () => null }));
+jest.mock('./services/jsonforms/JsonformsReviewResponsive', () => ({ JsonformsReviewResponsive: () => null }));
 jest.mock('./services/DesignSystemsMain', () => ({ DesignSystemsMain: () => null }));
 jest.mock('./services/design-systems/DesignSystemsExampleOne', () => ({ DesignSystemsExampleOne: () => null }));
 jest.mock('./services/planning-poker/PlanningPokerMain', () => ({ PlanningPokerMain: () => null }));
@@ -80,6 +81,7 @@ jest.mock('./services/AdspComponentsMain', () => ({ AdspComponentsMain: () => nu
 jest.mock('./services/adsp-components/AdspThemingExample', () => ({ AdspThemingExample: () => null }));
 jest.mock('./services/adsp-components/ADSPGoACalendarExample', () => ({ ADSPGoACalendarExample: () => null }));
 jest.mock('./services/AuditServiceMain', () => ({ AuditServiceMain: () => null }));
+jest.mock('./services/adsp-components/AdspConversationExample', () => ({ AdspConversationExample: () => null }));
 jest.mock('@core-services/app-common', () => ({
   ...jest.requireActual('@core-services/app-common'),
   Band: () => null,

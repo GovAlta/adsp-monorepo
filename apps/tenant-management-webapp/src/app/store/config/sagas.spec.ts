@@ -12,20 +12,10 @@ const configJson = {
   serviceUrls: { directoryServiceApiUrl: 'https://directory-service.example' },
 };
 
-const entries = [
-  { service: 'tenant-service', url: 'https://tenant-service.example' },
-  { service: 'project-planner-service', url: 'https://project-planner-service.example' },
-];
-
-const plannerConfigJson = {
-  ...configJson,
-  serviceUrls: { ...configJson.serviceUrls, projectPlannerServiceUrl: 'https://planner-from-config.example' },
-};
-
-const mockDirectory = (directoryEntries: { service: string; url: string }[], config: unknown = configJson) => {
+const mockDirectory = (directoryEntries: { service: string; url: string }[]) => {
   axiosGet.mockImplementation(async (url: string) => {
     if (url === '/config/config.json?v=2') {
-      return { data: config };
+      return { data: configJson };
     }
     if (url.endsWith('/directory/v2/namespaces/platform/entries')) {
       return { data: directoryEntries };
@@ -34,50 +24,21 @@ const mockDirectory = (directoryEntries: { service: string; url: string }[], con
   });
 };
 
-const runPlannerUrl = async () => {
+const fetchServiceUrls = async () => {
   const { effects } = await expectSaga(fetchConfig).withState({ config: {} }).run();
   const [action] = effects.put.map((e) => e.payload.action);
   expect(action.type).toBe(FETCH_CONFIG_SUCCESS_ACTION);
-  return action.payload.serviceUrls.projectPlannerServiceApiUrl;
+  return action.payload.serviceUrls;
 };
 
-describe('config sagas', () => {
-  const originalEnv = process.env;
-
-  beforeEach(() => {
-    process.env = { ...originalEnv };
-    delete process.env.NX_PUBLIC_PROJECT_PLANNER_SERVICE_URL;
-  });
-
+describe('fetchConfig', () => {
   afterEach(() => {
-    process.env = originalEnv;
     jest.resetAllMocks();
   });
 
-  describe('fetchConfig project planner url', () => {
-    it('falls back to the project planner service directory entry when config.json has no planner url', async () => {
-      mockDirectory(entries);
+  it('takes the project planner app URL from the directory', async () => {
+    mockDirectory([{ service: 'project-planner-app', url: 'https://planner.example' }]);
 
-      expect(await runPlannerUrl()).toBe('https://project-planner-service.example');
-    });
-
-    it('is undefined when the directory has no planner entry', async () => {
-      mockDirectory(entries.filter((e) => e.service !== 'project-planner-service'));
-
-      expect(await runPlannerUrl()).toBeUndefined();
-    });
-
-    it('uses serviceUrls.projectPlannerServiceUrl from config.json over the directory entry', async () => {
-      mockDirectory(entries, plannerConfigJson);
-
-      expect(await runPlannerUrl()).toBe('https://planner-from-config.example');
-    });
-
-    it('uses NX_PUBLIC_PROJECT_PLANNER_SERVICE_URL override when set', async () => {
-      process.env.NX_PUBLIC_PROJECT_PLANNER_SERVICE_URL = 'http://localhost:3381';
-      mockDirectory(entries, plannerConfigJson);
-
-      expect(await runPlannerUrl()).toBe('http://localhost:3381');
-    });
+    expect((await fetchServiceUrls()).projectPlannerWebApp).toBe('https://planner.example');
   });
 });

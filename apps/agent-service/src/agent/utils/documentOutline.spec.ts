@@ -19,6 +19,36 @@ describe('buildDocumentOutline', () => {
     expect(outline.sections[1].title).toBe('Page 2');
   });
 
+  it('marks page sections as untitled, since their titles are only page numbers', () => {
+    const outline = buildDocumentOutline(
+      { text: 'page one', pageCount: 1, pages: [{ num: 1, text: 'About your team' }] },
+      'survey.pdf',
+      'urn:ads:platform:file-service:v1:/files/abc',
+    );
+
+    expect(outline.sections[0].untitled).toBe(true);
+  });
+
+  it('marks a document without headings, such as an XFA form, as untitled', () => {
+    const outline = buildDocumentOutline(
+      { text: '[Field: txtTradeName] Trade Name', format: 'html', xfaForm: true },
+      'REG3018.pdf',
+      'urn:ads:platform:file-service:v1:/files/abc',
+    );
+
+    expect(outline.sections[0].untitled).toBe(true);
+  });
+
+  it('does not mark sections taken from document headings as untitled', () => {
+    const outline = buildDocumentOutline(
+      { text: '<h2>Applicant</h2><p>Name</p><h2>Business</h2><p>Trade name</p>', format: 'html' },
+      'requirements.docx',
+      'urn:ads:platform:file-service:v1:/files/abc',
+    );
+
+    expect(outline.sections.map((section) => section.untitled)).toEqual([undefined, undefined]);
+  });
+
   it('splits documents on Category: markers even without HTML headings', () => {
     const html = [
       '<p>Survey instructions. Do not include the text “Category:” in the displayed title.</p>',

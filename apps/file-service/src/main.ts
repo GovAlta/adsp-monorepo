@@ -9,6 +9,7 @@ import { createLogger, createErrorHandler, createAmqpConfigUpdateService } from 
 import {
   adspId,
   AdspId,
+  AuditService,
   initializePlatform,
   instrumentAxios,
   ServiceMetricsValueDefinition,
@@ -17,6 +18,7 @@ import { environment, POD_TYPES } from './environments/environment';
 import {
   applyFileMiddleware,
   configurationSchema,
+  FileAuditActions,
   FileDeletedDefinition,
   FileScannedDefinition,
   FileType,
@@ -34,7 +36,7 @@ import { createFileQueueService } from './amqp';
 
 const logger = createLogger('file-service', environment.LOG_LEVEL || 'info');
 
-async function initializeApp(): Promise<express.Application> {
+async function initializeApp(): Promise<{ app: express.Application; auditService: AuditService }> {
   const app = express();
 
   app.use(compression());
@@ -60,6 +62,7 @@ async function initializeApp(): Promise<express.Application> {
     clearCached,
     healthCheck,
     eventService,
+    auditService,
     metricsHandler,
     tenantService,
     traceHandler,
@@ -88,6 +91,9 @@ async function initializeApp(): Promise<express.Application> {
         }).reduce((types, [id, type]) => ({ ...types, [id]: new FileTypeEntity({ ...type, tenantId }) }), {}),
       useLongConfigurationCacheTTL: true,
       events: [FileUploadedDefinition, FileDeletedDefinition, FileScannedDefinition],
+      auditActions: FileAuditActions,
+      // Downloads are potentially high volume, so audit events are sent in batches.
+      audit: { batchSize: 100, enabled: environment.FILE_AUDIT_ENABLED },
       clientSecret: environment.CLIENT_SECRET,
       accessServiceUrl,
       directoryUrl: new URL(environment.DIRECTORY_URL),
@@ -204,6 +210,7 @@ async function initializeApp(): Promise<express.Application> {
     logger,
     storageProvider,
     eventService,
+    auditService,
     scanService,
     queueService,
     tenantService,
@@ -256,10 +263,10 @@ async function initializeApp(): Promise<express.Application> {
   const errorHandler = createErrorHandler(logger);
   app.use(errorHandler);
 
-  return app;
+  return { app, auditService };
 }
 
-initializeApp().then((app) => {
+initializeApp().then(({ app, auditService }) => {
   const port = environment.PORT || 3337;
 
   const server = app.listen(port, () => {
@@ -269,6 +276,8 @@ initializeApp().then((app) => {
   const handleExit = async (message, code, err) => {
     server.close();
     err === null ? logger.info(message) : logger.error(message, err);
+    // Send audit events still waiting in a partial batch.
+    await auditService.flush();
     process.exit(code);
   };
 

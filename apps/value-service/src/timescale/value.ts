@@ -163,6 +163,7 @@ export class TimescaleValuesRepository implements ValuesRepository {
       }
 
       if (criteria.payload) {
+        // JSONB object containment requires every supplied property, so multiple payload conditions use AND.
         query.whereRaw(`value @> ?::jsonb`, [JSON.stringify({ payload: criteria.payload })]);
       }
     }

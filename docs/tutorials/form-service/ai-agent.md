@@ -163,6 +163,8 @@ The agent will typically:
 2. **Ask about the format** — simple string list (just labels) or label/value pairs (display label + stored value).
 3. **Create the register** and wire it into the dropdown field.
 
+Creating a register never overwrites an existing one. If the name is already taken, the agent leaves that register unchanged and offers to reuse it, update its values, or use a different name. Register names can be 1–50 characters long, using letters, numbers, spaces, hyphens and underscores.
+
 ### Simple vs. Label/Value Registers
 
 **Simple list** — Each value is both the label and stored value:

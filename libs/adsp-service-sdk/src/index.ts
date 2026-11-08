@@ -15,7 +15,15 @@ export {
 } from './utils';
 export { AssertCoreRole, AssertRole, isAllowedUser, UnauthorizedUserError, hasRequiredRole, authorize } from './access';
 export type { TokenProvider, User } from './access';
-export { auditDefinitions, AuditCategories, AuditSeverities, BuiltInRetentionClasses } from './audit';
+export {
+  auditDefinitions,
+  auditDetailsFromRequest,
+  AuditCategories,
+  AuditSeverities,
+  BuiltInRetentionClasses,
+  createAuditService,
+  toAuditActor,
+} from './audit';
 export type {
   AuditAction,
   AuditActionDefinition,
@@ -23,6 +31,7 @@ export type {
   AuditActorType,
   AuditCategory,
   AuditChangeSet,
+  AuditClientOptions,
   AuditDropReason,
   AuditEventCriteria,
   AuditEventRecord,
@@ -30,6 +39,8 @@ export type {
   AuditQueryOptions,
   AuditRecordDetails,
   AuditRecordOutcome,
+  AuditRequestContext,
+  AuditRequestRecordDetails,
   AuditResource,
   AuditService,
   AuditSeverity,

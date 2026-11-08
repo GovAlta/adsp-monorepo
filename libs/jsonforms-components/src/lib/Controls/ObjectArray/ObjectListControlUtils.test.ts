@@ -319,26 +319,26 @@ describe('isObjectArrayEmpty', () => {
 });
 
 describe('renderNoneGivenText', () => {
-  test('returns (none given) text when data is undefined', () => {
+  test('returns the no-answer message when data is undefined', () => {
     // Arrange
     const data = undefined;
 
     // Act
-    const { container } = render(renderNoneGivenText(data) as JSX.Element);
+    const { container } = render(renderNoneGivenText(data, 'Not answered.') as JSX.Element);
 
     // Assert
-    expect(container.textContent).toContain('(none given)');
+    expect(container.textContent).toContain('Not answered.');
   });
 
-  test('returns (none given) text when data is empty string', () => {
+  test('returns the no-answer message when data is empty string', () => {
     // Arrange
     const data = '';
 
     // Act
-    const { container } = render(renderNoneGivenText(data) as JSX.Element);
+    const { container } = render(renderNoneGivenText(data, 'Not answered.') as JSX.Element);
 
     // Assert
-    expect(container.textContent).toContain('(none given)');
+    expect(container.textContent).toContain('Not answered.');
   });
 
   test('returns the provided text when data is not empty', () => {
@@ -346,7 +346,7 @@ describe('renderNoneGivenText', () => {
     const data = 'Sample Text';
 
     // Act
-    const result = renderNoneGivenText(data);
+    const result = renderNoneGivenText(data, 'Not answered.');
 
     // Assert
     expect(result).toBe('Sample Text');
@@ -357,13 +357,13 @@ describe('renderNoneGivenText', () => {
     const data = '42';
 
     // Act
-    const result = renderNoneGivenText(data);
+    const result = renderNoneGivenText(data, 'Not answered.');
 
     // Assert
     expect(result).toBe('42');
   });
 
-  test('returns (none given) text when data is 0', () => {
+  test('returns the provided text when data is 0', () => {
     // Arrange
     const data = '0';
 

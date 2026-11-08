@@ -38,6 +38,7 @@
   },
   "private": true,
   "dependencies": {
+    "@ai-sdk/openai-compatible": "2.0.62",
     "@ai-sdk/provider-utils": "^4.0.50",
     "@azure/storage-blob": "^12.9.0",
     "@emotion/react": "11.14.0",
@@ -162,7 +163,7 @@
     "winston": "^3.3.3",
     "worker-timers": "^8.0.0",
     "xss": "^1.0.10",
-    "zod": "^3.25.76"
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "@abgov/design-tokens": "2.8.1",
@@ -387,6 +388,7 @@
     "immutable": "4.3.9",
     "undici": "7.30.0",
     "svgo": "4.1.0",
+    "zod": "$zod",
     "engine.io": "6.6.11",
     "websocket-driver": "0.7.5",
     "http-proxy-middleware": {

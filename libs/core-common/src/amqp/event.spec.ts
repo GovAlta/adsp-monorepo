@@ -44,6 +44,53 @@ describe('AmqpEventSubscriberService', () => {
     });
   });
 
+  describe('domain event binding', () => {
+    const createConnection = () => {
+      const channel = {
+        assertExchange: jest.fn(() => Promise.resolve()),
+        assertQueue: jest.fn(() => Promise.resolve()),
+        bindQueue: jest.fn(() => Promise.resolve()),
+      };
+      const createChannel = jest.fn(({ setup }) => setup(channel));
+      const connection = { createChannel } as unknown as AmqpConnectionManager;
+      const queueConfigured = async () => {
+        await createChannel.mock.results[0].value;
+        return channel;
+      };
+      return { connection, queueConfigured };
+    };
+
+    it('receives every domain event by default', async () => {
+      const { connection, queueConfigured } = createConnection();
+      const service = new AmqpEventSubscriberService('event-log', logger, connection);
+
+      await service.connect();
+      const channel = await queueConfigured();
+
+      expect(channel.bindQueue).toHaveBeenCalledWith('event-log', 'domain-events', '#');
+    });
+
+    it('receives only domain events matching the binding key', async () => {
+      const { connection, queueConfigured } = createConnection();
+      const service = new AmqpEventSubscriberService('event-access-audit', logger, connection, {}, 'access-service.#');
+
+      await service.connect();
+      const channel = await queueConfigured();
+
+      expect(channel.bindQueue).toHaveBeenCalledWith('event-access-audit', 'domain-events', 'access-service.#');
+    });
+
+    it('does not bind the queue to every domain event when a binding key is set', async () => {
+      const { connection, queueConfigured } = createConnection();
+      const service = new AmqpEventSubscriberService('event-access-audit', logger, connection, {}, 'access-service.#');
+
+      await service.connect();
+      const channel = await queueConfigured();
+
+      expect(channel.bindQueue).not.toHaveBeenCalledWith('event-access-audit', 'domain-events', '#');
+    });
+  });
+
   it('can receive item', (done) => {
     const workItem = {
       value: 'test',

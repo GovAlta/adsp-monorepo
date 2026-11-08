@@ -15,20 +15,28 @@ import {
   getGeneratedLabelFromScope,
   controlScopeMatchesLabel,
   getLabelText,
-  getLastSegmentFromPointer,
   isNilOrEmptyValue,
 } from '../../util';
 import { humanizeAjvError } from '../ObjectArray/ListWithDetailControl';
 import { GoabFormItem } from '@abgov/react-components-ds1';
 
 import { useReviewChange } from '../FormStepper/context/useReviewChange';
+import { useStepperPageOptions } from '../FormStepper/context/StepperOptionsContext';
 import { BackButton } from '../FormStepper/BackButton';
 import { useShowChangeButtons } from '../../Context/ContextProvider';
 import { JsonFormsDispatch, useJsonForms } from '@jsonforms/react';
+import { FileUploaderReview } from '../FileUploader/FileUploaderControl';
+
+const isFileUrnSchema = (schema: JsonSchema | undefined): boolean => {
+  if (schema?.format === 'file-urn') return true;
+  const items = schema?.items as JsonSchema | undefined;
+  return schema?.type === 'array' && !Array.isArray(items) && items?.format === 'file-urn';
+};
 
 export const GoAInputBaseTableReview = (props: ControlProps): JSX.Element | null => {
   const { data, uischema, label, schema, rootSchema, path, errors, enabled, cells, required, visible } = props;
   const reportChange = useReviewChange();
+  const { noAnswerMessage } = useStepperPageOptions();
   const showChangeButtons = useShowChangeButtons();
   const jsonForms = useJsonForms();
   const reviewLabel = typeof uischema.options?.reviewLabel === 'string' ? (uischema.options.reviewLabel as string) : '';
@@ -157,7 +165,7 @@ export const GoAInputBaseTableReview = (props: ControlProps): JSX.Element | null
           uischema as UISchemaElement,
         );
       }
-    } catch (err) {
+    } catch {
       // Fallback: try to extract missing property name and create a friendly message
       if (matchedError.keyword === 'required' && matchedError.params?.missingProperty) {
         const missing = matchedError.params.missingProperty as string;
@@ -219,7 +227,6 @@ export const GoAInputBaseTableReview = (props: ControlProps): JSX.Element | null
     isBooleanRequiredError = true;
   }
 
-  // eslint-disable-next-line
   const stepId = uischema.options?.stepId;
 
   function handleChangeClick(): void {
@@ -253,9 +260,13 @@ export const GoAInputBaseTableReview = (props: ControlProps): JSX.Element | null
           )}
         </ReviewHeader>
         <ReviewValue>
-          {showInlineValue ? (
+          {isFileUrnSchema(schema) && !isNilOrEmptyValue(data, true) ? (
             <div data-testid={`review-value-${label}`}>
-              {isValueEmpty ? <NoneGivenText>(none given)</NoneGivenText> : (reviewText ?? '')}
+              <FileUploaderReview {...props} label="" required={false} />
+            </div>
+          ) : showInlineValue ? (
+            <div data-testid={`review-value-${label}`}>
+              {isValueEmpty ? <NoneGivenText>{noAnswerMessage}</NoneGivenText> : (reviewText ?? '')}
             </div>
           ) : (
             <JsonFormsDispatch

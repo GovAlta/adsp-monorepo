@@ -20,8 +20,8 @@ describe('payload search query', () => {
     expect(result).toEqual({ payloadPath: 'applicant.contact.email', payloadValue: expected });
   });
 
-  it('parses a nested JSON containment object', () => {
-    const payload = { applicationId: '12345', decision: { status: 'submitted' } };
+  it('keeps all JSON payload conditions in one containment object', () => {
+    const payload = { applicationId: 'application-12345', decision: { status: 'submitted' } };
 
     const result = parsePayloadSearchQuery({ ...bounds, payload: JSON.stringify(payload) });
 

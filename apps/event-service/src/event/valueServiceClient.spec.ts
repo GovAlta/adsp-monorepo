@@ -110,6 +110,57 @@ describe('countEvents', () => {
     );
   });
 
+  it.each([
+    ['namespace', 'application-events'],
+    ['name', 'user-registration'],
+  ])('includes the event %s in the value context when provided', async (property, value) => {
+    axiosMock.get.mockResolvedValueOnce({ data: { count: 1 } });
+
+    await countEvents(
+      directoryMock as unknown as ServiceDirectory,
+      tokenProviderMock as unknown as TokenProvider,
+      tenantId,
+      { [property]: value },
+    );
+
+    expect(axiosMock.get).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({
+        params: expect.objectContaining({
+          context: JSON.stringify({ [property]: value }),
+        }),
+      }),
+    );
+  });
+
+  it('gives event namespace and name precedence over matching context properties', async () => {
+    axiosMock.get.mockResolvedValueOnce({ data: { count: 1 } });
+
+    await countEvents(
+      directoryMock as unknown as ServiceDirectory,
+      tokenProviderMock as unknown as TokenProvider,
+      tenantId,
+      {
+        namespace: 'application-events',
+        name: 'user-registration',
+        context: { namespace: 'other-events', name: 'other-event', region: 'north' },
+      },
+    );
+
+    expect(axiosMock.get).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({
+        params: expect.objectContaining({
+          context: JSON.stringify({
+            namespace: 'application-events',
+            name: 'user-registration',
+            region: 'north',
+          }),
+        }),
+      }),
+    );
+  });
+
   it('includes timestampMin as an ISO string when provided', async () => {
     axiosMock.get.mockResolvedValueOnce({ data: { count: 1 } });
     const timestampMin = new Date('2021-03-23T12:00:00Z');

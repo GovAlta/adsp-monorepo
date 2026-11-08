@@ -15,4 +15,8 @@ export interface FormStepperComponentProps {
   readOnly?: boolean;
 }
 
+export interface FormStepperOptions {
+  summaryPageTitle?: string;
+}
+
 export type CategorizationElement = Category | Categorization;

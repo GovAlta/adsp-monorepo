@@ -54,14 +54,19 @@ export function stepSourceText(documents: DocumentOutline[], sectionId?: string)
 
 export function describeSections(documents: DocumentOutline[]): string {
   const lines = documents.flatMap((document) =>
-    document.sections.map((section) => `- ${section.sectionId}: ${section.title} (${section.text.length} chars)`),
+    document.sections.map((section) => `- ${section.sectionId}: ${sectionTitle(section)} (${section.text.length} chars)`),
   );
 
   return lines.join('\n');
 }
 
 function formatSection(filename: string, section: DocumentOutlineSection): string {
-  return `### ${section.sectionId}: ${section.title} (from '${filename}')\n${section.text}`;
+  return `### ${section.sectionId}: ${sectionTitle(section)} (from '${filename}')\n${section.text}`;
+}
+
+// A made-up title such as 'Document' or 'Page 2' was copied into the form as a page title, so it is not shown.
+function sectionTitle(section: DocumentOutlineSection): string {
+  return section.untitled ? '(untitled)' : section.title;
 }
 
 function capSections(sections: string[], cap: number): string {

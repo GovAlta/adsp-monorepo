@@ -1,6 +1,8 @@
+import { environment } from '../environments/environment';
 import { AgentConfigurations } from './configuration';
 import { deleteThread, getAccessScope, onIoConnection } from './router';
 import { WorkspaceChangeProjector } from './workspace';
+import { UsageRecorder } from './model';
 
 jest.mock('@abgov/adsp-service-sdk', () => ({
   ...jest.requireActual('@abgov/adsp-service-sdk'),
@@ -28,9 +30,10 @@ describe('onIoConnection workspace socket events', () => {
     readWorkspace?: jest.Mock;
     createProjector?: jest.Mock;
     stream?: jest.Mock;
+    getConversationStatus?: jest.Mock;
   }
 
-  function buildSocketHarness(brokerOverrides: MockBrokerOverrides = {}) {
+  function buildSocketHarness(brokerOverrides: MockBrokerOverrides = {}, user: Record<string, unknown> = mockUser) {
     const mockBroker = {
       initializeWorkspace:
         brokerOverrides.initializeWorkspace ??
@@ -65,6 +68,9 @@ describe('onIoConnection workspace socket events', () => {
           })(),
           object: Promise.resolve(null),
         }),
+      getConversationStatus:
+        brokerOverrides.getConversationStatus ??
+        jest.fn().mockResolvedValue({ contextTokens: 0, contextWindowTokens: 256000, state: 'ok' }),
     };
 
     const getAgent = jest.fn().mockResolvedValue(mockBroker);
@@ -73,7 +79,7 @@ describe('onIoConnection workspace socket events', () => {
     const eventHandlers: Record<string, (...args: unknown[]) => Promise<void>> = {};
     const socket = {
       request: {
-        user: mockUser,
+        user,
         tenant: mockTenant,
         getServiceConfiguration: jest.fn().mockResolvedValue(mockConfiguration),
       },
@@ -89,8 +95,8 @@ describe('onIoConnection workspace socket events', () => {
     return { socket, eventHandlers, mockBroker, getAgent };
   }
 
-  async function connect(brokerOverrides: MockBrokerOverrides = {}) {
-    const harness = buildSocketHarness(brokerOverrides);
+  async function connect(brokerOverrides: MockBrokerOverrides = {}, user: Record<string, unknown> = mockUser) {
+    const harness = buildSocketHarness(brokerOverrides, user);
     await onIoConnection(logger as never)(harness.socket as never);
     return harness;
   }
@@ -416,6 +422,270 @@ describe('onIoConnection workspace socket events', () => {
           chunk: { type: 'error', payload: { message: 'model refused' } },
         }),
       );
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // reply usage and conversation status
+  // -------------------------------------------------------------------------
+
+  describe('reply usage and conversation status', () => {
+    const omStatusPart = {
+      type: 'data-om-status',
+      data: {
+        windows: {
+          active: {
+            messages: { tokens: 6000, threshold: 30000 },
+            observations: { tokens: 1800, threshold: 40000 },
+          },
+        },
+      },
+    };
+
+    function streamWith(chunks: unknown[], usage: { steps?: unknown[]; totalUsage?: unknown } = {}) {
+      return jest.fn().mockResolvedValue({
+        fullStream: (async function* () {
+          yield* chunks;
+        })(),
+        textStream: (async function* () {})(),
+        object: Promise.resolve(null),
+        steps: Promise.resolve(usage.steps),
+        totalUsage: Promise.resolve(usage.totalUsage),
+      });
+    }
+
+    const sendMessage = (eventHandlers: Record<string, (...args: unknown[]) => Promise<void>>) =>
+      eventHandlers['message']({
+        agent: 'AccessServiceAgent',
+        threadId: 'thread-1',
+        messageId: 'user-message-1',
+        content: 'Which clients are in the core realm?',
+        rawChunks: true,
+      });
+
+    it('adds the reply usage to the done event', async () => {
+      // Arrange
+      const stream = streamWith([{ type: 'text-delta', payload: { text: 'Three clients.' } }], {
+        steps: [
+          { usage: { inputTokens: 9000, outputTokens: 200 } },
+          { usage: { inputTokens: 11000, outputTokens: 450 } },
+        ],
+        totalUsage: { inputTokens: 20000, outputTokens: 650, totalTokens: 20650 },
+      });
+      const { socket, eventHandlers } = await connect({ stream });
+
+      // Act
+      await sendMessage(eventHandlers);
+
+      // Assert
+      expect(socket.emit).toHaveBeenCalledWith(
+        'stream',
+        expect.objectContaining({
+          done: true,
+          usage: {
+            contextTokens: 11000,
+            contextWindowTokens: 256000,
+            totalTokens: 20650,
+            outputTokens: 650,
+            modelCalls: 2,
+          },
+        }),
+      );
+    });
+
+    it('leaves usage off the done event when the provider reports none', async () => {
+      // Arrange
+      const stream = streamWith([{ type: 'text-delta', payload: { text: 'Three clients.' } }]);
+      const { socket, eventHandlers } = await connect({ stream });
+
+      // Act
+      await sendMessage(eventHandlers);
+
+      // Assert
+      const done = socket.emit.mock.calls.find(([event, payload]) => event === 'stream' && payload.done)?.[1];
+      expect(done).not.toHaveProperty('usage');
+    });
+
+    it('works out the conversation status from the memory status the stream reported', async () => {
+      // Arrange
+      const stream = streamWith([omStatusPart, { type: 'text-delta', payload: { text: 'Three clients.' } }], {
+        steps: [{ usage: { inputTokens: 14000, outputTokens: 300 } }],
+        totalUsage: { inputTokens: 14000, outputTokens: 300, totalTokens: 14300 },
+      });
+      const { eventHandlers, mockBroker } = await connect({ stream });
+
+      // Act
+      await sendMessage(eventHandlers);
+
+      // Assert
+      expect(mockBroker.getConversationStatus).toHaveBeenCalledWith(mockUser, 'thread-1', {
+        contextTokens: 14000,
+        memoryStatus: {
+          messageTokens: 6000,
+          messageThreshold: 30000,
+          observationTokens: 1800,
+          observationThreshold: 40000,
+          generationCount: 0,
+        },
+      });
+    });
+
+    it('sends the conversation status to the client after the reply', async () => {
+      // Arrange
+      const status = { contextTokens: 14000, contextWindowTokens: 256000, state: 'notice', reason: 'summarised' };
+      const getConversationStatus = jest.fn().mockResolvedValue(status);
+      const stream = streamWith([{ type: 'text-delta', payload: { text: 'Three clients.' } }]);
+      const { socket, eventHandlers } = await connect({ stream, getConversationStatus });
+
+      // Act
+      await sendMessage(eventHandlers);
+
+      // Assert
+      expect(socket.emit).toHaveBeenCalledWith('conversation-status', {
+        agent: 'AccessServiceAgent',
+        threadId: 'thread-1',
+        ...status,
+      });
+    });
+
+    it('does not forward the memory status part as a stream chunk', async () => {
+      // Arrange
+      const stream = streamWith([omStatusPart]);
+      const { socket, eventHandlers } = await connect({ stream });
+
+      // Act
+      await sendMessage(eventHandlers);
+
+      // Assert
+      expect(socket.emit).not.toHaveBeenCalledWith(
+        'stream',
+        expect.objectContaining({ chunk: expect.objectContaining({ type: 'data-om-status' }) }),
+      );
+    });
+
+    it('gives the agent a usage recorder for model calls made inside tools', async () => {
+      // Arrange
+      const stream = streamWith([]);
+      const { eventHandlers } = await connect({ stream });
+
+      // Act
+      await sendMessage(eventHandlers);
+
+      // Assert
+      expect(stream.mock.calls[0][4]).toBeInstanceOf(UsageRecorder);
+    });
+
+    it('still completes the reply when the conversation status cannot be worked out', async () => {
+      // Arrange
+      const getConversationStatus = jest.fn().mockRejectedValue(new Error('storage unavailable'));
+      const stream = streamWith([{ type: 'text-delta', payload: { text: 'Three clients.' } }]);
+      const { socket, eventHandlers } = await connect({ stream, getConversationStatus });
+
+      // Act
+      await sendMessage(eventHandlers);
+
+      // Assert
+      expect(socket.emit).toHaveBeenCalledWith('stream', expect.objectContaining({ done: true }));
+      expect(socket.emit).not.toHaveBeenCalledWith('error', expect.anything());
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // message latency logging
+  // -------------------------------------------------------------------------
+
+  describe('message latency logging', () => {
+    const PRE_STREAM_DELAY_MS = 25;
+
+    it('includes the time before the stream starts in the logged total', async () => {
+      const streamResult = {
+        fullStream: (async function* () {})(),
+        textStream: (async function* () {
+          yield 'hello';
+        })(),
+        object: Promise.resolve(null),
+      };
+      const stream = jest.fn(() => new Promise((resolve) => setTimeout(() => resolve(streamResult), PRE_STREAM_DELAY_MS)));
+      const { eventHandlers } = await connect({ stream });
+
+      await eventHandlers['message']({
+        agent: 'formGenerationAgent',
+        threadId: 'thread-1',
+        messageId: 'user-message-1',
+        content: 'List the data registers',
+      });
+
+      expect(logger.info).toHaveBeenCalledWith(
+        expect.stringMatching(/^Stream complete for agent formGenerationAgent: total=\d+ms, preStream=\d+ms, /),
+        expect.objectContaining({
+          preStreamDurationMs: expect.any(Number),
+          totalDurationMs: expect.any(Number),
+        }),
+      );
+      const [, meta] = logger.info.mock.calls.find(([message]) => String(message).startsWith('Stream complete'));
+      expect(meta.preStreamDurationMs).toBeGreaterThanOrEqual(PRE_STREAM_DELAY_MS - 5);
+      expect(meta.totalDurationMs).toBeGreaterThanOrEqual(meta.preStreamDurationMs + meta.streamLoopDurationMs);
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // token expiry while a message is in progress
+  // -------------------------------------------------------------------------
+
+  describe('token expiry while a message is in progress', () => {
+    const EXPIRY_TIMER_MS = 40;
+
+    // A token whose expiry disconnect (threshold before exp) fires EXPIRY_TIMER_MS after connecting.
+    const expiringUser = () => ({
+      ...mockUser,
+      token: { exp: (Date.now() + environment.AGENT_TOKEN_EXPIRY_THRESHOLD_MS + EXPIRY_TIMER_MS) / 1000 },
+    });
+    const streamResult = () => ({
+      fullStream: (async function* () {})(),
+      textStream: (async function* () {
+        yield 'The form is valid.';
+      })(),
+      object: Promise.resolve(null),
+    });
+    const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+    const message = { agent: 'formGenerationAgent', threadId: 'thread-1', messageId: 'user-message-1', content: 'Validate' };
+
+    it('sends the reply before disconnecting when the token expires before the stream starts', async () => {
+      let startStream: (result: unknown) => void = () => undefined;
+      const stream = jest.fn(() => new Promise((resolve) => (startStream = resolve)));
+      const { socket, eventHandlers } = await connect({ stream }, expiringUser());
+
+      const handling = eventHandlers['message'](message);
+      await wait(EXPIRY_TIMER_MS * 2);
+      const disconnectedBeforeReply = socket.disconnect.mock.calls.length > 0;
+      startStream(streamResult());
+      await handling;
+
+      expect(disconnectedBeforeReply).toBe(false);
+      expect(socket.emit).toHaveBeenCalledWith('stream', expect.objectContaining({ replyTo: 'user-message-1', done: true }));
+      expect(socket.disconnect).toHaveBeenCalledWith(true);
+      expect(socket.emit).toHaveBeenLastCalledWith('session-expired', expect.objectContaining({ code: 'USER_TOKEN_EXPIRED' }));
+    });
+
+    it('reports the error before disconnecting when the agent fails before the stream starts', async () => {
+      const stream = jest.fn(
+        () => new Promise((_resolve, reject) => setTimeout(() => reject(new Error('model unavailable')), EXPIRY_TIMER_MS * 2)),
+      );
+      const { socket, eventHandlers } = await connect({ stream }, expiringUser());
+
+      await eventHandlers['message'](message);
+
+      expect(socket.emit).toHaveBeenCalledWith('error', expect.anything());
+      expect(socket.disconnect).toHaveBeenCalledWith(true);
+      expect(socket.emit).toHaveBeenLastCalledWith('session-expired', expect.objectContaining({ code: 'USER_TOKEN_EXPIRED' }));
+    });
+
+    it('disconnects as soon as the token expires when no message is in progress', async () => {
+      const { socket } = await connect({}, expiringUser());
+
+      await wait(EXPIRY_TIMER_MS * 2);
+
+      expect(socket.disconnect).toHaveBeenCalledWith(true);
     });
   });
 

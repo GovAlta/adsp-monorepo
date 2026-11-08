@@ -24,9 +24,7 @@ export const AuditPage = ({ heading, testId, children }: AuditPageProps) => {
       .catch((err) =>
         setInit({
           type: 'important',
-          message: `Could not verify or register the action catalog (configuration-admin role is required): ${errorMessage(
-            err
-          )}`,
+          message: `Could not verify or register the action catalog: ${errorMessage(err)}`,
         })
       );
   }, []);

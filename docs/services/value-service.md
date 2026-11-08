@@ -40,8 +40,8 @@ Value definitions are managed through the value service definitions API (`/value
 
 Event log reads support exact payload searching with either `payloadPath` and `payloadValue`, or a JSON object in
 `payload`. Both `timestampMin` and `timestampMax` are required for payload searches, and the two search forms are
-mutually exclusive. See [Search the event log](event-service.md#search-the-event-log) for examples and scalar type
-handling.
+mutually exclusive. Every property in a multi-condition `payload` object must match (`AND`). See
+[Search the event log](event-service.md#search-the-event-log) for examples and scalar type handling.
 
 ### Value
 

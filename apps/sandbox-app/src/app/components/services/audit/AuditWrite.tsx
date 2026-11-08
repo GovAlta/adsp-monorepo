@@ -9,9 +9,17 @@ import {
   GoabTextArea,
 } from '@abgov/react-components';
 import { useEffect, useState } from 'react';
+import { useSelector } from 'react-redux';
+import { authenticatedUserSelector } from '../../../state/user.slice';
+import { hasRole } from '../../../state/util';
 import { ActionDefinition, AuditEventInput, getActions, SAMPLE_NAMESPACE, WriteResult, writeEvents } from './auditApi';
-import { errorMessage } from './util';
+import { errorMessage, isForbidden } from './util';
 import { Card, ErrorCallout, FormGrid } from './common';
+
+const AUDIT_WRITER_ROLE = 'urn:ads:platform:audit-service:audit-writer';
+
+const NOT_PERMITTED =
+  'You do not have permission to write audit events. This requires the audit-writer role; ask a tenant administrator to grant it to your account.';
 
 function newEvent(): AuditEventInput {
   return {
@@ -33,9 +41,13 @@ const WRITE_NAMESPACE = SAMPLE_NAMESPACE;
 // The action must be defined in the namespace's audit action catalog (registered via service configuration).
 export function AuditWrite() {
   const namespace = WRITE_NAMESPACE;
+  const user = useSelector(authenticatedUserSelector);
+  // Until the user is known the form is shown; a 403 from the service is still handled on submit.
+  const canWrite = !user || hasRole(AUDIT_WRITER_ROLE, user);
   const [body, setBody] = useState(() => format(newEvent()));
   const [result, setResult] = useState<WriteResult>();
   const [error, setError] = useState<string>();
+  const [forbidden, setForbidden] = useState(false);
   const [actions, setActions] = useState<ActionDefinition[]>([]);
 
   useEffect(() => {
@@ -71,16 +83,26 @@ export function AuditWrite() {
   const submit = async () => {
     try {
       setError(undefined);
+      setForbidden(false);
       setResult(await writeEvents(namespace, [JSON.parse(body)]));
     } catch (err) {
       setResult(undefined);
-      setError(errorMessage(err));
+      if (isForbidden(err)) {
+        setForbidden(true);
+      } else {
+        setError(errorMessage(err));
+      }
     }
   };
 
   return (
     <>
       <Card title="Write an audit event">
+        {(!canWrite || forbidden) && (
+          <GoabCallout type="information" mb="l">
+            {NOT_PERMITTED}
+          </GoabCallout>
+        )}
         <FormGrid>
           <GoabFormItem label="Namespace" helpText="Namespace whose action catalog defines the event's action.">
             <GoabInput name="namespace" width="100%" value={namespace} disabled onChange={() => undefined} />
@@ -102,7 +124,7 @@ export function AuditWrite() {
           <GoabTextArea name="event" rows={16} width="100%" value={body} onChange={(e) => setBody(e.value)} />
         </GoabFormItem>
         <GoabBlock gap="m" mt="xl">
-          <GoabButton type="primary" onClick={submit}>
+          <GoabButton type="primary" disabled={!canWrite || forbidden} onClick={submit}>
             Write event
           </GoabButton>
           <GoabButton type="tertiary" onClick={() => setBody(format(newEvent()))}>

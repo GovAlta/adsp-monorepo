@@ -70,6 +70,14 @@ export const ReviewItemSection = styled.div`
   .element-style {
     max-width: 1600px;
   }
+
+  @media (max-width: 639px) {
+    padding: var(--goa-space-l) var(--goa-space-m);
+  }
+`;
+export const ReviewSectionTitle = styled.h3`
+  margin-bottom: var(--goa-space-m);
+  overflow-wrap: anywhere;
 `;
 export const ReviewItemHeader = styled.div`
   display: flex;
@@ -123,10 +131,12 @@ export const RightAlignmentDiv = styled.div`
 
 export const FormStepperSummaryH3 = styled.h3`
   flex: 1;
+  max-width: 100%;
   margin-bottom: var(--goa-space-m);
   font-size: var(--goa-font-size-7);
   line-height: var(--goa-line-height-4);
-  font-weight: var(--goa-font-weight-regular);
+  font-weight: var(--goa-font-weight-bold);
+  overflow-wrap: anywhere;
 `;
 export const PageRenderPadding = styled.div`
   margin-top: var(--goa-space-2xl);
@@ -138,6 +148,10 @@ export const PageRenderPaddingBottom = styled.div`
 
 export const PageBorder = styled.div`
   padding: var(--goa-space-m) var(--goa-space-3xl);
+
+  @media (max-width: 639px) {
+    padding: var(--goa-space-m) var(--goa-space-xs);
+  }
 `;
 
 export const TableReviewItemSection = styled.div`

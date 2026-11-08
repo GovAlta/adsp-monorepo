@@ -15,7 +15,9 @@ const StyledBackButton = styled.button<{ $showBackIcon?: boolean }>`
   color: var(--goa-color-interactive-default, #0070c4);
   cursor: pointer;
   display: inline-flex;
+  flex-shrink: 0;
   font: inherit;
+  white-space: nowrap;
   margin: 0;
   padding: 0;
   text-decoration: underline;

@@ -26,6 +26,7 @@ import Task from './task/reducers';
 import Feedback from './feedback/reducers';
 import Value from './value/reducers';
 import Agent from './agent/reducers';
+import Audit from './audit/reducers';
 import sharepointReducer from './sharePoint/reducers';
 import TokenHandler from './tokenHandler/reducers';
 
@@ -58,6 +59,7 @@ export const rootReducer = combineReducers({
   scriptService: Script,
   valueService: Value,
   agent: Agent,
+  audit: Audit,
   sharepoint: sharepointReducer,
   tokenHandler: TokenHandler,
 });

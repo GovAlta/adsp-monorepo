@@ -129,7 +129,7 @@ To use the calculation control:
 3. Put the calculation expression in the field's <code>description</code>.
 4. Add a normal <code>Control</code> in the UI schema that points to the computed field.
 
-The rendered control is read-only. The library evaluates the expression against the current form data and writes the computed numeric result back to the field automatically.
+The rendered control is read-only. The library evaluates the expression against the current form data and writes the result back to the field automatically. The result is stored as a numeric string, such as <code>"1050"</code>, to match the field's <code>string</code> type. Other computed fields can still use it in their expressions.
 
 #### Basic Arithmetic
 

@@ -12,14 +12,14 @@ Feature: Notifications
     # Verify there is Add notification button on the notification type page as well after saving a new notification type
     And the user views Add notification type button on Notification types page
     When the user clicks the notification type of "autotest-aed-type<$ph>", "autotest-aed-type<$ph>", "yes", "yes"
-    And the user clicks "edit" button on "autotest-aed-type<$ph>" notification type details pane
+    And the user clicks "edit" button in "autotest-aed-type<$ph>" notification type details pane
     Then the user views Edit notification type modal for "autotest-aed-type<$ph>"
     When the user enters "autotest-edit-type<$ph>", "Edited notification type desc", "auto-test-role1", "no", "no", "no" on notification type modal
     And the user clicks Save button in notification type modal
-    And the user clicks back to notification types link on notification type details pane
+    And the user clicks back to notification types link in notification type details pane
     Then the user "views" the notification type of "autotest-edit-type<$ph>", "autotest-aed-type<$ph>", "no", "no"
     When the user clicks the notification type of "autotest-edit-type<$ph>", "autotest-aed-type<$ph>", "no", "no"
-    And the user clicks "delete" button on "autotest-edit-type<$ph>" notification type details pane
+    And the user clicks "delete" button in "autotest-edit-type<$ph>" notification type details pane
     Then the user views delete notification type confirmation modal for "autotest-edit-type<$ph>"
     When the user clicks Delete button in delete confirmation modal
     Then the user "should not view" the notification type of "autotest-edit-type<$ph>", "autotest-aed-type<$ph>", "no", "no"
@@ -30,43 +30,42 @@ Feature: Notifications
     Given a tenant admin user is on notification types page
     # Add an event and verify the event can't be added again
     When the user clicks the notification type of "autotest-notification-type", "autotest-notification-type", "no", "no"
-    And the user clicks Add event button on "autotest-notification-type" notification type details pane
+    And the user clicks Add event button in "autotest-notification-type" notification type details pane
     Then the user views Select an event modal
     When the user selects "tenant-service:tenant-created" in the event dropdown
     And the user clicks Next button on Select an event page
     Then the user views Add an email template page
     When the user enters "autotest subject" as subject and "autotest body" as body on "email" template page
     And the user clicks Add button in Add an email template page
-    Then the user "views" the event of "tenant-service:tenant-created" on "autotest-notification-type" notification type details pane
-    When the user clicks Add event button on "autotest-notification-type" notification type details pane
+    Then the user "views" the event of "tenant-service:tenant-created" in "autotest-notification-type" notification type details pane
+    When the user clicks Add event button in "autotest-notification-type" notification type details pane
     Then the user views Select an event modal
     When the user cannot select "tenant-service:tenant-created" in the event dropdown
     And the user clicks Cancel button in Select an event modal
     # Delete an event
-    When the user clicks "delete" button for "tenant-service:tenant-created" on "autotest-notification-type" notification type details pane
+    When the user clicks "delete" button for "tenant-service:tenant-created" in "autotest-notification-type" notification type details pane
     Then the user views delete "event" confirmation modal for "tenant-service:tenant-created"
     When the user clicks Delete button in delete confirmation modal
-    Then the user "should not view" the event of "tenant-service:tenant-created" on "autotest-notification-type" notification type details pane
+    Then the user "should not view" the event of "tenant-service:tenant-created" in "autotest-notification-type" notification type details pane
 
-  # Ignored due to recent UI change to notification types page. Need to update the test steps accordingly later
-  @TEST_CS-976 @REQ_CS-906 @regression @prod @ignore
+  @TEST_CS-976 @REQ_CS-906 @regression @prod
   Scenario: Test the registration of notification type in status service for application health change
     Given a tenant admin user is on notification types page
     # Verify the type and its events
-    Then the user "views" the notification type card of "Application health check change"
-    And the user "views" the event of "status-service:health-check-started" in "Application health check change"
-    And the user "views" the event of "status-service:health-check-stopped" in "Application health check change"
-    And the user "views" the event of "status-service:application-unhealthy" in "Application health check change"
-    And the user "views" the event of "status-service:application-healthy" in "Application health check change"
+    When the user clicks the core notification type of "Application health check change", "status-application-health-change", "no", "yes"
+    Then the user "views" the event of "status-service:health-check-started" in "Application health check change" notification type details pane
+    And the user "views" the event of "status-service:health-check-stopped" in "Application health check change" notification type details pane
+    And the user "views" the event of "status-service:application-unhealthy" in "Application health check change" notification type details pane
+    And the user "views" the event of "status-service:application-healthy" in "Application health check change" notification type details pane
     # Verify the events' email icons and preview links, and no edit buttons
-    And the user "views" "email template indicator" for "status-service:health-check-started" in "Application health check change"
-    And the user "views" "Edit button" for "status-service:health-check-started" in "Application health check change"
-    And the user "views" "email template indicator" for "status-service:health-check-stopped" in "Application health check change"
-    And the user "views" "Edit button" for "status-service:health-check-stopped" in "Application health check change"
-    And the user "views" "email template indicator" for "status-service:application-unhealthy" in "Application health check change"
-    And the user "views" "Edit button" for "status-service:application-unhealthy" in "Application health check change"
-    And the user "views" "email template indicator" for "status-service:application-healthy" in "Application health check change"
-    And the user "views" "Edit button" for "status-service:application-healthy" in "Application health check change"
+    And the user "views" "Email template configured" for the event of "status-service:health-check-started" in "Application health check change" notification type details pane
+    And the user "views" "Edit templates" for the event of "status-service:health-check-started" in "Application health check change" notification type details pane
+    And the user "views" "Email template configured" for the event of "status-service:health-check-stopped" in "Application health check change" notification type details pane
+    And the user "views" "Edit templates" for the event of "status-service:health-check-stopped" in "Application health check change" notification type details pane
+    And the user "views" "Email template configured" for the event of "status-service:application-unhealthy" in "Application health check change" notification type details pane
+    And the user "views" "Edit templates" for the event of "status-service:application-unhealthy" in "Application health check change" notification type details pane
+    And the user "views" "Email template configured" for the event of "status-service:application-healthy" in "Application health check change" notification type details pane
+    And the user "views" "Edit templates" for the event of "status-service:application-healthy" in "Application health check change" notification type details pane
   # Verify email template is read-only (pick one event)
   # Future work: need in-depth research on test automation with Monaco-editor before we can automate test steps.
   # When the user attempts to edit the template
@@ -97,19 +96,17 @@ Feature: Notifications
     When the user "selects" the subscribe checkbox for health check notification type
     Then the user views a notification message of "You are subscribed! You will receive notifications on adsp1.t@gov.ab.ca for status-application-health-change"
 
-  # Ignored due to recent UI change to notification types page. Need to update the test steps accordingly later
-  @TEST_CS-986 @TEST_CS-443 @REQ_CS-1068 @REQ_CS-963 @REQ_CS-978 @regression @ignore
+  @TEST_CS-986 @TEST_CS-443 @REQ_CS-1068 @REQ_CS-963 @REQ_CS-978 @regression
   Scenario: As a tenant admin, I can see notification type for application status change updates
     Given a tenant admin user is on notification types page
-    Then the user "views" the notification type card of "Application status update"
-    And the user views "Application status update" has self-service-allowed attribute is "yes"
+    When the user clicks the core notification type of "Application status update", "status-application-status-change", "yes", "yes"
     # Verify the events' email template indicator, preview link and edit button
-    And the user "views" the event of "status-service:application-status-changed" in "Application status update"
-    And the user "views" the event of "status-service:application-notice-published" in "Application status update"
-    And the user "views" "email template indicator" for "status-service:application-status-changed" in "Application status update"
-    And the user "views" "Edit button" for "status-service:application-status-changed" in "Application status update"
-    And the user "views" "email template indicator" for "status-service:application-notice-published" in "Application status update"
-    And the user "views" "Edit button" for "status-service:application-notice-published" in "Application status update"
+    Then the user "views" the event of "status-service:application-status-changed" in "Application status update" notification type details pane
+    And the user "views" the event of "status-service:application-notice-published" in "Application status update" notification type details pane
+    And the user "views" "Email template configured" for the event of "status-service:application-status-changed" in "Application status update" notification type details pane
+    And the user "views" "Edit templates" for the event of "status-service:application-status-changed" in "Application status update" notification type details pane
+    And the user "views" "Email template configured" for the event of "status-service:application-notice-published" in "Application status update" notification type details pane
+    And the user "views" "Edit templates" for the event of "status-service:application-notice-published" in "Application status update" notification type details pane
 
   @TEST_CS-1097 @REQ_CS-1031 @regression
   Scenario: As a tenant admin, I can find subscriptions for a particular subscriber
@@ -212,19 +209,19 @@ Feature: Notifications
   # Then the user "views" the subscriber of "autotest-DO-NOT-DELETE", "adsp4.t@gov.ab.ca", "EMPTY"
   # And the user "should not view" the subscriber of "autotest-DO-NOT-DELETE", "adsp4.t@gov.ab.ca", "7808005678"
 
-  # Ignored due to recent UI change to notification types page. Need to update the test steps accordingly later
-  @TEST_CS-1339 @REQ_CS-1308 @REQ_CS-1233 @regression @ignore
+  @TEST_CS-1339 @REQ_CS-1308 @REQ_CS-1233 @regression
   Scenario: As a tenant admin, I can configure what channels are supported by a notification type, so that I can support multiple channels of notifications.
     Given a tenant admin user is on notification types page
     # Add a notification type
     When the user clicks Add notification type button on Notification type page
     Then the user views Add notification type modal
-    When the user enters "autotest-add-multi-channels", "autotest notification desc", "public", "yes", "yes", "yes" on notification type modal
+    When the user enters "autotest-aed-multi-channels", "autotest notification desc", "public", "yes", "yes", "yes" on notification type modal
     Then the user views that email channel is greyed out
     And the user clicks Save button in notification type modal
-    Then the user "views" the notification type of "autotest-add-multi-channels", "autotest notification desc", "public", "yes", "yes"
+    Then the user "views" the notification type of "autotest-aed-multi-channels", "autotest-aed-multi-channels", "yes", "yes"
+    When the user clicks the notification type of "autotest-aed-multi-channels", "autotest-aed-multi-channels", "yes", "yes"
     # Add an event
-    When the user clicks Add event button on "autotest-add-multi-channels" notification type details pane
+    And the user clicks Add event button in "autotest-aed-multi-channels" notification type details pane
     Then the user views Select an event modal
     When the user selects "form-service:form-submitted" in the event dropdown
     And the user clicks Next button on Select an event page
@@ -233,69 +230,73 @@ Feature: Notifications
     Then the user selects "SMS" tab on the event template
     When the user enters "autotest subject" as subject and "autotest body" as body on "SMS" template page
     And the user clicks Add button in Add an email template page
-    Then the user "views" the event of "form-service:form-submitted" on "autotest-add-multi-channels" notification type details pane
-    And the user "views" "email template indicator" for the event of "form-service:form-submitted" in "autotest-add-multi-channels" on tenant events
-    And the user "views" "sms template indicator" for the event of "form-service:form-submitted" in "autotest-add-multi-channels" on tenant events
-    And the user "views" "bot template indicator with warning" for the event of "form-service:form-submitted" in "autotest-add-multi-channels" on tenant events
+    Then the user "views" the event of "form-service:form-submitted" in "autotest-aed-multi-channels" notification type details pane
+    And the user "views" "Email template configured" for the event of "form-service:form-submitted" in "autotest-aed-multi-channels" notification type details pane
+    And the user "views" "SMS template configured" for the event of "form-service:form-submitted" in "autotest-aed-multi-channels" notification type details pane
+    And the user "views" "No bot template configured" for the event of "form-service:form-submitted" in "autotest-aed-multi-channels" notification type details pane
     # Edit the event, remove bot & sms channels from template
-    When the user clicks "edit" button on "autotest-add-multi-channels" notification type details pane
-    Then the user views Edit notification type modal for "autotest-add-multi-channels"
+    When the user clicks "edit" button in "autotest-aed-multi-channels" notification type details pane
+    Then the user views Edit notification type modal for "autotest-aed-multi-channels"
     And the user views that email channel is greyed out
     When the user enters "autotest-edit-multi-channels", "Edited notification type desc", "auto-test-role1", "no", "no", "no" on notification type modal
     And the user clicks Save button in notification type modal
-    Then the user "views" the notification type of "autotest-edit-multi-channels", "Edited notification type desc", "auto-test-role1", "no", "no"
-    And the user "views" "email template indicator" for the event of "form-service:form-submitted" in "autotest-edit-multi-channels" on tenant events
-    And the user "should not view" "sms template indicator" for the event of "form-service:form-submitted" in "autotest-edit-multi-channels" on tenant events
-    And the user "should not view" "bot template indicator" for the event of "form-service:form-submitted" in "autotest-edit-multi-channels" on tenant events
+    And the user clicks back to notification types link in notification type details pane
+    Then the user "views" the notification type of "autotest-edit-multi-channels", "autotest-aed-multi-channels", "no", "no"
+    When the user clicks the notification type of "autotest-edit-multi-channels", "autotest-aed-multi-channels", "no", "no"
+    Then the user "views" "Email template configured" for the event of "form-service:form-submitted" in "autotest-edit-multi-channels" notification type details pane
+    And the user "should not view" "SMS template configured" for the event of "form-service:form-submitted" in "autotest-edit-multi-channels" notification type details pane
+    And the user "should not view" "Bot template configured" for the event of "form-service:form-submitted" in "autotest-edit-multi-channels" notification type details pane
     # Add back bot and sms channels to see the template preserved
-    When the user clicks "edit" button on "autotest-edit-multi-channels" notification type details pane
+    When the user clicks "edit" button in "autotest-edit-multi-channels" notification type details pane
     Then the user views Edit notification type modal for "autotest-edit-multi-channels"
     When the user enters "autotest-edit-multi-channels", "Edited notification type desc", "auto-test-role2, beta-tester", "yes", "yes", "no" on notification type modal
     And the user clicks Save button in notification type modal
-    Then the user "views" the notification type of "autotest-edit-multi-channels", "Edited notification type desc", "auto-test-role2, beta-tester", "no", "no"
-    And the user "views" "sms template indicator" for the event of "form-service:form-submitted" in "autotest-edit-multi-channels" on tenant events
-    And the user "views" "bot template indicator with warning" for the event of "form-service:form-submitted" in "autotest-edit-multi-channels" on tenant events
+    And the user clicks back to notification types link in notification type details pane
+    Then the user "views" the notification type of "autotest-edit-multi-channels", "autotest-aed-multi-channels", "no", "no"
+    When the user clicks the notification type of "autotest-edit-multi-channels", "autotest-aed-multi-channels", "no", "no"
+    And the user "views" "SMS template configured" for the event of "form-service:form-submitted" in "autotest-edit-multi-channels" notification type details pane
+    And the user "views" "No bot template configured" for the event of "form-service:form-submitted" in "autotest-edit-multi-channels" notification type details pane
     # Delete the notification type
-    When the user clicks "delete" button on "autotest-edit-multi-channels" notification type details pane
+    When the user clicks "delete" button in "autotest-edit-multi-channels" notification type details pane
     Then the user views delete "notification type" confirmation modal for "autotest-edit-multi-channels"
     When the user clicks Delete button in delete confirmation modal
-    Then the user "should not view" the notification type of "autotest-edit-multi-channels", "Edited notification type desc", "auto-test-role2, beta-tester", "no", "no"
+    Then the user "should not view" the notification type of "autotest-edit-multi-channels", "autotest-aed-multi-channels", "no", "no"
 
-  # Ignored due to recent UI change to notification types page. Need to update the test steps accordingly later
   # TEST DATA: a precreated event of "Autotest:autotest-eventDefinition" in "autotest-notification-type"
-  @TEST_CS-1157 @REQ_CS-1070 @regression @ignore
+  @TEST_CS-1157 @REQ_CS-1070 @regression
   Scenario: As a tenant admin, I can preview the rendered notification message, so I know what my subscribers will receive.
     Given a tenant admin user is on notification types page
-    When the user clicks "edit" button for "Autotest:autotest-eventDefinition" in "autotest-notification-type"
+    When the user clicks the notification type of "autotest-notification-type", "autotest-notification-type", "no", "no"
+    And the user clicks "Edit templates" for the event of "Autotest:autotest-eventDefinition" in "autotest-notification-type" notification type details pane
     Then the user views an email template modal title for "Autotest:autotest-eventDefinition"
     And the user views the email subject "Autotest"
     And the user views the email body "Autotest"
     When the user clicks Close button in event template modal
     Then Preview event template modal is closed
 
-  # Ignored due to recent UI change to notification types page. Need to update the test steps accordingly later
-  @TEST_CS-1289 @REQ_CS-1269 @regression @ignore
+  @TEST_CS-1289 @REQ_CS-1269 @regression
   Scenario: As a tenant admin, I can access subscription management from the notification email preview.
     Given a tenant admin user is on notification types page
-    Then the user "views" the event of "status-service:health-check-started" on "Application health check change" notification type details pane
-    When the user clicks "edit" button for "status-service:health-check-started" on "Application health check change" notification type details pane
+    When the user clicks the core notification type of "Application health check change", "status-application-health-change", "no", "yes"
+    Then the user "views" the event of "status-service:health-check-started" in "Application health check change" notification type details pane
+    When the user clicks "edit" button for "status-service:health-check-started" in "Application health check change" notification type details pane
     Then the user views the link for managing email subscription
     When the user clicks Close button in event template modal
     Then Preview event template modal is closed
 
-  # Ignored due to recent UI change to notification types page. Need to update the test steps accordingly later
-  @TEST_CS-1170 @REQ_CS-1074 @regression @ignore
+  @TEST_CS-1170 @REQ_CS-1074 @regression
   Scenario: As a tenant admin, I can override the email template for a platform notification type, so that I can customize the notification that is sent
     Given a tenant admin user is on notification types page
-    When the user clicks "edit" button for "status-service:application-status-changed" in "Application status update"
+    When the user clicks the core notification type of "Application status update", "status-application-status-change", "yes", "yes"
+    And the user clicks "Edit templates" for the event of "status-service:application-status-changed" in "Application status update" notification type details pane
     Then the user views an email template modal title for "status-service:application-status-changed"
     When the user enters "autotest subject" as subject and "autotest body" as body on "email" template page
     And the user clicks Save all button in template modal
-    Then the user "views" Reset button for "status-service:application-status-changed" in "Application status update"
-    When the user clicks "Reset" button for "status-service:application-status-changed" in "Application status update"
+    And the user "views" "Reset" for the event of "status-service:application-status-changed" in "Application status update" notification type details pane
+    And the user clicks "Reset" for the event of "status-service:application-status-changed" in "Application status update" notification type details pane
     Then the user views Reset email template modal
     When the user clicks Delete button in Reset email template modal
-    Then the user "should not view" Reset button for "status-service:application-status-changed" in "Application status update"
+    Then the user "should not view" "Reset" for the event of "status-service:application-status-changed" in "Application status update" notification type details pane
 
   # TEST DATA: a precreated subscription of "autotest-DO-NOT-DELETE", "adsp4.t@gov.ab.ca" under "Application health check change" with some criteria details
   @TEST_CS-1431 @REQ_CS-1404 @regression
@@ -307,12 +308,12 @@ Feature: Notifications
     When the user clicks eye icon of "autotest-DO-NOT-DELETE", "adsp4.t@gov.ab.ca" under "Application health check change"
     Then the user views the details of "autotest-DO-NOT-DELETE", "adsp4.t@gov.ab.ca" under "Application health check change"
 
-  # Ignored due to recent UI change to notification types page. Need to update the test steps accordingly later
-  @TEST_CS-329 @REQ_CS-1087 @regression @ignore
+  @TEST_CS-329 @REQ_CS-1087 @regression
   Scenario: As a tenant admin, I can preview an email template as I edit, so I have an accurate preview of the notification.
     Given a tenant admin user is on notification types page
     # Preview in Add flow
-    When the user clicks Add event button on "autotest-notification-type" notification type details pane
+    When the user clicks the notification type of "autotest-notification-type", "autotest-notification-type", "no", "no"
+    And the user clicks Add event button in "autotest-notification-type" notification type details pane
     Then the user views Select an event modal
     When the user selects "tenant-service:tenant-deleted" in the event dropdown
     And the user clicks Next button on Select an event page
@@ -321,22 +322,22 @@ Feature: Notifications
     Then the user views the email template preview of "autotest subject" as subject and "autotest body" as body
     And the user clicks Add button in Add an email template page
     # Preview in Edit mode
-    When the user clicks "Edit" button for "tenant-service:tenant-deleted" in "autotest-notification-type"
+    And the user clicks "Edit templates" for the event of "tenant-service:tenant-deleted" in "autotest-notification-type" notification type details pane
     Then the user views an email template modal title for "tenant-service:tenant-deleted"
     When the user enters "autotest subject edited" as subject and "autotest body edited" as body on "email" template page
     Then the user views the email template preview of "autotest subject edited" as subject and "autotest body edited" as body
     When the user clicks Save all button in template modal
     # Delete an event
-    And the user clicks "delete" button for "tenant-service:tenant-deleted" in "autotest-notification-type"
+    And the user clicks "delete" button for "tenant-service:tenant-deleted" in "autotest-notification-type" notification type details pane
     Then the user views delete "event" confirmation modal for "tenant-service:tenant-deleted"
     When the user clicks Delete button in delete confirmation modal
-    Then the user "should not view" the event of "tenant-service:tenant-deleted" on "autotest-notification-type" notification type details pane
+    Then the user "should not view" the event of "tenant-service:tenant-deleted" in "autotest-notification-type" notification type details pane
 
-  # Ignored due to recent UI change to notification types page. Need to update the test steps accordingly later
-  @TEST_CS-1375 @REQ_CS-1237 @regression @ignore
+  @TEST_CS-1375 @REQ_CS-1237 @regression
   Scenario: As a tenant admin, I can configure an SMS message template for a notification type event, so I can provide SMS notifications.
     Given a tenant admin user is on notification types page
-    When the user clicks Add event button on "autotest-notification-type" notification type details pane
+    When the user clicks the notification type of "autotest-notification-type", "autotest-notification-type", "no", "no"
+    And the user clicks Add event button in "autotest-notification-type" notification type details pane
     Then the user views Select an event modal
     When the user selects "status-service:application-status-changed" in the event dropdown
     And the user clicks Next button on Select an event page
@@ -344,18 +345,18 @@ Feature: Notifications
     And the user enters "{{event.payload.application.name}} status is changed" as subject and "{{event.payload.application.description}} status is changed body" as body on "SMS" template page
     Then the user views the SMS template preview of "{{event.payload.application.name}} status is changed" as subject and "{{event.payload.application.description}} status is changed body" as body
     When the user clicks Save all button in template modal
-    Then the user "views" "sms template indicator" for the event of "status-service:application-status-changed" on "autotest-notification-type" notification type details pane
+    Then the user "views" "SMS template configured" for the event of "status-service:application-status-changed" in "autotest-notification-type" notification type details pane
     # Delete an event
-    When the user clicks "delete" button for "status-service:application-status-changed" in "autotest-notification-type"
+    When the user clicks "delete" button for "status-service:application-status-changed" in "autotest-notification-type" notification type details pane
     Then the user views delete "event" confirmation modal for "status-service:application-status-changed"
     When the user clicks Delete button in delete confirmation modal
-    Then the user "should not view" the event of "status-service:application-status-changed" on "autotest-notification-type" notification type details pane
+    Then the user "should not view" the event of "status-service:application-status-changed" in "autotest-notification-type" notification type details pane
 
-  # Ignored due to recent UI change to notification types page. Need to update the test steps accordingly later
-  @TEST_CS-1392 @REQ_CS-1234 @regression @ignore
+  @TEST_CS-1392 @REQ_CS-1234 @regression
   Scenario: As a tenant admin, I can configure a Bot message template for a notification type event, so I can provide slack/teams notifications.
     Given a tenant admin user is on notification types page
-    When the user clicks Add event button on "autotest-notification-type" notification type details pane
+    When the user clicks the notification type of "autotest-notification-type", "autotest-notification-type", "no", "no"
+    And the user clicks Add event button in "autotest-notification-type" notification type details pane
     Then the user views Select an event modal
     When the user selects "status-service:application-notice-published" in the event dropdown
     And the user clicks Next button on Select an event page
@@ -363,26 +364,26 @@ Feature: Notifications
     And the user enters "{{event.payload.application.name}} has a notice published" as subject and "{{event.payload.application.name}} has a notice published body" as body on "bot" template page
     Then the user views the Bot template preview of "{{event.payload.application.name}} has a notice published" as subject and "{{event.payload.application.name}} has a notice published body" as body
     When the user clicks Save all button in template modal
-    Then the user "views" "bot template indicator" for the event of "status-service:application-notice-published" in "autotest-notification-type" on tenant events
+    Then the user "views" "Bot template configured" for the event of "status-service:application-notice-published" in "autotest-notification-type" notification type details pane
     # Delete an event
-    When the user clicks "delete" button for "status-service:application-notice-published" in "autotest-notification-type"
+    When the user clicks "delete" button for "status-service:application-notice-published" in "autotest-notification-type" notification type details pane
     Then the user views delete "event" confirmation modal for "status-service:application-notice-published"
     When the user clicks Delete button in delete confirmation modal
-    Then the user "should not view" the event of "status-service:application-notice-published" on "autotest-notification-type" notification type details pane
+    Then the user "should not view" the event of "status-service:application-notice-published" in "autotest-notification-type" notification type details pane
 
-  # Ignored due to recent UI change to notification types page. Need to update the test steps accordingly later
-  @TEST_CS-1164 @REQ_CS-1072 @regression @ignore
+  @TEST_CS-1164 @REQ_CS-1072 @regression
   Scenario: As a tenant admin, I can configure a notification email message template to use standard GoA email format, so that I can have a consistent look for emails.
     Given a tenant admin user is on notification types page
     # Preview an email without <html> or </html>
-    When the user clicks "edit" button for "form-service:form-locked" in "autotest-notification-type"
+    When the user clicks the notification type of "autotest-notification-type", "autotest-notification-type", "no", "no"
+    And the user clicks "Edit templates" for the event of "form-service:form-locked" in "autotest-notification-type" notification type details pane
     Then the user views an email template modal title for "form-service:form-locked"
     And the user views the hint text for GoA wrapper in event template modal
     And the user "views" GoA header and footer in the email preview
     When the user clicks Close button in event template modal
     Then Event template modal is closed
     # Preview a html email with <html> and </html>
-    When the user clicks "edit" button for "form-service:form-unlocked" in "autotest-notification-type"
+    When the user clicks "Edit templates" for the event of "form-service:form-unlocked" in "autotest-notification-type" notification type details pane
     Then the user views an email template modal title for "form-service:form-unlocked"
     And the user "should not view" GoA header and footer in the email preview
     When the user clicks Close button in event template modal
@@ -404,7 +405,7 @@ Feature: Notifications
     # And no critical or serious accessibility issues for "notification type modal" on "notification overview page"
     When the user clicks Cancel button in notification type modal
     Then no critical or serious accessibility issues on "notification notification types page"
-    When the user clicks Add event button on "autotest-notification-type" notification type details pane
+    When the user clicks Add event button in "autotest-notification-type" notification type details pane
     Then the user views Select an event modal
     ## CS-1826 is pending for fix
     # And no critical or serious accessibility issues for "select an event modal" on "notification notification types page"

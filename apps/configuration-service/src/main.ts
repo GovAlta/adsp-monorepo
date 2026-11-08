@@ -24,12 +24,13 @@ import {
   ConfigurationUpdatedDefinition,
   ConfigurationUpdatesStream,
   ConfigurationDeletedDefinition,
+  ConfigurationAuditActions,
 } from './configuration';
 import { Strategy as AnonymousStrategy } from 'passport-anonymous';
 
 const logger = createLogger('configuration-service', environment.LOG_LEVEL);
 
-const initializeApp = async (): Promise<express.Application> => {
+const initializeApp = async () => {
   const app = express();
 
   app.use(compression());
@@ -44,8 +45,16 @@ const initializeApp = async (): Promise<express.Application> => {
   instrumentAxios(logger);
 
   const serviceId = AdspId.parse(environment.CLIENT_ID);
-  const { coreStrategy, tenantStrategy, tenantHandler, eventService, healthCheck, metricsHandler, traceHandler } =
-    await initializePlatform(
+  const {
+    coreStrategy,
+    tenantStrategy,
+    tenantHandler,
+    eventService,
+    auditService,
+    healthCheck,
+    metricsHandler,
+    traceHandler,
+  } = await initializePlatform(
       {
         serviceId,
         displayName: 'Configuration service',
@@ -74,6 +83,8 @@ const initializeApp = async (): Promise<express.Application> => {
           ActiveRevisionSetDefinition,
         ],
         eventStreams: [ConfigurationUpdatesStream],
+        auditActions: ConfigurationAuditActions,
+        audit: { enabled: environment.CONFIGURATION_AUDIT_ENABLED },
         clientSecret: environment.CLIENT_SECRET,
         accessServiceUrl: new URL(environment.KEYCLOAK_ROOT_URL),
         directoryUrl: new URL(environment.DIRECTORY_URL),
@@ -171,6 +182,7 @@ const initializeApp = async (): Promise<express.Application> => {
   await applyConfigurationMiddleware(app, {
     ...repositories,
     eventService,
+    auditService,
     serviceId,
     logger,
   });
@@ -213,14 +225,33 @@ const initializeApp = async (): Promise<express.Application> => {
   const errorHandler = createErrorHandler(logger);
   app.use(errorHandler);
 
-  return app;
+  return { app, auditService };
 };
 
-initializeApp().then((app) => {
+initializeApp().then(({ app, auditService }) => {
   const port = environment.PORT || 3339;
 
   const server = app.listen(port, () => {
     logger.info(`Listening at http://localhost:${port}`);
   });
   server.on('error', (err) => logger.error(`Error encountered in server: ${err}`));
+
+  // Stop accepting requests, then deliver any buffered audit events before the process exits.
+  let stopping = false;
+  const shutdown = async () => {
+    if (stopping) return;
+    stopping = true;
+    // Fallback in case the flush or close hangs.
+    setTimeout(() => process.exit(1), 15000).unref();
+    server.close();
+    try {
+      await auditService.flush();
+      process.exit(0);
+    } catch (err) {
+      logger.error(`Error encountered flushing audit events on shutdown: ${err}`);
+      process.exit(1);
+    }
+  };
+  process.once('SIGTERM', shutdown);
+  process.once('SIGINT', shutdown);
 });

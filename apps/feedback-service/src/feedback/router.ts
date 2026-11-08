@@ -15,12 +15,12 @@ import { FeedbackConfiguration } from './configuration';
 import { FeedbackWorkItem } from './job';
 import { ServiceRoles } from './roles';
 import { Feedback } from './types';
-import { ReadQueryParameters, ValueService } from './value';
+import { FeedbackSummaryQueryParameters, ReadQueryParameters, ValueService } from './value';
 import { FeedbackSiteService } from './feedbackSiteService';
 
 export function resolveFeedbackContext(
   tenantService: TenantService,
-  rateLimitHandler: RateLimitRequestHandler
+  rateLimitHandler: RateLimitRequestHandler,
 ): RequestHandler {
   return async function (req, res, next) {
     try {
@@ -128,8 +128,8 @@ export const readValues =
         tenantIdToUse === undefined
           ? undefined
           : typeof tenantIdToUse === 'string'
-          ? AdspId.parse(tenantIdToUse)
-          : tenantIdToUse;
+            ? AdspId.parse(tenantIdToUse)
+            : tenantIdToUse;
 
       const queryParameters: ReadQueryParameters = {
         site: req.query?.site ? (req.query?.site as string) : undefined,
@@ -145,6 +145,27 @@ export const readValues =
           : await valueService.readValues(tenantIdParam, queryParameters);
 
       res.json(values);
+    } catch (err) {
+      next(err);
+    }
+  };
+
+export const readSummary =
+  (valueService: ValueService): RequestHandler =>
+  async (req, res, next) => {
+    try {
+      if (!canRead(req.user, req.tenant, ServiceRoles.FeedbackReader)) {
+        throw new UnauthorizedError('User not authorized to read feedback summary');
+      }
+
+      const queryParameters: FeedbackSummaryQueryParameters = {
+        site: req.query.site as string,
+        start: req.query.start as string | undefined,
+        end: req.query.end as string | undefined,
+      };
+      const summary = await valueService.readSummary(req.tenant.id, queryParameters);
+
+      res.json(summary);
     } catch (err) {
       next(err);
     }
@@ -291,11 +312,11 @@ export async function createFeedbackRouter({
             isLength: { options: { min: 1, max: 2000 } },
           },
         },
-        ['body']
-      )
+        ['body'],
+      ),
     ),
     resolveFeedbackContext(tenantService, rateLimitHandler),
-    sendFeedback(logger, queueService)
+    sendFeedback(logger, queueService),
   );
 
   router.get('/script/adspFeedback.js', downloadWidgetScript(loadWidgetInformation));
@@ -303,6 +324,21 @@ export async function createFeedbackRouter({
   router.get('/script/integrity', getWidgetScriptIntegrity(loadWidgetInformation));
 
   router.get('/feedback', readValues(valueService));
+
+  router.get(
+    '/feedback/summary',
+    createValidationHandler(
+      ...checkSchema(
+        {
+          site: { isString: true, isLength: { options: { min: 1, max: 100 } } },
+          start: { optional: true, isISO8601: true },
+          end: { optional: true, isISO8601: true },
+        },
+        ['query'],
+      ),
+    ),
+    readSummary(valueService),
+  );
 
   router.get('/sites', getSites(feedbackSiteService, tenantService));
 

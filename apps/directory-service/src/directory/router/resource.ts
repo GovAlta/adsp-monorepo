@@ -1,5 +1,6 @@
 import {
   AdspId,
+  AuditService,
   DomainEvent,
   EventService,
   isAllowedUser,
@@ -18,6 +19,16 @@ import { DirectoryConfiguration } from '../configuration';
 import { mapTag, mapResource } from '../mapper';
 import { TAG_OPERATION_TAG, TAG_OPERATION_UNTAG, TagOperationRequests } from './types';
 import { Resource } from '../types';
+import {
+  auditDirectory,
+  ResourceDeletedAuditAction,
+  TagDeletedAuditAction,
+  toResourceDeletedAuditDetails,
+  toTagDeletedAuditDetails,
+  ResourceTagAddedAuditAction,
+  ResourceTagRemovedAuditAction,
+  toTagAuditDetails,
+} from '../audit';
 
 export function getTags(apiId: AdspId, repository: DirectoryRepository): RequestHandler {
   return async (req, res, next) => {
@@ -81,7 +92,13 @@ export function getTag(apiId: AdspId, repository: DirectoryRepository): RequestH
   };
 }
 
-export function deleteTag(apiId: AdspId, repository: DirectoryRepository, eventService: EventService): RequestHandler {
+export function deleteTag(
+  apiId: AdspId,
+  logger: Logger,
+  repository: DirectoryRepository,
+  eventService: EventService,
+  auditService: AuditService
+): RequestHandler {
   return async (req, res, next) => {
     try {
       const user = req.user;
@@ -103,6 +120,7 @@ export function deleteTag(apiId: AdspId, repository: DirectoryRepository, eventS
         deleted = await repository.deleteTag(result);
         if (deleted) {
           eventService.send(tagDeleted(tenantId, mapTag(apiId, result), user));
+          auditDirectory(auditService, logger, TagDeletedAuditAction, user, tenantId, toTagDeletedAuditDetails(tag));
         }
       }
 
@@ -118,6 +136,7 @@ export function tagOperation(
   logger: Logger,
   directory: ServiceDirectory,
   eventService: EventService,
+  auditService: AuditService,
   repository: DirectoryRepository
 ): RequestHandler {
   return async (req, res, next) => {
@@ -190,6 +209,14 @@ export function tagOperation(
 
           if (tagged) {
             event = taggedResource(tenantId, resourceResult, tagResult, user, isNewResource);
+            auditDirectory(
+              auditService,
+              logger,
+              ResourceTagAddedAuditAction,
+              user,
+              tenantId,
+              toTagAuditDetails(urn.toString(), tag)
+            );
           }
           break;
         }
@@ -206,6 +233,14 @@ export function tagOperation(
 
           if (untagged) {
             event = untaggedResource(tenantId, resourceResult, tagResult, user);
+            auditDirectory(
+              auditService,
+              logger,
+              ResourceTagRemovedAuditAction,
+              user,
+              tenantId,
+              toTagAuditDetails(urn.toString(), tag)
+            );
           }
           break;
         }
@@ -377,8 +412,10 @@ export function getResource(apiId: AdspId, repository: DirectoryRepository): Req
 
 export function deleteResource(
   apiId: AdspId,
+  logger: Logger,
   repository: DirectoryRepository,
-  eventService: EventService
+  eventService: EventService,
+  auditService: AuditService
 ): RequestHandler {
   return async (req, res, next) => {
     try {
@@ -402,6 +439,14 @@ export function deleteResource(
         deleted = await repository.deleteResource(result);
         if (deleted) {
           eventService.send(resourceDeleted(tenantId, mapResource(apiId, result), user));
+          auditDirectory(
+            auditService,
+            logger,
+            ResourceDeletedAuditAction,
+            user,
+            tenantId,
+            toResourceDeletedAuditDetails(resource.toString())
+          );
         }
       }
 
@@ -446,10 +491,18 @@ interface ResourceRouterProps {
   logger: Logger;
   directory: ServiceDirectory;
   eventService: EventService;
+  auditService: AuditService;
   repository: DirectoryRepository;
 }
 
-export function createResourceRouter({ apiId, logger, directory, eventService, repository }: ResourceRouterProps) {
+export function createResourceRouter({
+  apiId,
+  logger,
+  directory,
+  eventService,
+  auditService,
+  repository,
+}: ResourceRouterProps) {
   const router = Router();
 
   router.get(
@@ -476,7 +529,7 @@ export function createResourceRouter({ apiId, logger, directory, eventService, r
       body('resource.name').optional().isString().isLength({ min: 1, max: 250 }),
       body('resource.description').optional().isString().isLength({ min: 1, max: 2000 })
     ),
-    tagOperation(apiId, logger, directory, eventService, repository)
+    tagOperation(apiId, logger, directory, eventService, auditService, repository)
   );
 
   router.get(
@@ -496,7 +549,7 @@ export function createResourceRouter({ apiId, logger, directory, eventService, r
         .isString()
         .matches(/^[0-9a-z-]{1,100}$/)
     ),
-    deleteTag(apiId, repository, eventService)
+    deleteTag(apiId, logger, repository, eventService, auditService)
   );
 
   router.get(
@@ -532,7 +585,7 @@ export function createResourceRouter({ apiId, logger, directory, eventService, r
   router.delete(
     '/resources/:resource',
     createValidationHandler(param('resource').isString().isLength({ min: 1, max: 2000 })),
-    deleteResource(apiId, repository, eventService)
+    deleteResource(apiId, logger, repository, eventService, auditService)
   );
 
   router.get(

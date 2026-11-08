@@ -8,7 +8,14 @@ import { Logger } from 'winston';
 import { createPlannerRouter } from './router';
 import { PlannerServiceRoles } from './roles';
 import { getSpecialist } from './specialists';
-import { BlueprintComponent, BusinessPattern, ComponentReview, Solution, SpecialistChat } from './types';
+import {
+  BlueprintComponent,
+  BusinessPattern,
+  ComponentReview,
+  DecisionRecord,
+  Solution,
+  SpecialistChat,
+} from './types';
 import type { LlmAnalysis, LlmConsultation, PlannerLlm, SpecialistReply } from './llm';
 import { solutionCreated } from './events';
 import { DISCOVERY_FACTORS, DISCOVERY_THRESHOLD } from './discovery';
@@ -74,7 +81,13 @@ describe('planner router routes', () => {
     save: jest.fn(),
     delete: jest.fn(),
   };
-  const versionRepository = { list: jest.fn(), get: jest.fn(), latest: jest.fn(), create: jest.fn(), rename: jest.fn() };
+  const versionRepository = {
+    list: jest.fn(),
+    get: jest.fn(),
+    latest: jest.fn(),
+    create: jest.fn(),
+    rename: jest.fn(),
+  };
   const eventService = { send: jest.fn() };
   const logger = { info: jest.fn(), debug: jest.fn(), warn: jest.fn(), error: jest.fn() };
   const getConfiguration = jest.fn();
@@ -170,6 +183,7 @@ describe('planner router routes', () => {
       createdOn: new Date('2026-04-01T09:00:00.000Z'),
       contentHash: contentHash(content),
       content,
+      changedSections: [],
     }));
   });
 
@@ -895,7 +909,7 @@ describe('planner router routes', () => {
     it('returns 400 for an unsupported file format', async () => {
       const res = await request(buildApp(owner))
         .post('/planner/v1/documents/extract')
-        .attach('file', Buffer.from('bytes'), 'plan.doc');
+        .attach('file', Buffer.from('bytes'), 'plan.txt');
 
       expect(res.status).toBe(400);
       expect(res.body.error).toContain('not a supported format');
@@ -938,15 +952,6 @@ describe('planner router routes', () => {
         createdById: 'owner-1',
         version: 1,
       });
-    });
-
-    it('saves Version 1 of the new solution', async () => {
-      const res = await request(buildApp(owner))
-        .post('/planner/v1/solutions')
-        .send({ name: 'Permit intake', problemStatement: 'Applicants submit permit forms.' });
-
-      const [savedSolution] = repository.save.mock.calls[0];
-      expect(versionRepository.create).toHaveBeenCalledWith(tenantId, res.body.id, versionContent(savedSolution, []));
     });
 
     it('stores the problem statement in the initial state', async () => {
@@ -1238,12 +1243,10 @@ describe('planner router routes', () => {
       expect(eventService.send).not.toHaveBeenCalled();
     });
 
-    it('allows an admin to delete another user solution', async () => {
-      repository.delete.mockResolvedValueOnce(true);
-
+    it('does not let an admin delete another user solution', async () => {
       const res = await remove(admin);
 
-      expect(res.status).toBe(200);
+      expect(res.status).toBe(403);
     });
 
     it('returns 403 for a non-owner without admin role', async () => {
@@ -1622,273 +1625,6 @@ describe('planner router routes', () => {
     });
   });
 
-  describe('PUT /solutions/:id/questions/:questionId', () => {
-    const QUESTION_ID = '8c1d5e2a-3b4f-4a6d-9e7c-1f2a3b4c5d6e';
-    const answerQuestion = (body: object = { answer: 'The director' }, user: User = owner, questionId = QUESTION_ID) =>
-      request(buildApp(user)).put(`/planner/v1/solutions/${SOLUTION_ID}/questions/${questionId}`).send(body);
-
-    beforeEach(() => {
-      const stored = solutionOwnedBy('owner-1');
-      stored.state.questions = [
-        { id: QUESTION_ID, question: 'Who approves?', raisedBy: 'ai', status: 'answered', answer: 'Old answer' },
-        { id: 'other-id', question: 'How many users?', raisedBy: 'planner', status: 'open' },
-      ];
-      repository.get.mockResolvedValue(stored);
-    });
-
-    it('marks the question as answered with the trimmed answer', async () => {
-      const res = await answerQuestion({ answer: '  The director  ' });
-
-      expect(res.body.state.questions[0]).toEqual({
-        id: QUESTION_ID,
-        question: 'Who approves?',
-        raisedBy: 'ai',
-        status: 'answered',
-        answer: 'The director',
-      });
-    });
-
-    it('leaves other questions untouched', async () => {
-      const res = await answerQuestion();
-
-      expect(res.body.state.questions[1]).toEqual({
-        id: 'other-id',
-        question: 'How many users?',
-        raisedBy: 'planner',
-        status: 'open',
-      });
-    });
-
-    it.each([
-      ['empty', ''],
-      ['whitespace only', '   '],
-    ])('reopens the question when the answer is %s', async (_name, answer) => {
-      const res = await answerQuestion({ answer });
-
-      expect(res.body.state.questions[0]).toEqual({
-        id: QUESTION_ID,
-        question: 'Who approves?',
-        raisedBy: 'ai',
-        status: 'open',
-      });
-    });
-
-    it('sends a solution-updated event with the answer operation', async () => {
-      await answerQuestion();
-
-      expect(eventService.send).toHaveBeenCalledWith(
-        expect.objectContaining({ payload: expect.objectContaining({ operation: 'answer' }) }),
-      );
-    });
-
-    it('does not bump the version on a plain edit', async () => {
-      const res = await answerQuestion();
-
-      expect(res.body.version).toBe(1);
-    });
-
-    it('returns 404 for an unknown question', async () => {
-      const res = await answerQuestion({ answer: 'x' }, owner, '11111111-2222-4333-8444-555555555555');
-
-      expect(res.status).toBe(404);
-    });
-
-    it.each([
-      ['missing', {}],
-      ['not a string', { answer: 7 }],
-      ['too long', { answer: 'x'.repeat(5001) }],
-    ])('returns 400 when the answer is %s', async (_name, body) => {
-      const res = await answerQuestion(body);
-
-      expect(res.status).toBe(400);
-    });
-
-    it('returns 400 for a malformed question id', async () => {
-      const res = await answerQuestion({ answer: 'x' }, owner, 'not-a-uuid');
-
-      expect(res.status).toBe(400);
-    });
-
-    it('returns 403 for a user who does not own the solution', async () => {
-      const res = await answerQuestion({ answer: 'x' }, stranger);
-
-      expect(res.status).toBe(403);
-    });
-  });
-
-  describe('PUT /solutions/:id/questions/:questionId (confidence rescoring)', () => {
-    const QUESTION_ID = '8c1d5e2a-3b4f-4a6d-9e7c-1f2a3b4c5d6e';
-    const OTHER_QUESTION_ID = '11111111-2222-4333-8444-555555555555';
-    const DUPLICATE_QUESTION_ID = '22222222-3333-4444-8555-666666666666';
-    const answerQuestion = (
-      body: object = { answer: 'Each renewal is reviewed and approved before moving to the next stage.' },
-    ) => request(buildApp(owner)).put(`/planner/v1/solutions/${SOLUTION_ID}/questions/${QUESTION_ID}`).send(body);
-    const storedWith = (
-      factorScores: Partial<Record<string, number>>,
-      extraQuestions: Solution['state']['questions'] = [],
-    ) => {
-      const stored = solutionOwnedBy('owner-1');
-      stored.state.questions = [
-        {
-          id: QUESTION_ID,
-          question: 'Does the clerk review each case before approval?',
-          raisedBy: 'ai',
-          status: 'open',
-        },
-        ...extraQuestions,
-      ];
-      stored.state.discovery = {
-        messages: [],
-        confidence: 50,
-        threshold: DISCOVERY_THRESHOLD,
-        factors: DISCOVERY_FACTORS.map((f) => ({ id: f.id, label: f.label, score: factorScores[f.id] ?? 95 })),
-        ready: false,
-        mode: 'ai',
-        updatedOn: '2026-01-01T00:00:00.000Z',
-      };
-      repository.get.mockResolvedValue(stored);
-      return stored;
-    };
-
-    it('bumps only the factor the question and answer are relevant to, starting from the AI baseline', async () => {
-      storedWith({ process: 20 });
-
-      const res = await answerQuestion();
-
-      const byId = (id: string) => res.body.state.discovery.factors.find((f: { id: string }) => f.id === id).score;
-      expect(byId('process')).toBe(80);
-      DISCOVERY_FACTORS.filter((f) => f.id !== 'process').forEach((f) => expect(byId(f.id)).toBe(95));
-    });
-
-    it('always moves the relevant factor a little, even with a vague answer, since the question itself is relevant', async () => {
-      storedWith({ process: 60 });
-
-      const res = await answerQuestion({ answer: 'No further detail.' });
-
-      const process = res.body.state.discovery.factors.find((f: { id: string }) => f.id === 'process');
-      expect(process.score).toBe(65);
-    });
-
-    it('never lowers an unrelated factor', async () => {
-      storedWith({});
-
-      const res = await answerQuestion();
-
-      const unrelated = res.body.state.discovery.factors.find((f: { id: string }) => f.id === 'communication');
-      expect(unrelated.score).toBe(95);
-    });
-
-    it('caps every factor and the overall confidence below 100% while questions remain open', async () => {
-      storedWith({}, [
-        {
-          id: OTHER_QUESTION_ID,
-          question: 'Who approves grants above the delegated limit?',
-          raisedBy: 'ai',
-          status: 'open',
-        },
-      ]);
-
-      const res = await answerQuestion();
-
-      expect(res.body.state.discovery.factors.every((f: { score: number }) => f.score <= 90)).toBe(true);
-      expect(res.body.state.discovery.confidence).toBeLessThanOrEqual(90);
-    });
-
-    it('does not cap a factor above 90% once no questions remain open', async () => {
-      storedWith({ process: 95 });
-
-      const res = await answerQuestion();
-
-      expect(res.body.state.discovery.factors.find((f: { id: string }) => f.id === 'process').score).toBe(100);
-    });
-
-    it('replaces the incremental bump with a full AI re-score once the last open question closes, when an llm is configured', async () => {
-      storedWith({ process: 20 });
-      const llm = {
-        model: 'GOA-Default',
-        analyze: jest.fn(),
-        discover: jest.fn().mockResolvedValue({
-          reply: 'Understood.',
-          factors: DISCOVERY_FACTORS.map((f) => ({ id: f.id, score: 100 })),
-          model: 'GOA-Default',
-        }),
-        blueprint: jest.fn(),
-        consult: jest.fn(),
-        converse: jest.fn(),
-      };
-
-      const res = await request(buildApp(owner, true, llm))
-        .put(`/planner/v1/solutions/${SOLUTION_ID}/questions/${QUESTION_ID}`)
-        .send({ answer: 'Each renewal is reviewed and approved before moving to the next stage.' });
-
-      expect(llm.discover).toHaveBeenCalled();
-      expect(res.body.state.discovery.factors.every((f: { score: number }) => f.score === 100)).toBe(true);
-    });
-
-    it('does not trigger a full re-score when a question other than the last one is answered', async () => {
-      storedWith({ process: 20 }, [
-        {
-          id: OTHER_QUESTION_ID,
-          question: 'Who approves grants above the delegated limit?',
-          raisedBy: 'ai',
-          status: 'open',
-        },
-      ]);
-      const llm = {
-        model: 'GOA-Default',
-        analyze: jest.fn(),
-        discover: jest.fn(),
-        blueprint: jest.fn(),
-        consult: jest.fn(),
-        converse: jest.fn(),
-      };
-
-      await request(buildApp(owner, true, llm))
-        .put(`/planner/v1/solutions/${SOLUTION_ID}/questions/${QUESTION_ID}`)
-        .send({ answer: 'Each renewal is reviewed and approved before moving to the next stage.' });
-
-      expect(llm.discover).not.toHaveBeenCalled();
-    });
-
-    it('prunes a differently-worded duplicate open question once a similar one is answered (regression)', async () => {
-      const stored = solutionOwnedBy('owner-1');
-      stored.state.questions = [
-        {
-          id: QUESTION_ID,
-          question: 'Do permits expire, and if so, is there a renewal process?',
-          raisedBy: 'ai',
-          status: 'open',
-        },
-        {
-          id: DUPLICATE_QUESTION_ID,
-          question: 'Do these permits expire after a certain period, or do they need to be renewed annually?',
-          raisedBy: 'ai',
-          status: 'open',
-        },
-      ];
-      repository.get.mockResolvedValue(stored);
-
-      const res = await answerQuestion({
-        answer:
-          "Permits expire at the end of each month and staff must renew. The clerk can revoke a permit if it's misused.",
-      });
-
-      expect(res.body.state.questions.some((q: { id: string }) => q.id === DUPLICATE_QUESTION_ID)).toBe(false);
-    });
-
-    it('does not rescore when discovery has not started', async () => {
-      const stored = solutionOwnedBy('owner-1');
-      stored.state.questions = [
-        { id: QUESTION_ID, question: 'When does a permit need to be renewed?', raisedBy: 'ai', status: 'open' },
-      ];
-      repository.get.mockResolvedValue(stored);
-
-      const res = await answerQuestion();
-
-      expect(res.body.state.discovery).toBeUndefined();
-    });
-  });
-
   describe('PUT /solutions/:id/components/:order/review', () => {
     const reviewComponent = (body: object = { review: 'approved' }, user: User = owner, order: number | string = 2) =>
       request(buildApp(user)).put(`/planner/v1/solutions/${SOLUTION_ID}/components/${order}/review`).send(body);
@@ -1976,6 +1712,7 @@ describe('planner router routes', () => {
       analyze: jest.fn(),
       discover: jest.fn(),
       blueprint: jest.fn(),
+      acceptanceCriteria: jest.fn(),
       consult: jest.fn(),
       converse: jest.fn(),
     };
@@ -2054,7 +1791,7 @@ describe('planner router routes', () => {
     });
 
     describe('POST /solutions/:id/analyze (confidence rescoring)', () => {
-      it('clears a stale AI discovery warning once Save & analyze runs in rules mode', async () => {
+      it('clears a stale AI discovery warning once Save & analyze runs, since rescoring no longer calls AI', async () => {
         const stored = solutionOwnedBy('owner-1');
         stored.state.problemStatement = aiText;
         stored.state.discovery = {
@@ -2069,30 +1806,145 @@ describe('planner router routes', () => {
         };
         repository.get.mockResolvedValue(stored);
 
-        const res = await analyze(buildApp(owner, true, llm), { text: aiText, mode: 'rules' });
+        const res = await analyze(buildApp(owner, true, llm), { text: aiText, mode: 'ai' });
 
         expect(res.body.state.discovery.warning).toBeUndefined();
+        expect(llm.discover).not.toHaveBeenCalled();
+      });
+    });
+
+    describe('POST /solutions/:id/analyze (discovery status announcement)', () => {
+      const vagueText = 'Short vague idea.';
+      const existingMessages = [
+        {
+          role: 'assistant' as const,
+          content: 'I have a complete understanding so far.',
+          at: '2026-01-01T00:00:00.000Z',
+        },
+      ];
+
+      it('appends a discovery status message when confidence drops significantly', async () => {
+        const stored = solutionOwnedBy('owner-1');
+        stored.state.problemStatement = vagueText;
+        stored.state.discovery = {
+          messages: existingMessages,
+          confidence: 90,
+          threshold: DISCOVERY_THRESHOLD,
+          factors: DISCOVERY_FACTORS.map((f) => ({ id: f.id, label: f.label, score: 90 })),
+          ready: true,
+          mode: 'rules',
+          updatedOn: '2026-01-01T00:00:00.000Z',
+        };
+        repository.get.mockResolvedValue(stored);
+
+        const res = await analyze(buildApp(owner, true, llm), { text: vagueText, mode: 'rules' });
+
+        const messages = res.body.state.discovery.messages;
+        expect(messages).toHaveLength(2);
+        expect(messages[1].role).toBe('assistant');
+        expect(messages[1].content).toContain('confident so far');
       });
 
-      it('sets a fresh warning when this attempt itself fails in AI mode', async () => {
+      it('does not append a status message when nothing meaningfully changed', async () => {
+        const stored = solutionOwnedBy('owner-1');
+        stored.state.problemStatement = vagueText;
+        stored.state.discovery = {
+          messages: existingMessages,
+          confidence: 3,
+          threshold: DISCOVERY_THRESHOLD,
+          factors: DISCOVERY_FACTORS.map((f) => ({ id: f.id, label: f.label, score: 3 })),
+          ready: false,
+          mode: 'rules',
+          updatedOn: '2026-01-01T00:00:00.000Z',
+        };
+        repository.get.mockResolvedValue(stored);
+
+        const res = await analyze(buildApp(owner, true, llm), { text: vagueText, mode: 'rules' });
+
+        expect(res.body.state.discovery.messages).toHaveLength(1);
+      });
+
+      it('appends a discovery status message when confidence rises significantly', async () => {
         const stored = solutionOwnedBy('owner-1');
         stored.state.problemStatement = aiText;
         stored.state.discovery = {
-          messages: [],
-          confidence: 40,
+          messages: existingMessages,
+          confidence: 3,
           threshold: DISCOVERY_THRESHOLD,
-          factors: DISCOVERY_FACTORS.map((f) => ({ id: f.id, label: f.label, score: 40 })),
+          factors: DISCOVERY_FACTORS.map((f) => ({ id: f.id, label: f.label, score: 3 })),
+          ready: false,
+          mode: 'rules',
+          updatedOn: '2026-01-01T00:00:00.000Z',
+        };
+        repository.get.mockResolvedValue(stored);
+
+        const res = await analyze(buildApp(owner, true, llm), { text: aiText, mode: 'rules' });
+
+        const messages = res.body.state.discovery.messages;
+        expect(messages).toHaveLength(2);
+        expect(messages[1].content).toContain('confident so far');
+      });
+
+      it('appends a discovery status message when the rescoring mode changes from ai to rules', async () => {
+        const stored = solutionOwnedBy('owner-1');
+        stored.state.problemStatement = vagueText;
+        stored.state.discovery = {
+          messages: existingMessages,
+          confidence: 3,
+          threshold: DISCOVERY_THRESHOLD,
+          factors: DISCOVERY_FACTORS.map((f) => ({ id: f.id, label: f.label, score: 3 })),
           ready: false,
           mode: 'ai',
           updatedOn: '2026-01-01T00:00:00.000Z',
         };
         repository.get.mockResolvedValue(stored);
+
+        const res = await analyze(buildApp(owner, true, llm), { text: vagueText, mode: 'rules' });
+
+        expect(res.body.state.discovery.mode).toBe('rules');
+        expect(res.body.state.discovery.messages).toHaveLength(2);
+      });
+
+      it('does not announce when there is no existing discovery conversation yet', async () => {
+        const stored = solutionOwnedBy('owner-1');
+        stored.state.problemStatement = vagueText;
+        stored.state.discovery = {
+          messages: [],
+          confidence: 90,
+          threshold: DISCOVERY_THRESHOLD,
+          factors: DISCOVERY_FACTORS.map((f) => ({ id: f.id, label: f.label, score: 90 })),
+          ready: true,
+          mode: 'rules',
+          updatedOn: '2026-01-01T00:00:00.000Z',
+        };
+        repository.get.mockResolvedValue(stored);
+
+        const res = await analyze(buildApp(owner, true, llm), { text: vagueText, mode: 'rules' });
+
+        expect(res.body.state.discovery.messages).toHaveLength(0);
+      });
+
+      it('uses a rule-based reply and never calls llm.discover, since rescoring no longer uses AI', async () => {
+        const stored = solutionOwnedBy('owner-1');
+        stored.state.problemStatement = aiText;
+        stored.state.discovery = {
+          messages: existingMessages,
+          confidence: 90,
+          threshold: DISCOVERY_THRESHOLD,
+          factors: DISCOVERY_FACTORS.map((f) => ({ id: f.id, label: f.label, score: 90 })),
+          ready: true,
+          mode: 'ai',
+          updatedOn: '2026-01-01T00:00:00.000Z',
+        };
+        repository.get.mockResolvedValue(stored);
         llm.analyze.mockResolvedValueOnce(aiAnalysis);
-        llm.discover.mockRejectedValueOnce(new Error('Model request failed (HTTP 429)'));
 
         const res = await analyze(buildApp(owner, true, llm), { text: aiText, mode: 'ai' });
 
-        expect(res.body.state.discovery.warning).toContain('AI scoring failed');
+        const messages = res.body.state.discovery.messages;
+        expect(messages).toHaveLength(2);
+        expect(messages[1].content).toContain('confident so far');
+        expect(llm.discover).not.toHaveBeenCalled();
       });
     });
 
@@ -2305,7 +2157,7 @@ describe('planner router routes', () => {
         ['empty', { message: '' }],
         ['whitespace only', { message: '   ' }],
         ['not a string', { message: 42 }],
-        ['too long', { message: 'x'.repeat(5001) }],
+        ['too long', { message: 'x'.repeat(20001) }],
         ['with an invalid mode', { message: 'Hello', mode: 'bogus' }],
       ])('returns 400 when the message is %s', async (_name, body) => {
         const res = await chat(buildApp(owner, true, llm), body);
@@ -2332,8 +2184,12 @@ describe('planner router routes', () => {
     describe('POST /solutions/:id/discovery', () => {
       const vagueProblem = 'We handle grants.';
       const detailedProblem =
-        'Our goal is to reduce the backlog of grant applications. Applicants submit a form with documents, ' +
-        'staff review and approve each one, applicants get an email and can track status, and privacy legislation applies.';
+        'Our goal is to reduce the backlog of grant applications and success is measured by faster approvals. ' +
+        'Applicants and staff reviewers have different roles with access permissions in the ministry department. ' +
+        'Staff review and approve each submission through a multi-step workflow process with escalation. ' +
+        'Applicants upload documents and we retain records for audit history. ' +
+        'Applicants receive email notifications and can track status on a portal dashboard. ' +
+        'The data is Protected B under FOIP privacy legislation and integrates with our existing legacy case management system.';
       const lowFactors = [
         { id: 'problem', score: 30, note: 'Goal unclear' },
         { id: 'users', score: 10 },
@@ -2439,7 +2295,10 @@ describe('planner router routes', () => {
 
         const res = await discovery(buildApp(owner, true, llm));
 
-        expect(res.body.state.confidence).toMatchObject({ score: res.body.state.discovery.confidence, threshold: 50 });
+        expect(res.body.state.confidence).toMatchObject({
+          score: res.body.state.discovery.confidence,
+          threshold: DISCOVERY_THRESHOLD,
+        });
       });
 
       it('appends the user message before the assistant reply', async () => {
@@ -2650,7 +2509,7 @@ describe('planner router routes', () => {
 
         const res = await analyze(buildApp(owner, true, llm));
 
-        expect(res.body.state.confidence).toMatchObject({ threshold: 50, factors: expect.any(Array) });
+        expect(res.body.state.confidence).toMatchObject({ threshold: DISCOVERY_THRESHOLD, factors: expect.any(Array) });
       });
     });
 
@@ -3059,6 +2918,25 @@ describe('planner router routes', () => {
         expect(res.body.state.blueprint).toMatchObject({ mode: 'ai', model: MODEL });
       });
 
+      it('saves Version 1 with the first blueprint and its acceptance criteria', async () => {
+        await blueprint(buildApp(owner, true, llm));
+
+        const saved: Solution = repository.save.mock.calls[0][0];
+        expect(saved.state.blueprint.acceptance).toBeDefined();
+        expect(versionRepository.create).toHaveBeenCalledWith(tenantId, SOLUTION_ID, versionContent(saved, []));
+      });
+
+      it('auto-saves another version when regenerating the blueprint changes the content', async () => {
+        const first = await blueprint(buildApp(owner, true, llm));
+        repository.get.mockResolvedValue(first.body);
+        versionRepository.create.mockClear();
+
+        await blueprint(buildApp(owner, true, llm));
+
+        const saved: Solution = repository.save.mock.calls[repository.save.mock.calls.length - 1][0];
+        expect(versionRepository.create).toHaveBeenCalledWith(tenantId, SOLUTION_ID, versionContent(saved, []));
+      });
+
       it('merges the ai overview into the blueprint', async () => {
         const res = await blueprint(buildApp(owner, true, llm));
 
@@ -3244,6 +3122,114 @@ describe('planner router routes', () => {
         await blueprint(buildApp(owner, true, llm));
 
         expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining('AI blueprint failed'));
+      });
+
+      describe('acceptance criteria', () => {
+        const draftSaving: DecisionRecord = {
+          id: 'd-1',
+          title: 'Draft saving',
+          decision: 'Applicants can save a draft and return later',
+          reason: 'Long forms',
+          decidedOn: '2026-10-01',
+        };
+        const ruleCriterion = {
+          group: 'Rules',
+          then: 'Applicants can save a draft and return later',
+          source: 'Decision "Draft saving"',
+        };
+
+        beforeEach(() => {
+          const solution = analysed();
+          solution.state.decisions = [draftSaving];
+          repository.get.mockResolvedValue(solution);
+          llm.acceptanceCriteria.mockResolvedValue({
+            criteria: [
+              {
+                group: 'Rules',
+                given: 'a saved draft',
+                when: 'the applicant returns',
+                then: 'the draft opens',
+                source: 'decision:d-1',
+              },
+            ],
+            model: MODEL,
+          });
+        });
+
+        it('stores the ai criteria with the plan item each restates', async () => {
+          const res = await blueprint(buildApp(owner, true, llm));
+
+          expect(res.body.state.blueprint.acceptance).toEqual({
+            mode: 'ai',
+            criteria: [
+              {
+                id: 'AC-1',
+                group: 'Rules',
+                given: 'a saved draft',
+                when: 'the applicant returns',
+                then: 'the draft opens',
+                source: 'Decision "Draft saving"',
+              },
+            ],
+          });
+        });
+
+        it('gives the llm the plan items a criterion may restate', async () => {
+          await blueprint(buildApp(owner, true, llm));
+
+          expect(llm.acceptanceCriteria).toHaveBeenCalledWith(
+            expect.objectContaining({ mode: 'ai' }),
+            expect.arrayContaining([
+              { key: 'decision:d-1', label: 'Decision "Draft saving"', text: draftSaving.decision },
+            ]),
+          );
+        });
+
+        it('falls back to rule-based criteria when the llm fails', async () => {
+          llm.acceptanceCriteria.mockRejectedValueOnce(new Error('Model request failed'));
+
+          const res = await blueprint(buildApp(owner, true, llm));
+
+          expect(res.body.state.blueprint.acceptance.mode).toBe('rules');
+          expect(res.body.state.blueprint.acceptance.criteria).toContainEqual(expect.objectContaining(ruleCriterion));
+        });
+
+        it('falls back to rule-based criteria and logs why when no ai criterion cites the plan', async () => {
+          llm.acceptanceCriteria.mockResolvedValueOnce({
+            criteria: [{ group: 'Rules', then: 'payments settle overnight', source: 'decision:d-9' }],
+            model: MODEL,
+          });
+
+          const res = await blueprint(buildApp(owner, true, llm));
+
+          expect(res.body.state.blueprint.acceptance.mode).toBe('rules');
+          expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining('AI acceptance criteria failed'));
+        });
+
+        it('keeps the blueprint warning clear when only the acceptance criteria fall back', async () => {
+          llm.acceptanceCriteria.mockRejectedValueOnce(new Error('Model request failed'));
+
+          const res = await blueprint(buildApp(owner, true, llm));
+
+          expect(res.body.state.blueprint.warning).toBeUndefined();
+        });
+
+        it('writes rule-based criteria without the llm for a rule-based blueprint', async () => {
+          const res = await blueprint(buildApp(owner, true, llm), { mode: 'rules' });
+
+          expect(llm.acceptanceCriteria).not.toHaveBeenCalled();
+          expect(res.body.state.blueprint.acceptance.mode).toBe('rules');
+          expect(res.body.state.blueprint.acceptance.criteria).toContainEqual(expect.objectContaining(ruleCriterion));
+        });
+
+        it('does not ask the llm for criteria after the ai blueprint failed', async () => {
+          llm.blueprint.mockRejectedValueOnce(new Error('Model request failed'));
+
+          const res = await blueprint(buildApp(owner, true, llm));
+
+          expect(llm.acceptanceCriteria).not.toHaveBeenCalled();
+          expect(res.body.state.blueprint.acceptance.mode).toBe('rules');
+        });
       });
 
       it('adds rule-based components when the llm drafts none', async () => {

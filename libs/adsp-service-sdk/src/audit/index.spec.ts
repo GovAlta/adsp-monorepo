@@ -1,4 +1,53 @@
-import { AuditAction, AuditCategories, AuditSeverities, BuiltInRetentionClasses, auditDefinitions } from './index';
+import axios from 'axios';
+import { createLogger, transports } from 'winston';
+import { adspId } from '../utils';
+import {
+  AuditAction,
+  AuditCategories,
+  AuditSeverities,
+  BuiltInRetentionClasses,
+  auditDefinitions,
+  createAuditService,
+} from './index';
+
+jest.mock('axios');
+const axiosMock = axios as jest.Mocked<typeof axios>;
+
+describe('createAuditService', () => {
+  const logger = createLogger({ transports: [new transports.Console({ silent: true })] });
+  const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
+  const directory = {
+    getServiceUrl: jest.fn(),
+    getResourceUrl: jest.fn(async (id) => new URL(`https://audit.example.test/audit/v1${id.resource}`)),
+  };
+  const tokenProvider = { getAccessToken: jest.fn(async () => 'event-service-token') };
+  const action: AuditAction = {
+    name: 'user.deleted',
+    version: 1,
+    category: 'security',
+    severity: 'critical',
+    retentionClass: 'security',
+  };
+
+  it('lets a Core service record into the namespace of the service it bridges', async () => {
+    axiosMock.post.mockResolvedValueOnce({ data: { accepted: 1, duplicates: 0, rejected: [] } });
+    const auditService = createAuditService({
+      isCore: true,
+      logger,
+      directory,
+      tokenProvider,
+      serviceId: adspId`urn:ads:platform:access-service`,
+    });
+
+    await auditService.record(action, { tenantId, actor: { id: 'tenant-admin', type: 'user' } });
+
+    expect(axiosMock.post).toHaveBeenCalledWith(
+      'https://audit.example.test/audit/v1/access-service/events',
+      expect.anything(),
+      expect.objectContaining({ params: { tenantId: tenantId.toString() } }),
+    );
+  });
+});
 
 describe('audit classification constants', () => {
   it('preserves the public category values', () => {
@@ -7,6 +56,7 @@ describe('audit classification constants', () => {
       Runtime: 'runtime',
       Security: 'security',
       DataAccess: 'data-access',
+      Diagnostic: 'diagnostic',
     });
   });
 

@@ -78,10 +78,6 @@ class NotificationsPage {
     return cy.xpath('//goa-button[@testid="delete-notification-type"]');
   }
 
-  notificationTypeDetailsPaneBackToNotificationTypesLink() {
-    return cy.xpath('//goa-button[@testid="back-to-notification-types"]');
-  }
-
   addANotificationTypeButtonOnNotificationTypesPage() {
     return cy.get('[testid="add-notification"]');
   }
@@ -93,6 +89,12 @@ class NotificationsPage {
   notificationTypeRows(name, typeId, publicOrNot, selfServiceOrNot) {
     return cy.xpath(
       `//goa-table[@testid="notification-types-table"]//tbody/tr[td[1][contains(., "${name}")] and td[2][contains(., "${typeId}")] and td[3][contains(., "${publicOrNot}")] and td[4][contains(., "${selfServiceOrNot}")]]`
+    );
+  }
+
+  notificationTypeCoreRows(name, typeId, publicOrNot, selfServiceOrNot) {
+    return cy.xpath(
+      `//goa-table[@testid="core-notification-types-table"]//tbody/tr[td[1][contains(., "${name}")] and td[2][contains(., "${typeId}")] and td[3][contains(., "${publicOrNot}")] and td[4][contains(., "${selfServiceOrNot}")]]`
     );
   }
 
@@ -111,9 +113,7 @@ class NotificationsPage {
   }
 
   notificaitonTypeDetailsPaneEventTitles() {
-    return cy.xpath(
-      '//div[div[h2[text()="Events"]]]/following-sibling::div//goa-icon-button[@testid="delete-event"]/preceding-sibling::span'
-    );
+    return cy.xpath('//div[div[h2[text()="Events"]]]/following-sibling::div/div/div/span');
   }
 
   selectAnEventModalTitle() {
@@ -170,17 +170,50 @@ class NotificationsPage {
     );
   }
 
-  // Internal notification type card elements have different xpath than those from custom created notification type cards, so use "Internal" prefix for the following several UI page object names
-  notificationTypeEventMailIcon(cardTitle, eventName) {
+  notificationTypeDetailsPaneEventEmailTemplateConfigured(eventName) {
     return cy.xpath(
-      `//goa-container//h2[contains(text(), "${cardTitle}")]//ancestor::goa-container//h2[text()="Events:"]/following-sibling::goa-grid//*[@class="flex1" and contains(., "${eventName}")]/parent::*/following-sibling::*//*[@data-testid="core-email-channel"]`
+      `//span[contains(normalize-space(.), "${eventName}")]/parent::div/following-sibling::div//span[normalize-space(.)="Email template configured"]`
     );
   }
 
-  notificationTypeEventEditButton(cardTitle, eventName) {
+  notificationTypeDetailsPaneEventBotTemplateConfigured(eventName) {
     return cy.xpath(
-      `//goa-container//h2[contains(text(), "${cardTitle}")]//ancestor::goa-container//h2[text()="Events:"]/following-sibling::goa-grid//*[@class="flex1" and contains(., "${eventName}")]/parent::*/following-sibling::*//*[@data-testid="edit-event"]`
+      `//span[contains(normalize-space(.), "${eventName}")]/parent::div/following-sibling::div//span[normalize-space(.)="Bot template configured"]`
     );
+  }
+
+  notificationTypeDetailsPaneEventNoBotTemplateConfigured(eventName) {
+    return cy.xpath(
+      `//span[contains(normalize-space(.), "${eventName}")]/parent::div/following-sibling::div//span[normalize-space(.)="No bot template configured"]`
+    );
+  }
+
+  notificationTypeDetailsPaneEventSmsTemplateConfigured(eventName) {
+    return cy.xpath(
+      `//span[contains(normalize-space(.), "${eventName}")]/parent::div/following-sibling::div//span[normalize-space(.)="SMS template configured"]`
+    );
+  }
+
+  notificationTypeDetailsPaneEventNoSmsTemplateConfigured(eventName) {
+    return cy.xpath(
+      `//span[contains(normalize-space(.), "${eventName}")]/parent::div/following-sibling::div//span[normalize-space(.)="No sms template configured"]`
+    );
+  }
+
+  notificationTypeDetailsPaneEventEditTemplates(eventName) {
+    return cy.xpath(
+      `//span[contains(normalize-space(.), "${eventName}")]/parent::div/following-sibling::div/div[text()="Edit templates"]`
+    );
+  }
+
+  notificationTypeDetailsPaneEventResetBtn(eventName) {
+    return cy.xpath(
+      `//span[contains(normalize-space(.), "${eventName}")]/parent::div/following-sibling::div/div[text()="Reset"]`
+    );
+  }
+
+  notificationTypeDetailsPaneBackToNotificationTypesLink() {
+    return cy.xpath('//goa-button[@testid="back-to-notification-types"]');
   }
 
   eventTemplatePreviewModal() {
@@ -261,12 +294,6 @@ class NotificationsPage {
 
   deleteConfirmationModalConfirmBtn() {
     return cy.get('[testid="delete-confirm"]');
-  }
-
-  notificationTypeEventDeleteBtn(cardTitle, eventName) {
-    return cy.xpath(
-      `//goa-container//h2[contains(text(), "${cardTitle}")]//ancestor::goa-container//h2[text()="Events:"]/following-sibling::goa-grid//*[@class="flex1" and contains(., "${eventName}")]/parent::*/following-sibling::*//*[@data-testid="delete-event"]`
-    );
   }
 
   subscribersSearchField() {
@@ -413,42 +440,6 @@ class NotificationsPage {
     return cy.get('[testid="add-notification"]');
   }
 
-  tenantNotificationTypeEventMailIcon(cardTitle, eventName) {
-    return cy.xpath(
-      `//goa-container//h2[contains(text(), "${cardTitle}")]//ancestor::goa-container//h2[text()="Events:"]/following-sibling::goa-grid//*[@class="flex1" and contains(., "${eventName}")]/parent::*/following-sibling::*//*[@data-testid="tenant-email-channel"]`
-    );
-  }
-
-  tenantNotificationTypeEventMailBadge(cardTitle, eventName) {
-    return cy.xpath(
-      `//goa-container//h2[contains(text(), "${cardTitle}")]//ancestor::goa-container//h2[text()="Events:"]/following-sibling::goa-grid//*[@class="flex1" and contains(., "${eventName}")]/parent::*/following-sibling::*//*[@data-testid="tenant-email-badge"]`
-    );
-  }
-
-  tenantNotificationTypeEventBotIcon(cardTitle, eventName) {
-    return cy.xpath(
-      `//goa-container//h2[contains(text(), "${cardTitle}")]//ancestor::goa-container//h2[text()="Events:"]/following-sibling::goa-grid//*[@class="flex1" and contains(., "${eventName}")]/parent::*/following-sibling::*//*[@data-testid="tenant-bot-channel"]`
-    );
-  }
-
-  tenantNotificationTypeEventBotIconBadge(cardTitle, eventName) {
-    return cy.xpath(
-      `//goa-container//h2[contains(text(), "${cardTitle}")]//ancestor::goa-container//h2[text()="Events:"]/following-sibling::goa-grid//*[@class="flex1" and contains(., "${eventName}")]/parent::*/following-sibling::*//*[@data-testid="tenant-bot-channel-badge"]`
-    );
-  }
-
-  tenantNotificationTypeEventSmsIcon(cardTitle, eventName) {
-    return cy.xpath(
-      `//goa-container//h2[contains(text(), "${cardTitle}")]//ancestor::goa-container//h2[text()="Events:"]/following-sibling::goa-grid//*[@class="flex1" and contains(., "${eventName}")]/parent::*/following-sibling::*//*[@data-testid="tenant-sms-channel"]`
-    );
-  }
-
-  tenantNotificationTypeEventSmsIconBadge(cardTitle, eventName) {
-    return cy.xpath(
-      `//goa-container//h2[contains(text(), "${cardTitle}")]//ancestor::goa-container//h2[text()="Events:"]/following-sibling::goa-grid//*[@class="flex1" and contains(., "${eventName}")]/parent::*/following-sibling::*//*[@data-testid="tenant-sms-channel-badge"]`
-    );
-  }
-
   notificationEventTemplateTab(text) {
     return cy.xpath(`//*[@data-testid="template-form"]//div[contains(text(), "${text}")]`);
   }
@@ -513,12 +504,6 @@ class NotificationsPage {
 
   editTemplateModalSaveallBtn() {
     return cy.get('[testid="template-form-save"]');
-  }
-
-  notificationTypeEventResetBtn(cardTitle, eventName) {
-    return cy.xpath(
-      `//goa-container//h2[contains(text(), "${cardTitle}")]//ancestor::goa-container//h2[text()="Events:"]/following-sibling::goa-grid//*[@class="flex1" and contains(., "${eventName}")]/parent::*/following-sibling::*//*[@data-testid="reset-button"]`
-    );
   }
 
   resetEmailTemplateModalTitle() {

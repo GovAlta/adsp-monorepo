@@ -1,8 +1,17 @@
-import { AdspId, initializePlatform, instrumentAxios, ServiceMetricsValueDefinition } from '@abgov/adsp-service-sdk';
+import {
+  AdspId,
+  adspId,
+  auditDefinitions,
+  createAuditService,
+  initializePlatform,
+  instrumentAxios,
+  ServiceMetricsValueDefinition,
+} from '@abgov/adsp-service-sdk';
 import type { User } from '@abgov/adsp-service-sdk';
 import {
   AjvValidationService,
   createAmqpConfigUpdateService,
+  createAmqpEventService,
   createLogger,
   createErrorHandler,
 } from '@core-services/core-common';
@@ -15,6 +24,7 @@ import * as passport from 'passport';
 import { promisify } from 'util';
 import { environment } from './environments/environment';
 import { createEventService } from './amqp';
+import { ACCESS_SERVICE_ID, AccessAuditActions, createAccessAuditJob, LoginFailureLimiter } from './access';
 import { applyEventMiddleware, configurationSchema, EventServiceRoles, Namespace, NamespaceEntity } from './event';
 
 const logger = createLogger('event-service', environment.LOG_LEVEL);
@@ -56,6 +66,7 @@ const initializeApp = async (): Promise<express.Application> => {
     healthCheck,
     metricsHandler,
     traceHandler,
+    meterProvider,
   } = await initializePlatform(
     {
       serviceId,
@@ -96,6 +107,22 @@ const initializeApp = async (): Promise<express.Application> => {
         ...coreConfig,
       }),
       useLongConfigurationCacheTTL: true,
+      serviceConfigurations: [
+        {
+          serviceId: adspId`urn:ads:platform:audit-service`,
+          configuration: [
+            {
+              name: `actions-${ACCESS_SERVICE_ID.service}`,
+              operation: 'REPLACE',
+              configuration: {
+                kind: 'actionCatalog',
+                application: ACCESS_SERVICE_ID.service,
+                actions: auditDefinitions(AccessAuditActions),
+              },
+            },
+          ],
+        },
+      ],
       clientSecret: environment.CLIENT_SECRET,
       accessServiceUrl,
       directoryUrl: new URL(environment.DIRECTORY_URL),
@@ -129,6 +156,27 @@ const initializeApp = async (): Promise<express.Application> => {
     clearCached(item.tenantId, item.serviceId);
     done();
   });
+
+  const accessAuditJob = createAccessAuditJob({
+    logger,
+    auditService: createAuditService({
+      isCore: true,
+      logger,
+      directory,
+      tokenProvider,
+      serviceId: ACCESS_SERVICE_ID,
+      meterProvider,
+      enabled: environment.ACCESS_AUDIT_ENABLED,
+    }),
+    limiter: new LoginFailureLimiter(logger, environment.ACCESS_AUDIT_LOGIN_FAILURES_PER_MINUTE),
+  });
+  const accessEvents = await createAmqpEventService({
+    ...environment,
+    queue: 'event-access-audit',
+    bindingKey: `${ACCESS_SERVICE_ID.service}.#`,
+    logger,
+  });
+  accessEvents.getItems().subscribe(({ item, done }) => accessAuditJob(item, done));
 
   passport.use('core', coreStrategy);
   passport.use('tenant', tenantStrategy);

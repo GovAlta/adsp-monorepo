@@ -1,0 +1,22 @@
+diff --git a/node_modules/botframework-schema/lib/index.js b/node_modules/botframework-schema/lib/index.js
+index 270eee0..ab1c21f 100644
+--- a/node_modules/botframework-schema/lib/index.js
++++ b/node_modules/botframework-schema/lib/index.js
+@@ -203,7 +203,7 @@ function isAttachment(val) {
+     return attachment.safeParse(val).success;
+ }
+ exports.isAttachment = isAttachment;
+-const entity = z.record(z.unknown()).refine((val) => typeof val.type === 'string');
++const entity = z.record(z.string(), z.unknown()).refine((val) => typeof val.type === 'string');
+ /**
+  * @internal
+  */
+@@ -248,7 +248,7 @@ const textHighlight = z.object({
+ const semanticAction = z.object({
+     id: z.string(),
+     state: z.string(),
+-    entities: z.record(entity),
++    entities: z.record(z.string(), entity),
+ });
+ /**
+  * @internal

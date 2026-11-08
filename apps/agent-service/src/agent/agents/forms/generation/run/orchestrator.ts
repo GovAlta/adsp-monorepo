@@ -12,6 +12,7 @@ import { validateFormSchemas } from '../../schema/validateCore';
 import type { DocumentOutline } from '../../../../utils/documentOutline';
 import { createGenerationLog, modelOutputOf, type GenerationLog } from './log';
 import type { GenerationAgents } from '../llm/agents';
+import type { UsageRecorder } from '../../../../model/conversationUsage';
 import { planFormGeneration } from '../llm/planner';
 import { FORM_GENERATION_PROGRESS, type GenerationPass, type ProgressEmitter } from './progress';
 import { generateStepPayload } from '../llm/stepBuilder';
@@ -34,6 +35,8 @@ export interface RunFormGenerationInput {
   variant: 'pages' | 'stepper';
   emit: ProgressEmitter;
   abortSignal?: AbortSignal;
+  /** Collects planner and step builder usage, which the chat agent's own usage leaves out. */
+  usage?: UsageRecorder;
 }
 
 interface StepCounts {
@@ -125,6 +128,7 @@ export async function runFormGeneration(input: RunFormGenerationInput): Promise<
     variant,
     abortSignal,
     log,
+    usage: input.usage,
   });
 
   await emit({
@@ -194,6 +198,8 @@ export async function runFormGeneration(input: RunFormGenerationInput): Promise<
 
   return {
     complexity: plan.complexity,
+    planReason: plan.reason,
+    documentCount: documents.length,
     total: plan.steps.length,
     saved: savedLabels.length,
     savedLabels,
@@ -307,7 +313,7 @@ async function runStep(
   pass: GenerationPass,
   priorError?: string,
 ): Promise<StepOutcome> {
-  const { agents, client, tenantId, formDefinitionId, documents, emit, abortSignal, readLatest } = input;
+  const { agents, client, tenantId, formDefinitionId, documents, emit, abortSignal, readLatest, usage } = input;
   let errors: string[] = priorError ? [priorError] : [];
   let generationFailed = false;
 
@@ -352,6 +358,7 @@ async function runStep(
               previousErrors: errors,
               abortSignal,
               log,
+              usage,
             });
     } catch (err) {
       errors = [`The increment could not be generated: ${describeError(err)}`];

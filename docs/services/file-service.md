@@ -27,6 +27,26 @@ File type represents a category of files with specific access roles. For example
 ### File
 A file represents an uploaded file and consists of a minimal metadata record and the actual file that was uploaded. File service provides minimal metadata and does not support extensible metadata; keep additional values in a domain record and reference it using `recordId`.
 
+## Audit actions
+File service records audit events in the `file-service` namespace of the [audit service](audit-service.md). Records are written to the tenant of the file, with the file as the resource (`{ type: 'file', id: <file ID>, name: <filename> }`), the `recordId` of the file as the correlation ID, and the `filename`, file `type`, `recordId` and `size` in the metadata. All actions are version 1.
+
+| action | category | severity | retention class | recorded when |
+|:-|:-|:-|:-|:-|
+| file.uploaded | data-access | info | compliance | A file is uploaded, even while its virus scan is pending, or a file is copied (with `sourceFileId` in the metadata). |
+| file.downloaded | data-access | info | compliance | A scanned file is downloaded. A partial (range) download includes the `range` in the metadata. |
+| file.unsafe-downloaded | data-access | warning | security | A file is downloaded with `unsafe=true` before its virus scan is completed. |
+| file.deleted | administrative | warning | compliance | A file is deleted through the API, or by the retention job (with `reason: 'retention'` and `retentionDays` in the metadata). |
+| file.scan-completed | runtime | info | standard | The virus scan result of a file is recorded, with `scanResult` of `clean` or `threat`. |
+| file.scan-threat-found | security | critical | security | The virus scan detects a threat. Threat names are included as `threats` when the anti-virus provider reports them. |
+
+Downloads of files of an `anonymousRead` type by users who are not signed in are recorded with the actor `{ id: 'anonymous', type: 'user' }`. Scan results and retention deletes are recorded with the system actor `file-service-job`. Scan results are recorded when the asynchronous scan completes, not when the file is uploaded.
+
+Changes to file types are not recorded by file service, since file types are managed in the [configuration service](configuration-service.md); audit records of those changes are in the `configuration-service` namespace.
+
+Downloads can be high volume, so file service sends audit events in batches of up to 100 events. Audit failures are logged by the SDK and do not fail the file operation. The file service account requires the `audit-writer` role of `urn:ads:platform:audit-service`.
+
+Audit recording is on by default. Set the environment variable `FILE_AUDIT_ENABLED=false` on file service to turn it off, or `true` to turn it on regardless of the SDK `AUDIT_ENABLED` variable, which applies when `FILE_AUDIT_ENABLED` is not set. The action catalog is still registered while recording is off, so turning it back on needs only a restart.
+
 ## Code examples
 ### Configure a file type
 File types are configured using the [configuration service](configuration-service.md). Note that new configuration may take up to 15 mins to apply.

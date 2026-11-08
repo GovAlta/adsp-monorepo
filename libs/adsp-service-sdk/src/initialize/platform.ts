@@ -43,6 +43,7 @@ export async function initializePlatform(
     additionalExtractors,
     tracing,
     metrics,
+    audit,
     ...registration
   }: PlatformOptions,
   logOptions: Logger | LogOptions,
@@ -201,6 +202,7 @@ export async function initializePlatform(
   const auditService =
     service?.auditService ||
     createAuditService({
+      ...audit,
       isCore: realm === 'core',
       logger,
       serviceId,

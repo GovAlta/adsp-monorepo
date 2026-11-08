@@ -1,7 +1,12 @@
 import { ConfidenceFactor, ConversationMessage, SolutionState } from './types';
 
 // The solution is presented once overall confidence reaches this percentage.
-export const DISCOVERY_THRESHOLD = 50;
+export const DISCOVERY_THRESHOLD = 75;
+
+export const DISCOVERY_FACTOR_FLOOR = 40;
+
+export const isDiscoveryReady = (factors: ConfidenceFactor[], confidence: number, force = false): boolean =>
+  force || (confidence >= DISCOVERY_THRESHOLD && factors.every((f) => f.score >= DISCOVERY_FACTOR_FLOOR));
 
 interface FactorDefinition {
   id: string;

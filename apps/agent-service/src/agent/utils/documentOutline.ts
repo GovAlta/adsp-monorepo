@@ -5,6 +5,8 @@ export interface DocumentOutlineSection {
   sectionId: string;
   title: string;
   text: string;
+  /** The title was made up here (a page number, or 'Document'), not taken from the document. */
+  untitled?: boolean;
 }
 
 export interface DocumentOutline {
@@ -55,6 +57,7 @@ function outlineSections(extracted: DocumentExtractResult): DocumentOutlineSecti
       sectionId: `page-${page.num}`,
       title: `Page ${page.num}`,
       text: truncateText(page.text ?? '', OUTLINE_SECTION_CHAR_CAP).text,
+      untitled: true,
     }));
   }
 
@@ -122,6 +125,7 @@ function singleSection(text: string): DocumentOutlineSection {
     sectionId: 'document',
     title: 'Document',
     text: truncateText(text, OUTLINE_SECTION_CHAR_CAP).text,
+    untitled: true,
   };
 }
 

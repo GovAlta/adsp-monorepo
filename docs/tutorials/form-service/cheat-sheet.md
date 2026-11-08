@@ -552,9 +552,11 @@ export const DEFAULT_PATTERNS: Record<string, MaskPattern> = {
 
 `createDefaultAjv` registers every `DEFAULT_PATTERNS` key as a JSON schema format automatically. After that, form definitions can set `"format": "accountNumber"` the same way as `phone` or `driverId`.
 
+Form service validates submitted data on the server with its own validator, so add the same pattern to `NAMED_FORMAT_PATTERNS` in `libs/core-common/src/jsonSchema/ajv.ts`. Without it, form service rejects every submission of a form that uses the format.
+
 #### Calculation Control
 
-The calculation control is rendered when the JSON schema field uses <code>"format": "computed"</code>. The expression is defined in <code>schema.description</code>, evaluated against current form data, and the result is written back to the control path automatically. The rendered field is read-only.
+The calculation control is rendered when the JSON schema field uses <code>"format": "computed"</code>. The expression is defined in <code>schema.description</code>, evaluated against current form data, and the result is written back to the control path automatically as a numeric string, such as <code>"1050"</code>. The rendered field is read-only.
 
 ##### Calculation Requirements
 
@@ -1579,6 +1581,19 @@ Page steppers support these Task List and review-flow options:
     </code></pre></td>
   </tr>
   <tr>
+    <td><code>summaryPageTitle</code></td>
+    <td>Show a heading at the top of the summary review page. No heading is shown by default or when the form is read-only.</td>
+    <td><code>Categorization.options</code></td>
+    <td><pre><code>
+{
+  "type": "Categorization",
+  "options": {
+    "summaryPageTitle": "Review your application"
+  }
+}
+    </code></pre></td>
+  </tr>
+  <tr>
     <td><code>hideSubmit</code></td>
     <td>Hide the Submit button on the summary review page.</td>
     <td><code>Categorization.options</code></td>
@@ -1600,6 +1615,19 @@ Page steppers support these Task List and review-flow options:
   "type": "Categorization",
   "options": {
     "toAppOverviewLabel": "Back to task list"
+  }
+}
+    </code></pre></td>
+  </tr>
+  <tr>
+    <td><code>noAnswerMessage</code></td>
+    <td>Change the text shown on review pages and summaries for fields without an answer. Defaults to <code>(none given)</code>.</td>
+    <td><code>Categorization.options</code></td>
+    <td><pre><code>
+{
+  "type": "Categorization",
+  "options": {
+    "noAnswerMessage": "No response provided"
   }
 }
     </code></pre></td>

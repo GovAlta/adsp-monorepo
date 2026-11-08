@@ -34,7 +34,8 @@ You return only the fields and UI elements for the increment you are given, neve
 const CATEGORY_RULES = `- Do not wrap the elements in a Category, Group, or Layout. Return the page's elements directly.
 - Add HelpContent elements with "markdown": true for instructions and notices that are not questions, but only ones an applicant needs to read.
 - Never turn build guidance into HelpContent. Lines that map a requirement to a component, name schema keys or JSON Forms types, or describe the notation of the requirements document are addressed to you, not to the applicant.
-- Do not add SHOW/HIDE rules here; conditional groups are added by their own branch increment.`;
+- Do not add SHOW/HIDE rules here; conditional groups are added by their own branch increment.
+- Validate fields whose purpose is clear from the label, even when the requirements do not ask for it: "format": "email" for an email address, "format": "phone" for a telephone number and "format": "postalCode" for a Canadian postal code.`;
 
 const BRANCH_RULES = `- Set branch.triggerScope to the scope of the control that already exists and drives visibility, branch.triggerValue to the exact stored enum value (match its casing), and branch.effect (SHOW when hidden by default).
 - branch.triggerScope MUST be copied from the Control scopes listed as already saved. Never invent one; a scope that does not resolve fails the whole increment.

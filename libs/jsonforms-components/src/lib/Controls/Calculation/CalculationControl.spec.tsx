@@ -3,6 +3,7 @@ import { render, screen, cleanup } from '@testing-library/react';
 import { ControlProps } from '@jsonforms/core';
 import { GoACalculationControl as GoAComputed } from './CalculationControl';
 import * as jsonforms from '@jsonforms/react';
+import { createDefaultAjv } from '../../common/Ajv';
 
 jest.mock('../../util', () => ({
   //eslint-disable-next-line
@@ -51,7 +52,46 @@ describe('GoAComputed control', () => {
     const input = screen.getByTestId('computed-input-123') as HTMLInputElement;
     expect(input).toBeTruthy();
     expect(input.value).toBe('10');
-    expect(handleChange).toHaveBeenCalledWith('#/properties/total', 10);
+    expect(handleChange).toHaveBeenCalledWith('#/properties/total', '10');
+  });
+
+  it('stores the result as a string that is valid for the computed field schema', () => {
+    useJsonFormsMock.mockReturnValue({ core: { data: { amount: 1000 } } });
+
+    const handleChange = jest.fn();
+    const schema = { type: 'string', format: 'computed', description: '#/properties/amount * 1.05' };
+    const props = {
+      id: 'totalWithFee',
+      uischema: { label: 'Total with fee' },
+      schema,
+      path: 'totalWithFee',
+      visible: true,
+      handleChange,
+    } as unknown as ControlProps;
+
+    render(<GoAComputed {...(props as ControlProps)} />);
+
+    const [, stored] = handleChange.mock.calls[0];
+    expect(stored).toBe('1050');
+    expect(createDefaultAjv().validate(schema, stored)).toBe(true);
+  });
+
+  it('uses another computed field stored as a string', () => {
+    useJsonFormsMock.mockReturnValue({ core: { data: { subtotal: '1050', tax: 50 } } });
+
+    const handleChange = jest.fn();
+    const props = {
+      id: 'grandTotal',
+      uischema: { label: 'Grand total' },
+      schema: { description: '#/properties/subtotal + #/properties/tax' },
+      path: 'grandTotal',
+      visible: true,
+      handleChange,
+    } as unknown as ControlProps;
+
+    render(<GoAComputed {...(props as ControlProps)} />);
+
+    expect(handleChange).toHaveBeenCalledWith('grandTotal', '1100');
   });
 
   it('shows blank and does not call handleChange when referenced value missing', () => {

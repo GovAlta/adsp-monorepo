@@ -38,6 +38,7 @@ describe('TaskList Component', () => {
     subtitle: 'Test Subtitle',
     isValid: true,
     hideSummary: false,
+    hideProgress: false,
   };
 
   afterEach(() => {

@@ -1,4 +1,4 @@
-import { AdspId } from '@abgov/adsp-service-sdk';
+import { AdspId, toAuditActor } from '@abgov/adsp-service-sdk';
 import { randomUUID } from 'crypto';
 import type { Request } from 'express';
 import type { Logger } from 'winston';
@@ -12,6 +12,7 @@ export interface SelfAuditRecord {
   endpoint: string;
   filters?: Record<string, unknown>;
   resultCount: number;
+  status?: 'success' | 'failure';
 }
 
 interface SelfAuditorOptions {
@@ -23,9 +24,6 @@ interface SelfAuditorOptions {
 }
 
 const MAX_CORRELATION_ID_LENGTH = 128;
-
-// Keycloak names service account users with this prefix.
-const SERVICE_ACCOUNT_PREFIX = 'service-account-';
 
 /**
  * Records reads of the audit trail as events in the service's own namespace.
@@ -42,7 +40,10 @@ export class SelfAuditor {
     return this.failures;
   }
 
-  async record(req: Request, { action, endpoint, filters, resultCount }: SelfAuditRecord): Promise<void> {
+  async record(
+    req: Request,
+    { action, endpoint, filters, resultCount, status = 'success' }: SelfAuditRecord,
+  ): Promise<void> {
     const { serviceId, catalogs, retention, submitter, logger } = this.options;
     const tenantId = req.tenant?.id;
     try {
@@ -62,14 +63,8 @@ export class SelfAuditor {
         eventId: randomUUID(),
         occurredAt: now.toISOString(),
         action,
-        status: 'success' as const,
-        actor: {
-          id: user.id,
-          type: user.name?.startsWith(SERVICE_ACCOUNT_PREFIX) ? ('service' as const) : ('user' as const),
-          name: user.name || undefined,
-          email: user.email || undefined,
-          roles: user.roles,
-        },
+        status,
+        actor: toAuditActor(user),
         ...(correlationId ? { correlationId } : {}),
         metadata: { endpoint, resultCount, ...(filters && Object.keys(filters).length ? { filters } : {}) },
       };

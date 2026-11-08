@@ -13,7 +13,9 @@ import {
   loadSolution,
   requirePlannerAdmin,
   requirePlannerUser,
+  requireSolutionOwner,
 } from './access';
+import { acceptanceReferences, checkedAcceptanceCriteria, ruleAcceptanceCriteria } from './acceptance';
 import {
   buildHypotheses,
   buildNextSteps,
@@ -47,6 +49,7 @@ import {
   computeConfidence,
   dedupeOpenQuestions,
   DISCOVERY_THRESHOLD,
+  isDiscoveryReady,
   isQuestionCovered,
   normalizeFactors,
   ruleAssess,
@@ -65,6 +68,7 @@ import {
 import { getSpecialist, ruleBasedSpecialistReply, SPECIALISTS } from './specialists';
 import {
   AnalysisMode,
+  BlueprintAcceptance,
   BusinessConcept,
   BlueprintComponent,
   BusinessPattern,
@@ -74,13 +78,14 @@ import {
   PatternMatch,
   PlannerConfiguration,
   Solution,
+  SolutionBlueprint,
   SolutionState,
   SpecialistChat,
   SpecialistNote,
   SpecialistStatus,
   StoredChatMessage,
 } from './types';
-import { versionContent } from './versioning';
+import { contentHash, versionContent } from './versioning';
 import { createVersionRouter } from './versionRouter';
 
 interface PlannerRouterProps {
@@ -269,10 +274,23 @@ export function createPlannerRouter({
     }
   }
 
-  async function persist(req: Request, solution: Solution, operation: string) {
+  async function persist(req: Request, solution: Solution, operation: string, checkpoint = true) {
     const saved = await solutionRepository.save({ ...solution, updatedOn: new Date() });
     eventService.send(solutionUpdated(req.user, saved, operation));
-    return saved;
+    return checkpoint ? autoSaveVersion(req, saved) : saved;
+  }
+
+  async function autoSaveVersion(req: Request, solution: Solution): Promise<Solution> {
+    const tenantId = getTenantId(req);
+    const chats = await specialistChatRepository.findBySolution(tenantId, solution.id);
+    const content = versionContent(solution, chats);
+    const latest = await solutionVersionRepository.latest(tenantId, solution.id);
+    if (latest && latest.contentHash === contentHash(content)) {
+      return solution;
+    }
+    const version = await solutionVersionRepository.create(tenantId, solution.id, content);
+    eventService.send(solutionUpdated(req.user, solution, 'version-saved'));
+    return { ...solution, version: version.number };
   }
 
   // An undefined result means the caller should fall back to rule-based output.
@@ -296,28 +314,44 @@ export function createPlannerRouter({
     }
   }
 
-  async function refreshConfidence(req: Request, state: SolutionState, mode?: AnalysisMode): Promise<void> {
+  // Only the label records a fallback here; the reason is logged, not shown as a warning.
+  async function buildAcceptance(
+    blueprint: SolutionBlueprint,
+    state: SolutionState,
+    mode: AnalysisMode,
+  ): Promise<BlueprintAcceptance> {
+    const references = acceptanceReferences(blueprint, state);
+    const { result: criteria } = await tryAi(
+      mode,
+      async (llm) => {
+        const { criteria: drafts } = await llm.acceptanceCriteria(blueprint, references);
+        const checked = checkedAcceptanceCriteria(drafts, blueprint, references);
+        if (!checked.length) {
+          throw new Error('No criteria restated an item in the plan.');
+        }
+        return checked;
+      },
+      ruleFallbackWording('acceptance criteria', 'rule-based acceptance criteria'),
+    );
+    return criteria
+      ? { mode: 'ai', criteria }
+      : { mode: 'rules', criteria: ruleAcceptanceCriteria(blueprint, state.decisions) };
+  }
+
+  function refreshConfidence(state: SolutionState): void {
     if (state.discovery) {
-      const requestedMode: AnalysisMode = mode || (llm ? 'ai' : 'rules');
       const evidence = allUserEvidence(state);
-      const { result: aiFactors, warning } = await tryAi(
-        requestedMode,
-        async (llm) => {
-          const patterns = await getPatterns(req, patternRepository);
-          const recent = [...(state.discovery?.messages || []), ...(state.conversation || [])].map(
-            ({ role, content }) => ({ role, content }),
-          );
-          const discovered = await llm.discover(state.problemStatement, recent, patterns);
-          return normalizeFactors(discovered.factors, evidence);
-        },
-        ruleFallbackWording('scoring', 'rule-based scoring'),
-      );
-      const rawFactors = aiFactors ?? ruleAssess(evidence);
       const hasOpenQuestions = state.questions.some((q) => q.status === 'open');
-      const factors = capFactors(rawFactors, hasOpenQuestions);
+      const factors = capFactors(ruleAssess(evidence), hasOpenQuestions);
       const confidence = computeConfidence(factors);
-      // The warning reflects this attempt only, so switching to rules mode clears a stale AI failure note.
-      state.discovery = { ...state.discovery, factors, confidence, ready: confidence >= DISCOVERY_THRESHOLD, warning };
+      state.discovery = {
+        ...state.discovery,
+        factors,
+        confidence,
+        ready: isDiscoveryReady(factors, confidence),
+        mode: 'rules',
+        warning: undefined,
+      };
     }
     state.confidence = assessConfidence(state);
   }
@@ -333,9 +367,30 @@ export function createPlannerRouter({
       hasOpenQuestions,
     );
     const confidence = computeConfidence(factors);
-    const discovery = { ...state.discovery, factors, confidence, ready: confidence >= DISCOVERY_THRESHOLD };
+    const discovery = { ...state.discovery, factors, confidence, ready: isDiscoveryReady(factors, confidence) };
     const withDiscovery = { ...state, discovery };
     return { ...withDiscovery, confidence: assessConfidence(withDiscovery) };
+  }
+
+  function announceDiscoveryChange(
+    state: SolutionState,
+    priorDiscovery: NonNullable<SolutionState['discovery']>,
+  ): void {
+    const discovery = state.discovery;
+    if (!discovery || !priorDiscovery.messages.length) {
+      return;
+    }
+    const readyChanged = priorDiscovery.ready !== discovery.ready;
+    const confidenceChanged = Math.abs(priorDiscovery.confidence - discovery.confidence) >= 10;
+    const modeChanged = priorDiscovery.mode !== discovery.mode;
+    if (!readyChanged && !confidenceChanged && !modeChanged) {
+      return;
+    }
+    const reply = ruleDiscoveryReply(discovery.factors, discovery.confidence, discovery.ready);
+    state.discovery = {
+      ...discovery,
+      messages: [...discovery.messages, { role: 'assistant', content: reply, at: new Date().toISOString() }],
+    };
   }
 
   async function runAnalysis(
@@ -346,7 +401,16 @@ export function createPlannerRouter({
       mode,
       message,
       skipConfidenceRefresh,
-    }: { text: string; mode?: AnalysisMode; message?: string; skipConfidenceRefresh?: boolean },
+      announceDiscoveryUpdate,
+      checkpoint,
+    }: {
+      text: string;
+      mode?: AnalysisMode;
+      message?: string;
+      skipConfidenceRefresh?: boolean;
+      announceDiscoveryUpdate?: boolean;
+      checkpoint?: boolean;
+    },
   ): Promise<Solution> {
     const patterns = await getPatterns(req, patternRepository);
     const requestedMode: AnalysisMode = mode || (llm ? 'ai' : 'rules');
@@ -464,15 +528,20 @@ export function createPlannerRouter({
       analysis: { mode: result.mode, model: result.model, warning, analyzedOn: now },
     };
     state.nextSteps = buildNextSteps(state);
+    const priorDiscovery = state.discovery;
     if (skipConfidenceRefresh) {
       state.confidence = assessConfidence(state);
     } else {
-      await refreshConfidence(req, state, requestedMode);
+      refreshConfidence(state);
+      if (announceDiscoveryUpdate && priorDiscovery) {
+        announceDiscoveryChange(state, priorDiscovery);
+      }
     }
     return persist(
       req,
       { ...solution, status: solution.status === 'draft' ? 'analyzed' : solution.status, state },
       message ? 'chat' : 'analyze',
+      checkpoint ?? true,
     );
   }
 
@@ -600,7 +669,7 @@ export function createPlannerRouter({
         }
         if (!isSupportedProblemStatementFile(file.originalname)) {
           throw new InvalidOperationError(
-            `${file.originalname} is not a supported format. Upload a Markdown (.md), Word (.docx) or PDF (.pdf) file.`,
+            `${file.originalname} is not a supported format. Upload a Markdown (.md), Word (.doc, .docx) or PDF (.pdf) file.`,
           );
         }
         let text: string;
@@ -671,7 +740,6 @@ export function createPlannerRouter({
           version: 1,
           state: emptyState(req.body.problemStatement),
         });
-        await solutionVersionRepository.create(tenantId, solution.id, versionContent(solution, []));
         res.status(201).send(solution);
         eventService.send(solutionCreated(req.user, solution));
         logger.info(`Created solution ${solution.name} (ID: ${solution.id}).`, {
@@ -705,6 +773,7 @@ export function createPlannerRouter({
       body('concepts.*.name').optional().isString().notEmpty(),
       body('decisions').optional().isArray(),
       body('questions').optional().isArray(),
+      body('checkpoint').optional().isBoolean(),
     ),
     getSolution(solutionRepository),
     async (req, res, next) => {
@@ -736,7 +805,7 @@ export function createPlannerRouter({
         };
         if (problemStatement !== undefined && problemStatement !== solution.state.problemStatement) {
           state.problemStatementUpdatedOn = new Date().toISOString();
-          await refreshConfidence(req, state);
+          refreshConfidence(state);
         }
         res.send(
           await persist(
@@ -749,6 +818,7 @@ export function createPlannerRouter({
               state,
             },
             'update',
+            req.body.checkpoint ?? true,
           ),
         );
       } catch (err) {
@@ -762,6 +832,7 @@ export function createPlannerRouter({
     requirePlannerUser,
     validateId,
     getSolution(solutionRepository),
+    requireSolutionOwner,
     async (req, res, next) => {
       try {
         const solution = loaded(req);
@@ -783,6 +854,7 @@ export function createPlannerRouter({
     createValidationHandler(
       body('text').optional().isString().isLength({ max: 20000 }),
       body('mode').optional().isIn(['ai', 'rules']),
+      body('checkpoint').optional().isBoolean(),
     ),
     getSolution(solutionRepository),
     async (req, res, next) => {
@@ -792,7 +864,14 @@ export function createPlannerRouter({
         if (!text) {
           throw new InvalidOperationError('Solution has no problem statement to analyze.');
         }
-        res.send(await runAnalysis(req, solution, { text, mode: req.body.mode }));
+        res.send(
+          await runAnalysis(req, solution, {
+            text,
+            mode: req.body.mode,
+            announceDiscoveryUpdate: true,
+            checkpoint: req.body.checkpoint,
+          }),
+        );
       } catch (err) {
         next(err);
       }
@@ -804,7 +883,7 @@ export function createPlannerRouter({
     requirePlannerUser,
     validateId,
     createValidationHandler(
-      body('message').optional().isString().trim().isLength({ min: 1, max: 5000 }),
+      body('message').optional().isString().trim().isLength({ min: 1, max: 20000 }),
       body('mode').optional().isIn(['ai', 'rules']),
       body('force').optional().isBoolean(),
       body('restart').optional().isBoolean(),
@@ -842,7 +921,7 @@ export function createPlannerRouter({
         const mode: AnalysisMode = aiDiscovery ? 'ai' : 'rules';
 
         const confidence = computeConfidence(factors);
-        const ready = confidence >= DISCOVERY_THRESHOLD || req.body.force === true;
+        const ready = isDiscoveryReady(factors, confidence, req.body.force === true);
         let reply = aiDiscovery?.reply || ruleDiscoveryReply(factors, confidence, ready);
         if (req.body.message) {
           const priorConfidence = solution.state.discovery?.confidence ?? 0;
@@ -891,7 +970,7 @@ export function createPlannerRouter({
     requirePlannerUser,
     validateId,
     createValidationHandler(
-      body('message').isString().trim().isLength({ min: 1, max: 5000 }),
+      body('message').isString().trim().isLength({ min: 1, max: 20000 }),
       body('mode').optional().isIn(['ai', 'rules']),
     ),
     getSolution(solutionRepository),
@@ -902,53 +981,6 @@ export function createPlannerRouter({
         res.send(
           await runAnalysis(req, solution, { text: solution.state.problemStatement, mode: req.body.mode, message }),
         );
-      } catch (err) {
-        next(err);
-      }
-    },
-  );
-
-  router.put(
-    '/solutions/:id/questions/:questionId',
-    requirePlannerUser,
-    validateId,
-    createValidationHandler(param('questionId').isUUID(), body('answer').isString().isLength({ max: 5000 })),
-    getSolution(solutionRepository),
-    async (req, res, next) => {
-      try {
-        const solution = loaded(req);
-        const existing = solution.state.questions.find((q) => q.id === req.params.questionId);
-        if (!existing) {
-          throw new NotFoundError('question', req.params.questionId);
-        }
-        const answer: string = req.body.answer.trim();
-        const updatedQuestions = solution.state.questions.map((q) =>
-          q.id === existing.id
-            ? answer
-              ? { ...q, status: 'answered' as const, answer }
-              : { id: q.id, question: q.question, raisedBy: q.raisedBy, status: 'open' as const }
-            : q,
-        );
-        const questions = answer ? dedupeOpenQuestions(updatedQuestions) : updatedQuestions;
-        const state = { ...solution.state, questions };
-        state.nextSteps = buildNextSteps(state);
-        const hadOpenQuestions = solution.state.questions.some((q) => q.status === 'open');
-        const hasOpenQuestions = questions.some((q) => q.status === 'open');
-        if (state.discovery && answer) {
-          const evidence = allUserEvidence(state);
-          const factors = capFactors(
-            applyAnswerToFactors(state.discovery.factors, existing.question, answer, evidence),
-            hasOpenQuestions,
-          );
-          const confidence = computeConfidence(factors);
-          state.discovery = { ...state.discovery, factors, confidence, ready: confidence >= DISCOVERY_THRESHOLD };
-        }
-        if (llm && answer && hadOpenQuestions && !hasOpenQuestions) {
-          await refreshConfidence(req, state, state.analysis?.mode);
-        } else {
-          state.confidence = assessConfidence(state);
-        }
-        res.send(await persist(req, { ...solution, state }, 'answer'));
       } catch (err) {
         next(err);
       }
@@ -1091,12 +1123,12 @@ export function createPlannerRouter({
     createValidationHandler(
       body('mode').optional().isIn(['ai', 'rules']),
       body('refreshConsultations').optional().isBoolean(),
+      body('checkpoint').optional().isBoolean(),
     ),
     getSolution(solutionRepository),
     async (req, res, next) => {
       try {
         const solution = loaded(req);
-        const isFirstBlueprint = !solution.state.blueprint;
         const hypothesis = solution.state.hypotheses[0];
         if (!hypothesis) {
           throw new InvalidOperationError('Analyze the problem before generating a blueprint.');
@@ -1184,12 +1216,13 @@ export function createPlannerRouter({
           generated?.notCoveredByAdsp,
           components,
         );
-        const saved = await persist(req, { ...solution, state: { ...working.state, blueprint } }, 'blueprint');
-        if (isFirstBlueprint) {
-          const tenantId = getTenantId(req);
-          const savedChats = await specialistChatRepository.findBySolution(tenantId, saved.id);
-          await solutionVersionRepository.create(tenantId, saved.id, versionContent(saved, savedChats));
-        }
+        const acceptance = await buildAcceptance(blueprint, solution.state, mode);
+        const saved = await persist(
+          req,
+          { ...solution, state: { ...working.state, blueprint: { ...blueprint, acceptance } } },
+          'blueprint',
+          req.body.checkpoint ?? true,
+        );
         res.send(saved);
       } catch (err) {
         next(err);

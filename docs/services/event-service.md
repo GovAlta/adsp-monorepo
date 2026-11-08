@@ -36,6 +36,10 @@ In the tenant management app, the Event log page initially searches **Last 7 day
 
 Select a period and click **Search** to apply it along with any other filters. Start and end date/time controls display the selected period in Mountain Time. They are disabled for predefined periods and editable for **Custom**, initially filled with the selected period. The end must be later than the start. **Reset** clears other filters and immediately searches Last 7 days again. Removing the date range chip clears the selected period and searches without a lower date limit, retaining other applied filters. Pagination pins an upper timestamp at search time so new events do not shift the result pages or count. Search is disabled when no criteria are selected. An empty result displays **No Events Found**.
 
+### Access service audit
+
+Event service also records security-sensitive `access-service` (Keycloak) events in the [audit service](audit-service.md). See [access service audit actions](access-service.md#audit-actions).
+
 ## Code examples
 
 ### Configure an event definition
@@ -149,7 +153,8 @@ const response = await fetch(`${valueServiceUrl}/value/v1/event-service/values/e
 Unquoted values that are valid JSON scalars are matched using their JSON type, so `123`, `true`, and `null` match
 a number, boolean, and null respectively. JSON-quote a string that would otherwise parse as another scalar type.
 
-Use `payload` for JSON containment. The event payload may have additional properties beyond those supplied:
+Use `payload` for JSON containment. When the object contains multiple conditions, every condition must match
+(`AND`). The event payload may have additional properties beyond those supplied:
 
 ```typescript
 const parameters = new URLSearchParams({
@@ -160,7 +165,8 @@ const parameters = new URLSearchParams({
 ```
 
 The two payload search forms cannot be combined. They can be combined with the existing tenant, event context,
-correlation ID, and timestamp filters. Payload searches use JSONB containment without an additional payload index.
+correlation ID, and timestamp filters; all filters are combined using `AND`. Payload searches use JSONB containment
+without an additional payload index.
 
 ### Count events in the event log
 

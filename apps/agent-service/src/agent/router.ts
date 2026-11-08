@@ -6,7 +6,7 @@ import { v4 as uuid } from 'uuid';
 import { Logger } from 'winston';
 import { ServiceRoles } from './roles';
 import { AgentServiceConfiguration } from './configuration';
-import { AgentBroker } from './model';
+import { AgentBroker, MemoryStatus, readMemoryStatus, readReplyUsage, ReplyUsage, UsageRecorder } from './model';
 import { CoreUserMessage } from '@mastra/core/llm';
 import { environment } from '../environments/environment';
 import { resolveAccessScope } from './agents/access/discovery/scope';
@@ -61,6 +61,44 @@ function emitMappedStreamError(
     done: true,
   });
   return true;
+}
+
+// Usage is informational, so a provider that reports none, or fails to, never costs the user the reply.
+async function readUsage(
+  logger: Logger,
+  result: Parameters<typeof readReplyUsage>[0],
+  toolUsage: UsageRecorder,
+  meta: { agent: string; threadId: string },
+): Promise<ReplyUsage | undefined> {
+  try {
+    return await readReplyUsage(result, toolUsage, environment.AGENT_MODEL_CONTEXT_TOKENS);
+  } catch (err) {
+    logger.warn(`Unable to read token usage for agent ${meta.agent} in thread ${meta.threadId}.`, {
+      context: 'AgentRouter',
+      error: err instanceof Error ? err.message : String(err),
+    });
+    return undefined;
+  }
+}
+
+/** Tells the user's client whether the conversation has grown long enough that the agent may miss earlier details. */
+async function emitConversationStatus(
+  socket: Socket,
+  logger: Logger,
+  broker: AgentBroker,
+  user: User,
+  meta: { agent: string; threadId: string },
+  reply: { contextTokens: number; memoryStatus?: MemoryStatus },
+): Promise<void> {
+  try {
+    const status = await broker.getConversationStatus(user, meta.threadId, reply);
+    socket.emit('conversation-status', { agent: meta.agent, threadId: meta.threadId, ...status });
+  } catch (err) {
+    logger.warn(`Unable to work out the conversation status for agent ${meta.agent} in thread ${meta.threadId}.`, {
+      context: 'AgentRouter',
+      error: err instanceof Error ? err.message : String(err),
+    });
+  }
 }
 
 interface ToolChunk {
@@ -207,17 +245,18 @@ export function onIoConnection(logger: Logger) {
       const expiry = getUserTokenExpiry(user);
       const timeToExpiry = expiry !== null ? Math.max(expiry - TOKEN_EXPIRY_THRESHOLD_MS - Date.now(), 0) : null;
 
-      // Track whether an agent response is currently being streamed so that
-      // token-expiry disconnects can be deferred until the stream finishes.
-      let streaming = false;
+      // Count the messages still being answered so that token-expiry disconnects can be deferred until each reply is
+      // sent: replies only go to this socket. A message counts from when it is accepted, because thread memory and input
+      // processors run before the stream starts.
+      let messagesInProgress = 0;
       let disconnectDeferred = false;
 
       const deferredDisconnect = () => {
-        if (streaming) {
+        if (messagesInProgress > 0) {
           // An agent response is in-flight — defer the disconnect until it completes.
           disconnectDeferred = true;
           logger.info(
-            `Deferring token-expiry disconnect for user ${user.name} (ID: ${user.id}) while stream is in progress.`,
+            `Deferring token-expiry disconnect for user ${user.name} (ID: ${user.id}) while a message is in progress.`,
             {
               context: 'AgentRouter',
               tenant: tenant?.id?.toString(),
@@ -250,12 +289,13 @@ export function onIoConnection(logger: Logger) {
       };
 
       socket.on('message', async (payload) => {
-        try {
-          if (isUserTokenExpired(user)) {
-            disconnectExpiredSocket(socket, logger, user, tenant);
-            return;
-          }
+        if (isUserTokenExpired(user)) {
+          disconnectExpiredSocket(socket, logger, user, tenant);
+          return;
+        }
 
+        messagesInProgress += 1;
+        try {
           if (typeof payload !== 'object') {
             throw new InvalidOperationError('payload for message must be a JSON object.');
           } else {
@@ -298,6 +338,9 @@ export function onIoConnection(logger: Logger) {
               throw new InvalidValueError('content', 'content must string or array of text, image, or file parts.');
             }
 
+            // Thread memory and input processors (such as prompt injection detection) run before the stream starts.
+            const requestStartTime = Date.now();
+            const toolUsage = new UsageRecorder();
             const result = await aiAgent.stream(
               user,
               threadId,
@@ -306,14 +349,15 @@ export function onIoConnection(logger: Logger) {
                 content: userContent,
               },
               context,
+              toolUsage,
             );
             const replyId = uuid();
 
-            streaming = true;
             // Send periodic heartbeats during streaming to prevent reverse proxy
             // (e.g. OpenShift HAProxy route) from timing out the WebSocket connection
             // during long LLM thinking or tool execution gaps.
             const streamStartTime = Date.now();
+            const preStreamDurationMs = streamStartTime - requestStartTime;
             const streamMeta = { agent, threadId, messageId: replyId, replyTo: messageId };
             const heartbeatInterval = setInterval(() => {
               if (socket.connected) {
@@ -323,6 +367,8 @@ export function onIoConnection(logger: Logger) {
                 });
               }
             }, 15_000);
+            // Observational memory reports its token counts before each model call; the last report is the current one.
+            let memoryStatus: MemoryStatus | undefined;
             try {
               if (rawChunks === true) {
                 const projector = await aiAgent.createProjector(user, threadId);
@@ -346,6 +392,7 @@ export function onIoConnection(logger: Logger) {
                 };
 
                 for await (const chunk of result.fullStream) {
+                  memoryStatus = readMemoryStatus(chunk) ?? memoryStatus;
                   if (!FORWARDABLE_CHUNK_TYPES.has(chunk.type)) {
                     continue;
                   }
@@ -405,25 +452,34 @@ export function onIoConnection(logger: Logger) {
                 );
               }
 
-              const totalDurationMs = Date.now() - streamStartTime;
+              const streamEndTime = Date.now();
+              const resultObjectDurationMs = streamEndTime - streamStartTime - streamLoopDurationMs;
+              const totalDurationMs = streamEndTime - requestStartTime;
               logger.info(
-                `Stream complete for agent ${agent}: total=${totalDurationMs}ms, streamLoop=${streamLoopDurationMs}ms, resultObject=${totalDurationMs - streamLoopDurationMs}ms`,
+                `Stream complete for agent ${agent}: total=${totalDurationMs}ms, preStream=${preStreamDurationMs}ms, streamLoop=${streamLoopDurationMs}ms, resultObject=${resultObjectDurationMs}ms`,
                 {
                   context: 'AgentRouter',
                   tenant: tenant?.id?.toString(),
                   user: `${user.name} (ID: ${user.id})`,
                   totalDurationMs,
+                  preStreamDurationMs,
                   streamLoopDurationMs,
                 },
               );
 
+              const usage = await readUsage(logger, result, toolUsage, streamMeta);
               socket.emit('stream', {
                 agent,
                 threadId,
                 messageId: replyId,
                 replyTo: messageId,
                 output,
+                ...(usage ? { usage } : {}),
                 done: true,
+              });
+              await emitConversationStatus(socket, logger, aiAgent, user, streamMeta, {
+                contextTokens: usage?.contextTokens ?? 0,
+                memoryStatus,
               });
             } catch (err) {
               if (!emitMappedStreamError(socket, streamMeta, err)) {
@@ -431,18 +487,19 @@ export function onIoConnection(logger: Logger) {
               }
             } finally {
               clearInterval(heartbeatInterval);
-              streaming = false;
-
-              // If a token-expiry disconnect was deferred while the stream was
-              // in progress, execute it now that the response has been delivered.
-              if (disconnectDeferred) {
-                disconnectDeferred = false;
-                disconnectExpiredSocket(socket, logger, user, tenant);
-              }
             }
           }
         } catch (err) {
           socket.emit('error', describeStreamError(err));
+        } finally {
+          messagesInProgress -= 1;
+
+          // If a token-expiry disconnect was deferred while a message was
+          // in progress, execute it now that the response has been delivered.
+          if (messagesInProgress === 0 && disconnectDeferred) {
+            disconnectDeferred = false;
+            disconnectExpiredSocket(socket, logger, user, tenant);
+          }
         }
       });
       socket.on('workspace-init', async (payload) => {

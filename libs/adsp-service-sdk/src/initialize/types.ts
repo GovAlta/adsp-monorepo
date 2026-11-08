@@ -5,7 +5,7 @@ import type { Logger } from 'winston';
 import type { MeterProvider } from '@opentelemetry/sdk-metrics';
 import type { NodeTracerProvider } from '@opentelemetry/sdk-trace-node';
 import { TokenProvider } from '../access';
-import type { AuditService } from '../audit';
+import type { AuditClientOptions, AuditService } from '../audit';
 import { CombineConfiguration, ConfigurationConverter, ConfigurationService } from '../configuration';
 import { ServiceDirectory } from '../directory';
 import { EventService } from '../event';
@@ -186,6 +186,11 @@ export interface PlatformOptions extends ServiceRegistration {
    * @memberof PlatformOptions
    */
   metrics?: MetricsConfiguration;
+  /**
+   * Audit client options. Defaults to immediate single-event delivery.
+   * Set batchSize greater than 1 to opt into client-side batching.
+   */
+  audit?: AuditClientOptions;
 }
 
 export interface PlatformServices {

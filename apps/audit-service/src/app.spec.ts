@@ -237,6 +237,7 @@ describe('audit application authorization', () => {
     const { actions } = registered[0].configuration as { actions: Record<string, unknown> };
     expect(Object.keys(actions).sort()).toEqual(
       [
+        'events.export',
         'events.list',
         'events.list-all',
         'events.read',

@@ -1,4 +1,4 @@
-import { adspId, UnauthorizedUserError, User } from '@abgov/adsp-service-sdk';
+import { adspId, AdspId, AuditService, EventService, UnauthorizedUserError, User } from '@abgov/adsp-service-sdk';
 import { InvalidOperationError, UnauthorizedError } from '@core-services/core-common';
 import { Request, Response } from 'express';
 import { Logger } from 'winston';
@@ -6,17 +6,28 @@ import { ConfigurationEntity } from '../model';
 import { ConfigurationServiceRoles } from '../roles';
 import {
   createConfigurationRouter,
-  configurationOperations,
+  configurationOperations as createConfigurationOperations,
   getConfiguration,
   getConfigurationEntity,
-  patchConfigurationRevision,
+  patchConfigurationRevision as createPatchConfigurationRevision,
   getRevisions,
   getActiveRevision,
-  deleteConfiguration,
+  deleteConfiguration as createDeleteConfiguration,
   findConfiguration,
   assertAuthenticateConfigHandler,
 } from './configuration';
 import { RateLimitRequestHandler } from 'express-rate-limit';
+
+const auditServiceMock = {
+  record: jest.fn(),
+} as unknown as jest.Mocked<AuditService>;
+
+const configurationOperations = (apiId: AdspId, logger: Logger, eventService: EventService) =>
+  createConfigurationOperations(apiId, logger, eventService, auditServiceMock);
+const patchConfigurationRevision = (apiId: AdspId, logger: Logger, eventService: EventService) =>
+  createPatchConfigurationRevision(apiId, logger, eventService, auditServiceMock);
+const deleteConfiguration = (apiId: AdspId, logger: Logger, eventService: EventService) =>
+  createDeleteConfiguration(apiId, logger, eventService, auditServiceMock);
 
 describe('router', () => {
   const configurationServiceId = adspId`urn:ads:platform:configuration-service`;
@@ -58,6 +69,8 @@ describe('router', () => {
     repositoryMock.getActiveRevision.mockClear();
     repositoryMock.setActiveRevision.mockClear();
     eventServiceMock.send.mockClear();
+    auditServiceMock.record.mockReset();
+    auditServiceMock.record.mockResolvedValue({ status: 'recorded', eventId: 'event-1' });
   });
 
   describe('createConfigurationRouter', () => {
@@ -66,6 +79,7 @@ describe('router', () => {
         isConnected: () => true,
         serviceId: adspId`urn:ads:platform:configuration-service`,
         eventService: eventServiceMock,
+        auditService: auditServiceMock,
         logger: loggerMock as Logger,
         configuration: repositoryMock,
       });
@@ -855,6 +869,15 @@ describe('router', () => {
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ namespace, name, latest: entity.latest }));
       expect(entity.update).toHaveBeenCalledWith(req.user, expect.objectContaining(req.body.update));
       expect(eventServiceMock.send).toHaveBeenCalledTimes(1);
+      expect(auditServiceMock.record).toHaveBeenCalledWith(
+        expect.objectContaining({ name: 'configuration.updated', captureChangeSet: true }),
+        expect.objectContaining({
+          tenantId,
+          resource: { type: 'configuration', id: `${namespace}:${name}` },
+          metadata: expect.objectContaining({ namespace, name, operation: 'UPDATE' }),
+          changeSet: { before: null, after: null },
+        })
+      );
     });
 
     it('can return error for update missing value', async () => {
@@ -1238,6 +1261,10 @@ describe('router', () => {
 
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ deleted: true }));
       expect(repositoryMock.delete).toHaveBeenCalledWith(entity);
+      expect(auditServiceMock.record).toHaveBeenCalledWith(
+        expect.objectContaining({ name: 'configuration.deleted', severity: 'warning' }),
+        expect.objectContaining({ tenantId, resource: { type: 'configuration', id: `${namespace}:${name}` } })
+      );
       expect(eventServiceMock.send).toHaveBeenCalledWith(
         expect.objectContaining({
           name: 'configuration-deleted',

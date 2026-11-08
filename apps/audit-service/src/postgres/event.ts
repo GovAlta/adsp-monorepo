@@ -90,6 +90,26 @@ export class PostgresEventRepository implements AuditEventStore, EventReader {
     return row ?? null;
   }
 
+  // Walks the (tenant_id, namespace, ...) unique index one namespace at a time, so the cost depends on the
+  // number of namespaces rather than the number of events.
+  async findNamespaces(tenantId: string): Promise<string[]> {
+    const result = await this.read(async () =>
+      this.knex
+        .raw<{ rows: { namespace: string }[] }>(
+          `WITH RECURSIVE namespaces AS (
+             (SELECT namespace FROM audit_events WHERE tenant_id = ? ORDER BY namespace LIMIT 1)
+             UNION ALL
+             SELECT (SELECT namespace FROM audit_events WHERE tenant_id = ? AND namespace > namespaces.namespace ORDER BY namespace LIMIT 1)
+             FROM namespaces WHERE namespaces.namespace IS NOT NULL
+           )
+           SELECT namespace FROM namespaces WHERE namespace IS NOT NULL`,
+          [tenantId, tenantId],
+        )
+        .timeout(HISTORY_QUERY_TIMEOUT_MS, { cancel: true }),
+    );
+    return result.rows.map(({ namespace }) => namespace);
+  }
+
   private async write<T>(
     { signal }: AuditStoreContext,
     operation: (transaction: Knex.Transaction) => Promise<T>,

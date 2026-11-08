@@ -35,6 +35,7 @@ import { FeedbackCSSLeak } from './services/feedback/FeedbackCSSLeak';
 import { JsonformsExampleOne } from './services/jsonforms/JsonformsExampleOne';
 import { JsonformsExternalNavigation } from './services/jsonforms/JsonformsExternalNavigation';
 import { JsonformsReviewNavigation } from './services/jsonforms/JsonformsReviewNavigation';
+import { JsonformsReviewResponsive } from './services/jsonforms/JsonformsReviewResponsive';
 import { DesignSystemsMain } from './services/DesignSystemsMain';
 import { DesignSystemsExampleOne } from './services/design-systems/DesignSystemsExampleOne';
 import { PlanningPokerMain } from './services/planning-poker/PlanningPokerMain';
@@ -45,6 +46,7 @@ import { AdspComponentsMain } from './services/AdspComponentsMain';
 import { AdspThemingExample } from './services/adsp-components/AdspThemingExample';
 import { ADSPGoACalendarExample } from './services/adsp-components/ADSPGoACalendarExample';
 import { AuditServiceMain } from './services/AuditServiceMain';
+import { AdspConversationExample } from './services/adsp-components/AdspConversationExample';
 
 export const SandBoxTenant = () => {
   const { tenant: tenantName } = useParams<{ tenant: string }>();
@@ -99,6 +101,7 @@ export const SandBoxTenant = () => {
                   path="/services/adsp-components/adspcalendar"
                   element={<ADSPGoACalendarExample tenantName={tenantName} />}
                 />
+                <Route path="/services/adsp-components/conversation" element={<AdspConversationExample />} />
 
                 <Route path="/services/agent" element={<AgentServiceMain tenantName={tenantName} />} />
                 <Route path="/services/audit" element={<AuditServiceMain tenantName={tenantName} />} />
@@ -121,6 +124,7 @@ export const SandBoxTenant = () => {
                 <Route path="/services/jsonforms/example1/:definitionId" element={<JsonformsExampleOne />} />
                 <Route path="/services/jsonforms/external-navigation" element={<JsonformsExternalNavigation />} />
                 <Route path="/services/jsonforms/review-navigation" element={<JsonformsReviewNavigation />} />
+                <Route path="/services/jsonforms/review-responsive" element={<JsonformsReviewResponsive />} />
 
                 <Route path="/services/notification" element={<NotificationServiceMain tenantName={tenantName} />} />
                 <Route path="/services/pdf" element={<PDFServiceMain tenantName={tenantName} />} />

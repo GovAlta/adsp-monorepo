@@ -54,7 +54,19 @@ const hash = (value: unknown): string =>
     .update(JSON.stringify(canonical(value)))
     .digest('hex');
 
-export const contentHash = (content: VersionContent): string => hash(content);
+const withoutVolatileTimestamps = (content: VersionContent): VersionContent => {
+  const withoutAnalysis = content.state.analysis
+    ? { ...content, state: { ...content.state, analysis: { ...content.state.analysis, analyzedOn: undefined } } }
+    : content;
+  return withoutAnalysis.state.blueprint
+    ? {
+        ...withoutAnalysis,
+        state: { ...withoutAnalysis.state, blueprint: { ...withoutAnalysis.state.blueprint, generatedOn: undefined } },
+      }
+    : withoutAnalysis;
+};
+
+export const contentHash = (content: VersionContent): string => hash(withoutVolatileTimestamps(content));
 
 const omitConsultedOn = (note: SpecialistNote): Omit<SpecialistNote, 'consultedOn'> => {
   const { consultedOn: _consultedOn, ...rest } = note;
@@ -78,7 +90,7 @@ const SECTIONS: Record<string, (content: VersionContent) => unknown> = {
   Status: (c) => c.status,
   'Problem statement': (c) => c.state.problemStatement,
   Analysis: (c) => ({
-    analysis: c.state.analysis,
+    analysis: withoutVolatileTimestamps(c).state.analysis,
     patternMatches: c.state.patternMatches,
     confidence: c.state.confidence,
   }),
@@ -103,6 +115,7 @@ const SECTIONS: Record<string, (content: VersionContent) => unknown> = {
   Workflows: (c) => c.state.blueprint?.workflows,
   'Data & governance': (c) => c.state.blueprint?.dataGovernance,
   Delivery: (c) => c.state.blueprint?.delivery,
+  'Acceptance criteria': (c) => c.state.blueprint?.acceptance,
 };
 
 const normalize = (value: unknown): unknown => {

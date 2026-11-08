@@ -67,7 +67,7 @@ export const SDK_REFERENCE: SdkSymbolDoc[] = [
       'Fixes realm to "core". options extends ServiceRegistration with: clientSecret, directoryUrl, accessServiceUrl, ' +
       'ignoreServiceAud?, configurationConverter?, combineConfiguration?, enableConfigurationInvalidation?, ' +
       'useLongConfigurationCacheTTL?, additionalExtractors?, tracing? (TracingOptions | OTLP endpoint string), ' +
-      'metrics? (MetricsOptions | OTLP endpoint string).\n\n' +
+      'metrics? (MetricsOptions | OTLP endpoint string), audit? (AuditClientOptions; immediate delivery by default).\n\n' +
       'Returns PlatformCapabilities: directory, tenantService, configurationService, eventService, auditService, tokenProvider, ' +
       'coreStrategy, tenantStrategy, tenantHandler, configurationHandler, healthCheck, clearCached(tenantId, serviceId), ' +
       'metricsHandler, traceHandler, tracerProvider? (only if tracing enabled), meterProvider? (only if metrics enabled), logger.\n\n' +
@@ -398,7 +398,7 @@ export const SDK_REFERENCE: SdkSymbolDoc[] = [
     summary: 'Shared audit action categories used by TypeScript types and configuration validation.',
     details:
       "const AuditCategories = { Administrative: 'administrative', Runtime: 'runtime', " +
-      "Security: 'security', DataAccess: 'data-access' } as const;",
+      "Security: 'security', DataAccess: 'data-access', Diagnostic: 'diagnostic' } as const;",
     example: 'category: AuditCategories.Administrative',
     seeAlso: ['AuditCategory', 'AuditActionDefinition'],
   },
@@ -409,7 +409,7 @@ export const SDK_REFERENCE: SdkSymbolDoc[] = [
     summary: 'String union of supported audit action categories, derived from AuditCategories.',
     details:
       'type AuditCategory = (typeof AuditCategories)[keyof typeof AuditCategories];\n\n' +
-      "Equivalent to 'administrative' | 'runtime' | 'security' | 'data-access'.",
+      "Equivalent to 'administrative' | 'runtime' | 'security' | 'data-access' | 'diagnostic'.",
     seeAlso: ['AuditCategories', 'AuditActionDefinition'],
   },
   {
@@ -456,11 +456,15 @@ export const SDK_REFERENCE: SdkSymbolDoc[] = [
       '  flush(): Promise<void>;\n' +
       '  readonly droppedEventCount: number;\n' +
       '}\n\n' +
-      'record() batches events (100 events or 500 ms, per tenant for core services), retries network errors and ' +
+      'record() sends each event immediately by default. Set options.audit.batchSize greater than 1 during initialization ' +
+      'to opt into batching (500 ms default batch interval, per tenant for core services). It retries network errors and ' +
       '429/502/503/504 with the same eventId (honouring Retry-After), and buffers at most 1,000 events or 8 MB. ' +
-      'It never rejects; it resolves recorded, rejected, or failed. Non-recorded events increment ' +
+      'Await it and check the outcome: it never rejects and resolves recorded, rejected, or failed. ' +
+      'recorded confirms storage or an idempotent duplicate, not just queue admission. Non-recorded events increment ' +
       'droppedEventCount and the audit.client.dropped_events metric. Change sets are dropped unless the action sets ' +
-      'captureChangeSet. Writes wait for auditActions registration to settle. Call flush() on shutdown. ' +
+      'captureChangeSet. Writes wait for auditActions registration to settle. Call flush() before shutdown if batches ' +
+      'or unawaited records remain; no separate flush is needed once all record() calls have settled. ' +
+      'Normal shutdown must still wait for in-flight application work. ' +
       'query() uses the service token unless options.token is set, and rejects on failure.',
     example:
       "const outcome = await auditService.record(UPDATE_CASE, {\n" +
@@ -468,7 +472,35 @@ export const SDK_REFERENCE: SdkSymbolDoc[] = [
       "  resource: { type: 'case', id: caseId },\n" +
       "});\n" +
       "if (outcome.status !== 'recorded') logger.warn(`Audit event not recorded: ${outcome.reason}`);",
-    seeAlso: ['AuditRecordDetails', 'AuditRecordOutcome', 'AuditEventCriteria', 'AuditQueryOptions', 'ServiceRegistration'],
+    seeAlso: [
+      'AuditClientOptions',
+      'AuditRecordDetails',
+      'AuditRecordOutcome',
+      'AuditEventCriteria',
+      'AuditQueryOptions',
+      'ServiceRegistration',
+      'auditDetailsFromRequest',
+    ],
+  },
+  {
+    name: 'AuditClientOptions',
+    kind: 'interface',
+    module: 'audit',
+    summary:
+      'Optional audit delivery configuration on initializeService and initializePlatform; defaults to immediate single-event writes.',
+    details:
+      'interface AuditClientOptions {\n' +
+      '  enabled?: boolean; // default from AUDIT_ENABLED env var, true when unset; false rejects every record with code audit_disabled\n' +
+      '  batchSize?: number; // default 1; greater than 1 enables batching\n' +
+      '  batchIntervalMs?: number; // default 500; unused for single-event delivery\n' +
+      '  maxBufferedEvents?: number; // default 1000, including in-flight and retrying events\n' +
+      '  maxBufferedBytes?: number; // default 8 MiB serialized\n' +
+      '  retryDelaysMs?: number[]; // default [200, 1000, 3000, 5000]\n' +
+      '  maxRetryAfterMs?: number; // default 30000\n' +
+      '  requestTimeoutMs?: number; // default 10000 per HTTP attempt, not a total call deadline\n' +
+      '}',
+    example: 'const options = { ...serviceOptions, audit: { batchSize: 100, batchIntervalMs: 500 } };',
+    seeAlso: ['AuditService', 'initializeService', 'initializePlatform'],
   },
   {
     name: 'AuditRecordDetails',
@@ -486,7 +518,87 @@ export const SDK_REFERENCE: SdkSymbolDoc[] = [
       '  metadata?: Record<string, unknown>;\n' +
       '  changeSet?: AuditChangeSet; // sent only if the action sets captureChangeSet\n' +
       '}',
-    seeAlso: ['AuditService', 'AuditActor', 'AuditResource', 'AuditChangeSet'],
+    seeAlso: ['AuditService', 'AuditActor', 'AuditResource', 'AuditChangeSet', 'auditDetailsFromRequest'],
+  },
+  {
+    name: 'auditDetailsFromRequest',
+    kind: 'function',
+    module: 'audit',
+    summary:
+      'Builds AuditRecordDetails for an authenticated request, defaulting the actor and tenant from the request.',
+    details:
+      'auditDetailsFromRequest(req: AuditRequestContext, details?: AuditRequestRecordDetails): AuditRecordDetails\n\n' +
+      'actor defaults to toAuditActor(req.user); tenantId defaults to req.tenant?.id ?? req.user?.tenantId. ' +
+      'Explicit details.actor and details.tenantId take precedence, e.g. the tenantId of a different target tenant ' +
+      'when a core service acts on it. Throws when no actor is provided and the request has no user, so events are ' +
+      'never attributed to an unknown actor.',
+    example:
+      'await auditService.record(\n' +
+      '  ACTIONS.UPDATE_CASE,\n' +
+      '  auditDetailsFromRequest(req, {\n' +
+      "    resource: { type: 'case', id: updated.id },\n" +
+      '    metadata: { reason: req.body.reason },\n' +
+      '  }),\n' +
+      ');',
+    seeAlso: ['toAuditActor', 'AuditRequestContext', 'AuditRequestRecordDetails', 'AuditRecordDetails', 'AuditService'],
+  },
+  {
+    name: 'toAuditActor',
+    kind: 'function',
+    module: 'audit',
+    summary: 'Converts an authenticated user into the AuditActor of an audit event.',
+    details:
+      'toAuditActor(user: User): AuditActor\n\n' +
+      "Keycloak service accounts (username starting with service-account-) become 'service' actors; other users " +
+      "become 'user' actors. Maps id, name, email, and roles from the user. Throws when there is no user.",
+    example:
+      '// Outside a request, for example in a queue consumer:\n' +
+      'await auditService.record(ACTIONS.UPDATE_CASE, { tenantId, actor: toAuditActor(user), resource });',
+    seeAlso: ['AuditActor', 'User', 'auditDetailsFromRequest'],
+  },
+  {
+    name: 'createAuditService',
+    kind: 'function',
+    module: 'audit',
+    summary:
+      "Creates an AuditService client for another application's namespace, e.g. a core service bridging that application's events.",
+    details:
+      'createAuditService(options: {\n' +
+      '  isCore: boolean; logger: Logger; directory: ServiceDirectory; tokenProvider: TokenProvider;\n' +
+      '  serviceId: AdspId; // namespace is serviceId.service\n' +
+      '  ready?: Promise<unknown>; meterProvider?: MeterProvider;\n' +
+      '} & AuditClientOptions): AuditService\n\n' +
+      'Use the auditService from initializeService or initializePlatform for your own namespace. auditActions only ' +
+      'registers the caller catalog, so register the bridged catalog through serviceConfigurations. Core clients ' +
+      'require tenantId on every record; writtenBy is still the calling client, which needs audit-writer.',
+    example:
+      'const accessAudit = createAuditService({\n' +
+      '  isCore: true,\n' +
+      '  logger,\n' +
+      '  directory,\n' +
+      '  tokenProvider,\n' +
+      '  serviceId: adspId`urn:ads:platform:access-service`,\n' +
+      '});\n' +
+      'await accessAudit.record(USER_DELETED, { tenantId, actor, resource });',
+    seeAlso: ['AuditService', 'AuditClientOptions', 'initializePlatform'],
+  },
+  {
+    name: 'AuditRequestContext',
+    kind: 'interface',
+    module: 'audit',
+    summary:
+      'Request context used by auditDetailsFromRequest; an Express request authenticated by the SDK satisfies it.',
+    details: 'interface AuditRequestContext { user?: User; tenant?: { id: AdspId }; }',
+    seeAlso: ['auditDetailsFromRequest', 'User'],
+  },
+  {
+    name: 'AuditRequestRecordDetails',
+    kind: 'type',
+    module: 'audit',
+    summary:
+      'AuditRecordDetails with an optional actor, which defaults to the request user in auditDetailsFromRequest.',
+    details: "type AuditRequestRecordDetails = Omit<AuditRecordDetails, 'actor'> & { actor?: AuditActor };",
+    seeAlso: ['auditDetailsFromRequest', 'AuditRecordDetails', 'AuditActor'],
   },
   {
     name: 'AuditRecordOutcome',
@@ -496,7 +608,7 @@ export const SDK_REFERENCE: SdkSymbolDoc[] = [
     details:
       "type AuditRecordOutcome =\n" +
       "  | { status: 'recorded'; eventId: string } // stored, or an idempotent duplicate\n" +
-      "  | { status: 'rejected'; eventId: string; code: string; reason: string } // refused by the service, not resent\n" +
+      "  | { status: 'rejected'; eventId: string; code: string; reason: string } // refused by the service, or code audit_disabled when recording is off; not resent\n" +
       "  | { status: 'failed'; eventId: string; reason: Exclude<AuditDropReason, 'rejected'>; error: string };",
     seeAlso: ['AuditService', 'AuditDropReason'],
   },
@@ -531,7 +643,7 @@ export const SDK_REFERENCE: SdkSymbolDoc[] = [
     module: 'audit',
     summary: 'Actor that performed an audited action.',
     details: 'interface AuditActor { id: string; type: AuditActorType; name?: string; email?: string; roles?: string[]; }',
-    seeAlso: ['AuditRecordDetails', 'AuditActorType'],
+    seeAlso: ['AuditRecordDetails', 'AuditActorType', 'toAuditActor'],
   },
   {
     name: 'AuditResource',

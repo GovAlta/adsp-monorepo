@@ -1,6 +1,7 @@
 import axios, { AxiosError } from 'axios';
 import { Logger } from 'winston';
 import { ConsultResult } from './analysis';
+import { AcceptanceDraft, AcceptanceReference, criteriaGroups } from './acceptance';
 import { BlueprintCore, BlueprintServiceDetail } from './blueprint';
 import { ADSP_COMPONENT_MAP, ComponentDraft } from './components';
 import { DISCOVERY_FACTORS, DISCOVERY_THRESHOLD } from './discovery';
@@ -17,6 +18,7 @@ import {
   PatternUnsupportedCapability,
   PRODUCT_TYPES,
   ProductType,
+  SolutionBlueprint,
   SolutionState,
   SpecialistDefinition,
   SpecialistNote,
@@ -88,6 +90,11 @@ export interface LlmBlueprint {
   model: string;
 }
 
+export interface LlmAcceptance {
+  criteria: AcceptanceDraft[];
+  model: string;
+}
+
 export interface SpecialistChatMessage {
   role: 'user' | 'assistant';
   content: string;
@@ -117,6 +124,8 @@ export interface PlannerLlm {
   ): Promise<LlmDiscovery>;
   // Candidates are live ADSP services missing from the component map that may still have components.
   blueprint(state: SolutionState, notes: SpecialistNote[], candidates?: string[]): Promise<LlmBlueprint>;
+  // Each draft cites one reference key as its source; the caller checks it against the plan.
+  acceptanceCriteria(blueprint: SolutionBlueprint, references: AcceptanceReference[]): Promise<LlmAcceptance>;
   consult(
     state: SolutionState,
     specialist: SpecialistDefinition,
@@ -587,6 +596,44 @@ Give up to 6 matches ordered best first, up to 3 hypotheses, 5-12 concepts and u
       throw new Error('Model response did not contain a usable blueprint.');
     }
     return { core, services, notCoveredByAdsp, components, model: this.config.model };
+  }
+
+  async acceptanceCriteria(blueprint: SolutionBlueprint, references: AcceptanceReference[]): Promise<LlmAcceptance> {
+    const system =
+      'You write acceptance criteria that a generated application is checked against. ' +
+      'Each criterion restates one item from the plan as a testable Given / When / Then check. ' +
+      'Never add behaviour, numbers or rules the plan does not state; skip anything the plan is silent on. ' +
+      'Reply with a single JSON object only, no commentary.';
+    const groups = criteriaGroups(blueprint);
+    const user = [
+      `Plan: ${blueprint.overview.title} — ${blueprint.overview.summary}`,
+      `Plan items (key: text):\n${references.map((r) => `${r.key}: ${r.text}`).join('\n')}`,
+      `Groups: ${groups.map((g) => `"${g}"`).join(', ')}`,
+      'Return JSON: {"criteria": [{"group": "one of the groups", "actor": "who acts, if the item names one", ' +
+        '"given": "", "when": "", "then": "the observable result", "source": "the key of the plan item it restates"}]}. ' +
+        'Put criteria about a workflow in that workflow group; put access, audit, retention, privacy, compliance and non-functional criteria in Rules. ' +
+        'Leave given or when empty when the item does not state them. Keep each field to one sentence.',
+    ].join('\n\n');
+    const json = await this.completeJson([
+      { role: 'system', content: system },
+      { role: 'user', content: user },
+    ]);
+    const criteria = (Array.isArray(json.criteria) ? json.criteria : [])
+      .filter((c): c is Record<string, unknown> => !!c && typeof c === 'object')
+      .slice(0, 60)
+      .map((c) => ({
+        group: asString(c.group, 120),
+        actor: asString(c.actor, 120) || undefined,
+        given: asString(c.given, 500) || undefined,
+        when: asString(c.when, 500) || undefined,
+        then: asString(c.then, 500),
+        source: asString(c.source, 120),
+      }))
+      .filter((c) => c.then && c.source);
+    if (criteria.length === 0) {
+      throw new Error('Model response did not contain acceptance criteria.');
+    }
+    return { criteria, model: this.config.model };
   }
 
   async consult(

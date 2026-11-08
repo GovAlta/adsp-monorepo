@@ -182,4 +182,46 @@ describe('ValidationService', () => {
 
     service.setSchema('test', schema);
   });
+
+  describe('named input formats of the form renderer', () => {
+    const schemaFor = (format: string) => ({ type: 'object', properties: { value: { type: 'string', format } } });
+
+    it.each([
+      ['sin', '046 454 286'],
+      ['postalCode', 'T5J 2Z4'],
+      ['driverId', '123456-789'],
+      ['mvid', '1234-56789'],
+    ])('accepts a valid %s value', (format, value) => {
+      const service = new AjvValidationService(logger);
+      service.setSchema('form', schemaFor(format));
+
+      expect(() => service.validate('form submission', 'form', { value })).not.toThrow();
+    });
+
+    it.each([
+      ['sin', '046454286'],
+      ['postalCode', 'T5J2Z4'],
+      ['driverId', '123456789'],
+      ['mvid', '1234-5678'],
+    ])('rejects a malformed %s value', (format, value) => {
+      const service = new AjvValidationService(logger);
+      service.setSchema('form', schemaFor(format));
+
+      expect(() => service.validate('form submission', 'form', { value })).toThrow(/Value not valid for/);
+    });
+
+    it.each(['sin', 'postalCode', 'driverId', 'mvid'])('accepts an empty %s value for a field left blank', (format) => {
+      const service = new AjvValidationService(logger);
+      service.setSchema('form', schemaFor(format));
+
+      expect(() => service.validate('form submission', 'form', { value: '' })).not.toThrow();
+    });
+
+    it('rejects a SIN with an invalid checksum', () => {
+      const service = new AjvValidationService(logger);
+      service.setSchema('form', schemaFor('sin'));
+
+      expect(() => service.validate('form submission', 'form', { value: '046 454 287' })).toThrow(/Value not valid for/);
+    });
+  });
 });

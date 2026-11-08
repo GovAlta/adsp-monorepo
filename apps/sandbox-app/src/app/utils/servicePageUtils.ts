@@ -21,6 +21,12 @@ export const addJsonformsPages = (tenantName: string) => {
       url: `${prefix}/review-navigation`,
       testId: 'jsonformsReviewNavigation',
     },
+    {
+      id: 'jsonformsReviewResponsive',
+      name: 'Review layout with long values',
+      url: `${prefix}/review-responsive`,
+      testId: 'jsonformsReviewResponsive',
+    },
   ];
 
   return jsonformsPages;
@@ -68,6 +74,12 @@ export const addAdspComponentsPages = (tenantName: string) => {
       name: 'ADSP Calendar Example 1',
       url: `${prefix}/adspcalendar`,
       testId: 'adspCalendarExample1',
+    },
+    {
+      id: 'adspConversation',
+      name: 'Conversation',
+      url: `${prefix}/conversation`,
+      testId: 'adspConversation',
     },
   ];
 

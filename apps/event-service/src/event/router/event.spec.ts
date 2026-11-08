@@ -335,6 +335,31 @@ describe('event router', () => {
       expect(next).not.toHaveBeenCalled();
     });
 
+    it.each([
+      ['namespace', 'application-events'],
+      ['name', 'user-registration'],
+    ])('can count events filtered by %s', async (parameter, value) => {
+      const req = {
+        user: { tenantId, name: 'test', id: 'test', isCore: false, roles: [EventServiceRoles.reader] },
+        tenant: { id: tenantId },
+        query: { [parameter]: value },
+      };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+
+      countEventsMock.mockResolvedValueOnce(3);
+      const handler = countEventLogEvents(loggerMock, directoryMock, tokenProviderMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      expect(countEventsMock).toHaveBeenCalledWith(
+        directoryMock,
+        tokenProviderMock,
+        tenantId,
+        expect.objectContaining({ [parameter]: value }),
+      );
+      expect(res.send).toHaveBeenCalledWith({ count: 3 });
+    });
+
     it('can count events filtered by correlationId', async () => {
       const req = {
         user: { tenantId, name: 'test', id: 'test', isCore: false, roles: [EventServiceRoles.reader] },

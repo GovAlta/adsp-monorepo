@@ -15,6 +15,7 @@ import { schemaErrorSelector } from '@store/form/selectors';
 import { ErrorBoundary } from 'react-error-boundary';
 import { useSelector } from 'react-redux';
 import FallbackRender from './FallbackRenderer';
+import { clearRegisterPlaceholders } from './registerPlaceholder';
 import { FormPreviewSpacer } from './style-components';
 import { RegisterConfigData } from '../../../../jsonforms-components/src';
 
@@ -63,7 +64,7 @@ export const JSONFormPreviewer = ({
           middleware={autoPopulateMiddleware}
           validationMode={'ValidateAndShow'}
           //need to re-create the schemas here in order to trigger a refresh when passing data back through the context
-          schema={{ ...dataSchema }}
+          schema={clearRegisterPlaceholders(dataSchema)}
           uischema={{ ...uiSchema }}
         />
       </JsonFormRegisterProvider>

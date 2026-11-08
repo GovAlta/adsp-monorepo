@@ -1,12 +1,18 @@
 import React from 'react';
-import { JsonFormsDispatch } from '@jsonforms/react';
-import { Categorization, Layout, isVisible, Scoped, UISchemaElement } from '@jsonforms/core';
+import { JsonFormsDispatch, useJsonForms } from '@jsonforms/react';
+import { Categorization, Layout, isVisible, Scoped, UISchemaElement, Category } from '@jsonforms/core';
 import { withJsonFormsLayoutProps, withTranslateProps } from '@jsonforms/react';
 import { CategorizationStepperLayoutReviewRendererProps } from './types';
-import { Anchor, ReviewItem, ReviewItemHeader, ReviewItemSection, ReviewItemTitle } from './styled-components';
+import {
+  FormStepperSummaryH3,
+  ReviewItem,
+  ReviewItemHeader,
+  ReviewItemSection,
+  ReviewItemTitle,
+  ReviewSectionTitle,
+} from './styled-components';
 import { withAjvProps } from '../../util/layout';
 import { GoabTable } from '@abgov/react-components-ds1';
-import { FormStepperComponentProps } from './types';
 
 import { JsonFormsRendererRegistryEntry } from '@jsonforms/core';
 import { withJsonFormsControlProps } from '@jsonforms/react';
@@ -54,6 +60,8 @@ import { GoAGroupReviewLayoutTester } from '../../layouts/GroupReviewControl';
 import { HelpContentTester } from '../../Additional/HelpContent';
 import { GoACalloutControlTester, CalloutReviewControl } from '../../Additional/GoACalloutControl';
 import { TableGroupLayoutRenderer, TableLayoutRenderer } from '../../layouts/TableLayoutRenderers';
+import { StepperOptionsProvider } from './context/StepperOptionsContext';
+import { getStepperPageOptions } from './util/stepperOptions';
 
 const EmptyHelpContentRenderer = () => null;
 
@@ -168,7 +176,9 @@ export const GoABaseReviewRenderers: JsonFormsRendererRegistryEntry[] = [
 export const FormStepperReviewer = (props: CategorizationStepperLayoutReviewRendererProps): JSX.Element => {
   const { uischema, data, schema, ajv, cells, enabled } = props;
 
-  const componentProps = (uischema.options?.componentProps as FormStepperComponentProps) ?? {};
+  const jsonForms = useJsonForms();
+  // Read from the uischema directly; the provider below is not yet in scope here.
+  const { summaryPageTitle } = getStepperPageOptions(uischema);
   const categorization = uischema as Categorization;
   const categories = categorization.elements;
   const rescopeMaps = ['#/properties/albertaAddress', '#/properties/canadianAddress', '#/properties/sin'];
@@ -191,73 +201,97 @@ export const FormStepperReviewer = (props: CategorizationStepperLayoutReviewRend
     return true;
   };
 
+  // A section title is shown once, before the first rendered category of that section.
+  let lastShownSectionTitle = '';
+
   return (
-    <ReviewItem>
-      {categories.map((category, categoryIndex) => {
-        // Preserve index stability
-        if (!isVisible(category, data, '', ajv, undefined)) {
-          return null;
-        }
+    <StepperOptionsProvider uischema={uischema}>
+      <ReviewItem>
+        {summaryPageTitle && !jsonForms.readonly && <FormStepperSummaryH3>{summaryPageTitle}</FormStepperSummaryH3>}
+        {categories.map((category, categoryIndex) => {
+          // Preserve index stability
+          if (!isVisible(category, data, '', ajv, undefined)) {
+            return null;
+          }
 
-        const categoryLabel = category.label || category.i18n || 'Unknown Category';
+          const categoryLabel = category.label || category.i18n || 'Unknown Category';
 
-        // Build visible elements list
-        const elementsToRender = category.elements
-          .filter((field) => hasVisibleContent(field))
-          .map((e) => {
-            const layout = e as Layout;
+          const isInTaskList = (cat: Categorization | Category) => cat?.options?.showInTaskList !== false;
 
-            if (rescopeMaps.some((scope) => layout.elements?.map((el) => (el as Scoped).scope).includes(scope))) {
-              return layout.elements;
-            }
+          // Build visible elements list
+          const elementsToRender = category.elements
+            .filter((field) => hasVisibleContent(field))
+            .map((e) => {
+              const layout = e as Layout;
 
-            return e;
-          })
-          .flat();
+              if (rescopeMaps.some((scope) => layout.elements?.map((el) => (el as Scoped).scope).includes(scope))) {
+                return layout.elements;
+              }
 
-        // Do not render empty categories
-        if (elementsToRender.length === 0) {
-          return null;
-        }
+              return e;
+            })
+            .flat();
 
-        return (
-          <ReviewItemSection
-            key={categoryIndex}
-            className="jsonforms-table-review-section"
-            id={`jsonforms-table-review-section-${categoryIndex}`}
-          >
-            <ReviewItemHeader>
-              <ReviewItemTitle>{categoryLabel}</ReviewItemTitle>
-            </ReviewItemHeader>
+          // Do not render empty categories or showInTaskList is false
+          if (elementsToRender.length === 0 || !isInTaskList(category)) {
+            return null;
+          }
 
-            {elementsToRender.map((element, elementIndex) => {
-              const stepperElement = {
-                ...element,
-                options: {
-                  ...element.options,
-                  stepId: categoryIndex,
-                },
-              };
+          //The tasklist can have a parent section title, we want to display if it exists
+          const sectionTitle =
+            category.options?.showInTaskList === true || category.options?.showInTaskList === undefined
+              ? String(category.options?.sectionTitle ?? '').trim()
+              : '';
+          const showSectionTitle = sectionTitle !== '' && sectionTitle !== lastShownSectionTitle;
+          if (showSectionTitle) {
+            lastShownSectionTitle = sectionTitle;
+          }
 
-              return (
-                <GoabTable width="100%" key={elementIndex} mb="m">
-                  <tbody>
-                    <JsonFormsDispatch
-                      data-testid="jsonforms-object-list-defined-elements-dispatch"
-                      schema={schema}
-                      uischema={stepperElement}
-                      enabled={enabled}
-                      renderers={GoABaseTableReviewRenderers}
-                      cells={cells}
-                    />
-                  </tbody>
-                </GoabTable>
-              );
-            })}
-          </ReviewItemSection>
-        );
-      })}
-    </ReviewItem>
+          return (
+            <React.Fragment key={`sectionTitle_${categoryIndex}`}>
+              {showSectionTitle && (
+                <ReviewSectionTitle data-testid={`jsonforms-table-review-section-title-${categoryIndex}`}>
+                  {sectionTitle}
+                </ReviewSectionTitle>
+              )}
+              <ReviewItemSection
+                className="jsonforms-table-review-section"
+                id={`jsonforms-table-review-section-${categoryIndex}`}
+              >
+                <ReviewItemHeader>
+                  <ReviewItemTitle>{categoryLabel}</ReviewItemTitle>
+                </ReviewItemHeader>
+
+                {elementsToRender.map((element, elementIndex) => {
+                  const stepperElement = {
+                    ...element,
+                    options: {
+                      ...element.options,
+                      stepId: categoryIndex,
+                    },
+                  };
+
+                  return (
+                    <GoabTable width="100%" key={elementIndex} mb="m">
+                      <tbody>
+                        <JsonFormsDispatch
+                          data-testid="jsonforms-object-list-defined-elements-dispatch"
+                          schema={schema}
+                          uischema={stepperElement}
+                          enabled={enabled}
+                          renderers={GoABaseTableReviewRenderers}
+                          cells={cells}
+                        />
+                      </tbody>
+                    </GoabTable>
+                  );
+                })}
+              </ReviewItemSection>
+            </React.Fragment>
+          );
+        })}
+      </ReviewItem>
+    </StepperOptionsProvider>
   );
 };
 export const FormStepperReviewControl = withAjvProps(withTranslateProps(withJsonFormsLayoutProps(FormStepperReviewer)));
