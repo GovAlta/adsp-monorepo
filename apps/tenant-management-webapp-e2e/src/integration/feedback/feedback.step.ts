@@ -482,12 +482,12 @@ Then('the user views a feedback list with Date submitted, Page, Rating, Action',
   });
 });
 
-Then('the user views a feedback list of 10 ordered from most recent to oldest', function () {
+Then('the user views a feedback list of 20 ordered from most recent to oldest', function () {
   //Compare submitted on dates in the top 10 records
   feedbackObj.feedbackFeedbackTableSubmittedOnCells().then((elements) => {
-    expect(elements.length).to.eq(10);
+    expect(elements.length).to.eq(20);
     let date1, year1, month1, day1, date2, year2, month2, day2;
-    for (let i = 0; i < 9; i++) {
+    for (let i = 0; i < 19; i++) {
       // Get later date
       cy.log(elements[i].outerText);
       year1 = elements[i].outerText.split(',')[1].trim();
@@ -507,10 +507,6 @@ Then('the user views a feedback list of 10 ordered from most recent to oldest', 
       cy.log(date1 + ' >= ' + date2);
     }
   });
-});
-
-Then('the user views more than 10 feedback records on feedback page', function () {
-  feedbackObj.feedbackFeedbackTableRows().should('have.length.above', 10);
 });
 
 When('the user clicks toggle details icon on the latest feedback', function () {
