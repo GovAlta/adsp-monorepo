@@ -260,6 +260,34 @@ class feedbackPage {
   feedbackFeedbackCollapseViewButtonExpendedView() {
     return cy.xpath('//goa-button[text()="Collapse view"]');
   }
+
+  feedbackPreviousPageButton() {
+    return cy.xpath('//goa-button[@testid="feedback-pagination-previous"]');
+  }
+
+  feedbackNextPageButton() {
+    return cy.xpath('//goa-button[@testid="feedback-pagination-next"]');
+  }
+
+  feedbackPageMessage() {
+    return cy.xpath('//*[@data-testid="feedback-result-count"]');
+  }
+
+  feedbackPageCount() {
+    return cy.xpath('//*[@data-testid="feedback-pagination"]//span[starts-with(., "of ")]');
+  }
+
+  feedbackPageDropdown() {
+    return cy.xpath('//select[@data-testid="feedback-pagination-page"]');
+  }
+
+  feedbackPageSizeDropdown() {
+    return cy.xpath('//goa-dropdown[@testid="feedback-page-size"]');
+  }
+
+  feedbackFeedbackStartDateFilter() {
+    return cy.xpath('//goa-input[@name="feedback-filter-start-date"]');
+  }
 }
 
 export default feedbackPage;
