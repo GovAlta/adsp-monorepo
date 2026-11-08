@@ -28,6 +28,12 @@ export const environment = envalid.cleanEnv(
     AGENT_TOKEN_EXPIRY_THRESHOLD_MS: envalid.num({ default: 30000 }),
     AGENT_LAST_MESSAGES: envalid.num({ default: 20 }),
     AGENT_OBSERVATIONAL_MEMORY: envalid.bool({ default: true }),
+    // Unobserved message tokens at which observational memory summarises older messages (Mastra's default).
+    AGENT_OM_MESSAGE_TOKENS: envalid.num({ default: 30000 }),
+    // Observation tokens at which observational memory condenses its notes (Mastra's default).
+    AGENT_OM_OBSERVATION_TOKENS: envalid.num({ default: 40000 }),
+    // Context window of the configured model, used to show users how much of it a conversation takes up.
+    AGENT_MODEL_CONTEXT_TOKENS: envalid.num({ default: 256000 }),
     AGENT_THREAD_CLEANUP_CRON: envalid.str({ default: '0 * * * *' }),
     AGENT_THREAD_CLEANUP_BATCH_SIZE: envalid.num({ default: 100 }),
     AGENT_JSON_BODY_LIMIT: envalid.str({ default: '50mb' }),

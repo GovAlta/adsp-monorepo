@@ -1,6 +1,6 @@
 import { GoabDetails, GoabFormItem, GoabSkeleton, GoabTextArea, GoabIconButton } from '@abgov/react-components';
 import { GoabTextAreaOnChangeDetail } from '@abgov/ui-components-common';
-import { FunctionComponent, ReactNode, memo, useEffect, useMemo, useRef, useState } from 'react';
+import { Fragment, FunctionComponent, ReactNode, memo, useEffect, useMemo, useRef, useState } from 'react';
 import Markdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import styled from 'styled-components';
@@ -17,6 +17,7 @@ import {
   ResolvedImagePart,
   ResolvedFilePart,
 } from '../types/agent';
+import { describeUsage } from './conversationUsage';
 
 // ========================================
 // Type Definitions
@@ -48,6 +49,10 @@ interface AgentChatProps {
   idleHint?: string;
   deadlineMs?: number;
   deadlineMessage?: string;
+  /** Shows what each finished reply used, when agent-service reports it. */
+  showUsage?: boolean;
+  /** Shown between the messages and the message box, such as the conversation status bar. */
+  status?: ReactNode;
 }
 
 interface UserMessageItemProps {
@@ -183,6 +188,12 @@ const ContainerDiv = styled.div`
 
   & .content[data-from='agent'] {
     margin-right: var(--goa-space-l);
+  }
+
+  & .usage {
+    margin: calc(-1 * var(--goa-space-s)) var(--goa-space-xs) var(--goa-space-m) var(--goa-space-xs);
+    color: var(--goa-color-text-secondary);
+    font-size: var(--goa-font-size-1);
   }
 
   & .content pre,
@@ -622,6 +633,8 @@ export const AgentChat: FunctionComponent<AgentChatProps> = ({
   idleHint,
   deadlineMs,
   deadlineMessage,
+  showUsage,
+  status,
 }) => {
   // State — use internal state when no controlled draft is provided
   const [draftInternal, setDraftInternal] = useState('');
@@ -800,12 +813,18 @@ export const AgentChat: FunctionComponent<AgentChatProps> = ({
             message.from === 'user' ? (
               <UserMessageItem key={message.id} message={message} />
             ) : (
-              <AgentMessageItem
-                key={message.id}
-                message={timedOut && message.from === 'agent' ? { ...message, streaming: false } : message}
-                renderToolCall={renderToolCall}
-                maxJsonChars={maxJsonChars}
-              />
+              <Fragment key={message.id}>
+                <AgentMessageItem
+                  message={timedOut && message.from === 'agent' ? { ...message, streaming: false } : message}
+                  renderToolCall={renderToolCall}
+                  maxJsonChars={maxJsonChars}
+                />
+                {showUsage && !message.streaming && message.usage && (
+                  <div className="usage" data-testid="agent-message-usage">
+                    {describeUsage(message.usage)}
+                  </div>
+                )}
+              </Fragment>
             ),
           )}
           {isWaitingForResponse && !timedOut && (
@@ -830,6 +849,8 @@ export const AgentChat: FunctionComponent<AgentChatProps> = ({
           <div ref={targetElementRef} />
         </div>
       </div>
+
+      {status}
 
       {/* Input form */}
       <FormDiv onPaste={handlePaste}>

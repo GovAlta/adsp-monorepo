@@ -166,6 +166,7 @@ const initializeApp = async (): Promise<express.Application> => {
       tokenProvider,
       serviceId: ACCESS_SERVICE_ID,
       meterProvider,
+      enabled: environment.ACCESS_AUDIT_ENABLED,
     }),
     limiter: new LoginFailureLimiter(logger, environment.ACCESS_AUDIT_LOGIN_FAILURES_PER_MINUTE),
   });

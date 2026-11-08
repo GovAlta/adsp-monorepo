@@ -85,6 +85,7 @@ describe('file router documented behaviour', () => {
         storageProvider: storageProviderMock as never,
         fileRepository: repositoryMock as never,
         eventService: eventServiceMock,
+        auditService: { record: jest.fn() },
       } as never),
     );
     app.use(createErrorHandler(loggerMock));

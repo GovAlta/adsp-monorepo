@@ -1,11 +1,13 @@
 import React from 'react';
 import { fireEvent, render, waitFor } from '@testing-library/react';
+import { useSelector } from 'react-redux';
 import { Solutions } from './solutions';
 import { usePlannerApi } from './api';
 import { Solution } from './model';
 import { download } from './utils';
 
 jest.mock('./api', () => ({ usePlannerApi: jest.fn() }));
+jest.mock('react-redux', () => ({ useSelector: jest.fn() }));
 jest.mock('./utils', () => ({
   ...jest.requireActual('./utils'),
   download: jest.fn(),
@@ -25,6 +27,7 @@ describe('Solutions', () => {
     name,
     scenario: 'new',
     status: 'draft',
+    createdById: 'owner-1',
     createdByName: 'Pat Planner',
     updatedOn: '2026-03-01T10:00:00.000Z',
     version: 1,
@@ -49,6 +52,7 @@ describe('Solutions', () => {
 
   beforeEach(() => {
     (usePlannerApi as jest.Mock).mockReturnValue(api);
+    (useSelector as jest.Mock).mockReturnValue('owner-1');
     api.listSolutions.mockResolvedValue([permitIntake]);
   });
 
@@ -264,6 +268,14 @@ describe('Solutions', () => {
       await waitFor(() => expect(api.deleteSolution).toHaveBeenCalled());
       expect(container.querySelector('goa-modal')?.hasAttribute('open')).toBe(true);
     });
+
+    it('hides delete for a solution owned by someone else', async () => {
+      (useSelector as jest.Mock).mockReturnValue('someone-else');
+      const { container, findByText } = render(<Solutions onSelect={onSelect} />);
+      await findByText('Permit intake');
+
+      expect(container.querySelector('[testid="delete-solution-solution-1"]')).toBeNull();
+    });
   });
 
   describe('search', () => {
@@ -285,7 +297,7 @@ describe('Solutions', () => {
       type(container, 'goa-input[testid="solutions-search"]', 'nothing matches this');
 
       expect(await findByTestId('no-solutions-match')).toBeTruthy();
-      expect(container.querySelector('goa-table')).toBeNull();
+      expect(container.querySelector('goa-table')).not.toBeNull();
     });
   });
 

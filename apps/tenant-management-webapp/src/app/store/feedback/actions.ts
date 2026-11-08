@@ -1,8 +1,18 @@
-import { Feedback, FeedbackMetrics, FeedbackSearchCriteria, FeedbackSite, SelectedSite } from './models';
+import {
+  Feedback,
+  FeedbackMetrics,
+  FeedbackSearchCriteria,
+  FeedbackSite,
+  FeedbackSummary,
+  SelectedSite,
+} from './models';
 
 export const FETCH_FEEDBACKS_ACTION = 'feedback/FETCH_FEEDBACKS_ACTION';
 export const EXPORT_FEEDBACKS_ACTION = 'feedback/EXPORT_FEEDBACKS_ACTION';
 export const FETCH_FEEDBACKS_SUCCESS_ACTION = 'feedback/FETCH_FEEDBACKS_SUCCESS_ACTION';
+export const FETCH_FEEDBACK_SUMMARY_ACTION = 'feedback/FETCH_FEEDBACK_SUMMARY_ACTION';
+export const FETCH_FEEDBACK_SUMMARY_SUCCESS_ACTION = 'feedback/FETCH_FEEDBACK_SUMMARY_SUCCESS_ACTION';
+export const CLEAR_FEEDBACK_SUMMARY_ACTION = 'feedback/CLEAR_FEEDBACK_SUMMARY_ACTION';
 export const EXPORT_FEEDBACKS_SUCCESS_ACTION = 'feedback/EXPORT_FEEDBACKS_SUCCESS_ACTION';
 
 export const FETCH_FEEDBACK_SITES_ACTION = 'feedback/FETCH_FEEDBACK_SITES_ACTION';
@@ -25,19 +35,35 @@ export interface FetchFeedbacksAction {
   type: typeof FETCH_FEEDBACKS_ACTION;
   feedback: FeedbackSite;
   searchCriteria: FeedbackSearchCriteria;
-  next: string;
-  resolve?: (feedbacks: Feedback[]) => void;
+  // One based.
+  page: number;
+  pageSize: number;
+  includeTotal: boolean;
 }
 export interface ExportFeedbacksAction {
   type: typeof EXPORT_FEEDBACKS_ACTION;
   site: SelectedSite;
   searchCriteria: FeedbackSearchCriteria;
 }
+export interface FetchFeedbackSummaryAction {
+  type: typeof FETCH_FEEDBACK_SUMMARY_ACTION;
+  site: string;
+  searchCriteria: FeedbackSearchCriteria;
+}
+export interface FetchFeedbackSummarySuccessAction {
+  type: typeof FETCH_FEEDBACK_SUMMARY_SUCCESS_ACTION;
+  summary: FeedbackSummary;
+}
+export interface ClearFeedbackSummaryAction {
+  type: typeof CLEAR_FEEDBACK_SUMMARY_ACTION;
+}
 export interface FetchFeedbacksSuccessAction {
   type: typeof FETCH_FEEDBACKS_SUCCESS_ACTION;
   payload: Feedback[];
-  after: string;
-  next: string;
+  page: number;
+  pageSize: number;
+  // Only set when the total was requested; paging within the same criteria keeps the previous total.
+  total?: number;
 }
 export interface ExportFeedbacksSuccessAction {
   type: typeof EXPORT_FEEDBACKS_SUCCESS_ACTION;
@@ -91,6 +117,9 @@ export type FeedbackActionTypes =
   | FetchFeedbacksAction
   | FetchFeedbacksSuccessAction
   | ExportFeedbacksSuccessAction
+  | FetchFeedbackSummaryAction
+  | FetchFeedbackSummarySuccessAction
+  | ClearFeedbackSummaryAction
   | FetchFeedbackSitesAction
   | FetchFeedbackSitesSuccessAction
   | UpdateFeedbackSiteAction
@@ -105,33 +134,56 @@ export type FeedbackActionTypes =
 export const getFeedbacks = (
   payload: FeedbackSite,
   searchCriteria: FeedbackSearchCriteria,
-  next?: string,
-  resolve?: (feedbacks: Feedback[]) => void
+  page: number,
+  pageSize: number,
+  includeTotal = false,
 ): FetchFeedbacksAction => ({
   type: FETCH_FEEDBACKS_ACTION,
   feedback: payload,
   searchCriteria,
-  next,
-  resolve,
+  page,
+  pageSize,
+  includeTotal,
 });
 export const exportFeedbacks = (
   payload: SelectedSite,
-  searchCriteria: FeedbackSearchCriteria
+  searchCriteria: FeedbackSearchCriteria,
 ): ExportFeedbacksAction => ({
   type: EXPORT_FEEDBACKS_ACTION,
   site: payload,
   searchCriteria,
 });
 
-export const getFeedbacksSuccess = (results: Feedback[], after: string, next: string): FetchFeedbacksSuccessAction => ({
+export const getFeedbacksSuccess = (
+  results: Feedback[],
+  page: number,
+  pageSize: number,
+  total?: number,
+): FetchFeedbacksSuccessAction => ({
   type: FETCH_FEEDBACKS_SUCCESS_ACTION,
   payload: results,
-  after,
-  next,
+  page,
+  pageSize,
+  total,
 });
 export const exportFeedbacksSuccess = (exportData?: Feedback[]): ExportFeedbacksSuccessAction => ({
   type: EXPORT_FEEDBACKS_SUCCESS_ACTION,
   exportData,
+});
+export const getFeedbackSummary = (
+  site: string,
+  searchCriteria: FeedbackSearchCriteria,
+): FetchFeedbackSummaryAction => ({
+  type: FETCH_FEEDBACK_SUMMARY_ACTION,
+  site,
+  searchCriteria,
+});
+export const getFeedbackSummarySuccess = (summary: FeedbackSummary): FetchFeedbackSummarySuccessAction => ({
+  type: FETCH_FEEDBACK_SUMMARY_SUCCESS_ACTION,
+  summary,
+});
+export const clearFeedbackSummary = (): ClearFeedbackSummaryAction => ({
+  type: CLEAR_FEEDBACK_SUMMARY_ACTION,
 });
 export const getFeedbackSites = (): FetchFeedbackSitesAction => ({
   type: FETCH_FEEDBACK_SITES_ACTION,
@@ -174,7 +226,7 @@ export const fetchFeedbackMetricsMonthlyChange = (): FetchFeedbackMetricsMonthly
 });
 
 export const fetchFeedbackMetricsMonthlyChangeSuccess = (
-  metrics: FeedbackMetrics
+  metrics: FeedbackMetrics,
 ): FetchFeedbackMetricsMonthlyChangeSuccessAction => ({
   type: FETCH_FEEDBACK_METRICS_MONTHLY_CHANGE_SUCCESS_ACTION,
   metrics,

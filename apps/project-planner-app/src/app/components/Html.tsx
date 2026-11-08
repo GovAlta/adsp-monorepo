@@ -12,7 +12,7 @@ const Page = styled.div<PagePros>`
   }
   background: #fbfcfe;
   padding: 0 3rem;
-  margin-top: 9px;
+  margin-top: var(--goa-space-l, 1.5rem);
 `;
 
 const Main = styled.main`
@@ -63,7 +63,8 @@ const Main = styled.main`
   }
 
   // default padding is way too much
-  ul {
+  ul,
+  ol {
     padding-left: 1rem;
   }
 

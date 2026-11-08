@@ -12,6 +12,7 @@ import {
   sendFeedback,
   readValues,
   getSites,
+  readSummary,
 } from './router';
 import { ServiceRoles } from './roles';
 import { ValueService } from './value';
@@ -39,6 +40,7 @@ describe('router', () => {
   const valueServiceMock = {
     writeValue: jest.fn(),
     readValues: jest.fn(),
+    readSummary: jest.fn(),
   };
 
   const feedbackSiteServiceMock = {
@@ -54,6 +56,7 @@ describe('router', () => {
     queueServiceMock.enqueue.mockReset();
     valueServiceMock.writeValue.mockReset();
     valueServiceMock.readValues.mockReset();
+    valueServiceMock.readSummary.mockReset();
     feedbackSiteServiceMock.getAllSites.mockReset();
     feedbackSiteServiceMock.countAllSites.mockReset();
     feedbackSiteServiceMock.getTenantSites.mockReset();
@@ -77,7 +80,7 @@ describe('router', () => {
     it('can create handler', () => {
       const handler = resolveFeedbackContext(
         tenantServiceMock as unknown as TenantService,
-        jest.fn() as unknown as RateLimitRequestHandler
+        jest.fn() as unknown as RateLimitRequestHandler,
       );
       expect(handler).toBeTruthy();
     });
@@ -96,7 +99,7 @@ describe('router', () => {
       tenantServiceMock.getTenant.mockResolvedValueOnce({ id: tenantId });
       const handler = resolveFeedbackContext(
         tenantServiceMock as unknown as TenantService,
-        jest.fn() as unknown as RateLimitRequestHandler
+        jest.fn() as unknown as RateLimitRequestHandler,
       );
       await handler(req as Request, res as Response, next);
       expect(next).toHaveBeenCalledWith();
@@ -118,7 +121,7 @@ describe('router', () => {
       tenantServiceMock.getTenantByName.mockResolvedValueOnce({ id: tenantId });
       const handler = resolveFeedbackContext(
         tenantServiceMock as unknown as TenantService,
-        jest.fn() as unknown as RateLimitRequestHandler
+        jest.fn() as unknown as RateLimitRequestHandler,
       );
       await handler(req as Request, res as Response, next);
       expect(next).toHaveBeenCalledWith();
@@ -139,7 +142,7 @@ describe('router', () => {
 
       const handler = resolveFeedbackContext(
         tenantServiceMock as unknown as TenantService,
-        jest.fn() as unknown as RateLimitRequestHandler
+        jest.fn() as unknown as RateLimitRequestHandler,
       );
       await handler(req as Request, res as Response, next);
       expect(next).toHaveBeenCalledWith();
@@ -158,7 +161,7 @@ describe('router', () => {
 
       const handler = resolveFeedbackContext(
         tenantServiceMock as unknown as TenantService,
-        jest.fn() as unknown as RateLimitRequestHandler
+        jest.fn() as unknown as RateLimitRequestHandler,
       );
       await handler(req as Request, res as Response, next);
       expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedUserError));
@@ -176,7 +179,7 @@ describe('router', () => {
       tenantServiceMock.getTenant.mockResolvedValueOnce({ id: tenantId });
       const handler = resolveFeedbackContext(
         tenantServiceMock as unknown as TenantService,
-        jest.fn() as unknown as RateLimitRequestHandler
+        jest.fn() as unknown as RateLimitRequestHandler,
       );
       await handler(req as Request, res as Response, next);
       expect(next).toHaveBeenCalledWith(expect.any(InvalidOperationError));
@@ -196,7 +199,7 @@ describe('router', () => {
       tenantServiceMock.getTenant.mockResolvedValueOnce({ id: tenantId });
       const handler = resolveFeedbackContext(
         tenantServiceMock as unknown as TenantService,
-        rateLimitHandler as unknown as RateLimitRequestHandler
+        rateLimitHandler as unknown as RateLimitRequestHandler,
       );
       await handler(req as Request, res as Response, next);
       expect(rateLimitHandler).toHaveBeenCalledWith(req, res, next);
@@ -237,7 +240,7 @@ describe('router', () => {
           timestamp: expect.any(String),
           digest: expect.any(String),
           feedback: expect.objectContaining(req.body),
-        })
+        }),
       );
     });
 
@@ -270,7 +273,7 @@ describe('router', () => {
           timestamp: expect.any(String),
           digest: expect.any(String),
           feedback: expect.objectContaining(req.body),
-        })
+        }),
       );
     });
 
@@ -505,6 +508,55 @@ describe('router', () => {
     });
   });
 
+  describe('getFeedbackSummary', () => {
+    it('reads a tenant-scoped summary with the requested filters', async () => {
+      const req = {
+        tenant: { id: tenantId },
+        user: { tenantId, id: 'tester', roles: [ServiceRoles.FeedbackReader] },
+        query: {
+          site: 'http://test.org',
+          start: '2025-06-01T00:00:00.000Z',
+          end: '2025-06-30T23:59:59.999Z',
+        },
+      };
+      const res = { json: jest.fn() };
+      const next = jest.fn();
+      const summary = {
+        totalResponses: 12,
+        averageRating: 3.8,
+        responsesWithComments: 5,
+        responsesWithIssues: 2,
+      };
+      valueServiceMock.readSummary.mockResolvedValueOnce(summary);
+
+      const handler = readSummary(valueServiceMock as unknown as ValueService);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      expect(valueServiceMock.readSummary).toHaveBeenCalledWith(tenantId, {
+        site: 'http://test.org',
+        start: '2025-06-01T00:00:00.000Z',
+        end: '2025-06-30T23:59:59.999Z',
+      });
+      expect(res.json).toHaveBeenCalledWith(summary);
+    });
+
+    it('rejects a user without the feedback reader role', async () => {
+      const req = {
+        tenant: { id: tenantId },
+        user: { tenantId, id: 'tester', roles: [] },
+        query: { site: 'http://test.org' },
+      };
+      const res = { json: jest.fn() };
+      const next = jest.fn();
+
+      const handler = readSummary(valueServiceMock as unknown as ValueService);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      expect(valueServiceMock.readSummary).not.toHaveBeenCalled();
+      expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedError));
+    });
+  });
+
   describe('get feedback sites', () => {
     it('can get feedback sites', async () => {
       const req = {
@@ -602,7 +654,7 @@ describe('router', () => {
           after: undefined,
           start: undefined,
           end: undefined,
-        })
+        }),
       );
       expect(res.json).toHaveBeenCalledWith(['feedback-for-another-tenant']);
     });

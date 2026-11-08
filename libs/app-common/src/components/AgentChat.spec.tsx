@@ -250,4 +250,68 @@ describe('AgentChat', () => {
       expect(onSend).toHaveBeenCalledWith('thread-1', {}, [{ type: 'text', text: '/' }]);
     });
   });
+
+  describe('reply usage', () => {
+    const finishedReply: AgentMessage = {
+      id: 'agent-1',
+      threadId: 'thread-1',
+      from: 'agent',
+      streaming: false,
+      content: 'The core realm has three clients.',
+      toolCalls: [],
+      usage: {
+        contextTokens: 36000,
+        contextWindowTokens: 256000,
+        totalTokens: 111000,
+        outputTokens: 1400,
+        modelCalls: 3,
+      },
+    };
+
+    function renderWithUsage(message: AgentMessage, showUsage: boolean) {
+      return render(
+        <AgentChat threadId="thread-1" context={{}} messages={[message]} onSend={jest.fn()} showUsage={showUsage} />,
+      );
+    }
+
+    it('shows what a finished reply used when asked to', () => {
+      // Act
+      renderWithUsage(finishedReply, true);
+
+      // Assert
+      expect(screen.getByTestId('agent-message-usage')).toHaveTextContent('About 111k tokens · 3 model calls');
+    });
+
+    it('leaves usage out unless asked to show it', () => {
+      // Act
+      renderWithUsage(finishedReply, false);
+
+      // Assert
+      expect(screen.queryByTestId('agent-message-usage')).not.toBeInTheDocument();
+    });
+
+    it('leaves usage out while the reply is still streaming', () => {
+      // Act
+      renderWithUsage({ ...finishedReply, streaming: true }, true);
+
+      // Assert
+      expect(screen.queryByTestId('agent-message-usage')).not.toBeInTheDocument();
+    });
+  });
+
+  it('shows the status it is given above the message box', () => {
+    // Act
+    render(
+      <AgentChat
+        threadId="thread-1"
+        context={{}}
+        messages={[]}
+        onSend={jest.fn()}
+        status={<div data-testid="chat-status">Context 14%</div>}
+      />,
+    );
+
+    // Assert
+    expect(screen.getByTestId('chat-status')).toHaveTextContent('Context 14%');
+  });
 });

@@ -1,5 +1,6 @@
 import { AgentMessage, ToolCall } from '@core-services/app-common';
 import {
+  AGENT_CONVERSATION_STATUS_ACTION,
   AGENT_RESPONSE_ACTION,
   AgentActionTypes,
   AgentResponseAction,
@@ -36,6 +37,7 @@ const defaultState: AgentState = {
   threads: {},
   threadMessages: {},
   messages: {},
+  conversationStatus: {},
   availableTools: [
     {
       id: 'fileDownloadTool',
@@ -183,6 +185,7 @@ function processResponseChunk(
       streaming: false,
       content: message.content?.trim().length ? message.content : fallbackText,
       output: action.output ?? message.output,
+      ...(action.usage ? { usage: action.usage } : {}),
     };
   }
 
@@ -394,13 +397,25 @@ export default function (state: AgentState = defaultState, action: AgentActionTy
       delete newThreadMessages[action.threadId];
       const newThreads = { ...state.threads };
       delete newThreads[action.threadId];
+      const newConversationStatus = { ...state.conversationStatus };
+      delete newConversationStatus[action.threadId];
       return {
         ...state,
         threads: newThreads,
         threadMessages: newThreadMessages,
         messages: newMessages,
+        conversationStatus: newConversationStatus,
       };
     }
+    case AGENT_CONVERSATION_STATUS_ACTION:
+      // A status can arrive after the user reset the chat; ignore it for threads no longer tracked.
+      if (!state.threads[action.threadId]) {
+        return state;
+      }
+      return {
+        ...state,
+        conversationStatus: { ...state.conversationStatus, [action.threadId]: action.status },
+      };
     case MESSAGE_AGENT_ACTION:
       return {
         ...state,

@@ -1,6 +1,7 @@
 import { MAX_INCREMENT_CONTROLS, MAX_INCREMENT_JSON_BYTES, MAX_INCREMENT_PROPERTIES } from '../increment/limits';
 import type { DocumentOutline } from '../../../../utils/documentOutline';
 import type { GenerationLog } from '../run/log';
+import { recordGenerateUsage, type UsageRecorder } from '../../../../model/conversationUsage';
 import type { GenerationAgents } from './agents';
 import { generationCallOptions } from './agents';
 import { stepSourceText } from '../run/sourceDocuments';
@@ -27,6 +28,7 @@ export interface GenerateStepInput {
   previousErrors?: string[];
   abortSignal?: AbortSignal;
   log: GenerationLog;
+  usage?: UsageRecorder;
 }
 
 export async function generateStepPayload({
@@ -38,13 +40,14 @@ export async function generateStepPayload({
   previousErrors,
   abortSignal,
   log,
+  usage,
 }: GenerateStepInput): Promise<IncrementPayload> {
   const isBranch = step.type === 'branch';
   const builder = isBranch ? agents.branchStepBuilder : agents.categoryStepBuilder;
   const prompt = buildStepPrompt({ plan, step, documents, context, previousErrors });
   log.record('step-prompt', { index: step.index, stepType: step.type, label: step.label, prompt });
 
-  const { object } = await builder.generate(prompt, {
+  const result = await builder.generate(prompt, {
     ...generationCallOptions(abortSignal, 'step'),
     structuredOutput: {
       schema: isBranch ? branchIncrementSchema : categoryIncrementSchema,
@@ -52,8 +55,9 @@ export async function generateStepPayload({
       jsonPromptInjection: 'system',
     },
   });
+  recordGenerateUsage(usage, result);
 
-  const payload = object as IncrementPayload;
+  const payload = result.object as IncrementPayload;
 
   log.record('step-payload', { index: step.index, stepType: step.type, label: step.label, payload });
 

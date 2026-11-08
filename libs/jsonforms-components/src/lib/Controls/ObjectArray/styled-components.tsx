@@ -84,6 +84,12 @@ export const RowFlex = styled.div`
   margin: 1.5rem 0 1.5rem 0;
 
   align-items: flex-start;
+
+  /* The list and detail panes need more room than a phone has, so they stack. */
+  @media (max-width: 639px) {
+    flex-direction: column;
+    align-items: stretch;
+  }
 `;
 
 export const RowFlexMenuMain = styled.div`
@@ -125,6 +131,10 @@ export const FlexTabs = styled.div`
   flex-direction: column;
   flex: 1;
   overflow-y: auto !important;
+
+  @media (max-width: 639px) {
+    flex: none;
+  }
 `;
 export const FlexTabsWithMargin = styled.div`
   flex-direction: column;
@@ -134,6 +144,14 @@ export const FlexTabsWithMargin = styled.div`
 
   flex-shrink: 1;
   // max-height: 500px;
+
+  /* height overrides the desktop height ListWithDetailControl sets to match the detail pane. */
+  @media (max-width: 639px) {
+    flex: none;
+    height: auto !important;
+    margin-right: 0;
+    margin-bottom: var(--goa-space-m);
+  }
 `;
 
 export const FlexForm = styled.div`
@@ -141,6 +159,11 @@ export const FlexForm = styled.div`
   flex: 3;
   flex-shrink: 0;
   overflow-y: visible;
+
+  @media (max-width: 639px) {
+    flex: none;
+    min-width: 0;
+  }
 `;
 
 export const TabName = styled.div`
@@ -167,6 +190,11 @@ export const UpdateListContainer = styled.div`
   width: 100%;
   border: 1px solid #dcdcdc;
   padding: var(--goa-space-xl);
+
+  @media (max-width: 639px) {
+    box-sizing: border-box;
+    padding: var(--goa-space-m);
+  }
 `;
 
 export const CompleteContainer = styled.div`
@@ -237,6 +265,11 @@ export const IconsContainer = styled.div`
   justify-content: flex-end;
   gap: var(--goa-space-xs);
   padding-bottom: var(--goa-space-xs);
+`;
+
+/* A row of inputs can't wrap, so a wide table scrolls here rather than widening the form. */
+export const TableScrollContainer = styled.div`
+  overflow-x: auto;
 `;
 
 export const TableContentContainer = styled.div`
