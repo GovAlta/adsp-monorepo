@@ -112,7 +112,7 @@ Solution records use `{ type: 'solution', id: <solution ID>, name: <solution nam
 
 Routine reads by the solution owner (listing and reading solutions, patterns, specialists, chats and versions) are not audited, and neither is a `planner-admin` listing the solutions of the tenant. Solution updates are not recorded as separate actions; they are covered by the `solution-updated` event. Patterns defined in the `patterns` configuration are managed in the [configuration service](configuration-service.md), which records those changes in the `configuration-service` namespace. Denied and failed operations are not recorded.
 
-Records are sent after the operation succeeds and the response is sent. Audit failures are logged and do not fail the request. The project planner service account requires the `audit-writer` role of `urn:ads:platform:audit-service`.
+Records are sent after the operation succeeds and the response is sent. Audit failures are logged and do not fail the request. On shutdown, the service waits for in-flight requests to complete and delivers the audit records still being sent before exiting. The project planner service account requires the `audit-writer` role of `urn:ads:platform:audit-service`.
 
 Audit recording is on by default. Set the environment variable `PROJECT_PLANNER_AUDIT_ENABLED=false` on project planner service to turn it off, or `true` to turn it on regardless of the SDK `AUDIT_ENABLED` variable, which applies when `PROJECT_PLANNER_AUDIT_ENABLED` is not set. The action catalog is still registered while recording is off, so turning it back on needs only a restart.
 
