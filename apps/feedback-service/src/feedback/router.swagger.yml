@@ -1,5 +1,40 @@
 components:
+  parameters:
+    FeedbackTenantId:
+      name: tenantId
+      description: >
+        ID of the tenant to act on. Only used for core (platform) users; tenant users always act on the tenant of their
+        token and this parameter is ignored.
+      in: query
+      required: false
+      schema:
+        type: string
+      example: urn:ads:platform:tenant-service:v2:/tenants/61f2e3a8c9b1d2e3f4a5b6c7
+  responses:
+    FeedbackBadRequest:
+      description: Request is invalid, for example a query or body parameter failed validation.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/FeedbackError'
+          example:
+            errorMessage: 'Validation failed with error(s): rating (body) - Invalid value'
+    FeedbackUnauthorized:
+      description: >
+        Request does not include a valid bearer token, or the user does not have the role required for the operation.
+        Role checks in this API respond with 401 rather than 403.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/FeedbackError'
+          example:
+            errorMessage: User not authorized to read feedback
   schemas:
+    FeedbackError:
+      type: object
+      properties:
+        errorMessage:
+          type: string
     FeedbackEntry:
       type: object
       properties:
@@ -20,6 +55,7 @@ components:
               type: string
             digest:
               type: string
+              description: SHA-256 digest of the feedback content, used to detect duplicate submissions.
             includesComment:
               type: boolean
             includesTechnicalIssue:
@@ -33,13 +69,32 @@ components:
               enum: [terrible, bad, neutral, good, delightful]
             comment:
               type: string
+              nullable: true
+              description: Comment, with personally identifiable information removed.
             ratingValue:
               type: number
-              example: 5
+              description: Rating as a number, from 1 (terrible) to 5 (delightful).
+              example: 4
             technicalIssue:
               type: string
-          required: [rating, comment, ratingValue]
-      required: [tenant, timestamp, context, value]
+              nullable: true
+              description: Technical issue, with personally identifiable information removed.
+          required: [rating, ratingValue]
+      required: [timestamp, context, value]
+      example:
+        timestamp: '2026-10-01T15:04:05.000Z'
+        correlationId: application-1234
+        context:
+          site: https://my-application.alberta.ca
+          view: /apply
+          digest: 3f79bb7b435b05321651daefd374cdc681dc06faa65e374e38337b88ca046dea
+          includesComment: true
+          includesTechnicalIssue: false
+        value:
+          rating: good
+          ratingValue: 4
+          comment: The form was easy to complete.
+          technicalIssue: null
     FeedbackResponse:
       type: object
       properties:
@@ -54,8 +109,27 @@ components:
               type: string
             next:
               type: string
+              description: Cursor for the next page. Pass it as `after` to read the next page.
             size:
               type: number
+      example:
+        feedback:
+          - timestamp: '2026-10-01T15:04:05.000Z'
+            correlationId: application-1234
+            context:
+              site: https://my-application.alberta.ca
+              view: /apply
+              digest: 3f79bb7b435b05321651daefd374cdc681dc06faa65e374e38337b88ca046dea
+              includesComment: true
+              includesTechnicalIssue: false
+            value:
+              rating: good
+              ratingValue: 4
+              comment: The form was easy to complete.
+              technicalIssue: null
+        page:
+          next: MTA=
+          size: 1
     FeedbackSummary:
       type: object
       properties:
@@ -65,6 +139,7 @@ components:
         averageRating:
           type: number
           nullable: true
+          description: Average rating value from 1 to 5, or null if there are no responses.
           example: 3.8
         responsesWithComments:
           type: number
@@ -73,12 +148,27 @@ components:
           type: number
           example: 21
       required: [totalResponses, averageRating, responsesWithComments, responsesWithIssues]
+      example:
+        totalResponses: 247
+        averageRating: 3.8
+        responsesWithComments: 38
+        responsesWithIssues: 21
 
 /feedback/v1/feedback:
   post:
     tags:
       - Feedback
-    description: Send feedback
+    description: >
+      Send feedback for a site of a tenant. Feedback is queued, has personally identifiable information removed from
+      its text, and is then written to the value service.
+
+
+      Authenticated users act on the tenant of their token and require the feedback-provider role. Anonymous requests
+      (without a bearer token) set the tenant in the body, are only accepted for sites configured with
+      allowAnonymous, and are rate limited to 5 requests per 5 minutes.
+    security:
+      - {}
+      - accessToken: []
     requestBody:
       required: true
       content:
@@ -88,66 +178,145 @@ components:
             properties:
               tenant:
                 type: string
+                nullable: true
+                minLength: 1
+                maxLength: 100
+                description: >
+                  Name or ID (URN) of the tenant. Required for anonymous requests; ignored when the request has a
+                  tenant context from the bearer token.
               context:
                 type: object
                 properties:
                   site:
                     type: string
+                    minLength: 1
+                    maxLength: 100
+                    description: URL of the site, matching a site in the tenant's feedback configuration.
                   view:
                     type: string
+                    minLength: 1
+                    maxLength: 500
+                    description: Path of the view. If the site configures views, it must be one of them.
                   correlationId:
                     type: string
+                    nullable: true
+                    minLength: 1
+                    maxLength: 500
+                    description: ID to correlate the feedback with, for example an application number.
                 required: [site, view]
               rating:
                 type: string
                 enum: [terrible, bad, neutral, good, delightful]
               comment:
                 type: string
-            required: [context, rating, comment]
+                nullable: true
+                minLength: 1
+                maxLength: 2000
+              technicalIssue:
+                type: string
+                nullable: true
+                minLength: 1
+                maxLength: 2000
+            required: [context, rating]
+          examples:
+            anonymous:
+              summary: Anonymous feedback on a site that allows it
+              value:
+                tenant: My Tenant
+                context:
+                  site: https://my-application.alberta.ca
+                  view: /apply
+                rating: good
+                comment: The form was easy to complete.
+            authenticated:
+              summary: Feedback from a user with the feedback-provider role
+              value:
+                context:
+                  site: https://my-application.alberta.ca
+                  view: /apply
+                  correlationId: application-1234
+                rating: bad
+                technicalIssue: The page took a long time to load.
     responses:
       200:
-        description: Feedback successfully sent.
+        description: Feedback received and queued for processing.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                sent:
+                  type: boolean
+            example:
+              sent: true
       400:
-        description: Request is not valid.
+        description: >
+          Request is invalid: a body parameter failed validation, there is no tenant context, the site isn't
+          configured for the tenant, or the view isn't one of the site's views.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FeedbackError'
+            example:
+              errorMessage: Site configuration for feedback context not found.
       401:
-        description: User is not authorized to send feedback.
+        description: Request is anonymous, and the site does not allow anonymous feedback.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FeedbackError'
+            example:
+              errorMessage: Site https://my-application.alberta.ca requires user context for feedback.
+      403:
+        description: Authenticated user does not have the feedback-provider role in the tenant.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FeedbackError'
+            example:
+              errorMessage: 'User Test User (ID: 1234) not permitted to provide feedback.'
       429:
-        description: Too many requests received from client.
+        description: Too many anonymous requests from the client; limited to 5 requests per 5 minutes.
   get:
     tags:
       - Feedback
-    description: Retrieves feedback submitted by users over the specified time period
+    description: >
+      Retrieves feedback submitted for the tenant, newest first. Requires the feedback-reader role. Core users with the
+      role can read the feedback of a tenant by setting tenantId, or of all tenants by leaving it out.
     parameters:
+      - $ref: '#/components/parameters/FeedbackTenantId'
       - name: site
-        description: Name of site for which to retrieve feedback entries
+        description: Site for which to retrieve feedback entries.
         in: query
         required: false
         schema:
           type: string
           example: https://adsp.alberta.ca
       - name: start
-        description: Return only feedback entered after the start data
+        description: Return only feedback entered on or after this timestamp.
         in: query
         required: false
         schema:
           type: string
+          format: date-time
           example: 2023-01-01T00:00:00Z
       - name: end
-        description: Return only feedback entered before the end date
+        description: Return only feedback entered on or before this timestamp.
         in: query
         required: false
         schema:
           type: string
-          example: 2023-01-01T00:00:00Z
+          format: date-time
+          example: 2023-01-31T00:00:00Z
       - name: top
-        description: Return only the first top entries
+        description: Number of entries to return. Defaults to 10.
         in: query
         required: false
         schema:
           type: number
           example: 50
       - name: after
-        description: Cursor for retrieving additional pages.
+        description: Cursor for retrieving additional pages, from page.next of the previous response.
         in: query
         required: false
         schema:
@@ -161,22 +330,31 @@ components:
             schema:
               $ref: '#/components/schemas/FeedbackResponse'
       400:
-        description: Request is not valid.
+        description: tenantId is not a valid tenant URN.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FeedbackError'
       401:
-        description: User not authorized to request feedback entries.
+        $ref: '#/components/responses/FeedbackUnauthorized'
 
 /feedback/v1/feedback/summary:
   get:
     tags:
       - Feedback
-    description: Summarizes all feedback matching a site and optional time period.
+    description: >
+      Summarizes the feedback of the tenant for a site and optional time period. Requires the feedback-reader role.
+      Core users must set tenantId.
     parameters:
+      - $ref: '#/components/parameters/FeedbackTenantId'
       - name: site
         description: Site for which to summarize feedback entries.
         in: query
         required: true
         schema:
           type: string
+          minLength: 1
+          maxLength: 100
           example: https://adsp.alberta.ca
       - name: start
         description: Include feedback entered on or after this timestamp.
@@ -185,6 +363,7 @@ components:
         schema:
           type: string
           format: date-time
+          example: 2023-01-01T00:00:00Z
       - name: end
         description: Include feedback entered on or before this timestamp.
         in: query
@@ -192,6 +371,7 @@ components:
         schema:
           type: string
           format: date-time
+          example: 2023-01-31T00:00:00Z
     responses:
       200:
         description: Feedback summary successfully retrieved.
@@ -200,26 +380,95 @@ components:
             schema:
               $ref: '#/components/schemas/FeedbackSummary'
       400:
-        description: Request is not valid.
+        $ref: '#/components/responses/FeedbackBadRequest'
       401:
-        description: User not authorized to request a feedback summary.
+        $ref: '#/components/responses/FeedbackUnauthorized'
+
+/feedback/v1/sites:
+  get:
+    tags:
+      - Feedback
+    description: >
+      Lists the URLs of configured feedback sites, or counts them, across all tenants or for one tenant. Intended for
+      core users with the feedback-reader role, for example to report platform usage.
+    parameters:
+      - name: tenant
+        description: Name of the tenant to list sites for. Lists the sites of all tenants if not set.
+        in: query
+        required: false
+        schema:
+          type: string
+          example: my-tenant
+      - name: count
+        description: >
+          If true, return the number of sites instead of their URLs. The count is returned as a number when tenant is
+          set, and as an object with a count property when it isn't.
+        in: query
+        required: false
+        schema:
+          type: boolean
+    responses:
+      200:
+        description: Sites, or the number of sites.
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - type: array
+                  items:
+                    type: string
+                - type: number
+                - type: object
+                  properties:
+                    count:
+                      type: number
+            examples:
+              sites:
+                summary: Site URLs
+                value:
+                  - https://my-application.alberta.ca
+                  - https://other-application.alberta.ca
+              tenantCount:
+                summary: Number of sites of a tenant (count=true and tenant set)
+                value: 2
+              allCount:
+                summary: Number of sites of all tenants (count=true)
+                value:
+                  count: 42
+      400:
+        description: The tenant was not found.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FeedbackError'
+            example:
+              errorMessage: "Tenant 'my-tenant' not found."
+      401:
+        $ref: '#/components/responses/FeedbackUnauthorized'
 
 /feedback/v1/script/adspFeedback.js:
   get:
     tags:
       - Feedback
-    description: Retrieves feedback widget script which can inject a feedback widget to use with this API.
+    description: >
+      Retrieves the feedback widget script, which injects a feedback widget that uses this API. Anonymous access is
+      allowed. The response is cacheable for 10 days.
+    security:
+      - {}
     responses:
       200:
         description: Script successfully retrieved.
         content:
-          application/javascript: {}
+          text/javascript: {}
 
 /feedback/v1/script/integrity:
   get:
     tags:
       - Feedback
-    description: Retrieves feedback widget script digest for Subresource integrity (SRI).
+    description: >
+      Retrieves the digest of the feedback widget script, for Subresource Integrity (SRI). Anonymous access is allowed.
+    security:
+      - {}
     responses:
       200:
         description: Script digest successfully retrieved.
@@ -230,3 +479,5 @@ components:
               properties:
                 integrity:
                   type: string
+            example:
+              integrity: sha256-47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU=
