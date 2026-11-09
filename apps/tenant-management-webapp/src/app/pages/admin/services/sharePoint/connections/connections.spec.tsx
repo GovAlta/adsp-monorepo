@@ -4,7 +4,11 @@ import configureStore from 'redux-mock-store';
 import { act, render } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { SESSION_INIT } from '@store/session/models';
-import { fetchSharepointConfiguration, fetchSharepointCredentialStatus } from '@store/sharePoint/actions';
+import {
+  deleteSharepointConnection,
+  fetchSharepointConfiguration,
+  fetchSharepointCredentialStatus,
+} from '@store/sharePoint/actions';
 import { ConnectionsView } from './connectionsView';
 import { ConnectionModal } from './connectionModal';
 
@@ -30,6 +34,41 @@ describe('ConnectionsView', () => {
       </Provider>,
     );
     expect(store.getActions()).toEqual([fetchSharepointConfiguration()]);
+  });
+
+  it('names the destinations that stop working, then deletes the connection', () => {
+    const destination = (id: string, name: string, connectionId: string) => ({
+      id,
+      name,
+      connectionId,
+      listId: 'list-1',
+      fieldMappings: [],
+    });
+    const store = configureStore([])({
+      sharepoint: {
+        connections: { a: connection('a'), b: connection('b') },
+        destinations: { intake: destination('intake', 'HR intake', 'a'), log: destination('log', 'HR log', 'b') },
+        credentialStatus: {},
+        testResults: {},
+      },
+      session: SESSION_INIT,
+    });
+    const { baseElement } = render(
+      <Provider store={store}>
+        <ConnectionsView />
+      </Provider>,
+    );
+
+    act(() => {
+      baseElement.querySelector('goa-icon-button[testid="connection-delete-a"]').dispatchEvent(new CustomEvent('_click'));
+    });
+    const confirmation = baseElement.querySelector('goa-modal[testid="delete-confirmation"]');
+    expect(confirmation).toHaveTextContent('These destinations use this connection and will stop working: HR intake.');
+
+    act(() => {
+      confirmation.querySelector('goa-button[testid="delete-confirm"]').dispatchEvent(new CustomEvent('_click'));
+    });
+    expect(store.getActions()).toContainEqual(deleteSharepointConnection('a'));
   });
 });
 
