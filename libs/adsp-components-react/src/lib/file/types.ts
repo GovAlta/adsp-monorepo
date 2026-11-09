@@ -1,6 +1,6 @@
 // clean-code-ignore: RULE-19 (types only; no runtime code to test)
 import type { ReactElement } from 'react';
-import type {
+import type { // clean-code-ignore: RULE-19 (types only; no runtime code to test)
   AdspComponentThemeOverrides,
   FileMetadata,
   IFileClient,

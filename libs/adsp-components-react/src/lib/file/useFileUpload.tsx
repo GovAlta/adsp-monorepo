@@ -58,6 +58,8 @@ export function useFileUpload(
   const [reloadCount, setReloadCount] = useState(0);
 
   const active = useRef<AbortController | null>(null);
+  // The File Type uploads may go to: set only once it has loaded for the current client and fileTypeId.
+  const loadedType = useRef<string | null>(null);
   const onUploadRef = useRef(onUpload);
   onUploadRef.current = onUpload;
 
@@ -69,6 +71,7 @@ export function useFileUpload(
   // A new client or File Type starts over; an upload to the old one is cancelled rather than reported against the new.
   useEffect(() => {
     stop();
+    loadedType.current = null;
     setFileType(null);
     setError(null);
     setStatus('idle');
@@ -87,6 +90,7 @@ export function useFileUpload(
       .getFileType(fileTypeId)
       .then((type) => {
         if (current) {
+          loadedType.current = fileTypeId;
           setFileType(type);
         }
       })
@@ -109,9 +113,24 @@ export function useFileUpload(
   // Unmounting cancels an upload in progress.
   useEffect(() => stop, [stop]);
 
+  // A file being uploaded for one record must not be reported against the next, so a new recordId cancels it.
+  const firstRecord = useRef(true);
+  useEffect(() => {
+    if (firstRecord.current) {
+      firstRecord.current = false;
+      return;
+    }
+    if (active.current) {
+      stop();
+      setStatus('idle');
+      setSelectedFile(null);
+      setProgress(0);
+    }
+  }, [recordId, stop]);
+
   const upload = useCallback(
     async (file: File) => {
-      if (!client || !fileTypeId || active.current) {
+      if (!client || !fileTypeId || loadedType.current !== fileTypeId || active.current) {
         return;
       }
 
@@ -123,8 +142,9 @@ export function useFileUpload(
       setProgress(0);
       setStatus('uploading');
 
+      let result: FileMetadata;
       try {
-        const result = await client.uploadFile(fileTypeId, file, {
+        result = await client.uploadFile(fileTypeId, file, {
           recordId,
           signal: controller.signal,
           onProgress: (fraction) => {
@@ -133,13 +153,6 @@ export function useFileUpload(
             }
           },
         });
-        if (controller.signal.aborted) {
-          return;
-        }
-        setUploaded(result);
-        setProgress(1);
-        setStatus('uploaded');
-        onUploadRef.current?.(result);
       } catch (err) {
         // A cancelled upload isn't a failure, and whatever cancelled it has already set the state.
         if (controller.signal.aborted || isAbort(err)) {
@@ -147,11 +160,21 @@ export function useFileUpload(
         }
         setError({ error: toFileServiceError(err), source: 'upload' });
         setStatus('failed');
+        return;
       } finally {
         if (active.current === controller) {
           active.current = null;
         }
       }
+
+      if (controller.signal.aborted) {
+        return;
+      }
+      setUploaded(result);
+      setProgress(1);
+      setStatus('uploaded');
+      // File service has accepted the file, so a failing callback is the application's error, not a failed upload.
+      onUploadRef.current?.(result);
     },
     [client, fileTypeId, recordId],
   );

@@ -226,4 +226,45 @@ describe('ADSPFileUpload', () => {
     );
     expect(root).toHaveClass('adsp-file-upload');
   });
+  test('moves focus back into the component after a cancelled upload', async () => {
+    // Arrange
+    const client = createClient({
+      uploadFile: jest.fn(
+        (_type, _file, options) =>
+          new Promise((_resolve, reject) =>
+            options.signal.addEventListener('abort', () => reject(new DOMException('cancelled', 'AbortError'))),
+          ),
+      ),
+    });
+    await renderUpload(client);
+    selectFile(file);
+
+    // Act
+    await act(async () => {
+      fireEvent(
+        byGoaTestId('upload-card') as HTMLElement,
+        new CustomEvent('_cancel', { detail: { filename: file.name } }),
+      );
+    });
+
+    // Assert
+    // jsdom renders the GoA input without its shadow root, so it can't take focus and the component root does.
+    await waitFor(() => expect(document.activeElement).toBe(screen.getByTestId('upload')));
+    expect(byGoaTestId('upload-input')).not.toBeNull();
+  });
+
+  test('moves focus to the error when Try again fails again', async () => {
+    // Arrange
+    const client = createClient({ uploadFile: jest.fn().mockRejectedValue(new TypeError('offline')) });
+    await renderUpload(client);
+    selectFile(file);
+    await screen.findByText('Something went wrong while uploading this file.');
+
+    // Act
+    clickGoabButton('Try again');
+
+    // Assert
+    await waitFor(() => expect(client.uploadFile).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(document.activeElement).toBe(screen.getByRole('alert')));
+  });
 });

@@ -38,7 +38,7 @@ export type FileServiceErrorReason =
   | 'unavailable'
   | 'unexpected';
 
-export interface FileTypeInfo {
+export interface FileTypeInfo { // clean-code-ignore: RULE-19 (types only; no runtime code to test)
   id: string;
   name: string;
   anonymousRead: boolean;

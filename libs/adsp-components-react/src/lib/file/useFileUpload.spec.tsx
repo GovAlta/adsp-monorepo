@@ -260,4 +260,74 @@ describe('useFileUpload', () => {
     // Assert
     expect(signal?.aborted).toBe(true);
   });
+  test('does not start an upload before the File Type has loaded', async () => {
+    // Arrange
+    const client = createClient({ getFileType: jest.fn(() => new Promise(() => undefined)) });
+    const { result } = renderHook(() => useFileUpload(client, fileTypeId));
+
+    // Act
+    await act(() => result.current.upload(file));
+
+    // Assert
+    expect(client.uploadFile).not.toHaveBeenCalled();
+    expect(result.current.status).toBe('idle');
+  });
+
+  test('does not upload to a File Type that failed to load', async () => {
+    // Arrange
+    const client = createClient({
+      getFileType: jest.fn().mockRejectedValue(new FileServiceError('forbidden', 'no', 403)),
+    });
+    const { result } = renderHook(() => useFileUpload(client, fileTypeId));
+    await waitFor(() => expect(result.current.error).not.toBeNull());
+
+    // Act
+    await act(() => result.current.upload(file));
+
+    // Assert
+    expect(client.uploadFile).not.toHaveBeenCalled();
+    expect(result.current.error?.reason).toBe('forbidden');
+  });
+
+  test('a new recordId cancels the upload for the old record and never reports it', async () => {
+    // Arrange
+    const deferred = deferredUpload();
+    const onUpload = jest.fn();
+    const client = createClient({ uploadFile: deferred.uploadFile });
+    const { result, rerender } = renderHook(
+      ({ record }) => useFileUpload(client, fileTypeId, { recordId: record, onUpload }),
+      {
+        initialProps: { record: 'record-1' },
+      },
+    );
+    await waitFor(() => expect(result.current.ready).toBe(true));
+    act(() => void result.current.upload(file));
+    const { signal } = deferred.uploadFile.mock.calls[0][2] as UploadFileOptions;
+
+    // Act
+    rerender({ record: 'record-2' });
+
+    // Assert
+    expect(signal?.aborted).toBe(true);
+    expect(result.current.status).toBe('idle');
+    expect(result.current.selectedFile).toBeNull();
+    expect(onUpload).not.toHaveBeenCalled();
+  });
+
+  test('a throwing onUpload callback leaves the accepted upload as uploaded', async () => {
+    // Arrange
+    const onUpload = jest.fn(() => {
+      throw new Error('app bug');
+    });
+    const client = createClient();
+    const { result } = await renderReady(client, { onUpload });
+
+    // Act
+    await act(() => result.current.upload(file).catch(() => undefined));
+
+    // Assert
+    expect(onUpload).toHaveBeenCalledWith(stored());
+    expect(result.current.status).toBe('uploaded');
+    expect(result.current.error).toBeNull();
+  });
 });
