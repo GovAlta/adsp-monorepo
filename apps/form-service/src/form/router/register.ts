@@ -1,9 +1,16 @@
-import { AdspId, isAllowedUser, UnauthorizedUserError, User } from '@abgov/adsp-service-sdk';
+import { AdspId, AuditService, isAllowedUser, UnauthorizedUserError, User } from '@abgov/adsp-service-sdk';
 import { assertAuthenticatedHandler, createValidationHandler, InvalidOperationError } from '@core-services/core-common';
 import { RequestHandler, Router } from 'express';
 import { body, param } from 'express-validator';
 import * as HttpStatusCodes from 'http-status-codes';
 import { Logger } from 'winston';
+import {
+  DataRegisterCreatedAuditAction,
+  DataRegisterDeletedAuditAction,
+  DataRegisterUpdatedAuditAction,
+  recordFormAudit,
+  toDataRegisterAuditDetails,
+} from '../audit';
 import { DataRegisterClient } from '../dataRegisterClient';
 import { ConfigurationServiceRoles, FormServiceRoles } from '../roles';
 import { DataRegisterCreateRequest, DataRegisterUpdateRequest } from '../types/register';
@@ -61,7 +68,7 @@ export function getRegister(client: DataRegisterClient): RequestHandler {
   };
 }
 
-export function createRegister(client: DataRegisterClient, logger: Logger): RequestHandler {
+export function createRegister(client: DataRegisterClient, logger: Logger, auditService: AuditService): RequestHandler {
   return async (req, res, next) => {
     try {
       const tenantId = getRequiredTenantId(req);
@@ -71,13 +78,16 @@ export function createRegister(client: DataRegisterClient, logger: Logger): Requ
       const register = await client.create(tenantId, req.body as DataRegisterCreateRequest);
       res.status(HttpStatusCodes.CREATED).send(register);
       logRegisterAction(logger, 'created', register.name, tenantId, user);
+      recordFormAudit(auditService, logger, DataRegisterCreatedAuditAction, () =>
+        toDataRegisterAuditDetails(user, tenantId, register.name, { entryCount: register.entries?.length ?? 0 }),
+      );
     } catch (err) {
       next(err);
     }
   };
 }
 
-export function updateRegister(client: DataRegisterClient, logger: Logger): RequestHandler {
+export function updateRegister(client: DataRegisterClient, logger: Logger, auditService: AuditService): RequestHandler {
   return async (req, res, next) => {
     try {
       const tenantId = getRequiredTenantId(req);
@@ -85,16 +95,26 @@ export function updateRegister(client: DataRegisterClient, logger: Logger): Requ
       assertCanManageRegisters(user, tenantId, 'update data register');
 
       const { name } = req.params;
-      const register = await client.update(tenantId, name, req.body as DataRegisterUpdateRequest);
+      const request = req.body as DataRegisterUpdateRequest;
+      const register = await client.update(tenantId, name, request);
       res.send(register);
       logRegisterAction(logger, 'updated', name, tenantId, user);
+      recordFormAudit(auditService, logger, DataRegisterUpdatedAuditAction, () =>
+        toDataRegisterAuditDetails(user, tenantId, name, {
+          updatedFields: [
+            ...(request.entries !== undefined ? ['entries'] : []),
+            ...(request.description !== undefined ? ['description'] : []),
+          ],
+          entryCount: register.entries?.length ?? 0,
+        }),
+      );
     } catch (err) {
       next(err);
     }
   };
 }
 
-export function deleteRegister(client: DataRegisterClient, logger: Logger): RequestHandler {
+export function deleteRegister(client: DataRegisterClient, logger: Logger, auditService: AuditService): RequestHandler {
   return async (req, res, next) => {
     try {
       const tenantId = getRequiredTenantId(req);
@@ -105,6 +125,9 @@ export function deleteRegister(client: DataRegisterClient, logger: Logger): Requ
       await client.delete(tenantId, name);
       res.sendStatus(HttpStatusCodes.NO_CONTENT);
       logRegisterAction(logger, 'deleted', name, tenantId, user);
+      recordFormAudit(auditService, logger, DataRegisterDeletedAuditAction, () =>
+        toDataRegisterAuditDetails(user, tenantId, name),
+      );
     } catch (err) {
       next(err);
     }
@@ -125,9 +148,10 @@ const validateEntries = body('entries')
 interface RegisterRouterProps {
   client: DataRegisterClient;
   logger: Logger;
+  auditService: AuditService;
 }
 
-export function createRegisterRouter({ client, logger }: RegisterRouterProps): Router {
+export function createRegisterRouter({ client, logger, auditService }: RegisterRouterProps): Router {
   const router = Router();
 
   const validateNameParam = param('name').isString().matches(REGISTER_NAME_PATTERN);
@@ -149,21 +173,21 @@ export function createRegisterRouter({ client, logger }: RegisterRouterProps): R
       body('description').optional().isString(),
       validateEntries,
     ),
-    createRegister(client, logger),
+    createRegister(client, logger, auditService),
   );
 
   router.patch(
     '/registers/:name',
     assertAuthenticatedHandler,
     createValidationHandler(validateNameParam, body('description').optional().isString(), validateEntries),
-    updateRegister(client, logger),
+    updateRegister(client, logger, auditService),
   );
 
   router.delete(
     '/registers/:name',
     assertAuthenticatedHandler,
     createValidationHandler(validateNameParam),
-    deleteRegister(client, logger),
+    deleteRegister(client, logger, auditService),
   );
 
   return router;

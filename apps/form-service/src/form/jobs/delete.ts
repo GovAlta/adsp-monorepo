@@ -1,8 +1,9 @@
-import { AdspId, EventService } from '@abgov/adsp-service-sdk';
+import { AdspId, AuditService, EventService } from '@abgov/adsp-service-sdk';
 import { DateTime, Duration } from 'luxon';
 import { Logger } from 'winston';
 import { FileService } from '../../file';
 import { NotificationService } from '../../notification';
+import { FormDeletedAuditAction, FormServiceJobAuditActor, recordFormAudit, toFormAuditDetails } from '../audit';
 import { formDeleted } from '../events';
 import { FormRepository } from '../repository';
 import { FormStatus } from '../types';
@@ -13,6 +14,7 @@ interface DeleteJobProps {
   logger: Logger;
   repository: FormRepository;
   eventService: EventService;
+  auditService: AuditService;
   fileService: FileService;
   notificationService: NotificationService;
 }
@@ -23,6 +25,7 @@ export function createDeleteJob({
   logger,
   repository,
   eventService,
+  auditService,
   fileService,
   notificationService,
 }: DeleteJobProps) {
@@ -44,6 +47,12 @@ export function createDeleteJob({
             if (deleted) {
               numberDeleted++;
               eventService.send(formDeleted(apiId, jobUser, result));
+              recordFormAudit(auditService, logger, FormDeletedAuditAction, () =>
+                toFormAuditDetails(FormServiceJobAuditActor, result, {
+                  reason: 'lock-expired',
+                  locked: result.locked?.toISOString() ?? null,
+                }),
+              );
             }
           } catch (err) {
             // Log and continue with other forms if there's an error on form delete.

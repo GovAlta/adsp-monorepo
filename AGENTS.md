@@ -383,6 +383,7 @@ All standards are centralized in the `architecture/` folder at the repo root:
 - `architecture/clean-code-rules.md` — code quality rules (used by agents AND GitHub PR review)
 - `architecture/unit-testing-standards.md` — testing conventions
 - `architecture/jira-ticket-templates.md` — ticket templates for Story, Bug, and Spike
+- `architecture/api-documentation-maintenance.md` — what to update in OpenAPI, docs specs, and service docs when adding an endpoint
 
 For questions about specific services, check:
 - Service README (if exists)

@@ -1,5 +1,13 @@
 import axios from 'axios';
-import { CLEAR_THREAD_ACTION, connectAgent, discardThread, getAccessScope, messageAgent } from './actions';
+import {
+  AGENT_CONVERSATION_STATUS_ACTION,
+  CLEAR_THREAD_ACTION,
+  connectAgent,
+  discardThread,
+  getAccessScope,
+  messageAgent,
+  resetThread,
+} from './actions';
 
 jest.mock('axios');
 jest.mock('@store/tenant/actions', () => ({
@@ -131,5 +139,123 @@ describe('discardThread', () => {
 
     expect(mockSocket.send).toHaveBeenCalledTimes(1);
     expect(mockSocket.send).toHaveBeenCalledWith(expect.objectContaining({ threadId: 'thread-2' }));
+  });
+});
+
+describe('conversation status from agent-service', () => {
+  const state = {
+    config: { serviceUrls: { agentServiceApiUrl: 'https://agent-service.test' } },
+    agent: { threads: {} },
+  };
+
+  it('stores the status with the message limit of a notice', async () => {
+    // Arrange
+    const { dispatch, getState } = createDispatch(state);
+    await connectAgent()(dispatch as never, getState as never);
+
+    // Act
+    mockSocket.handlers['conversation-status']({
+      agent: 'formGenerationAgent',
+      threadId: 'thread-1',
+      contextTokens: 13600,
+      contextWindowTokens: 256000,
+      state: 'notice',
+      reason: 'older-messages-dropped',
+      messageLimit: 20,
+    });
+
+    // Assert
+    expect(dispatch).toHaveBeenCalledWith({
+      type: AGENT_CONVERSATION_STATUS_ACTION,
+      threadId: 'thread-1',
+      status: {
+        contextTokens: 13600,
+        contextWindowTokens: 256000,
+        state: 'notice',
+        reason: 'older-messages-dropped',
+        messageLimit: 20,
+      },
+    });
+  });
+});
+
+describe('resetThread', () => {
+  const question = {
+    id: 'question-1',
+    threadId: 'thread-1',
+    from: 'user',
+    content: [{ type: 'text', text: 'Which clients?' }],
+  };
+  const reply = {
+    id: 'reply-1',
+    threadId: 'thread-1',
+    from: 'agent',
+    content: 'Three clients.',
+    streaming: false,
+    toolCalls: [],
+  };
+
+  function stateWith(lastReply: Record<string, unknown> | undefined) {
+    const messages = lastReply ? { 'question-1': question, 'reply-1': lastReply } : { 'question-1': question };
+    return {
+      config: { serviceUrls: { agentServiceApiUrl: 'https://agent-service.test' } },
+      agent: {
+        threads: { 'thread-1': { id: 'thread-1', agent: 'AccessServiceAgent' } },
+        threadMessages: { 'thread-1': Object.keys(messages) },
+        messages,
+      },
+    };
+  }
+
+  beforeEach(() => {
+    mockedDelete.mockReset().mockResolvedValue({ data: { deleted: true } });
+  });
+
+  it('deletes the thread on the server once the reply has finished', async () => {
+    // Arrange
+    const { dispatch, getState } = createDispatch(stateWith(reply));
+
+    // Act
+    await resetThread('thread-1')(dispatch as never, getState as never);
+
+    // Assert
+    expect(mockedDelete).toHaveBeenCalledWith(
+      'https://agent-service.test/agent/v1/agents/AccessServiceAgent/threads/thread-1',
+      expect.anything(),
+    );
+  });
+
+  it('leaves the thread to expire on the server while a reply is still in progress', async () => {
+    // Arrange
+    const { dispatch, getState } = createDispatch(stateWith({ ...reply, streaming: true }));
+
+    // Act
+    await resetThread('thread-1')(dispatch as never, getState as never);
+
+    // Assert
+    expect(dispatch).toHaveBeenCalledWith({ type: CLEAR_THREAD_ACTION, threadId: 'thread-1' });
+    expect(mockedDelete).not.toHaveBeenCalled();
+  });
+
+  it('leaves the thread to expire on the server when a reply was cut off by a reconnect', async () => {
+    // Arrange
+    const { dispatch, getState } = createDispatch(stateWith({ ...reply, interrupted: true }));
+
+    // Act
+    await resetThread('thread-1')(dispatch as never, getState as never);
+
+    // Assert
+    expect(mockedDelete).not.toHaveBeenCalled();
+  });
+
+  it('leaves the thread to expire on the server while the question has no reply yet', async () => {
+    // Arrange
+    const { dispatch, getState } = createDispatch(stateWith(undefined));
+
+    // Act
+    await resetThread('thread-1')(dispatch as never, getState as never);
+
+    // Assert
+    expect(mockedDelete).not.toHaveBeenCalled();
   });
 });

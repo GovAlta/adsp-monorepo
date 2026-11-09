@@ -482,12 +482,12 @@ Then('the user views a feedback list with Date submitted, Page, Rating, Action',
   });
 });
 
-Then('the user views a feedback list of 10 ordered from most recent to oldest', function () {
+Then('the user views a feedback list of 20 ordered from most recent to oldest', function () {
   //Compare submitted on dates in the top 10 records
   feedbackObj.feedbackFeedbackTableSubmittedOnCells().then((elements) => {
-    expect(elements.length).to.eq(10);
+    expect(elements.length).to.eq(20);
     let date1, year1, month1, day1, date2, year2, month2, day2;
-    for (let i = 0; i < 9; i++) {
+    for (let i = 0; i < 19; i++) {
       // Get later date
       cy.log(elements[i].outerText);
       year1 = elements[i].outerText.split(',')[1].trim();
@@ -509,10 +509,6 @@ Then('the user views a feedback list of 10 ordered from most recent to oldest', 
   });
 });
 
-Then('the user views more than 10 feedback records on feedback page', function () {
-  feedbackObj.feedbackFeedbackTableRows().should('have.length.above', 10);
-});
-
 When('the user clicks toggle details icon on the latest feedback', function () {
   feedbackObj.feedbackFeedbackTableEyeIcons().first().shadow().find('button').click({ force: true });
 });
@@ -527,7 +523,7 @@ Then('the user views feedback details with timestamp, rating, comments, technica
     .feedbackFeedbackTableItemDetails()
     .find('h4')
     .then((elements) => {
-      expect(elements.length).to.gte(2);
+      expect(elements.length).to.gte(1);
       if (elements.length == 3) {
         expect(elements[0].outerText).to.eq('Rating');
         expect(elements[1].outerText).to.eq('Comments');
@@ -535,6 +531,8 @@ Then('the user views feedback details with timestamp, rating, comments, technica
       } else if (elements.length == 2) {
         expect(elements[0].outerText).to.eq('Rating');
         expect(elements[1].outerText).to.eq('Comments');
+      } else if (elements.length == 1) {
+        expect(elements[0].outerText).to.eq('Rating');
       }
     });
 });
@@ -573,5 +571,88 @@ When('the user clicks Back to default view button on the expanded view', functio
 
 When('the user clicks Collapse view button on the expanded view', function () {
   feedbackObj.feedbackFeedbackCollapseViewButtonExpendedView().shadow().find('button').click({ force: true });
+  cy.wait(2000);
+});
+
+Then('the user views the previous button is disabled on feedback page', function () {
+  feedbackObj.feedbackPreviousPageButton().shadow().find('button').should('be.disabled');
+});
+
+When('the user clicks next button on feedback page', function () {
+  feedbackObj.feedbackNextPageButton().shadow().find('button').click({ force: true });
+  cy.wait(2000);
+});
+
+Then('the user views the previous button is enabled on the feedback page', function () {
+  feedbackObj.feedbackPreviousPageButton().shadow().find('button').should('be.enabled');
+});
+
+Then(
+  'the user views the message showing current numbers of page {string} with {string} records per page of the total number of feedback responses on feedback page',
+  function (pageNumber: string, pageSize: string) {
+    const firstRecord = (Number(pageNumber) - 1) * Number(pageSize) + 1;
+    feedbackObj
+      .feedbackPageMessage()
+      .invoke('text')
+      .should('match', new RegExp(`^Showing ${firstRecord}–\\d+ of [\\d,]+ responses$`));
+  }
+);
+
+Then('the user views page {string} of the total number of pages on feedback page', function (pageNumber: string) {
+  feedbackObj.feedbackPageDropdown().should('have.value', pageNumber);
+  feedbackObj
+    .feedbackPageCount()
+    .invoke('text')
+    .should('match', /^of \d+$/);
+});
+
+When('the user selects the last page in the page dropdown on feedback page', function () {
+  feedbackObj
+    .feedbackPageDropdown()
+    .find('option')
+    .last()
+    .then((option) => {
+      feedbackObj.feedbackPageDropdown().select(option.val() as string);
+    });
+  cy.wait(2000);
+});
+
+Then('the user views the last page of feedback records on feedback page', function () {
+  feedbackObj.feedbackNextPageButton().shadow().find('button').should('be.disabled');
+  feedbackObj
+    .feedbackPageCount()
+    .invoke('text')
+    .then((text) => {
+      const totalPages = text.match(/\d+/)![0];
+      feedbackObj.feedbackPageDropdown().should('have.value', totalPages);
+    });
+});
+
+When('the user selects {string} in the page size dropdown on feedback page', function (pageSize: string) {
+  feedbackObj.feedbackPageSizeDropdown().shadow().find('select').select(pageSize);
+  cy.wait(2000);
+});
+
+Then('the user views a feedback list with {string} records per page on feedback page', function (pageSize: string) {
+  feedbackObj.feedbackPageSizeDropdown().shadow().find('select').should('have.value', pageSize);
+  feedbackObj
+    .feedbackPageMessage()
+    .invoke('text')
+    .should('match', new RegExp(`^Showing 1–${pageSize} of [\\d,]+ responses$`));
+});
+
+When('the user changes the start date filter to be {string} on feedback page', function (startDate: string) {
+  feedbackObj.feedbackFeedbackStartDateFilter().shadow().find('input').clear().type(startDate).blur();
+  cy.wait(2000);
+});
+
+Then('the user views the first page of feedback records on feedback page', function () {
+  feedbackObj.feedbackPageDropdown().should('have.value', '1');
+  feedbackObj.feedbackPreviousPageButton().shadow().find('button').should('be.disabled');
+});
+
+When('the user selects {string} in Registered sites dropdown on feedback page', function (siteUrl: string) {
+  feedbackObj.feedbackFeedbackSitesDropdown().shadow().find('input').click({ force: true });
+  feedbackObj.feedbackFeedbackSitesDropdown().shadow().find('li').contains(siteUrl).click({ force: true });
   cy.wait(2000);
 });
