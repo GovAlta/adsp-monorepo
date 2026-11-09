@@ -1,7 +1,7 @@
 import { AuditService, EventService } from '@abgov/adsp-service-sdk';
 import { createValidationHandler, InvalidOperationError, NotFoundError } from '@core-services/core-common';
 import { randomUUID } from 'crypto';
-import { Request, Router } from 'express';
+import { NextFunction, Request, Response, Router } from 'express';
 import { body, param, query } from 'express-validator';
 import * as multer from 'multer';
 import { Logger } from 'winston';
@@ -19,6 +19,7 @@ import { acceptanceReferences, checkedAcceptanceCriteria, ruleAcceptanceCriteria
 import {
   AdminAccessOperation,
   AnalyzedAuditMetadata,
+  AnalyzedEndpoint,
   auditAdminAccess,
   createAuditRecorder,
   PatternCreatedAuditAction,
@@ -34,6 +35,7 @@ import {
   toPatternChangeSet,
   toSolutionAuditDetails,
   toSpecialistChatAuditDetails,
+  toAuditStatus,
 } from './audit';
 import {
   buildHypotheses,
@@ -282,31 +284,67 @@ export function createPlannerRouter({
     limits: { fileSize: MAX_PROBLEM_STATEMENT_UPLOAD_BYTES },
   });
 
-  // Requests that sent solution content to the AI model, and whether any of those calls fell back to rules.
-  const aiCalls = new WeakMap<Request, { fellBack: boolean }>();
+  // Per request: whether solution content was sent to the AI model, whether any call fell back to rules, and the
+  // solution and result mode to audit.
+  interface AiUse {
+    called: boolean;
+    fellBack: boolean;
+    solution?: Solution;
+    mode?: AnalysisMode;
+  }
+  const aiUses = new WeakMap<Request, AiUse>();
+  const aiUse = (req: Request): AiUse => {
+    let use = aiUses.get(req);
+    if (!use) {
+      use = { called: false, fellBack: false };
+      aiUses.set(req, use);
+    }
+    return use;
+  };
   const noteAiCall = (req: Request, fellBack: boolean) => {
-    const calls = aiCalls.get(req) || { fellBack: false };
-    aiCalls.set(req, { fellBack: calls.fellBack || fellBack });
+    const use = aiUse(req);
+    use.called = true;
+    use.fellBack = use.fellBack || fellBack;
+  };
+  const noteAnalyzed = (req: Request, solution: Solution, mode?: AnalysisMode) => {
+    Object.assign(aiUse(req), { solution, mode });
   };
 
-  function recordAnalyzed(
-    req: Request,
-    solution: Solution,
-    { endpoint, mode, service }: Pick<AnalyzedAuditMetadata, 'endpoint' | 'mode' | 'service'>,
-  ) {
-    const calls = aiCalls.get(req);
-    if (!calls) {
+  // Recorded when the request completes, including when it fails after content was sent to the model.
+  function recordAnalyzed(req: Request, endpoint: AnalyzedEndpoint, error?: unknown) {
+    const use = aiUses.get(req);
+    const solution = use?.solution ?? loaded(req);
+    if (!use?.called || !solution) {
       return;
     }
+    // The specialist is validated before the model is called, so the service is a known specialist here.
+    const service = endpoint === 'consult' || endpoint === 'specialist-chat' ? req.params.service : undefined;
     const metadata: AnalyzedAuditMetadata = {
       endpoint,
-      mode,
+      ...(!error && use.mode ? { mode: use.mode } : {}),
       model: llm?.model ?? null,
-      fellBack: calls.fellBack,
+      fellBack: use.fellBack,
       ...(service ? { service } : {}),
     };
-    recordAudit(SolutionAnalyzedAuditAction, toSolutionAuditDetails(req.user, solution, { ...metadata }));
+    recordAudit(SolutionAnalyzedAuditAction, {
+      ...toSolutionAuditDetails(req.user, solution, { ...metadata }),
+      status: toAuditStatus(error),
+    });
   }
+
+  const analyzing =
+    (endpoint: AnalyzedEndpoint, handler: (req: Request, res: Response, next: NextFunction) => Promise<void>) =>
+    async (req: Request, res: Response, next: NextFunction) => {
+      let error: unknown;
+      try {
+        await handler(req, res, (err?: unknown) => {
+          error = err;
+          next(err);
+        });
+      } finally {
+        recordAnalyzed(req, endpoint, error);
+      }
+    };
 
   // Undefined keys mean the catalog could not be read; candidates are live services missing from the component map.
   async function readCatalog(): Promise<{ keys?: string[]; candidates: string[] }> {
@@ -951,7 +989,7 @@ export function createPlannerRouter({
       body('checkpoint').optional().isBoolean(),
     ),
     solutionFor('update'),
-    async (req, res, next) => {
+    analyzing('analyze', async (req, res, next) => {
       try {
         const solution = loaded(req);
         const text = req.body.text || solution.state.problemStatement;
@@ -965,11 +1003,11 @@ export function createPlannerRouter({
           checkpoint: req.body.checkpoint,
         });
         res.send(analyzed);
-        recordAnalyzed(req, analyzed, { endpoint: 'analyze', mode: analyzed.state.analysis?.mode ?? 'rules' });
+        noteAnalyzed(req, analyzed, analyzed.state.analysis?.mode);
       } catch (err) {
         next(err);
       }
-    },
+    }),
   );
 
   router.post(
@@ -983,7 +1021,7 @@ export function createPlannerRouter({
       body('restart').optional().isBoolean(),
     ),
     solutionFor('update'),
-    async (req, res, next) => {
+    analyzing('discovery', async (req, res, next) => {
       try {
         const solution = loaded(req);
         const problem = solution.state.problemStatement.trim();
@@ -1053,11 +1091,11 @@ export function createPlannerRouter({
           ? await runAnalysis(req, withDiscovery, { text: problem, mode: requestedMode, skipConfidenceRefresh: true })
           : await persist(req, withDiscovery, 'discovery');
         res.send(saved);
-        recordAnalyzed(req, saved, { endpoint: 'discovery', mode });
+        noteAnalyzed(req, saved, mode);
       } catch (err) {
         next(err);
       }
-    },
+    }),
   );
 
   router.post(
@@ -1069,7 +1107,7 @@ export function createPlannerRouter({
       body('mode').optional().isIn(['ai', 'rules']),
     ),
     solutionFor('update'),
-    async (req, res, next) => {
+    analyzing('chat', async (req, res, next) => {
       try {
         const solution = loaded(req);
         const message: string = req.body.message.trim();
@@ -1079,11 +1117,11 @@ export function createPlannerRouter({
           message,
         });
         res.send(refined);
-        recordAnalyzed(req, refined, { endpoint: 'chat', mode: refined.state.analysis?.mode ?? 'rules' });
+        noteAnalyzed(req, refined, refined.state.analysis?.mode);
       } catch (err) {
         next(err);
       }
-    },
+    }),
   );
 
   router.put(
@@ -1133,7 +1171,7 @@ export function createPlannerRouter({
       body('mode').optional().isIn(['ai', 'rules']),
     ),
     solutionFor('update'),
-    async (req, res, next) => {
+    analyzing('consult', async (req, res, next) => {
       try {
         const solution = loaded(req);
         const { result, state } = await runConsult(req, solution, req.params.service, {
@@ -1143,15 +1181,11 @@ export function createPlannerRouter({
         });
         const saved = await persist(req, { ...solution, state }, 'consult');
         res.send({ ...result, solution: saved });
-        recordAnalyzed(req, saved, {
-          endpoint: 'consult',
-          mode: result.advice ? 'ai' : 'rules',
-          service: result.service,
-        });
+        noteAnalyzed(req, saved, result.advice ? 'ai' : 'rules');
       } catch (err) {
         next(err);
       }
-    },
+    }),
   );
 
   // Consults a specialist (AI with a rules fallback) and records the exchange in the user's saved chats.
@@ -1238,7 +1272,7 @@ export function createPlannerRouter({
       body('checkpoint').optional().isBoolean(),
     ),
     solutionFor('update'),
-    async (req, res, next) => {
+    analyzing('blueprint', async (req, res, next) => {
       try {
         const solution = loaded(req);
         const hypothesis = solution.state.hypotheses[0];
@@ -1337,11 +1371,11 @@ export function createPlannerRouter({
           req.body.checkpoint ?? true,
         );
         res.send(saved);
-        recordAnalyzed(req, saved, { endpoint: 'blueprint', mode });
+        noteAnalyzed(req, saved, mode);
       } catch (err) {
         next(err);
       }
-    },
+    }),
   );
 
   const userChatCriteria = (req: Request) => ({
@@ -1528,7 +1562,7 @@ export function createPlannerRouter({
       body('solutionId').optional().isUUID(),
       body('mode').optional().isIn(['ai', 'rules']),
     ),
-    async (req, res, next) => {
+    analyzing('specialist-chat', async (req, res, next) => {
       try {
         const specialist = getSpecialist(req.params.service);
         if (!specialist) {
@@ -1548,6 +1582,10 @@ export function createPlannerRouter({
         const solutionId: string = chat?.solutionId || req.body.solutionId;
         const solution = solutionId ? await loadSolution(solutionRepository, req, solutionId) : undefined;
         const state = solution?.state;
+        if (solution) {
+          // Without a solution no solution content is sent, so the chat is not audited as analysis.
+          noteAnalyzed(req, solution);
+        }
 
         const history: SpecialistChatMessage[] = [
           ...(chat?.messages || []).map(({ role, content }) => ({ role, content })),
@@ -1605,7 +1643,7 @@ export function createPlannerRouter({
         });
         if (solution) {
           const audited = updatedSolution || solution;
-          recordAnalyzed(req, audited, { endpoint: 'specialist-chat', mode: replyMode, service: specialist.service });
+          noteAnalyzed(req, audited, replyMode);
           if (solution.createdById !== req.user.id && isPlannerAdmin(req.user, solution.tenantId)) {
             recordAudit(
               SolutionAdminAccessedAuditAction,
@@ -1619,7 +1657,7 @@ export function createPlannerRouter({
       } catch (err) {
         next(err);
       }
-    },
+    }),
   );
 
   return router;

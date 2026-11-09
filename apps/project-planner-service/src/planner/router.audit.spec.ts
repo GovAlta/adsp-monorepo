@@ -359,6 +359,7 @@ describe('planner router audit', () => {
 
       expect(recorded(SolutionAnalyzedAuditAction)).toEqual([
         expect.objectContaining({
+          status: 'success',
           resource: { type: 'solution', id: SOLUTION_ID, name: 'Grants' },
           metadata: { endpoint: 'analyze', mode: 'ai', model: MODEL, fellBack: false },
         }),
@@ -386,6 +387,57 @@ describe('planner router audit', () => {
     it('does not record when no model is configured', async () => {
       await request(buildApp()).post(`/planner/v1/solutions/${SOLUTION_ID}/analyze`).send({});
 
+      expect(recorded(SolutionAnalyzedAuditAction)).toEqual([]);
+    });
+
+    it('records an error without a mode when the request fails after content was sent to the model', async () => {
+      llm.analyze.mockResolvedValueOnce(aiAnalysis);
+      repository.save.mockRejectedValue(new Error('database unavailable'));
+
+      const res = await request(aiApp()).post(`/planner/v1/solutions/${SOLUTION_ID}/analyze`).send({});
+
+      expect(res.status).toBe(500);
+      expect(recorded(SolutionAnalyzedAuditAction)).toEqual([
+        expect.objectContaining({
+          status: 'error',
+          resource: { type: 'solution', id: SOLUTION_ID, name: 'Grants' },
+          metadata: { endpoint: 'analyze', model: MODEL, fellBack: false },
+        }),
+      ]);
+    });
+
+    it('records a failure when a specialist chat is rejected after content was sent to the model', async () => {
+      llm.converse.mockResolvedValue({ reply: 'Enable drafts.', model: MODEL });
+      chatRepository.get.mockResolvedValue(
+        storedChat({
+          messages: [...Array(200)].map(() => ({
+            role: 'user' as const,
+            content: 'x',
+            at: '2026-03-01T10:00:00.000Z',
+          })),
+        }),
+      );
+
+      const res = await request(aiApp())
+        .post('/planner/v1/specialists/form-service/chat')
+        .send({ message: 'One more question', chatId: CHAT_ID });
+
+      expect(res.status).toBe(400);
+      expect(recorded(SolutionAnalyzedAuditAction)).toEqual([
+        expect.objectContaining({
+          status: 'failure',
+          metadata: { endpoint: 'specialist-chat', model: MODEL, fellBack: false, service: 'form-service' },
+        }),
+      ]);
+    });
+
+    it('does not record a request that fails before calling the model', async () => {
+      repository.get.mockResolvedValue(solutionOwnedBy('owner-1', { problemStatement: '' }));
+
+      const res = await request(aiApp()).post(`/planner/v1/solutions/${SOLUTION_ID}/analyze`).send({});
+
+      expect(res.status).toBe(400);
+      expect(llm.analyze).not.toHaveBeenCalled();
       expect(recorded(SolutionAnalyzedAuditAction)).toEqual([]);
     });
 

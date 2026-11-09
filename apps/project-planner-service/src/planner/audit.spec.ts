@@ -14,7 +14,9 @@ import {
   toPlannerAuditActor,
   toSolutionAuditDetails,
   toSpecialistChatAuditDetails,
+  toAuditStatus,
 } from './audit';
+import { InvalidOperationError } from '@core-services/core-common';
 import { PlannerServiceRoles } from './roles';
 import { BusinessPattern, Solution } from './types';
 
@@ -233,6 +235,20 @@ describe('planner audit', () => {
       );
 
       expect(result).toEqual({ changeSetOmitted: true });
+    });
+  });
+
+  describe('toAuditStatus', () => {
+    it('is success without an error', () => {
+      expect(toAuditStatus()).toBe('success');
+    });
+
+    it('is failure for a client error', () => {
+      expect(toAuditStatus(new InvalidOperationError('This chat is full; start a new chat.'))).toBe('failure');
+    });
+
+    it('is error for a server or unexpected error', () => {
+      expect(toAuditStatus(new Error('database unavailable'))).toBe('error');
     });
   });
 

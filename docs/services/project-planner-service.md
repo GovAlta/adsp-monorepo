@@ -108,7 +108,7 @@ Project planner service records audit events in the `project-planner-service` na
 
 Solution records use `{ type: 'solution', id: <solution ID>, name: <solution name> }` as the resource, pattern records use `{ type: 'pattern', id: <pattern ID>, name: <pattern name> }`, and chat records use `{ type: 'specialist-chat', id: <chat ID> }`. An export of all chats has no single chat, so it has no resource. A pattern change set that would exceed the 16 KB audit limit is omitted, with `changeSetOmitted: true` in the metadata.
 
-`planner.solution.analyzed` is recorded only when the model is called: rule-based requests, and AI requests when no model is configured, send nothing to the model and are not recorded.
+`planner.solution.analyzed` is recorded only when the model is called: rule-based requests, and AI requests when no model is configured, send nothing to the model and are not recorded. It is recorded once per request when the request completes, including when the request fails after solution content was sent to the model. A failed request is recorded with status `failure` (client error) or `error` (server error) and without a `mode`, since there is no result.
 
 Routine reads by the solution owner (listing and reading solutions, patterns, specialists, chats and versions) are not audited, and neither is a `planner-admin` listing the solutions of the tenant. Solution updates are not recorded as separate actions; they are covered by the `solution-updated` event. Patterns defined in the `patterns` configuration are managed in the [configuration service](configuration-service.md), which records those changes in the `configuration-service` namespace. Denied and failed operations are not recorded.
 

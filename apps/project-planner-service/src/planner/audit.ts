@@ -4,6 +4,7 @@ import {
   AuditActor,
   AuditCategories,
   AuditChangeSet,
+  AuditEventStatus,
   AuditRecordDetails,
   AuditService,
   AuditSeverities,
@@ -244,8 +245,18 @@ export const auditAdminAccess =
 
 export interface AnalyzedAuditMetadata {
   endpoint: AnalyzedEndpoint;
-  mode: AnalysisMode;
+  /** Mode of the result; absent when the request failed. */
+  mode?: AnalysisMode;
   model: string | null;
   fellBack: boolean;
   service?: string;
+}
+
+/** Audit status of a request outcome: client errors (4xx) are failures, other errors are errors. */
+export function toAuditStatus(error?: unknown): AuditEventStatus {
+  if (!error) {
+    return 'success';
+  }
+  const statusCode = (error as { extra?: { statusCode?: number } })?.extra?.statusCode;
+  return statusCode !== undefined && statusCode >= 400 && statusCode < 500 ? 'failure' : 'error';
 }
