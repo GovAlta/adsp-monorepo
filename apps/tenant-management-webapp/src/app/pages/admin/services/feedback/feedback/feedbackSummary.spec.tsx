@@ -17,8 +17,12 @@ describe('FeedbackSummary', () => {
     );
 
     expect(screen.getByTestId('feedback-summary')).toHaveTextContent(
-      '247 responses · Average rating 3.8 · 38 with comments · 21 with issues',
+      'Total responses 247 | Average rating 3.8/5 | Comments 38 | Issues 21',
     );
+    expect(screen.getByText('Total responses').tagName).toBe('STRONG');
+    expect(screen.getByText('Average rating').tagName).toBe('STRONG');
+    expect(screen.getByText('Comments').tagName).toBe('STRONG');
+    expect(screen.getByText('Issues').tagName).toBe('STRONG');
   });
 
   it('displays no responses for an empty result set', () => {
