@@ -5,9 +5,10 @@ import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import { ReadBuffer, serializeMessage } from '@modelcontextprotocol/sdk/shared/stdio.js';
 import type { Transport } from '@modelcontextprotocol/sdk/shared/transport.js';
 import type { JSONRPCMessage } from '@modelcontextprotocol/sdk/types.js';
+import * as fs from 'fs';
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'fs';
 import { tmpdir } from 'os';
-import { join } from 'path';
+import { join, relative, resolve, sep } from 'path';
 import { PassThrough, Readable, Writable } from 'stream';
 import { callForContract, FIXTURE_DOCS_ROOT, TOOL_CONTRACT } from './fixtures/toolContract';
 import { createAdspMcpServer } from './server';
@@ -188,5 +189,95 @@ describe('stdio transport', () => {
     const actual = await callForContract(client, call);
 
     expect(JSON.stringify(actual)).toBe(JSON.stringify(outcome));
+  });
+});
+
+describe('shared tools', () => {
+  let readFileSyncSpy: jest.SpyInstance;
+  let roots: string[];
+
+  function createDocsRoot(docs: Record<string, string>): string {
+    const root = mkdtempSync(join(tmpdir(), 'adsp-shared-docs-'));
+    roots.push(root);
+    Object.entries(docs).forEach(([path, content]) => writeDoc(root, path, content));
+    return root;
+  }
+
+  function countReadsUnder(root: string): number {
+    return readFileSyncSpy.mock.calls.filter(([path]) => resolve(String(path)).startsWith(root)).length;
+  }
+
+  function firstText(result: Awaited<ReturnType<Client['callTool']>>): string {
+    return (result.content as { type: 'text'; text: string }[])[0].text;
+  }
+
+  beforeEach(() => {
+    roots = [];
+    readFileSyncSpy = jest.spyOn(fs, 'readFileSync');
+  });
+
+  afterEach(() => {
+    readFileSyncSpy.mockRestore();
+    roots.forEach((root) => rmSync(root, { recursive: true, force: true }));
+  });
+
+  it('reads each docs file once when two servers share a docs root', () => {
+    const root = createDocsRoot({
+      'services/event-service.md': '---\ntitle: Event service\n---\n\nRoutes domain events.',
+      'services/file-service.md': '---\ntitle: File service\n---\n\nStores files.',
+    });
+
+    createAdspMcpServer({ docsRoot: root });
+    createAdspMcpServer({ docsRoot: root });
+
+    expect(countReadsUnder(root)).toBe(2);
+  });
+
+  it('resolves relative docs roots to the same cached index', () => {
+    const root = createDocsRoot({
+      'services/event-service.md': '---\ntitle: Event service\n---\n\nRoutes domain events.',
+      'services/file-service.md': '---\ntitle: File service\n---\n\nStores files.',
+    });
+
+    createAdspMcpServer({ docsRoot: root });
+    createAdspMcpServer({ docsRoot: relative(process.cwd(), root) + sep });
+
+    expect(countReadsUnder(root)).toBe(2);
+  });
+
+  it("serves each docs root's own docs", async () => {
+    const alphaRoot = createDocsRoot({ 'services/alpha-service.md': '---\ntitle: Alpha service\n---\n\nAlpha.' });
+    const betaRoot = createDocsRoot({ 'services/beta-service.md': '---\ntitle: Beta service\n---\n\nBeta.' });
+    const alphaClient = await connectInMemoryClient(createAdspMcpServer({ docsRoot: alphaRoot }));
+    const betaClient = await connectInMemoryClient(createAdspMcpServer({ docsRoot: betaRoot }));
+
+    const fromAlpha = await alphaClient.callTool({ name: 'search_adsp_docs', arguments: { query: 'beta' } });
+    const fromBeta = await betaClient.callTool({ name: 'search_adsp_docs', arguments: { query: 'beta' } });
+
+    expect(JSON.parse(firstText(fromAlpha))).toEqual([]);
+    expect(JSON.parse(firstText(fromBeta))[0].path).toBe('services/beta-service.md');
+  });
+
+  it('does not cache a docs root that failed to load', async () => {
+    const root = join(createDocsRoot({}), 'not-yet-created');
+    expect(() => createAdspMcpServer({ docsRoot: root })).toThrow('ENOENT');
+    writeDoc(root, 'services/late-service.md', '---\ntitle: Late service\n---\n\nAdded after a failed load.');
+
+    const client = await connectInMemoryClient(createAdspMcpServer({ docsRoot: root }));
+    const result = await client.callTool({ name: 'read_adsp_doc', arguments: { path: 'services/late-service.md' } });
+
+    expect(firstText(result)).toContain('Added after a failed load.');
+  });
+
+  it('keeps serving one session after another session closes', async () => {
+    const root = createDocsRoot({ 'services/event-service.md': '---\ntitle: Event service\n---\n\nRoutes domain events.' });
+    const closingServer = createAdspMcpServer({ docsRoot: root });
+    await connectInMemoryClient(closingServer);
+    const remainingClient = await connectInMemoryClient(createAdspMcpServer({ docsRoot: root }));
+
+    await closingServer.close();
+    const result = await remainingClient.callTool({ name: 'read_adsp_doc', arguments: { path: 'services/event-service.md' } });
+
+    expect(result.isError).toBeUndefined();
   });
 });
