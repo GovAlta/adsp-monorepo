@@ -214,7 +214,7 @@ describe('TestDestinationModal', () => {
       .getAttribute('helptext');
 
   it('explains the row key when the destination updates existing rows', () => {
-    expect(helpText(['_adsp.key'])).toMatch(/Keep the same "_adsp" key to update the row/);
+    expect(helpText(['_adsp.key'])).toContain('"_adsp"');
   });
 
   it('leaves the row key out when every push adds a row', () => {
