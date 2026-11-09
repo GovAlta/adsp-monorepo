@@ -33,6 +33,7 @@ jest.mock('./environments/environment', () => ({ environment: mockEnvironment })
 jest.mock('./planner', () => ({
   applyPlannerMiddleware: mockApplyPlannerMiddleware,
   createLlmFromEnv: jest.fn(),
+  PlannerAuditActions: ['planner-audit-actions'],
   PlannerServiceRoles: {},
 }));
 jest.mock('./postgres', () => ({ createRepositories: mockCreateRepositories }));
@@ -41,6 +42,7 @@ describe('main', () => {
   const healthCheck = jest.fn();
   const configurationService = { getConfiguration: jest.fn() };
   const tokenProvider = { getAccessToken: jest.fn() };
+  const auditService = { record: jest.fn() };
   const postgresRepositories = {
     solutionRepository: { name: 'solutions' },
     patternRepository: { name: 'patterns' },
@@ -64,7 +66,7 @@ describe('main', () => {
     mockExpress.mockReturnValue(mockApp);
     mockApp.listen.mockReturnValue({ on: jest.fn() });
     mockReadFile.mockImplementation((_path, _encoding, callback) => callback(null, '{}'));
-    mockInitializePlatform.mockResolvedValue({ healthCheck, configurationService, tokenProvider });
+    mockInitializePlatform.mockResolvedValue({ healthCheck, configurationService, tokenProvider, auditService });
     mockCreateRepositories.mockResolvedValue(postgresRepositories);
   });
 
@@ -123,6 +125,28 @@ describe('main', () => {
         specialistChatRepository: postgresRepositories.specialistChatRepository,
       }),
     );
+  });
+
+  it('registers the audit action catalog', async () => {
+    await startMain();
+
+    expect(mockInitializePlatform).toHaveBeenCalledWith(
+      expect.objectContaining({ auditActions: ['planner-audit-actions'] }),
+      expect.anything(),
+    );
+  });
+
+  it.each([undefined, false, true])('passes PROJECT_PLANNER_AUDIT_ENABLED=%p to the audit client', async (enabled) => {
+    mockEnvironment.PROJECT_PLANNER_AUDIT_ENABLED = enabled;
+    await startMain();
+
+    expect(mockInitializePlatform.mock.calls[0][0].audit).toEqual({ enabled });
+  });
+
+  it('passes the audit service to the planner middleware', async () => {
+    await startMain();
+
+    expect(mockApplyPlannerMiddleware).toHaveBeenCalledWith(mockApp, expect.objectContaining({ auditService }));
   });
 
   it('reports platform health together with the database connection state', async () => {

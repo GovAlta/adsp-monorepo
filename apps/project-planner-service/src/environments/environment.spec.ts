@@ -82,6 +82,22 @@ describe('environment', () => {
     expect(environment.MAAS_MODEL).toBe('GOA-Large');
   });
 
+  it('leaves PROJECT_PLANNER_AUDIT_ENABLED unset so the SDK AUDIT_ENABLED default applies', () => {
+    const environment = loadEnvironment();
+
+    expect(environment.PROJECT_PLANNER_AUDIT_ENABLED).toBeUndefined();
+  });
+
+  it.each([
+    ['false', false],
+    ['0', false],
+    ['true', true],
+  ])('parses PROJECT_PLANNER_AUDIT_ENABLED=%s as %p', (value, expected) => {
+    const environment = loadEnvironment({ PROJECT_PLANNER_AUDIT_ENABLED: value });
+
+    expect(environment.PROJECT_PLANNER_AUDIT_ENABLED).toBe(expected);
+  });
+
   it('does not report errors when all required variables are present', () => {
     loadEnvironment();
 

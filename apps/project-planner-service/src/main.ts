@@ -13,6 +13,7 @@ import {
   applyPlannerMiddleware,
   configurationSchema,
   createLlmFromEnv,
+  PlannerAuditActions,
   PlannerServiceRoles,
   SolutionCreatedDefinition,
   SolutionDeletedDefinition,
@@ -39,6 +40,7 @@ const initializeApp = async (): Promise<express.Application> => {
   const serviceId = AdspId.parse(environment.CLIENT_ID);
   const accessServiceUrl = new URL(environment.KEYCLOAK_ROOT_URL);
   const {
+    auditService,
     coreStrategy,
     configurationHandler,
     configurationService,
@@ -67,6 +69,8 @@ const initializeApp = async (): Promise<express.Application> => {
         },
       ],
       events: [SolutionCreatedDefinition, SolutionUpdatedDefinition, SolutionDeletedDefinition],
+      auditActions: PlannerAuditActions,
+      audit: { enabled: environment.PROJECT_PLANNER_AUDIT_ENABLED },
       configuration: {
         schema: configurationSchema,
         description: 'Tenant-defined business patterns that extend the planner built-in pattern catalog.',
@@ -115,6 +119,7 @@ const initializeApp = async (): Promise<express.Application> => {
     specialistChatRepository: repositories.specialistChatRepository,
     solutionVersionRepository: repositories.solutionVersionRepository,
     eventService,
+    auditService,
     llm: createLlmFromEnv(
       {
         MAAS_API_KEY: environment.MAAS_API_KEY,
