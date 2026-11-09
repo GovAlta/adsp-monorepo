@@ -30,7 +30,7 @@ module.exports = defineConfig({
     setupNodeEvents(on, config) {
       return require('./src/plugins/index.js')(on, config);
     },
-    baseUrl: 'https://form-management.alberta.ca',
+    baseUrl: 'https://form-management-app-adsp-prod.apps.aro-01.int.gov.ab.ca/',
     specPattern: './src/integration/**/*.feature',
     supportFile: './src/support/index.ts',
     excludeSpecPattern: '*.js',
