@@ -46,7 +46,7 @@ export const ValueDefinitionDeletedAuditAction: AuditAction = {
 };
 
 export const ServiceMetricRollupTriggeredAuditAction: AuditAction = {
-  name: 'service-metric-rollup.triggered',
+  name: 'value-definition.service-metric-rollup.triggered',
   version: 1,
   category: AuditCategories.Runtime,
   severity: AuditSeverities.Info,

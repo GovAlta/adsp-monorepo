@@ -102,7 +102,7 @@ Value service records audit events for administrative changes through the [audit
 | `value-definition.created` | administrative | info | compliance | A value definition is created. |
 | `value-definition.updated` | administrative | info | compliance | A definition is updated; metadata lists the changed fields. |
 | `value-definition.deleted` | administrative | warning | compliance | A value definition is deleted. |
-| `service-metric-rollup.triggered` | runtime | info | standard | A rollup is triggered manually via the API. A rollup across all tenants records one event per tenant rolled up. |
+| `value-definition.service-metric-rollup.triggered` | runtime | info | standard | A rollup is triggered manually via the API. A rollup across all tenants records one event per tenant rolled up. |
 
 Value writes, the scheduled rollup job and read operations are not audited. Set `VALUE_AUDIT_ENABLED=false` to disable audit recording for the service; when unset, the SDK `AUDIT_ENABLED` setting applies (enabled by default).
 

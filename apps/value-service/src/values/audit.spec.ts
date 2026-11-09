@@ -31,7 +31,7 @@ describe('value audit', () => {
         'value-definition.created',
         'value-definition.updated',
         'value-definition.deleted',
-        'service-metric-rollup.triggered',
+        'value-definition.service-metric-rollup.triggered',
       ]);
     });
 
