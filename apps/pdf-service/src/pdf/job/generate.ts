@@ -1,8 +1,9 @@
-import { AdspId, ConfigurationService, EventService, TokenProvider } from '@abgov/adsp-service-sdk';
+import { AdspId, AuditService, ConfigurationService, EventService, TokenProvider } from '@abgov/adsp-service-sdk';
 import { NotFoundError } from '@core-services/core-common';
 import { FileResult, FileService, JobRepository } from '@core-services/job-common';
 import * as path from 'path';
 import { Logger } from 'winston';
+import { PdfJobGeneratedAuditAction, toAuditError, toPdfJobAuditDetails, toRequesterAuditActor } from '../audit';
 import { pdfGenerated, pdfGenerationFailed } from '../events';
 import { PdfTemplateEntity } from '../model';
 import { PdfServiceWorkItem } from './types';
@@ -15,6 +16,7 @@ export interface GenerateJobProps {
   repository: JobRepository<FileResult>;
   fileService: FileService;
   eventService: EventService;
+  auditService: AuditService;
 }
 
 const context = 'GenerateJob';
@@ -26,6 +28,7 @@ export function createGenerateJob({
   repository,
   fileService,
   eventService,
+  auditService,
 }: GenerateJobProps) {
   return async (
     {
@@ -49,6 +52,8 @@ export function createGenerateJob({
     });
 
     const tenantId = AdspId.parse(tenantIdValue);
+    const auditActor = toRequesterAuditActor(requestedBy);
+    const auditTarget = { tenantId, jobId, templateId, filename, fileType, recordId };
 
     try {
       const token = await tokenProvider.getAccessToken();
@@ -80,11 +85,19 @@ export function createGenerateJob({
       });
 
       await repository.update(jobId, 'completed', result);
+      void auditService.record(
+        PdfJobGeneratedAuditAction,
+        toPdfJobAuditDetails(auditActor, auditTarget, { fileId: result?.id }),
+      );
       done();
     } catch (err) {
       if (!retryOnError) {
         await repository.update(jobId, 'failed');
         eventService.send(pdfGenerationFailed(tenantId, jobId, templateId, context, requestedBy, { error: err.toString() }));
+        void auditService.record(PdfJobGeneratedAuditAction, {
+          ...toPdfJobAuditDetails(auditActor, auditTarget, { error: toAuditError(err) }),
+          status: 'failure',
+        });
         logger.error(`Generation of PDF (ID: ${jobId}) failed with error. ${err}`);
       }
 

@@ -21,6 +21,7 @@ import {
   applyPdfMiddleware,
   configurationSchema,
   GeneratedPdfType,
+  PdfAuditActions,
   PdfGeneratedDefinition,
   PdfGenerationFailedDefinition,
   PdfGenerationQueuedDefinition,
@@ -54,6 +55,7 @@ const initializeApp = async (): Promise<express.Application> => {
   const accessServiceUrl = new URL(environment.KEYCLOAK_ROOT_URL);
 
   const {
+    auditService,
     clearCached,
     configurationHandler,
     configurationService,
@@ -102,6 +104,8 @@ const initializeApp = async (): Promise<express.Application> => {
       ],
       events: [PdfGenerationQueuedDefinition, PdfGeneratedDefinition, PdfGenerationFailedDefinition],
       eventStreams: [PdfGenerationUpdatesStream],
+      auditActions: PdfAuditActions,
+      audit: { enabled: environment.PDF_AUDIT_ENABLED },
       fileTypes: [GeneratedPdfType, PdfTemplateAssetsType],
       clientSecret: environment.CLIENT_SECRET,
       accessServiceUrl,
@@ -188,6 +192,7 @@ const initializeApp = async (): Promise<express.Application> => {
     queueService,
     fileService,
     eventService,
+    auditService,
     directory,
   });
 
