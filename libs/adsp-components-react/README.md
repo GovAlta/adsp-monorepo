@@ -4,7 +4,7 @@
 
 - `AdspThemeProvider`, for selecting a theme at application level
 - the hooks components use to read the current theme
-- the React components themselves: `ADSPCalendar`, `ADSPConversation` and `ADSPFileDownload`
+- the React components themselves: `ADSPCalendar`, `ADSPConversation`, `ADSPFileDownload` and `ADSPFileUpload`
 
 It contains only React-specific code. The theme contract, the themes, the stylesheet and shared types live in [adsp-components-core](../adsp-components-core/README.md), so an Angular or Vue adapter can reuse them.
 
@@ -192,6 +192,52 @@ Things to know:
 #### `useFileDownload(client, fileId, { loadMetadata })`
 
 The hook `ADSPFileDownload` uses. It returns `{ file, loading, downloading, ready, error, download, retry }`. `retry` repeats whatever failed: the metadata load or the download. With `loadMetadata: false` it requests nothing until `download()` is called. Use it to build a different download experience on the same File service behaviour.
+
+#### `ADSPFileUpload`
+
+Uploads files to a File service File Type. With only `client` and `fileTypeId`, it loads the File Type, then shows the GoA drag-and-drop area, which also opens the browser's file picker. It shows the file and its progress while uploading, confirms the upload, and explains a missing File Type, a permission failure or a rejected file, with **Try again** where trying again can help.
+
+```tsx
+import { useMemo } from 'react';
+import { FileClient } from '@abgov/adsp-components-core';
+import { ADSPFileUpload } from '@abgov/adsp-components-react';
+
+// Create the client once or memoize it: a new client on every render reloads the File Type.
+const client = useMemo(() => new FileClient({ serviceUrl, getAccessToken }), [serviceUrl]);
+
+<ADSPFileUpload client={client} fileTypeId="my-file-type" />;
+
+<ADSPFileUpload client={client} fileTypeId="my-file-type" recordId={application.id} onUpload={addFile} />;
+```
+
+| Prop             | Type                                        | Description                                                                                                                                                       |
+| ---------------- | ------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `client`         | `IFileUploadClient`                         | Loads the File Type and uploads files, usually a `FileClient` from core built with the app's `getAccessToken`. Create it once or memoize it.                      |
+| `fileTypeId`     | `string`                                    | ID of the File service File Type the files are uploaded as.                                                                                                       |
+| `canUpload`      | `boolean`                                   | Whether the application lets the current user upload. `false` renders nothing and sends no request. Defaults to `true`; File service still authorizes the upload. |
+| `recordId`       | `string`                                    | Ties each uploaded file to a record in the application, such as a form submission.                                                                               |
+| `onUpload`       | `(file: FileMetadata) => void`              | Called with the file as File service stored it, once an upload succeeds.                                                                                          |
+| `themeOverrides` | `AdspComponentThemeOverrides<'fileUpload'>` | File upload tokens for this instance only.                                                                                                                        |
+| `testId`         | `string`                                    | `data-testid` on the root element; the GoA input, card and retry button get `-input`, `-card` and `-retry`.                                                       |
+
+| Token (`themeOverrides`) | Styles                         |
+| ------------------------ | ------------------------------ |
+| `guidanceTextColor`      | Guidance text                  |
+| `statusTextColor`        | Loading and uploading messages |
+| `successTextColor`       | The upload confirmation        |
+| `errorTextColor`         | Error messages                 |
+
+Things to know:
+
+- **Permissions.** There is no shared ADSP permission resolver yet, so the application passes `canUpload`. File service's answer to the File Type request also tells the component before any upload whether the user may use the type: a 403 shows a permission message instead of the drop area.
+- **Allowed formats.** File service File Types don't configure allowed formats or a size limit, so the component can't validate formats on the client. It only applies File service's 3 GB upload limit (the GoA input would otherwise reject anything over 5 MB). File service's answer to the upload is authoritative.
+- **One file at a time.** The drop area is hidden while a file uploads and comes back once it finishes, to upload another.
+- **Cancel and remove** only affect the component. Cancelling stops the request; removing a finished upload clears it from view but leaves the file in File service.
+- **Changing `client` or `fileTypeId`** cancels an upload in progress and starts over with the new File Type.
+
+#### `useFileUpload(client, fileTypeId, { recordId, onUpload })`
+
+The hook `ADSPFileUpload` uses. It returns `{ fileType, loading, status, selectedFile, progress, uploaded, error, ready, upload, retry, reset }`. `status` is `idle`, `uploading`, `uploaded` or `failed`. `retry` repeats whatever failed: loading the File Type or uploading the same file. Use it to build a different upload experience on the same File service behaviour.
 
 ## Building a component
 

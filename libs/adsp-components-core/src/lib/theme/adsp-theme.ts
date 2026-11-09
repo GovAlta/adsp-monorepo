@@ -1,6 +1,7 @@
 import type { AdspCalendarTheme } from '../calendar/calendarTheme';
 import type { AdspConversationTheme } from '../conversation/conversationTheme';
 import type { AdspFileDownloadTheme } from '../file/fileDownloadTheme'; // clean-code-ignore: RULE-19 (types only; the theme values are tested in adsp-themes.spec.ts)
+import type { AdspFileUploadTheme } from '../file/fileUploadTheme'; // clean-code-ignore: RULE-19 (types only; the theme values are tested in adsp-themes.spec.ts)
 
 export interface AdspThemeColor {
   text: { default: string; secondary: string; light: string; disabled: string };
@@ -34,6 +35,7 @@ export interface AdspThemeComponents {
   calendar: AdspCalendarTheme;
   conversation: AdspConversationTheme;
   fileDownload: AdspFileDownloadTheme;
+  fileUpload: AdspFileUploadTheme;
 }
 
 // A theme controls presentation, never behaviour. Start from AdspThemes; adjust with createAdspTheme.
