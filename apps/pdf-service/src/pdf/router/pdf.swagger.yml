@@ -1,56 +1,144 @@
 components:
+  parameters:
+    PdfTenantId:
+      name: tenantId
+      in: query
+      required: false
+      description: >
+        Tenant to act on, as a tenant URN. Only read for core (platform) users and service accounts. Tenant users and
+        service accounts always act on the tenant of their token, and this parameter is ignored for them. Core callers
+        must set it on every operation that acts on tenant templates or jobs.
+      schema:
+        type: string
+        example: urn:ads:platform:tenant-service:v2:/tenants/61f2e3a8c9b1d2e3f4a5b6c7
+    PdfTemplateId:
+      name: templateId
+      in: path
+      required: true
+      description: >
+        ID of the template. The ID is derived from the template name when it is created (trimmed, lower case, with
+        whitespace replaced by hyphens), and is shown in the template editor of the tenant admin app.
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 50
+        example: submission-summary
+  responses:
+    PdfBadRequest:
+      description: Request is invalid, for example a parameter or the request body failed validation.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/PdfError'
+          example:
+            errorMessage: 'Validation failed with error(s): name (body) - name is required'
+    PdfUnauthorized:
+      description: Request does not include a valid bearer token.
+    PdfForbidden:
+      description: User does not have the role required for the operation, or the resource belongs to another tenant.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/PdfError'
+          example:
+            errorMessage: 'User Test User (ID: 1234) not permitted to generate pdf.'
+    PdfTemplateNotFound:
+      description: PDF template not found in the tenant or platform templates.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/PdfError'
+          example:
+            errorMessage: "PDF Template with ID 'submission-summary' could not be found."
   schemas:
+    PdfError:
+      type: object
+      properties:
+        errorMessage:
+          type: string
+          example: "PDF Template with ID 'submission-summary' could not be found."
     Template:
       type: object
+      description: >
+        A PDF template. Templates are stored in the configuration service under platform:pdf-service. Template content
+        is HTML and CSS with Handlebars expressions, evaluated with a context of { data }.
       properties:
         id:
           type: string
           description: The template ID
-          example: my-template
+          readOnly: true
+          example: submission-summary
         name:
           type: string
           description: The name of the template
-          example: My Template
+          example: Submission summary
         description:
           type: string
           description: The purpose of the template
-          example: A template for rendering a user name
+          example: Provides a summary of the submission
         template:
           type: string
           description: The template body, designed with HTML/CSS
-          example: <p>Their name is {{data.user.name}}</p>
+          example: <p>Submitted by {{data.applicant.name}}</p>
         header:
           type: string
           description: Page headers, designed with HTML/CSS
-          example: <h1>What is their name?</h1>
+          example: <h1>Submission summary</h1>
         footer:
           type: string
           description: Page footers, designed with HTML/CSS
-          example: <p>Thank you, thank you very much</p>
+          example: <p>Government of Alberta</p>
         additionalStyles:
           type: string
           description: CSS styles shared across the template, header, and footer.
-          example: ".label { font-weight: bold; }"
+          example: '.label { font-weight: bold; }'
         variables:
           type: string
-          description: Variable assignments available to the template.
+          description: Variable assignments available to the template, as a JSON string.
+          example: '{"applicant": {"name": "Test User"}}'
+      example:
+        id: submission-summary
+        name: Submission summary
+        description: Provides a summary of the submission
+        template: <p>Submitted by {{data.applicant.name}}</p>
+        header: <h1>Submission summary</h1>
+        footer: <p>Government of Alberta</p>
+        additionalStyles: '.label { font-weight: bold; }'
+        variables: '{"applicant": {"name": "Test User"}}'
+    TemplateConflict:
+      type: object
+      description: Response body when a template with the same ID already exists. Note that the property is `error`.
+      properties:
+        error:
+          type: string
+      example:
+        error: "PDF template 'Submission summary' already exists."
     Job:
       type: object
       properties:
         id:
           description: Id of the Job spawned to generate a PDF.  Required when polling to get the status of the Job.
           type: string
+          format: uuid
+          readOnly: true
           example: 7696ed03-977e-4bde-af54-d823be00ffad
         status:
           type: string
           enum: [queued, completed, failed]
-          description: Indicates the status of the PDF generation Job.
+          readOnly: true
+          description: >
+            Indicates the status of the PDF generation Job. A job is queued when it is created, and changes to
+            completed when the PDF is uploaded to the file service, or to failed if generation fails.
         urn:
           type: string
+          readOnly: true
           description: Logical URN to use for querying the job status.  You can map the URN to a URL using the [ADSP Service SDK's](https://github.com/GovAlta/adsp-monorepo/blob/main/libs/adsp-service-sdk/src/directory/serviceDirectory.ts) getResourceUrl(AdspId\`urn\`)
           example: urn:ads:platform:pdf-service:v1:/jobs/7696ed03-977e-4bde-af54-d823be00ffad
         result:
           type: object
+          nullable: true
+          readOnly: true
+          description: The generated file. Null until the job is completed.
           properties:
             urn:
               type: string
@@ -63,7 +151,15 @@ components:
             filename:
               type: string
               description: The name of the PDF file.
-              example: MyPDF-2022-02-19
+              example: submission-summary-1234.pdf
+      example:
+        urn: urn:ads:platform:pdf-service:v1:/jobs/7696ed03-977e-4bde-af54-d823be00ffad
+        id: 7696ed03-977e-4bde-af54-d823be00ffad
+        status: completed
+        result:
+          urn: urn:ads:platform:file-service:v1:/files/54e22556-d453-4626-ac6b-9bcadc577901
+          id: 54e22556-d453-4626-ac6b-9bcadc577901
+          filename: submission-summary-1234.pdf
     GenerateOperation:
       type: object
       properties:
@@ -73,35 +169,64 @@ components:
           description: The operation will always be *generate*.
         fileType:
           type: string
-          example: example-template
-          description: The **File Server** collection to which this PDF document will be assigned.  Useful when searching for collections of PDF documents, like those generated from a specific template.
+          minLength: 1
+          maxLength: 50
+          example: submission-documents
+          description: >
+            ID of the file service file type that the generated PDF is uploaded as. It must exist in the tenant.
+            Defaults to `generated-pdf`, which deletes files after 30 days.
         templateId:
           description: Identifies the template to use when generating the PDF document.
           type: string
-          example: my-template
+          minLength: 1
+          maxLength: 50
+          example: submission-summary
         recordId:
-          description: An arbitrary identifier that can be used by your application to cross reference the PDF document being generated.
+          description: >
+            An arbitrary identifier that can be used by your application to cross reference the PDF document being
+            generated. Set as the record ID of the uploaded file. Defaults to the job ID.
           type: string
-          example: user-jane-doe
+          example: application-1234
         context:
-          description: The context in which the PDF is being generated. This is an arbitrary JSON object that can include any relevant information about the generation request.
-          example: {"requestId": "12345", "source": "user-action"}
+          description: >
+            The context in which the PDF is being generated. This is an arbitrary JSON object that is included in the
+            context of the job's domain events.
+          example: { 'applicationId': 'application-1234' }
           type: object
         data:
           description: The variable (Handlebars) assignments to be applied to the template when generating a PDF.  This is an arbitrary JSON object, but its properties must match those expected by the template.
-          example: {"user": {"name": "Jane Doe"}}
+          example: { 'applicant': { 'name': 'Test User' } }
           type: object
         filename:
-          description: The name of the file that will be given to the generated PDF document.  It must be unique within your tenant.
+          description: >
+            The name given to the generated PDF document. Any extension is replaced with `.pdf`.
           type: string
-          example: janeDoe.pdf
+          minLength: 1
+          maxLength: 60
+          example: submission-summary-1234.pdf
       required: [operation, templateId, filename]
+      example:
+        operation: generate
+        templateId: submission-summary
+        filename: submission-summary-1234.pdf
+        fileType: submission-documents
+        recordId: application-1234
+        context:
+          applicationId: application-1234
+        data:
+          applicant:
+            name: Test User
 
 /pdf/v1/templates:
   get:
     tags:
       - Templates
-    description: Retrieves all PDF templates created by the tenant.
+    description: >
+      Retrieves the PDF templates available to the tenant: the tenant's own templates combined with platform templates.
+      A platform template replaces a tenant template with the same ID. Any authenticated user of the tenant can call
+      it; no specific role is required. Core users without a tenantId get only the platform templates.
+    parameters:
+      - $ref: '#/components/parameters/PdfTenantId'
     responses:
       200:
         description: A list of PDF templates successfully retrieved.
@@ -110,11 +235,17 @@ components:
             schema:
               type: array
               items:
-                $ref: "#/components/schemas/Template"
+                $ref: '#/components/schemas/Template'
+      401:
+        $ref: '#/components/responses/PdfUnauthorized'
   post:
     tags:
       - Templates
-    description: Creates a new PDF template for the tenant.
+    description: >
+      Creates a new PDF template for the tenant. Requires the `urn:ads:platform:pdf-service:pdf-admin` role, in the
+      tenant or as a core user. The template ID is derived from the name. Core callers must set tenantId.
+    parameters:
+      - $ref: '#/components/parameters/PdfTenantId'
     requestBody:
       required: true
       content:
@@ -126,67 +257,94 @@ components:
             properties:
               name:
                 type: string
-                description: Name of the template. Can contain letters, numbers, spaces, and hyphens.
+                description: Name of the template. Can contain letters, numbers, spaces, and hyphens. Leading and trailing whitespace is removed.
                 minLength: 1
                 maxLength: 50
-                example: My Template
+                pattern: '^[a-zA-Z0-9 -]+$'
+                example: Submission summary
               description:
                 type: string
-                description: Description of the template's purpose.
-                example: A template for rendering a user name
+                description: Description of the template's purpose. Defaults to an empty string.
+                example: Provides a summary of the submission
               template:
                 type: string
-                description: Initial HTML body content for the template.
+                description: Initial HTML body content for the template. Defaults to an empty string.
+                example: <p>Submitted by {{data.applicant.name}}</p>
               header:
                 type: string
                 description: Initial HTML header content for the template.
+                example: <h1>Submission summary</h1>
               footer:
                 type: string
                 description: Initial HTML footer content for the template.
+                example: <p>Government of Alberta</p>
               additionalStyles:
                 type: string
                 description: Initial CSS styles shared across template, header, and footer.
+                example: '.label { font-weight: bold; }'
               variables:
                 type: string
                 description: Initial variable assignments for the template.
+                example: '{"applicant": {"name": "Test User"}}'
+          example:
+            name: Submission summary
+            description: Provides a summary of the submission
+            template: <p>Submitted by {{data.applicant.name}}</p>
     responses:
       201:
         description: PDF template successfully created.
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/Template"
+              $ref: '#/components/schemas/Template'
+      400:
+        $ref: '#/components/responses/PdfBadRequest'
+      401:
+        $ref: '#/components/responses/PdfUnauthorized'
+      403:
+        $ref: '#/components/responses/PdfForbidden'
+      409:
+        description: A tenant or platform template with the same ID already exists.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TemplateConflict'
 
 /pdf/v1/templates/{templateId}:
   get:
     tags:
       - Templates
-    description: Retrieve the specified PDF template.
+    description: >
+      Retrieve the specified PDF template, from the tenant's templates or the platform templates. Any authenticated
+      user of the tenant can call it; no specific role is required.
     parameters:
-      - name: templateId
-        description: ID of template to retrieve. You can find the ID in the [Template Editor](https://adsp.alberta.ca).
-        in: path
-        required: true
-        schema:
-          type: string
+      - $ref: '#/components/parameters/PdfTemplateId'
+      - $ref: '#/components/parameters/PdfTenantId'
     responses:
       200:
         description: The PDF template.
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/Template"
+              $ref: '#/components/schemas/Template'
+      400:
+        $ref: '#/components/responses/PdfBadRequest'
+      401:
+        $ref: '#/components/responses/PdfUnauthorized'
+      404:
+        $ref: '#/components/responses/PdfTemplateNotFound'
   patch:
     tags:
       - Templates
-    description: Update an existing PDF template. Only the fields included in the request body are updated; all other fields are left unchanged.
+    description: >
+      Update an existing PDF template of the tenant. Only the fields included in the request body are updated; all
+      other fields are left unchanged, and the ID does not change when the name does. Requires the
+      `urn:ads:platform:pdf-service:pdf-admin` role, in the tenant or as a core user. The template is looked up before
+      the role is checked, so an unknown ID responds 404 to any caller. Core callers must set tenantId. Responds 201,
+      not 200, on success.
     parameters:
-      - name: templateId
-        description: ID of template to update.
-        in: path
-        required: true
-        schema:
-          type: string
+      - $ref: '#/components/parameters/PdfTemplateId'
+      - $ref: '#/components/parameters/PdfTenantId'
     requestBody:
       required: true
       content:
@@ -196,100 +354,151 @@ components:
             properties:
               name:
                 type: string
-                description: Name of the template. Can contain letters, numbers, spaces, and hyphens.
+                description: Name of the template.
                 minLength: 1
                 maxLength: 50
-                example: My Template
+                example: Submission summary
               description:
                 type: string
                 description: Description of the template's purpose.
-                example: A template for rendering a user name
+                example: Provides a summary of the submission
               template:
                 type: string
                 description: The template body, designed with HTML/CSS.
-                example: <p>Their name is {{data.user.name}}</p>
+                example: <p>Submitted by {{data.applicant.name}}</p>
               header:
                 type: string
                 description: Page header, designed with HTML/CSS.
-                example: <h1>What is their name?</h1>
+                example: <h1>Submission summary</h1>
               footer:
                 type: string
                 description: Page footer, designed with HTML/CSS.
-                example: <p>Thank you, thank you very much</p>
+                example: <p>Government of Alberta</p>
               additionalStyles:
                 type: string
                 description: CSS styles shared across the template, header, and footer.
-                example: ".label { font-weight: bold; }"
+                example: '.label { font-weight: bold; }'
               variables:
                 type: string
                 description: Variable assignments available to the template.
+                example: '{"applicant": {"name": "Test User"}}'
+          example:
+            template: <p>Submitted by {{data.applicant.name}} on {{formatDate data.submitted}}</p>
+            additionalStyles: '.label { font-weight: bold; }'
     responses:
       201:
         description: The PDF template was successfully updated.
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/Template"
+              $ref: '#/components/schemas/Template'
       400:
-        description: Request body does not match the expected schema.
+        $ref: '#/components/responses/PdfBadRequest'
+      401:
+        $ref: '#/components/responses/PdfUnauthorized'
       403:
-        description: User does not have the pdf-admin role.
+        $ref: '#/components/responses/PdfForbidden'
       404:
-        description: Template not found.
+        $ref: '#/components/responses/PdfTemplateNotFound'
   delete:
     tags:
       - Templates
-    description: Delete the specified PDF template.
+    description: >
+      Delete the specified PDF template of the tenant. Requires the `urn:ads:platform:pdf-service:pdf-admin` role, in
+      the tenant or as a core user. The template is looked up before the role is checked, so an unknown ID responds
+      404 to any caller. Core callers must set tenantId.
     parameters:
-      - name: templateId
-        description: ID of template to delete.
-        in: path
-        required: true
-        schema:
-          type: string
+      - $ref: '#/components/parameters/PdfTemplateId'
+      - $ref: '#/components/parameters/PdfTenantId'
     responses:
       204:
         description: The PDF template was successfully deleted.
+      400:
+        $ref: '#/components/responses/PdfBadRequest'
+      401:
+        $ref: '#/components/responses/PdfUnauthorized'
+      403:
+        $ref: '#/components/responses/PdfForbidden'
       404:
-        description: Template not found.
+        $ref: '#/components/responses/PdfTemplateNotFound'
 
 /pdf/v1/jobs:
   post:
     tags:
       - Generator
-    description:
-      "Initiate a new, asynchronous Job to generate a PDF document.  The Job's *properties* are cached, with a finite TTL, and it is important for your application
-      to ensure that it receives the *file id* of the new PDF document within that time frame, e.g. by polling  \n>GET /pdf/v1/jobs/{jobId}. TTL is approximately 12 hours."
+    description: >
+      Initiate a new, asynchronous Job to generate a PDF document from a tenant or platform template. Requires the
+      `urn:ads:platform:pdf-service:pdf-generator` role, in the tenant or as a core user (for example a platform
+      service account). Core callers must set tenantId. The job is queued and a `pdf-generation-queued` event is sent;
+      the generated PDF is uploaded to the file service, and `pdf-generated` or `pdf-generation-failed` is sent when
+      the job finishes. Job state is kept for about 24 hours after its last update, so your application must read
+      the file ID of the new PDF document within that time, e.g. by polling GET /pdf/v1/jobs/{jobId} or by listening
+      on the push service `pdf-generation-updates` stream.
+    parameters:
+      - $ref: '#/components/parameters/PdfTenantId'
     requestBody:
       required: true
       content:
         application/json:
           schema:
             oneOf:
-              - $ref: "#/components/schemas/GenerateOperation"
+              - $ref: '#/components/schemas/GenerateOperation'
             discriminator:
               propertyName: operation
               mapping:
-                generate: "#/components/schemas/GenerateOperation"
+                generate: '#/components/schemas/GenerateOperation'
+          example:
+            operation: generate
+            templateId: submission-summary
+            filename: submission-summary-1234.pdf
+            fileType: submission-documents
+            data:
+              applicant:
+                name: Test User
     responses:
       200:
         description: Job successfully created.
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/Job"
+              $ref: '#/components/schemas/Job'
+            example:
+              urn: urn:ads:platform:pdf-service:v1:/jobs/7696ed03-977e-4bde-af54-d823be00ffad
+              id: 7696ed03-977e-4bde-af54-d823be00ffad
+              status: queued
+              result: null
         links:
           getJobById:
             description: The `id` returned can be used as the `jobId` parameter in `GET /pdf/v1/jobs/{jobId}`
             operationId: getJob
             parameters:
               jobId: $response.body#/id
+      400:
+        description: >
+          Request is invalid, for example the body failed validation, or the specified file type cannot be found in
+          the tenant.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PdfError'
+            example:
+              errorMessage: "Specified target file type 'submission-documents' cannot be found."
+      401:
+        $ref: '#/components/responses/PdfUnauthorized'
+      403:
+        $ref: '#/components/responses/PdfForbidden'
+      404:
+        $ref: '#/components/responses/PdfTemplateNotFound'
 
 /pdf/v1/jobs/{jobId}:
   get:
     tags:
       - Generator
-    description: Retrieve the specified job's attributes.
+    description: >
+      Retrieve the specified job's status and, once completed, the generated file. Requires the
+      `urn:ads:platform:pdf-service:pdf-generator` role in the job's tenant. Core users and service accounts are not
+      allowed (403), and a job of another tenant responds 403. Jobs expire about 24 hours after their last update and
+      then respond 404.
     operationId: getJob
     parameters:
       - name: jobId
@@ -298,10 +507,26 @@ components:
         required: true
         schema:
           type: string
+          format: uuid
+          example: 7696ed03-977e-4bde-af54-d823be00ffad
     responses:
       200:
         description: Job successfully retrieved.
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/Job"
+              $ref: '#/components/schemas/Job'
+      400:
+        $ref: '#/components/responses/PdfBadRequest'
+      401:
+        $ref: '#/components/responses/PdfUnauthorized'
+      403:
+        $ref: '#/components/responses/PdfForbidden'
+      404:
+        description: Job not found, or expired.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PdfError'
+            example:
+              errorMessage: "Generated PDF with ID '7696ed03-977e-4bde-af54-d823be00ffad' could not be found."
