@@ -7,7 +7,6 @@ import {
   AuditRecordDetails,
   AuditService,
   AuditSeverities,
-  BuiltInRetentionClasses,
   getContextTrace,
   toAuditActor,
   User,
@@ -27,7 +26,6 @@ export const SolutionCreatedAuditAction: AuditAction = {
   version: 1,
   category: AuditCategories.Administrative,
   severity: AuditSeverities.Info,
-  retentionClass: BuiltInRetentionClasses.Compliance,
   resourceType: SOLUTION_RESOURCE_TYPE,
   description: 'A planner solution is created.',
 };
@@ -37,7 +35,6 @@ export const SolutionDeletedAuditAction: AuditAction = {
   version: 1,
   category: AuditCategories.Administrative,
   severity: AuditSeverities.Warning,
-  retentionClass: BuiltInRetentionClasses.Compliance,
   resourceType: SOLUTION_RESOURCE_TYPE,
   description: 'A planner solution is deleted.',
 };
@@ -47,7 +44,6 @@ export const SolutionExportedAuditAction: AuditAction = {
   version: 1,
   category: AuditCategories.DataAccess,
   severity: AuditSeverities.Info,
-  retentionClass: BuiltInRetentionClasses.Compliance,
   resourceType: SOLUTION_RESOURCE_TYPE,
   description: 'A planner solution or a saved version of it is downloaded.',
 };
@@ -57,7 +53,6 @@ export const SolutionAdminAccessedAuditAction: AuditAction = {
   version: 1,
   category: AuditCategories.DataAccess,
   severity: AuditSeverities.Info,
-  retentionClass: BuiltInRetentionClasses.Compliance,
   resourceType: SOLUTION_RESOURCE_TYPE,
   description: 'A planner administrator reads, changes or exports a solution owned by another user.',
 };
@@ -67,7 +62,6 @@ export const SolutionAnalyzedAuditAction: AuditAction = {
   version: 1,
   category: AuditCategories.Runtime,
   severity: AuditSeverities.Info,
-  retentionClass: BuiltInRetentionClasses.Standard,
   resourceType: SOLUTION_RESOURCE_TYPE,
   description: 'Solution content is sent to the AI model. The content itself is not recorded.',
 };
@@ -77,7 +71,6 @@ export const PatternCreatedAuditAction: AuditAction = {
   version: 1,
   category: AuditCategories.Administrative,
   severity: AuditSeverities.Info,
-  retentionClass: BuiltInRetentionClasses.Compliance,
   resourceType: PATTERN_RESOURCE_TYPE,
   description: 'A tenant business pattern is created.',
 };
@@ -87,7 +80,6 @@ export const PatternUpdatedAuditAction: AuditAction = {
   version: 1,
   category: AuditCategories.Administrative,
   severity: AuditSeverities.Info,
-  retentionClass: BuiltInRetentionClasses.Compliance,
   resourceType: PATTERN_RESOURCE_TYPE,
   description: 'A business pattern is updated, or a built-in pattern is customized for the tenant.',
   captureChangeSet: true,
@@ -98,7 +90,6 @@ export const PatternDeletedAuditAction: AuditAction = {
   version: 1,
   category: AuditCategories.Administrative,
   severity: AuditSeverities.Warning,
-  retentionClass: BuiltInRetentionClasses.Compliance,
   resourceType: PATTERN_RESOURCE_TYPE,
   description: 'A custom business pattern is deleted, or a customized built-in pattern is reset.',
 };
@@ -109,7 +100,6 @@ export const SpecialistChatExportedAuditAction: AuditAction = {
   version: 1,
   category: AuditCategories.DataAccess,
   severity: AuditSeverities.Info,
-  retentionClass: BuiltInRetentionClasses.Compliance,
   description: 'One or all saved specialist chats of a user are downloaded.',
 };
 
@@ -118,7 +108,6 @@ export const SpecialistChatDeletedAuditAction: AuditAction = {
   version: 1,
   category: AuditCategories.Administrative,
   severity: AuditSeverities.Info,
-  retentionClass: BuiltInRetentionClasses.Compliance,
   resourceType: SPECIALIST_CHAT_RESOURCE_TYPE,
   description: 'A saved specialist chat is deleted.',
 };

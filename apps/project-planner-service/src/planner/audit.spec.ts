@@ -1,4 +1,4 @@
-import { adspId, auditDefinitions, getContextTrace } from '@abgov/adsp-service-sdk';
+import { adspId, auditDefinitions, getContextTrace, resolveRetentionClass } from '@abgov/adsp-service-sdk';
 import type { AuditService, User } from '@abgov/adsp-service-sdk';
 import type { Request, Response } from 'express';
 import { EventEmitter } from 'events';
@@ -48,17 +48,21 @@ describe('planner audit', () => {
     jest.resetAllMocks();
   });
 
-  it('registers the action catalog with category, severity and retention class', () => {
+  it('registers the action catalog with category, severity and the category-derived retention class', () => {
     const catalog = auditDefinitions(PlannerAuditActions);
 
     expect(
       Object.fromEntries(
-        Object.entries(catalog).map(
-          ([name, { category, severity, retentionClass, resourceType, captureChangeSet }]) => [
-            name,
-            { category, severity, retentionClass, resourceType, captureChangeSet },
-          ],
-        ),
+        Object.entries(catalog).map(([name, definition]) => [
+          name,
+          {
+            category: definition.category,
+            severity: definition.severity,
+            retentionClass: resolveRetentionClass(definition),
+            resourceType: definition.resourceType,
+            captureChangeSet: definition.captureChangeSet,
+          },
+        ]),
       ),
     ).toEqual({
       'planner.solution.created': {
@@ -123,6 +127,10 @@ describe('planner audit', () => {
       },
     });
     expect(PlannerAuditActions.every((action) => action.version === 1 && action.description)).toBe(true);
+  });
+
+  it('does not set a retention class on any action, so the audit service derives it from the category', () => {
+    expect(PlannerAuditActions.filter((action) => 'retentionClass' in action)).toEqual([]);
   });
 
   it('records the user id, type, name and roles as the actor, without the email', () => {

@@ -91,7 +91,7 @@ AI analysis calls an OpenAI-compatible chat completions endpoint (the GoA Model 
 
 ## Audit actions
 
-Project planner service records audit events in the `project-planner-service` namespace of the [audit service](audit-service.md). Records are written to the tenant of the solution, pattern or chat, with the signed-in user (ID, name and roles, without the email address) as the actor. The correlation ID is the trace ID of the request when tracing is on. Metadata holds only IDs, counts and enumerated values: problem statements, conversation and chat messages, chat titles, AI prompts and responses, and blueprint content are never recorded. All actions are version 1.
+Project planner service records audit events in the `project-planner-service` namespace of the [audit service](audit-service.md). Records are written to the tenant of the solution, pattern or chat, with the signed-in user (ID, name and roles, without the email address) as the actor. The correlation ID is the trace ID of the request when tracing is on. Metadata holds only IDs, counts and enumerated values: problem statements, conversation and chat messages, chat titles, AI prompts and responses, and blueprint content are never recorded. All actions are version 1. Actions do not set a retention class; the audit service derives it from the category (`compliance` for administrative and data-access actions, `standard` for runtime actions), as shown in the table.
 
 | action | category | severity | retention class | recorded when |
 |:-|:-|:-|:-|:-|
