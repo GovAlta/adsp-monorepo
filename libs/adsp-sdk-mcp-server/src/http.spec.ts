@@ -57,6 +57,14 @@ function postMcp(endpoint: URL, body: unknown, init: RequestInit = {}): Promise<
   });
 }
 
+function postRawMcp(endpoint: URL, body: string): Promise<Response> {
+  return fetch(endpoint, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', accept: 'application/json, text/event-stream' },
+    body,
+  });
+}
+
 async function waitFor(condition: () => boolean, timeoutMs = 2000): Promise<void> {
   const deadline = Date.now() + timeoutMs;
   while (!condition()) {
@@ -309,6 +317,34 @@ describe('HTTP request failures', () => {
     const response = await postMcp(running.endpoint, TOOLS_LIST_REQUEST, { signal: AbortSignal.timeout(2000) });
 
     expect({ status: response.status, body: await response.text() }).toEqual({ status: 200, body: '' });
+  });
+
+  it('answers a malformed JSON body with a JSON-RPC parse error', async () => {
+    const response = await postRawMcp(running.endpoint, '{not json');
+
+    expect({ status: response.status, body: await response.json() }).toEqual({
+      status: 400,
+      body: { jsonrpc: '2.0', error: { code: -32700, message: 'Parse error: Invalid JSON' }, id: null },
+    });
+  });
+
+  it('answers a body over 1 MiB with a JSON-RPC payload-too-large error', async () => {
+    const response = await postRawMcp(running.endpoint, JSON.stringify({ padding: 'a'.repeat(1024 * 1024) }));
+
+    expect({ status: response.status, body: await response.json() }).toEqual({
+      status: 413,
+      body: {
+        jsonrpc: '2.0',
+        error: { code: -32000, message: 'Payload Too Large: Request body must not exceed 1048576 bytes' },
+        id: null,
+      },
+    });
+  });
+
+  it('sends CORS headers when it rejects a request body', async () => {
+    const response = await postRawMcp(running.endpoint, '{not json');
+
+    expect(response.headers.get('access-control-allow-origin')).toBe('*');
   });
 
   it('answers a malformed JSON body without crashing', async () => {

@@ -2,6 +2,8 @@ import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/
 import * as express from 'express';
 import { createAdspMcpServer, CreateAdspMcpServerOptions, loadAdspMcpTools } from './server';
 
+const MAX_REQUEST_BODY_BYTES = 1024 * 1024;
+
 function applyCorsHeaders(req: express.Request, res: express.Response, next: express.NextFunction): void {
   res.setHeader('Access-Control-Allow-Origin', process.env['CORS_ORIGIN'] ?? '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
@@ -17,7 +19,11 @@ function applyCorsHeaders(req: express.Request, res: express.Response, next: exp
 function createStatelessPostHandler(options: CreateAdspMcpServerOptions): express.RequestHandler {
   return async (req, res) => {
     const server = createAdspMcpServer(options);
-    const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined, enableJsonResponse: true });
+    const transport = new StreamableHTTPServerTransport({
+      sessionIdGenerator: undefined,
+      enableJsonResponse: true,
+      maxRequestBodySize: MAX_REQUEST_BODY_BYTES,
+    });
     // Registered before handling starts so a client that disconnects mid-request still releases both.
     res.on('close', () => {
       transport.close();
@@ -26,7 +32,7 @@ function createStatelessPostHandler(options: CreateAdspMcpServerOptions): expres
 
     try {
       await server.connect(transport);
-      await transport.handleRequest(req, res, req.body);
+      await transport.handleRequest(req, res);
     } catch (err) {
       console.error('[adsp-sdk-mcp-server] Failed to handle MCP request:', err);
       sendInternalError(res);
@@ -52,8 +58,8 @@ function methodNotAllowed(_req: express.Request, res: express.Response): void {
 export function createMcpHttpApp(options: CreateAdspMcpServerOptions = {}): express.Express {
   loadAdspMcpTools(options);
 
+  // No express.json(): the transport reads the body so parse and size errors come back as JSON-RPC.
   const app = express();
-  app.use(express.json({ limit: '1mb' }));
   app.use(applyCorsHeaders);
 
   app.get('/health', (_req, res) => {
