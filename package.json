@@ -91,7 +91,7 @@
     "dashify": "^2.0.0",
     "dayjs": "^1.10.7",
     "detect-file-type": "^0.2.8",
-    "dompurify": "^3.4.16",
+    "dompurify": "^3.4.17",
     "dotenv": "10.0.0",
     "enquirer": "^2.3.6",
     "envalid": "^7.1.0",
