@@ -1,7 +1,6 @@
 ---
 layout: page
 title: Project planner service
-nav_order: 20
 parent: Services
 ---
 
@@ -122,6 +121,35 @@ The service sends these domain events in the `project-planner-service` namespace
 | solution-created | Signalled when a solution is created.                                                                                                                                                                                             |
 | solution-updated | Signalled when a solution is updated, analyzed or consulted. `operation` is one of `update`, `analyze`, `chat`, `discovery`, `consult`, `blueprint`, `component-review`, `specialist-chat`, `version-saved` or `version-renamed`. |
 | solution-deleted | Signalled when a solution is deleted.                                                                                                                                                                                             |
+
+## Audit actions
+
+Project planner service records audit events in the `project-planner-service` namespace of the [audit service](audit-service.md). Records are written to the tenant of the solution, pattern or chat, with the signed-in user (ID, name and roles, without the email address) as the actor. The correlation ID is the trace ID of the request when tracing is on. Metadata holds only IDs, counts and enumerated values: problem statements, conversation and chat messages, chat titles, AI prompts and responses, and blueprint content are never recorded. All actions are version 1. Actions do not set a retention class; the audit service derives it from the category (`compliance` for administrative and data-access actions, `standard` for runtime actions), as shown in the table.
+
+| action | category | severity | retention class | recorded when |
+|:-|:-|:-|:-|:-|
+| planner.solution.created | administrative | info | compliance | A solution is created (`POST /solutions`), with the `scenario` in the metadata. |
+| planner.solution.deleted | administrative | warning | compliance | A solution is deleted by its owner (`DELETE /solutions/{id}`), with its `scenario` and `status`. |
+| planner.solution.exported | data-access | info | compliance | A solution is downloaded (`GET /solutions/{id}/export`, `scope: 'solution'` with the latest `version` and `unsavedChanges`) or a saved version is downloaded (`GET /solutions/{id}/versions/{number}/export`, `scope: 'version'` with the `version`). |
+| planner.solution.admin-accessed | data-access | info | compliance | A `planner-admin` successfully reads, changes or exports a solution owned by another user, with the `ownerId` and the `operation` (`read`, `update` or `export`) in the metadata. Reading the solution or its versions is `read`; changes, analysis, discovery, chat, consultations, blueprints, component reviews and version checkpoints or renames are `update`. A specialist chat that uses the solution as context is `read`, or `update` when the chat changes the solution. |
+| planner.solution.analyzed | runtime | info | standard | A request sends solution content to the AI model, with the `endpoint` (`analyze`, `discovery`, `chat`, `blueprint`, `consult` or `specialist-chat`), the `mode` of the result (`ai`, or `rules` after a fallback), the configured `model`, whether any model call in the request `fellBack` to rules, and the specialist `service` for consultations and specialist chats. |
+| planner.pattern.created | administrative | info | compliance | A tenant pattern is created (`POST /patterns`), with `source: 'custom'`. |
+| planner.pattern.updated | administrative | info | compliance | A pattern is updated or a built-in pattern is customized (`PUT /patterns/{id}`), with the `source` after the update and the `previousSource`. The change set holds the before and after values of the changed pattern fields. |
+| planner.pattern.deleted | administrative | warning | compliance | A custom pattern is deleted or a customized built-in pattern is reset (`DELETE /patterns/{id}`), with the `source` (`custom` or `customized`) of the deleted pattern. |
+| planner.specialist-chat.exported | data-access | info | compliance | A user downloads one saved specialist chat (`scope: 'single'`) or all of their chats (`scope: 'all'`), with the `chatCount`, the specialist `service` and the `solutionId` (the filters, for an export of all chats). |
+| planner.specialist-chat.deleted | administrative | info | compliance | A saved specialist chat is deleted, with its specialist `service` and `solutionId`. |
+
+Solution records use `{ type: 'solution', id: <solution ID>, name: <solution name> }` as the resource, pattern records use `{ type: 'pattern', id: <pattern ID>, name: <pattern name> }`, and chat records use `{ type: 'specialist-chat', id: <chat ID> }`. An export of all chats has no single chat, so it has no resource. A pattern change set that would exceed the 16 KB audit limit is omitted, with `changeSetOmitted: true` in the metadata.
+
+`planner.solution.analyzed` is recorded only when the model is called: rule-based requests, and AI requests when no model is configured, send nothing to the model and are not recorded. It is recorded once per request when the request completes, including when the request fails after solution content was sent to the model. A failed request is recorded with status `failure` (client error) or `error` (server error) and without a `mode`, since there is no result.
+
+Routine reads by the solution owner (listing and reading solutions, patterns, specialists, chats and versions) are not audited, and neither is a `planner-admin` listing the solutions of the tenant. Solution updates are not recorded as separate actions; they are covered by the `solution-updated` event. Patterns defined in the `patterns` configuration are managed in the [configuration service](configuration-service.md), which records those changes in the `configuration-service` namespace. Denied and failed operations are not recorded.
+
+Records are sent after the operation succeeds and the response is sent. Audit failures are logged and do not fail the request. On shutdown, the service waits for in-flight requests to complete and delivers the audit records still being sent before exiting. The project planner service account requires the `audit-writer` role of `urn:ads:platform:audit-service`.
+
+Audit recording is on by default. Set the environment variable `PROJECT_PLANNER_AUDIT_ENABLED=false` on project planner service to turn it off, or `true` to turn it on regardless of the SDK `AUDIT_ENABLED` variable, which applies when `PROJECT_PLANNER_AUDIT_ENABLED` is not set. The action catalog is still registered while recording is off, so turning it back on needs only a restart.
+
+## Business pattern library
 
 ## Code examples
 

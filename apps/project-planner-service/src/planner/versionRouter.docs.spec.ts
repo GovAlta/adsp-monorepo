@@ -40,6 +40,7 @@ describe('version router documented behaviour', () => {
     rename: jest.fn(),
   };
   const eventService = { send: jest.fn() } as unknown as EventService;
+  const recordAudit = jest.fn();
 
   const tenantUser = (id: string, roles: string[]) =>
     ({ id, name: id, tenantId, isCore: false, roles }) as unknown as User;
@@ -96,7 +97,13 @@ describe('version router documented behaviour', () => {
     });
     app.use(
       '/planner/v1',
-      createVersionRouter({ solutionRepository, specialistChatRepository, solutionVersionRepository, eventService }),
+      createVersionRouter({
+        solutionRepository,
+        specialistChatRepository,
+        solutionVersionRepository,
+        eventService,
+        recordAudit,
+      }),
     );
     app.use(createErrorHandler(logger));
     return app;

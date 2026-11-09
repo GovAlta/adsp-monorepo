@@ -66,7 +66,7 @@ An `AdspTheme` is presentation policy for the whole ADSP component family. A the
 | `typography`   | `fontFamily`, plus `heading` (`2xs`–`2xl`) and `body` (`xs`–`l`) scales of `{ fontSize, fontWeight, lineHeight }` |
 | `spacing`      | The GoA spacing scale, `none`–`4xl`                                                               |
 | `borderRadius` | The GoA radius scale, `none`–`3xl` and `round`                                                    |
-| `components`   | Component tokens, one section per component: `calendar`, `conversation`                           |
+| `components`   | Component tokens, one section per component: `calendar`, `conversation`, `fileDownload`           |
 
 There are two layers:
 

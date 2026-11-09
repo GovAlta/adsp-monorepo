@@ -1,10 +1,163 @@
 components:
+  parameters:
+    CalendarTenantId:
+      name: tenantId
+      description: >
+        ID of the tenant to act on. Only used for core (platform) users; tenant users always act on the tenant of
+        their token and this parameter is ignored. Must be a valid tenant URN.
+      in: query
+      required: false
+      schema:
+        type: string
+      example: urn:ads:platform:tenant-service:v2:/tenants/61f2e3a8c9b1d2e3f4a5b6c7
+    CalendarTenantName:
+      name: tenant
+      description: >
+        Name of the tenant whose calendar to use. Any caller can set it, including anonymous users and users of
+        another tenant, and it replaces the tenant of the token or tenantId parameter. Anonymous callers must set it,
+        since they have no tenant context. An unknown tenant name responds 400.
+      in: query
+      required: false
+      schema:
+        type: string
+      example: service-delivery
+    CalendarName:
+      name: name
+      description: Name of the calendar.
+      in: path
+      required: true
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 50
+      example: site-inspections
+    CalendarDefinitionName:
+      name: name
+      description: Name of the tenant calendar.
+      in: path
+      required: true
+      schema:
+        type: string
+        pattern: '^[a-zA-Z0-9-_ ]{1,50}$'
+      example: site-inspections
+    CalendarEventId:
+      name: id
+      description: ID of the calendar event.
+      in: path
+      required: true
+      schema:
+        type: integer
+      example: 42
+    CalendarAttendeeId:
+      name: attendeeId
+      description: ID of the attendee.
+      in: path
+      required: true
+      schema:
+        type: integer
+      example: 7
+    CalendarIncludeAttendees:
+      name: includeAttendees
+      description: >
+        Set to true to include attendees in the events. Requires private access to the calendar (see the operation
+        description), even for public events; other callers receive 403.
+      in: query
+      required: false
+      schema:
+        type: boolean
+        default: false
+    CalendarEventsTop:
+      name: top
+      description: Number of events to return in a page. Must be a positive integer.
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        default: 10
+      example: 25
+    CalendarEventsAfter:
+      name: after
+      description: Cursor for the page of results to retrieve, from page.next of the previous page.
+      in: query
+      required: false
+      schema:
+        type: string
+      example: MjU=
+  responses:
+    CalendarBadRequest:
+      description: >
+        Request is invalid, for example a path, query, or body parameter failed validation, or there is no tenant
+        context.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CalendarError'
+          example:
+            errorMessage: 'Validation failed with error(s): id (params) - Invalid value'
+    CalendarUnauthorized:
+      description: Request does not include a valid bearer token.
+      content:
+        text/plain:
+          schema:
+            type: string
+          example: Unauthorized
+    CalendarForbidden:
+      description: User does not have the role required for the operation.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CalendarError'
+          example:
+            errorMessage: 'User Test User (ID: 9f1c2a3b-4c5d-4e6f-8a9b-0c1d2e3f4a5b) not permitted to create calendar event.'
+    CalendarNotFound:
+      description: Calendar, event, occurrence, attendee, or date not found in the tenant.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CalendarError'
+          example:
+            errorMessage: "Calendar with ID 'site-inspections' could not be found."
+    CalendarConflict:
+      description: Request conflicts with the current state of the calendar.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CalendarError'
+          example:
+            errorMessage: "Calendar 'site-inspections' already exists."
+    CalendarBadGateway:
+      description: Configuration service is unavailable, rejected the service's credentials, or returned invalid calendar definitions.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CalendarError'
+          example:
+            errorMessage: Configuration service is unavailable.
   schemas:
+    CalendarError:
+      type: object
+      properties:
+        errorMessage:
+          type: string
+    CalendarPage:
+      type: object
+      properties:
+        after:
+          type: string
+          description: Cursor of the current page, if one was requested.
+        next:
+          type: string
+          nullable: true
+          description: Cursor of the next page; not set when there are no more results.
+        size:
+          type: integer
     Calendar:
       type: object
       properties:
         urn:
           type: string
+          readOnly: true
         name:
           type: string
         displayName:
@@ -13,29 +166,48 @@ components:
           type: string
         readRoles:
           type: array
+          description: Roles that can read private events and the attendees of events.
           items:
             type: string
         updateRoles:
           type: array
+          description: Roles that can read private events, and create, update, and delete events and attendees.
           items:
             type: string
+      example:
+        urn: urn:ads:platform:calendar-service:v1:/calendars/site-inspections
+        name: site-inspections
+        displayName: Site inspections
+        description: Calendar of scheduled site inspections.
+        readRoles: [inspection-viewer]
+        updateRoles: [inspection-scheduler]
     CalendarDefinition:
       allOf:
-        - $ref: "#/components/schemas/Calendar"
+        - $ref: '#/components/schemas/Calendar'
         - type: object
           required: [source]
           properties:
             source:
               type: string
               enum: [tenant, core]
+              readOnly: true
+              description: tenant for calendars managed by the tenant; core for read-only calendars registered by platform services.
+      example:
+        urn: urn:ads:platform:calendar-service:v1:/calendars/site-inspections
+        name: site-inspections
+        displayName: Site inspections
+        description: Calendar of scheduled site inspections.
+        readRoles: [inspection-viewer]
+        updateRoles: [inspection-scheduler]
+        source: tenant
     CalendarDefinitionInput:
       type: object
       additionalProperties: false
       properties:
         name:
           type: string
-          pattern: "^[a-zA-Z0-9-_ ]{1,50}$"
-          description: Must not be the reserved __proto__ property.
+          pattern: '^[a-zA-Z0-9-_ ]{1,50}$'
+          description: Must not be the reserved __proto__ property. On update, must match the name in the path.
         displayName:
           type: string
           minLength: 1
@@ -53,43 +225,179 @@ components:
           items:
             type: string
       required: [name, displayName, readRoles, updateRoles]
+      example:
+        name: site-inspections
+        displayName: Site inspections
+        description: Calendar of scheduled site inspections.
+        readRoles: [inspection-viewer]
+        updateRoles: [inspection-scheduler]
     CalendarEvent:
       type: object
       properties:
         urn:
           type: string
+          readOnly: true
         id:
-          type: number
+          type: integer
+          readOnly: true
         recordId:
           type: string
+          nullable: true
+          description: ID of a record in another system that the event relates to.
         context:
           type: object
+          nullable: true
+          description: Properties of the event that can be used as criteria to find it.
         name:
           type: string
         description:
           type: string
         isPublic:
           type: boolean
+          description: Public events can be read by anyone, including anonymous users. Their attendees are not public.
         isAllDay:
           type: boolean
+        start:
+          type: string
+          format: date-time
+          description: Start in the service timezone (America/Edmonton).
+        end:
+          type: string
+          format: date-time
+          nullable: true
+          description: End in the service timezone (America/Edmonton).
+        recurrenceId:
+          type: string
+          format: date-time
+          readOnly: true
+          description: Original start of the occurrence (RFC 5545 RECURRENCE-ID). Only included on occurrences of recurring events returned by range retrieval; id is the recurring event.
+        recurrence:
+          allOf:
+            - $ref: '#/components/schemas/EventRecurrence'
+          description: Only included for recurring events. exclusions is only included when retrieving the recurring event itself.
+        attendees:
+          type: array
+          description: Only included when includeAttendees is true.
+          items:
+            $ref: '#/components/schemas/Attendee'
+      example:
+        urn: urn:ads:platform:calendar-service:v1:/calendars/site-inspections/events/42
+        id: 42
+        recordId: inspection-1024
+        context:
+          region: north
+        name: Site inspection
+        description: Inspection of the Edmonton north facility.
+        isPublic: false
+        isAllDay: false
+        start: '2026-11-17T09:00:00.000-07:00'
+        end: '2026-11-17T10:30:00.000-07:00'
+    CalendarEventsPage:
+      type: object
+      properties:
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/CalendarEvent'
+        page:
+          allOf:
+            - $ref: '#/components/schemas/CalendarPage'
+          description: Not included for range retrieval with from and to.
+      example:
+        results:
+          - urn: urn:ads:platform:calendar-service:v1:/calendars/site-inspections/events/42
+            id: 42
+            recordId: inspection-1024
+            context:
+              region: north
+            name: Site inspection
+            description: Inspection of the Edmonton north facility.
+            isPublic: false
+            isAllDay: false
+            start: '2026-11-17T09:00:00.000-07:00'
+            end: '2026-11-17T10:30:00.000-07:00'
+          - urn: urn:ads:platform:calendar-service:v1:/calendars/site-inspections/events/43/occurrences/2026-11-17
+            id: 43
+            name: Team meeting
+            description: Weekly inspection planning meeting.
+            isPublic: true
+            isAllDay: false
+            start: '2026-11-17T13:00:00.000-07:00'
+            end: '2026-11-17T14:00:00.000-07:00'
+            recurrenceId: '2026-11-17T13:00:00.000-07:00'
+            recurrence:
+              frequency: weekly
+              interval: 1
+              daysOfWeek: [TU]
+              end:
+                until: '2026-12-15'
+        page:
+          next: Mg==
+          size: 2
+    CalendarEventInput:
+      type: object
+      properties:
+        recordId:
+          type: string
+          nullable: true
+        context:
+          type: object
+          nullable: true
+        name:
+          type: string
+          minLength: 1
+          maxLength: 50
+        description:
+          type: string
+        start:
+          type: string
+          format: date-time
+          description: ISO 8601 date/time. Values without an offset are read in the service timezone (America/Edmonton).
+        end:
+          type: string
+          format: date-time
+          description: ISO 8601 date/time. Must not be before start.
+        isPublic:
+          type: boolean
+          default: false
+        isAllDay:
+          type: boolean
+          default: false
+        recurrence:
+          allOf:
+            - $ref: '#/components/schemas/EventRecurrence'
+          nullable: true
+      required: [name, start, end]
+    CalendarEventUpdate:
+      type: object
+      description: >
+        Properties to change. Omitted properties are unchanged. end, name, description, and context can't be cleared,
+        and recordId can't be changed.
+      properties:
+        context:
+          type: object
+        name:
+          type: string
+          minLength: 1
+          maxLength: 50
+        description:
+          type: string
         start:
           type: string
           format: date-time
         end:
           type: string
           format: date-time
-        recurrenceId:
-          type: string
-          format: date-time
-          description: Original start of the occurrence (RFC 5545 RECURRENCE-ID). Only included on occurrences of recurring events returned by range retrieval; id is the recurring event.
+          description: Must not be before start.
+        isPublic:
+          type: boolean
+        isAllDay:
+          type: boolean
         recurrence:
           allOf:
-            - $ref: "#/components/schemas/EventRecurrence"
-          description: Only included for recurring events. exclusions is only included when retrieving the recurring event itself.
-        attendees:
-          type: array
-          items:
-            $ref: "#/components/schemas/Attendee"
+            - $ref: '#/components/schemas/EventRecurrence'
+          nullable: true
+          description: Replaces the whole recurrence. Set to null to make the event a single event.
     EventRecurrence:
       type: object
       description: Recurrence of an event based on a subset of the RFC 5545 RRULE. Occurrences are generated in Mountain time (America/Edmonton) and keep the local start time across daylight saving changes.
@@ -131,16 +439,48 @@ components:
             type: string
             format: date-time
       required: [frequency]
+      example:
+        frequency: weekly
+        interval: 1
+        daysOfWeek: [TU]
+        end:
+          until: '2026-12-15'
     Attendee:
       type: object
       properties:
         id:
-          type: number
+          type: integer
+          readOnly: true
         name:
           type: string
         email:
           type: string
           format: email
+      example:
+        id: 7
+        name: Test User
+        email: test.user@gov.ab.ca
+    AttendeeInput:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Name of the attendee. Can be an empty string.
+        email:
+          type: string
+          format: email
+          description: Email of the attendee. An event can't have two attendees with the same email.
+      required: [name, email]
+      example:
+        name: Test User
+        email: test.user@gov.ab.ca
+    CalendarDeleteResult:
+      type: object
+      properties:
+        deleted:
+          type: boolean
+      example:
+        deleted: true
     CalendarEventCriteria:
       type: object
       properties:
@@ -148,8 +488,10 @@ components:
           type: string
         context:
           type: object
+          description: Matches events whose context contains these properties and values.
         isPublic:
           type: boolean
+          description: Only applies to callers with private access; other callers always receive only public events.
         startsAfter:
           type: string
           format: date-time
@@ -164,256 +506,258 @@ components:
           properties:
             nameEquals:
               type: string
+              nullable: true
             emailEquals:
               type: string
+              nullable: true
         orderBy:
           type: string
           enum: [id, start]
+      example:
+        recordId: inspection-1024
+        startsAfter: '2026-11-01T00:00:00-06:00'
 
 /calendar/v1/calendars:
   get:
     tags:
       - Calendar
-    description: Retrieves separate tenant and core calendar definitions, including definitions with the same name. Anonymous requests receive only core definitions; authenticated tenant requests receive both.
+    description: >
+      Retrieves the calendar definitions, with tenant and core definitions listed separately (including definitions
+      with the same name). Public: no roles are required and anonymous requests are allowed. Anonymous requests, and
+      core users without tenantId, receive only core definitions; tenant users receive their tenant's definitions and
+      the core definitions.
     security:
       - {}
       - accessToken: []
     parameters:
-      - name: tenantId
-        in: query
-        required: false
-        description: Tenant ID when requesting definitions as a core user.
-        schema:
-          type: string
+      - $ref: '#/components/parameters/CalendarTenantId'
     responses:
       200:
-        description: Request completed successfully.
+        description: Calendar definitions successfully retrieved.
         content:
           application/json:
             schema:
               type: array
               items:
-                $ref: "#/components/schemas/CalendarDefinition"
+                $ref: '#/components/schemas/CalendarDefinition'
+      400:
+        $ref: '#/components/responses/CalendarBadRequest'
       502:
-        description: Configuration service is unavailable or returned invalid calendar definitions.
+        $ref: '#/components/responses/CalendarBadGateway'
   post:
     tags:
       - Calendar
-    description: Creates a tenant calendar definition. Requires the calendar-admin role; core administrators must specify tenantId.
-    security:
-      - accessToken: []
+    description: >
+      Creates a tenant calendar definition. Requires the calendar-admin role in the tenant, or as a core user; core
+      users must set tenantId, or the request responds 400. The name must not be used by a tenant or core calendar.
+      Signals calendar-definition-created.
     parameters:
-      - name: tenantId
-        in: query
-        required: false
-        description: Tenant ID when acting as a core administrator.
-        schema:
-          type: string
+      - $ref: '#/components/parameters/CalendarTenantId'
     requestBody:
       required: true
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/CalendarDefinitionInput"
+            $ref: '#/components/schemas/CalendarDefinitionInput'
     responses:
       201:
         description: Tenant calendar definition created.
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/CalendarDefinition"
+              $ref: '#/components/schemas/CalendarDefinition'
       400:
-        description: Invalid definition or missing tenant context.
+        $ref: '#/components/responses/CalendarBadRequest'
       401:
-        description: Authentication required.
+        $ref: '#/components/responses/CalendarUnauthorized'
       403:
-        description: The caller does not have the calendar-admin role for this tenant.
+        $ref: '#/components/responses/CalendarForbidden'
       409:
-        description: A tenant or core calendar with this name already exists.
+        $ref: '#/components/responses/CalendarConflict'
+      502:
+        $ref: '#/components/responses/CalendarBadGateway'
 
 /calendar/v1/calendars/{name}:
   get:
     tags:
       - Calendar
-    description: Retrieves a specific calendar.
+    description: >
+      Retrieves a calendar of the tenant, including core calendars. Public: no roles are required and anonymous
+      requests are allowed. The calendar is found in the tenant named by the tenant parameter; otherwise in the tenant
+      of the token, or of tenantId for core users. Without a tenant context the request responds 400. When a tenant
+      and a core calendar have the same name, the core calendar is returned.
+    security:
+      - {}
+      - accessToken: []
     parameters:
-      - name: tenant
-        description: Name of the tenant.
-        in: query
-        required: false
-        schema:
-          type: string
-      - name: name
-        description: Name of the calendar.
-        in: path
-        required: true
-        schema:
-          type: string
+      - $ref: '#/components/parameters/CalendarName'
+      - $ref: '#/components/parameters/CalendarTenantName'
+      - $ref: '#/components/parameters/CalendarTenantId'
     responses:
       200:
-        description: Request completed successfully.
+        description: Calendar successfully retrieved.
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/Calendar"
+              $ref: '#/components/schemas/Calendar'
+      400:
+        $ref: '#/components/responses/CalendarBadRequest'
+      404:
+        $ref: '#/components/responses/CalendarNotFound'
   put:
     tags:
       - Calendar
-    description: Updates an existing tenant calendar definition. Core definitions are read-only. Requires the calendar-admin role.
-    security:
-      - accessToken: []
+    description: >
+      Replaces an existing tenant calendar definition. Core definitions are read-only and respond 404. Requires the
+      calendar-admin role in the tenant, or as a core user; core users must set tenantId, or the request responds 400.
+      The name in the body must match the path. Signals calendar-definition-updated.
     parameters:
-      - name: name
-        in: path
-        required: true
-        schema:
-          type: string
-          pattern: "^[a-zA-Z0-9-_ ]{1,50}$"
-      - name: tenantId
-        in: query
-        required: false
-        description: Tenant ID when acting as a core administrator.
-        schema:
-          type: string
+      - $ref: '#/components/parameters/CalendarDefinitionName'
+      - $ref: '#/components/parameters/CalendarTenantId'
     requestBody:
       required: true
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/CalendarDefinitionInput"
+            $ref: '#/components/schemas/CalendarDefinitionInput'
     responses:
       200:
         description: Tenant calendar definition updated.
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/CalendarDefinition"
+              $ref: '#/components/schemas/CalendarDefinition'
       400:
-        description: Invalid definition, name mismatch, or missing tenant context.
+        $ref: '#/components/responses/CalendarBadRequest'
       401:
-        description: Authentication required.
+        $ref: '#/components/responses/CalendarUnauthorized'
       403:
-        description: The caller does not have the calendar-admin role for this tenant.
+        $ref: '#/components/responses/CalendarForbidden'
       404:
-        description: No tenant calendar with this name exists.
+        $ref: '#/components/responses/CalendarNotFound'
+      502:
+        $ref: '#/components/responses/CalendarBadGateway'
   delete:
     tags:
       - Calendar
-    description: Deletes an existing tenant calendar definition only if it has no events. Core definitions are read-only. Requires the calendar-admin role.
-    security:
-      - accessToken: []
+    description: >
+      Deletes an existing tenant calendar definition, only if the calendar has no events (409 otherwise). Core
+      definitions are read-only and respond 404. Requires the calendar-admin role in the tenant, or as a core user;
+      core users must set tenantId, or the request responds 400. Signals calendar-definition-deleted.
     parameters:
-      - name: name
-        in: path
-        required: true
-        schema:
-          type: string
-          pattern: "^[a-zA-Z0-9-_ ]{1,50}$"
-      - name: tenantId
-        in: query
-        required: false
-        description: Tenant ID when acting as a core administrator.
-        schema:
-          type: string
+      - $ref: '#/components/parameters/CalendarDefinitionName'
+      - $ref: '#/components/parameters/CalendarTenantId'
     responses:
       204:
         description: Tenant calendar definition deleted.
       400:
-        description: Invalid name or missing tenant context.
+        $ref: '#/components/responses/CalendarBadRequest'
       401:
-        description: Authentication required.
+        $ref: '#/components/responses/CalendarUnauthorized'
       403:
-        description: The caller does not have the calendar-admin role for this tenant.
+        $ref: '#/components/responses/CalendarForbidden'
       404:
-        description: No tenant calendar with this name exists.
+        $ref: '#/components/responses/CalendarNotFound'
       409:
-        description: The calendar contains events and cannot be deleted.
+        $ref: '#/components/responses/CalendarConflict'
+      502:
+        $ref: '#/components/responses/CalendarBadGateway'
 
 /calendar/v1/calendars/{name}/export:
   get:
     tags:
       - Calendar
-    description: Retrieves export of calendar and events.
+    description: >
+      Exports a page of the calendar's events as an iCalendar (.ics) file. Public: anonymous requests are allowed.
+      Callers with private access (the calendar-admin role, or one of the calendar's readRoles or updateRoles, held in
+      the calendar's tenant or by a core user) export private and public events; all other callers, including
+      anonymous users and users of another tenant, export only public events. Attendees are included only with
+      includeAttendees, which requires private access. The calendar is found in the tenant named by the tenant
+      parameter; otherwise in the tenant of the token, or of tenantId for core users. Without a tenant context the
+      request responds 400.
+    security:
+      - {}
+      - accessToken: []
     parameters:
-      - name: tenant
-        description: Name of the tenant.
+      - $ref: '#/components/parameters/CalendarName'
+      - $ref: '#/components/parameters/CalendarTenantName'
+      - $ref: '#/components/parameters/CalendarTenantId'
+      - $ref: '#/components/parameters/CalendarEventsTop'
+      - $ref: '#/components/parameters/CalendarEventsAfter'
+      - $ref: '#/components/parameters/CalendarIncludeAttendees'
+      - name: filename
+        description: Name of the file to download. Defaults to the calendar name with the .ics extension.
         in: query
         required: false
         schema:
           type: string
-      - name: name
-        description: Name of the calendar.
-        in: path
-        required: true
-        schema:
-          type: string
-      - name: top
-        description: Number of events to return in a page.
-        in: query
-        required: false
-        schema:
-          type: number
-      - name: after
-        description: Cursor for retrieving additional pages.
-        in: query
-        required: false
-        schema:
-          type: string
-      - name: includeAttendees
-        description: Flag indicating if attendees should be included in events.
-        in: query
-        required: false
-        schema:
-          type: boolean
+        example: site-inspections.ics
       - name: criteria
-        description: Criteria for events to retrieve.
+        description: >
+          JSON criteria for the events to export. Must be valid JSON. activeOn is not supported for export.
         in: query
         required: false
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/CalendarEventCriteria"
+              $ref: '#/components/schemas/CalendarEventCriteria'
     responses:
       200:
-        description: Request completed successfully.
+        description: Calendar successfully exported.
+        content:
+          text/calendar:
+            schema:
+              type: string
+            example: |
+              BEGIN:VCALENDAR
+              VERSION:2.0
+              PRODID:-//Government of Alberta//urn:ads:platform:calendar-service//EN
+              NAME:Site inspections
+              X-WR-CALNAME:Site inspections
+              BEGIN:VEVENT
+              UID:42
+              DTSTART;TZID=America/Edmonton:20261117T090000
+              DTEND;TZID=America/Edmonton:20261117T103000
+              SUMMARY:Site inspection
+              END:VEVENT
+              END:VCALENDAR
+      400:
+        $ref: '#/components/responses/CalendarBadRequest'
+      403:
+        $ref: '#/components/responses/CalendarForbidden'
+      404:
+        $ref: '#/components/responses/CalendarNotFound'
 
 /calendar/v1/calendars/{name}/events:
-  parameters:
-    - name: name
-      description: Name of the calendar.
-      in: path
-      required: true
-      schema:
-        type: string
   get:
     tags:
       - Calendar
-    description: Retrieves calendar events. Calendar date/time values use the service timezone, America/Edmonton (Mountain time; MST or MDT depending on the date). When both from and to are specified, returns the complete set of events that overlap the requested range in a single response; top and after are ignored for range retrieval, but criteria can still be used to filter the results. An event overlaps the range when it occurs at least partially within it, including events that start before from or end after to. Range retrieval supports a maximum range of 366 days. Range retrieval returns each occurrence of a recurring event that overlaps the range, excluding cancelled occurrences; without from and to, recurring events are returned once and time criteria apply to their first occurrence.
+    description: >
+      Retrieves calendar events. Public: anonymous requests are allowed. Callers with private access (the
+      calendar-admin role, or one of the calendar's readRoles or updateRoles, held in the calendar's tenant or by a
+      core user) receive private and public events; all other callers, including anonymous users and users of another
+      tenant, receive only public events. Attendees are included only with includeAttendees, which requires private
+      access. The calendar is found in the tenant named by the tenant parameter; otherwise in the tenant of the token,
+      or of tenantId for core users. Without a tenant context the request responds 400.
+
+
+      Calendar date/time values use the service timezone, America/Edmonton (Mountain time; MST or MDT depending on
+      the date). When both from and to are specified, returns the complete set of events that overlap the requested
+      range in a single response; top and after are ignored for range retrieval, but criteria can still be used to
+      filter the results. An event overlaps the range when it occurs at least partially within it, including events
+      that start before from or end after to. Range retrieval supports a maximum range of 366 days. Range retrieval
+      returns each occurrence of a recurring event that overlaps the range, excluding cancelled occurrences; without
+      from and to, recurring events are returned once and time criteria apply to their first occurrence.
+    security:
+      - {}
+      - accessToken: []
     parameters:
-      - name: tenant
-        description: Name of the tenant.
-        in: query
-        required: false
-        schema:
-          type: string
-      - name: top
-        description: Number of events to return in a page.
-        in: query
-        required: false
-        schema:
-          type: number
-      - name: after
-        description: Cursor for retrieving additional pages.
-        in: query
-        required: false
-        schema:
-          type: string
-      - name: includeAttendees
-        description: Flag indicating if attendees should be included in events.
-        in: query
-        required: false
-        schema:
-          type: boolean
+      - $ref: '#/components/parameters/CalendarName'
+      - $ref: '#/components/parameters/CalendarTenantName'
+      - $ref: '#/components/parameters/CalendarTenantId'
+      - $ref: '#/components/parameters/CalendarEventsTop'
+      - $ref: '#/components/parameters/CalendarEventsAfter'
+      - $ref: '#/components/parameters/CalendarIncludeAttendees'
       - name: from
         description: ISO 8601 date/time for the start of a calendar display range. Must be specified with to. Events overlapping this range are returned without pagination.
         in: query
@@ -421,326 +765,362 @@ components:
         schema:
           type: string
           format: date-time
-          example: "2026-10-01T00:00:00-06:00"
+        example: '2026-10-01T00:00:00-06:00'
       - name: to
-        description: ISO 8601 date/time for the end of a calendar display range. Must be specified with from. Requests spanning more than 366 days fail with a client error.
+        description: ISO 8601 date/time for the end of a calendar display range. Must be specified with from, must not be before from, and must be within 366 days of from.
         in: query
         required: false
         schema:
           type: string
           format: date-time
-          example: "2026-10-31T23:59:59-06:00"
+        example: '2026-10-31T23:59:59-06:00'
       - name: criteria
-        description: Criteria for events to retrieve.
+        description: JSON criteria for the events to retrieve.
         in: query
         required: false
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/CalendarEventCriteria"
+              $ref: '#/components/schemas/CalendarEventCriteria'
     responses:
       200:
-        description: Request completed successfully.
+        description: Calendar events successfully retrieved.
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                results:
-                  type: array
-                  items:
-                    $ref: "#/components/schemas/CalendarEvent"
-                page:
-                  type: object
-                  properties:
-                    after:
-                      type: string
-                    next:
-                      type: string
-                    size:
-                      type: number
+              $ref: '#/components/schemas/CalendarEventsPage'
+      400:
+        $ref: '#/components/responses/CalendarBadRequest'
+      403:
+        $ref: '#/components/responses/CalendarForbidden'
+      404:
+        $ref: '#/components/responses/CalendarNotFound'
   post:
     tags:
       - Calendar
-    description: Creates a new calendar event.
+    description: >
+      Creates a calendar event. Requires the calendar-admin role, or one of the calendar's updateRoles, held in the
+      calendar's tenant or by a core user; other callers, including anonymous users, receive 403. The calendar is
+      found in the tenant named by the tenant parameter; otherwise in the tenant of the token, or of tenantId for core
+      users. Without a tenant context the request responds 400. Invalid recurrence rules respond 400. Signals
+      calendar-event-created.
+    parameters:
+      - $ref: '#/components/parameters/CalendarName'
+      - $ref: '#/components/parameters/CalendarTenantName'
+      - $ref: '#/components/parameters/CalendarTenantId'
     requestBody:
       required: true
       content:
         application/json:
           schema:
-            type: object
-            properties:
-              recordId:
-                type: string
-              context:
-                type: object
-              name:
-                type: string
-              description:
-                type: string
-              start:
-                type: string
-                format: date-time
-              end:
-                type: string
-                format: date-time
-              isPublic:
-                type: boolean
-              recurrence:
-                $ref: "#/components/schemas/EventRecurrence"
-            required: [name, start]
+            $ref: '#/components/schemas/CalendarEventInput'
+          examples:
+            single:
+              summary: Create a single event
+              value:
+                recordId: inspection-1024
+                context:
+                  region: north
+                name: Site inspection
+                description: Inspection of the Edmonton north facility.
+                start: '2026-11-17T09:00:00-07:00'
+                end: '2026-11-17T10:30:00-07:00'
+                isPublic: false
+            recurring:
+              summary: Create a weekly recurring event
+              value:
+                name: Team meeting
+                description: Weekly inspection planning meeting.
+                start: '2026-09-29T10:00:00-06:00'
+                end: '2026-09-29T11:00:00-06:00'
+                isPublic: true
+                recurrence:
+                  frequency: weekly
+                  daysOfWeek: [TU]
+                  end:
+                    until: '2026-12-15'
     responses:
       200:
-        description: Request completed successfully.
+        description: Calendar event successfully created.
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/CalendarEvent"
+              $ref: '#/components/schemas/CalendarEvent'
+      400:
+        $ref: '#/components/responses/CalendarBadRequest'
+      403:
+        $ref: '#/components/responses/CalendarForbidden'
+      404:
+        $ref: '#/components/responses/CalendarNotFound'
 
 /calendar/v1/calendars/{name}/events/{id}:
   parameters:
-    - name: name
-      description: Name of the calendar.
-      in: path
-      required: true
-      schema:
-        type: string
-    - name: id
-      description: ID of the event.
-      in: path
-      required: true
-      schema:
-        type: string
+    - $ref: '#/components/parameters/CalendarName'
+    - $ref: '#/components/parameters/CalendarEventId'
+    - $ref: '#/components/parameters/CalendarTenantName'
+    - $ref: '#/components/parameters/CalendarTenantId'
   get:
     tags:
       - Calendar
+    description: >
+      Retrieves a calendar event. Public events are public: anonymous requests are allowed. Private events require
+      private access (the calendar-admin role, or one of the calendar's readRoles or updateRoles, held in the
+      calendar's tenant or by a core user); other callers receive 403. Attendees are included only with
+      includeAttendees, which also requires private access. The calendar is found in the tenant named by the tenant
+      parameter; otherwise in the tenant of the token, or of tenantId for core users. Without a tenant context the
+      request responds 400. Events of other tenants or calendars respond 404.
+    security:
+      - {}
+      - accessToken: []
     parameters:
-      - name: tenant
-        description: Name of the tenant.
-        in: query
-        required: false
-        schema:
-          type: string
-      - name: includeAttendees
-        description: Flag indicating if attendees should be included in events.
-        in: query
-        required: false
-        schema:
-          type: boolean
-    description: Retrieves a calendar event.
+      - $ref: '#/components/parameters/CalendarIncludeAttendees'
     responses:
       200:
-        description: Request completed successfully.
+        description: Calendar event successfully retrieved.
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/CalendarEvent"
+              $ref: '#/components/schemas/CalendarEvent'
+      400:
+        $ref: '#/components/responses/CalendarBadRequest'
+      403:
+        $ref: '#/components/responses/CalendarForbidden'
+      404:
+        $ref: '#/components/responses/CalendarNotFound'
   patch:
     tags:
       - Calendar
-    description: Updates a calendar event.
+    description: >
+      Updates a calendar event with the properties in the request. For a recurring event, the update applies to all
+      occurrences. Requires the calendar-admin role, or one of the calendar's updateRoles, held in the calendar's
+      tenant or by a core user; other callers, including anonymous users, receive 403. The calendar is found in the
+      tenant named by the tenant parameter; otherwise in the tenant of the token, or of tenantId for core users.
+      Without a tenant context the request responds 400. Events of other tenants or calendars respond 404. Signals
+      calendar-event-updated.
     requestBody:
       required: true
       content:
         application/json:
           schema:
-            type: object
-            properties:
-              context:
-                type: object
-              name:
-                type: string
-              description:
-                type: string
-              start:
-                type: string
-                format: date-time
-              end:
-                type: string
-                format: date-time
-              isPublic:
-                type: boolean
-              isAllDay:
-                type: boolean
-              recurrence:
-                allOf:
-                  - $ref: "#/components/schemas/EventRecurrence"
-                nullable: true
-                description: Replaces the whole recurrence. Set to null to make the event a single event.
+            $ref: '#/components/schemas/CalendarEventUpdate'
+          examples:
+            reschedule:
+              summary: Reschedule an event
+              value:
+                start: '2026-11-18T09:00:00-07:00'
+                end: '2026-11-18T10:30:00-07:00'
+            make-single:
+              summary: Stop a recurring event from repeating
+              value:
+                recurrence: null
     responses:
       200:
-        description: Request completed successfully.
+        description: Calendar event successfully updated.
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/CalendarEvent"
+              $ref: '#/components/schemas/CalendarEvent'
+      400:
+        $ref: '#/components/responses/CalendarBadRequest'
+      403:
+        $ref: '#/components/responses/CalendarForbidden'
+      404:
+        $ref: '#/components/responses/CalendarNotFound'
   delete:
     tags:
       - Calendar
-    description: Deletes a calendar event. For a recurring event, deletes all occurrences.
+    description: >
+      Deletes a calendar event and its attendees. For a recurring event, deletes all occurrences. Requires the
+      calendar-admin role, or one of the calendar's updateRoles, held in the calendar's tenant or by a core user;
+      other callers, including anonymous users, receive 403. The calendar is found in the tenant named by the tenant
+      parameter; otherwise in the tenant of the token, or of tenantId for core users. Without a tenant context the
+      request responds 400. Events of other tenants or calendars respond 404. Signals calendar-event-deleted.
     responses:
       200:
-        description: Request completed successfully.
+        description: Calendar event successfully deleted.
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                deleted:
-                  type: boolean
+              $ref: '#/components/schemas/CalendarDeleteResult'
+      400:
+        $ref: '#/components/responses/CalendarBadRequest'
+      403:
+        $ref: '#/components/responses/CalendarForbidden'
+      404:
+        $ref: '#/components/responses/CalendarNotFound'
 
 /calendar/v1/calendars/{name}/events/{id}/occurrences/{occurrence}:
   parameters:
-    - name: name
-      description: Name of the calendar.
-      in: path
-      required: true
-      schema:
-        type: string
-    - name: id
-      description: ID of the recurring event.
-      in: path
-      required: true
-      schema:
-        type: string
+    - $ref: '#/components/parameters/CalendarName'
+    - $ref: '#/components/parameters/CalendarEventId'
     - name: occurrence
-      description: Mountain time date of the occurrence (e.g. 2026-10-13), or its URL-encoded recurrenceId.
+      description: Mountain time date of the occurrence (e.g. 2026-10-13), or its URL-encoded recurrenceId. Must be an ISO 8601 date or date/time.
       in: path
       required: true
       schema:
         type: string
+      example: '2026-10-13'
+    - $ref: '#/components/parameters/CalendarTenantName'
+    - $ref: '#/components/parameters/CalendarTenantId'
   delete:
     tags:
       - Calendar
-    description: Cancels one occurrence of a recurring event. The rest of the recurring event is unchanged. Cancelled occurrences cannot be restored.
+    description: >
+      Cancels one occurrence of a recurring event. The rest of the recurring event is unchanged. Cancelled
+      occurrences cannot be restored. Requires the calendar-admin role, or one of the calendar's updateRoles, held in
+      the calendar's tenant or by a core user; other callers, including anonymous users, receive 403. The calendar is
+      found in the tenant named by the tenant parameter; otherwise in the tenant of the token, or of tenantId for core
+      users. Without a tenant context the request responds 400. Signals calendar-event-updated when an occurrence is
+      cancelled.
     responses:
       200:
         description: Request completed successfully. deleted is false if the occurrence was already cancelled.
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                deleted:
-                  type: boolean
+              $ref: '#/components/schemas/CalendarDeleteResult'
       400:
-        description: The event is not a recurring event.
+        $ref: '#/components/responses/CalendarBadRequest'
+      403:
+        $ref: '#/components/responses/CalendarForbidden'
       404:
-        description: The event is not found, or the date is not an occurrence of the event.
+        $ref: '#/components/responses/CalendarNotFound'
 
 /calendar/v1/calendars/{name}/events/{id}/attendees:
   parameters:
-    - name: name
-      description: Name of the calendar.
-      in: path
-      required: true
-      schema:
-        type: string
-    - name: id
-      description: ID of the event.
-      in: path
-      required: true
-      schema:
-        type: string
+    - $ref: '#/components/parameters/CalendarName'
+    - $ref: '#/components/parameters/CalendarEventId'
+    - $ref: '#/components/parameters/CalendarTenantName'
+    - $ref: '#/components/parameters/CalendarTenantId'
   get:
     tags:
       - Calendar
-    description: Retrieves attendees of a calendar event.
+    description: >
+      Retrieves the attendees of a calendar event. Attendees are never public, even for public events: requires
+      private access (the calendar-admin role, or one of the calendar's readRoles or updateRoles, held in the
+      calendar's tenant or by a core user); other callers, including anonymous users, receive 403. The calendar is
+      found in the tenant named by the tenant parameter; otherwise in the tenant of the token, or of tenantId for core
+      users. Without a tenant context the request responds 400.
     responses:
       200:
-        description: Request completed successfully.
+        description: Attendees successfully retrieved.
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/Attendee"
+              type: array
+              items:
+                $ref: '#/components/schemas/Attendee'
+      400:
+        $ref: '#/components/responses/CalendarBadRequest'
+      403:
+        $ref: '#/components/responses/CalendarForbidden'
+      404:
+        $ref: '#/components/responses/CalendarNotFound'
   post:
     tags:
       - Calendar
-    description: Creates an attendees of a calendar event.
+    description: >
+      Adds an attendee to a calendar event. Requires the calendar-admin role, or one of the calendar's updateRoles,
+      held in the calendar's tenant or by a core user; other callers, including anonymous users, receive 403. Adding
+      an attendee to a private event also requires read access, which updateRoles include. The calendar is found in
+      the tenant named by the tenant parameter; otherwise in the tenant of the token, or of tenantId for core users.
+      Without a tenant context the request responds 400. Signals calendar-event-updated.
     requestBody:
       required: true
       content:
         application/json:
           schema:
-            type: object
-            properties:
-              name:
-                type: string
-              email:
-                type: string
-                format: email
+            $ref: '#/components/schemas/AttendeeInput'
     responses:
       200:
-        description: Request completed successfully.
+        description: Attendee successfully added.
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/Attendee"
+              $ref: '#/components/schemas/Attendee'
+      400:
+        $ref: '#/components/responses/CalendarBadRequest'
+      403:
+        $ref: '#/components/responses/CalendarForbidden'
+      404:
+        $ref: '#/components/responses/CalendarNotFound'
 
 /calendar/v1/calendars/{name}/events/{id}/attendees/{attendeeId}:
   parameters:
-    - name: name
-      description: Name of the calendar.
-      in: path
-      required: true
-      schema:
-        type: string
-    - name: id
-      description: ID of the event.
-      in: path
-      required: true
-      schema:
-        type: string
-    - name: attendeeId
-      description: ID of the attendee.
-      in: path
-      required: true
-      schema:
-        type: string
+    - $ref: '#/components/parameters/CalendarName'
+    - $ref: '#/components/parameters/CalendarEventId'
+    - $ref: '#/components/parameters/CalendarAttendeeId'
+    - $ref: '#/components/parameters/CalendarTenantName'
+    - $ref: '#/components/parameters/CalendarTenantId'
   get:
     tags:
       - Calendar
-    description: Retrieves an attendee of an event.
+    description: >
+      Retrieves an attendee of a calendar event. Attendees are never public, even for public events: requires private
+      access (the calendar-admin role, or one of the calendar's readRoles or updateRoles, held in the calendar's
+      tenant or by a core user); other callers, including anonymous users, receive 403. The calendar is found in the
+      tenant named by the tenant parameter; otherwise in the tenant of the token, or of tenantId for core users.
+      Without a tenant context the request responds 400.
     responses:
       200:
-        description: Request completed successfully.
+        description: Attendee successfully retrieved.
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/Attendee"
+              $ref: '#/components/schemas/Attendee'
+      400:
+        $ref: '#/components/responses/CalendarBadRequest'
+      403:
+        $ref: '#/components/responses/CalendarForbidden'
+      404:
+        $ref: '#/components/responses/CalendarNotFound'
   put:
     tags:
       - Calendar
-    description: Sets an attendee of an event.
+    description: >
+      Replaces the name and email of an attendee of a calendar event. Use the ID of an existing attendee of the event.
+      Requires the calendar-admin role, or one of the calendar's updateRoles, held in the calendar's tenant or by a
+      core user; other callers, including anonymous users, receive 403. The calendar is found in the tenant named by
+      the tenant parameter; otherwise in the tenant of the token, or of tenantId for core users. Without a tenant
+      context the request responds 400. Signals calendar-event-updated.
     requestBody:
       required: true
       content:
         application/json:
           schema:
-            type: object
-            properties:
-              name:
-                type: string
-              email:
-                type: string
+            $ref: '#/components/schemas/AttendeeInput'
     responses:
       200:
-        description: Request completed successfully.
+        description: Attendee successfully updated.
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/Attendee"
+              $ref: '#/components/schemas/Attendee'
+      400:
+        $ref: '#/components/responses/CalendarBadRequest'
+      403:
+        $ref: '#/components/responses/CalendarForbidden'
+      404:
+        $ref: '#/components/responses/CalendarNotFound'
   delete:
     tags:
       - Calendar
-    description: Deletes a calendar event attendee.
+    description: >
+      Removes an attendee from a calendar event. deleted is false if the event has no attendee with the ID. Requires
+      the calendar-admin role, or one of the calendar's updateRoles, held in the calendar's tenant or by a core user;
+      other callers, including anonymous users, receive 403. The calendar is found in the tenant named by the tenant
+      parameter; otherwise in the tenant of the token, or of tenantId for core users. Without a tenant context the
+      request responds 400. Signals calendar-event-updated.
     responses:
       200:
         description: Request completed successfully.
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                deleted:
-                  type: boolean
+              $ref: '#/components/schemas/CalendarDeleteResult'
+      400:
+        $ref: '#/components/responses/CalendarBadRequest'
+      403:
+        $ref: '#/components/responses/CalendarForbidden'
+      404:
+        $ref: '#/components/responses/CalendarNotFound'

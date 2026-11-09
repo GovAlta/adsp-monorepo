@@ -1,5 +1,5 @@
 import { adspId } from '@abgov/adsp-service-sdk';
-import type { EventService, User } from '@abgov/adsp-service-sdk';
+import type { AuditService, EventService, User } from '@abgov/adsp-service-sdk';
 import { createErrorHandler } from '@core-services/core-common';
 import { createDocumentedResponseRecorder } from '@core-services/core-common/testing';
 import * as express from 'express';
@@ -50,6 +50,7 @@ describe('planner router documented behaviour', () => {
     rename: jest.fn(),
   };
   const eventService = { send: jest.fn() } as unknown as EventService;
+  const auditService = { record: jest.fn(), query: jest.fn(), flush: jest.fn(), droppedEventCount: 0 };
 
   const tenantUser = (id: string, roles: string[]) =>
     ({ id, name: id, tenantId, isCore: false, roles }) as unknown as User;
@@ -139,6 +140,7 @@ describe('planner router documented behaviour', () => {
         specialistChatRepository,
         solutionVersionRepository,
         eventService,
+        auditService: auditService as unknown as AuditService,
       }),
     );
     app.use(createErrorHandler(logger));

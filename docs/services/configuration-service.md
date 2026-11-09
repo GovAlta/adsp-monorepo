@@ -1,7 +1,6 @@
 ---
 layout: page
 title: Configuration service
-nav_order: 4
 parent: Services
 ---
 
