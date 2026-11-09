@@ -1,4 +1,4 @@
-import { AdspId, isAllowedUser, UnauthorizedUserError, User } from '@abgov/adsp-service-sdk';
+import { AdspId, AuditService, isAllowedUser, UnauthorizedUserError, User } from '@abgov/adsp-service-sdk';
 import {
   ConfigurationClient,
   createValidationHandler,
@@ -9,6 +9,15 @@ import {
 import { RequestHandler, Router } from 'express';
 import { body, param } from 'express-validator';
 import * as HttpStatusCodes from 'http-status-codes';
+import { isDeepStrictEqual } from 'util';
+import { Logger } from 'winston';
+import {
+  auditValue,
+  toDefinitionAuditDetails,
+  ValueDefinitionCreatedAuditAction,
+  ValueDefinitionDeletedAuditAction,
+  ValueDefinitionUpdatedAuditAction,
+} from '../audit';
 import { ServiceUserRoles } from '../types';
 import type { Namespace, ValueConfiguration } from '../types';
 
@@ -151,9 +160,16 @@ export function getDefinition(client: ConfigurationClient<ValueConfiguration>): 
   };
 }
 
+const AUDITED_DEFINITION_FIELDS = ['displayName', 'description', 'jsonSchema', 'sendWriteEvent'] as const;
+
+const getChangedFields = (before: StoredDefinition, after: StoredDefinition): string[] =>
+  AUDITED_DEFINITION_FIELDS.filter((field) => !isDeepStrictEqual(before[field], after[field]));
+
 export function createDefinition(
   client: ConfigurationClient<ValueConfiguration>,
   validationService: ValidationService,
+  logger: Logger,
+  auditService: AuditService,
 ): RequestHandler {
   return async (req, res, next) => {
     try {
@@ -174,6 +190,14 @@ export function createDefinition(
       }
 
       const updated = await client.updateEntry(tenantId, namespace, mergeDefinition(tenant, namespace, definition));
+      auditValue(
+        auditService,
+        logger,
+        ValueDefinitionCreatedAuditAction,
+        req.user,
+        tenantId,
+        toDefinitionAuditDetails(namespace, definition.name, { sendWriteEvent: definition.sendWriteEvent ?? false }),
+      );
       res
         .status(HttpStatusCodes.CREATED)
         .send(toDefinitionResponse(namespace, findDefinition(updated, namespace, definition.name), false));
@@ -186,6 +210,8 @@ export function createDefinition(
 export function updateDefinition(
   client: ConfigurationClient<ValueConfiguration>,
   validationService: ValidationService,
+  logger: Logger,
+  auditService: AuditService,
 ): RequestHandler {
   return async (req, res, next) => {
     try {
@@ -203,6 +229,14 @@ export function updateDefinition(
       assertValidJsonSchema(validationService, namespace, definition);
 
       const updated = await client.updateEntry(tenantId, namespace, mergeDefinition(tenant, namespace, definition));
+      auditValue(
+        auditService,
+        logger,
+        ValueDefinitionUpdatedAuditAction,
+        req.user,
+        tenantId,
+        toDefinitionAuditDetails(namespace, name, { changedFields: getChangedFields(existing, definition) }),
+      );
       res.send(toDefinitionResponse(namespace, findDefinition(updated, namespace, name), false));
     } catch (err) {
       next(err);
@@ -210,7 +244,11 @@ export function updateDefinition(
   };
 }
 
-export function deleteDefinition(client: ConfigurationClient<ValueConfiguration>): RequestHandler {
+export function deleteDefinition(
+  client: ConfigurationClient<ValueConfiguration>,
+  logger: Logger,
+  auditService: AuditService,
+): RequestHandler {
   return async (req, res, next) => {
     try {
       const tenantId = getRequiredTenantId(req);
@@ -229,6 +267,14 @@ export function deleteDefinition(client: ConfigurationClient<ValueConfiguration>
         await client.updateEntry(tenantId, namespace, remaining);
       }
 
+      auditValue(
+        auditService,
+        logger,
+        ValueDefinitionDeletedAuditAction,
+        req.user,
+        tenantId,
+        toDefinitionAuditDetails(namespace, name),
+      );
       res.send({ deleted: true });
     } catch (err) {
       next(err);
@@ -239,6 +285,8 @@ export function deleteDefinition(client: ConfigurationClient<ValueConfiguration>
 interface DefinitionRouterProps {
   client: ConfigurationClient<ValueConfiguration>;
   validationService: ValidationService;
+  logger: Logger;
+  auditService: AuditService;
 }
 
 const validateDefinitionBody = (optional: boolean) => [
@@ -248,7 +296,12 @@ const validateDefinitionBody = (optional: boolean) => [
   body('sendWriteEvent').optional().isBoolean(),
 ];
 
-export const createDefinitionRouter = ({ client, validationService }: DefinitionRouterProps): Router => {
+export const createDefinitionRouter = ({
+  client,
+  validationService,
+  logger,
+  auditService,
+}: DefinitionRouterProps): Router => {
   const router = Router();
 
   const validateNamespaceNameParams = createValidationHandler(
@@ -265,15 +318,15 @@ export const createDefinitionRouter = ({ client, validationService }: Definition
       body('name').isString().matches(NAME_PATTERN),
       ...validateDefinitionBody(false),
     ),
-    createDefinition(client, validationService),
+    createDefinition(client, validationService, logger, auditService),
   );
   router.patch(
     '/definitions/:namespace/:name',
     validateNamespaceNameParams,
     createValidationHandler(...validateDefinitionBody(true)),
-    updateDefinition(client, validationService),
+    updateDefinition(client, validationService, logger, auditService),
   );
-  router.delete('/definitions/:namespace/:name', validateNamespaceNameParams, deleteDefinition(client));
+  router.delete('/definitions/:namespace/:name', validateNamespaceNameParams, deleteDefinition(client, logger, auditService));
 
   return router;
 };

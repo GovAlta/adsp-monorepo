@@ -4,7 +4,7 @@
 
 - `AdspThemeProvider`, for selecting a theme at application level
 - the hooks components use to read the current theme
-- the React components themselves, currently `AdspGoACalendar`
+- the React components themselves: `ADSPCalendar`, `ADSPConversation` and `ADSPFileDownload`
 
 It contains only React-specific code. The theme contract, the themes, the stylesheet and shared types live in [adsp-components-core](../adsp-components-core/README.md), so an Angular or Vue adapter can reuse them.
 
@@ -47,7 +47,7 @@ Then use the components anywhere below the provider. They pick up the theme on t
 ```tsx
 import { useMemo } from 'react';
 import { CalendarClient } from '@abgov/adsp-components-core';
-import { AdspGoACalendar } from '@abgov/adsp-components-react';
+import { ADSPCalendar } from '@abgov/adsp-components-react';
 
 function TeamCalendar({ getAccessToken }: { getAccessToken: () => Promise<string | undefined> }) {
   // Create the client once: a new client on every render reloads the events.
@@ -61,7 +61,7 @@ function TeamCalendar({ getAccessToken }: { getAccessToken: () => Promise<string
     [getAccessToken],
   );
 
-  return <AdspGoACalendar client={client} calendar="my-calendar" />;
+  return <ADSPCalendar client={client} calendar="my-calendar" />;
 }
 ```
 
@@ -93,7 +93,7 @@ const brandTheme = createAdspTheme(AdspThemes.standard, {
 </AdspThemeProvider>;
 
 // 3. Component level: this instance only
-<AdspGoACalendar
+<ADSPCalendar
   client={client}
   calendar="my-calendar"
   themeOverrides={{ borderColor: 'var(--adsp-color-interactive-default)' }}
@@ -108,15 +108,15 @@ const brandTheme = createAdspTheme(AdspThemes.standard, {
 
 ### Theme
 
-| Export                                    | Type                                                               | Purpose                                                                                     |
-| ----------------------------------------- | ------------------------------------------------------------------ | ------------------------------------------------------------------------------------------- |
-| `AdspThemeProvider`                       | `({ theme?: AdspTheme; overrides?: AdspThemeOverrides; children? })` | Selects `theme`, or builds on the theme above it, and applies `overrides` for its subtree |
-| `useAdspTheme()`                          | `() => AdspTheme`                                                  | Current theme object, for logic that needs a theme value                                    |
-| `useAdspThemeStyle(component?, overrides?)` | `() => CSSProperties`                                            | Current theme as `--adsp-*` properties, plus that component's instance overrides            |
+| Export                                      | Type                                                                 | Purpose                                                                                   |
+| ------------------------------------------- | -------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| `AdspThemeProvider`                         | `({ theme?: AdspTheme; overrides?: AdspThemeOverrides; children? })` | Selects `theme`, or builds on the theme above it, and applies `overrides` for its subtree |
+| `useAdspTheme()`                            | `() => AdspTheme`                                                    | Current theme object, for logic that needs a theme value                                  |
+| `useAdspThemeStyle(component?, overrides?)` | `() => CSSProperties`                                                | Current theme as `--adsp-*` properties, plus that component's instance overrides          |
 
 ### Components
 
-#### `AdspGoACalendar`
+#### `ADSPCalendar`
 
 A calendar built on FullCalendar and styled with GoA tokens. It shows month, week, day and list views, with a toolbar of GoA buttons. It loads events and Alberta statutory holidays for the visible range through the client you pass, and shows holidays as background events on their Alberta day.
 
@@ -145,7 +145,53 @@ Things to know:
 
 #### `useCalendarEvents(client, calendar, range)`
 
-The hook `AdspGoACalendar` uses to load data. It returns `{ calendarEvents, loading, error }`, reloads when the calendar or range changes, and fetches nothing while `range` is `undefined`. The client must be stable across renders.
+The hook `ADSPCalendar` uses to load data. It returns `{ calendarEvents, loading, error }`, reloads when the calendar or range changes, and fetches nothing while `range` is `undefined`. The client must be stable across renders.
+
+#### `ADSPFileDownload`
+
+Downloads a File service file. With only `client` and `fileId`, it shows the filename and size from File service as a tertiary download button. It shows progress while downloading and explains a missing file, a permission failure, an infected file or a pending virus scan, with **Try again** where trying again can help.
+
+```tsx
+import { useMemo } from 'react';
+import { FileClient } from '@abgov/adsp-components-core';
+import { ADSPFileDownload } from '@abgov/adsp-components-react';
+
+// Create the client once or memoize it: a new client on every render reloads the file.
+const client = useMemo(() => new FileClient({ serviceUrl, getAccessToken }), [serviceUrl]);
+
+<ADSPFileDownload client={client} fileId={file.id} />;
+
+<ADSPFileDownload client={client} fileId={file.id}>
+  <GoabButton type="secondary">Download</GoabButton>
+</ADSPFileDownload>;
+```
+
+| Prop             | Type                                          | Description                                                                                                                                                                                                                                                                                     |
+| ---------------- | --------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `client`         | `IFileClient`                                 | Loads and downloads the file, usually a `FileClient` from core built with the app's `getAccessToken`. Create it once or memoize it.                                                                                                                                                             |
+| `fileId`         | `string`                                      | ID of the File service file.                                                                                                                                                                                                                                                                    |
+| `canDownload`    | `boolean`                                     | Whether the application lets the current user download. `false` renders nothing and sends no request. Defaults to `true`; File service still authorizes the download.                                                                                                                           |
+| `children`       | `ReactElement`                                | A trigger to use in place of the default control, such as a `GoabButton` or a link. The component sets its `onClick`, and `disabled` while downloading (`aria-disabled` on a link, which can't be disabled). Metadata isn't loaded up front, so a list of files doesn't send a request per row. |
+| `themeOverrides` | `AdspComponentThemeOverrides<'fileDownload'>` | File download tokens for this instance only.                                                                                                                                                                                                                                                    |
+| `testId`         | `string`                                      | `data-testid` on the root element.                                                                                                                                                                                                                                                              |
+
+| Token (`themeOverrides`) | Styles                             |
+| ------------------------ | ---------------------------------- |
+| `metadataTextColor`      | The file size next to the filename |
+| `statusTextColor`        | Loading and downloading messages   |
+| `errorTextColor`         | Error messages                     |
+
+Things to know:
+
+- **Permissions.** There is no shared ADSP permission resolver yet, so the application passes `canDownload`. With the default control, File service's answer to the metadata request also tells the component before any click whether the user may download: a 403 shows a permission message instead of the button.
+- **The file is held in memory** as a `Blob` before the browser saves it, because a plain link can't send the user's token. See the [core File client README](../adsp-components-core/src/lib/file/README.md).
+- **Pending scans aren't bypassed.** The component never sends `unsafe=true`.
+- **Changing `fileId` mid-download** doesn't cancel it: the file the user clicked is still saved, but its progress and any error belong to that file, so the new one can be downloaded straight away.
+- **Focus after Try again** moves to the control when the retry succeeds, or back to the error when it fails again, because the Try again button removes itself.
+
+#### `useFileDownload(client, fileId, { loadMetadata })`
+
+The hook `ADSPFileDownload` uses. It returns `{ file, loading, downloading, ready, error, download, retry }`. `retry` repeats whatever failed: the metadata load or the download. With `loadMetadata: false` it requests nothing until `download()` is called. Use it to build a different download experience on the same File service behaviour.
 
 ## Building a component
 
@@ -160,7 +206,7 @@ Every ADSP React component follows the same four rules:
 import { type AdspComponentThemeOverrides, type CalendarView, type ICalendarClient } from '@abgov/adsp-components-core';
 import { useAdspThemeStyle } from '../theme/adsp-theme-provider';
 
-interface AdspGoACalendarProps {
+interface ADSPCalendarProps {
   client: ICalendarClient;
   calendar: string;
   defaultView?: CalendarView;
@@ -168,13 +214,13 @@ interface AdspGoACalendarProps {
   testId?: string;
 }
 
-export const AdspGoACalendar = ({
+export const ADSPCalendar = ({
   client,
   calendar,
   defaultView = 'month',
   themeOverrides,
   testId,
-}: AdspGoACalendarProps) => {
+}: ADSPCalendarProps) => {
   const themeStyle = useAdspThemeStyle('calendar', themeOverrides);
 
   // Load data with useCalendarEvents(client, calendar, range) and render FullCalendar inside the root element.

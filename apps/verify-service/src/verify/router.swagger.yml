@@ -1,23 +1,116 @@
+components:
+  responses:
+    VerifyBadRequest:
+      description: >
+        Request is invalid, for example the key is longer than 50 characters, expireIn is not a positive integer, code
+        is not a string, or the body is not valid JSON.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/VerifyError'
+          example:
+            errorMessage: 'Validation failed with error(s): expireIn (query) - Invalid value'
+    VerifyUnauthorized:
+      description: Request does not include a valid bearer token from the core realm or a tenant realm.
+      content:
+        text/plain:
+          schema:
+            type: string
+          example: Unauthorized
+    VerifyForbidden:
+      description: >
+        User does not have the role required for the operation: code-generator to generate a code, or code-verifier to
+        verify a code.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/VerifyError'
+          example:
+            errorMessage: 'User Test Service Account (ID: 3f2b8c1e-5d4a-4f6b-9c7e-1a2b3c4d5e6f) not permitted to verify code.'
+  schemas:
+    VerifyError:
+      type: object
+      properties:
+        errorMessage:
+          type: string
+    GeneratedCode:
+      type: object
+      properties:
+        key:
+          type: string
+          description: Key the code was generated at, as given in the path.
+          readOnly: true
+        code:
+          type: string
+          description: Random 6 character code, using characters that are easy to tell apart.
+          readOnly: true
+        expiresAt:
+          type: string
+          format: date-time
+          description: Time after which the code is cleared and can no longer be verified.
+          readOnly: true
+      required: [key, code, expiresAt]
+      example:
+        key: email-test.user@gov.ab.ca
+        code: CF4HKR
+        expiresAt: '2026-10-01T15:14:05.000Z'
+    VerifyResult:
+      type: object
+      properties:
+        verified:
+          type: boolean
+          description: >
+            True if the code matches the code at the key. False if it doesn't match, or if there is no code at the key
+            because it expired, was never generated, or was cleared after 10 failed verifications.
+          readOnly: true
+      required: [verified]
+      example:
+        verified: true
+
 /verify/v1/codes/{key}:
   post:
     tags:
       - Verify
-    description: Generates a new code or verifies a code.
+    description: >
+      Generates a new code at a key, or verifies a code against the code at a key.
+
+
+      Without a `code` in the body, the operation generates a new random code at the key, replacing any existing code
+      there, and requires the code-generator role. With a `code` in the body, the operation verifies it and requires the
+      code-verifier role. Each failed verification is counted, and the code at the key is cleared after 10 failures;
+      generate a new code at the key to continue.
+
+
+      Codes are isolated by tenant. Tenant users and service accounts generate and verify codes in the tenant of their
+      token, and core (platform) users with the role in the core realm use a separate core namespace. A code generated
+      in one tenant can't be verified from another; the verification responds 200 with `verified: false`. The
+      `tenantId` query parameter is not supported.
     parameters:
       - name: key
-        description: Key for the code to generate or verify.
+        description: >
+          Key for the code to generate or verify, for example an identifier of the email address or SMS number being
+          verified. Unique within the tenant.
         in: path
         required: true
         schema:
           type: string
+          minLength: 1
+          maxLength: 50
+          example: email-test.user@gov.ab.ca
       - name: expireIn
-        description: Valid duration for the code in minutes.
+        description: >
+          Number of minutes the generated code is valid for. Defaults to 10. Only used when generating a code; ignored
+          when verifying.
         in: query
         required: false
         schema:
-          type: number
+          type: integer
+          minimum: 1
+          default: 10
+          example: 15
     requestBody:
       required: false
+      description: Omit the body, or the code, to generate a code. Include a non-empty code to verify it.
       content:
         application/json:
           schema:
@@ -25,25 +118,40 @@
             properties:
               code:
                 type: string
+                description: Code to verify against the code at the key. Required to verify a code.
+          examples:
+            generate:
+              summary: Generate a code
+              value: {}
+            verify:
+              summary: Verify a code
+              value:
+                code: CF4HKR
     responses:
       200:
-        description: Request completed successfully.
+        description: >
+          Code generated, with the generated code in the response; or code verified, with the result of the verification
+          in the response.
         content:
           application/json:
             schema:
               oneOf:
-                - type: object
-                  properties:
-                    key:
-                      type: string
-                    code:
-                      type: string
-                    expiresAt:
-                      type: string
-                      format: date-time
-                - type: object
-                  properties:
-                    verified:
-                      type: boolean
+                - $ref: '#/components/schemas/GeneratedCode'
+                - $ref: '#/components/schemas/VerifyResult'
+            examples:
+              generated:
+                summary: Generated code
+                value:
+                  key: email-test.user@gov.ab.ca
+                  code: CF4HKR
+                  expiresAt: '2026-10-01T15:14:05.000Z'
+              verified:
+                summary: Verification result
+                value:
+                  verified: true
+      400:
+        $ref: '#/components/responses/VerifyBadRequest'
       401:
-        description: User not authorized to generate or verify code.
+        $ref: '#/components/responses/VerifyUnauthorized'
+      403:
+        $ref: '#/components/responses/VerifyForbidden'

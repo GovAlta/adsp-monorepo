@@ -18,7 +18,7 @@ jest.mock('@abgov/adsp-service-sdk', () => ({
 }));
 
 describe('createRepositories', () => {
-  const knexMock = { migrate: { latest: jest.fn() }, raw: jest.fn() };
+  const knexMock = { migrate: { latest: jest.fn() }, raw: jest.fn(), destroy: jest.fn() };
   const initKnexMock = initKnex as unknown as jest.Mock;
   const retryMock = retry.execute as jest.Mock;
   const logger = { debug: jest.fn(), info: jest.fn() };
@@ -138,5 +138,14 @@ describe('createRepositories', () => {
     const { isConnected } = await createRepositories(props);
 
     expect(await isConnected()).toBe(false);
+  });
+
+  it('closes the database connection pool', async () => {
+    knexMock.destroy.mockResolvedValueOnce(undefined);
+
+    const { close } = await createRepositories(props);
+    await close();
+
+    expect(knexMock.destroy).toHaveBeenCalledTimes(1);
   });
 });

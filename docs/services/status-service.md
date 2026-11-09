@@ -1,7 +1,6 @@
 ---
 layout: page
 title: Status service
-nav_order: 13
 parent: Services
 ---
 
@@ -23,7 +22,7 @@ Applications represent digital services that an end user may wish to access. Eac
 The status of an application indicates whether the service is fully available to end users, may be experiencing disruption, or is in planned or unplanned outage.
 
 ### Health check
-Health checks poll against an application endpoint to check for issues. It helps the tenant administrators monitor for issues but does not automatically update status.
+Health checks poll against an application endpoint to check for issues. It helps the tenant administrators monitor for issues. By default, health checks do not update the status. If `autoChangeStatus` is set on the application, the status changes from `operational` to `reported-issues` after the health check fails for 5 minutes, and back to `operational` after it succeeds for 5 minutes. Other statuses, such as `maintenance` and `outage`, are only changed manually.
 
 ### Notice
 Notices are important messages to users regarding upcoming changes to an application. For example, they can be used to inform users of scheduled maintenance events or service disruptions.

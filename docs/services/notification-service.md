@@ -1,7 +1,6 @@
 ---
 layout: page
 title: Notification service
-nav_order: 9
 parent: Services
 ---
 

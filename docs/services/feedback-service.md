@@ -1,7 +1,6 @@
 ---
 layout: page
 title: Feedback service
-nav_order: 18
 parent: Services
 ---
 
@@ -13,11 +12,33 @@ Feedback service allows users to submit feedback regarding their service interac
 
 client `urn:ads:platform:feedback-service`
 
-| name              | description                                        |
-| :---------------- | :------------------------------------------------- |
-| feedback-provider | Provider role that allows a user to send feedback. |
+| name              | description                                              |
+| :---------------- | :------------------------------------------------------- |
+| feedback-provider | Provider role that allows a user to send feedback.       |
+| feedback-reader   | Allows a user to access feedback submitted by end-users. |
 
 _Sites_ can be configured to allow anonymous feedback and in that case the send feedback request is not expected to include any credential. For _sites_ that don't allow anonymous feedback, the request must be in the context of a user with the `urn:ads:platform:feedback-service:feedback-provider` client role. In order to allow feedback from all authenticated users of an application, the associated client can include a hardcode role mapper to add the role to access tokens.
+
+## Tenancy
+
+- **Sending feedback.** Authenticated users send feedback to the tenant of their token, and need the `feedback-provider` role in that tenant. Anonymous requests name the tenant in the `tenant` field of the body (tenant name or tenant URN); without it the request is rejected with 400. Anonymous feedback is only accepted for sites configured with `allowAnonymous`, and is rate limited to 5 requests per 5 minutes per client.
+- **Reading feedback.** Tenant users with the `feedback-reader` role read the feedback of their own tenant. Core users with the role set the `tenantId` query parameter to read a tenant's feedback; without it, `GET /feedback/v1/feedback` reads the feedback of all tenants. Core users must set `tenantId` for the feedback summary.
+- **Sites.** Sites are tenant configuration. `GET /feedback/v1/sites` lists or counts sites across tenants, and is intended for core users.
+
+## API overview
+
+All endpoints are under `https://feedback-service.adsp.alberta.ca/feedback/v1`. See the [API documentation](https://api.adsp.alberta.ca) for request and response schemas.
+
+| Endpoint                                  | Purpose                                            | Required role                                             |
+| :---------------------------------------- | :------------------------------------------------- | :-------------------------------------------------------- |
+| `POST /feedback/v1/feedback`              | Send feedback for a site.                          | `feedback-provider`, or anonymous for sites that allow it |
+| `GET /feedback/v1/feedback`               | Read submitted feedback, newest first.             | `feedback-reader`                                         |
+| `GET /feedback/v1/feedback/summary`       | Summarize the feedback for a site and time period. | `feedback-reader`                                         |
+| `GET /feedback/v1/sites`                  | List or count configured sites.                    | `feedback-reader` (core)                                  |
+| `GET /feedback/v1/script/adspFeedback.js` | Download the feedback widget script.               | Anonymous                                                 |
+| `GET /feedback/v1/script/integrity`       | Get the script digest for Subresource Integrity.   | Anonymous                                                 |
+
+Sites are configured through the [configuration service](configuration-service.md); feedback service has no endpoints of its own for them.
 
 ## Concepts
 
@@ -28,6 +49,10 @@ A site represents a website against which feedback can be provided. A site can b
 ### Feedback anonymization
 
 The feedback service processes text content of submitted feedback using the [PII service](pii-service.md) to remove personally identifiable information.
+
+## Events
+
+Feedback service does not send or consume domain events. Received feedback is queued, processed, and then written as `feedback` values to the [value service](value-service.md) under the `feedback-service` namespace.
 
 ## Code examples
 
@@ -138,20 +163,31 @@ await fetch(`https://feedback-service.adsp.alberta.ca/feedback/v1/feedback`, {
 
 ### Retrieving feedback
 
-After anonymization, feedback is written to the [value service](value-service.md) and can be retrieved via its API.
+Users with the `feedback-reader` role can read feedback, after anonymization, from the feedback API. Use `page.next` from the response as `after` to read the next page.
 
 ```typescript
-const valueServiceUrl = 'https://value-service.adsp.alberta.ca';
-const top = 50;
-const timestampMin = `2024-10-10T12:00:00Z`;
+const feedbackServiceUrl = 'https://feedback-service.adsp.alberta.ca';
+const site = encodeURIComponent('https://my-application.alberta.ca');
 
 const response = await fetch(
-  `${valueServiceUrl}/value/v1/feedback-service/values/feedback?top=${top}&timestampMin=${timestampMin}`,
+  `${feedbackServiceUrl}/feedback/v1/feedback?site=${site}&top=50&start=2024-10-10T12:00:00Z`,
   {
     method: 'GET',
     headers: { Authorization: `Bearer ${accessToken}` },
   },
 );
 
-const { results, page } = await response.json();
+const { feedback, page } = await response.json();
+// feedback[0].value.rating, feedback[0].value.comment, page.next
+```
+
+### Summarize feedback for a site
+
+```typescript
+const response = await fetch(`${feedbackServiceUrl}/feedback/v1/feedback/summary?site=${site}`, {
+  method: 'GET',
+  headers: { Authorization: `Bearer ${accessToken}` },
+});
+
+const { totalResponses, averageRating, responsesWithComments, responsesWithIssues } = await response.json();
 ```

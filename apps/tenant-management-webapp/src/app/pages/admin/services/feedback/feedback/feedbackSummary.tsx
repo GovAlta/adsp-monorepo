@@ -18,6 +18,10 @@ const SummarySkeleton = styled.div`
   padding-top: var(--goa-space-l);
 `;
 
+const Separator = styled.span`
+  margin: 0 var(--goa-space-s);
+`;
+
 export const FeedbackSummaryLoading = (): JSX.Element => (
   <SummarySkeleton data-testid="feedback-summary-loading">
     <GoabSkeleton type="text" />
@@ -31,8 +35,13 @@ export const FeedbackSummary = ({ summary }: FeedbackSummaryProps): JSX.Element 
 
   return (
     <Summary data-testid="feedback-summary">
-      {summary.totalResponses} responses · Average rating {summary.averageRating?.toFixed(1)} ·{' '}
-      {summary.responsesWithComments} with comments · {summary.responsesWithIssues} with issues
+      <strong>Total responses</strong> {summary.totalResponses}
+      <Separator aria-hidden="true"> | </Separator>
+      <strong>Average rating</strong> {summary.averageRating?.toFixed(1)}/5
+      <Separator aria-hidden="true"> | </Separator>
+      <strong>Comments</strong> {summary.responsesWithComments}
+      <Separator aria-hidden="true"> | </Separator>
+      <strong>Issues</strong> {summary.responsesWithIssues}
     </Summary>
   );
 };

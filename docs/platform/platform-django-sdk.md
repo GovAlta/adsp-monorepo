@@ -1,7 +1,6 @@
 ---
 layout: page
 title: Service SDK (Django)
-nav_order: 6
 parent: Platform development
 ---
 

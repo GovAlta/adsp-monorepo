@@ -69,6 +69,115 @@ components:
               type: array
               items:
                 $ref: '#/components/schemas/Application'
+  post:
+    tags: ['Application Monitoring']
+    description: >
+      Adds an application to the tenant for monitoring. The application key is generated from the name if it is not
+      provided. Requires an authenticated tenant user.
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [name, endpoint]
+            properties:
+              appKey:
+                type: string
+                description: Key of the application. Generated from the name if not set.
+                example: my-application
+              name:
+                type: string
+                description: Name of the application. Must be unique for the tenant.
+                example: My Application
+              description:
+                type: string
+              endpoint:
+                type: object
+                required: [url]
+                properties:
+                  url:
+                    type: string
+                    description: URL of the application endpoint to monitor.
+                    example: https://my-application.alberta.ca/health
+              monitorOnly:
+                type: boolean
+                description: If true, the application is not displayed on the public status page.
+              status:
+                type: string
+                enum: [operational, reported-issues, maintenance, outage]
+    responses:
+      201:
+        description: Application added.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Application'
+      400:
+        description: An application with the same key or name already exists.
+      401:
+        $ref: '#/components/responses/Unauthorized'
+
+/status/v1/applications/{appKey}:
+  parameters:
+    - name: appKey
+      description: The application key, AKA application ID.
+      in: path
+      required: true
+      schema:
+        type: string
+        example: my-application
+  put:
+    tags: ['Application Monitoring']
+    description: Updates the configuration of an application. Requires an authenticated tenant user.
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [endpoint]
+            properties:
+              name:
+                type: string
+              description:
+                type: string
+              endpoint:
+                type: object
+                required: [url]
+                properties:
+                  url:
+                    type: string
+              monitorOnly:
+                type: boolean
+              autoChangeStatus:
+                type: boolean
+                description: >
+                  If true, health checks change the status from operational to reported-issues after failing for 5
+                  minutes, and back to operational after succeeding for 5 minutes.
+    responses:
+      200:
+        description: Application updated.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Application'
+      401:
+        $ref: '#/components/responses/Unauthorized'
+      404:
+        description: Application not found.
+  delete:
+    tags: ['Application Monitoring']
+    description: >
+      Deletes an application, and stops monitoring it if monitoring is enabled. Requires an authenticated tenant
+      user.
+    responses:
+      204:
+        description: Application deleted.
+      401:
+        $ref: '#/components/responses/Unauthorized'
+      404:
+        description: Application not found.
 
 /status/v1/applications/{appKey}/enable:
   patch:
@@ -179,3 +288,36 @@ components:
               type: array
               items:
                 $ref: '#/components/schemas/PingData'
+
+/status/v1/webhook/{id}/test/{eventName}:
+  get:
+    tags: ['Application Monitoring']
+    description: >
+      Sends a test event to a webhook of a monitored application. The response is sent after a 2 second delay.
+      Requires an authenticated tenant user.
+    parameters:
+      - name: id
+        description: ID of the webhook.
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: eventName
+        description: >
+          Event to send. monitored-service-down sends a service down event; any other value sends a service up event.
+        in: path
+        required: true
+        schema:
+          type: string
+          example: monitored-service-down
+    responses:
+      200:
+        description: Test event sent. The response is a text summary of the event.
+        content:
+          application/json:
+            schema:
+              type: string
+      401:
+        $ref: '#/components/responses/Unauthorized'
+      404:
+        description: Webhook, or the application it targets, not found.

@@ -1,7 +1,6 @@
 ---
 layout: page
 title: Service SDK (Node.js)
-nav_order: 3
 parent: Platform development
 ---
 

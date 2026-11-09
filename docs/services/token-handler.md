@@ -1,7 +1,6 @@
 ---
 layout: page
 title: Token handler
-nav_order: 17
 parent: Services
 ---
 
