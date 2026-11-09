@@ -1,21 +1,34 @@
 import React, { FunctionComponent, useState } from 'react';
 import { GoabButton, GoabButtonGroup, GoabModal } from '@abgov/react-components';
 
-interface NewChatButtonProps {
+export interface ResetChatButtonProps {
   hasMessages: boolean;
   awaitingReply: boolean;
-  onNewChat: () => void;
+  onReset: () => void;
+  /** 'inline' leaves out the icon, for tight spaces such as the chat status bar. */
+  variant?: 'button' | 'inline';
+  /** Base test ID. The dialog and its buttons add -modal, -confirm and -cancel. */
+  testId?: string;
+  /** What starting over leaves alone, such as the template being edited. */
+  keptContent?: string;
 }
 
 /**
  * Starts a new chat after the user confirms, since the current conversation cannot be recovered once cleared.
  */
-export const NewChatButton: FunctionComponent<NewChatButtonProps> = ({ hasMessages, awaitingReply, onNewChat }) => {
+export const ResetChatButton: FunctionComponent<ResetChatButtonProps> = ({
+  hasMessages,
+  awaitingReply,
+  onReset,
+  variant = 'button',
+  testId = 'agent-reset-chat',
+  keptContent,
+}: ResetChatButtonProps) => {
   const [confirming, setConfirming] = useState(false);
 
   const confirm = () => {
     setConfirming(false);
-    onNewChat();
+    onReset();
   };
 
   return (
@@ -23,15 +36,15 @@ export const NewChatButton: FunctionComponent<NewChatButtonProps> = ({ hasMessag
       <GoabButton
         type="tertiary"
         size="compact"
-        leadingIcon="reload"
-        testId="access-agent-new-chat"
+        leadingIcon={variant === 'button' ? 'reload' : undefined}
+        testId={testId}
         disabled={!hasMessages}
         onClick={() => setConfirming(true)}
       >
-        New chat
+        Reset chat
       </GoabButton>
       <GoabModal
-        testId="access-agent-new-chat-modal"
+        testId={`${testId}-modal`}
         open={confirming}
         heading="Start a new chat?"
         maxWidth="560px"
@@ -41,20 +54,21 @@ export const NewChatButton: FunctionComponent<NewChatButtonProps> = ({ hasMessag
             <GoabButton
               size="compact"
               type="secondary"
-              testId="access-agent-new-chat-cancel"
+              testId={`${testId}-cancel`}
               onClick={() => setConfirming(false)}
             >
               Cancel
             </GoabButton>
-            <GoabButton size="compact" type="primary" testId="access-agent-new-chat-confirm" onClick={confirm}>
+            <GoabButton size="compact" type="primary" testId={`${testId}-confirm`} onClick={confirm}>
               Start new chat
             </GoabButton>
           </GoabButtonGroup>
         }
       >
         <p>
-          The current conversation will be cleared and the agent will not remember it. This cannot be undone.
+          Starting a new chat will clear your current conversation and messages.
           {awaitingReply && ' The reply in progress will be discarded.'}
+          {keptContent && ` ${keptContent}`} This action cannot be undone. Do you want to continue?
         </p>
       </GoabModal>
     </>

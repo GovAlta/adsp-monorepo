@@ -96,18 +96,38 @@ Feature: Feedback
     When the user re-load the page and wait "5" seconds
     Then the user "views" the Feedback badge
 
-  # TEST DATA: https://adsp- site should have more than 10 feedback records
+  # TEST DATA: https://adsp- site should have more than 20 feedback records
   @TEST_CS-3210 @REQ_CS-3021 @regression
-  Scenario: As a tenant admin, I can see feedback sent regarding my sites, so I can review user experience and how to improve my site
+  Scenario: As a tenant admin, I can see feedback sent regarding my sites with pagination, so I can review user experience and how to improve my site
     Given a tenant admin user is on Feedback service Feedback page
     Then the user views site URLs from sites page in Registered sites dropdown
     When the user selects the adsp site in Registered sites dropdown
     Then the user views a feedback list with Date submitted, Page, Rating, Action
-    And the user views a feedback list of 10 ordered from most recent to oldest
-    When the user clicks Load more button on the page
-    Then the user views more than 10 feedback records on feedback page
+    And the user views a feedback list of 20 ordered from most recent to oldest
     When the user clicks toggle details icon on the latest feedback
     Then the user views feedback details with timestamp, rating, comments, technical issues
+    # Navigate through feedback using pagination
+    And the user views the previous button is disabled on feedback page
+    When the user clicks next button on feedback page
+    Then the user views the previous button is enabled on the feedback page
+    And the user views the message showing current numbers of page "2" with "20" records per page of the total number of feedback responses on feedback page
+    And the user views page "2" of the total number of pages on feedback page
+    When the user selects the last page in the page dropdown on feedback page
+    Then the user views the last page of feedback records on feedback page
+    # Change search dates and site returns to the first page
+    When the user changes the start date filter to be "2025-01-01" on feedback page
+    Then the user views the first page of feedback records on feedback page
+    When the user clicks next button on feedback page
+    And the user selects "https://form.adsp-uat.alberta.ca" in Registered sites dropdown on feedback page
+    And the user selects the adsp site in Registered sites dropdown
+    Then the user views the first page of feedback records on feedback page
+    # Change page size
+    When the user selects "10" in the page size dropdown on feedback page
+    Then the user views a feedback list with "10" records per page on feedback page
+    When the user selects "50" in the page size dropdown on feedback page
+    Then the user views a feedback list with "50" records per page on feedback page
+    When the user selects "100" in the page size dropdown on feedback page
+    Then the user views a feedback list with "100" records per page on feedback page
 
   @TEST_CS-4295 @REQ_CS-4265 @REQ_4304 @regression @prod
   Scenario: As an admin user, I want to see all the feedback for my tenant in the Tenant Management App with a maximum view

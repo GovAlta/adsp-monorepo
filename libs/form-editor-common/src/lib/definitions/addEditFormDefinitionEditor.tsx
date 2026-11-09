@@ -29,6 +29,7 @@ import { FullPagePane } from '@components/FullPagePane'; // clean-code-ignore: R
 import DataTable from '@components/DataTable';
 import { DeleteModal } from '@components/DeleteModal';
 import { CustomLoader } from '@components/CustomLoader';
+import { AgentChatStatusBar } from '@components/AgentChatStatusBar';
 import {
   FormDataSchemaElementCompletionItemProvider,
   FormPropertyValueCompletionItemProvider,
@@ -456,7 +457,7 @@ export function AddEditFormDefinitionEditor({
   };
 
   // Agent chat state
-  const [threadId] = useState(uuid());
+  const [threadId, setThreadId] = useState(() => uuid());
   const agentName = 'formGenerationAgent';
   const resourceId = definition?.id;
 
@@ -672,6 +673,7 @@ export function AddEditFormDefinitionEditor({
                     >
                       <div style={{ height: EditorHeight }}>
                         <AgentChat
+                          key={threadId}
                           threadId={threadId}
                           context={{ formDefinitionId: definition.id }}
                           messages={messages}
@@ -683,6 +685,15 @@ export function AddEditFormDefinitionEditor({
                           idleHint="Still working…"
                           deadlineMs={FORM_GENERATION_CLIENT_DEADLINE_MS}
                           deadlineMessage="Anything already saved is in the editor."
+                          showUsage
+                          status={
+                            <AgentChatStatusBar
+                              threadId={threadId}
+                              onReset={() => setThreadId(uuid())}
+                              keptContent="Your form isn’t changed."
+                              testId="form-editor-agent"
+                            />
+                          }
                         />
                       </div>
                     </Tab>

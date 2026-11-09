@@ -38,6 +38,7 @@
   },
   "private": true,
   "dependencies": {
+    "@ai-sdk/openai-compatible": "2.0.62",
     "@ai-sdk/provider-utils": "^4.0.50",
     "@azure/storage-blob": "^12.9.0",
     "@emotion/react": "11.14.0",
@@ -90,7 +91,7 @@
     "dashify": "^2.0.0",
     "dayjs": "^1.10.7",
     "detect-file-type": "^0.2.8",
-    "dompurify": "^3.4.16",
+    "dompurify": "^3.4.17",
     "dotenv": "10.0.0",
     "enquirer": "^2.3.6",
     "envalid": "^7.1.0",

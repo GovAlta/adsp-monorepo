@@ -1,6 +1,15 @@
 import { createSelector } from '@reduxjs/toolkit';
 import { RootState } from '../index';
-import { ImagePart, FilePart, UserMessage, ResolvedImagePart, ResolvedFilePart } from '@core-services/app-common';
+import {
+  AgentMessage,
+  AgentUsage,
+  ConversationStatus,
+  ImagePart,
+  FilePart,
+  UserMessage,
+  ResolvedImagePart,
+  ResolvedFilePart,
+} from '@core-services/app-common';
 
 // Helper to extract file ID from file service URN
 // Format: urn:ads:platform:file-service:v1:/files/{uuid}
@@ -95,6 +104,23 @@ export const messagesSelector = createSelector(
       return message;
     });
   },
+);
+
+/** The conversation status agent-service sent after the thread's last reply. */
+export const conversationStatusSelector = (state: RootState, threadId: string): ConversationStatus | undefined =>
+  state.agent.conversationStatus?.[threadId];
+
+/** What the thread's most recent finished reply used, when the model provider reported it. */
+export const lastReplyUsageSelector = createSelector(
+  (state: RootState) => state.agent.threadMessages,
+  (state: RootState) => state.agent.messages,
+  (_: RootState, threadId: string) => threadId,
+  (threadMessages, messages, threadId): AgentUsage | undefined =>
+    (threadMessages[threadId] || [])
+      .map((messageId) => messages[messageId])
+      .reverse()
+      .find((message): message is AgentMessage => message?.from === 'agent' && !!(message as AgentMessage).usage)
+      ?.usage,
 );
 
 export const agentsSelector = createSelector(

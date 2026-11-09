@@ -1,5 +1,5 @@
 import type { Message } from '@core-services/app-common';
-import { countQuestions, isAwaitingReply, mayStillBeSavingReply } from './chatState';
+import { isAwaitingReply, mayStillBeSavingReply } from './chatState';
 
 function userMessage(id: string, overrides: Record<string, unknown> = {}): Message {
   return { id, threadId: 'thread-1', from: 'user', content: [{ type: 'text', text: id }], ...overrides } as Message;
@@ -45,18 +45,5 @@ describe('mayStillBeSavingReply', () => {
 
     expect(isAwaitingReply(messages)).toBe(false);
     expect(mayStillBeSavingReply(messages)).toBe(true);
-  });
-});
-
-describe('countQuestions', () => {
-  it('counts the questions the user asked, not replies or system messages', () => {
-    expect(
-      countQuestions([
-        userMessage('first'),
-        agentMessage('answer'),
-        userMessage('notice', { local: true }),
-        userMessage('second'),
-      ]),
-    ).toBe(2);
   });
 });

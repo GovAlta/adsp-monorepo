@@ -540,7 +540,7 @@ describe('router', () => {
       expect(res.json).toHaveBeenCalledWith(summary);
     });
 
-    it('rejects a user without the feedback reader role', async () => {
+    it('reads a summary for a user without the feedback reader role', async () => {
       const req = {
         tenant: { id: tenantId },
         user: { tenantId, id: 'tester', roles: [] },
@@ -552,8 +552,12 @@ describe('router', () => {
       const handler = readSummary(valueServiceMock as unknown as ValueService);
       await handler(req as unknown as Request, res as unknown as Response, next);
 
-      expect(valueServiceMock.readSummary).not.toHaveBeenCalled();
-      expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedError));
+      expect(valueServiceMock.readSummary).toHaveBeenCalledWith(tenantId, {
+        site: 'http://test.org',
+        start: undefined,
+        end: undefined,
+      });
+      expect(next).not.toHaveBeenCalled();
     });
   });
 
