@@ -53,6 +53,16 @@ jest.mock('@abgov/jsonforms-components', () => ({
     return <div data-testid="review-provider">{children}</div>;
   },
   createDefaultAjv: () => ({}),
+  useStepChange: (listener?: (stepInfo: StepInfoLike) => void) => {
+    const [stepInfo, setStepInfo] = jest.requireActual('react').useState();
+    return {
+      stepInfo,
+      onStepChange: (next: StepInfoLike) => {
+        setStepInfo(next);
+        listener?.(next);
+      },
+    };
+  },
   getNavigationTargets: (uischema: { elements: { label?: string }[] }) =>
     uischema.elements.map((element, index) => ({
       pageId: `page-${index + 1}`,

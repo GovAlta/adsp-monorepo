@@ -22,6 +22,16 @@ jest.mock('@abgov/jsonforms-components', () => ({
       return <div>{children}</div>;
     },
   createDefaultAjv: () => ({}),
+  useStepChange: (listener?: (stepInfo: StepInfoLike) => void) => {
+    const [stepInfo, setStepInfo] = jest.requireActual('react').useState();
+    return {
+      stepInfo,
+      onStepChange: (next: StepInfoLike) => {
+        setStepInfo(next);
+        listener?.(next);
+      },
+    };
+  },
   GoARenderers: [],
   GoACells: [],
 }));
@@ -123,7 +133,7 @@ describe('JsonformsStepChange', () => {
   it('shows a usage example that wires onStepChange', () => {
     render(<JsonformsStepChange />);
 
-    expect(screen.getByTestId('step-change-usage')).toHaveTextContent('onStepChange={setStepInfo}');
+    expect(screen.getByTestId('step-change-usage')).toHaveTextContent('onStepChange={onStepChange}');
   });
 });
 

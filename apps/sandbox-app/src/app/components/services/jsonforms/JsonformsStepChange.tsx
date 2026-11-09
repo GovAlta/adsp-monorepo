@@ -12,6 +12,7 @@ import {
   GoACells,
   GoARenderers,
   StepInfo,
+  useStepChange,
 } from '@abgov/jsonforms-components';
 import { JsonForms } from '@jsonforms/react';
 import { ServiceContainer } from '../../styled-components';
@@ -69,18 +70,18 @@ export const stepChangeUiSchema = {
   ],
 };
 
-const USAGE_EXAMPLE = `import { ContextProviderFactory, StepInfo } from '@abgov/jsonforms-components';
+const USAGE_EXAMPLE = `import { ContextProviderFactory, useStepChange } from '@abgov/jsonforms-components';
 
 const ContextProvider = ContextProviderFactory();
 
-const [stepInfo, setStepInfo] = useState<StepInfo>();
+const { stepInfo, onStepChange } = useStepChange();
 
 // Outside the form container: host code reads the reported step.
-<StepInfoPanel stepInfo={stepInfo} stepLog={stepLog} />
+<StepInfoPanel stepInfo={stepInfo} />
 
 // The form container: the form only reports the step out.
 <div className="form-container">
-  <ContextProvider onStepChange={setStepInfo}>
+  <ContextProvider onStepChange={onStepChange}>
     <JsonForms schema={schema} uischema={uischema} data={data} renderers={GoARenderers} cells={GoACells} />
   </ContextProvider>
 </div>`;
@@ -113,13 +114,10 @@ const StepChangeFormContainer = ({ onStepChange }: { onStepChange: (stepInfo: St
 };
 
 export const JsonformsStepChange = (): JSX.Element => {
-  const [stepInfo, setStepInfo] = useState<StepInfo>();
   const [stepLog, setStepLog] = useState<StepLogEntry[]>([]);
-
-  const handleStepChange = useCallback((info: StepInfo) => {
-    setStepInfo(info);
-    setStepLog((entries) => [{ at: new Date().toLocaleTimeString(), stepInfo: info }, ...entries]);
-  }, []);
+  const { stepInfo, onStepChange } = useStepChange((info: StepInfo) =>
+    setStepLog((entries) => [{ at: new Date().toLocaleTimeString(), stepInfo: info }, ...entries]),
+  );
 
   return (
     <ServiceContainer>
@@ -143,7 +141,7 @@ export const JsonformsStepChange = (): JSX.Element => {
 
         <StepInfoPanel stepInfo={stepInfo} stepLog={stepLog} />
 
-        <StepChangeFormContainer onStepChange={handleStepChange} />
+        <StepChangeFormContainer onStepChange={onStepChange} />
 
         <h3>Usage</h3>
         <pre data-testid="step-change-usage">

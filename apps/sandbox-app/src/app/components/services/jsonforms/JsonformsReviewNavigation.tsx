@@ -35,6 +35,7 @@ import {
   NavigationTarget,
   ReviewRenderProvider,
   StepInfo,
+  useStepChange,
 } from '@abgov/jsonforms-components';
 import { JsonForms } from '@jsonforms/react';
 import { ServiceContainer } from '../../styled-components';
@@ -103,8 +104,10 @@ export const JsonformsReviewNavigation = (): JSX.Element => {
   const [formData, setFormData] = useState<Record<string, unknown>>(SAMPLE_DATA);
   const [navigationTarget, setNavigationTarget] = useState<NavigationTarget>();
   const [log, setLog] = useState<ClickLogEntry[]>([]);
-  const [stepInfo, setStepInfo] = useState<StepInfo>();
   const [stepLog, setStepLog] = useState<StepLogEntry[]>([]);
+  const { stepInfo, onStepChange } = useStepChange((info: StepInfo) =>
+    setStepLog((entries) => [{ at: new Date().toLocaleTimeString(), stepInfo: info }, ...entries]),
+  );
   const [useOwnReviewPage, setUseOwnReviewPage] = useState(true);
 
   // The CDRT definition sets hideSummary, so its form never reaches a review page. Lifting that in the
@@ -142,11 +145,6 @@ export const JsonformsReviewNavigation = (): JSX.Element => {
   const handleNavigationChange = useCallback((outcome: NavigationOutcome) => {
     setLog((entries) => (entries.length === 0 ? entries : [{ ...entries[0], outcome }, ...entries.slice(1)]));
     setNavigationTarget(undefined);
-  }, []);
-
-  const handleStepChange = useCallback((info: StepInfo) => {
-    setStepInfo(info);
-    setStepLog((entries) => [{ at: new Date().toLocaleTimeString(), stepInfo: info }, ...entries]);
   }, []);
 
   const handleReset = useCallback(() => {
@@ -203,7 +201,7 @@ export const JsonformsReviewNavigation = (): JSX.Element => {
             showChangeButtons={true}
             navigationTarget={navigationTarget}
             onNavigationChange={handleNavigationChange}
-            onStepChange={handleStepChange}
+            onStepChange={onStepChange}
             submit={{
               saveForm: handleSaveAndContinueClick,
             }}
