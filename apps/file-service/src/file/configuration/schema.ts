@@ -9,6 +9,7 @@ export const configurationSchema = {
         anonymousRead: { type: 'boolean' },
         readRoles: { type: 'array', items: { type: 'string' } },
         updateRoles: { type: 'array', items: { type: 'string' } },
+        allowedFileTypes: { type: 'array', items: { type: 'string' } },
         securityClassification: {
           type: 'string',
           enum: ['public', 'protected a', 'protected b', 'protected c'],

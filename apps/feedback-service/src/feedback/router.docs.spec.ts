@@ -236,9 +236,9 @@ describe('feedback router documented behaviour', () => {
 
     it('returns the summary for a user without the feedback-reader role', async () => {
       valueServiceMock.readSummary.mockResolvedValueOnce({
-        totalResponses: 0,
-        averageRating: 0,
-        responsesWithComments: 0,
+        totalResponses: 1,
+        averageRating: 4,
+        responsesWithComments: 1,
         responsesWithIssues: 0,
       });
 

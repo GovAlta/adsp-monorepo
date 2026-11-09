@@ -11,6 +11,8 @@ import { FileEntity, FileTypeEntity } from '../model';
 import { ServiceUserRoles } from '../types';
 import { createFileRouter, getTypes } from './file';
 
+jest.mock('file-type', () => ({ fileTypeFromBuffer: jest.fn() }));
+
 // Verifies the request validation, roles, and error responses documented in file.swagger.yml by sending requests
 // through the router with the real error handler.
 describe('file router documented behaviour', () => {
