@@ -82,6 +82,13 @@ components:
             description: A keycloak role that can update files within the collection.
             example: urn:ads:platform:tenant-service:platform-service
             type: string
+        allowedFileTypes:
+          description: File types accepted for upload to the collection.
+          type: array
+          items:
+            description: An accepted file type.
+            example: application/pdf
+            type: string
         rules:
           description: Rules applied to files of the type, such as retention.
           type: object
