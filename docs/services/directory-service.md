@@ -1,7 +1,6 @@
 ---
 layout: page
 title: Directory service
-nav_order: 3
 parent: Services
 ---
 

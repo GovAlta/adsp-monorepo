@@ -1,7 +1,6 @@
 ---
 layout: page
 title: PDF service
-nav_order: 15
 parent: Services
 ---
 

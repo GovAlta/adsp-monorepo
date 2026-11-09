@@ -1,7 +1,6 @@
 ---
 layout: page
 title: Agent service
-nav_order: 21
 parent: Services
 ---
 

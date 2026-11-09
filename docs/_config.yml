@@ -24,6 +24,7 @@ url: "https://govalta.github.io" # the base hostname & protocol for your site, e
 
 # Build settings
 markdown: kramdown
+nav_sort: case_insensitive
 remote_theme: pmarsceill/just-the-docs
 plugins:
   - jekyll-remote-theme
