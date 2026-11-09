@@ -1,4 +1,4 @@
-import { adspId, User } from '@abgov/adsp-service-sdk';
+import { adspId, AuditService, User } from '@abgov/adsp-service-sdk';
 import { assertAuthenticatedHandler, createErrorHandler } from '@core-services/core-common';
 import { createDocumentedResponseRecorder } from '@core-services/core-common/testing';
 import * as express from 'express';
@@ -30,6 +30,7 @@ describe('status router documented behaviour', () => {
     getTenantByRealm: jest.fn(),
   };
   const eventServiceMock = { send: jest.fn() };
+  const auditServiceMock = { record: jest.fn(), flush: jest.fn() } as unknown as AuditService;
   const applicationRepoMock = {
     getTenantApps: jest.fn(),
     getApp: jest.fn(),
@@ -47,12 +48,12 @@ describe('status router documented behaviour', () => {
   function createApp(currentUser: User | null): Express {
     const repo = applicationRepoMock as unknown as ApplicationRepo;
     const router = express.Router();
-    router.post('/applications', assertAuthenticatedHandler, createNewApplication(loggerMock, repo, tenantServiceMock));
-    router.put('/applications/:appKey', assertAuthenticatedHandler, updateApplication(loggerMock, repo));
+    router.post('/applications', assertAuthenticatedHandler, createNewApplication(loggerMock, repo, tenantServiceMock, auditServiceMock));
+    router.put('/applications/:appKey', assertAuthenticatedHandler, updateApplication(loggerMock, repo, auditServiceMock));
     router.delete(
       '/applications/:appKey',
       assertAuthenticatedHandler,
-      deleteApplication(loggerMock, repo, eventServiceMock),
+      deleteApplication(loggerMock, repo, eventServiceMock, auditServiceMock),
     );
     router.get(
       '/webhook/:id/test/:eventName',
