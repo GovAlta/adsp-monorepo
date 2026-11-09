@@ -94,14 +94,14 @@ describe('AdspFileDownloadExample', () => {
     // Arrange, Act
     render(<AdspFileDownloadExample />);
 
-    // Assert: the side by side tab also lists files, so look in the showcase table's row.
+    // Assert: the examples with code tab also lists files, so look in the showcase table's row.
     const tableRow = (await screen.findAllByText('Photo.png'))
       .map((element) => element.closest('tr'))
       .find((row): row is HTMLTableRowElement => !!row);
     expect(within(tableRow as HTMLElement).getByTestId(`download-${listedFiles[1].id}`)).toBeInTheDocument();
   });
 
-  test('has a side by side tab that downloads the picked file', async () => {
+  test('has an examples with code tab that downloads the picked file', async () => {
     // Arrange, Act
     render(<AdspFileDownloadExample />);
 

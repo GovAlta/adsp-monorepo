@@ -24,6 +24,9 @@ import { FileClient } from '@abgov/adsp-components-core';
 import { GoAFileDownload } from '@abgov/adsp-components-react';
 
 // fileServiceUrl: from the ADSP directory (urn:ads:platform:file-service)
+//   Development: https://file-service.adsp-dev.gov.ab.ca
+//   UAT:         https://file-service.adsp-uat.alberta.ca
+//   Production:  https://file-service.adsp.alberta.ca
 // getAccessToken: your app's sign-in, returning the user's token
 // file.id: from your app's data, such as a submission's uploaded files
 function SupportingDocument({ file }) {

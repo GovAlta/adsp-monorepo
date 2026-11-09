@@ -45,8 +45,8 @@ Sign in, then open **Services → ADSP components → Theming**, or go to `/<ten
 | `highContrastDemoTheme.ts`            | A theme-level customization built with `createAdspTheme`, used to show theme switching                                      |
 | `AdspFileDownloadExample.tsx`         | File download page: default control, custom trigger, file list, missing file, `canDownload={false}`, with the code for each |
 | `AdspFileDownloadExample.spec.tsx`    | Covers the client setup, file list and each example                                                                         |
-| `AdspFileDownloadSideBySide.tsx`      | The file download page's Side by side tab: four examples, each next to all the code it needs                                |
-| `AdspFileDownloadSideBySide.spec.tsx` | Covers each side by side example and the state before a file is picked                                                      |
+| `AdspFileDownloadSideBySide.tsx`      | The file download page's Examples with code tab: four examples, each next to all the code it needs                          |
+| `AdspFileDownloadSideBySide.spec.tsx` | Covers each example on the Examples with code tab and the state before a file is picked                                     |
 
 The file download page (`/<tenant>/services/adsp-components/file-download`) lists files the signed-in user can read in the tenant. To see the permission and pending-scan messages, enter the ID of a file whose type you can't read, or of a file uploaded moments ago.
 

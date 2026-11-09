@@ -282,7 +282,7 @@ export const AdspFileDownloadExample = () => {
                   <pre>{APPLICATION_SETUP}</pre>
                 </GoabDetails>
               </GoabTab>
-              <GoabTab heading="Side by side">
+              <GoabTab heading="Examples with code">
                 <AdspFileDownloadSideBySide client={client} fileId={exampleFileId} files={files} />
               </GoabTab>
             </GoabTabs>

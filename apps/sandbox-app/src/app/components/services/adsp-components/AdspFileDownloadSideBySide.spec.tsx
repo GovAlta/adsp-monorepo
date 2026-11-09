@@ -60,6 +60,19 @@ describe('AdspFileDownloadSideBySide', () => {
     ).toBeInTheDocument();
   });
 
+  test('lists the File service URL for each environment in the minimal example code', () => {
+    // Arrange, Act
+    render(<AdspFileDownloadSideBySide client={client} fileId={fileId} files={files} />);
+
+    // Assert
+    const code = within(screen.getByTestId('side-by-side-minimal')).getByText(
+      /fileServiceUrl: from the ADSP directory/,
+    );
+    expect(code).toHaveTextContent('Development: https://file-service.adsp-dev.gov.ab.ca');
+    expect(code).toHaveTextContent('UAT: https://file-service.adsp-uat.alberta.ca');
+    expect(code).toHaveTextContent('Production: https://file-service.adsp.alberta.ca');
+  });
+
   test('passes the client to every download', () => {
     // Arrange, Act
     render(<AdspFileDownloadSideBySide client={client} fileId={fileId} files={files} />);
