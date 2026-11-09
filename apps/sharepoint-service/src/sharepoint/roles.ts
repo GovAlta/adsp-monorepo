@@ -1,4 +1,4 @@
 export const ServiceRoles = {
-  Admin: 'test-sharepoint-admin',
-  Writer: 'test-sharepoint-writer',
+  Admin: 'sharepoint-admin',
+  Writer: 'sharepoint-writer',
 } as const;

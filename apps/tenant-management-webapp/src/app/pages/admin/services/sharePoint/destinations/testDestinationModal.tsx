@@ -11,7 +11,12 @@ import { GoabTextAreaOnChangeDetail } from '@abgov/ui-components-common';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@store/index';
 import { SharepointDestination, testSharepointDestination } from '@store/sharePoint/actions';
+import { ADSP_KEY_FIELD } from '@store/sharePoint/model';
 import { describeTestFailure, sampleTestData } from './destinationHelpers';
+
+const SAMPLE_HELP =
+  "Fill in each value using the column's type: numbers without quotes, dates like 2026-11-05, and true or false for yes/no.";
+const ROW_KEY_HELP = ' Keep the same key value for the "_adsp" to update the row, or change it to add a new row.';
 
 interface TestDestinationModalProps {
   destination: SharepointDestination;
@@ -26,6 +31,7 @@ export const TestDestinationModal = ({ destination, onClose }: TestDestinationMo
   );
   const [parseError, setParseError] = useState<string>();
   const [hasRun, setHasRun] = useState(false);
+  const updatesRows = !!destination.idempotencyFields?.includes(ADSP_KEY_FIELD);
 
   const run = () => {
     try {
@@ -64,7 +70,7 @@ export const TestDestinationModal = ({ destination, onClose }: TestDestinationMo
       <GoabFormItem
         label="Test data (JSON)"
         error={parseError}
-        helpText="The sample has an empty value for each mapped field. Replace them with values of the column's type: numbers without quotes, dates like 2026-11-05, and true or false for yes/no columns."
+        helpText={updatesRows ? SAMPLE_HELP + ROW_KEY_HELP : SAMPLE_HELP}
       >
         <GoabTextArea
           name="test-data"

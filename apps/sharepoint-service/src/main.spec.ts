@@ -70,7 +70,7 @@ describe('main', () => {
     Object.assign(mockEnvironment, {
       KEYCLOAK_ROOT_URL: 'http://keycloak.example',
       DIRECTORY_URL: 'http://directory.example',
-      CLIENT_ID: 'urn:ads:platform:test-sharepoint-service',
+      CLIENT_ID: 'urn:ads:platform:sharepoint-service',
       CLIENT_SECRET: 'secret',
       CREDENTIALS_KEY: 'key',
       CREDENTIALS_KEY_VERSION: 1,
@@ -91,7 +91,7 @@ describe('main', () => {
   it('registers roles and configuration with the platform, with cache invalidation on', async () => {
     await startMain();
     const [options] = mockInitializePlatform.mock.calls[0];
-    expect(options.roles.map(({ role }) => role)).toEqual(['test-sharepoint-admin', 'test-sharepoint-writer']);
+    expect(options.roles.map(({ role }) => role)).toEqual(['sharepoint-admin', 'sharepoint-writer']);
     expect(options.roles[0].inTenantAdmin).toBe(true);
     expect(options.configuration.schema).toBeDefined();
     expect(options.enableConfigurationInvalidation).toBe(true);

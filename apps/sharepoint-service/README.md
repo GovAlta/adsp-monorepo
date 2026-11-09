@@ -2,7 +2,7 @@
 
 Pushes data, such as form submissions, to SharePoint lists owned by tenant teams. ADSP never reads list data back.
 
-- **Connections** (Entra tenant ID, client ID, site ID) and **destinations** (connection, list ID, field mappings, whether to update existing rows, enabled) are tenant configuration in Configuration Service under `platform:test-sharepoint-service`. They never contain a secret.
+- **Connections** (Entra tenant ID, client ID, site ID) and **destinations** (connection, list ID, field mappings, whether to update existing rows, enabled) are tenant configuration in Configuration Service under `platform:sharepoint-service`. They never contain a secret.
 - **Client secrets** are write-only. They are encrypted with AES-256-GCM, bound to the ADSP tenant and connection, and stored in this service's MongoDB.
 - A push maps the data to list columns, then writes it as a new row or updates an existing one:
   - **Any caller** can send `"_adsp": { "key": "<unique key>" }` with the data. When the destination has updating turned on (Tenant Management's "Update existing rows", saved as `idempotencyFields: ["_adsp.key"]`, the default), a push with the same key updates the row that has it in the `AdspItemKey` column. The caller chooses the key, for example a submission ID or an application number.
@@ -13,11 +13,11 @@ Pushes data, such as form submissions, to SharePoint lists owned by tenant teams
 
 | Endpoint | Role | Result |
 |---|---|---|
-| `PUT /connections/{id}/credentials` `{ clientSecret }` | `test-sharepoint-admin` | Stores the secret encrypted and clears the cached token. Returns `{ isSet: true, updatedAt }`. Returns 404 if the connection isn't in this tenant's configuration |
-| `GET /connections/{id}/credentials` | `test-sharepoint-admin` | `{ isSet, updatedAt }`. Never the secret |
-| `DELETE /connections/{id}/credentials` | `test-sharepoint-admin` | Deletes the secret. Returns 204 |
-| `POST /destinations/{id}/test` with the data as the body | `test-sharepoint-admin` | Pushes the data through the same logic as a real push, even if the destination is disabled. Returns `{ ok: true }` or `{ ok: false, errorCode, column? }`; `row-identity-missing` means the data has no value for a row identity field |
-| `POST /destinations/{id}/data` with the data as the body | `test-sharepoint-writer` (core service accounts with `?tenantId=`). Tenant admins check destinations with Test instead | Returns 200 `{ dataId, date }`, where `dataId` is the SharePoint item ID. Nothing is stored. Failures: 400 data missing a row identity field, 404 unknown destination or connection, 409 `destination-disabled` or `credential-not-set`, 502 `{ errorCode, retryable, column? }` |
+| `PUT /connections/{id}/credentials` `{ clientSecret }` | `sharepoint-admin` | Stores the secret encrypted and clears the cached token. Returns `{ isSet: true, updatedAt }`. Returns 404 if the connection isn't in this tenant's configuration |
+| `GET /connections/{id}/credentials` | `sharepoint-admin` | `{ isSet, updatedAt }`. Never the secret |
+| `DELETE /connections/{id}/credentials` | `sharepoint-admin` | Deletes the secret. Returns 204 |
+| `POST /destinations/{id}/test` with the data as the body | `sharepoint-admin` | Pushes the data through the same logic as a real push, even if the destination is disabled. Returns `{ ok: true }` or `{ ok: false, errorCode, column? }`; `row-identity-missing` means the data has no value for a row identity field |
+| `POST /destinations/{id}/data` with the data as the body | `sharepoint-writer` (core service accounts with `?tenantId=`). Tenant admins check destinations with Test instead | Returns 200 `{ dataId, date }`, where `dataId` is the SharePoint item ID. Nothing is stored. Failures: 400 data missing a row identity field, 404 unknown destination or connection, 409 `destination-disabled` or `credential-not-set`, 502 `{ errorCode, retryable, column? }` |
 Error codes are `entra:AADSTS<code>`, `graph:<code>`, `network` or `unknown`. Payload values never appear in responses or logs.
 
 ## Environment
@@ -26,7 +26,7 @@ Error codes are `entra:AADSTS<code>`, `graph:<code>`, `network` or `unknown`. Pa
 |---|---|
 | `KEYCLOAK_ROOT_URL` | `https://access.adsp-dev.gov.ab.ca` |
 | `DIRECTORY_URL` | `http://localhost:3331` |
-| `CLIENT_ID` | `urn:ads:platform:test-sharepoint-service` |
+| `CLIENT_ID` | `urn:ads:platform:sharepoint-service` |
 | `CLIENT_SECRET` | required |
 | `CREDENTIALS_KEY` | required; base64 of 32 random bytes |
 | `CREDENTIALS_KEY_VERSION` | `1` |
@@ -45,7 +45,7 @@ The service reads `.env` from the folder it is started in, and `nx serve` starts
    ```
    KEYCLOAK_ROOT_URL=https://access.adsp-dev.gov.ab.ca
    DIRECTORY_URL=https://directory-service.adsp-dev.gov.ab.ca
-   CLIENT_ID=urn:ads:platform:test-sharepoint-service
+   CLIENT_ID=urn:ads:platform:sharepoint-service
    CLIENT_SECRET=<secret of the client in the dev core realm>
    CREDENTIALS_KEY=<generated key>
    ENTRA_AUTHORITY_URL=http://localhost:3399
@@ -83,11 +83,11 @@ Invoke-RestMethod -Method Post http://localhost:3399/_mock/reset
 ## One-time Keycloak setup (dev)
 
 - **Core realm:**
-  - Create a confidential client `urn:ads:platform:test-sharepoint-service` with a service account.
-  - Give the service account the roles `urn:ads:platform:tenant-service:platform-service` and `urn:ads:platform:configuration-service:configured-service`.
-  - Create the client role `test-sharepoint-writer` and grant it to `service-account-urn:ads:platform:form-service`.
+  - Create a confidential client `urn:ads:platform:sharepoint-service` with a service account.
+  - Give the service account the roles `urn:ads:platform:tenant-service:platform-service`, `urn:ads:platform:configuration-service:configured-service` and `urn:ads:platform:push-service:stream-listener`. Without `stream-listener`, the service logs `User not authorized to connect` and doesn't see configuration changes until its cache expires.
+  - Create the client role `sharepoint-writer` and grant it to `service-account-urn:ads:platform:form-service`.
 - **Tenant realm:**
-  - Create a client `urn:ads:platform:test-sharepoint-service` that holds the role `test-sharepoint-admin`.
+  - Create a client `urn:ads:platform:sharepoint-service` that holds the role `sharepoint-admin`.
   - Assign that role to the tenant admins who manage connections.
 
 ## Development

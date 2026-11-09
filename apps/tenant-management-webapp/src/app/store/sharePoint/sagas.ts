@@ -28,7 +28,7 @@ import {
   UpdateSharepointDestinationAction,
 } from './actions';
 
-const CONFIGURATION_PATH = 'configuration/v2/configuration/platform/test-sharepoint-service';
+const CONFIGURATION_PATH = 'configuration/v2/configuration/platform/sharepoint-service';
 
 const selectConfigurationUrl = (state: RootState) =>
   `${state.config.serviceUrls?.configurationServiceApiUrl}/${CONFIGURATION_PATH}`;

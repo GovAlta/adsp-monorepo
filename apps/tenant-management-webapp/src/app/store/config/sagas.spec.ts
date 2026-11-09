@@ -44,7 +44,7 @@ describe('fetchConfig', () => {
 });
 
 const entries = [{ service: 'tenant-service', url: 'https://tenant-service.example' }];
-const sharepointEntry = { service: 'test-sharepoint-service', url: 'https://sharepoint-service.example' };
+const sharepointEntry = { service: 'sharepoint-service', url: 'https://sharepoint-service.example' };
 
 const runConfig = async () => {
   const { effects } = await expectSaga(fetchConfig).withState({ config: {} }).run();

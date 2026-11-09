@@ -131,7 +131,7 @@ const getAgentServiceUrl = (entryMapping): string => {
 
 // Set NX_PUBLIC_SHAREPOINT_SERVICE_URL in .local.env to point at a locally running SharePoint service.
 const getSharepointServiceUrl = (entryMapping): string =>
-  process.env.NX_PUBLIC_SHAREPOINT_SERVICE_URL || entryMapping['test-sharepoint-service'];
+  process.env.NX_PUBLIC_SHAREPOINT_SERVICE_URL || entryMapping['sharepoint-service'];
 
 // Set NX_PUBLIC_FEATURE_FLAGS in .local.env (JSON, e.g. {"SharePoint":true}) to turn on features locally.
 const getLocalFeatureFlags = (): Record<string, boolean> => {
@@ -141,4 +141,3 @@ const getLocalFeatureFlags = (): Record<string, boolean> => {
     return {};
   }
 };
-

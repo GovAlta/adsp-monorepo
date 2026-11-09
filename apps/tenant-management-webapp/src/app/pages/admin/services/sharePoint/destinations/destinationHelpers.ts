@@ -41,8 +41,9 @@ const FAILURE_DESCRIPTIONS: Record<string, string> = {
   'graph:TooManyRequests': 'SharePoint is throttling requests. Try again shortly.',
   network: 'SharePoint could not be reached. Try again shortly.',
   'adsp:unreachable': 'The ADSP SharePoint service could not be reached. Check that it is running.',
-  'adsp:http-401': 'Your sign-in was not accepted by the SharePoint service. Sign out and back in.',
-  'adsp:http-403': 'You need the test-sharepoint-admin role to test destinations. Ask a tenant admin to assign it.',
+  'adsp:http-401':
+    'The SharePoint service did not accept your sign-in. Check that you have the sharepoint-admin role, then sign out and back in.',
+  'adsp:http-403': 'You need the sharepoint-admin role to test destinations. Ask a tenant admin to assign it.',
   'adsp:http-404': 'The destination or its connection was not found. Save the destination and try again.',
   'row-identity-missing':
     'The test data has no value for a row identity field. Add one, for example "_adsp": { "key": "test-1" }.',

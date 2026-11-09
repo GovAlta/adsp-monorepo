@@ -21,7 +21,7 @@ import {
 
 const connection = { id: 'hr-site', name: 'HR', entraTenantId: 't', clientId: 'c', siteId: 's' };
 const destination = { id: 'hr-intake', name: 'Intake', connectionId: 'hr-site', listId: 'l', fieldMappings: [] };
-const configUrl = 'https://config.example/configuration/v2/configuration/platform/test-sharepoint-service';
+const configUrl = 'https://config.example/configuration/v2/configuration/platform/sharepoint-service';
 const state = {
   config: {
     serviceUrls: {
@@ -90,11 +90,7 @@ describe('sharepoint sagas', () => {
         [matchers.call.fn(axios.delete), { status: 204 }],
         [matchers.call.fn(axios.patch), { data: { latest: { configuration: { connections: {} } } } }],
       ])
-      .call(
-        axios.delete,
-        'https://sharepoint.example/sharepoint/v1/connections/hr-site/credentials',
-        authHeaders,
-      )
+      .call(axios.delete, 'https://sharepoint.example/sharepoint/v1/connections/hr-site/credentials', authHeaders)
       .call(
         axios.patch,
         configUrl,
@@ -132,12 +128,7 @@ describe('sharepoint sagas', () => {
         [matchers.call.fn(getAccessToken), 'token'],
         [matchers.call.fn(axios.post), { data: { ok: false, errorCode: 'graph:invalidRequest', column: 'Nope' } }],
       ])
-      .call(
-        axios.post,
-        'https://sharepoint.example/sharepoint/v1/destinations/hr-intake/test',
-        { a: 1 },
-        authHeaders,
-      )
+      .call(axios.post, 'https://sharepoint.example/sharepoint/v1/destinations/hr-intake/test', { a: 1 }, authHeaders)
       .put(
         testSharepointDestinationSuccess('hr-intake', { ok: false, errorCode: 'graph:invalidRequest', column: 'Nope' }),
       )

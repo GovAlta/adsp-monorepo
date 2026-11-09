@@ -7,6 +7,7 @@ import { SESSION_INIT } from '@store/session/models';
 import { describeTestFailure, sampleTestData, validateDestination } from './destinationHelpers';
 import { DestinationsView } from './destinationsView';
 import { DestinationModal } from './destinationModal';
+import { TestDestinationModal } from './testDestinationModal';
 
 const destination = {
   id: 'hr-intake',
@@ -59,7 +60,8 @@ describe('describeTestFailure', () => {
 
   it('explains failures reaching the ADSP SharePoint service', () => {
     expect(describeTestFailure('adsp:unreachable')).toMatch(/SharePoint service could not be reached/);
-    expect(describeTestFailure('adsp:http-403')).toMatch(/test-sharepoint-admin/);
+    expect(describeTestFailure('adsp:http-403')).toMatch(/You need the sharepoint-admin role/);
+    expect(describeTestFailure('adsp:http-401')).toMatch(/sharepoint-admin role/);
   });
 
   it('explains a missing or unindexed key column and missing row identity data', () => {
@@ -201,6 +203,25 @@ describe('DestinationModal', () => {
     expect(isChecked(renderModal(undefined), 'destination-enabled')).toBe(true);
   });
 });
+describe('TestDestinationModal', () => {
+  const helpText = (idempotencyFields?: string[]) =>
+    render(
+      <Provider store={configureStore([])({ sharepoint: { testResults: {} } })}>
+        <TestDestinationModal destination={{ ...destination, idempotencyFields }} onClose={jest.fn()} />
+      </Provider>,
+    )
+      .baseElement.querySelector('goa-form-item')
+      .getAttribute('helptext');
+
+  it('explains the row key when the destination updates existing rows', () => {
+    expect(helpText(['_adsp.key'])).toMatch(/Keep the same "_adsp" key to update the row/);
+  });
+
+  it('leaves the row key out when every push adds a row', () => {
+    expect(helpText()).not.toMatch(/_adsp/);
+  });
+});
+
 describe('DestinationModal editing', () => {
   const change = (element: Element, value: string) =>
     element.dispatchEvent(new CustomEvent('_change', { detail: { name: element.getAttribute('name'), value } }));
