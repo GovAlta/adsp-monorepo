@@ -61,7 +61,10 @@ export class FileEntity implements File {
     //The extension return from the file type library does not have a period and
     //the stored files can prefix with a period
     const periodExtension = `.${extension}`;
-    if (type.allowedFileTypes?.length > 0 && !type.allowedFileTypes.includes(periodExtension || extension)) {
+    if (
+      type.allowedFileTypes?.length > 0 &&
+      !type.allowedFileTypes.some((allowed) => allowed.trim().toLowerCase() === periodExtension)
+    ) {
       throw new InvalidValueError(`file type`, `Invalid file type extension: ${periodExtension}`);
     }
 

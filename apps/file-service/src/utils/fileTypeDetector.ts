@@ -98,6 +98,7 @@ export class FileTypeDetector {
         try {
           // Archive-based formats (docx, xlsx, ...) need entries beyond the first chunk to be identified.
           const buffer = Buffer.concat(chunks);
+          //Checks if the file has magic numbers first before checking if it is a text file with string
           const fileType = (await fileTypeFromBuffer(buffer)) ?? this.detectText(buffer);
           resolve({ fileStream: customStream, fileType } as CustomConcatStream);
         } catch (err) {

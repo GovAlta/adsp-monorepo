@@ -1,6 +1,6 @@
 import { adspId, User } from '@abgov/adsp-service-sdk';
-import { UnauthorizedError, InvalidOperationError } from '@core-services/core-common';
-import { Mock, It } from 'moq.ts';
+import { UnauthorizedError, InvalidOperationError, InvalidValueError } from '@core-services/core-common';
+import { Mock, It, Times } from 'moq.ts';
 import { Readable } from 'stream';
 import { Logger } from 'winston';
 import { FileRepository } from '../repository';
@@ -128,7 +128,7 @@ describe('File Entity', () => {
       user,
       typeMock.object(),
       file,
-      contentMock.object()
+      contentMock.object(),
     );
 
     expect(fileEntity).toBeTruthy();
@@ -163,7 +163,7 @@ describe('File Entity', () => {
         user,
         typeMock.object(),
         file,
-        contentMock.object()
+        contentMock.object(),
       );
     }).rejects.toThrowError('Storage provider failed to save uploaded file: test.txt');
   });
@@ -195,8 +195,8 @@ describe('File Entity', () => {
         user,
         typeMock.object(),
         file,
-        contentMock.object()
-      )
+        contentMock.object(),
+      ),
     ).rejects.toThrowError(Error);
   });
 
@@ -223,11 +223,99 @@ describe('File Entity', () => {
         user,
         typeMock.object(),
         file,
-        contentMock.object()
+        contentMock.object(),
       );
     } catch (err) {
       expect(err).toBeInstanceOf(UnauthorizedError);
     }
+  });
+
+  describe('create with allowed file types', () => {
+    const createWith = (allowedFileTypes: string[] | undefined, filename: string) => {
+      typeMock.setup((m) => m.canUpdateFile(It.IsAny())).returns(true);
+      typeMock.setup((m) => m.allowedFileTypes).returns(allowedFileTypes);
+      storageProviderMock.setup((m) => m.saveFile(It.IsAny(), contentMock.object())).returns(Promise.resolve(true));
+      repositoryMock.setup((m) => m.save(It.IsAny())).callback((i) => Promise.resolve(i.args[0]));
+
+      const file = {
+        filename,
+        recordId: 'my-record-1',
+        size: 100,
+        securityClassification: 'Public',
+        created: new Date(),
+        createdBy: { id: 'user-1', name: 'testy' },
+      };
+
+      return FileEntity.create(
+        loggerMock as Logger,
+        storageProviderMock.object(),
+        repositoryMock.object(),
+        user,
+        typeMock.object(),
+        file,
+        contentMock.object(),
+      );
+    };
+
+    it('accepts a file whose extension is in the allowed list', async () => {
+      const result = await createWith(['.pdf', '.txt'], 'report.txt');
+
+      expect(result.filename).toBe('report.txt');
+    });
+
+    it('accepts a file when the allowed list is empty', async () => {
+      const result = await createWith([], 'report.txt');
+
+      expect(result.filename).toBe('report.txt');
+    });
+
+    it('accepts a file when the allowed list is not defined', async () => {
+      const result = await createWith(undefined, 'report.txt');
+
+      expect(result.filename).toBe('report.txt');
+    });
+
+    it('accepts a file when the allowed extension differs only by case', async () => {
+      const result = await createWith(['.TXT'], 'report.txt');
+
+      expect(result.filename).toBe('report.txt');
+    });
+
+    it('accepts a file when the allowed extension has surrounding whitespace', async () => {
+      const result = await createWith([' .txt '], 'report.txt');
+
+      expect(result.filename).toBe('report.txt');
+    });
+
+    it('accepts a file when the filename extension differs only by case', async () => {
+      const result = await createWith(['.txt'], 'REPORT.TXT');
+
+      expect(result.filename).toBe('REPORT.TXT');
+    });
+
+    it('rejects a file whose extension is not in the allowed list', async () => {
+      const result = createWith(['.pdf', '.docx'], 'report.txt');
+
+      await expect(result).rejects.toThrow('Invalid file type extension: .txt');
+    });
+
+    it('rejects with an invalid value error for a disallowed extension', async () => {
+      const result = createWith(['.pdf'], 'report.txt');
+
+      await expect(result).rejects.toBeInstanceOf(InvalidValueError);
+    });
+
+    it('rejects an allowed extension listed without a leading period', async () => {
+      const result = createWith(['txt'], 'report.txt');
+
+      await expect(result).rejects.toBeInstanceOf(InvalidValueError);
+    });
+
+    it('does not save a file that is rejected', async () => {
+      await createWith(['.pdf'], 'report.txt').catch(() => undefined);
+
+      repositoryMock.verify((m) => m.save(It.IsAny()), Times.Never());
+    });
   });
 
   describe('instance', () => {
