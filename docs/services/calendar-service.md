@@ -1,7 +1,6 @@
 ---
 layout: page
 title: Calendar service
-nav_order: 12
 parent: Services
 ---
 

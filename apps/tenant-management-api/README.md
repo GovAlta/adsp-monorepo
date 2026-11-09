@@ -1,51 +1,37 @@
 # Tenant Management API
 
-The tenant management api is an api for managing tenant information.
+Implements the ADSP tenant service (`urn:ads:platform:tenant-service`). See the [Tenant service documentation](https://govalta.github.io/adsp-monorepo/services/tenant-service.html) for what it does, its roles and its audit actions.
 
-### Running the service
-Start the service using:
-```
-nx run tenant-management-api:serve
-```
-Health endpoint at /health
+## Run locally
 
-### Environment Variables
-[Dotenv](https://www.npmjs.com/package/dotenv) is used to manage the envrionment variables. The .env.sample file provides the schema of the environment variables used for local developloment.
-```
-mv .env.sample .env
+```bash
+cp apps/tenant-management-api/.env.sample apps/tenant-management-api/.env
+npx nx serve tenant-management-api
 ```
 
-Secrets of dev keycloak which might be used during development are listed as follows:
-| Variable Name                             | Secret URI                                                                                                          |
-| ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
-| KEYCLOAK_TENANT_API_CLIENT_SECRET         | [Click](https://console.os99.gov.ab.ca:8443/console/project/core-services-dev/browse/secrets/tenant-management-api) |
-| KEYCLOAK_TENANT_REALM_ADMIN_CLIENT_SECRET | [click](https://console.os99.gov.ab.ca:8443/console/project/core-services-dev/browse/secrets/tenant-management-api) |
+The service listens on `PORT` (default `3333`). The health endpoint is at `/health`.
 
-Please do not commit .env to the repository.
+## Test and lint
 
-### Swagger
-Swagger yml file with suffix **.swagger.yml** will be compiled into a swagger.json.
-Swagger doc path: /swagger/docs/
-Swagger json path: /swagger/json/v1
-Please check the swagger.config.js and main.ts files for details.
-
-
-There are various pre-defined authentication flows. The pre-defined parameters used for the authentication flows are listed here:
-#### platformAdmin
-Username: dio-qa-dev@gov.ab.ca
-UserSecret: [UserSecret](https://console.os99.gov.ab.ca:8443/console/project/core-services-dev/browse/secrets/tenant-web-app-qa-user)
-ClientId: tenant-api
-ClientSecret: [ClientSecret](https://access-dev.os99.gov.ab.ca/auth/admin/master/console/#/realms/core/clients/ef519581-51cb-4d3b-baba-d42bb41ec90c/credentials)
-
-#### tenantInit
-ClientId: tenant-platform-webapp
-ClientSecret: blank
-
-#### tenant
-ClientId: tenant-platform-webapp
-ClientSecret: blank
-To login to a specific tenant, please update SWAGGER_TEST_TENANT in the .env:
+```bash
+npx nx test tenant-management-api
+npx nx lint tenant-management-api
 ```
-# in .env file
-SWAGGER_TEST_TENANT=<tenant_name>
-```
+
+## Environment variables
+
+Variables are loaded with [dotenv](https://www.npmjs.com/package/dotenv) and validated in `src/environments/environment.ts`, which holds the full list and the defaults. `.env.sample` covers the variables you usually set for local development. Do not commit `.env`.
+
+| Variable                                                                             | Purpose                                        |
+| ------------------------------------------------------------------------------------ | ---------------------------------------------- |
+| `MONGO_URI`, `MONGO_DB`, `MONGO_USER`, `MONGO_PASSWORD`                              | Tenant database connection                     |
+| `KEYCLOAK_ROOT_URL`                                                                  | Keycloak server                                |
+| `CLIENT_ID`, `CLIENT_SECRET`                                                         | Service account of the tenant service          |
+| `KEYCLOAK_TENANT_REALM_ADMIN_CLIENT_ID`, `KEYCLOAK_TENANT_REALM_ADMIN_CLIENT_SECRET` | Client used to create and manage tenant realms |
+| `DIRECTORY_URL`                                                                      | Directory service                              |
+
+Ask the team for the dev Keycloak client secrets.
+
+## API documentation
+
+The OpenAPI spec is built from `src/**/*.swagger.yml` (see `swagger.config.js`) and served at `/swagger/docs/v1`. The replaced `/api/tenant/v1` operations are documented as deprecated, each naming its v2 replacement or stating that there is none. The `/api/tenant/v1/user/*` operations are active internal endpoints used by the tenant admin webapp. `src/tenant/router/tenant.docs.spec.ts` checks that the routers' responses match the documented operations.

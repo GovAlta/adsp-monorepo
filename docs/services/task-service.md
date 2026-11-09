@@ -1,7 +1,6 @@
 ---
 layout: page
 title: Task service
-nav_order: 11
 parent: Services
 ---
 

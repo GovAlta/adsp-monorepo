@@ -1,7 +1,6 @@
 ---
 layout: page
 title: Getting started
-nav_order: 1
 parent: Platform development
 ---
 

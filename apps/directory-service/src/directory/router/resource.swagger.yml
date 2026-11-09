@@ -1,21 +1,135 @@
 components:
+  parameters:
+    ResourceTenantId:
+      name: tenantId
+      description: >
+        ID of the tenant to act on. Only used for core (platform) users; tenant users always act on the tenant of
+        their token and this parameter is ignored. Without it, core users read platform (core) tags.
+      in: query
+      required: false
+      schema:
+        type: string
+      example: urn:ads:platform:tenant-service:v2:/tenants/61f2e3a8c9b1d2e3f4a5b6c7
+    ResourceTagValue:
+      name: tag
+      description: Value of the tag.
+      in: path
+      required: true
+      schema:
+        type: string
+        pattern: '^[0-9a-z-]{1,100}$'
+      example: priority-applications
+    ResourceUrnPath:
+      name: resource
+      description: >
+        URN of the resource, URL encoded. Responds 400 if the value does not begin with `urn:ads:` or has an empty
+        element.
+      in: path
+      required: true
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 2000
+      example: urn%3Aads%3Aplatform%3Afile-service%3Av1%3A%2Ffiles%2Fff118afa-f74e-44ac-8866-7ebd5a43cb4c
+    ResourceTop:
+      name: top
+      description: Number of results to retrieve. Defaults to 10.
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 500
+      example: 10
+    ResourceAfter:
+      name: after
+      description: Cursor for the page of results to retrieve, from the `next` value of the previous page.
+      in: query
+      required: false
+      schema:
+        type: string
+      example: MTA=
+  responses:
+    ResourceBadRequest:
+      description: Request is invalid, for example a path, query, or body parameter failed validation.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ResourceError'
+          example:
+            errorMessage: 'Validation failed with error(s): top (query) - Invalid value'
+    ResourceUnauthorized:
+      description: Request does not include a valid bearer token. The response is the plain text `Unauthorized`.
+    ResourceForbidden:
+      description: >
+        User does not have a role required for the operation in the tenant. Core users without a tenant also
+        receive this response.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ResourceError'
+          example:
+            errorMessage: 'User Test User (ID: 7c3e1a52-1f0b-4bd3-9a41-2b8f6c5d9e10) not permitted to get tags.'
+    ResourceNotFound:
+      description: The tag or resource is not found in the tenant.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ResourceError'
+          example:
+            errorMessage: tag with ID 'priority-applications' could not be found.
   schemas:
+    ResourceError:
+      type: object
+      properties:
+        errorMessage:
+          type: string
+    ResourcePage:
+      type: object
+      properties:
+        next:
+          description: Cursor for requesting the next page, if any. Not set when no more results are available.
+          type: string
+        size:
+          description: The number of results returned.
+          type: number
+        after:
+          description: >
+            The cursor used to generate the current page. Don't use this as the `after` parameter in subsequent
+            calls, as it repeats the page just returned.
+          type: string
+      example:
+        next: MTA=
+        size: 1
     Tag:
       type: object
       properties:
         urn:
           type: string
+          readOnly: true
         label:
           type: string
         value:
           type: string
         _links:
           type: object
+          readOnly: true
           additionalProperties:
             type: object
             properties:
               href:
                 type: string
+      example:
+        urn: urn:ads:platform:directory-service:resource-v1:/tags/priority-applications
+        label: Priority applications
+        value: priority-applications
+        _links:
+          self:
+            href: urn:ads:platform:directory-service:resource-v1:/tags/priority-applications
+          resources:
+            href: urn:ads:platform:directory-service:resource-v1:/tags/priority-applications/resources
+          collection:
+            href: urn:ads:platform:directory-service:resource-v1:/tags
     Resource:
       type: object
       properties:
@@ -27,8 +141,10 @@ components:
           type: string
         type:
           type: string
+          description: Resource type that matched the resource URN, if any.
         _links:
           type: object
+          readOnly: true
           additionalProperties:
             type: object
             properties:
@@ -36,22 +152,60 @@ components:
                 type: string
         _embedded:
           type: object
+          readOnly: true
+          description: >
+            The represented resource (when `includeRepresents` is set) and the tags of the resource (when
+            `includeTags` is set).
+          properties:
+            represents:
+              type: object
+            tags:
+              type: array
+              items:
+                $ref: '#/components/schemas/Tag'
+      example:
+        urn: urn:ads:platform:file-service:v1:/files/ff118afa-f74e-44ac-8866-7ebd5a43cb4c
+        name: application-attachment.pdf
+        type: file
+        _links:
+          self:
+            href: urn:ads:platform:directory-service:resource-v1:/resources/urn%3Aads%3Aplatform%3Afile-service%3Av1%3A%2Ffiles%2Fff118afa-f74e-44ac-8866-7ebd5a43cb4c
+          represents:
+            href: urn:ads:platform:file-service:v1:/files/ff118afa-f74e-44ac-8866-7ebd5a43cb4c
+          tags:
+            href: urn:ads:platform:directory-service:resource-v1:/resources/urn%3Aads%3Aplatform%3Afile-service%3Av1%3A%2Ffiles%2Fff118afa-f74e-44ac-8866-7ebd5a43cb4c/tags
+          collection:
+            href: urn:ads:platform:directory-service:resource-v1:/resources
+        _embedded: {}
     TagSpecification:
       type: object
+      description: Tag to apply or remove. Either label or value must be set; the value defaults to the label in kebab case.
       properties:
         label:
           type: string
+          minLength: 1
+          maxLength: 100
         value:
           type: string
+          pattern: '^[0-9a-z-]{1,100}$'
     ResourceSpecification:
       type: object
       properties:
         urn:
           type: string
+          description: >
+            URN of the resource, in the form `urn:ads:{namespace}:{service}:{api}:{resource}`. The API must be
+            registered in the directory.
+          minLength: 1
+          maxLength: 2000
         name:
           type: string
+          minLength: 1
+          maxLength: 250
         description:
           type: string
+          minLength: 1
+          maxLength: 2000
       required: [urn]
     TagResourceOperation:
       type: object
@@ -60,9 +214,9 @@ components:
           type: string
           enum: [tag-resource]
         tag:
-          $ref: "#/components/schemas/TagSpecification"
+          $ref: '#/components/schemas/TagSpecification'
         resource:
-          $ref: "#/components/schemas/ResourceSpecification"
+          $ref: '#/components/schemas/ResourceSpecification'
       required: [operation, tag, resource]
     UntagResourceOperation:
       type: object
@@ -71,38 +225,53 @@ components:
           type: string
           enum: [untag-resource]
         tag:
-          $ref: "#/components/schemas/TagSpecification"
+          $ref: '#/components/schemas/TagSpecification'
         resource:
-          $ref: "#/components/schemas/ResourceSpecification"
+          $ref: '#/components/schemas/ResourceSpecification'
       required: [operation, tag, resource]
+    TagOperationResult:
+      type: object
+      properties:
+        tagged:
+          type: boolean
+          description: Set for tag-resource; false if the resource already had the tag.
+        untagged:
+          type: boolean
+          description: Set for untag-resource; false if the resource did not have the tag.
+        tag:
+          $ref: '#/components/schemas/Tag'
+        resource:
+          $ref: '#/components/schemas/Resource'
+    DeleteResult:
+      type: object
+      properties:
+        deleted:
+          type: boolean
+          description: False if there was nothing to delete.
+      example:
+        deleted: true
 
 /resource/v1/tags:
   get:
     tags:
       - Resource
-    description: Retrieves tags.
+    description: >
+      Retrieves the tags of the tenant. Requires the resource-browser or resource-tagger role in the tenant.
     parameters:
-      - name: top
-        description: Number of results to retrieve.
-        in: query
-        required: false
-        schema:
-          type: number
-      - name: after
-        description: Cursor for page of results to retrieve.
-        in: query
-        required: false
-        schema:
-          type: string
+      - $ref: '#/components/parameters/ResourceTop'
+      - $ref: '#/components/parameters/ResourceAfter'
       - name: resource
-        description: URN of the resource to retrieve tags for.
+        description: URN of a resource; retrieves only the tags of that resource.
         in: query
         required: false
         schema:
           type: string
+          minLength: 1
+          maxLength: 2000
+        example: urn:ads:platform:file-service:v1:/files/ff118afa-f74e-44ac-8866-7ebd5a43cb4c
     responses:
       200:
-        description: Request completed successfully
+        description: Page of tags.
         content:
           application/json:
             schema:
@@ -111,121 +280,165 @@ components:
                 results:
                   type: array
                   items:
-                    $ref: "#/components/schemas/Tag"
+                    $ref: '#/components/schemas/Tag'
                 page:
-                  type: object
-                  properties:
-                    next:
-                      description: Cursor for requesting the next next page, if any.  Next will be undefined if no more results are available.
-                      example: Ng==
-                      type: string
-                    size:
-                      description: The number of results returned.
-                      example: 10
-                      type: number
-                    after:
-                      description: |
-                        The cursor used to generate the current page. Note - Do not use this as the *after* parameter in subsequent calls,
-                        as it will just repeat the set just returned.
-                      example: Mw==
-                      type: string
+                  $ref: '#/components/schemas/ResourcePage'
+            example:
+              results:
+                - urn: urn:ads:platform:directory-service:resource-v1:/tags/priority-applications
+                  label: Priority applications
+                  value: priority-applications
+                  _links:
+                    self:
+                      href: urn:ads:platform:directory-service:resource-v1:/tags/priority-applications
+                    resources:
+                      href: urn:ads:platform:directory-service:resource-v1:/tags/priority-applications/resources
+                    collection:
+                      href: urn:ads:platform:directory-service:resource-v1:/tags
+              page:
+                next: MTA=
+                size: 1
       400:
-        description: Bad request
+        $ref: '#/components/responses/ResourceBadRequest'
       401:
-        description: Unauthorized
+        $ref: '#/components/responses/ResourceUnauthorized'
+      403:
+        $ref: '#/components/responses/ResourceForbidden'
   post:
     tags:
       - Resource
-    description: Tag or untag a resource.
+    description: >
+      Tags or untags a resource of the tenant. Requires the resource-tagger role in the tenant. Tagging creates the
+      tag and the resource if they don't exist. The resource URN must be under an API registered in the directory.
     requestBody:
       required: true
       content:
         application/json:
           schema:
             oneOf:
-              - $ref: "#/components/schemas/TagResourceOperation"
-              - $ref: "#/components/schemas/UntagResourceOperation"
+              - $ref: '#/components/schemas/TagResourceOperation'
+              - $ref: '#/components/schemas/UntagResourceOperation'
             discriminator:
               propertyName: operation
               mapping:
-                tag-resource: "#/components/schemas/TagResourceOperation"
-                untag-resource: "#/components/schemas/UntagResourceOperation"
+                tag-resource: '#/components/schemas/TagResourceOperation'
+                untag-resource: '#/components/schemas/UntagResourceOperation'
+          examples:
+            tag:
+              summary: Tag a resource
+              value:
+                operation: tag-resource
+                tag:
+                  label: Priority applications
+                resource:
+                  urn: urn:ads:platform:file-service:v1:/files/ff118afa-f74e-44ac-8866-7ebd5a43cb4c
+                  name: application-attachment.pdf
+            untag:
+              summary: Untag a resource
+              value:
+                operation: untag-resource
+                tag:
+                  value: priority-applications
+                resource:
+                  urn: urn:ads:platform:file-service:v1:/files/ff118afa-f74e-44ac-8866-7ebd5a43cb4c
     responses:
       200:
-        description: Request completed successfully
+        description: Result of the operation.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TagOperationResult'
+            example:
+              tagged: true
+              tag:
+                urn: urn:ads:platform:directory-service:resource-v1:/tags/priority-applications
+                label: Priority applications
+                value: priority-applications
+              resource:
+                urn: urn:ads:platform:file-service:v1:/files/ff118afa-f74e-44ac-8866-7ebd5a43cb4c
+                name: application-attachment.pdf
       400:
-        description: Bad request
+        description: >
+          Request is invalid: a body parameter failed validation, the tag has no label or value, the resource URN is
+          not a resource URN, or the URN's API is not registered in the directory.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResourceError'
+            example:
+              errorMessage: Resource URL cannot be resolved. Associated API must be registered in the directory.
       401:
-        description: Unauthorized
+        $ref: '#/components/responses/ResourceUnauthorized'
+      403:
+        $ref: '#/components/responses/ResourceForbidden'
 
 /resource/v1/tags/{tag}:
   parameters:
-    - name: tag
-      description: Value of the tag.
-      in: path
-      required: true
-      schema:
-        type: string
+    - $ref: '#/components/parameters/ResourceTagValue'
   get:
     tags:
       - Resource
-    description: Retrieves a tag.
+    description: >
+      Retrieves a tag of the tenant. Requires the resource-browser, resource-tagger, or resource-resolver role.
+      Core users with one of these roles are also permitted, and act on the tenant given by the tenantId parameter.
+    parameters:
+      - $ref: '#/components/parameters/ResourceTenantId'
     responses:
       200:
-        description: Request completed successfully
+        description: The tag.
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/Tag"
+              $ref: '#/components/schemas/Tag'
       400:
-        description: Bad request
+        $ref: '#/components/responses/ResourceBadRequest'
       401:
-        description: Unauthorized
+        $ref: '#/components/responses/ResourceUnauthorized'
+      403:
+        $ref: '#/components/responses/ResourceForbidden'
+      404:
+        $ref: '#/components/responses/ResourceNotFound'
   delete:
     tags:
       - Resource
-    description: Deletes a tag.
+    description: >
+      Deletes a tag of the tenant and its associations with resources. Requires the directory-admin role in the
+      tenant. Responds with `deleted: false` if the tag does not exist.
     responses:
       200:
-        description: Request completed successfully
+        description: Result of the delete.
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                deleted:
-                  type: boolean
+              $ref: '#/components/schemas/DeleteResult'
       400:
-        description: Bad request
+        $ref: '#/components/responses/ResourceBadRequest'
       401:
-        description: Unauthorized
+        $ref: '#/components/responses/ResourceUnauthorized'
+      403:
+        $ref: '#/components/responses/ResourceForbidden'
 
 /resource/v1/tags/{tag}/resources:
   get:
     tags:
       - Resource
-    description: Retrieves tagged resources.
+    description: >
+      Retrieves the resources of the tenant that have the tag. Requires the resource-browser or resource-tagger role
+      in the tenant. With includeRepresents, the directory also retrieves each represented resource from its API
+      using the caller's token, and passes any other query parameters through to that request.
     parameters:
-      - name: top
-        description: Number of results to retrieve.
-        in: query
-        required: false
-        schema:
-          type: number
-      - name: after
-        description: Cursor for page of results to retrieve.
-        in: query
-        required: false
-        schema:
-          type: string
+      - $ref: '#/components/parameters/ResourceTagValue'
+      - $ref: '#/components/parameters/ResourceTop'
+      - $ref: '#/components/parameters/ResourceAfter'
       - name: includeRepresents
-        description: Flag indicating if resolved represented resource should be embedded in response.
+        description: Embed the represented resource of each result, for resources that match a resource type.
         in: query
         required: false
         schema:
           type: boolean
+        example: true
       - name: criteria
-        description: Criteria for the resources to return.
+        description: Criteria for the resources to return, as JSON.
         in: query
         required: false
         content:
@@ -235,15 +448,11 @@ components:
               properties:
                 typeEquals:
                   type: string
-      - name: tag
-        description: Value of the tag.
-        in: path
-        required: true
-        schema:
-          type: string
+            example:
+              typeEquals: file
     responses:
       200:
-        description: Request completed successfully
+        description: Page of tagged resources.
         content:
           application/json:
             schema:
@@ -252,55 +461,52 @@ components:
                 results:
                   type: array
                   items:
-                    $ref: "#/components/schemas/Resource"
+                    $ref: '#/components/schemas/Resource'
                 page:
-                  type: object
-                  properties:
-                    next:
-                      description: Cursor for requesting the next next page, if any.  Next will be undefined if no more results are available.
-                      example: Ng==
-                      type: string
-                    size:
-                      description: The number of results returned.
-                      example: 10
-                      type: number
-                    after:
-                      description: |
-                        The cursor used to generate the current page. Note - Do not use this as the *after* parameter in subsequent calls,
-                        as it will just repeat the set just returned.
-                      example: Mw==
-                      type: string
+                  $ref: '#/components/schemas/ResourcePage'
+            example:
+              results:
+                - urn: urn:ads:platform:file-service:v1:/files/ff118afa-f74e-44ac-8866-7ebd5a43cb4c
+                  name: application-attachment.pdf
+                  type: file
+                  _links:
+                    represents:
+                      href: urn:ads:platform:file-service:v1:/files/ff118afa-f74e-44ac-8866-7ebd5a43cb4c
+                    collection:
+                      href: urn:ads:platform:directory-service:resource-v1:/resources
+                  _embedded: {}
+              page:
+                next: MTA=
+                size: 1
       400:
-        description: Bad request
+        $ref: '#/components/responses/ResourceBadRequest'
       401:
-        description: Unauthorized
+        $ref: '#/components/responses/ResourceUnauthorized'
+      403:
+        $ref: '#/components/responses/ResourceForbidden'
 
 /resource/v1/resources:
   get:
     tags:
       - Resource
-    description: Retrieves resources.
+    description: >
+      Retrieves the resources of the tenant. Requires the resource-browser or resource-tagger role in the tenant.
+      Set criteria to an array of resource URNs to retrieve those resources in one request; URNs that are not
+      found are left out, and paging parameters are ignored.
     parameters:
-      - name: top
-        description: Number of results to retrieve.
-        in: query
-        required: false
-        schema:
-          type: number
-      - name: after
-        description: Cursor for page of results to retrieve.
-        in: query
-        required: false
-        schema:
-          type: string
+      - $ref: '#/components/parameters/ResourceTop'
+      - $ref: '#/components/parameters/ResourceAfter'
       - name: includeTags
-        description: Flag indicating if resource tags should be embedded in response.
+        description: Embed up to 10 tags of each resource.
         in: query
         required: false
         schema:
           type: boolean
+        example: true
       - name: criteria
-        description: Criteria for the resources to return.
+        description: >
+          Criteria for the resources to return, as JSON: either an object, or an array of resource URNs. Responds
+          400 if an array element is not a valid URN.
         in: query
         required: false
         content:
@@ -314,9 +520,11 @@ components:
                 - type: array
                   items:
                     type: string
+            example:
+              - urn:ads:platform:file-service:v1:/files/ff118afa-f74e-44ac-8866-7ebd5a43cb4c
     responses:
       200:
-        description: Request completed successfully
+        description: Page of resources.
         content:
           application/json:
             schema:
@@ -325,98 +533,87 @@ components:
                 results:
                   type: array
                   items:
-                    $ref: "#/components/schemas/Resource"
+                    $ref: '#/components/schemas/Resource'
                 page:
-                  type: object
-                  properties:
-                    next:
-                      description: Cursor for requesting the next next page, if any.  Next will be undefined if no more results are available.
-                      example: Ng==
-                      type: string
-                    size:
-                      description: The number of results returned.
-                      example: 10
-                      type: number
-                    after:
-                      description: |
-                        The cursor used to generate the current page. Note - Do not use this as the *after* parameter in subsequent calls,
-                        as it will just repeat the set just returned.
-                      example: Mw==
-                      type: string
+                  $ref: '#/components/schemas/ResourcePage'
+            example:
+              results:
+                - urn: urn:ads:platform:file-service:v1:/files/ff118afa-f74e-44ac-8866-7ebd5a43cb4c
+                  name: application-attachment.pdf
+                  type: file
+                  _links:
+                    represents:
+                      href: urn:ads:platform:file-service:v1:/files/ff118afa-f74e-44ac-8866-7ebd5a43cb4c
+                    collection:
+                      href: urn:ads:platform:directory-service:resource-v1:/resources
+                  _embedded: {}
+              page:
+                next: MTA=
+                size: 1
       400:
-        description: Bad request
+        $ref: '#/components/responses/ResourceBadRequest'
       401:
-        description: Unauthorized
+        $ref: '#/components/responses/ResourceUnauthorized'
+      403:
+        $ref: '#/components/responses/ResourceForbidden'
 
 /resource/v1/resources/{resource}:
   parameters:
-    - name: resource
-      description: URN of the resource.
-      in: path
-      required: true
-      schema:
-        type: string
+    - $ref: '#/components/parameters/ResourceUrnPath'
   get:
     tags:
       - Resource
-    description: Retrieves a resource.
+    description: >
+      Retrieves a resource of the tenant. Requires the resource-browser or resource-tagger role in the tenant.
     responses:
       200:
-        description: Request completed successfully
+        description: The resource.
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/Resource"
+              $ref: '#/components/schemas/Resource'
       400:
-        description: Bad request
+        $ref: '#/components/responses/ResourceBadRequest'
       401:
-        description: Unauthorized
+        $ref: '#/components/responses/ResourceUnauthorized'
+      403:
+        $ref: '#/components/responses/ResourceForbidden'
+      404:
+        $ref: '#/components/responses/ResourceNotFound'
   delete:
     tags:
       - Resource
-    description: Deletes a tag.
+    description: >
+      Deletes a resource of the tenant and its tag associations. The represented resource is not affected. Requires
+      the directory-admin role in the tenant. Responds with `deleted: false` if the resource does not exist.
     responses:
       200:
-        description: Request completed successfully
+        description: Result of the delete.
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                deleted:
-                  type: boolean
+              $ref: '#/components/schemas/DeleteResult'
       400:
-        description: Bad request
+        $ref: '#/components/responses/ResourceBadRequest'
       401:
-        description: Unauthorized
+        $ref: '#/components/responses/ResourceUnauthorized'
+      403:
+        $ref: '#/components/responses/ResourceForbidden'
 
 /resource/v1/resources/{resource}/tags:
   get:
     tags:
       - Resource
-    description: Retrieves tags of a resource.
+    description: >
+      Retrieves the tags of a resource of the tenant. Requires the resource-browser or resource-tagger role in the
+      tenant.
     parameters:
-      - name: resource
-        description: URN of the resource.
-        in: path
-        required: true
-        schema:
-          type: string
-      - name: top
-        description: Number of results to retrieve.
-        in: query
-        required: false
-        schema:
-          type: number
-      - name: after
-        description: Cursor for page of results to retrieve.
-        in: query
-        required: false
-        schema:
-          type: string
+      - $ref: '#/components/parameters/ResourceUrnPath'
+      - $ref: '#/components/parameters/ResourceTop'
+      - $ref: '#/components/parameters/ResourceAfter'
     responses:
       200:
-        description: Request completed successfully
+        description: Page of tags.
         content:
           application/json:
             schema:
@@ -425,25 +622,27 @@ components:
                 results:
                   type: array
                   items:
-                    $ref: "#/components/schemas/Tag"
+                    $ref: '#/components/schemas/Tag'
                 page:
-                  type: object
-                  properties:
-                    next:
-                      description: Cursor for requesting the next next page, if any.  Next will be undefined if no more results are available.
-                      example: Ng==
-                      type: string
-                    size:
-                      description: The number of results returned.
-                      example: 10
-                      type: number
-                    after:
-                      description: |
-                        The cursor used to generate the current page. Note - Do not use this as the *after* parameter in subsequent calls,
-                        as it will just repeat the set just returned.
-                      example: Mw==
-                      type: string
+                  $ref: '#/components/schemas/ResourcePage'
+            example:
+              results:
+                - urn: urn:ads:platform:directory-service:resource-v1:/tags/priority-applications
+                  label: Priority applications
+                  value: priority-applications
+                  _links:
+                    self:
+                      href: urn:ads:platform:directory-service:resource-v1:/tags/priority-applications
+                    resources:
+                      href: urn:ads:platform:directory-service:resource-v1:/tags/priority-applications/resources
+                    collection:
+                      href: urn:ads:platform:directory-service:resource-v1:/tags
+              page:
+                next: MTA=
+                size: 1
       400:
-        description: Bad request
+        $ref: '#/components/responses/ResourceBadRequest'
       401:
-        description: Unauthorized
+        $ref: '#/components/responses/ResourceUnauthorized'
+      403:
+        $ref: '#/components/responses/ResourceForbidden'
