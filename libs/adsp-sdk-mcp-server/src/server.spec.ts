@@ -10,7 +10,13 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'fs';
 import { tmpdir } from 'os';
 import { join, relative, resolve, sep } from 'path';
 import { PassThrough, Readable, Writable } from 'stream';
-import { callForContract, FIXTURE_DOCS_ROOT, TOOL_CONTRACT } from './fixtures/toolContract';
+import {
+  callForContract,
+  connectInMemoryClient,
+  FIXTURE_DOCS_ROOT,
+  TOOL_CONTRACT,
+  TRANSPORT_EQUIVALENCE_CALLS,
+} from './fixtures/toolContract';
 import { createAdspMcpServer } from './server';
 
 class StreamClientTransport implements Transport {
@@ -37,13 +43,6 @@ class StreamClientTransport implements Transport {
   async close(): Promise<void> {
     this.onclose?.();
   }
-}
-
-async function connectInMemoryClient(server: Server): Promise<Client> {
-  const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
-  const client = new Client({ name: 'test-client', version: '0.0.1' });
-  await Promise.all([server.connect(serverTransport), client.connect(clientTransport)]);
-  return client;
 }
 
 async function connectStdioClient(server: Server): Promise<Client> {
@@ -157,38 +156,48 @@ describe('tool contract', () => {
 
   afterAll(() => client.close());
 
-  it('tools/list matches the golden', async () => {
-    const { tools } = await client.listTools();
-
-    expect(JSON.stringify(tools)).toBe(JSON.stringify(TOOL_CONTRACT.tools));
-  });
-
   it.each(TOOL_CONTRACT.calls)('tools/call $call.name $call.arguments matches the golden', async ({ call, outcome }) => {
     const actual = await callForContract(client, call);
 
+    expect(actual).toEqual(outcome);
     expect(JSON.stringify(actual)).toBe(JSON.stringify(outcome));
   });
 });
 
 describe('stdio transport', () => {
-  let client: Client;
+  let stdioClient: Client;
+  let inMemoryClient: Client;
 
   beforeAll(async () => {
-    client = await connectStdioClient(createAdspMcpServer({ docsRoot: FIXTURE_DOCS_ROOT }));
+    stdioClient = await connectStdioClient(createAdspMcpServer({ docsRoot: FIXTURE_DOCS_ROOT }));
+    inMemoryClient = await connectInMemoryClient(createAdspMcpServer({ docsRoot: FIXTURE_DOCS_ROOT }));
   });
 
-  afterAll(() => client.close());
-
-  it('tools/list over stdio matches the golden', async () => {
-    const { tools } = await client.listTools();
-
-    expect(JSON.stringify(tools)).toBe(JSON.stringify(TOOL_CONTRACT.tools));
+  afterAll(async () => {
+    await stdioClient.close();
+    await inMemoryClient.close();
   });
 
   it.each(TOOL_CONTRACT.calls)('tools/call $call.name $call.arguments over stdio matches the golden', async ({ call, outcome }) => {
-    const actual = await callForContract(client, call);
+    const actual = await callForContract(stdioClient, call);
 
+    expect(actual).toEqual(outcome);
     expect(JSON.stringify(actual)).toBe(JSON.stringify(outcome));
+  });
+
+  it('tools/list over stdio equals the in-memory output', async () => {
+    const [overStdio, inMemory] = await Promise.all([stdioClient.listTools(), inMemoryClient.listTools()]);
+
+    expect(JSON.stringify(overStdio)).toBe(JSON.stringify(inMemory));
+  });
+
+  it.each(TRANSPORT_EQUIVALENCE_CALLS)('tools/call $name $arguments over stdio equals the in-memory output', async (call) => {
+    const [overStdio, inMemory] = await Promise.all([
+      callForContract(stdioClient, call),
+      callForContract(inMemoryClient, call),
+    ]);
+
+    expect(JSON.stringify(overStdio)).toBe(JSON.stringify(inMemory));
   });
 });
 

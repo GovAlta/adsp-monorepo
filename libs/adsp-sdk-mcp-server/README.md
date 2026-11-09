@@ -70,6 +70,11 @@ nx test adsp-sdk-mcp-server
 nx lint adsp-sdk-mcp-server
 ```
 
+`src/fixtures/tool-contract.golden.json` is maintained by hand. It pins only the docs tools' and the unknown tool's
+output over the fixture docs in `src/fixtures/docs`; the other tools are checked for equal output across transports
+instead, so SDK reference and quickstart edits don't touch it. If you change docs search or the docs tools' output on
+purpose, update the matching entry.
+
 To try it locally against a real MCP client, point the client config's `command`/`args` at the built entry point
 instead of `npx`:
 

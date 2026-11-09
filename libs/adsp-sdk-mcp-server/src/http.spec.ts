@@ -6,8 +6,15 @@ import type { Server as HttpServer } from 'http';
 import type { AddressInfo } from 'net';
 import { tmpdir } from 'os';
 import { join, resolve } from 'path';
-import { callForContract, FIXTURE_DOCS_ROOT, TOOL_CONTRACT } from './fixtures/toolContract';
+import {
+  callForContract,
+  connectInMemoryClient,
+  FIXTURE_DOCS_ROOT,
+  TOOL_CONTRACT,
+  TRANSPORT_EQUIVALENCE_CALLS,
+} from './fixtures/toolContract';
 import { createMcpHttpApp, McpHttpApp } from './http';
+import { createAdspMcpServer } from './server';
 
 const SESSION_TTL_MS = 30 * 60 * 1000;
 
@@ -41,27 +48,37 @@ async function connectHttpClient(endpoint: URL): Promise<{ client: Client; trans
 describe('HTTP transport', () => {
   let running: RunningApp;
   let client: Client;
+  let inMemoryClient: Client;
 
   beforeAll(async () => {
     running = await listen(createMcpHttpApp({ docsRoot: FIXTURE_DOCS_ROOT, sessionTtlMs: SESSION_TTL_MS }));
     ({ client } = await connectHttpClient(running.endpoint));
+    inMemoryClient = await connectInMemoryClient(createAdspMcpServer({ docsRoot: FIXTURE_DOCS_ROOT }));
   });
 
   afterAll(async () => {
     await client.close();
+    await inMemoryClient.close();
     await stop(running);
-  });
-
-  it('tools/list over HTTP matches the golden', async () => {
-    const { tools } = await client.listTools();
-
-    expect(JSON.stringify(tools)).toBe(JSON.stringify(TOOL_CONTRACT.tools));
   });
 
   it.each(TOOL_CONTRACT.calls)('tools/call $call.name $call.arguments over HTTP matches the golden', async ({ call, outcome }) => {
     const actual = await callForContract(client, call);
 
+    expect(actual).toEqual(outcome);
     expect(JSON.stringify(actual)).toBe(JSON.stringify(outcome));
+  });
+
+  it('tools/list over HTTP equals the in-memory output', async () => {
+    const [overHttp, inMemory] = await Promise.all([client.listTools(), inMemoryClient.listTools()]);
+
+    expect(JSON.stringify(overHttp)).toBe(JSON.stringify(inMemory));
+  });
+
+  it.each(TRANSPORT_EQUIVALENCE_CALLS)('tools/call $name $arguments over HTTP equals the in-memory output', async (call) => {
+    const [overHttp, inMemory] = await Promise.all([callForContract(client, call), callForContract(inMemoryClient, call)]);
+
+    expect(JSON.stringify(overHttp)).toBe(JSON.stringify(inMemory));
   });
 
   it('serves a second session after the first closes', async () => {
