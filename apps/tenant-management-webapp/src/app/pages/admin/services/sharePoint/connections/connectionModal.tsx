@@ -23,15 +23,13 @@ interface ConnectionModalProps {
 type ConnectionField = 'name' | 'entraTenantId' | 'clientId' | 'siteId';
 
 const HINTS: Record<ConnectionField | 'clientSecret', string> = {
-  name: 'A name for this connection, usually the SharePoint site it points to. ADSP turns it into the connection ID that destinations refer to.',
-  entraTenantId:
-    "The Microsoft Entra directory (tenant) ID of the organization that owns the SharePoint site. It's on the Overview page of your app registration in Entra, labelled Directory (tenant) ID.",
-  clientId:
-    'The Application (client) ID of the app registration your team requested for ADSP. The site owner must grant this app write access to the site (Sites.Selected).',
+  name: 'A name for this connection, usually the SharePoint site it points to.',
+  entraTenantId: 'The Microsoft Entra directory (tenant) ID of the organization that owns the SharePoint site.',
+  clientId: 'The Application (client) ID of the Entra app registration that has write access to the SharePoint site.',
   siteId:
-    'The Microsoft Graph site ID: host name, site collection ID and site ID separated by commas. Paste the "id" value returned by GET https://graph.microsoft.com/v1.0/sites/{host}:/sites/{site-name}.',
+    'The Microsoft Graph site ID: host name, site collection ID and site ID separated by commas, in the format <host_name>,<site_collection_id>,<site_id>.',
   clientSecret:
-    "The client secret value of the app registration. ADSP stores it encrypted and it can't be viewed again. Leave this blank to keep the current secret, and replace it before it expires.",
+    "The client secret value of the app registration. ADSP stores it encrypted and it can't be viewed again. Leave this blank to keep the current secret.",
 };
 
 export const ConnectionModal = ({ connectionId, open, onCancel, onSave }: ConnectionModalProps): JSX.Element => {

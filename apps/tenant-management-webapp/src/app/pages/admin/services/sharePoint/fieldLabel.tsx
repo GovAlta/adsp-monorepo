@@ -7,11 +7,15 @@ interface FieldLabelProps {
   hint: string;
 }
 
+export const InfoHint: FunctionComponent<FieldLabelProps> = ({ label, hint }) => (
+  <GoabTooltip content={hint} position="right">
+    <GoabIcon type="information-circle" size="small" ariaLabel={`About ${label}`} />
+  </GoabTooltip>
+);
+
 export const FieldLabel: FunctionComponent<FieldLabelProps> = ({ label, hint }) => (
   <LabelRow>
     <span>{label}</span>
-    <GoabTooltip content={hint} position="right">
-      <GoabIcon type="information-circle" size="small" ariaLabel={`About ${label}`} />
-    </GoabTooltip>
+    <InfoHint label={label} hint={hint} />
   </LabelRow>
 );

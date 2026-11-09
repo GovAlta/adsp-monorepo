@@ -1,5 +1,8 @@
 import { SharepointConnection, SharepointDestination } from './actions';
 
+// Any caller can send _adsp.key in the pushed data to update the same row on later pushes.
+export const ADSP_KEY_FIELD = '_adsp.key';
+
 export const defaultConnection: SharepointConnection = {
   id: '',
   name: '',
@@ -14,6 +17,6 @@ export const defaultDestination: SharepointDestination = {
   connectionId: '',
   listId: '',
   fieldMappings: [{ source: '', target: '' }],
-  idempotencyFields: ['_adsp.key'],
+  idempotencyFields: [ADSP_KEY_FIELD],
   enabled: true,
 };

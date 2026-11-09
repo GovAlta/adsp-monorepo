@@ -4,13 +4,7 @@ import configureStore from 'redux-mock-store';
 import { act, render } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { SESSION_INIT } from '@store/session/models';
-import {
-  describeTestFailure,
-  formatIdempotencyFields,
-  parseIdempotencyFields,
-  sampleTestData,
-  validateDestination,
-} from './destinationHelpers';
+import { describeTestFailure, sampleTestData, validateDestination } from './destinationHelpers';
 import { DestinationsView } from './destinationsView';
 import { DestinationModal } from './destinationModal';
 
@@ -51,24 +45,6 @@ describe('validateDestination', () => {
         .fieldMappings,
     ).toBe('AdspItemKey is set by ADSP and cannot be mapped.');
   });
-
-  it('rejects a row identity field listed twice', () => {
-    expect(validateDestination({ ...destination, idempotencyFields: ['a', 'a'] }, [], true).idempotencyFields).toBe(
-      'List each row identity field once.',
-    );
-  });
-});
-
-describe('idempotency fields text', () => {
-  it('parses comma-separated paths, ignoring blanks', () => {
-    expect(parseIdempotencyFields(' application.number, year ,, ')).toEqual(['application.number', 'year']);
-    expect(parseIdempotencyFields('  ')).toEqual([]);
-  });
-
-  it('formats paths back to text', () => {
-    expect(formatIdempotencyFields(['application.number', 'year'])).toBe('application.number, year');
-    expect(formatIdempotencyFields(undefined)).toBe('');
-  });
 });
 
 describe('describeTestFailure', () => {
@@ -76,7 +52,9 @@ describe('describeTestFailure', () => {
     expect(describeTestFailure('credential-not-set')).toMatch(/no secret/);
     expect(describeTestFailure('graph:accessDenied')).toMatch(/grant/);
     expect(describeTestFailure('graph:invalidRequest', 'Nope')).toMatch(/'Nope'/);
-    expect(describeTestFailure('something-else')).toBe('The test failed with something-else.');
+    expect(describeTestFailure('something-else')).toBe(
+      'The test failed. Check the connection and destination settings, then try again.',
+    );
   });
 
   it('explains failures reaching the ADSP SharePoint service', () => {
@@ -137,10 +115,10 @@ describe('DestinationsView', () => {
 });
 
 describe('DestinationModal', () => {
-  const isEnabledChecked = (modal: HTMLElement) =>
-    modal.querySelector('goa-checkbox[name="destination-enabled"]').getAttribute('checked') === 'true';
+  const isChecked = (modal: HTMLElement, name: string) =>
+    modal.querySelector(`goa-checkbox[name="${name}"]`).getAttribute('checked') === 'true';
 
-  const renderModal = (destinationId: string | undefined) =>
+  const renderModal = (destinationId: string | undefined, onSave = jest.fn()) =>
     render(
       <Provider
         store={configureStore([])({
@@ -148,37 +126,81 @@ describe('DestinationModal', () => {
             connections: {},
             destinations: {
               'hr-intake': { ...destination, idempotencyFields: ['application.number', 'year'], enabled: false },
+              'hr-log': { ...destination, id: 'hr-log' },
             },
             credentialStatus: {},
             testResults: {},
           },
         })}
       >
-        <DestinationModal destinationId={destinationId} onCancel={jest.fn()} onSave={jest.fn()} />
+        <DestinationModal destinationId={destinationId} onCancel={jest.fn()} onSave={onSave} />
       </Provider>,
     ).baseElement;
 
-  it('shows the row identity fields and enabled state of an existing destination', () => {
+  const toggleUpdates = (modal: HTMLElement, checked: boolean) =>
+    act(() => {
+      modal
+        .querySelector('goa-checkbox[name="destination-updates-rows"]')
+        .dispatchEvent(
+          new CustomEvent('_change', { detail: { name: 'destination-updates-rows', checked, value: checked } }),
+        );
+    });
+
+  const save = (modal: HTMLElement) =>
+    act(() => {
+      modal.querySelector('goa-button[testid="destination-modal-save"]').dispatchEvent(new CustomEvent('_click'));
+    });
+
+  it('shows the update and enabled state of an existing destination', () => {
     const modal = renderModal('hr-intake');
-    expect(modal.querySelector('goa-input[name="destination-idempotency-fields"]').getAttribute('value')).toBe(
-      'application.number, year',
-    );
-    expect(isEnabledChecked(modal)).toBe(false);
+    expect(isChecked(modal, 'destination-updates-rows')).toBe(true);
+    expect(isChecked(modal, 'destination-enabled')).toBe(false);
   });
 
-  it('starts a new destination with the Form Service key as its row identity', () => {
+  it('starts a new destination with updating existing rows on', () => {
     const modal = renderModal(undefined);
-    expect(modal.querySelector('goa-input[name="destination-idempotency-fields"]').getAttribute('value')).toBe(
-      '_adsp.key',
+    const checkbox = modal.querySelector('goa-checkbox[name="destination-updates-rows"]');
+    expect(checkbox.getAttribute('text')).toBe('Update existing rows (requires an indexed AdspItemKey column)');
+    expect(isChecked(modal, 'destination-updates-rows')).toBe(true);
+  });
+
+  it('keeps a custom row identity when the checkbox is left alone', () => {
+    const onSave = jest.fn();
+    save(renderModal('hr-intake', onSave));
+    expect(onSave).toHaveBeenCalledWith(expect.objectContaining({ idempotencyFields: ['application.number', 'year'] }));
+  });
+
+  it('adds a new row each time once updating is turned off', () => {
+    const onSave = jest.fn();
+    const modal = renderModal('hr-intake', onSave);
+    toggleUpdates(modal, false);
+    save(modal);
+    expect(onSave.mock.calls[0][0].idempotencyFields).toBeUndefined();
+  });
+
+  it('keys rows on _adsp.key once updating is turned on', () => {
+    const onSave = jest.fn();
+    const modal = renderModal('hr-log', onSave);
+    toggleUpdates(modal, true);
+    save(modal);
+    expect(onSave).toHaveBeenCalledWith(expect.objectContaining({ idempotencyFields: ['_adsp.key'] }));
+  });
+
+  it('explains the destination ID, field mappings and enabled flag in info bubbles', () => {
+    const hints = Array.from(renderModal(undefined).querySelectorAll('goa-tooltip')).map((tooltip) =>
+      tooltip.getAttribute('content'),
     );
+    expect(hints).toEqual([
+      'Callers use this ID to push data to this destination.',
+      'Map a form data path to a SharePoint column, for example applicant.name.first to FirstName.',
+      'Disable pushing data to destination. Test actions can still push data.',
+    ]);
   });
 
   it('enables a new destination by default', () => {
-    const modal = renderModal(undefined);
-    expect(isEnabledChecked(modal)).toBe(true);
+    expect(isChecked(renderModal(undefined), 'destination-enabled')).toBe(true);
   });
 });
-
 describe('DestinationModal editing', () => {
   const change = (element: Element, value: string) =>
     element.dispatchEvent(new CustomEvent('_change', { detail: { name: element.getAttribute('name'), value } }));

@@ -1,4 +1,13 @@
-import styled from 'styled-components';
+import styled, { css } from 'styled-components';
+
+// goa-tooltip is inline and inherits the text line height, which drops its icon below the label's centre.
+const centredInfoIcon = css`
+  goa-tooltip {
+    display: inline-flex;
+    align-items: center;
+    line-height: 0;
+  }
+`;
 
 export const IdField = styled.div`
   min-height: 1.6rem;
@@ -51,12 +60,18 @@ export const MarginTop = styled.div`
   margin-top: var(--goa-space-m);
 `;
 
+// Centring the icon box sits it above the bold label's visible text, so the label row nudges it down.
 export const LabelRow = styled.div`
   display: flex;
   align-items: center;
   gap: var(--goa-space-2xs);
   font-weight: var(--goa-font-weight-bold);
   margin-bottom: var(--goa-space-2xs);
+  ${centredInfoIcon}
+
+  goa-tooltip {
+    transform: translateY(0.125rem);
+  }
 `;
 
 export const TabIntro = styled.p`
@@ -89,4 +104,15 @@ export const MappingHeading = styled.span`
   font-size: var(--goa-font-size-2);
   font-weight: var(--goa-font-weight-bold);
   color: var(--goa-color-text-secondary);
+`;
+
+export const CheckboxRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: var(--goa-space-2xs);
+  ${centredInfoIcon}
+
+  goa-checkbox {
+    flex: 0 0 auto;
+  }
 `;

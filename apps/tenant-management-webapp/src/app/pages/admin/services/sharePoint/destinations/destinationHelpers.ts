@@ -28,21 +28,8 @@ export function validateDestination(
   } else if (mappings.some((mapping) => mapping.target === ITEM_KEY_COLUMN)) {
     errors.fieldMappings = `${ITEM_KEY_COLUMN} is set by ADSP and cannot be mapped.`;
   }
-
-  const idempotencyFields = destination.idempotencyFields ?? [];
-  if (new Set(idempotencyFields).size !== idempotencyFields.length) {
-    errors.idempotencyFields = 'List each row identity field once.';
-  }
   return errors;
 }
-
-export const parseIdempotencyFields = (text: string): string[] =>
-  text
-    .split(',')
-    .map((path) => path.trim())
-    .filter(Boolean);
-
-export const formatIdempotencyFields = (fields: string[] | undefined): string => (fields ?? []).join(', ');
 
 const FAILURE_DESCRIPTIONS: Record<string, string> = {
   'credential-not-set': 'The connection has no secret. Set one on the Connections tab.',
@@ -70,7 +57,9 @@ export function describeTestFailure(errorCode: string, column?: string): string 
       ? `SharePoint rejected the value for column '${column}'. Check that the column exists and the value has the right type.`
       : `SharePoint rejected the request. Check the list columns, including an indexed ${ITEM_KEY_COLUMN} column.`;
   }
-  return FAILURE_DESCRIPTIONS[errorCode] ?? `The test failed with ${errorCode}.`;
+  return (
+    FAILURE_DESCRIPTIONS[errorCode] ?? 'The test failed. Check the connection and destination settings, then try again.'
+  );
 }
 
 const setAtPath = (data: Record<string, unknown>, path: string, value: unknown) => {

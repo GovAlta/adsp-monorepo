@@ -87,7 +87,7 @@ export const TestDestinationModal = ({ destination, onClose }: TestDestinationMo
       )}
       {hasRun && result && result.ok === false && (
         <GoabCallout type="emergency" heading="Test failed">
-          {describeTestFailure(result.errorCode, result.column)} <small>({result.errorCode})</small>
+          {describeTestFailure(result.errorCode, result.column)}
         </GoabCallout>
       )}
     </GoabModal>

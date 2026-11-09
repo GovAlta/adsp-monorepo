@@ -19,9 +19,10 @@ import { useSelector } from 'react-redux';
 import { toKebabName } from '@lib/kebabName';
 import { RootState } from '@store/index';
 import { SharepointDestination, SharepointFieldMapping } from '@store/sharePoint/actions';
-import { defaultDestination } from '@store/sharePoint/model';
-import { ConnectionPadding, MappingGrid, MappingHeading } from '../styled-components';
-import { formatIdempotencyFields, parseIdempotencyFields, validateDestination } from './destinationHelpers';
+import { ADSP_KEY_FIELD, defaultDestination } from '@store/sharePoint/model';
+import { FieldLabel, InfoHint } from '../fieldLabel';
+import { CheckboxRow, ConnectionPadding, MappingGrid, MappingHeading } from '../styled-components';
+import { validateDestination } from './destinationHelpers';
 
 interface DestinationModalProps {
   destinationId: string | undefined;
@@ -35,7 +36,6 @@ export const DestinationModal = ({ destinationId, onCancel, onSave }: Destinatio
   const [destination, setDestination] = useState<SharepointDestination>(
     (destinationId && destinations[destinationId]) || defaultDestination,
   );
-  const [idempotencyText, setIdempotencyText] = useState(formatIdempotencyFields(destination.idempotencyFields));
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const updateMapping = (index: number, mapping: Partial<SharepointFieldMapping>) =>
@@ -45,17 +45,16 @@ export const DestinationModal = ({ destinationId, onCancel, onSave }: Destinatio
     }));
 
   const save = () => {
-    const idempotencyFields = parseIdempotencyFields(idempotencyText);
-    const found = validateDestination({ ...destination, idempotencyFields }, Object.keys(destinations), isNew);
+    const found = validateDestination(destination, Object.keys(destinations), isNew);
     setErrors(found);
     if (Object.keys(found).length > 0) {
       return;
     }
-    const { idempotencyFields: _previous, ...rest } = destination;
+    const { idempotencyFields, ...rest } = destination;
     onSave({
       ...rest,
       fieldMappings: destination.fieldMappings.filter((m) => m.source && m.target),
-      ...(idempotencyFields.length ? { idempotencyFields } : {}),
+      ...(idempotencyFields?.length ? { idempotencyFields } : {}),
       enabled: destination.enabled !== false,
     });
     onCancel();
@@ -97,7 +96,8 @@ export const DestinationModal = ({ destinationId, onCancel, onSave }: Destinatio
         </GoabFormItem>
       </ConnectionPadding>
       <ConnectionPadding>
-        <GoabFormItem label="Destination ID" helpText="Form definitions reference this ID.">
+        <FieldLabel label="Destination ID" hint="Callers use this ID to push data to this destination." />
+        <GoabFormItem label="">
           <GoabInput
             size="compact"
             name="destination-id"
@@ -141,11 +141,11 @@ export const DestinationModal = ({ destinationId, onCancel, onSave }: Destinatio
         </GoabFormItem>
       </ConnectionPadding>
       <ConnectionPadding>
-        <GoabFormItem
+        <FieldLabel
           label="Field mappings"
-          error={errors.fieldMappings}
-          helpText="Map a data path (for example applicant.name.first or _adsp.submittedAt) to the column's internal name, which can differ from its display name. ADSP sets AdspItemKey itself."
-        >
+          hint="Map a form data path to a SharePoint column, for example applicant.name.first to FirstName."
+        />
+        <GoabFormItem label="" error={errors.fieldMappings}>
           <MappingGrid>
             <MappingHeading>Form data path</MappingHeading>
             <MappingHeading>SharePoint column (internal name)</MappingHeading>
@@ -157,7 +157,6 @@ export const DestinationModal = ({ destinationId, onCancel, onSave }: Destinatio
                   name={`mapping-source-${index}`}
                   testId={`mapping-source-${index}`}
                   ariaLabel={`Form data path ${index + 1}`}
-                  placeholder="applicant.name.first"
                   value={mapping.source}
                   width="100%"
                   onChange={(detail: GoabInputOnChangeDetail) => updateMapping(index, { source: detail.value })}
@@ -167,7 +166,6 @@ export const DestinationModal = ({ destinationId, onCancel, onSave }: Destinatio
                   name={`mapping-target-${index}`}
                   testId={`mapping-target-${index}`}
                   ariaLabel={`SharePoint column ${index + 1}`}
-                  placeholder="FirstName"
                   value={mapping.target}
                   width="100%"
                   onChange={(detail: GoabInputOnChangeDetail) => updateMapping(index, { target: detail.value })}
@@ -204,26 +202,17 @@ export const DestinationModal = ({ destinationId, onCancel, onSave }: Destinatio
         </GoabFormItem>
       </ConnectionPadding>
       <ConnectionPadding>
-        <GoabFormItem
-          label="Row identity fields"
-          error={errors.idempotencyFields}
-          helpText="Use _adsp.key to update the same row when a form is resubmitted. Needs an indexed AdspItemKey column. Leave empty to add a new row each time."
-        >
-          <GoabInput
-            size="compact"
-            name="destination-idempotency-fields"
-            testId="destination-idempotency-fields"
-            placeholder="application.number"
-            value={idempotencyText}
-            width="100%"
-            onChange={(detail: GoabInputOnChangeDetail) => setIdempotencyText(detail.value)}
-          />
-        </GoabFormItem>
+        <GoabCheckbox
+          name="destination-updates-rows"
+          testId="destination-updates-rows"
+          text="Update existing rows (requires an indexed AdspItemKey column)"
+          checked={!!destination.idempotencyFields?.length}
+          onChange={(detail: GoabCheckboxOnChangeDetail) =>
+            setDestination((current) => ({ ...current, idempotencyFields: detail.checked ? [ADSP_KEY_FIELD] : [] }))
+          }
+        />
       </ConnectionPadding>
-      <GoabFormItem
-        label=""
-        helpText="Turn this off to refuse pushes without deleting the destination. Tests still run."
-      >
+      <CheckboxRow>
         <GoabCheckbox
           name="destination-enabled"
           testId="destination-enabled"
@@ -233,7 +222,8 @@ export const DestinationModal = ({ destinationId, onCancel, onSave }: Destinatio
             setDestination((current) => ({ ...current, enabled: detail.checked }))
           }
         />
-      </GoabFormItem>
+        <InfoHint label="Enabled" hint="Disable pushing data to destination. Test actions can still push data." />
+      </CheckboxRow>
     </GoabModal>
   );
 };
