@@ -84,6 +84,7 @@ const initializeApp = async () => {
         ],
         eventStreams: [ConfigurationUpdatesStream],
         auditActions: ConfigurationAuditActions,
+        audit: { enabled: environment.CONFIGURATION_AUDIT_ENABLED },
         clientSecret: environment.CLIENT_SECRET,
         accessServiceUrl: new URL(environment.KEYCLOAK_ROOT_URL),
         directoryUrl: new URL(environment.DIRECTORY_URL),

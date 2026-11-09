@@ -43,7 +43,7 @@ export const generationPlanSchema = z.object({
 
 const incrementShape = {
   dataSchemaProperties: z
-    .record(z.object({}).passthrough())
+    .record(z.string(), z.object({}).passthrough())
     .optional()
     .describe('New root-level JSON Schema properties, keyed by property name'),
   required: z.array(z.string()).optional(),

@@ -30,7 +30,7 @@ interface RegisterErrorMessages {
   conflict?: string;
 }
 
-const createRegisterEntriesSchema = () => z.array(z.union([z.string(), z.record(z.unknown())]));
+const createRegisterEntriesSchema = () => z.array(z.union([z.string(), z.record(z.string(), z.unknown())]));
 
 const registerNameDescription =
   '1 to 50 letters, numbers, spaces, hyphens or underscores, not starting or ending with a space.';

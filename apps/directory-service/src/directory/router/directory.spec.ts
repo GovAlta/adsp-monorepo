@@ -1,4 +1,4 @@
-import { adspId, UnauthorizedUserError, User } from '@abgov/adsp-service-sdk';
+import { adspId, AuditService, UnauthorizedUserError, User } from '@abgov/adsp-service-sdk';
 import { InvalidValueError, NotFoundError } from '@core-services/core-common';
 import axios from 'axios';
 import { Request, Response } from 'express';
@@ -49,6 +49,11 @@ describe('router', () => {
   const eventServiceMock = {
     send: jest.fn(),
   };
+  const auditServiceMock = {
+    record: jest.fn().mockResolvedValue({ status: 'recorded' }),
+    flush: jest.fn(),
+  };
+
   const tenantServiceMock = {
     getTenants: jest.fn(),
     getTenant: jest.fn((id) => Promise.resolve({ id, name: 'Test', realm: 'test' })),
@@ -85,6 +90,7 @@ describe('router', () => {
   beforeEach(() => {
     repositoryMock.getDirectories.mockClear();
     eventServiceMock.send.mockClear();
+    auditServiceMock.record.mockClear();
   });
   describe('deleteEntry', () => {
     beforeEach(() => {
@@ -139,6 +145,7 @@ describe('router', () => {
         directoryRepository: repositoryMock,
         tenantService: tenantServiceMock,
         eventService: eventServiceMock,
+        auditService: auditServiceMock as unknown as AuditService,
       });
 
       expect(router).toBeTruthy();
@@ -565,12 +572,22 @@ describe('router', () => {
 
   describe('createNamespace', () => {
     it('can create handler', () => {
-      const handler = createNamespace(repositoryMock, tenantServiceMock, loggerMock as Logger);
+      const handler = createNamespace(
+        repositoryMock,
+        tenantServiceMock,
+        loggerMock as Logger,
+        auditServiceMock as unknown as AuditService
+      );
       expect(handler).toBeTruthy();
     });
 
     it('can create namespace by post', async () => {
-      const handler = createNamespace(repositoryMock, tenantServiceMock, loggerMock as Logger);
+      const handler = createNamespace(
+        repositoryMock,
+        tenantServiceMock,
+        loggerMock as Logger,
+        auditServiceMock as unknown as AuditService
+      );
       const tenantId = adspId`urn:ads:test:tenant-service:v2:/tenants/test`;
       const req = {
         tenant: { id: tenantId },
@@ -589,7 +606,12 @@ describe('router', () => {
     });
 
     it('createNamespace can call next with invalid operation', async () => {
-      const handler = createNamespace(repositoryMock, tenantServiceMock, loggerMock as Logger);
+      const handler = createNamespace(
+        repositoryMock,
+        tenantServiceMock,
+        loggerMock as Logger,
+        auditServiceMock as unknown as AuditService
+      );
       const testDirectory = {
         name: 'platform',
         services: null,
@@ -616,7 +638,12 @@ describe('router', () => {
     });
 
     it('createNamespace can call next with unauthorized', async () => {
-      const handler = createNamespace(repositoryMock, tenantServiceMock, loggerMock as Logger);
+      const handler = createNamespace(
+        repositoryMock,
+        tenantServiceMock,
+        loggerMock as Logger,
+        auditServiceMock as unknown as AuditService
+      );
 
       const req = {
         tenant: { id: tenantId },
@@ -638,7 +665,12 @@ describe('router', () => {
   });
 
   describe('addService', () => {
-    const handler = addService(repositoryMock, eventServiceMock, loggerMock as Logger);
+    const handler = addService(
+      repositoryMock,
+      eventServiceMock,
+      loggerMock as Logger,
+      auditServiceMock as unknown as AuditService
+    );
     const req = {
       tenant: { id: tenantId },
       user: { isCore: false, roles: [ServiceRoles.DirectoryAdmin], tenantId } as User,
@@ -673,6 +705,22 @@ describe('router', () => {
       });
       await handler(req, res as unknown as Response, next);
       expect(res.status).toHaveBeenCalledWith(HttpStatusCodes.CREATED);
+      expect(auditServiceMock.record).toHaveBeenCalledWith(
+        expect.objectContaining({ name: 'entry.created' }),
+        expect.objectContaining({ resource: { type: 'entry', id: 'urn:ads:platform:added-service' } })
+      );
+    });
+    it('audits the first service added to a new namespace', async () => {
+      repositoryMock.getDirectories.mockResolvedValueOnce(null);
+      repositoryMock.update.mockResolvedValueOnce(null);
+      const res = { status: jest.fn(), json: jest.fn() };
+      auditServiceMock.record.mockClear();
+      await handler(req, res as unknown as Response, next);
+      expect(res.status).toHaveBeenCalledWith(HttpStatusCodes.CREATED);
+      expect(auditServiceMock.record).toHaveBeenCalledWith(
+        expect.objectContaining({ name: 'entry.created' }),
+        expect.objectContaining({ resource: { type: 'entry', id: 'urn:ads:platform:added-service' } })
+      );
     });
     it('returns 409 when the service entry already exists', async () => {
       const testDirectory = {
@@ -705,11 +753,21 @@ describe('router', () => {
 
   describe('addServiceApi', () => {
     it('can create handler', () => {
-      const handler = addServiceApi(repositoryMock, eventServiceMock, loggerMock as Logger);
+      const handler = addServiceApi(
+        repositoryMock,
+        eventServiceMock,
+        loggerMock as Logger,
+        auditServiceMock as unknown as AuditService
+      );
       expect(handler).toBeTruthy();
     });
     it('can add ServiceApi by post', async () => {
-      const handler = addServiceApi(repositoryMock, eventServiceMock, loggerMock as Logger);
+      const handler = addServiceApi(
+        repositoryMock,
+        eventServiceMock,
+        loggerMock as Logger,
+        auditServiceMock as unknown as AuditService
+      );
 
       const req = {
         tenant: { id: tenantId },
@@ -743,7 +801,12 @@ describe('router', () => {
       expect(res.status).toHaveBeenCalledWith(HttpStatusCodes.CREATED);
     });
     it('returns 409 when the service api entry already exists', async () => {
-      const handler = addServiceApi(repositoryMock, eventServiceMock, loggerMock as Logger);
+      const handler = addServiceApi(
+        repositoryMock,
+        eventServiceMock,
+        loggerMock as Logger,
+        auditServiceMock as unknown as AuditService
+      );
       const testDirectory = {
         name: 'platform',
         services: [{ service: 'added-service:v1', host: '/existing/url' }],
@@ -764,7 +827,12 @@ describe('router', () => {
       expect(res.sendStatus).toHaveBeenCalledWith(HttpStatusCodes.CONFLICT);
     });
     it('addServiceApi can call next with not found', async () => {
-      const handler = addServiceApi(repositoryMock, eventServiceMock, loggerMock as Logger);
+      const handler = addServiceApi(
+        repositoryMock,
+        eventServiceMock,
+        loggerMock as Logger,
+        auditServiceMock as unknown as AuditService
+      );
       const testDirectory = {
         name: 'platform',
         services: null,
@@ -792,11 +860,21 @@ describe('router', () => {
   });
   describe('updateService', () => {
     it('can create handler', () => {
-      const handler = updateService(repositoryMock, eventServiceMock, loggerMock as Logger);
+      const handler = updateService(
+        repositoryMock,
+        eventServiceMock,
+        loggerMock as Logger,
+        auditServiceMock as unknown as AuditService
+      );
       expect(handler).toBeTruthy();
     });
     it('can update Service by namespace', async () => {
-      const handler = updateService(repositoryMock, eventServiceMock, loggerMock as Logger);
+      const handler = updateService(
+        repositoryMock,
+        eventServiceMock,
+        loggerMock as Logger,
+        auditServiceMock as unknown as AuditService
+      );
       const service = 'file-service';
       const req = {
         tenant: { id: tenantId },
@@ -826,10 +904,23 @@ describe('router', () => {
       });
       await handler(req, res as unknown as Response, next);
       expect(res.sendStatus).toHaveBeenCalledWith(HttpStatusCodes.CREATED);
+      expect(auditServiceMock.record).toHaveBeenCalledWith(
+        expect.objectContaining({ name: 'entry.updated' }),
+        expect.objectContaining({
+          tenantId,
+          resource: { type: 'entry', id: 'urn:ads:platform:file-service' },
+          changeSet: { before: { url: '/file/service' }, after: { url: '/add-service/core' } },
+        })
+      );
     });
 
     it('Modify has error', async () => {
-      const handler = updateService(repositoryMock, eventServiceMock, loggerMock as Logger);
+      const handler = updateService(
+        repositoryMock,
+        eventServiceMock,
+        loggerMock as Logger,
+        auditServiceMock as unknown as AuditService
+      );
 
       const req = {
         tenant: { id: tenantId },
@@ -863,7 +954,12 @@ describe('router', () => {
       expect(res.status).toHaveBeenCalledWith(HttpStatusCodes.BAD_REQUEST);
     });
     it('updateService can call next with not found', async () => {
-      const handler = updateService(repositoryMock, eventServiceMock, loggerMock as Logger);
+      const handler = updateService(
+        repositoryMock,
+        eventServiceMock,
+        loggerMock as Logger,
+        auditServiceMock as unknown as AuditService
+      );
       const testDirectory = {
         name: 'platform',
         services: null,
@@ -891,12 +987,22 @@ describe('router', () => {
   });
   describe('updateApi', () => {
     it('can create handler', () => {
-      const handler = updateApi(repositoryMock, eventServiceMock, loggerMock as Logger);
+      const handler = updateApi(
+        repositoryMock,
+        eventServiceMock,
+        loggerMock as Logger,
+        auditServiceMock as unknown as AuditService
+      );
       expect(handler).toBeTruthy();
     });
 
     it('updateApi can call next with not found', async () => {
-      const handler = updateApi(repositoryMock, eventServiceMock, loggerMock as Logger);
+      const handler = updateApi(
+        repositoryMock,
+        eventServiceMock,
+        loggerMock as Logger,
+        auditServiceMock as unknown as AuditService
+      );
       const testDirectory = {
         name: 'platform',
         services: null,
@@ -924,12 +1030,22 @@ describe('router', () => {
   });
   describe('deleteService', () => {
     it('can create handler', () => {
-      const handler = deleteService(repositoryMock, eventServiceMock, loggerMock as Logger);
+      const handler = deleteService(
+        repositoryMock,
+        eventServiceMock,
+        loggerMock as Logger,
+        auditServiceMock as unknown as AuditService
+      );
       expect(handler).toBeTruthy();
     });
 
     it('deleteService can call next with not found', async () => {
-      const handler = deleteService(repositoryMock, eventServiceMock, loggerMock as Logger);
+      const handler = deleteService(
+        repositoryMock,
+        eventServiceMock,
+        loggerMock as Logger,
+        auditServiceMock as unknown as AuditService
+      );
       const testDirectory = {
         name: 'platform',
         services: null,
@@ -958,12 +1074,22 @@ describe('router', () => {
 
   describe('deleteApi', () => {
     it('can create handler', () => {
-      const handler = deleteApi(repositoryMock, eventServiceMock, loggerMock as Logger);
+      const handler = deleteApi(
+        repositoryMock,
+        eventServiceMock,
+        loggerMock as Logger,
+        auditServiceMock as unknown as AuditService
+      );
       expect(handler).toBeTruthy();
     });
 
     it('deleteApi can call next with not found', async () => {
-      const handler = deleteApi(repositoryMock, eventServiceMock, loggerMock as Logger);
+      const handler = deleteApi(
+        repositoryMock,
+        eventServiceMock,
+        loggerMock as Logger,
+        auditServiceMock as unknown as AuditService
+      );
       const testDirectory = {
         name: 'platform',
         services: null,

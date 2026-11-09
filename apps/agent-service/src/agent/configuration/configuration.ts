@@ -26,7 +26,13 @@ function createAgentMemory(storage: LibSQLStore | PostgresStore, observationalMe
     storage,
     options: {
       lastMessages: environment.AGENT_LAST_MESSAGES,
-      observationalMemory: observationalMemoryEnabled ? { model: getAgentModelConfiguration() } : false,
+      observationalMemory: observationalMemoryEnabled
+        ? {
+            model: getAgentModelConfiguration(),
+            observation: { messageTokens: environment.AGENT_OM_MESSAGE_TOKENS },
+            reflection: { observationTokens: environment.AGENT_OM_OBSERVATION_TOKENS },
+          }
+        : false,
     },
   });
 }

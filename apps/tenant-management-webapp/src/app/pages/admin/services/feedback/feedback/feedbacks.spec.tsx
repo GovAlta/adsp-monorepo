@@ -11,9 +11,19 @@ jest.mock('@store/feedback/actions', () => ({
   getFeedbackSites: jest.fn(),
   getFeedbacks: jest.fn(),
   exportFeedbacks: jest.fn(),
+  getFeedbackSummary: jest.fn(),
+  clearFeedbackSummary: jest.fn(),
 }));
 
 const mockStore = configureStore([thunk]);
+const newSite = { url: 'http://newsite.com', allowAnonymous: true, views: [] };
+const getFeedbacksMock = getFeedbacks as jest.Mock;
+
+const selectSite = (baseElement: HTMLElement, url = newSite.url) =>
+  fireEvent(
+    baseElement.querySelector("goa-dropdown[testId='sites-dropdown']"),
+    new CustomEvent('_change', { detail: { value: url } }),
+  );
 
 describe('Feedbacks Components', () => {
   let store;
@@ -21,15 +31,8 @@ describe('Feedbacks Components', () => {
     store = mockStore({
       tenant: { name: 'autotest' },
       feedback: {
-        sites: [
-          {
-            sites: [
-              { url: 'http://newsite.com', allowAnonymous: true, views: [] },
-              { url: 'http://testsite.com', allowAnonymous: true, views: [] },
-            ],
-            isLoading: false,
-          },
-        ],
+        sites: [newSite, { url: 'http://testsite.com', allowAnonymous: true, views: [] }],
+        page: { page: 1, pageSize: 20, total: 60 },
 
         feedbacks: [
           {
@@ -63,6 +66,12 @@ describe('Feedbacks Components', () => {
         ],
         isLoading: false,
         exportData: [],
+        summary: {
+          totalResponses: 247,
+          averageRating: 3.8,
+          responsesWithComments: 38,
+          responsesWithIssues: 21,
+        },
       },
       session: {
         indicator: { show: false },
@@ -88,7 +97,7 @@ describe('Feedbacks Components', () => {
     const { baseElement } = render(
       <Provider store={store}>
         <FeedbacksList />
-      </Provider>
+      </Provider>,
     );
     expect(baseElement.querySelector("goa-dropdown[testId='sites-dropdown']")).toBeInTheDocument();
   });
@@ -97,7 +106,7 @@ describe('Feedbacks Components', () => {
     render(
       <Provider store={store}>
         <FeedbacksList />
-      </Provider>
+      </Provider>,
     );
     expect(store.dispatch).toHaveBeenCalledWith(getFeedbackSites());
   });
@@ -106,20 +115,135 @@ describe('Feedbacks Components', () => {
     const { baseElement } = render(
       <Provider store={store}>
         <FeedbacksList />
-      </Provider>
+      </Provider>,
     );
-    const dropDown = baseElement.querySelector("goa-dropdown[testId='sites-dropdown']");
-    fireEvent(dropDown, new CustomEvent('_change', { detail: { value: 'http://newsite.com' } }));
-    expect(store.dispatch).toHaveBeenCalledWith(
-      getFeedbacks({ url: 'http://newsite.com', allowAnonymous: true }, store.getState().searchCriteria)
-    );
+    selectSite(baseElement);
+    expect(getFeedbacksMock).toHaveBeenLastCalledWith(newSite, expect.any(Object), 1, 20, true);
+  });
+
+  describe('pagination', () => {
+    beforeEach(() => {
+      getFeedbacksMock.mockClear();
+    });
+
+    it('does not offer load more', () => {
+      const { baseElement } = render(
+        <Provider store={store}>
+          <FeedbacksList />
+        </Provider>,
+      );
+      selectSite(baseElement);
+
+      expect(screen.queryByText('Load more')).not.toBeInTheDocument();
+    });
+
+    it('shows the pagination and the total number of matching responses', () => {
+      const { baseElement } = render(
+        <Provider store={store}>
+          <FeedbacksList />
+        </Provider>,
+      );
+      selectSite(baseElement);
+
+      expect(screen.getByTestId('feedback-result-count')).toHaveTextContent('Showing 1–2 of 60 responses');
+      expect(screen.getByTestId('feedback-pagination')).toBeInTheDocument();
+    });
+
+    it('loads the selected page with the current criteria and page size, without recounting', () => {
+      const { baseElement } = render(
+        <Provider store={store}>
+          <FeedbacksList />
+        </Provider>,
+      );
+      selectSite(baseElement);
+
+      fireEvent.change(screen.getByTestId('feedback-pagination-page'), { target: { value: '3' } });
+
+      expect(getFeedbacksMock).toHaveBeenLastCalledWith(newSite, expect.any(Object), 3, 20);
+    });
+
+    it('returns to page 1 at the new size when the page size changes', () => {
+      const { baseElement } = render(
+        <Provider store={store}>
+          <FeedbacksList />
+        </Provider>,
+      );
+      selectSite(baseElement);
+
+      fireEvent(
+        baseElement.querySelector('goa-dropdown[name="feedback-page-size"]'),
+        new CustomEvent('_change', { detail: { name: 'feedback-page-size', value: '50' } }),
+      );
+
+      expect(getFeedbacksMock).toHaveBeenLastCalledWith(newSite, expect.any(Object), 1, 50, true);
+    });
+
+    it('keeps the selected page size when paging', () => {
+      const { baseElement } = render(
+        <Provider store={store}>
+          <FeedbacksList />
+        </Provider>,
+      );
+      selectSite(baseElement);
+      fireEvent(
+        baseElement.querySelector('goa-dropdown[name="feedback-page-size"]'),
+        new CustomEvent('_change', { detail: { name: 'feedback-page-size', value: '10' } }),
+      );
+
+      fireEvent.change(screen.getByTestId('feedback-pagination-page'), { target: { value: '2' } });
+
+      expect(getFeedbacksMock).toHaveBeenLastCalledWith(newSite, expect.any(Object), 2, 10);
+    });
+
+    it('returns to page 1 with a fresh total when the date range changes', () => {
+      const { baseElement } = render(
+        <Provider store={store}>
+          <FeedbacksList />
+        </Provider>,
+      );
+      selectSite(baseElement);
+      fireEvent.change(screen.getByTestId('feedback-pagination-page'), { target: { value: '3' } });
+
+      fireEvent(
+        baseElement.querySelector("goa-input[name='feedback-filter-start-date']"),
+        new CustomEvent('_change', { detail: { value: '2024-01-01' } }),
+      );
+
+      expect(getFeedbacksMock).toHaveBeenLastCalledWith(
+        newSite,
+        expect.objectContaining({ startDate: new Date('2024-01-01').toISOString() }),
+        1,
+        20,
+        true,
+      );
+    });
+
+    it('returns to page 1 with a fresh total when the registered site changes', () => {
+      const { baseElement } = render(
+        <Provider store={store}>
+          <FeedbacksList />
+        </Provider>,
+      );
+      selectSite(baseElement);
+      fireEvent.change(screen.getByTestId('feedback-pagination-page'), { target: { value: '3' } });
+
+      selectSite(baseElement, 'http://testsite.com');
+
+      expect(getFeedbacksMock).toHaveBeenLastCalledWith(
+        expect.objectContaining({ url: 'http://testsite.com' }),
+        expect.any(Object),
+        1,
+        20,
+        true,
+      );
+    });
   });
 
   it('should show feedbacks list with toggle-details-visibility icon button', () => {
     const { baseElement } = render(
       <Provider store={store}>
         <FeedbacksList />
-      </Provider>
+      </Provider>,
     );
     const dropDown = baseElement.querySelector("goa-dropdown[testId='sites-dropdown']");
     fireEvent(dropDown, new CustomEvent('_change', { detail: { value: 'http://newsite.com' } }));
@@ -127,18 +251,31 @@ describe('Feedbacks Components', () => {
     expect(baseElement.querySelector("goa-icon-button[testId='toggle-details-visibility_0']")).toBeInTheDocument();
   });
 
+  it('shows the summary immediately above the feedback table', () => {
+    const { baseElement } = render(
+      <Provider store={store}>
+        <FeedbacksList />
+      </Provider>,
+    );
+    selectSite(baseElement);
+
+    const summary = screen.getByTestId('feedback-summary');
+    const table = screen.getByTestId('feedback-table');
+    expect(summary.compareDocumentPosition(table) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
   it('should show details of feedback when toggle-details-visibility icon button is clicked', () => {
     const { baseElement } = render(
       <Provider store={store}>
         <FeedbacksList />
-      </Provider>
+      </Provider>,
     );
     const dropDown = baseElement.querySelector("goa-dropdown[testId='sites-dropdown']");
     fireEvent(dropDown, new CustomEvent('_change', { detail: { value: 'http://newsite.com' } }));
 
     fireEvent(
       baseElement.querySelector("goa-icon-button[testId='toggle-details-visibility_0']"),
-      new CustomEvent('_click')
+      new CustomEvent('_click'),
     );
     expect(screen.getByTestId('moredetails')).toBeInTheDocument();
   });
@@ -146,12 +283,8 @@ describe('Feedbacks Components', () => {
   it('should show no feedbacks found if no feedbacks', () => {
     store = mockStore({
       feedback: {
-        sites: [
-          {
-            sites: [{ url: 'http://newsite.com', allowAnonymous: true, views: [] }],
-            isLoading: false,
-          },
-        ],
+        sites: [newSite],
+        page: { page: 1, pageSize: 20, total: 0 },
 
         feedbacks: [],
         isLoading: false,
@@ -169,12 +302,13 @@ describe('Feedbacks Components', () => {
     const { baseElement } = render(
       <Provider store={store}>
         <FeedbacksList />
-      </Provider>
+      </Provider>,
     );
     const dropDown = baseElement.querySelector("goa-dropdown[testId='sites-dropdown']");
     fireEvent(dropDown, new CustomEvent('_change', { detail: { value: 'http://newsite.com' } }));
     expect(screen.getAllByText('No feedbacks found')).toBeTruthy();
     expect(baseElement.querySelector("goa-button[testId='expand-feedback-view']")).toBeDisabled();
+    expect(screen.queryByTestId('feedback-pagination')).not.toBeInTheDocument();
   });
 
   it('should open full screen when "Expand View" button is clicked', async () => {
@@ -189,7 +323,7 @@ describe('Feedbacks Components', () => {
           },
         ],
         exportData: [],
-        nextEntries: null,
+        page: null,
         isLoading: false,
       },
       session: { indicator: { show: false } },
@@ -200,7 +334,7 @@ describe('Feedbacks Components', () => {
     const { getByText, baseElement } = render(
       <Provider store={store}>
         <FeedbacksList />
-      </Provider>
+      </Provider>,
     );
     const dropDown = baseElement.querySelector("goa-dropdown[testId='sites-dropdown']");
     fireEvent(dropDown, new CustomEvent('_change', { detail: { value: 'http://newsite.com' } }));
@@ -218,7 +352,7 @@ describe('Feedbacks Components', () => {
     const { baseElement } = render(
       <Provider store={store}>
         <FeedbacksList />
-      </Provider>
+      </Provider>,
     );
     const dropDown = baseElement.querySelector("goa-dropdown[testId='sites-dropdown']");
     fireEvent(dropDown, new CustomEvent('_change', { detail: { value: 'http://newsite.com' } }));
@@ -236,7 +370,7 @@ describe('Feedbacks Components', () => {
     const { baseElement } = render(
       <Provider store={store}>
         <FeedbacksList />
-      </Provider>
+      </Provider>,
     );
     const dropDown = baseElement.querySelector("goa-dropdown[testId='sites-dropdown']");
     fireEvent(dropDown, new CustomEvent('_change', { detail: { value: 'http://newsite.com' } }));

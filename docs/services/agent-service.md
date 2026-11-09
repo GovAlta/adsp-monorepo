@@ -191,6 +191,34 @@ socket.on('error', (message) => {
 });
 ```
 
+#### Token usage and conversation length
+
+When the provider reports token usage, the done event also includes `usage`:
+
+| Field                 | Meaning                                                                                              |
+| --------------------- | ---------------------------------------------------------------------------------------------------- |
+| `contextTokens`       | Input tokens of the agent's last model call: how much of the context window the conversation takes up |
+| `contextWindowTokens` | The model's context window, from `AGENT_MODEL_CONTEXT_TOKENS` (default 256,000)                       |
+| `totalTokens`         | Every token the reply used across its model calls, including calls tools make, such as form generation |
+| `outputTokens`        | Tokens the model wrote                                                                               |
+| `modelCalls`          | Number of model calls the reply made                                                                 |
+
+After each reply, a `conversation-status` event says how the conversation stands. `state` is one of:
+
+- `ok`: nothing to tell the user.
+- `notice`: memory has started keeping the conversation short, which is normal but means early details may be missed. `reason` is `summarised` (observational memory has replaced older messages with notes) or `older-messages-dropped` (an agent without observational memory now reads only its most recent `messageLimit` messages).
+- `warning`: the conversation is close to what the assistant can handle well. `reason` is `near-context-limit` (it takes up at least 70% of the context window) or `notes-condensed` (observational memory has condensed its notes, which takes a very long conversation).
+
+```typescript
+socket.on('conversation-status', ({ threadId, contextTokens, contextWindowTokens, state, reason }) => {
+  if (state === 'warning') {
+    console.log(`Thread ${threadId} is close to the assistant's limit (${reason}); suggest starting a new chat.`);
+  }
+});
+```
+
+Observational memory summarises older messages at `AGENT_OM_MESSAGE_TOKENS` unobserved tokens (default 30,000) and condenses its notes at `AGENT_OM_OBSERVATION_TOKENS` (default 40,000).
+
 ### Delete a thread
 
 Delete one of your own threads, with its stored messages and context, for example when the user starts a new chat. The response is `{ "deleted": false }` when you have no thread with that ID, so repeating the request is harmless.

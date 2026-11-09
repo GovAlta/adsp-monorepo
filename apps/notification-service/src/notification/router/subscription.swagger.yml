@@ -4,21 +4,31 @@ components:
       name: tenantId
       description: >
         ID of the tenant to act on. Only used for core (platform) users; tenant users always act on the tenant of
-        their token and this parameter is ignored.
+        their token and this parameter is ignored. Core users must set it, since operations are scoped to a tenant;
+        only operations on a specific subscriber can find the subscriber without it.
       in: query
       required: false
       schema:
         type: string
       example: urn:ads:platform:tenant-service:v2:/tenants/61f2e3a8c9b1d2e3f4a5b6c7
+    SubscriberId:
+      name: subscriber
+      description: ID of the subscriber.
+      in: path
+      required: true
+      schema:
+        type: string
+        pattern: '^[0-9a-fA-F]{24}$'
+      example: 63f5a0d2c9b1d2e3f4a5b6c7
   responses:
     SubscriptionBadRequest:
       description: Request is invalid, for example a path, query, or body parameter failed validation.
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/SubscriptionError"
+            $ref: '#/components/schemas/SubscriptionError'
           example:
-            errorMessage: "Validation failed with error(s): subscriber (params) - Invalid value"
+            errorMessage: 'Validation failed with error(s): subscriber (params) - Invalid value'
     SubscriptionUnauthorized:
       description: >
         Request does not include a valid bearer token, or the user is not permitted to act on the subscriber or
@@ -26,7 +36,7 @@ components:
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/SubscriptionError"
+            $ref: '#/components/schemas/SubscriptionError'
           example:
             errorMessage: User not authorized to update subscriber.
     SubscriptionForbidden:
@@ -34,15 +44,15 @@ components:
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/SubscriptionError"
+            $ref: '#/components/schemas/SubscriptionError'
           example:
-            errorMessage: "User Test User (ID: 1234) not permitted to get subscribers."
+            errorMessage: 'User Test User (ID: 1234) not permitted to get subscribers.'
     SubscriptionConflict:
       description: A notification type with the ID already exists.
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/SubscriptionError"
+            $ref: '#/components/schemas/SubscriptionError'
           example:
             errorMessage: Notification type with ID 'application-status' already exists.
     SubscriptionNotFound:
@@ -50,7 +60,7 @@ components:
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/SubscriptionError"
+            $ref: '#/components/schemas/SubscriptionError'
           example:
             errorMessage: Subscriber with ID '63f5a0d2c9b1d2e3f4a5b6c7' could not be found.
   schemas:
@@ -105,13 +115,13 @@ components:
                 description: Templates by channel; a channel's template can be null when the event does not use it.
                 properties:
                   email:
-                    $ref: "#/components/schemas/Template"
+                    $ref: '#/components/schemas/Template'
                   bot:
-                    $ref: "#/components/schemas/Template"
+                    $ref: '#/components/schemas/Template'
                   sms:
-                    $ref: "#/components/schemas/Template"
+                    $ref: '#/components/schemas/Template'
                   mail:
-                    $ref: "#/components/schemas/Template"
+                    $ref: '#/components/schemas/Template'
       example:
         id: application-status
         name: Application status
@@ -126,13 +136,13 @@ components:
             templates:
               email:
                 subject: Your application status changed
-                body: "<p>Your application is now {{ event.payload.status }}.</p>"
+                body: '<p>Your application is now {{ event.payload.status }}.</p>'
     NotificationTypeDefinition:
       description: >
         Notification type as configured, including the settings for types that send to an address instead of to
         subscribers.
       allOf:
-        - $ref: "#/components/schemas/NotificationType"
+        - $ref: '#/components/schemas/NotificationType'
         - type: object
           required: [id, name, publicSubscribe, subscriberRoles, channels, events]
           properties:
@@ -154,6 +164,21 @@ components:
               type: string
             subTitlePath:
               type: string
+      example:
+        id: application-status
+        name: Application status
+        description: Notifications about changes to an application.
+        manageSubscribe: true
+        publicSubscribe: false
+        subscriberRoles: [applicant]
+        channels: [email]
+        events:
+          - namespace: application-service
+            name: application-status-changed
+            templates:
+              email:
+                subject: Your application status changed
+                body: '<p>Your application is now {{ event.payload.status }}.</p>'
     NotificationContact:
       type: object
       properties:
@@ -171,7 +196,7 @@ components:
           description: Address that email notifications of the tenant are sent from.
       example:
         contactEmail: support@example.com
-        phoneNumber: "7805550100"
+        phoneNumber: '7805550100'
         supportInstructions: Contact us during business hours.
         fromEmail: noreply@example.com
     SubscriberChannel:
@@ -191,15 +216,22 @@ components:
         timeCodeSent:
           type: number
           readOnly: true
+      example:
+        channel: email
+        address: test.user@gov.ab.ca
+        verified: true
     Subscriber:
       type: object
       properties:
         tenantId:
           type: string
+          readOnly: true
         urn:
           type: string
+          readOnly: true
         id:
           type: string
+          readOnly: true
         userId:
           type: string
         addressAs:
@@ -207,17 +239,19 @@ components:
         channels:
           type: array
           items:
-            $ref: "#/components/schemas/SubscriberChannel"
+            $ref: '#/components/schemas/SubscriberChannel'
         subscriptions:
           type: array
           items:
-            $ref: "#/components/schemas/Subscription"
+            $ref: '#/components/schemas/Subscription'
         created:
           type: string
           format: date-time
+          readOnly: true
         updated:
           type: string
           format: date-time
+          readOnly: true
       example:
         tenantId: urn:ads:platform:tenant-service:v2:/tenants/61f2e3a8c9b1d2e3f4a5b6c7
         urn: urn:ads:platform:notification-service:v1:/subscribers/63f5a0d2c9b1d2e3f4a5b6c7
@@ -228,8 +262,8 @@ components:
           - channel: email
             address: test.user@gov.ab.ca
             verified: true
-        created: "2026-09-01T17:00:00.000Z"
-        updated: "2026-09-01T17:00:00.000Z"
+        created: '2026-09-01T17:00:00.000Z'
+        updated: '2026-09-01T17:00:00.000Z'
     SubscriptionCriteria:
       type: object
       properties:
@@ -240,6 +274,11 @@ components:
         context:
           type: object
           additionalProperties: true
+      example:
+        description: Updates on application 1234
+        correlationId: application-1234
+        context:
+          applicationId: '1234'
     Subscription:
       type: object
       properties:
@@ -248,13 +287,13 @@ components:
         subscriberId:
           type: string
         subscriber:
-          $ref: "#/components/schemas/Subscriber"
+          $ref: '#/components/schemas/Subscriber'
         criteria:
           anyOf:
-            - $ref: "#/components/schemas/SubscriptionCriteria"
+            - $ref: '#/components/schemas/SubscriptionCriteria'
             - type: array
               items:
-                $ref: "#/components/schemas/SubscriptionCriteria"
+                $ref: '#/components/schemas/SubscriptionCriteria'
       example:
         typeId: application-status
         subscriberId: 63f5a0d2c9b1d2e3f4a5b6c7
@@ -276,6 +315,10 @@ components:
           type: number
         next:
           type: string
+      example:
+        after: MTA=
+        size: 10
+        next: MjA=
     SendVerifyCodeOperation:
       type: object
       properties:
@@ -318,13 +361,26 @@ components:
         subscriberId:
           type: string
         type:
-          $ref: "#/components/schemas/NotificationType"
+          $ref: '#/components/schemas/NotificationType'
         criteria:
           anyOf:
-            - $ref: "#/components/schemas/SubscriptionCriteria"
+            - $ref: '#/components/schemas/SubscriptionCriteria'
             - type: array
               items:
-                $ref: "#/components/schemas/SubscriptionCriteria"
+                $ref: '#/components/schemas/SubscriptionCriteria'
+      example:
+        typeId: application-status
+        subscriberId: 63f5a0d2c9b1d2e3f4a5b6c7
+        type:
+          id: application-status
+          name: Application status
+          description: Notifications about changes to an application.
+          manageSubscribe: true
+          publicSubscribe: false
+          subscriberRoles: [applicant]
+          channels: [email]
+        criteria:
+          - correlationId: application-1234
     MySubscriberDetails:
       type: object
       properties:
@@ -341,17 +397,38 @@ components:
         channels:
           type: array
           items:
-            $ref: "#/components/schemas/SubscriberChannel"
+            $ref: '#/components/schemas/SubscriberChannel'
         subscriptions:
           type: array
           items:
-            $ref: "#/components/schemas/MySubscriberSubscriptions"
+            $ref: '#/components/schemas/MySubscriberSubscriptions'
         created:
           type: string
           format: date-time
         updated:
           type: string
           format: date-time
+      example:
+        tenantId: urn:ads:platform:tenant-service:v2:/tenants/61f2e3a8c9b1d2e3f4a5b6c7
+        urn: urn:ads:platform:notification-service:v1:/subscribers/63f5a0d2c9b1d2e3f4a5b6c7
+        id: 63f5a0d2c9b1d2e3f4a5b6c7
+        userId: 9c1f2b7e-4d3a-4f6b-8a2e-1b2c3d4e5f60
+        addressAs: Test User
+        channels:
+          - channel: email
+            address: test.user@gov.ab.ca
+            verified: true
+        subscriptions:
+          - typeId: application-status
+            subscriberId: 63f5a0d2c9b1d2e3f4a5b6c7
+            type:
+              id: application-status
+              name: Application status
+              description: Notifications about changes to an application.
+            criteria:
+              correlationId: application-1234
+        created: '2026-09-01T17:00:00.000Z'
+        updated: '2026-09-01T17:00:00.000Z'
     CheckCodeOperation:
       type: object
       properties:
@@ -392,7 +469,7 @@ components:
       With the source parameter, retrieves the type definitions as configured instead, which requires the
       subscription-admin or configuration-admin role.
     parameters:
-      - $ref: "#/components/parameters/SubscriptionTenantId"
+      - $ref: '#/components/parameters/SubscriptionTenantId'
       - name: source
         description: >
           Retrieve the definitions configured by the tenant (tenant) or the platform (core) instead of the combined
@@ -410,13 +487,13 @@ components:
             schema:
               type: array
               items:
-                $ref: "#/components/schemas/NotificationTypeDefinition"
+                $ref: '#/components/schemas/NotificationTypeDefinition'
       400:
-        $ref: "#/components/responses/SubscriptionBadRequest"
+        $ref: '#/components/responses/SubscriptionBadRequest'
       401:
-        $ref: "#/components/responses/SubscriptionUnauthorized"
+        $ref: '#/components/responses/SubscriptionUnauthorized'
       403:
-        $ref: "#/components/responses/SubscriptionForbidden"
+        $ref: '#/components/responses/SubscriptionForbidden'
   post:
     tags:
       - Subscription
@@ -424,28 +501,28 @@ components:
       Creates a notification type for the tenant. Requires the subscription-admin or configuration-admin role. The definition is validated,
       including its channels, trigger events, and templates.
     parameters:
-      - $ref: "#/components/parameters/SubscriptionTenantId"
+      - $ref: '#/components/parameters/SubscriptionTenantId'
     requestBody:
       required: true
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/NotificationTypeDefinition"
+            $ref: '#/components/schemas/NotificationTypeDefinition'
     responses:
       201:
         description: Notification type successfully created.
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/NotificationTypeDefinition"
+              $ref: '#/components/schemas/NotificationTypeDefinition'
       400:
-        $ref: "#/components/responses/SubscriptionBadRequest"
+        $ref: '#/components/responses/SubscriptionBadRequest'
       401:
-        $ref: "#/components/responses/SubscriptionUnauthorized"
+        $ref: '#/components/responses/SubscriptionUnauthorized'
       403:
-        $ref: "#/components/responses/SubscriptionForbidden"
+        $ref: '#/components/responses/SubscriptionForbidden'
       409:
-        $ref: "#/components/responses/SubscriptionConflict"
+        $ref: '#/components/responses/SubscriptionConflict'
 /subscription/v1/types/{type}:
   get:
     tags:
@@ -460,20 +537,20 @@ components:
           type: string
           minLength: 1
           maxLength: 50
-      - $ref: "#/components/parameters/SubscriptionTenantId"
+      - $ref: '#/components/parameters/SubscriptionTenantId'
     responses:
       200:
         description: Notification type successfully retrieved.
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/NotificationType"
+              $ref: '#/components/schemas/NotificationType'
       400:
-        $ref: "#/components/responses/SubscriptionBadRequest"
+        $ref: '#/components/responses/SubscriptionBadRequest'
       401:
-        $ref: "#/components/responses/SubscriptionUnauthorized"
+        $ref: '#/components/responses/SubscriptionUnauthorized'
       404:
-        $ref: "#/components/responses/SubscriptionNotFound"
+        $ref: '#/components/responses/SubscriptionNotFound'
   patch:
     tags:
       - Subscription
@@ -490,28 +567,44 @@ components:
           type: string
           minLength: 1
           maxLength: 50
-      - $ref: "#/components/parameters/SubscriptionTenantId"
+      - $ref: '#/components/parameters/SubscriptionTenantId'
     requestBody:
       required: true
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/NotificationTypeDefinition"
+            $ref: '#/components/schemas/NotificationTypeDefinition'
+          examples:
+            rename:
+              summary: Update properties of a tenant type
+              value:
+                name: Application progress
+                subscriberRoles: [applicant, reviewer]
+            customize-template:
+              summary: Customize the email template of a platform type
+              value:
+                events:
+                  - namespace: status-service
+                    name: health-check-started
+                    templates:
+                      email:
+                        subject: '{{ event.payload.application.name }} is being monitored'
+                        body: '<p>Health checks started for {{ event.payload.application.name }}.</p>'
     responses:
       200:
         description: Notification type successfully updated.
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/NotificationTypeDefinition"
+              $ref: '#/components/schemas/NotificationTypeDefinition'
       400:
-        $ref: "#/components/responses/SubscriptionBadRequest"
+        $ref: '#/components/responses/SubscriptionBadRequest'
       401:
-        $ref: "#/components/responses/SubscriptionUnauthorized"
+        $ref: '#/components/responses/SubscriptionUnauthorized'
       403:
-        $ref: "#/components/responses/SubscriptionForbidden"
+        $ref: '#/components/responses/SubscriptionForbidden'
       404:
-        $ref: "#/components/responses/SubscriptionNotFound"
+        $ref: '#/components/responses/SubscriptionNotFound'
   delete:
     tags:
       - Subscription
@@ -528,7 +621,7 @@ components:
           type: string
           minLength: 1
           maxLength: 50
-      - $ref: "#/components/parameters/SubscriptionTenantId"
+      - $ref: '#/components/parameters/SubscriptionTenantId'
     responses:
       200:
         description: Notification type successfully deleted.
@@ -542,16 +635,16 @@ components:
             example:
               deleted: true
       400:
-        $ref: "#/components/responses/SubscriptionBadRequest"
+        $ref: '#/components/responses/SubscriptionBadRequest'
       401:
-        $ref: "#/components/responses/SubscriptionUnauthorized"
+        $ref: '#/components/responses/SubscriptionUnauthorized'
       403:
-        $ref: "#/components/responses/SubscriptionForbidden"
+        $ref: '#/components/responses/SubscriptionForbidden'
       404:
-        $ref: "#/components/responses/SubscriptionNotFound"
+        $ref: '#/components/responses/SubscriptionNotFound'
 /subscription/v1/contact:
   parameters:
-    - $ref: "#/components/parameters/SubscriptionTenantId"
+    - $ref: '#/components/parameters/SubscriptionTenantId'
   get:
     tags:
       - Subscription
@@ -563,11 +656,13 @@ components:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/NotificationContact"
+              $ref: '#/components/schemas/NotificationContact'
+      400:
+        $ref: '#/components/responses/SubscriptionBadRequest'
       401:
-        $ref: "#/components/responses/SubscriptionUnauthorized"
+        $ref: '#/components/responses/SubscriptionUnauthorized'
       403:
-        $ref: "#/components/responses/SubscriptionForbidden"
+        $ref: '#/components/responses/SubscriptionForbidden'
   patch:
     tags:
       - Subscription
@@ -579,20 +674,20 @@ components:
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/NotificationContact"
+            $ref: '#/components/schemas/NotificationContact'
     responses:
       200:
         description: Contact successfully updated.
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/NotificationContact"
+              $ref: '#/components/schemas/NotificationContact'
       400:
-        $ref: "#/components/responses/SubscriptionBadRequest"
+        $ref: '#/components/responses/SubscriptionBadRequest'
       401:
-        $ref: "#/components/responses/SubscriptionUnauthorized"
+        $ref: '#/components/responses/SubscriptionUnauthorized'
       403:
-        $ref: "#/components/responses/SubscriptionForbidden"
+        $ref: '#/components/responses/SubscriptionForbidden'
 /subscription/v1/types/{type}/subscriptions:
   parameters:
     - name: type
@@ -603,7 +698,7 @@ components:
         type: string
         minLength: 1
         maxLength: 50
-    - $ref: "#/components/parameters/SubscriptionTenantId"
+    - $ref: '#/components/parameters/SubscriptionTenantId'
   get:
     tags:
       - Subscription
@@ -661,17 +756,17 @@ components:
                 results:
                   type: array
                   items:
-                    $ref: "#/components/schemas/Subscription"
+                    $ref: '#/components/schemas/Subscription'
                 page:
-                  $ref: "#/components/schemas/SubscriptionPage"
+                  $ref: '#/components/schemas/SubscriptionPage'
       400:
-        $ref: "#/components/responses/SubscriptionBadRequest"
+        $ref: '#/components/responses/SubscriptionBadRequest'
       401:
-        $ref: "#/components/responses/SubscriptionUnauthorized"
+        $ref: '#/components/responses/SubscriptionUnauthorized'
       403:
-        $ref: "#/components/responses/SubscriptionForbidden"
+        $ref: '#/components/responses/SubscriptionForbidden'
       404:
-        $ref: "#/components/responses/SubscriptionNotFound"
+        $ref: '#/components/responses/SubscriptionNotFound'
   post:
     tags:
       - Subscription
@@ -697,7 +792,7 @@ components:
             type: object
             properties:
               criteria:
-                $ref: "#/components/schemas/SubscriptionCriteria"
+                $ref: '#/components/schemas/SubscriptionCriteria'
               id:
                 type: string
                 description: ID of an existing subscriber to subscribe.
@@ -709,7 +804,7 @@ components:
               channels:
                 type: array
                 items:
-                  $ref: "#/components/schemas/SubscriberChannel"
+                  $ref: '#/components/schemas/SubscriberChannel'
           examples:
             self:
               summary: Current user (with userSub=true)
@@ -729,15 +824,15 @@ components:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/Subscription"
+              $ref: '#/components/schemas/Subscription'
       400:
-        $ref: "#/components/responses/SubscriptionBadRequest"
+        $ref: '#/components/responses/SubscriptionBadRequest'
       401:
-        $ref: "#/components/responses/SubscriptionUnauthorized"
+        $ref: '#/components/responses/SubscriptionUnauthorized'
       403:
-        $ref: "#/components/responses/SubscriptionForbidden"
+        $ref: '#/components/responses/SubscriptionForbidden'
       404:
-        $ref: "#/components/responses/SubscriptionNotFound"
+        $ref: '#/components/responses/SubscriptionNotFound'
 
 /subscription/v1/types/{type}/subscriptions/{subscriber}:
   parameters:
@@ -749,13 +844,8 @@ components:
         type: string
         minLength: 1
         maxLength: 50
-    - name: subscriber
-      description: ID of the subscriber.
-      in: path
-      required: true
-      schema:
-        type: string
-    - $ref: "#/components/parameters/SubscriptionTenantId"
+    - $ref: '#/components/parameters/SubscriberId'
+    - $ref: '#/components/parameters/SubscriptionTenantId'
   get:
     tags:
       - Subscription
@@ -768,15 +858,15 @@ components:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/Subscription"
+              $ref: '#/components/schemas/Subscription'
       400:
-        $ref: "#/components/responses/SubscriptionBadRequest"
+        $ref: '#/components/responses/SubscriptionBadRequest'
       401:
-        $ref: "#/components/responses/SubscriptionUnauthorized"
+        $ref: '#/components/responses/SubscriptionUnauthorized'
       403:
-        $ref: "#/components/responses/SubscriptionForbidden"
+        $ref: '#/components/responses/SubscriptionForbidden'
       404:
-        $ref: "#/components/responses/SubscriptionNotFound"
+        $ref: '#/components/responses/SubscriptionNotFound'
   post:
     tags:
       - Subscription
@@ -794,12 +884,12 @@ components:
             properties:
               criteria:
                 anyOf:
-                  - $ref: "#/components/schemas/SubscriptionCriteria"
+                  - $ref: '#/components/schemas/SubscriptionCriteria'
                   - type: array
                     minItems: 1
                     maxItems: 200
                     items:
-                      $ref: "#/components/schemas/SubscriptionCriteria"
+                      $ref: '#/components/schemas/SubscriptionCriteria'
           example:
             criteria:
               - correlationId: application-1234
@@ -810,15 +900,15 @@ components:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/Subscription"
+              $ref: '#/components/schemas/Subscription'
       400:
-        $ref: "#/components/responses/SubscriptionBadRequest"
+        $ref: '#/components/responses/SubscriptionBadRequest'
       401:
-        $ref: "#/components/responses/SubscriptionUnauthorized"
+        $ref: '#/components/responses/SubscriptionUnauthorized'
       403:
-        $ref: "#/components/responses/SubscriptionForbidden"
+        $ref: '#/components/responses/SubscriptionForbidden'
       404:
-        $ref: "#/components/responses/SubscriptionNotFound"
+        $ref: '#/components/responses/SubscriptionNotFound'
 
   delete:
     tags:
@@ -839,11 +929,11 @@ components:
             example:
               deleted: true
       400:
-        $ref: "#/components/responses/SubscriptionBadRequest"
+        $ref: '#/components/responses/SubscriptionBadRequest'
       401:
-        $ref: "#/components/responses/SubscriptionUnauthorized"
+        $ref: '#/components/responses/SubscriptionUnauthorized'
       404:
-        $ref: "#/components/responses/SubscriptionNotFound"
+        $ref: '#/components/responses/SubscriptionNotFound'
 
 /subscription/v1/types/{type}/subscriptions/{subscriber}/criteria:
   parameters:
@@ -855,25 +945,20 @@ components:
         type: string
         minLength: 1
         maxLength: 50
-    - name: subscriber
-      description: ID of the subscriber.
-      in: path
-      required: true
-      schema:
-        type: string
+    - $ref: '#/components/parameters/SubscriberId'
     - name: criteria
       description: >
-        JSON encoded criteria for deletion of subscription criteria. Deletion criteria can match multiple
-        subscription criteria. The subscription is deleted when its last criteria is removed.
+        JSON encoded criteria for deletion of subscription criteria. Must be valid JSON. Deletion criteria can match
+        multiple subscription criteria. The subscription is deleted when its last criteria is removed.
       in: query
       required: true
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/SubscriptionCriteria"
+            $ref: '#/components/schemas/SubscriptionCriteria'
           example:
             correlationId: application-1234
-    - $ref: "#/components/parameters/SubscriptionTenantId"
+    - $ref: '#/components/parameters/SubscriptionTenantId'
 
   delete:
     tags:
@@ -892,13 +977,13 @@ components:
             example:
               deleted: true
       400:
-        $ref: "#/components/responses/SubscriptionBadRequest"
+        $ref: '#/components/responses/SubscriptionBadRequest'
       401:
-        $ref: "#/components/responses/SubscriptionUnauthorized"
+        $ref: '#/components/responses/SubscriptionUnauthorized'
       403:
-        $ref: "#/components/responses/SubscriptionForbidden"
+        $ref: '#/components/responses/SubscriptionForbidden'
       404:
-        $ref: "#/components/responses/SubscriptionNotFound"
+        $ref: '#/components/responses/SubscriptionNotFound'
 
 /subscription/v1/subscribers:
   get:
@@ -958,7 +1043,7 @@ components:
         schema:
           type: string
           enum: [asc, desc]
-      - $ref: "#/components/parameters/SubscriptionTenantId"
+      - $ref: '#/components/parameters/SubscriptionTenantId'
     responses:
       200:
         description: Subscribers successfully retrieved.
@@ -970,21 +1055,21 @@ components:
                 results:
                   type: array
                   items:
-                    $ref: "#/components/schemas/Subscriber"
+                    $ref: '#/components/schemas/Subscriber'
                 page:
                   allOf:
-                    - $ref: "#/components/schemas/SubscriptionPage"
+                    - $ref: '#/components/schemas/SubscriptionPage'
                     - type: object
                       properties:
                         total:
                           type: number
                           description: Number of subscribers matching the criteria, across all pages.
       400:
-        $ref: "#/components/responses/SubscriptionBadRequest"
+        $ref: '#/components/responses/SubscriptionBadRequest'
       401:
-        $ref: "#/components/responses/SubscriptionUnauthorized"
+        $ref: '#/components/responses/SubscriptionUnauthorized'
       403:
-        $ref: "#/components/responses/SubscriptionForbidden"
+        $ref: '#/components/responses/SubscriptionForbidden'
   post:
     tags:
       - Subscription
@@ -1000,7 +1085,7 @@ components:
         required: false
         schema:
           type: boolean
-      - $ref: "#/components/parameters/SubscriptionTenantId"
+      - $ref: '#/components/parameters/SubscriptionTenantId'
     requestBody:
       required: false
       content:
@@ -1015,7 +1100,7 @@ components:
               channels:
                 type: array
                 items:
-                  $ref: "#/components/schemas/SubscriberChannel"
+                  $ref: '#/components/schemas/SubscriberChannel'
           example:
             addressAs: Test User
             channels:
@@ -1027,19 +1112,14 @@ components:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/Subscriber"
+              $ref: '#/components/schemas/Subscriber'
       401:
-        $ref: "#/components/responses/SubscriptionUnauthorized"
+        $ref: '#/components/responses/SubscriptionUnauthorized'
 
 /subscription/v1/subscribers/{subscriber}:
   parameters:
-    - name: subscriber
-      description: ID of the subscriber.
-      in: path
-      required: true
-      schema:
-        type: string
-    - $ref: "#/components/parameters/SubscriptionTenantId"
+    - $ref: '#/components/parameters/SubscriberId'
+    - $ref: '#/components/parameters/SubscriptionTenantId'
   get:
     tags:
       - Subscription
@@ -1059,15 +1139,15 @@ components:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/Subscriber"
+              $ref: '#/components/schemas/Subscriber'
       400:
-        $ref: "#/components/responses/SubscriptionBadRequest"
+        $ref: '#/components/responses/SubscriptionBadRequest'
       401:
-        $ref: "#/components/responses/SubscriptionUnauthorized"
+        $ref: '#/components/responses/SubscriptionUnauthorized'
       403:
-        $ref: "#/components/responses/SubscriptionForbidden"
+        $ref: '#/components/responses/SubscriptionForbidden'
       404:
-        $ref: "#/components/responses/SubscriptionNotFound"
+        $ref: '#/components/responses/SubscriptionNotFound'
   patch:
     tags:
       - Subscription
@@ -1084,29 +1164,29 @@ components:
               channels:
                 type: array
                 items:
-                  $ref: "#/components/schemas/SubscriberChannel"
+                  $ref: '#/components/schemas/SubscriberChannel'
           example:
             addressAs: Test User
             channels:
               - channel: email
                 address: test.user@gov.ab.ca
               - channel: sms
-                address: "7805551234"
+                address: '7805551234'
     responses:
       200:
         description: Subscriber successfully updated.
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/Subscriber"
+              $ref: '#/components/schemas/Subscriber'
       400:
-        $ref: "#/components/responses/SubscriptionBadRequest"
+        $ref: '#/components/responses/SubscriptionBadRequest'
       401:
-        $ref: "#/components/responses/SubscriptionUnauthorized"
+        $ref: '#/components/responses/SubscriptionUnauthorized'
       403:
-        $ref: "#/components/responses/SubscriptionForbidden"
+        $ref: '#/components/responses/SubscriptionForbidden'
       404:
-        $ref: "#/components/responses/SubscriptionNotFound"
+        $ref: '#/components/responses/SubscriptionNotFound'
   post:
     tags:
       - Subscription
@@ -1120,17 +1200,17 @@ components:
         application/json:
           schema:
             oneOf:
-              - $ref: "#/components/schemas/SendVerifyCodeOperation"
-              - $ref: "#/components/schemas/SendVerifyCodeWithLinkOperation"
-              - $ref: "#/components/schemas/VerifyChannelOperation"
-              - $ref: "#/components/schemas/CheckCodeOperation"
+              - $ref: '#/components/schemas/SendVerifyCodeOperation'
+              - $ref: '#/components/schemas/SendVerifyCodeWithLinkOperation'
+              - $ref: '#/components/schemas/VerifyChannelOperation'
+              - $ref: '#/components/schemas/CheckCodeOperation'
             discriminator:
               propertyName: operation
               mapping:
-                send-code: "#/components/schemas/SendVerifyCodeOperation"
-                send-code-with-link: "#/components/schemas/SendVerifyCodeWithLinkOperation"
-                check-code: "#/components/schemas/CheckCodeOperation"
-                verify-channel: "#/components/schemas/VerifyChannelOperation"
+                send-code: '#/components/schemas/SendVerifyCodeOperation'
+                send-code-with-link: '#/components/schemas/SendVerifyCodeWithLinkOperation'
+                check-code: '#/components/schemas/CheckCodeOperation'
+                verify-channel: '#/components/schemas/VerifyChannelOperation'
           examples:
             send-code:
               summary: Send a verification code
@@ -1139,13 +1219,29 @@ components:
                 channel: email
                 address: test.user@gov.ab.ca
                 reason: Verify your email address.
+            send-code-with-link:
+              summary: Send a verification code with a link
+              value:
+                operation: send-code-with-link
+                channel: email
+                address: test.user@gov.ab.ca
+                reason: Verify your email address.
+                expireIn: 30
+                verificationLink: https://my-app.alberta.ca/verify
+            check-code:
+              summary: Check a code without verifying the channel
+              value:
+                operation: check-code
+                channel: email
+                address: test.user@gov.ab.ca
+                code: '123456'
             verify-channel:
               summary: Verify the channel with the code
               value:
                 operation: verify-channel
                 channel: email
                 address: test.user@gov.ab.ca
-                code: "123456"
+                code: '123456'
     responses:
       200:
         description: Subscriber operation successfully executed.
@@ -1164,13 +1260,13 @@ components:
             example:
               sent: true
       400:
-        $ref: "#/components/responses/SubscriptionBadRequest"
+        $ref: '#/components/responses/SubscriptionBadRequest'
       401:
-        $ref: "#/components/responses/SubscriptionUnauthorized"
+        $ref: '#/components/responses/SubscriptionUnauthorized'
       403:
-        $ref: "#/components/responses/SubscriptionForbidden"
+        $ref: '#/components/responses/SubscriptionForbidden'
       404:
-        $ref: "#/components/responses/SubscriptionNotFound"
+        $ref: '#/components/responses/SubscriptionNotFound'
   delete:
     tags:
       - Subscription
@@ -1188,22 +1284,17 @@ components:
             example:
               deleted: true
       400:
-        $ref: "#/components/responses/SubscriptionBadRequest"
+        $ref: '#/components/responses/SubscriptionBadRequest'
       401:
-        $ref: "#/components/responses/SubscriptionUnauthorized"
+        $ref: '#/components/responses/SubscriptionUnauthorized'
       403:
-        $ref: "#/components/responses/SubscriptionForbidden"
+        $ref: '#/components/responses/SubscriptionForbidden'
       404:
-        $ref: "#/components/responses/SubscriptionNotFound"
+        $ref: '#/components/responses/SubscriptionNotFound'
 
 /subscription/v1/subscribers/{subscriber}/subscriptions:
   parameters:
-    - name: subscriber
-      description: ID of the subscriber.
-      in: path
-      required: true
-      schema:
-        type: string
+    - $ref: '#/components/parameters/SubscriberId'
     - name: top
       description: Number of results to retrieve. Defaults to 10.
       in: query
@@ -1218,7 +1309,7 @@ components:
       required: false
       schema:
         type: string
-    - $ref: "#/components/parameters/SubscriptionTenantId"
+    - $ref: '#/components/parameters/SubscriptionTenantId'
   get:
     tags:
       - Subscription
@@ -1234,26 +1325,21 @@ components:
                 results:
                   type: array
                   items:
-                    $ref: "#/components/schemas/MySubscriberSubscriptions"
+                    $ref: '#/components/schemas/MySubscriberSubscriptions'
                 page:
-                  $ref: "#/components/schemas/SubscriptionPage"
+                  $ref: '#/components/schemas/SubscriptionPage'
       400:
-        $ref: "#/components/responses/SubscriptionBadRequest"
+        $ref: '#/components/responses/SubscriptionBadRequest'
       401:
-        $ref: "#/components/responses/SubscriptionUnauthorized"
+        $ref: '#/components/responses/SubscriptionUnauthorized'
       403:
-        $ref: "#/components/responses/SubscriptionForbidden"
+        $ref: '#/components/responses/SubscriptionForbidden'
       404:
-        $ref: "#/components/responses/SubscriptionNotFound"
+        $ref: '#/components/responses/SubscriptionNotFound'
 
 /subscription/v1/subscribers/{subscriber}/types/{type}/channels:
   parameters:
-    - name: subscriber
-      description: ID of the subscriber.
-      in: path
-      required: true
-      schema:
-        type: string
+    - $ref: '#/components/parameters/SubscriberId'
     - name: type
       description: ID of the notification type.
       in: path
@@ -1262,7 +1348,7 @@ components:
         type: string
         minLength: 1
         maxLength: 50
-    - $ref: "#/components/parameters/SubscriptionTenantId"
+    - $ref: '#/components/parameters/SubscriptionTenantId'
   get:
     tags:
       - Subscription
@@ -1277,15 +1363,15 @@ components:
             schema:
               type: array
               items:
-                $ref: "#/components/schemas/SubscriberChannel"
+                $ref: '#/components/schemas/SubscriberChannel'
       400:
-        $ref: "#/components/responses/SubscriptionBadRequest"
+        $ref: '#/components/responses/SubscriptionBadRequest'
       401:
-        $ref: "#/components/responses/SubscriptionUnauthorized"
+        $ref: '#/components/responses/SubscriptionUnauthorized'
       403:
-        $ref: "#/components/responses/SubscriptionForbidden"
+        $ref: '#/components/responses/SubscriptionForbidden'
       404:
-        $ref: "#/components/responses/SubscriptionNotFound"
+        $ref: '#/components/responses/SubscriptionNotFound'
 
 /subscription/v1/subscribers/my-subscriber:
   parameters:
@@ -1295,6 +1381,7 @@ components:
       required: false
       schema:
         type: boolean
+    - $ref: '#/components/parameters/SubscriptionTenantId'
   get:
     tags:
       - Subscription
@@ -1307,8 +1394,8 @@ components:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/MySubscriberDetails"
+              $ref: '#/components/schemas/MySubscriberDetails'
       401:
-        $ref: "#/components/responses/SubscriptionUnauthorized"
+        $ref: '#/components/responses/SubscriptionUnauthorized'
       404:
-        $ref: "#/components/responses/SubscriptionNotFound"
+        $ref: '#/components/responses/SubscriptionNotFound'

@@ -4,6 +4,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import styled from 'styled-components';
 import { RootState } from '@store/index';
 import { FeedbackListTable } from './feedbacksTable';
+import { FeedbackSummary, FeedbackSummaryLoading } from './feedbackSummary';
 import { renderNoItem } from '@components/NoItem';
 import {
   GoabBadge,
@@ -16,9 +17,15 @@ import {
   GoabInput,
   GoabSkeleton,
 } from '@abgov/react-components';
-import { LoadMoreWrapper } from '@components/styled-components';
-import { FeedbackSearchCriteria, getDefaultSearchCriteria } from '@store/feedback/models';
-import { exportFeedbacks, getFeedbackSites, getFeedbacks } from '@store/feedback/actions';
+import { DEFAULT_FEEDBACK_PAGE_SIZE, FeedbackSearchCriteria, getDefaultSearchCriteria } from '@store/feedback/models';
+import {
+  clearFeedbackSummary,
+  exportFeedbacks,
+  getFeedbackSites,
+  getFeedbacks,
+  getFeedbackSummary,
+} from '@store/feedback/actions';
+import { FeedbackPagination } from './feedbackPagination';
 import { ExportDates, FeedbackFilterError, FeedbackFilterErrorWrapper, ProgressWrapper } from '../styled-components';
 import { transformedData } from '../ratings';
 import { FullScreenModalWrapper } from '../styled-components';
@@ -36,38 +43,47 @@ export const FeedbacksList = (): JSX.Element => {
   const exportData = useSelector((state: RootState) => state.feedback.exportData);
   const tenantName = useSelector((state: RootState) => state.tenant?.name);
   const indicator = useSelector((state: RootState) => state.session?.indicator);
-  const next = useSelector((state: RootState) => state.feedback.nextEntries);
+  const feedbackPage = useSelector((state: RootState) => state.feedback.page);
+  const summary = useSelector((state: RootState) => state.feedback.summary);
 
   const [selectedSite, setSelectedSite] = useState('');
   const [searchCriteria, setSearchCriteria] = useState(getDefaultSearchCriteria);
+  const [pageSize, setPageSize] = useState(DEFAULT_FEEDBACK_PAGE_SIZE);
   const [isExport, setIsExport] = useState(false);
   const [showDateError, setShowDateError] = useState(false);
   const [expandView, setExpandView] = useState(false);
+
+  const selectedSiteData = Array.isArray(sites) ? sites.find((s) => s.url === selectedSite) : undefined;
 
   useEffect(() => {
     dispatch(getFeedbackSites());
   }, [dispatch]);
 
   useEffect(() => {
-    if (selectedSite) {
-      const selectedSiteData = sites.find((s) => s.url === selectedSite);
-      dispatch(getFeedbacks(selectedSiteData, searchCriteria));
+    if (selectedSiteData) {
+      // A new site, date range or page size starts again from the first page with a fresh total.
+      dispatch(getFeedbacks(selectedSiteData, searchCriteria, 1, pageSize, true));
     }
-  }, [dispatch, searchCriteria, selectedSite, sites]);
-
-  useEffect(() => {
-    if (selectedSite && searchCriteria.startDate && searchCriteria.endDate) {
-      const selectedSiteData = sites.find((s) => s.url === selectedSite);
-      dispatch(getFeedbacks(selectedSiteData, searchCriteria));
-    }
-  }, [dispatch, searchCriteria, selectedSite, sites]);
+  }, [dispatch, searchCriteria, selectedSiteData, pageSize]);
 
   const isSearchCriteriaValid = (criteria: FeedbackSearchCriteria) =>
     new Date(criteria.startDate) <= new Date(criteria.endDate);
 
-  const onNext = () => {
-    const selectedSiteData = sites.find((s) => s.url === selectedSite);
-    dispatch(getFeedbacks(selectedSiteData, searchCriteria, next));
+  useEffect(() => {
+    if (
+      selectedSiteData &&
+      searchCriteria.startDate &&
+      searchCriteria.endDate &&
+      isSearchCriteriaValid(searchCriteria)
+    ) {
+      dispatch(getFeedbackSummary(selectedSiteData.url, searchCriteria));
+    } else {
+      dispatch(clearFeedbackSummary());
+    }
+  }, [dispatch, searchCriteria, selectedSiteData]);
+
+  const onPage = (page: number) => {
+    dispatch(getFeedbacks(selectedSiteData, searchCriteria, page, pageSize));
   };
 
   useEffect(() => {
@@ -97,17 +113,17 @@ export const FeedbacksList = (): JSX.Element => {
       technicalIssue: obj.value?.technicalIssue,
     }));
   };
-  const renderLoadMoreButton = () => {
-    return (
-      next && (
-        <LoadMoreWrapper>
-          <GoabButton size="compact" type="text" onClick={onNext}>
-            Load more
-          </GoabButton>
-        </LoadMoreWrapper>
-      )
+  const renderPagination = () =>
+    feedbackPage && (
+      <FeedbackPagination
+        page={feedbackPage.page}
+        pageSize={feedbackPage.pageSize}
+        shownCount={feedbacks.length}
+        total={feedbackPage.total}
+        onPage={onPage}
+        onPageSize={setPageSize}
+      />
     );
-  };
 
   const sharedFilterForm = (
     <div>
@@ -195,9 +211,14 @@ export const FeedbacksList = (): JSX.Element => {
             </GoabButton>
           </GoabButtonGroup>
 
+          {summary ? <FeedbackSummary summary={summary} /> : <FeedbackSummaryLoading />}
           {!indicator.show && feedbacks.length === 0 && renderNoItem('feedbacks')}
-          {feedbacks.length > 0 && <FeedbackListTable feedbacks={feedbacks} showDetailsToggle={false} />}
-          {renderLoadMoreButton()}
+          {feedbacks.length > 0 && (
+            <>
+              <FeedbackListTable feedbacks={feedbacks} showDetailsToggle={false} />
+              {renderPagination()}
+            </>
+          )}
         </FullScreenModalWrapper>
       )}
 
@@ -237,18 +258,22 @@ export const FeedbacksList = (): JSX.Element => {
         </div>
       )}
 
-      {!next && indicator.show && (
+      {indicator.show && (
         <ProgressWrapper>
           <GoabCircularProgress visible={indicator.show} size="large" />
         </ProgressWrapper>
       )}
 
+      {!expandView &&
+        selectedSite &&
+        !showDateError &&
+        (summary ? <FeedbackSummary summary={summary} /> : <FeedbackSummaryLoading />)}
       {!indicator.show && selectedSite && feedbacks.length === 0 && renderNoItem('feedbacks')}
 
       {selectedSite && feedbacks.length > 0 && (
         <Visible visible={!expandView}>
           <FeedbackListTable feedbacks={feedbacks} showDetailsToggle={true} />
-          {renderLoadMoreButton()}
+          {renderPagination()}
         </Visible>
       )}
     </section>

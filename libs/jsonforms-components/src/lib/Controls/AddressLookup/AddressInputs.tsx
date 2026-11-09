@@ -1,12 +1,13 @@
 import React from 'react';
 import { Address } from './types';
-import { GoabFormItem, GoabInput, GoabGrid, GoabDropdownItem, GoabDropdown } from '@abgov/react-components-ds1';
+import { GoabFormItem, GoabInput, GoabGrid, GoabDropdownItem } from '@abgov/react-components-ds1';
 import { LabelDiv } from './styled-components';
 import {
   GoabInputOnChangeDetail,
   GoabDropdownOnChangeDetail,
   GoabInputOnBlurDetail,
 } from '@abgov/ui-components-common';
+import { FluidDropdown } from '../../Components/FluidDropdown';
 
 interface AddressInputsProps {
   address: Address;
@@ -108,7 +109,7 @@ export const AddressInputs: React.FC<AddressInputsProps> = ({
         >
           {isAlbertaAddress && <LabelDiv data-testid="address-form-province">Alberta</LabelDiv>}
           {!isAlbertaAddress && (
-            <GoabDropdown
+            <FluidDropdown
               name="subdivisionCode"
               disabled={!enabled}
               testId="address-form-province-dropdown"
@@ -122,7 +123,7 @@ export const AddressInputs: React.FC<AddressInputsProps> = ({
               {provinces.map((w) => (
                 <GoabDropdownItem key={w.value} value={w.value} label={w.label} />
               ))}
-            </GoabDropdown>
+            </FluidDropdown>
           )}
         </GoabFormItem>
         <GoabFormItem label="Country">

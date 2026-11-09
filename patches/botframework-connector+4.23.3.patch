@@ -1,0 +1,48 @@
+diff --git a/node_modules/botframework-connector/lib/auth/botFrameworkClientImpl.js b/node_modules/botframework-connector/lib/auth/botFrameworkClientImpl.js
+index 28d2266..5d4897e 100644
+--- a/node_modules/botframework-connector/lib/auth/botFrameworkClientImpl.js
++++ b/node_modules/botframework-connector/lib/auth/botFrameworkClientImpl.js
+@@ -70,7 +70,7 @@ const botFrameworkClientFetchImpl = (connectorClientOptions) => {
+     });
+     return (input, init) => __awaiter(void 0, void 0, void 0, function* () {
+         const url = z.string().parse(input);
+-        const { body, headers } = z.object({ body: z.string(), headers: z.record(z.string()).optional() }).parse(init);
++        const { body, headers } = z.object({ body: z.string(), headers: z.record(z.string(), z.string()).optional() }).parse(init);
+         const response = yield axiosInstance.post(url, body, {
+             headers,
+         });
+@@ -124,7 +124,7 @@ class BotFrameworkClientImpl {
+                 toUrl: z.string(),
+                 serviceUrl: z.string(),
+                 conversationId: z.string(),
+-                activity: z.record(z.unknown()),
++                activity: z.record(z.string(), z.unknown()),
+             }).parse({
+                 fromBotId,
+                 toBotId,
+diff --git a/node_modules/botframework-connector/lib/auth/userTokenClient.js b/node_modules/botframework-connector/lib/auth/userTokenClient.js
+index 19db079..22b52f8 100644
+--- a/node_modules/botframework-connector/lib/auth/userTokenClient.js
++++ b/node_modules/botframework-connector/lib/auth/userTokenClient.js
+@@ -44,7 +44,7 @@ class UserTokenClient {
+         z.object({
+             appId: z.string(),
+             connectionName: z.string(),
+-            activity: z.record(z.unknown()),
++            activity: z.record(z.string(), z.unknown()),
+         }).parse({
+             appId,
+             connectionName,
+diff --git a/node_modules/botframework-connector/lib/auth/userTokenClientImpl.js b/node_modules/botframework-connector/lib/auth/userTokenClientImpl.js
+index 9ffd499..b3a4ef3 100644
+--- a/node_modules/botframework-connector/lib/auth/userTokenClientImpl.js
++++ b/node_modules/botframework-connector/lib/auth/userTokenClientImpl.js
+@@ -89,7 +89,7 @@ class UserTokenClientImpl extends userTokenClient_1.UserTokenClient {
+     getSignInResource(connectionName, activity, finalRedirect) {
+         return __awaiter(this, void 0, void 0, function* () {
+             z.object({
+-                activity: z.record(z.unknown()),
++                activity: z.record(z.string(), z.unknown()),
+                 connectionName: z.string(),
+             }).parse({
+                 activity,
