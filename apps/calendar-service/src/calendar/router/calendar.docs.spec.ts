@@ -602,7 +602,8 @@ describe('calendar router documented behaviour', () => {
         .send({ start: '2026-11-18T09:00:00-07:00', end: '2026-11-18T10:30:00-07:00' });
 
       expect(res.status).toBe(200);
-      expect(res.body.start).toBe('2026-11-18T09:00:00.000-07:00');
+      // Compare instants: the America/Edmonton offset differs between tzdata releases.
+      expect(DateTime.fromISO(res.body.start).toMillis()).toBe(DateTime.fromISO('2026-11-18T09:00:00-07:00').toMillis());
       expect(eventServiceMock.send).toHaveBeenCalledWith(expect.objectContaining({ name: 'calendar-event-updated' }));
     });
 
