@@ -5,7 +5,6 @@ import {
   AuditRecordDetails,
   AuditService,
   AuditSeverities,
-  BuiltInRetentionClasses,
   toAuditActor,
   User,
 } from '@abgov/adsp-service-sdk';
@@ -20,7 +19,6 @@ export const ValueDefinitionCreatedAuditAction: AuditAction = {
   version: 1,
   category: AuditCategories.Administrative,
   severity: AuditSeverities.Info,
-  retentionClass: BuiltInRetentionClasses.Compliance,
   resourceType: VALUE_DEFINITION_RESOURCE_TYPE,
   description: 'A value definition is created.',
 };
@@ -30,7 +28,6 @@ export const ValueDefinitionUpdatedAuditAction: AuditAction = {
   version: 1,
   category: AuditCategories.Administrative,
   severity: AuditSeverities.Info,
-  retentionClass: BuiltInRetentionClasses.Compliance,
   resourceType: VALUE_DEFINITION_RESOURCE_TYPE,
   description: 'A value definition schema or settings are updated.',
 };
@@ -40,7 +37,6 @@ export const ValueDefinitionDeletedAuditAction: AuditAction = {
   version: 1,
   category: AuditCategories.Administrative,
   severity: AuditSeverities.Warning,
-  retentionClass: BuiltInRetentionClasses.Compliance,
   resourceType: VALUE_DEFINITION_RESOURCE_TYPE,
   description: 'A value definition is deleted. Stored values are not deleted.',
 };
@@ -50,7 +46,6 @@ export const ServiceMetricRollupTriggeredAuditAction: AuditAction = {
   version: 1,
   category: AuditCategories.Runtime,
   severity: AuditSeverities.Info,
-  retentionClass: BuiltInRetentionClasses.Standard,
   resourceType: SERVICE_METRIC_ROLLUP_RESOURCE_TYPE,
   description: 'A service metric rollup is triggered manually through the API.',
 };

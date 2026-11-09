@@ -1,4 +1,4 @@
-import { adspId, AuditService, User } from '@abgov/adsp-service-sdk';
+import { adspId, AuditService, resolveRetentionClass, User } from '@abgov/adsp-service-sdk';
 import { Logger } from 'winston';
 import {
   auditValue,
@@ -38,13 +38,17 @@ describe('value audit', () => {
     it('classifies definition changes as administrative with compliance retention', () => {
       [ValueDefinitionCreatedAuditAction, ValueDefinitionUpdatedAuditAction, ValueDefinitionDeletedAuditAction].forEach(
         (action) => {
+          expect(resolveRetentionClass(action)).toBe('compliance');
           expect(action).toMatchObject({
             category: 'administrative',
-            retentionClass: 'compliance',
             resourceType: 'value-definition',
           });
         },
       );
+    });
+
+    it('does not set a retention class on any action, so the audit service derives it from the category', () => {
+      expect(ValueAuditActions.filter((action) => 'retentionClass' in action)).toEqual([]);
     });
 
     it('uses warning severity only for deletion', () => {
@@ -54,10 +58,10 @@ describe('value audit', () => {
     });
 
     it('classifies manual rollup as runtime with standard retention', () => {
+      expect(resolveRetentionClass(ServiceMetricRollupTriggeredAuditAction)).toBe('standard');
       expect(ServiceMetricRollupTriggeredAuditAction).toMatchObject({
         category: 'runtime',
         severity: 'info',
-        retentionClass: 'standard',
         resourceType: 'service-metric-rollup',
       });
     });

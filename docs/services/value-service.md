@@ -95,7 +95,7 @@ A rollup can also be run on demand with `POST /value/v1/service-metric-rollups/r
 
 ## Audit
 
-Value service records audit events for administrative changes through the [audit service](audit-service.md), under the `value-service` namespace. Each record includes the actor and the affected resource.
+Value service records audit events for administrative changes through the [audit service](audit-service.md), under the `value-service` namespace. Each record includes the actor and the affected resource. Actions do not set a retention class; the audit service derives it from the category (`compliance` for administrative and data-access actions, `standard` for runtime actions), as shown in the table.
 
 | Action | Category | Severity | Retention | Recorded when |
 |---|---|---|---|---|
