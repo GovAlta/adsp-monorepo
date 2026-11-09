@@ -154,10 +154,6 @@ export const readSummary =
   (valueService: ValueService): RequestHandler =>
   async (req, res, next) => {
     try {
-      if (!canRead(req.user, req.tenant, ServiceRoles.FeedbackReader)) {
-        throw new UnauthorizedError('User not authorized to read feedback summary');
-      }
-
       const queryParameters: FeedbackSummaryQueryParameters = {
         site: req.query.site as string,
         start: req.query.start as string | undefined,
