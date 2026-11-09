@@ -1,7 +1,11 @@
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
+import { Server } from '@modelcontextprotocol/sdk/server/index.js';
+import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
+import { randomUUID } from 'crypto';
 import * as fs from 'fs';
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'fs';
+import type { Express } from 'express';
 import type { Server as HttpServer } from 'http';
 import type { AddressInfo } from 'net';
 import { tmpdir } from 'os';
@@ -13,29 +17,51 @@ import {
   TOOL_CONTRACT,
   TRANSPORT_EQUIVALENCE_CALLS,
 } from './fixtures/toolContract';
-import { createMcpHttpApp, McpHttpApp } from './http';
+import { createMcpHttpApp } from './http';
 import { createAdspMcpServer } from './server';
 
-const SESSION_TTL_MS = 30 * 60 * 1000;
-
 interface RunningApp {
-  mcpApp: McpHttpApp;
   httpServer: HttpServer;
   endpoint: URL;
 }
 
-async function listen(mcpApp: McpHttpApp): Promise<RunningApp> {
+async function listen(app: Express): Promise<RunningApp> {
   const httpServer = await new Promise<HttpServer>((resolveListening) => {
-    const server = mcpApp.app.listen(0, '127.0.0.1', () => resolveListening(server));
+    const server = app.listen(0, '127.0.0.1', () => resolveListening(server));
   });
   const { port } = httpServer.address() as AddressInfo;
-  return { mcpApp, httpServer, endpoint: new URL(`http://127.0.0.1:${port}/mcp`) };
+  return { httpServer, endpoint: new URL(`http://127.0.0.1:${port}/mcp`) };
 }
 
-async function stop({ mcpApp, httpServer }: RunningApp): Promise<void> {
-  mcpApp.close();
+async function stop({ httpServer }: RunningApp): Promise<void> {
   httpServer.closeAllConnections();
   await new Promise((resolveClosed) => httpServer.close(resolveClosed));
+}
+
+const INITIALIZE_REQUEST = {
+  jsonrpc: '2.0',
+  id: 1,
+  method: 'initialize',
+  params: { protocolVersion: '2025-06-18', capabilities: {}, clientInfo: { name: 'test-client', version: '0.0.1' } },
+};
+
+const TOOLS_LIST_REQUEST = { jsonrpc: '2.0', id: 2, method: 'tools/list', params: {} };
+
+function postMcp(endpoint: URL, body: unknown, init: RequestInit = {}): Promise<Response> {
+  return fetch(endpoint, {
+    ...init,
+    method: 'POST',
+    headers: { 'content-type': 'application/json', accept: 'application/json, text/event-stream', ...init.headers },
+    body: JSON.stringify(body),
+  });
+}
+
+async function waitFor(condition: () => boolean, timeoutMs = 2000): Promise<void> {
+  const deadline = Date.now() + timeoutMs;
+  while (!condition()) {
+    if (Date.now() > deadline) throw new Error(`condition not met within ${timeoutMs} ms`);
+    await new Promise((resolveTick) => setTimeout(resolveTick, 10));
+  }
 }
 
 async function connectHttpClient(endpoint: URL): Promise<{ client: Client; transport: StreamableHTTPClientTransport }> {
@@ -51,7 +77,7 @@ describe('HTTP transport', () => {
   let inMemoryClient: Client;
 
   beforeAll(async () => {
-    running = await listen(createMcpHttpApp({ docsRoot: FIXTURE_DOCS_ROOT, sessionTtlMs: SESSION_TTL_MS }));
+    running = await listen(createMcpHttpApp({ docsRoot: FIXTURE_DOCS_ROOT }));
     ({ client } = await connectHttpClient(running.endpoint));
     inMemoryClient = await connectInMemoryClient(createAdspMcpServer({ docsRoot: FIXTURE_DOCS_ROOT }));
   });
@@ -118,9 +144,9 @@ describe('HTTP startup', () => {
   });
 
   it('builds the docs index before the first request', async () => {
-    const mcpApp = createMcpHttpApp({ docsRoot, sessionTtlMs: SESSION_TTL_MS });
+    const app = createMcpHttpApp({ docsRoot });
     const readsBeforeListening = countDocsReads();
-    running = await listen(mcpApp);
+    running = await listen(app);
     const { client } = await connectHttpClient(running.endpoint);
     await client.callTool({ name: 'read_adsp_doc', arguments: { path: 'services/event-service.md' } });
     await client.close();
@@ -129,39 +155,93 @@ describe('HTTP startup', () => {
   });
 });
 
-describe('HTTP sessions', () => {
+describe('HTTP CORS', () => {
   let running: RunningApp;
-  let setIntervalSpy: jest.SpyInstance;
 
   beforeEach(async () => {
-    setIntervalSpy = jest.spyOn(global, 'setInterval');
-    running = await listen(createMcpHttpApp({ docsRoot: FIXTURE_DOCS_ROOT, sessionTtlMs: -1 }));
+    running = await listen(createMcpHttpApp({ docsRoot: FIXTURE_DOCS_ROOT }));
   });
 
-  afterEach(async () => {
-    setIntervalSpy.mockRestore();
-    await stop(running);
-  });
+  afterEach(() => stop(running));
 
   it('answers a CORS preflight with 204', async () => {
     const response = await fetch(running.endpoint, { method: 'OPTIONS' });
 
     expect(response.status).toBe(204);
   });
+});
 
-  it.each(['GET', 'DELETE'])('rejects %s /mcp without a known session with 400', async (method) => {
-    const response = await fetch(running.endpoint, { method, headers: { 'mcp-session-id': 'unknown-session' } });
+describe('stateless HTTP', () => {
+  let running: RunningApp;
 
-    expect(response.status).toBe(400);
+  beforeEach(async () => {
+    running = await listen(createMcpHttpApp({ docsRoot: FIXTURE_DOCS_ROOT }));
   });
 
-  it('reclaims a session idle longer than the TTL', async () => {
-    const { client } = await connectHttpClient(running.endpoint);
-    const runIdleSweep = setIntervalSpy.mock.calls[0][0] as () => void;
+  afterEach(async () => {
+    jest.restoreAllMocks();
+    await stop(running);
+  });
 
-    runIdleSweep();
+  it('sends no Mcp-Session-Id header on initialize', async () => {
+    const response = await postMcp(running.endpoint, INITIALIZE_REQUEST);
 
-    await expect(client.listTools()).rejects.toThrow('Server not initialized');
-    await client.close();
+    expect(response.headers.get('mcp-session-id')).toBeNull();
+  });
+
+  it('answers initialize with a JSON body', async () => {
+    const response = await postMcp(running.endpoint, INITIALIZE_REQUEST);
+
+    expect(response.headers.get('content-type')).toMatch(/^application\/json/);
+  });
+
+  it('answers tools/list without a prior initialize on this process', async () => {
+    const response = await postMcp(running.endpoint, TOOLS_LIST_REQUEST);
+    const body = await response.json();
+
+    expect({ status: response.status, toolCount: body.result?.tools.length }).toEqual({ status: 200, toolCount: 6 });
+  });
+
+  it('ignores an Mcp-Session-Id header from an earlier stateful session', async () => {
+    const response = await postMcp(running.endpoint, TOOLS_LIST_REQUEST, { headers: { 'mcp-session-id': randomUUID() } });
+
+    expect(response.status).toBe(200);
+  });
+
+  it('closes the transport and server when the response closes', async () => {
+    const transportClose = jest.spyOn(StreamableHTTPServerTransport.prototype, 'close');
+    const serverClose = jest.spyOn(Server.prototype, 'close');
+
+    await (await postMcp(running.endpoint, TOOLS_LIST_REQUEST)).text();
+    await waitFor(() => transportClose.mock.calls.length > 0 && serverClose.mock.calls.length > 0);
+
+    expect([transportClose, serverClose]).toEqual([expect.anything(), expect.anything()]);
+  });
+
+  it('closes the transport and server when the client disconnects mid-request', async () => {
+    const handleRequest = jest
+      .spyOn(StreamableHTTPServerTransport.prototype, 'handleRequest')
+      .mockImplementationOnce(() => new Promise(() => undefined));
+    const transportClose = jest.spyOn(StreamableHTTPServerTransport.prototype, 'close');
+    const serverClose = jest.spyOn(Server.prototype, 'close');
+    const abort = new AbortController();
+
+    const pending = postMcp(running.endpoint, TOOLS_LIST_REQUEST, { signal: abort.signal }).catch(() => undefined);
+    await waitFor(() => handleRequest.mock.calls.length > 0);
+    abort.abort();
+    await pending;
+
+    await expect(waitFor(() => transportClose.mock.calls.length > 0 && serverClose.mock.calls.length > 0)).resolves.toBeUndefined();
+  });
+});
+
+describe('stateless HTTP startup', () => {
+  it('does not schedule an idle-session sweep', () => {
+    const setIntervalSpy = jest.spyOn(global, 'setInterval');
+
+    createMcpHttpApp({ docsRoot: FIXTURE_DOCS_ROOT });
+
+    expect(setIntervalSpy).not.toHaveBeenCalled();
+    setIntervalSpy.mockRestore();
   });
 });
