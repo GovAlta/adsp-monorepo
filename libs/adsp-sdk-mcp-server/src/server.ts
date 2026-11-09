@@ -1,31 +1,50 @@
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
-import { join } from 'path';
+import { join, resolve } from 'path';
 import { DocsRepository } from './docs/docsRepository';
 import { createConfigurationSchemaTools } from './tools/registerConfigurationSchemaTool';
 import { createDocsTools } from './tools/registerDocsTools';
 import { createQuickstartTool } from './tools/registerQuickstartTool';
 import { createServiceRolesTools } from './tools/registerServiceRolesTool';
 import { createSdkTools } from './tools/registerSdkTools';
+import { LiveToolDefinition, ToolDefinition } from './tools/types';
 
 export interface CreateAdspMcpServerOptions {
   /** Root directory of bundled ADSP docs. Defaults to the assets copied alongside the built package. */
   docsRoot?: string;
 }
 
-export function createAdspMcpServer(options: CreateAdspMcpServerOptions = {}): Server {
-  // Compiled output places this file under dist/.../src/, while the docs asset copy lands one level up at dist/.../assets/docs.
-  const docsRoot = options.docsRoot ?? join(__dirname, '..', 'assets', 'docs');
-  const docs = new DocsRepository(docsRoot);
+export interface AdspMcpTools {
+  tools: (ToolDefinition | LiveToolDefinition)[];
+  toolsByName: Map<string, ToolDefinition | LiveToolDefinition>;
+}
+
+// Compiled output places this file under dist/.../src/, while the docs asset copy lands one level up at dist/.../assets/docs.
+const DEFAULT_DOCS_ROOT = join(__dirname, '..', 'assets', 'docs');
+
+const toolsByDocsRoot = new Map<string, AdspMcpTools>();
+
+export function loadAdspMcpTools(options: CreateAdspMcpServerOptions = {}): AdspMcpTools {
+  const docsRoot = resolve(options.docsRoot ?? DEFAULT_DOCS_ROOT);
+  const cached = toolsByDocsRoot.get(docsRoot);
+  if (cached) {
+    return cached;
+  }
 
   const tools = [
-    ...createDocsTools(docs),
+    ...createDocsTools(new DocsRepository(docsRoot)),
     ...createSdkTools(),
     ...createQuickstartTool(),
     ...createServiceRolesTools(),
     ...createConfigurationSchemaTools(),
   ];
-  const toolsByName = new Map(tools.map((tool) => [tool.name, tool]));
+  const loaded = { tools, toolsByName: new Map(tools.map((tool) => [tool.name, tool])) };
+  toolsByDocsRoot.set(docsRoot, loaded);
+  return loaded;
+}
+
+export function createAdspMcpServer(options: CreateAdspMcpServerOptions = {}): Server {
+  const { tools, toolsByName } = loadAdspMcpTools(options);
 
   // Deliberately using the low-level Server (McpServer is recommended for typical cases) rather than an oversight:
   // this workspace hoists multiple physical copies of zod (root zod@3.x plus nested zod@4.x/3.x under unrelated
