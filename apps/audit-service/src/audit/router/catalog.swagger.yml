@@ -192,7 +192,6 @@ components:
         - version
         - category
         - severity
-        - retentionClass
         - captureChangeSet
         - forwardToSiem
       properties:
@@ -210,7 +209,10 @@ components:
           enum: [info, warning, critical]
         retentionClass:
           type: string
-          description: Named retention class; custom classes are allowed. Never a duration.
+          description: >-
+            Named retention class; custom classes are allowed. Never a duration. Optional: when omitted, the class
+            is derived from the category (administrative and data-access: compliance, security: security,
+            runtime and diagnostic: standard). A class set on the action overrides the category default.
         description:
           type: string
         resourceType:

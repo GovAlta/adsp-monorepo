@@ -313,10 +313,16 @@ separate. Only trusted deployment identities should publish catalogs; Configurat
 permissions do not enforce application-level write isolation.
 
 Each definition requires a positive integer `version`, `category` (`administrative`, `runtime`,
-`security`, `data-access`, `diagnostic`), `severity` (`info`, `warning`, `critical`) and a kebab-case
-`retentionClass`. Optional fields include `description`, `resourceType`, `metadataSchema`,
+`security`, `data-access`, `diagnostic`) and `severity` (`info`, `warning`, `critical`). Optional
+fields include `retentionClass`, `description`, `resourceType`, `metadataSchema`,
 `captureChangeSet` and `forwardToSiem`. Both flags default to false; SIEM forwarding is a separate
 capability. Shared Core definitions win over tenant definitions with the same action name.
+
+When `retentionClass` (a kebab-case name, never a duration) is omitted, it is derived from the
+category: `administrative` and `data-access` use `compliance`, `security` uses `security`, and
+`runtime` and `diagnostic` use `standard`. A `retentionClass` set on the action overrides the
+category default, including custom classes. The class is resolved when the event is written and
+stored on the event.
 
 The `diagnostic` category is for debugging-oriented records (as opposed to audit records of who did
 what). Applications register diagnostic actions in their own catalog like any other category, and

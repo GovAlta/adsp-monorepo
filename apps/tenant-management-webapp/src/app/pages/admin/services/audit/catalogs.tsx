@@ -2,6 +2,7 @@ import React, { FunctionComponent, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@store/index';
 import { fetchAuditConfiguration } from '@store/audit/actions';
+import { resolveRetentionClass } from '@store/audit/models';
 import type { AuditAction } from '@store/audit/models';
 import DataTable from '@components/DataTable';
 import { PageIndicator } from '@components/Indicator';
@@ -19,7 +20,7 @@ const ActionRow: FunctionComponent<{ action: AuditAction }> = ({ action }) => {
         <td data-testid="audit-action-name">{action.name}</td>
         <td>{action.category}</td>
         <td>{action.severity}</td>
-        <td>{action.retentionClass}</td>
+        <td>{resolveRetentionClass(action)}</td>
         <td>{yesNo(action.forwardToSiem)}</td>
         <td>{yesNo(action.captureChangeSet)}</td>
         <td>
