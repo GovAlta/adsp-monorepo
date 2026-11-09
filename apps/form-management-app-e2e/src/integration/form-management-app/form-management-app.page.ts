@@ -15,12 +15,16 @@ class FormManagementAppPage {
     return cy.get('goa-app-header');
   }
 
+  dashboardHeading() {
+    return cy.get('main h1');
+  }
+
   formDefinitionsList() {
-    return cy.get('table, [data-testid="definitions-table"], goa-table').first();
+    return cy.get('main table').first();
   }
 
   formFiltersContent() {
-    return cy.get('main, [data-testid="filters-content"]').first();
+    return cy.contains('main h1', 'Form Filters');
   }
 
   overviewContent() {

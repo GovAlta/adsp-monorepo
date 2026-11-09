@@ -7,9 +7,9 @@ Feature: Form management application
     Then the user views the Keycloak login form
 
   @regression
-  Scenario: As an authenticated form admin, I can see the form management overview page
+  Scenario: As an authenticated form admin, I can see the form management dashboard page
     Given an authenticated user is logged into the form management app for tenant "autotest"
-    Then the user views the form management overview page
+    Then the user views the form management dashboard page
 
   @regression
   Scenario: As an authenticated form admin, I can navigate to the forms definitions list
