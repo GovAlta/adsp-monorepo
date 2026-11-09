@@ -24,9 +24,22 @@ function createStatelessPostHandler(options: CreateAdspMcpServerOptions): expres
       server.close();
     });
 
-    await server.connect(transport);
-    await transport.handleRequest(req, res, req.body);
+    try {
+      await server.connect(transport);
+      await transport.handleRequest(req, res, req.body);
+    } catch (err) {
+      console.error('[adsp-sdk-mcp-server] Failed to handle MCP request:', err);
+      sendInternalError(res);
+    }
   };
+}
+
+function sendInternalError(res: express.Response): void {
+  if (res.headersSent) {
+    res.end();
+    return;
+  }
+  res.status(500).json({ jsonrpc: '2.0', error: { code: -32603, message: 'Internal server error' }, id: null });
 }
 
 function methodNotAllowed(_req: express.Request, res: express.Response): void {

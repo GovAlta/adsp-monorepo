@@ -18,6 +18,7 @@ import {
   TRANSPORT_EQUIVALENCE_CALLS,
 } from './fixtures/toolContract';
 import { createMcpHttpApp } from './http';
+import * as quickstartModule from './tools/registerQuickstartTool';
 import { createAdspMcpServer } from './server';
 
 interface RunningApp {
@@ -252,6 +253,121 @@ describe('HTTP methods other than POST', () => {
       allow: 'POST',
       body: { jsonrpc: '2.0', error: { code: -32000, message: 'Method not allowed.' }, id: null },
     });
+  });
+});
+
+describe('HTTP request failures', () => {
+  const INTERNAL_ERROR_BODY = { jsonrpc: '2.0', error: { code: -32603, message: 'Internal server error' }, id: null };
+  let running: RunningApp;
+  let unhandledRejection: jest.Mock;
+
+  beforeEach(async () => {
+    unhandledRejection = jest.fn();
+    process.on('unhandledRejection', unhandledRejection);
+    jest.spyOn(console, 'error').mockImplementation(() => undefined);
+    running = await listen(createMcpHttpApp({ docsRoot: FIXTURE_DOCS_ROOT }));
+  });
+
+  afterEach(async () => {
+    await new Promise((resolveTick) => setImmediate(resolveTick));
+    process.off('unhandledRejection', unhandledRejection);
+    jest.restoreAllMocks();
+    await stop(running);
+
+    expect(unhandledRejection).not.toHaveBeenCalled();
+  });
+
+  it('returns a JSON-RPC 500 when handling the request throws', async () => {
+    jest.spyOn(StreamableHTTPServerTransport.prototype, 'handleRequest').mockRejectedValueOnce(new Error('boom'));
+
+    const response = await postMcp(running.endpoint, TOOLS_LIST_REQUEST, { signal: AbortSignal.timeout(2000) });
+
+    expect({ status: response.status, body: await response.json() }).toEqual({ status: 500, body: INTERNAL_ERROR_BODY });
+  });
+
+  it('keeps serving after a request fails', async () => {
+    jest.spyOn(StreamableHTTPServerTransport.prototype, 'handleRequest').mockRejectedValueOnce(new Error('boom'));
+    await postMcp(running.endpoint, TOOLS_LIST_REQUEST, { signal: AbortSignal.timeout(2000) }).catch(() => undefined);
+
+    const response = await postMcp(running.endpoint, TOOLS_LIST_REQUEST, { signal: AbortSignal.timeout(2000) });
+
+    expect(response.status).toBe(200);
+  });
+
+  it('does not write an error body once headers are sent', async () => {
+    jest.spyOn(StreamableHTTPServerTransport.prototype, 'handleRequest').mockImplementationOnce(async (_req, res) => {
+      (res as unknown as { writeHead(status: number): void }).writeHead(200);
+      throw new Error('failed after headers');
+    });
+
+    const response = await postMcp(running.endpoint, TOOLS_LIST_REQUEST, { signal: AbortSignal.timeout(2000) });
+
+    expect({ status: response.status, body: await response.text() }).toEqual({ status: 200, body: '' });
+  });
+
+  it('answers a malformed JSON body without crashing', async () => {
+    const malformed = await fetch(running.endpoint, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', accept: 'application/json, text/event-stream' },
+      body: '{not json',
+    });
+    const followUp = await postMcp(running.endpoint, TOOLS_LIST_REQUEST);
+
+    expect([malformed.status, followUp.status]).toEqual([400, 200]);
+  });
+});
+
+describe('HTTP tool handler failures', () => {
+  let docsRoot: string;
+  let running: RunningApp;
+  let unhandledRejection: jest.Mock;
+
+  beforeEach(async () => {
+    unhandledRejection = jest.fn();
+    process.on('unhandledRejection', unhandledRejection);
+    docsRoot = mkdtempSync(join(tmpdir(), 'adsp-failing-tool-'));
+    mkdirSync(join(docsRoot, 'services'));
+    writeFileSync(join(docsRoot, 'services', 'event-service.md'), '---\ntitle: Event service\n---\n\nRoutes events.');
+    jest.spyOn(quickstartModule, 'createQuickstartTool').mockReturnValue([
+      {
+        name: 'get_platform_quickstart',
+        description: 'Quickstart that fails.',
+        inputSchema: { type: 'object' },
+        handler: () => {
+          throw new Error('handler failed');
+        },
+      },
+    ]);
+    running = await listen(createMcpHttpApp({ docsRoot }));
+  });
+
+  afterEach(async () => {
+    await new Promise((resolveTick) => setImmediate(resolveTick));
+    process.off('unhandledRejection', unhandledRejection);
+    jest.restoreAllMocks();
+    await stop(running);
+    rmSync(docsRoot, { recursive: true, force: true });
+
+    expect(unhandledRejection).not.toHaveBeenCalled();
+  });
+
+  it('returns a JSON-RPC error when a tool handler throws', async () => {
+    const { client } = await connectHttpClient(running.endpoint);
+
+    const failure = await callForContract(client, { name: 'get_platform_quickstart', arguments: {} });
+    await client.close();
+
+    expect(failure).toEqual({ error: { code: -32603, message: 'MCP error -32603: handler failed' } });
+  });
+
+  it('keeps serving tool calls after a tool handler throws', async () => {
+    const { client } = await connectHttpClient(running.endpoint);
+    await callForContract(client, { name: 'get_platform_quickstart', arguments: {} });
+
+    const result = await client.callTool({ name: 'search_adsp_docs', arguments: { query: 'event' } });
+    await client.close();
+
+    expect(result.isError).toBeUndefined();
   });
 });
 
