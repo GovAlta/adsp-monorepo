@@ -3,9 +3,9 @@ module.exports = {
   info: {
     title: 'Dashboard metrics',
     version: '0.0.0',
-    description: '',
+    description: 'Internal service that collects daily platform usage metrics for the ADSP dashboard.',
   },
-  tags: [],
+  tags: [{ name: 'Metrics', description: 'API to read collected platform usage metrics.' }],
   components: {
     securitySchemes: {
       accessToken: {
