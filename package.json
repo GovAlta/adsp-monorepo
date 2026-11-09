@@ -104,6 +104,7 @@
     "express-validator": "^6.14.0",
     "fast-json-patch": "^3.1.1",
     "fast-xml-builder": "1.1.7",
+    "file-type": "^21.3.4",
     "flat": "^5.0.2",
     "handlebars": "^4.7.10",
     "hasha": "^5.2.0",

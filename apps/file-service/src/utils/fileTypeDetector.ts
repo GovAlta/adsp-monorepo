@@ -1,4 +1,5 @@
-import * as detect from 'detect-file-type';
+import { fileTypeFromBuffer } from 'file-type';
+import { extname } from 'path';
 import { Readable } from 'stream';
 import { Logger } from 'winston';
 
@@ -7,13 +8,56 @@ interface CustomConcatStream {
   fileType: { mime: string; ext: string };
 }
 
+// Deliberately excludes html and svg, which must not be served back as renderable content.
+const TEXT_MIME_TYPES: Record<string, string> = {
+  txt: 'text/plain',
+  log: 'text/plain',
+  csv: 'text/csv',
+  tsv: 'text/tab-separated-values',
+  json: 'application/json',
+  xml: 'application/xml',
+  md: 'text/markdown',
+};
+
+const TEXT_SAMPLE_SIZE = 8192;
+
+const isText = (buffer: Buffer): boolean => {
+  if (!buffer.length) {
+    return false;
+  }
+
+  const sample = buffer.subarray(0, TEXT_SAMPLE_SIZE);
+  if (sample.includes(0)) {
+    return false;
+  }
+
+  try {
+    // stream: true tolerates a multi-byte character split by the sample boundary.
+    new TextDecoder('utf-8', { fatal: true }).decode(sample, { stream: true });
+    return true;
+  } catch {
+    return false;
+  }
+};
+
 export class FileTypeDetector {
   private content: Readable;
   private logger: Logger;
+  private filename?: string;
 
-  constructor(logger: Logger, content: Readable) {
+  constructor(logger: Logger, content: Readable, filename?: string) {
     this.content = content;
     this.logger = logger;
+    this.filename = filename;
+  }
+
+  private detectText(buffer: Buffer): { mime: string; ext: string } | undefined {
+    const ext = extname(this.filename ?? '')
+      .slice(1)
+      .toLowerCase();
+    const mime = TEXT_MIME_TYPES[ext];
+
+    return mime && isText(buffer) ? { mime, ext } : undefined;
   }
 
   async detect() {
@@ -22,6 +66,7 @@ export class FileTypeDetector {
     const response = (await this.createCustomConcatStream(this.content)) as CustomConcatStream;
     const fileType = response.fileType;
 
+    console.log('FILE TYPE ===', fileType);
     const end = Date.now();
 
     this.logger.debug('File type as determined: ' + fileType?.mime);
@@ -36,34 +81,28 @@ export class FileTypeDetector {
         read() {},
       });
 
-      let fileType;
+      const chunks: Buffer[] = [];
 
       const onData = (data) => {
-        if (customStream.readableLength === 0) {
-          let accumulatedData = Buffer.alloc(0); // Start with an empty buffer
-          accumulatedData = Buffer.concat([accumulatedData, data]);
-
-          detect.fromBuffer(accumulatedData, (err, result) => {
-            if (err) {
-              console.error(err);
-              reject(err);
-            }
-
-            fileType = result;
-          });
-        }
-
+        chunks.push(data);
         customStream.push(data);
       };
 
       readableStream.on('data', onData);
 
       // Resolve the promise when the concatStream operation is complete
-      readableStream.on('end', () => {
+      readableStream.on('end', async () => {
         customStream.push(null); // Signal the end of the readable stream
-        const response: CustomConcatStream = { fileStream: customStream, fileType: fileType };
         readableStream.removeListener('data', onData);
-        resolve(response);
+
+        try {
+          // Archive-based formats (docx, xlsx, ...) need entries beyond the first chunk to be identified.
+          const buffer = Buffer.concat(chunks);
+          const fileType = (await fileTypeFromBuffer(buffer)) ?? this.detectText(buffer);
+          resolve({ fileStream: customStream, fileType } as CustomConcatStream);
+        } catch (err) {
+          reject(err);
+        }
       });
 
       // Handle any errors

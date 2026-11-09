@@ -1,4 +1,5 @@
 import { AdspId, isAllowedUser, User } from '@abgov/adsp-service-sdk';
+import { extname } from 'path';
 import { UnauthorizedError, InvalidOperationError, InvalidValueError } from '@core-services/core-common';
 import { Readable } from 'stream';
 import { File, FileRecord, NewFile, ServiceUserRoles, UserInfo } from '../types';
@@ -48,11 +49,20 @@ export class FileEntity implements File {
       },
     });
 
-    const fileTypeDetector = new FileTypeDetector(logger, content);
+    const fileTypeDetector = new FileTypeDetector(logger, content, entity.filename);
     const result = await fileTypeDetector.detect();
 
-    if (!type.allowedFileTypes.includes(result.fileType.ext)) {
-      throw new InvalidValueError(`file type`, `Invalid file type extension`);
+    const extension =
+      result.fileType?.ext ??
+      extname(entity.filename ?? '')
+        .slice(1)
+        .toLowerCase();
+
+    //The extension return from the file type library does not have a period and
+    //the stored files can prefix with a period
+    const periodExtension = `.${extension}`;
+    if (type.allowedFileTypes?.length > 0 && !type.allowedFileTypes.includes(periodExtension || extension)) {
+      throw new InvalidValueError(`file type`, `Invalid file type extension: ${periodExtension}`);
     }
 
     if (result.fileType?.mime) {
