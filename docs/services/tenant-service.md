@@ -1,7 +1,6 @@
 ---
 layout: page
 title: Tenant service
-nav_order: 1
 parent: Services
 ---
 

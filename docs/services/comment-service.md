@@ -1,7 +1,6 @@
 ---
 layout: page
 title: Comment service
-nav_order: 16
 parent: Services
 ---
 

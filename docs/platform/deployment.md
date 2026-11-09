@@ -1,7 +1,6 @@
 ---
 layout: page
 title: Platform deployment
-nav_order: 7
 parent: Platform development
 ---
 

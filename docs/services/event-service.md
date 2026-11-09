@@ -1,7 +1,6 @@
 ---
 layout: page
 title: Event service
-nav_order: 5
 parent: Services
 ---
 

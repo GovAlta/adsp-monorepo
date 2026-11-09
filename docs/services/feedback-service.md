@@ -1,7 +1,6 @@
 ---
 layout: page
 title: Feedback service
-nav_order: 18
 parent: Services
 ---
 

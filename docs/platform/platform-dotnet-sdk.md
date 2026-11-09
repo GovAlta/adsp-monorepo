@@ -1,7 +1,6 @@
 ---
 layout: page
 title: Service SDK (.NET)
-nav_order: 2
 parent: Platform development
 ---
 
