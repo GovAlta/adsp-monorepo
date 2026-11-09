@@ -81,6 +81,12 @@ export const addAdspComponentsPages = (tenantName: string) => {
       url: `${prefix}/conversation`,
       testId: 'adspConversation',
     },
+    {
+      id: 'adspFileDownload',
+      name: 'File download',
+      url: `${prefix}/file-download`,
+      testId: 'adspFileDownload',
+    },
   ];
 
   return adspComponentsPages;

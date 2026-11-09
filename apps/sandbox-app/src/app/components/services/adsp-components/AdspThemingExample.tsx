@@ -40,7 +40,7 @@ const SECTION_LEVEL = `<AdspThemeProvider
   ...
 </AdspThemeProvider>`;
 
-const COMPONENT_LEVEL = `<AdspGoACalendar
+const COMPONENT_LEVEL = `<ADSPCalendar
   client={client}
   calendar="my-calendar"
   themeOverrides={{ eventBackground: '#6a1b9a' }}
