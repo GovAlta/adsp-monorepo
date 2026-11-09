@@ -235,6 +235,26 @@ describe('stateless HTTP', () => {
   });
 });
 
+describe('HTTP methods other than POST', () => {
+  let running: RunningApp;
+
+  beforeAll(async () => {
+    running = await listen(createMcpHttpApp({ docsRoot: FIXTURE_DOCS_ROOT }));
+  });
+
+  afterAll(() => stop(running));
+
+  it.each(['GET', 'DELETE'])('%s /mcp returns 405 with Allow: POST and a JSON-RPC error', async (method) => {
+    const response = await fetch(running.endpoint, { method });
+
+    expect({ status: response.status, allow: response.headers.get('allow'), body: await response.json() }).toEqual({
+      status: 405,
+      allow: 'POST',
+      body: { jsonrpc: '2.0', error: { code: -32000, message: 'Method not allowed.' }, id: null },
+    });
+  });
+});
+
 describe('stateless HTTP startup', () => {
   it('does not schedule an idle-session sweep', () => {
     const setIntervalSpy = jest.spyOn(global, 'setInterval');

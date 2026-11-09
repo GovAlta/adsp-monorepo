@@ -29,6 +29,13 @@ function createStatelessPostHandler(options: CreateAdspMcpServerOptions): expres
   };
 }
 
+function methodNotAllowed(_req: express.Request, res: express.Response): void {
+  res
+    .status(405)
+    .set('Allow', 'POST')
+    .json({ jsonrpc: '2.0', error: { code: -32000, message: 'Method not allowed.' }, id: null });
+}
+
 export function createMcpHttpApp(options: CreateAdspMcpServerOptions = {}): express.Express {
   loadAdspMcpTools(options);
 
@@ -41,6 +48,8 @@ export function createMcpHttpApp(options: CreateAdspMcpServerOptions = {}): expr
   });
 
   app.post('/mcp', createStatelessPostHandler(options));
+  app.get('/mcp', methodNotAllowed);
+  app.delete('/mcp', methodNotAllowed);
 
   return app;
 }
