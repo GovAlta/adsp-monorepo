@@ -15,7 +15,15 @@
 // Every click is logged with what the review reported and what the form resolved it to, so a click
 // that goes nowhere can be attributed to one side or the other rather than guessed at.
 import { useCallback, useMemo, useState } from 'react';
-import { GoabButton, GoabButtonGroup, GoabCallout, GoabContainer, GoabTable, GoabText } from '@abgov/react-components';
+import {
+  GoabButton,
+  GoabButtonGroup,
+  GoabCallout,
+  GoabContainer,
+  GoabDetails,
+  GoabTable,
+  GoabText,
+} from '@abgov/react-components';
 import {
   ContextProviderFactory,
   createDefaultAjv,
@@ -26,10 +34,12 @@ import {
   NavigationOutcome,
   NavigationTarget,
   ReviewRenderProvider,
+  StepInfo,
 } from '@abgov/jsonforms-components';
 import { JsonForms } from '@jsonforms/react';
 import { ServiceContainer } from '../../styled-components';
 import { condoTribunalDataSchema, condoTribunalUiSchema } from './condoTribunal';
+import { FormContainer, StepInfoPanel, StepLogEntry } from './StepInfoPanel';
 
 const ContextProvider = ContextProviderFactory();
 
@@ -93,6 +103,19 @@ export const JsonformsReviewNavigation = (): JSX.Element => {
   const [formData, setFormData] = useState<Record<string, unknown>>(SAMPLE_DATA);
   const [navigationTarget, setNavigationTarget] = useState<NavigationTarget>();
   const [log, setLog] = useState<ClickLogEntry[]>([]);
+  const [stepInfo, setStepInfo] = useState<StepInfo>();
+  const [stepLog, setStepLog] = useState<StepLogEntry[]>([]);
+  const [useOwnReviewPage, setUseOwnReviewPage] = useState(true);
+
+  // The CDRT definition sets hideSummary, so its form never reaches a review page. Lifting that in the
+  // sandbox copy is what lets Next on the last step land on the review and report isOnReview.
+  const formUiSchema = useMemo(
+    () =>
+      useOwnReviewPage
+        ? { ...condoTribunalUiSchema, options: { ...condoTribunalUiSchema.options, hideSummary: false } }
+        : condoTribunalUiSchema,
+    [useOwnReviewPage],
+  );
 
   // What the definition says a host is allowed to address. Rendering it here makes the page ids the
   // review is reporting against visible, rather than something to infer from the behaviour.
@@ -121,10 +144,16 @@ export const JsonformsReviewNavigation = (): JSX.Element => {
     setNavigationTarget(undefined);
   }, []);
 
+  const handleStepChange = useCallback((info: StepInfo) => {
+    setStepInfo(info);
+    setStepLog((entries) => [{ at: new Date().toLocaleTimeString(), stepInfo: info }, ...entries]);
+  }, []);
+
   const handleReset = useCallback(() => {
     setFormData(SAMPLE_DATA);
     setNavigationTarget(undefined);
     setLog([]);
+    setStepLog([]);
   }, []);
 
   const handleSaveAndContinueClick = useCallback(() => {
@@ -155,48 +184,64 @@ export const JsonformsReviewNavigation = (): JSX.Element => {
           <GoabButton type="secondary" testId="reset-review-navigation" onClick={handleReset}>
             Reset the data and log
           </GoabButton>
+          <GoabButton
+            type="tertiary"
+            testId="toggle-own-review-page"
+            onClick={() => setUseOwnReviewPage((value) => !value)}
+          >
+            {useOwnReviewPage
+              ? "Using the form's own review page (click to hide it, as CDRT does)"
+              : "Review page hidden, as CDRT does (click to use the form's own review page)"}
+          </GoabButton>
         </GoabButtonGroup>
 
+        <StepInfoPanel stepInfo={stepInfo} stepLog={stepLog} />
+
         <h3>The form</h3>
-        <ContextProvider
-          showChangeButtons={true}
-          navigationTarget={navigationTarget}
-          onNavigationChange={handleNavigationChange}
-          submit={{
-            saveForm: handleSaveAndContinueClick,
-          }}
-        >
-          <JsonForms
-            ajv={ajv}
-            schema={condoTribunalDataSchema}
-            uischema={condoTribunalUiSchema}
-            data={formData}
-            validationMode="ValidateAndShow"
-            renderers={GoARenderers}
-            cells={GoACells}
-            onChange={handleFormChange}
-          />
-        </ContextProvider>
+        <FormContainer data-testid="review-navigation-form-container">
+          <ContextProvider
+            showChangeButtons={true}
+            navigationTarget={navigationTarget}
+            onNavigationChange={handleNavigationChange}
+            onStepChange={handleStepChange}
+            submit={{
+              saveForm: handleSaveAndContinueClick,
+            }}
+          >
+            <JsonForms
+              ajv={ajv}
+              schema={condoTribunalDataSchema}
+              uischema={formUiSchema}
+              data={formData}
+              validationMode="ValidateAndShow"
+              renderers={GoARenderers}
+              cells={GoACells}
+              onChange={handleFormChange}
+            />
+          </ContextProvider>
+        </FormContainer>
 
         <h3>The review, rendered on its own</h3>
         <GoabText size="body-m" mb="m">
           No stepper is in context here, so a Change button has nothing of its own to move. Everything it can do is in
           the report it makes.
         </GoabText>
-        <ContextProvider showChangeButtons={true}>
-          <ReviewRenderProvider onReviewChange={handleReviewChange}>
-            <JsonForms
-              readonly={true}
-              ajv={ajv}
-              schema={condoTribunalDataSchema}
-              uischema={condoTribunalUiSchema}
-              data={formData}
-              validationMode="NoValidation"
-              renderers={GoAReviewRenderers}
-              cells={GoACells}
-            />
-          </ReviewRenderProvider>
-        </ContextProvider>
+        <GoabDetails heading="Show the standalone review" mb="l">
+          <ContextProvider showChangeButtons={true}>
+            <ReviewRenderProvider onReviewChange={handleReviewChange}>
+              <JsonForms
+                readonly={true}
+                ajv={ajv}
+                schema={condoTribunalDataSchema}
+                uischema={condoTribunalUiSchema}
+                data={formData}
+                validationMode="NoValidation"
+                renderers={GoAReviewRenderers}
+                cells={GoACells}
+              />
+            </ReviewRenderProvider>
+          </ContextProvider>
+        </GoabDetails>
 
         <h3>What the definition offers a host</h3>
         <GoabText size="body-m" mb="m">

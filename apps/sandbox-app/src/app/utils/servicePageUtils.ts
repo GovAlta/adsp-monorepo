@@ -27,6 +27,12 @@ export const addJsonformsPages = (tenantName: string) => {
       url: `${prefix}/review-responsive`,
       testId: 'jsonformsReviewResponsive',
     },
+    {
+      id: 'jsonformsStepChange',
+      name: 'Track the current step (onStepChange)',
+      url: `${prefix}/step-change`,
+      testId: 'jsonformsStepChange',
+    },
   ];
 
   return jsonformsPages;
