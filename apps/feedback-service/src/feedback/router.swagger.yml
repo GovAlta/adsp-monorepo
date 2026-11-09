@@ -343,8 +343,8 @@ components:
     tags:
       - Feedback
     description: >
-      Summarizes the feedback of the tenant for a site and optional time period. Requires the feedback-reader role.
-      Core users must set tenantId.
+      Summarizes the feedback of the tenant for a site and optional time period. Available to any authenticated user
+      in the tenant. Core users must set tenantId.
     parameters:
       - $ref: '#/components/parameters/FeedbackTenantId'
       - name: site
@@ -381,8 +381,6 @@ components:
               $ref: '#/components/schemas/FeedbackSummary'
       400:
         $ref: '#/components/responses/FeedbackBadRequest'
-      401:
-        $ref: '#/components/responses/FeedbackUnauthorized'
 
 /feedback/v1/sites:
   get:
