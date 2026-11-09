@@ -234,10 +234,17 @@ describe('feedback router documented behaviour', () => {
       expect(res.status).toBe(400);
     });
 
-    it('returns 401 for a user without the feedback-reader role', async () => {
+    it('returns the summary for a user without the feedback-reader role', async () => {
+      valueServiceMock.readSummary.mockResolvedValueOnce({
+        totalResponses: 0,
+        averageRating: 0,
+        responsesWithComments: 0,
+        responsesWithIssues: 0,
+      });
+
       const res = await request(await createApp(plain)).get(`/feedback/v1/feedback/summary?site=${site}`);
 
-      expect(res.status).toBe(401);
+      expect(res.status).toBe(200);
     });
   });
 
