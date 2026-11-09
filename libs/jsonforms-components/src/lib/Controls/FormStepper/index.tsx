@@ -16,3 +16,4 @@ export {
   type PageTarget,
 } from './util/navigationTarget';
 export type { StepInfo } from './context/types';
+export { useStepChange, type StepChange } from './context/useStepChange';

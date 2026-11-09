@@ -131,14 +131,17 @@ import { GoACells, GoAReviewRenderers, ReviewRenderProvider } from '@abgov/jsonf
 `onStepChange` on the same provider reports where the user is, so a host can act on it - show progress, change a banner, or log analytics. It is called once when the form mounts and again each time the step changes, including when an answer shows or hides a page. Typing on a step does not trigger it.
 
 ```javascript
-import { ContextProviderFactory, StepInfo } from '@abgov/jsonforms-components';
+import { ContextProviderFactory, useStepChange } from '@abgov/jsonforms-components';
 
-const [stepInfo, setStepInfo] = useState<StepInfo>();
+// stepInfo is undefined until the form reports on mount. The optional listener runs on each report.
+const { stepInfo, onStepChange } = useStepChange((info) => analytics.track('step', info));
 
-<ContextProvider onStepChange={setStepInfo}>
+<ContextProvider onStepChange={onStepChange}>
   <JsonForms ... />
 </ContextProvider>
 ```
+
+`useStepChange` is a convenience; any `(stepInfo: StepInfo) => void` callback works as `onStepChange`.
 
 | Field          | Meaning                                                                                        |
 | -------------- | ---------------------------------------------------------------------------------------------- |
