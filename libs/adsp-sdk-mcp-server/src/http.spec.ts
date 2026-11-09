@@ -170,6 +170,12 @@ describe('HTTP CORS', () => {
 
     expect(response.status).toBe(204);
   });
+
+  it('allows the mcp-protocol-version request header', async () => {
+    const response = await fetch(running.endpoint, { method: 'OPTIONS' });
+
+    expect(response.headers.get('access-control-allow-headers')?.split(', ')).toContain('mcp-protocol-version');
+  });
 });
 
 describe('stateless HTTP', () => {

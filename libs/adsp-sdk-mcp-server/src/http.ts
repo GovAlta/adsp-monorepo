@@ -5,7 +5,7 @@ import { createAdspMcpServer, CreateAdspMcpServerOptions, loadAdspMcpTools } fro
 function applyCorsHeaders(req: express.Request, res: express.Response, next: express.NextFunction): void {
   res.setHeader('Access-Control-Allow-Origin', process.env['CORS_ORIGIN'] ?? '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, mcp-session-id');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, mcp-session-id, mcp-protocol-version');
   res.setHeader('Access-Control-Expose-Headers', 'mcp-session-id');
   if (req.method === 'OPTIONS') {
     res.sendStatus(204);
