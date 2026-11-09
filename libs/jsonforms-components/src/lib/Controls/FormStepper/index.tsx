@@ -15,3 +15,4 @@ export {
   type NavigationTargetInfo,
   type PageTarget,
 } from './util/navigationTarget';
+export type { StepInfo } from './context/types';

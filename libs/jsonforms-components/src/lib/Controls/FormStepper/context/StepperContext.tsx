@@ -13,7 +13,8 @@ import { CategorizationStepperLayoutRendererProps } from '../types';
 import { Categorization, deriveLabelForUISchemaElement, isEnabled, isVisible } from '@jsonforms/core';
 import { pickPropertyValues } from '../util/helpers';
 import { stepperReducer } from './reducer';
-import { StepperContextDataType, CategoryState } from './types';
+import { StepperContextDataType, CategoryState, StepInfo } from './types';
+import { getStepInfo, isSameStepInfo } from './stepInfo';
 import { JsonFormStepperDispatch } from './reducer';
 import { JsonSchema7, JsonSchema } from '@jsonforms/core';
 import { ErrorObject } from 'ajv';
@@ -48,6 +49,7 @@ export interface JsonFormsStepperContextProps {
   validatePage: (id: number) => void;
   selectNumberOfCompletedCategories: () => number;
   selectStepperOptions: () => StepperPageOptions;
+  selectStepInfo: () => StepInfo;
   isProvided?: boolean;
 }
 
@@ -159,6 +161,8 @@ export const JsonFormsStepperContextProvider = ({
   const formId = formCtx?.formId as string | undefined;
   const navigationTarget = formCtx?.navigationTarget as NavigationTarget | undefined;
   const onNavigationChange = formCtx?.onNavigationChange as ((outcome: NavigationOutcome) => void) | undefined;
+  const onStepChangeRef = useRef(formCtx?.onStepChange as ((stepInfo: StepInfo) => void) | undefined);
+  onStepChangeRef.current = formCtx?.onStepChange as ((stepInfo: StepInfo) => void) | undefined;
   // Steps opened in an earlier session. Seeding these on first mount is what keeps a step the user
   // has been through from dropping back to NotStarted on resume — including the case where they
   // edited an auto-populated field and then restored the original value, which leaves nothing in
@@ -250,6 +254,7 @@ export const JsonFormsStepperContextProvider = ({
         return snapshot.path;
       },
       selectStepperOptions: () => getStepperPageOptions(uischema),
+      selectStepInfo: () => getStepInfo(snapshot),
       selectCategory: (id: number) => {
         return snapshot.categories[id];
       },
@@ -413,6 +418,18 @@ export const JsonFormsStepperContextProvider = ({
     stepperState.categories.length,
     targetKey,
   ]);
+
+  // Reported on mount and then only when the value changes, so typing on a step stays silent.
+  const lastReportedStep = useRef<StepInfo | undefined>(undefined);
+  useEffect(() => {
+    const stepInfo = getStepInfo(snapshot);
+    if (isSameStepInfo(lastReportedStep.current, stepInfo)) {
+      return;
+    }
+
+    lastReportedStep.current = stepInfo;
+    onStepChangeRef.current?.(stepInfo);
+  }, [snapshot]);
 
   return <JsonFormsStepperContext.Provider value={context}>{children}</JsonFormsStepperContext.Provider>;
 };
