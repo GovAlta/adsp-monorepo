@@ -9,6 +9,8 @@ import { FileType, ServiceUserRoles } from '../types';
 import { createFileRouter, deleteFile, deleteFiles, fileOperation, getFile, getType, getTypes } from './file';
 import { Readable } from 'stream';
 
+jest.mock('file-type', () => ({ fileTypeFromBuffer: jest.fn() }));
+
 describe('file router', () => {
   const serviceId = adspId`urn:ads:platform:file-service`;
   const apiId = adspId`${serviceId}:v1`;

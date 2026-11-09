@@ -8,6 +8,7 @@ interface CustomConcatStream {
   fileType: { mime: string; ext: string };
 }
 
+// Text file types doesnt have magic numbers so we to analuze if it has text in it.
 // Deliberately excludes html and svg, which must not be served back as renderable content.
 const TEXT_MIME_TYPES: Record<string, string> = {
   txt: 'text/plain',
@@ -66,7 +67,6 @@ export class FileTypeDetector {
     const response = (await this.createCustomConcatStream(this.content)) as CustomConcatStream;
     const fileType = response.fileType;
 
-    console.log('FILE TYPE ===', fileType);
     const end = Date.now();
 
     this.logger.debug('File type as determined: ' + fileType?.mime);
