@@ -21,6 +21,8 @@ export const environment = envalid.cleanEnv(
     OTEL_EXPORTER_OTLP_ENDPOINT: envalid.str({ default: '' }),
     PORT: envalid.num({ default: 3336 }),
     TRUSTED_PROXY: envalid.str({ default: 'uniquelocal' }),
+    // Unset falls back to the SDK AUDIT_ENABLED variable, which defaults to on.
+    VALUE_AUDIT_ENABLED: envalid.bool({ default: undefined }),
     SERVICE_METRIC_ROLLUP_JOB_ENABLED: envalid.bool({ default: false }),
     SERVICE_METRIC_ROLLUP_BACKFILL_ON_STARTUP: envalid.bool({ default: false }),
     SERVICE_METRIC_ROLLUP_TRAILING_DAYS: envalid.num({ default: 3 }),

@@ -1,5 +1,6 @@
 import {
   AdspId,
+  AuditService,
   DomainEvent,
   EventService,
   hasRequiredRole,
@@ -11,6 +12,7 @@ import { createValidationHandler, InvalidOperationError, NotFoundError, decodeAf
 import { RequestHandler, Router } from 'express';
 import { checkSchema, param, query } from 'express-validator';
 import { Logger } from 'winston';
+import { auditValue, ServiceMetricRollupTriggeredAuditAction, toRollupAuditDetails } from '../audit';
 import { valueWritten } from '../events';
 import { NamespaceEntity } from '../model';
 import { ServiceMetricRollupRepository, ValuesRepository } from '../repository';
@@ -32,6 +34,7 @@ interface ValueRouterProps {
   serviceMetricRollupRepository: ServiceMetricRollupRepository;
   serviceMetricRollupTrailingDays: number;
   eventService: EventService;
+  auditService: AuditService;
 }
 
 const mapValue = (value: Value) => {
@@ -405,6 +408,7 @@ export function runServiceMetricRollup(
   logger: Logger,
   repository: ServiceMetricRollupRepository,
   trailingDays: number,
+  auditService: AuditService,
 ): RequestHandler {
   return async (req, res, next) => {
     try {
@@ -432,7 +436,25 @@ export function runServiceMetricRollup(
       }
 
       const tenant = user.isCore ? tenantIdValue : user.tenantId?.toString();
-      const rollupCount = await createServiceMetricRollupJob(repository, logger)(range, { tenant });
+      const rollupsByTenant: Record<string, number> = {};
+      const rollupCount = await createServiceMetricRollupJob(repository, logger)(
+        range,
+        { tenant },
+        (counts) => Object.assign(rollupsByTenant, counts)
+      );
+
+      // A rollup across all tenants is audited once per tenant it rolled up, since an event is recorded to a tenant.
+      const auditedTenants = tenant ? { [tenant]: rollupsByTenant[tenant] ?? rollupCount } : rollupsByTenant;
+      for (const [auditedTenant, count] of Object.entries(auditedTenants)) {
+        auditValue(
+          auditService,
+          logger,
+          ServiceMetricRollupTriggeredAuditAction,
+          user,
+          toAuditTenantId(auditedTenant),
+          toRollupAuditDetails({ start: formatDay(range.start), end: formatDay(range.end) }, count, auditedTenant)
+        );
+      }
 
       res.send({
         start: formatDay(range.start),
@@ -454,12 +476,21 @@ function formatDay(day: Date): string {
   return day.toISOString().slice(0, 10);
 }
 
+function toAuditTenantId(tenant?: string): AdspId | undefined {
+  try {
+    return tenant ? AdspId.parse(tenant) : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 export const createValueRouter = ({
   logger,
   repository,
   serviceMetricRollupRepository,
   serviceMetricRollupTrailingDays,
   eventService,
+  auditService,
 }: ValueRouterProps): Router => {
   const valueRouter = Router();
 
@@ -494,7 +525,7 @@ export const createValueRouter = ({
         ['body'],
       ),
     ),
-    runServiceMetricRollup(logger, serviceMetricRollupRepository, serviceMetricRollupTrailingDays),
+    runServiceMetricRollup(logger, serviceMetricRollupRepository, serviceMetricRollupTrailingDays, auditService),
   );
 
   valueRouter.get(
