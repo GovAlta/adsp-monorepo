@@ -1,7 +1,7 @@
 import React from 'react';
 import { GoabButton, GoabText } from '@abgov/react-components';
 import type { IFileClient } from '@abgov/adsp-components-core';
-import { GoAFileDownload } from '@abgov/adsp-components-react';
+import { ADSPFileDownload } from '@abgov/adsp-components-react';
 
 // A valid UUID that no file has, so File service answers 404.
 export const MISSING_FILE_ID = '00000000-0000-4000-8000-000000000000';
@@ -21,7 +21,7 @@ interface AdspFileDownloadSideBySideProps {
 
 const MINIMAL_CODE = `import { useMemo } from 'react';
 import { FileClient } from '@abgov/adsp-components-core';
-import { GoAFileDownload } from '@abgov/adsp-components-react';
+import { ADSPFileDownload } from '@abgov/adsp-components-react';
 
 // fileServiceUrl: from the ADSP directory (urn:ads:platform:file-service)
 //   Development: https://file-service.adsp-dev.gov.ab.ca
@@ -35,40 +35,40 @@ function SupportingDocument({ file }) {
     [fileServiceUrl],
   );
 
-  return <GoAFileDownload client={client} fileId={file.id} />;
+  return <ADSPFileDownload client={client} fileId={file.id} />;
 }`;
 
 const OWN_BUTTON_CODE = `import { GoabButton } from '@abgov/react-components';
-import { GoAFileDownload } from '@abgov/adsp-components-react';
+import { ADSPFileDownload } from '@abgov/adsp-components-react';
 
-<GoAFileDownload client={client} fileId={file.id}>
+<ADSPFileDownload client={client} fileId={file.id}>
   <GoabButton type="secondary" leadingIcon="download">
     Download
   </GoabButton>
-</GoAFileDownload>`;
+</ADSPFileDownload>`;
 
-const LINK_LIST_CODE = `import { GoAFileDownload } from '@abgov/adsp-components-react';
+const LINK_LIST_CODE = `import { ADSPFileDownload } from '@abgov/adsp-components-react';
 
 // files: [{ id, filename }] from your app's data
 <ul>
   {files.map((file) => (
     <li key={file.id}>
-      <GoAFileDownload client={client} fileId={file.id}>
+      <ADSPFileDownload client={client} fileId={file.id}>
         <a href={\`#\${file.id}\`}>{file.filename}</a>
-      </GoAFileDownload>
+      </ADSPFileDownload>
     </li>
   ))}
 </ul>`;
 
-const THEMED_CODE = `import { GoAFileDownload } from '@abgov/adsp-components-react';
+const THEMED_CODE = `import { ADSPFileDownload } from '@abgov/adsp-components-react';
 
 const fileTheme = {
   metadataTextColor: 'var(--adsp-color-status-success)',
   errorTextColor: 'var(--adsp-color-status-important)',
 };
 
-<GoAFileDownload client={client} fileId={file.id} themeOverrides={fileTheme} />
-<GoAFileDownload client={client} fileId={missingFileId} themeOverrides={fileTheme} />`;
+<ADSPFileDownload client={client} fileId={file.id} themeOverrides={fileTheme} />
+<ADSPFileDownload client={client} fileId={missingFileId} themeOverrides={fileTheme} />`;
 
 // Defined once so the override object keeps its identity across renders.
 const FILE_THEME = {
@@ -137,7 +137,7 @@ export const AdspFileDownloadSideBySide = ({ client, fileId, files }: AdspFileDo
         testId="side-by-side-minimal"
       >
         {fileId ? (
-          <GoAFileDownload client={client} fileId={fileId} testId="side-by-side-minimal-download" />
+          <ADSPFileDownload client={client} fileId={fileId} testId="side-by-side-minimal-download" />
         ) : (
           <PickAFile />
         )}
@@ -150,11 +150,11 @@ export const AdspFileDownloadSideBySide = ({ client, fileId, files }: AdspFileDo
         testId="side-by-side-own-button"
       >
         {fileId ? (
-          <GoAFileDownload client={client} fileId={fileId} testId="side-by-side-own-button-download">
+          <ADSPFileDownload client={client} fileId={fileId} testId="side-by-side-own-button-download">
             <GoabButton type="secondary" leadingIcon="download">
               Download
             </GoabButton>
-          </GoAFileDownload>
+          </ADSPFileDownload>
         ) : (
           <PickAFile />
         )}
@@ -170,9 +170,9 @@ export const AdspFileDownloadSideBySide = ({ client, fileId, files }: AdspFileDo
           <ul>
             {linkFiles.map((file) => (
               <li key={file.id}>
-                <GoAFileDownload client={client} fileId={file.id}>
+                <ADSPFileDownload client={client} fileId={file.id}>
                   <a href={`#${file.id}`}>{file.filename}</a>
-                </GoAFileDownload>
+                </ADSPFileDownload>
               </li>
             ))}
           </ul>
@@ -188,7 +188,7 @@ export const AdspFileDownloadSideBySide = ({ client, fileId, files }: AdspFileDo
         testId="side-by-side-themed"
       >
         {fileId ? (
-          <GoAFileDownload
+          <ADSPFileDownload
             client={client}
             fileId={fileId}
             themeOverrides={FILE_THEME}
@@ -198,7 +198,7 @@ export const AdspFileDownloadSideBySide = ({ client, fileId, files }: AdspFileDo
           <PickAFile />
         )}
         <div style={{ marginTop: '1rem' }}>
-          <GoAFileDownload
+          <ADSPFileDownload
             client={client}
             fileId={MISSING_FILE_ID}
             themeOverrides={FILE_THEME}

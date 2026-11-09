@@ -2,7 +2,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { GoabButton } from '@abgov/react-components';
 import { FileServiceError, type FileMetadata, type IFileClient } from '@abgov/adsp-components-core';
-import { AdspFileDownload, GoAFileDownload } from './adsp-file-download';
+import { ADSPFileDownload } from './adsp-file-download';
 import { AdspThemeProvider } from '../theme/adsp-theme-provider';
 import { saveFile } from './saveFile';
 
@@ -35,7 +35,7 @@ const createClient = (overrides: Partial<IFileClient> = {}): IFileClient & Recor
 const clickGoabButton = (label: string) => fireEvent(screen.getByText(label), new CustomEvent('_click'));
 const goaButton = (label: string) => screen.getByText(label).closest('goa-button');
 
-describe('AdspFileDownload', () => {
+describe('ADSPFileDownload', () => {
   beforeEach(() => {
     saveFileMock.mockReset();
   });
@@ -46,7 +46,7 @@ describe('AdspFileDownload', () => {
       const client = createClient();
 
       // Act
-      render(<AdspFileDownload client={client} fileId={fileId} />);
+      render(<ADSPFileDownload client={client} fileId={fileId} />);
 
       // Assert
       expect(screen.getByRole('status')).toHaveTextContent('Loading file details...');
@@ -59,7 +59,7 @@ describe('AdspFileDownload', () => {
     test('downloads the file when the control is clicked', async () => {
       // Arrange
       const client = createClient();
-      render(<AdspFileDownload client={client} fileId={fileId} />);
+      render(<ADSPFileDownload client={client} fileId={fileId} />);
       await screen.findByText('Annual report.pdf');
 
       // Act
@@ -73,7 +73,7 @@ describe('AdspFileDownload', () => {
     test('shows that the download is in progress and disables the control', async () => {
       // Arrange
       const client = createClient({ downloadFile: jest.fn(() => new Promise(() => undefined)) });
-      render(<AdspFileDownload client={client} fileId={fileId} testId="file" />);
+      render(<ADSPFileDownload client={client} fileId={fileId} testId="file" />);
       await screen.findByText('Annual report.pdf');
 
       // Act
@@ -93,7 +93,7 @@ describe('AdspFileDownload', () => {
       });
 
       // Act
-      render(<AdspFileDownload client={client} fileId={fileId} />);
+      render(<ADSPFileDownload client={client} fileId={fileId} />);
 
       // Assert
       expect(await screen.findByRole('alert')).toHaveTextContent("This file doesn't exist or has been removed.");
@@ -108,7 +108,7 @@ describe('AdspFileDownload', () => {
       });
 
       // Act
-      render(<AdspFileDownload client={client} fileId={fileId} />);
+      render(<ADSPFileDownload client={client} fileId={fileId} />);
 
       // Assert
       expect(await screen.findByRole('alert')).toHaveTextContent("You don't have permission to download this file.");
@@ -123,7 +123,7 @@ describe('AdspFileDownload', () => {
           .mockResolvedValueOnce(metadata({ scanned: false }))
           .mockResolvedValueOnce(metadata()),
       });
-      render(<AdspFileDownload client={client} fileId={fileId} />);
+      render(<ADSPFileDownload client={client} fileId={fileId} />);
       expect(await screen.findByRole('alert')).toHaveTextContent('This file is still being checked for viruses.');
       expect(goaButton('Annual report.pdf')).toHaveAttribute('disabled', 'true');
 
@@ -141,7 +141,7 @@ describe('AdspFileDownload', () => {
       const client = createClient({ getFile: jest.fn().mockResolvedValue(metadata({ infected: true })) });
 
       // Act
-      render(<AdspFileDownload client={client} fileId={fileId} />);
+      render(<ADSPFileDownload client={client} fileId={fileId} />);
 
       // Assert
       expect(await screen.findByRole('alert')).toHaveTextContent("This file can't be downloaded.");
@@ -156,7 +156,7 @@ describe('AdspFileDownload', () => {
           .mockRejectedValueOnce(new FileServiceError('unexpected', 'File download failed', 500))
           .mockResolvedValueOnce(downloaded()),
       });
-      render(<AdspFileDownload client={client} fileId={fileId} />);
+      render(<ADSPFileDownload client={client} fileId={fileId} />);
       await screen.findByText('Annual report.pdf');
       clickGoabButton('Annual report.pdf');
       expect(await screen.findByRole('alert')).toHaveTextContent('Something went wrong while downloading this file.');
@@ -177,7 +177,7 @@ describe('AdspFileDownload', () => {
           .mockResolvedValueOnce(metadata({ scanned: false }))
           .mockResolvedValueOnce(metadata()),
       });
-      render(<AdspFileDownload client={client} fileId={fileId} testId="file" />);
+      render(<ADSPFileDownload client={client} fileId={fileId} testId="file" />);
       await screen.findByRole('alert');
 
       // Act
@@ -193,7 +193,7 @@ describe('AdspFileDownload', () => {
       const client = createClient({
         getFile: jest.fn().mockResolvedValue(metadata({ scanned: false })),
       });
-      render(<AdspFileDownload client={client} fileId={fileId} />);
+      render(<ADSPFileDownload client={client} fileId={fileId} />);
       await screen.findByRole('alert');
 
       // Act
@@ -210,9 +210,9 @@ describe('AdspFileDownload', () => {
       // Arrange
       const client = createClient();
       render(
-        <AdspFileDownload client={client} fileId={fileId}>
+        <ADSPFileDownload client={client} fileId={fileId}>
           <GoabButton type="secondary">Download</GoabButton>
-        </AdspFileDownload>,
+        </ADSPFileDownload>,
       );
 
       // Act
@@ -229,11 +229,11 @@ describe('AdspFileDownload', () => {
       const client = createClient();
       const onClick = jest.fn();
       render(
-        <AdspFileDownload client={client} fileId={fileId}>
+        <ADSPFileDownload client={client} fileId={fileId}>
           <a href="/somewhere" onClick={onClick}>
             Annual report
           </a>
-        </AdspFileDownload>,
+        </ADSPFileDownload>,
       );
 
       // Act
@@ -249,9 +249,9 @@ describe('AdspFileDownload', () => {
       // Arrange
       const client = createClient({ downloadFile: jest.fn(() => new Promise(() => undefined)) });
       render(
-        <AdspFileDownload client={client} fileId={fileId}>
+        <ADSPFileDownload client={client} fileId={fileId}>
           <button type="button">Download</button>
-        </AdspFileDownload>,
+        </ADSPFileDownload>,
       );
 
       // Act
@@ -268,9 +268,9 @@ describe('AdspFileDownload', () => {
         downloadFile: jest.fn().mockRejectedValue(new FileServiceError('scan-pending', 'File download failed', 400)),
       });
       render(
-        <AdspFileDownload client={client} fileId={fileId}>
+        <ADSPFileDownload client={client} fileId={fileId}>
           <button type="button">Download</button>
-        </AdspFileDownload>,
+        </ADSPFileDownload>,
       );
 
       // Act
@@ -286,11 +286,11 @@ describe('AdspFileDownload', () => {
       const client = createClient({ downloadFile: jest.fn(() => new Promise(() => undefined)) });
       const onClick = jest.fn();
       render(
-        <AdspFileDownload client={client} fileId={fileId}>
+        <ADSPFileDownload client={client} fileId={fileId}>
           <a href="/somewhere" onClick={onClick}>
             Annual report
           </a>
-        </AdspFileDownload>,
+        </ADSPFileDownload>,
       );
       fireEvent.click(screen.getByText('Annual report'));
       await screen.findByRole('status');
@@ -316,9 +316,9 @@ describe('AdspFileDownload', () => {
           .mockResolvedValueOnce(downloaded()),
       });
       render(
-        <AdspFileDownload client={client} fileId={fileId}>
+        <ADSPFileDownload client={client} fileId={fileId}>
           <button type="button">Download</button>
-        </AdspFileDownload>,
+        </ADSPFileDownload>,
       );
       fireEvent.click(screen.getByText('Download'));
       await screen.findByRole('alert');
@@ -333,24 +333,12 @@ describe('AdspFileDownload', () => {
   });
 
   describe('client and permission', () => {
-    test('is also exported as GoAFileDownload, the name the design uses', async () => {
-      // Arrange
-      const client = createClient();
-
-      // Act
-      render(<GoAFileDownload client={client} fileId={fileId} />);
-
-      // Assert
-      expect(await screen.findByText('Annual report.pdf')).toBeInTheDocument();
-      expect(client.getFile).toHaveBeenCalledWith(fileId);
-    });
-
     test('renders nothing and sends no request when the application says the user cannot download', () => {
       // Arrange
       const client = createClient();
 
       // Act
-      const { container } = render(<AdspFileDownload client={client} fileId={fileId} canDownload={false} />);
+      const { container } = render(<ADSPFileDownload client={client} fileId={fileId} canDownload={false} />);
 
       // Assert
       expect(container).toBeEmptyDOMElement();
@@ -363,9 +351,9 @@ describe('AdspFileDownload', () => {
 
       // Act
       render(
-        <AdspFileDownload client={client} fileId={fileId} canDownload={false}>
+        <ADSPFileDownload client={client} fileId={fileId} canDownload={false}>
           <button type="button">Download</button>
-        </AdspFileDownload>,
+        </ADSPFileDownload>,
       );
 
       // Assert
@@ -380,7 +368,7 @@ describe('AdspFileDownload', () => {
       const client = createClient();
 
       // Act
-      render(<AdspFileDownload client={client} fileId={fileId} testId="file" />);
+      render(<ADSPFileDownload client={client} fileId={fileId} testId="file" />);
 
       // Assert
       await screen.findByText('Annual report.pdf');
@@ -398,7 +386,7 @@ describe('AdspFileDownload', () => {
       // Act
       render(
         <AdspThemeProvider overrides={{ components: { fileDownload: { metadataTextColor: 'provider-color' } } }}>
-          <AdspFileDownload
+          <ADSPFileDownload
             client={client}
             fileId={fileId}
             testId="file"

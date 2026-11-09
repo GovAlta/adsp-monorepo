@@ -1,6 +1,6 @@
 # File service client
 
-`FileClient` reads files from the ADSP File service for the File service components, starting with `AdspFileDownload` in `@abgov/adsp-components-react`.
+`FileClient` reads files from the ADSP File service for the File service components, starting with `ADSPFileDownload` in `@abgov/adsp-components-react`.
 
 ```ts
 import { FileClient } from '@abgov/adsp-components-core';

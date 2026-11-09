@@ -3,7 +3,7 @@ import { GoabButton } from '@abgov/react-components';
 import { formatFileSize, getFileErrorMessage } from '@abgov/adsp-components-core';
 import { useAdspThemeStyle } from '../theme/adsp-theme-provider';
 import { useFileDownload } from './useFileDownload';
-import type { AdspFileDownloadProps, AdspFileDownloadTriggerProps } from './types';
+import type { ADSPFileDownloadProps, ADSPFileDownloadTriggerProps } from './types';
 
 const FOCUSABLE = 'goa-button, button, a[href], [tabindex]:not([tabindex="-1"])';
 
@@ -18,16 +18,16 @@ function tryFocus(element: HTMLElement | null | undefined): boolean {
   return active === element || element.contains(active);
 }
 
-export const AdspFileDownload = ({
+export const ADSPFileDownload = ({
   fileId,
   client,
   canDownload = true,
   children,
   themeOverrides,
   testId,
-}: AdspFileDownloadProps) => {
+}: ADSPFileDownloadProps) => {
   const themeStyle = useAdspThemeStyle('fileDownload', themeOverrides);
-  const trigger = isValidElement<AdspFileDownloadTriggerProps>(children) ? children : null;
+  const trigger = isValidElement<ADSPFileDownloadTriggerProps>(children) ? children : null;
   const rootRef = useRef<HTMLDivElement>(null);
   const errorRef = useRef<HTMLParagraphElement>(null);
   const [restoreFocus, setRestoreFocus] = useState(false);
@@ -149,7 +149,3 @@ export const AdspFileDownload = ({
     </div>
   );
 };
-
-// The name the File Service Components design uses.
-export type GoAFileDownloadProps = AdspFileDownloadProps;
-export const GoAFileDownload = AdspFileDownload;

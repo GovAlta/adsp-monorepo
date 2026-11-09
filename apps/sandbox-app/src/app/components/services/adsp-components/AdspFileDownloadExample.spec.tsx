@@ -22,7 +22,7 @@ jest.mock('../../../state', () => ({
 }));
 
 jest.mock('@abgov/adsp-components-react', () => ({
-  GoAFileDownload: (props) => mockFileDownload(props),
+  ADSPFileDownload: (props) => mockFileDownload(props),
 }));
 
 const fileServiceUrl = 'https://file-service.test';

@@ -6,13 +6,13 @@ import type { AdspComponentThemeOverrides, IFileClient } from '@abgov/adsp-compo
  * Props the component sets on a custom trigger; a GoabButton or a native button or link accepts them.
  * A link can't be disabled, so a link trigger gets aria-disabled instead and its clicks are ignored while disabled.
  */
-export interface AdspFileDownloadTriggerProps {
+export interface ADSPFileDownloadTriggerProps {
   onClick?: (event?: { preventDefault?: () => void }) => void;
   disabled?: boolean;
   'aria-disabled'?: boolean;
 }
 
-export interface AdspFileDownloadProps {
+export interface ADSPFileDownloadProps {
   /** ID of the File service file to download. */
   fileId: string;
   /** Loads and downloads the file, usually a FileClient from core. Create it once or memoize it. */
@@ -26,7 +26,7 @@ export interface AdspFileDownloadProps {
    * A custom trigger, such as `<GoabButton type="secondary">Download</GoabButton>`, in place of the default control.
    * The component sets its onClick, and disabled while a download runs. File metadata isn't loaded up front.
    */
-  children?: ReactElement<AdspFileDownloadTriggerProps>;
+  children?: ReactElement<ADSPFileDownloadTriggerProps>;
   themeOverrides?: AdspComponentThemeOverrides<'fileDownload'>;
   testId?: string;
 }

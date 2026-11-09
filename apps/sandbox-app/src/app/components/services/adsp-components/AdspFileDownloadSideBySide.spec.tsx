@@ -18,7 +18,7 @@ const mockFileDownload = jest.fn(
 );
 
 jest.mock('@abgov/adsp-components-react', () => ({
-  GoAFileDownload: (props) => mockFileDownload(props),
+  ADSPFileDownload: (props) => mockFileDownload(props),
 }));
 
 const client = { getFile: jest.fn(), downloadFile: jest.fn() };
@@ -55,7 +55,7 @@ describe('AdspFileDownloadSideBySide', () => {
     expect(screen.getByTestId('side-by-side-minimal-download')).toHaveAttribute('data-file-id', fileId);
     expect(
       within(screen.getByTestId('side-by-side-minimal')).getByText(
-        /<GoAFileDownload client=\{client\} fileId=\{file.id\} \/>/,
+        /<ADSPFileDownload client=\{client\} fileId=\{file.id\} \/>/,
       ),
     ).toBeInTheDocument();
   });

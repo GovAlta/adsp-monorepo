@@ -14,7 +14,7 @@ import {
   GoabText,
 } from '@abgov/react-components';
 import { FileClient } from '@abgov/adsp-components-core';
-import { GoAFileDownload } from '@abgov/adsp-components-react';
+import { ADSPFileDownload } from '@abgov/adsp-components-react';
 import { directorySelector, getAccessToken } from '../../../state';
 import { ServiceContainer } from '../../styled-components';
 import { AdspFileDownloadSideBySide, MISSING_FILE_ID } from './AdspFileDownloadSideBySide';
@@ -31,39 +31,39 @@ interface ListedFile {
 
 const APPLICATION_SETUP = `import { useMemo } from 'react';
 import { FileClient } from '@abgov/adsp-components-core';
-import { GoAFileDownload } from '@abgov/adsp-components-react';
+import { ADSPFileDownload } from '@abgov/adsp-components-react';
 
-// Create the client once and pass it to each GoAFileDownload: a new client on every render reloads the file.
+// Create the client once and pass it to each ADSPFileDownload: a new client on every render reloads the file.
 const client = useMemo(
   () => new FileClient({ serviceUrl: fileServiceUrl, getAccessToken }),
   [fileServiceUrl],
 );
 
-<GoAFileDownload client={client} fileId={file.id} />`;
+<ADSPFileDownload client={client} fileId={file.id} />`;
 
-const DEFAULT_USAGE = `<GoAFileDownload client={client} fileId={file.id} />`;
+const DEFAULT_USAGE = `<ADSPFileDownload client={client} fileId={file.id} />`;
 
-const CUSTOM_TRIGGER_USAGE = `<GoAFileDownload client={client} fileId={file.id}>
+const CUSTOM_TRIGGER_USAGE = `<ADSPFileDownload client={client} fileId={file.id}>
   <GoabButton type="secondary" leadingIcon="download">
     Download
   </GoabButton>
-</GoAFileDownload>`;
+</ADSPFileDownload>`;
 
 const LIST_USAGE = `{files.map((file) => (
   <tr key={file.id}>
     <td>{file.filename}</td>
     <td>
-      <GoAFileDownload client={client} fileId={file.id}>
+      <ADSPFileDownload client={client} fileId={file.id}>
         <GoabButton type="tertiary" size="compact">Download</GoabButton>
-      </GoAFileDownload>
+      </ADSPFileDownload>
     </td>
   </tr>
 ))}`;
 
-const MISSING_USAGE = `<GoAFileDownload client={client} fileId="${MISSING_FILE_ID}" />`;
+const MISSING_USAGE = `<ADSPFileDownload client={client} fileId="${MISSING_FILE_ID}" />`;
 
 const NO_PERMISSION_USAGE = `// The application decides the user can't download; nothing renders and nothing is requested.
-<GoAFileDownload client={client} fileId={file.id} canDownload={false} />`;
+<ADSPFileDownload client={client} fileId={file.id} canDownload={false} />`;
 
 const Example = ({
   heading,
@@ -143,8 +143,9 @@ export const AdspFileDownloadExample = () => {
         heading="ADSP file download"
       >
         <GoabText size="body-m" mt="none">
-          GoAFileDownload downloads a File service file. It uses the application's sign-in, shows progress, and explains
-          missing files, permission failures and pending virus scans. File service still authorizes every download.
+          ADSPFileDownload downloads a File service file. It uses the application's sign-in, shows progress, and
+          explains missing files, permission failures and pending virus scans. File service still authorizes every
+          download.
         </GoabText>
 
         {!client ? (
@@ -207,7 +208,7 @@ export const AdspFileDownloadExample = () => {
                       description="Only the client and the file ID: the component shows the filename and size from File service."
                       code={DEFAULT_USAGE}
                     >
-                      <GoAFileDownload client={client} fileId={exampleFileId} testId="example-default" />
+                      <ADSPFileDownload client={client} fileId={exampleFileId} testId="example-default" />
                     </Example>
 
                     <Example
@@ -215,11 +216,11 @@ export const AdspFileDownloadExample = () => {
                       description="Pass any button or link as the child. The component handles the download; the file isn't looked up until it's clicked."
                       code={CUSTOM_TRIGGER_USAGE}
                     >
-                      <GoAFileDownload client={client} fileId={exampleFileId} testId="example-custom">
+                      <ADSPFileDownload client={client} fileId={exampleFileId} testId="example-custom">
                         <GoabButton type="secondary" leadingIcon="download">
                           Download
                         </GoabButton>
-                      </GoAFileDownload>
+                      </ADSPFileDownload>
                     </Example>
                   </>
                 )}
@@ -244,11 +245,11 @@ export const AdspFileDownloadExample = () => {
                             <td>{file.filename}</td>
                             <td>{file.typeName}</td>
                             <td>
-                              <GoAFileDownload client={client} fileId={file.id}>
+                              <ADSPFileDownload client={client} fileId={file.id}>
                                 <GoabButton type="tertiary" size="compact">
                                   Download
                                 </GoabButton>
-                              </GoAFileDownload>
+                              </ADSPFileDownload>
                             </td>
                           </tr>
                         ))}
@@ -262,7 +263,7 @@ export const AdspFileDownloadExample = () => {
                   description="File service answers 404, so the component says the file doesn't exist."
                   code={MISSING_USAGE}
                 >
-                  <GoAFileDownload client={client} fileId={MISSING_FILE_ID} testId="example-missing" />
+                  <ADSPFileDownload client={client} fileId={MISSING_FILE_ID} testId="example-missing" />
                 </Example>
 
                 <Example
@@ -270,7 +271,7 @@ export const AdspFileDownloadExample = () => {
                   description="With canDownload={false} the component renders nothing, so there is nothing to see here. A user File service refuses sees a permission message instead: enter the ID of a file whose type you can't read."
                   code={NO_PERMISSION_USAGE}
                 >
-                  <GoAFileDownload
+                  <ADSPFileDownload
                     client={client}
                     fileId={exampleFileId || MISSING_FILE_ID}
                     canDownload={false}
