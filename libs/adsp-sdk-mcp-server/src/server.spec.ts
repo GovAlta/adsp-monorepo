@@ -1,9 +1,60 @@
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
+import type { Server } from '@modelcontextprotocol/sdk/server/index.js';
+import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
+import { ReadBuffer, serializeMessage } from '@modelcontextprotocol/sdk/shared/stdio.js';
+import type { Transport } from '@modelcontextprotocol/sdk/shared/transport.js';
+import type { JSONRPCMessage } from '@modelcontextprotocol/sdk/types.js';
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'fs';
 import { tmpdir } from 'os';
 import { join } from 'path';
+import { PassThrough, Readable, Writable } from 'stream';
+import { callForContract, FIXTURE_DOCS_ROOT, TOOL_CONTRACT } from './fixtures/toolContract';
 import { createAdspMcpServer } from './server';
+
+class StreamClientTransport implements Transport {
+  onmessage?: (message: JSONRPCMessage) => void;
+  onclose?: () => void;
+  onerror?: (error: Error) => void;
+  private readonly readBuffer = new ReadBuffer();
+
+  constructor(private readonly input: Readable, private readonly output: Writable) {}
+
+  async start(): Promise<void> {
+    this.input.on('data', (chunk: Buffer) => {
+      this.readBuffer.append(chunk);
+      for (let message = this.readBuffer.readMessage(); message; message = this.readBuffer.readMessage()) {
+        this.onmessage?.(message);
+      }
+    });
+  }
+
+  async send(message: JSONRPCMessage): Promise<void> {
+    this.output.write(serializeMessage(message));
+  }
+
+  async close(): Promise<void> {
+    this.onclose?.();
+  }
+}
+
+async function connectInMemoryClient(server: Server): Promise<Client> {
+  const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
+  const client = new Client({ name: 'test-client', version: '0.0.1' });
+  await Promise.all([server.connect(serverTransport), client.connect(clientTransport)]);
+  return client;
+}
+
+async function connectStdioClient(server: Server): Promise<Client> {
+  const clientToServer = new PassThrough();
+  const serverToClient = new PassThrough();
+  const client = new Client({ name: 'test-client', version: '0.0.1' });
+  await Promise.all([
+    server.connect(new StdioServerTransport(clientToServer, serverToClient)),
+    client.connect(new StreamClientTransport(serverToClient, clientToServer)),
+  ]);
+  return client;
+}
 
 // clean-code-ignore: 2.3 — 4-line helper; the review bot appears to be miscounting this function's length.
 function writeDoc(root: string, relativePath: string, content: string): void {
@@ -93,5 +144,49 @@ describe('adsp-sdk-mcp-server', () => {
     expect(content.text).toContain('initializeService');
     expect(content.text).toContain('initializePlatform');
     expect(content.text).toContain('@abgov/adsp-service-sdk');
+  });
+});
+
+describe('tool contract', () => {
+  let client: Client;
+
+  beforeAll(async () => {
+    client = await connectInMemoryClient(createAdspMcpServer({ docsRoot: FIXTURE_DOCS_ROOT }));
+  });
+
+  afterAll(() => client.close());
+
+  it('tools/list matches the golden', async () => {
+    const { tools } = await client.listTools();
+
+    expect(JSON.stringify(tools)).toBe(JSON.stringify(TOOL_CONTRACT.tools));
+  });
+
+  it.each(TOOL_CONTRACT.calls)('tools/call $call.name $call.arguments matches the golden', async ({ call, outcome }) => {
+    const actual = await callForContract(client, call);
+
+    expect(JSON.stringify(actual)).toBe(JSON.stringify(outcome));
+  });
+});
+
+describe('stdio transport', () => {
+  let client: Client;
+
+  beforeAll(async () => {
+    client = await connectStdioClient(createAdspMcpServer({ docsRoot: FIXTURE_DOCS_ROOT }));
+  });
+
+  afterAll(() => client.close());
+
+  it('tools/list over stdio matches the golden', async () => {
+    const { tools } = await client.listTools();
+
+    expect(JSON.stringify(tools)).toBe(JSON.stringify(TOOL_CONTRACT.tools));
+  });
+
+  it.each(TOOL_CONTRACT.calls)('tools/call $call.name $call.arguments over stdio matches the golden', async ({ call, outcome }) => {
+    const actual = await callForContract(client, call);
+
+    expect(JSON.stringify(actual)).toBe(JSON.stringify(outcome));
   });
 });
