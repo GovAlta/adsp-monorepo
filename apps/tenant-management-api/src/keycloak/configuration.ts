@@ -205,6 +205,7 @@ export const createAdspMcpPublicClientConfig = (id: string): ClientRepresentatio
     'http://localhost:8787/callback',
     'cursor://anysphere.cursor-mcp/oauth/callback',
     'http://localhost:6274/oauth/callback',
+    'http://localhost:6274/oauth/callback/debug',
     'http://127.0.0.1:6276/oauth/callback',
   ],
   // Browser-hosted clients exchange the code from the page, so the token endpoint must allow their origin.

@@ -302,6 +302,7 @@ describe('KeycloakRealmService', () => {
                 'http://localhost:8787/callback',
                 'cursor://anysphere.cursor-mcp/oauth/callback',
                 'http://localhost:6274/oauth/callback',
+                'http://localhost:6274/oauth/callback/debug',
                 'http://127.0.0.1:6276/oauth/callback',
               ],
               webOrigins: ['https://vscode.dev', 'http://localhost:6274'],
@@ -329,11 +330,10 @@ describe('KeycloakRealmService', () => {
               ],
             }),
           ]),
-          clientScopeMappings: expect.objectContaining({
-            'adsp-mcp': [{ client: 'urn:ads:platform:configuration-service', roles: ['configuration-admin'] }],
-          }),
         }),
       );
+      // Realm JSON keys clientScopeMappings by the role-owning client, so an 'adsp-mcp' key would create stray roles.
+      expect(keycloakClientMock.realms.create.mock.calls[0][0].clientScopeMappings).not.toHaveProperty('adsp-mcp');
       const adspMcpClient = keycloakClientMock.realms.create.mock.calls[0][0].clients.find(
         (c: { clientId: string }) => c.clientId === 'adsp-mcp',
       );
@@ -349,6 +349,12 @@ describe('KeycloakRealmService', () => {
           [{ id: 'config-admin-role-123', name: 'configuration-admin' }],
         ],
       ]);
+      // The adsp-cli grant, the adsp-mcp grant and the CI service account each look up configuration-admin once.
+      expect(
+        keycloakClientMock.clients.findRole.mock.calls.filter(
+          ([query]) => query.id === 'config-service-client-123' && query.roleName === 'configuration-admin',
+        ),
+      ).toHaveLength(3);
 
       axiosMock.get.mockResolvedValueOnce({ data: [{ id: 'execution-123' }] });
 

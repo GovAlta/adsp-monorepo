@@ -502,7 +502,6 @@ export class KeycloakRealmServiceImpl implements RealmService {
       clientScopeMappings: {
         'adsp-cli': ADSP_CLI_CLIENT_SCOPE_MAPPINGS,
         [ADSP_CLI_CI_CLIENT_ID]: ADSP_CLI_CI_CLIENT_SCOPE_MAPPINGS,
-        [ADSP_MCP_CLIENT_ID]: ADSP_MCP_CLIENT_SCOPE_MAPPINGS,
       },
       enabled: true,
     };
