@@ -14,7 +14,7 @@ function resolveTransport(): Transport {
 
 async function main(): Promise<void> {
   const transport = resolveTransport();
-  console.error(`[adsp-sdk-mcp-server] transport=${transport} sessionTtlMs=${SESSION_TTL_MS}`);
+  console.error(`[adsp-sdk-mcp-server] transport=${transport}`);
 
   if (transport === 'http') {
     await startHttp();
@@ -24,20 +24,17 @@ async function main(): Promise<void> {
   }
 }
 
-const SESSION_TTL_MS = parseInt(process.env['SESSION_TTL_MINUTES'] ?? '30', 10) * 60 * 1000;
-
 async function startHttp(): Promise<void> {
   const port = parseInt(process.env['PORT'] ?? '3000', 10);
-  const mcpApp = createMcpHttpApp({ sessionTtlMs: SESSION_TTL_MS });
+  const app = createMcpHttpApp();
 
   return new Promise((resolve) => {
-    const httpServer = mcpApp.app.listen(port, () => {
+    const httpServer = app.listen(port, () => {
       console.error(`[adsp-sdk-mcp-server] HTTP server listening on :${port}`);
       resolve();
     });
 
     function shutdown() {
-      mcpApp.close();
       httpServer.close(() => process.exit(0));
       setTimeout(() => process.exit(1), 5_000).unref();
     }

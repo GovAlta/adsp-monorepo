@@ -42,6 +42,24 @@ Add it to your MCP client's server config, run via `npx`:
 }
 ```
 
+### HTTP transport
+
+To host the server instead of running it per user, start it with `MCP_TRANSPORT=http`. It serves Streamable HTTP
+at `POST /mcp`, with a liveness check at `GET /health`.
+
+| Variable | Default | Purpose |
+|---|---|---|
+| `MCP_TRANSPORT` | `stdio` | `http` to serve HTTP |
+| `PORT` | `3000` | Port to listen on |
+| `CORS_ORIGIN` | `*` | Value of `Access-Control-Allow-Origin` |
+
+HTTP mode is stateless: each `POST /mcp` gets its own MCP server, the response is JSON (the server never streams),
+and nothing is kept between requests. The response carries no `Mcp-Session-Id`, so any replica can serve any request
+and an idle client never loses its session. `GET /mcp` and `DELETE /mcp` return `405` with `Allow: POST`, because
+there is no stream to open and no session to delete.
+
+`SESSION_TTL_MINUTES` has been removed and is ignored: there are no sessions to expire.
+
 ### Using `list_service_roles`
 
 That one tool needs a real ADSP environment and a logged-in session (via `@abgov/adsp-cli`, a separate package this
