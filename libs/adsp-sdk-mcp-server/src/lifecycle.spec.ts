@@ -102,6 +102,19 @@ describe('graceful shutdown', () => {
     expect(response.headers.get('connection')).toBe('close');
   });
 
+  it('asks the client to close the connection on a request that was already running when draining began', async () => {
+    const held = postMcp(new URL(`${base}/mcp`), QUICKSTART_CALL);
+    await waitFor(() => handlerCalls === 1);
+
+    lifecycle.beginDrain();
+    releaseHeld();
+    const response = await held;
+    await response.text();
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get('connection')).toBe('close');
+  });
+
   it('keeps serving during the delay, lets in-flight requests finish, then exits 0 after flushing', async () => {
     const order: string[] = [];
     const flush = jest.fn(async () => {
@@ -111,10 +124,10 @@ describe('graceful shutdown', () => {
     const held = callHeldTool();
     await waitFor(() => handlerCalls === 1);
 
-    shutdownWith({ delayMs: 150, timeoutMs: 5000, flush })();
+    shutdownWith({ delayMs: 500, timeoutMs: 5000, flush })();
     const duringDelay = await postMcp(new URL(`${base}/mcp`), TOOLS_LIST_REQUEST);
     await duringDelay.text();
-    await pause(250);
+    await pause(600);
     releaseHeld();
 
     expect(duringDelay.status).toBe(200);

@@ -86,10 +86,15 @@ export function createMcpHttpApp({
   app.set('trust proxy', config.trustedProxy);
 
   app.use((_req, res, next) => {
-    // Lets keep-alive clients reconnect to another pod instead of reusing a socket that is about to close.
-    if (lifecycle.draining) {
-      res.setHeader('Connection', 'close');
-    }
+    // Decided when the head is written, not on arrival, so a request already running when draining starts also tells
+    // its client not to reuse a socket that is about to close.
+    const writeHead = res.writeHead;
+    res.writeHead = function (this: express.Response, ...args: Parameters<typeof writeHead>) {
+      if (lifecycle.draining && !this.headersSent) {
+        this.setHeader('Connection', 'close');
+      }
+      return writeHead.apply(this, args);
+    } as typeof res.writeHead;
     next();
   });
 
