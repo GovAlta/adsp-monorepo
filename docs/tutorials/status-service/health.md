@@ -40,7 +40,7 @@ Click _start health check_ to begin the pinging. The status bar will update ever
 
 ### APIs
 
-You can also monitor and control the pings via the [Status Service APIs](https://api.adsp-uat.alberta.ca/autotest/?urls.primaryName=Status%20service), from another application. This would only be necessary if you wished to automate control, provide your own interface to keep user's notified, or perhaps to perform automated diagnostic on the application in question. The [Tenant Management Webapp](https://adsp.alberta.ca) provides basic capabilities for doing these things manually.
+You can also monitor and control the pings via the [Status Service APIs](https://api.adsp.alberta.ca), from another application. This would only be necessary if you wished to automate control, provide your own interface to keep user's notified, or perhaps to perform automated diagnostic on the application in question. The [Tenant Management Webapp](https://adsp.alberta.ca) provides basic capabilities for doing these things manually.
 
 ## Learn More
 
