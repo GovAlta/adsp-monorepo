@@ -1,5 +1,13 @@
 from adsp_py_common.access import User as User
 from adsp_py_common.adsp_id import AdspId as AdspId
+from adsp_py_common.audit import (
+    AuditAction as AuditAction,
+    AuditRecordDetails as AuditRecordDetails,
+    AuditRecordOutcome as AuditRecordOutcome,
+    AuditService as AuditService,
+    audit_definitions as audit_definitions,
+    to_audit_actor as to_audit_actor,
+)
 from adsp_py_common.event import DomainEvent as DomainEvent
 from adsp_py_common.registration import (
     AdspRegistration as AdspRegistration,
@@ -13,6 +21,7 @@ from adsp_py_common.registration import (
 )
 from adsp_py_common.tenant import Tenant as Tenant
 
+from .audit import audit_details_from_request as audit_details_from_request
 from .extension import AdspExtension as AdspExtension, AdspServices as AdspServices
 from .filter import (
     request_user as request_user,
@@ -25,6 +34,10 @@ __all__ = [
     "AdspExtension",
     "AdspRegistration",
     "AdspServices",
+    "AuditAction",
+    "AuditRecordDetails",
+    "AuditRecordOutcome",
+    "AuditService",
     "ConfigurationDefinition",
     "DomainEvent",
     "DomainEventDefinition",
@@ -35,7 +48,10 @@ __all__ = [
     "StreamDefinition",
     "Tenant",
     "User",
+    "audit_definitions",
+    "audit_details_from_request",
     "request_user",
     "request_tenant",
     "require_user",
+    "to_audit_actor",
 ]
