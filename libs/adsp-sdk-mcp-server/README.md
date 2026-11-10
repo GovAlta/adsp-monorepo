@@ -52,6 +52,8 @@ at `POST /mcp`, with a liveness check at `GET /health`.
 | `MCP_TRANSPORT` | `stdio` | `http` to serve HTTP |
 | `PORT` | `3000` | Port to listen on |
 | `CORS_ORIGIN` | `*` | Value of `Access-Control-Allow-Origin` |
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | unset | OTLP/HTTP collector base URL. When set, metrics are exported to `<endpoint>/v1/metrics` |
+| `OTEL_METRIC_EXPORT_INTERVAL` | `60000` | Metric export interval, in milliseconds |
 
 HTTP mode is stateless: each `POST /mcp` gets its own MCP server, the response is JSON (the server never streams),
 and nothing is kept between requests. The response carries no `Mcp-Session-Id`, so any replica can serve any request
@@ -59,6 +61,41 @@ and an idle client never loses its session. `GET /mcp` and `DELETE /mcp` return 
 there is no stream to open and no session to delete.
 
 `SESSION_TTL_MINUTES` has been removed and is ignored: there are no sessions to expire.
+
+#### Metrics
+
+In HTTP mode with `OTEL_EXPORTER_OTLP_ENDPOINT` set, the server exports these OpenTelemetry metrics (meter
+`adsp-sdk-mcp-server`, resource `service.name=adsp-sdk-mcp-server`). With no endpoint, nothing is created and the
+OpenTelemetry SDK isn't loaded. Stdio mode never exports metrics.
+
+| Name | Kind | Unit | Labels | Meaning |
+|---|---|---|---|---|
+| `mcp.requests.in_flight` | UpDownCounter | `{request}` | none | `POST /mcp` requests being handled |
+| `mcp.requests.rejected` | Counter | `{request}` | `reason` | Requests or tool calls refused by an overload guard |
+| `mcp.request.duration` | Histogram | `s` | `mcp.method.name`, and `http.response.status_code` or `error.type=aborted` | Time to answer a `POST /mcp` request, or until the client disconnected |
+| `mcp.tool.duration` | Histogram | `s` | `mcp.tool.name`, `error.type` (absent on success) | Time to run a tool call |
+| `mcp.live_tool.upstream.errors` | Counter | `{error}` | `mcp.tool.name`, `error.type` | Failed ADSP calls from `list_service_roles` and `get_service_configuration_schema` |
+| `nodejs.eventloop.delay.p50`, `.p99`, `.max` | Gauge | `s` | none | Event-loop delay since the previous export |
+| `v8js.memory.heap.used` | Gauge | `By` | none | V8 heap in use |
+| `process.memory.usage` | Gauge | `By` | none | Resident set size |
+| `mcp.docs_index.build.duration` | Histogram | `s` | none | Time to build the docs index, once per process at startup |
+
+Every label takes a value from a fixed set:
+
+- `mcp.tool.name`: one of the six tool names, or `unknown` for any name the server doesn't have.
+- `mcp.method.name`: an MCP method such as `initialize`, `tools/list` or `tools/call`; `other` for any other method;
+  `batch` for a JSON-RPC batch; `unparsed` when the body wasn't valid JSON-RPC or was too large.
+- `error.type` on `mcp.request.duration`: `aborted` when the client disconnected before the response was written; the
+  status code is then left out.
+- `error.type` on `mcp.tool.duration`: `tool_error` (the tool answered with `isError`), `exception` (the tool threw),
+  `unknown_tool`, or `busy` (no live-tool slot was free in time).
+- `error.type` on `mcp.live_tool.upstream.errors`: `http_4xx`, `http_5xx`, `network`, `not_in_directory`,
+  `not_authenticated` or `other`. `not_authenticated` covers both a missing `adsp-cli` login and a failed token
+  request, which `adsp-cli` reports the same way.
+- `reason` on `mcp.requests.rejected`: `in_flight_cap`, `rate_limit`, `origin` or `live_tool_cap`.
+
+This version has no overload guards yet, so `mcp.requests.rejected` and the `busy` error type are defined but never
+recorded.
 
 ### Using `list_service_roles`
 

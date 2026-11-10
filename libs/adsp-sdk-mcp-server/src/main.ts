@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { createMcpHttpApp } from './http';
+import { startMetricsFromEnv } from './metrics';
 import { createAdspMcpServer } from './server';
 
 type Transport = 'stdio' | 'http';
@@ -26,6 +27,8 @@ async function main(): Promise<void> {
 
 async function startHttp(): Promise<void> {
   const port = parseInt(process.env['PORT'] ?? '3000', 10);
+  // Started before the app so the docs index build, which the app triggers, is recorded.
+  const metrics = await startMetricsFromEnv();
   const app = createMcpHttpApp();
 
   return new Promise((resolve) => {
@@ -35,7 +38,8 @@ async function startHttp(): Promise<void> {
     });
 
     function shutdown() {
-      httpServer.close(() => process.exit(0));
+      const flushed = metrics?.shutdown().catch(() => undefined) ?? Promise.resolve();
+      httpServer.close(() => flushed.then(() => process.exit(0)));
       setTimeout(() => process.exit(1), 5_000).unref();
     }
 

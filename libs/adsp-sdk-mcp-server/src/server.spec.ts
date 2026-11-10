@@ -17,7 +17,10 @@ import {
   TOOL_CONTRACT,
   TRANSPORT_EQUIVALENCE_CALLS,
 } from './fixtures/toolContract';
+import { createMetricsTestKit, histogramCount, MetricsTestKit } from './fixtures/metricsTestKit';
+import { installMetrics } from './metrics';
 import { createAdspMcpServer } from './server';
+import * as quickstartModule from './tools/registerQuickstartTool';
 
 class StreamClientTransport implements Transport {
   onmessage?: (message: JSONRPCMessage) => void;
@@ -288,5 +291,120 @@ describe('shared tools', () => {
     const result = await remainingClient.callTool({ name: 'read_adsp_doc', arguments: { path: 'services/event-service.md' } });
 
     expect(result.isError).toBeUndefined();
+  });
+});
+
+describe('tool and docs index metrics', () => {
+  let kit: MetricsTestKit;
+  let uninstall: () => void;
+  let roots: string[];
+
+  function createDocsRoot(): string {
+    const root = mkdtempSync(join(tmpdir(), 'adsp-metrics-docs-'));
+    roots.push(root);
+    writeDoc(root, 'services/event-service.md', '---\ntitle: Event service\n---\n\nRoutes domain events.');
+    return root;
+  }
+
+  function toolPoints() {
+    return kit.points('mcp.tool.duration').map((point) => ({ attributes: point.attributes, count: histogramCount(point) }));
+  }
+
+  beforeEach(() => {
+    roots = [];
+    kit = createMetricsTestKit();
+    ({ uninstall } = installMetrics(kit.provider));
+  });
+
+  afterEach(async () => {
+    uninstall();
+    await kit.shutdown();
+    jest.restoreAllMocks();
+    roots.forEach((root) => rmSync(root, { recursive: true, force: true }));
+  });
+
+  it('records mcp.tool.duration for a successful tool call', async () => {
+    const client = await connectInMemoryClient(createAdspMcpServer({ docsRoot: FIXTURE_DOCS_ROOT }));
+    await client.callTool({ name: 'search_adsp_docs', arguments: { query: 'event service' } });
+    await client.close();
+    await kit.collect();
+
+    expect(toolPoints()).toEqual([{ attributes: { 'mcp.tool.name': 'search_adsp_docs' }, count: 1 }]);
+  });
+
+  it('labels a tool result with isError as tool_error', async () => {
+    const client = await connectInMemoryClient(createAdspMcpServer({ docsRoot: FIXTURE_DOCS_ROOT }));
+    const result = await client.callTool({ name: 'read_adsp_doc', arguments: { path: 'services/missing.md' } });
+    await client.close();
+    await kit.collect();
+
+    expect(result.isError).toBe(true);
+    expect(toolPoints()).toEqual([
+      { attributes: { 'mcp.tool.name': 'read_adsp_doc', 'error.type': 'tool_error' }, count: 1 },
+    ]);
+  });
+
+  it('labels a throwing tool handler as exception and still returns the JSON-RPC error', async () => {
+    jest.spyOn(quickstartModule, 'createQuickstartTool').mockReturnValue([
+      {
+        name: 'get_platform_quickstart',
+        description: 'Quickstart that fails.',
+        inputSchema: { type: 'object' },
+        handler: () => {
+          throw new Error('handler failed');
+        },
+      },
+    ]);
+    const client = await connectInMemoryClient(createAdspMcpServer({ docsRoot: createDocsRoot() }));
+    const outcome = await callForContract(client, { name: 'get_platform_quickstart', arguments: {} });
+    await client.close();
+    await kit.collect();
+
+    expect(outcome).toEqual({ error: { code: -32603, message: 'MCP error -32603: handler failed' } });
+    expect(toolPoints()).toEqual([
+      { attributes: { 'mcp.tool.name': 'get_platform_quickstart', 'error.type': 'exception' }, count: 1 },
+    ]);
+  });
+
+  it('labels every unknown tool name as unknown', async () => {
+    const client = await connectInMemoryClient(createAdspMcpServer({ docsRoot: FIXTURE_DOCS_ROOT }));
+    for (const name of ['nope-1', 'nope-2', 'nope-3']) {
+      await client.callTool({ name, arguments: {} });
+    }
+    await client.close();
+    await kit.collect();
+
+    expect(toolPoints()).toEqual([
+      { attributes: { 'mcp.tool.name': 'unknown', 'error.type': 'unknown_tool' }, count: 3 },
+    ]);
+  });
+
+  it('records the docs index build once per docs root', async () => {
+    const root = createDocsRoot();
+    createAdspMcpServer({ docsRoot: root });
+    createAdspMcpServer({ docsRoot: root });
+    await kit.collect();
+
+    const points = kit.points('mcp.docs_index.build.duration');
+    expect(points).toHaveLength(1);
+    expect(histogramCount(points[0])).toBe(1);
+  });
+
+  it('does not record a docs index build that fails', async () => {
+    expect(() => createAdspMcpServer({ docsRoot: join(tmpdir(), 'adsp-no-such-docs-root') })).toThrow();
+    await kit.collect();
+
+    expect(kit.points('mcp.docs_index.build.duration')).toEqual([]);
+  });
+
+  it('keeps the tool contract unchanged with metrics installed', async () => {
+    const client = await connectInMemoryClient(createAdspMcpServer({ docsRoot: FIXTURE_DOCS_ROOT }));
+    const outcomes = [];
+    for (const { call } of TOOL_CONTRACT.calls) {
+      outcomes.push(await callForContract(client, call));
+    }
+    await client.close();
+
+    expect(outcomes).toEqual(TOOL_CONTRACT.calls.map(({ outcome }) => outcome));
   });
 });
