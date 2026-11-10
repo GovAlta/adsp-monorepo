@@ -109,6 +109,31 @@ objects:
               env:
                 - name: PORT
                   value: "3350"
+                - name: MONGO_USER
+                  valueFrom:
+                    secretKeyRef:
+                      key: database-user
+                      name: ${APP_NAME}-mongodb
+                - name: MONGO_URI
+                  valueFrom:
+                    secretKeyRef:
+                      key: database-uri
+                      name: ${APP_NAME}-mongodb
+                - name: MONGO_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      key: database-password
+                      name: ${APP_NAME}-mongodb
+                - name: MONGO_DB
+                  valueFrom:
+                    secretKeyRef:
+                      key: database-name
+                      name: ${APP_NAME}-mongodb
+                - name: MONGO_TLS
+                  valueFrom:
+                    secretKeyRef:
+                      key: database-tls
+                      name: ${APP_NAME}-mongodb
               imagePullPolicy: IfNotPresent
               name: ${APP_NAME}
               ports:
