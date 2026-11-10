@@ -1,0 +1,61 @@
+{
+  "name": "adsp-sdk-mcp-service",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/adsp-sdk-mcp-service/src",
+  "projectType": "application",
+  "prefix": "adsp-sdk-mcp-service",
+  "tags": [],
+  "targets": {
+    "build": {
+      "executor": "@nx/webpack:webpack",
+      "inputs": ["production", "^production", "{workspaceRoot}/docs/**/*.md"],
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "webpackConfig": "apps/adsp-sdk-mcp-service/webpack.config.js",
+        "outputPath": "dist/apps/adsp-sdk-mcp-service",
+        "main": "apps/adsp-sdk-mcp-service/src/main.ts",
+        "tsConfig": "apps/adsp-sdk-mcp-service/tsconfig.app.json",
+        "assets": [
+          {
+            "input": "docs",
+            "glob": "**/*.md",
+            "output": "assets/docs"
+          }
+        ],
+        "target": "node",
+        "compiler": "tsc",
+        "babelUpwardRootMode": true
+      },
+      "configurations": {
+        "production": {
+          "optimization": true,
+          "extractLicenses": true,
+          "inspect": false,
+          "fileReplacements": []
+        }
+      }
+    },
+    "serve": {
+      "executor": "@nx/js:node",
+      "options": {
+        "buildTarget": "adsp-sdk-mcp-service:build",
+        "port": 7792
+      }
+    },
+    "lint": {
+      "inputs": [
+        "default",
+        "^default",
+        "{workspaceRoot}/eslint.config.mjs",
+        "{workspaceRoot}/tools/eslint-rules/**/*"
+      ]
+    },
+    "test": {
+      "executor": "@nx/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/apps/adsp-sdk-mcp-service"],
+      "options": {
+        "jestConfig": "apps/adsp-sdk-mcp-service/jest.config.ts"
+      }
+    }
+  }
+}
