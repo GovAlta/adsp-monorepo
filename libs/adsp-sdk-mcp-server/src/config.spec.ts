@@ -93,4 +93,42 @@ describe('readConfig', () => {
       /MCP_SHUTDOWN_DELAY_MS/
     );
   });
+
+  describe('hosted sign-in settings', () => {
+    const AUTH_ENV = {
+      MCP_PUBLIC_URL: 'https://mcp.example.test/',
+      ADSP_ACCESS_SERVICE_URL: 'https://access.example.test',
+      ADSP_DIRECTORY_SERVICE_URL: 'https://directory.example.test/',
+    };
+
+    it('leaves auth unset when none of the three is set', () => {
+      expect(readConfig({}).auth).toBeUndefined();
+    });
+
+    it('reads and normalises all three', () => {
+      expect(readConfig(AUTH_ENV).auth).toEqual({
+        publicUrl: 'https://mcp.example.test',
+        accessServiceUrl: 'https://access.example.test',
+        directoryServiceUrl: 'https://directory.example.test',
+      });
+    });
+
+    it('names the settings that are missing when only some are set', () => {
+      expect(() => readConfig({ MCP_PUBLIC_URL: AUTH_ENV.MCP_PUBLIC_URL })).toThrow(
+        /ADSP_ACCESS_SERVICE_URL.*ADSP_DIRECTORY_SERVICE_URL/
+      );
+    });
+
+    it.each(['http://access.example.test', 'not a url', 'ftp://access.example.test'])(
+      'rejects %p as an access service URL',
+      (value) => {
+        expect(() => readConfig({ ...AUTH_ENV, ADSP_ACCESS_SERVICE_URL: value })).toThrow(/ADSP_ACCESS_SERVICE_URL/);
+      }
+    );
+
+    it.each(['http://127.0.0.1:4321', 'http://localhost:4321'])('allows plain http on loopback (%p)', (value) => {
+      expect(readConfig({ ...AUTH_ENV, MCP_PUBLIC_URL: value }).auth?.publicUrl).toBe(value);
+    });
+  });
 });
+
