@@ -42,9 +42,11 @@ export function createGracefulShutdown({
 }: GracefulShutdownOptions): () => void {
   let started = false;
   let exited = false;
+  let deadline: NodeJS.Timeout | undefined;
   const exitOnce = (code: number) => {
     if (!exited) {
       exited = true;
+      clearTimeout(deadline);
       exit(code);
     }
   };
@@ -56,7 +58,7 @@ export function createGracefulShutdown({
     started = true;
     lifecycle.beginDrain();
     log(`Shutting down: readiness off, draining for up to ${timeoutMs} ms.`);
-    setTimeout(() => {
+    deadline = setTimeout(() => {
       log('Shutdown deadline reached with requests still running; exiting.');
       exitOnce(1);
     }, timeoutMs).unref();

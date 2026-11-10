@@ -37,7 +37,7 @@ describe('startMcpHttpServer', () => {
       port: 0,
       host: '127.0.0.1',
       env: {},
-      config: testConfig({ rateLimitPerMinute: 0, shutdownDelayMs: 20, shutdownTimeoutMs: 2000 }),
+      config: testConfig({ rateLimitPerMinute: 0, shutdownDelayMs: 300, shutdownTimeoutMs: 3000 }),
       signals,
       exit,
       ...overrides,
