@@ -23,6 +23,16 @@ components:
             oneOf:
               - type: string
               - type: object
+      example:
+        namespace: data-register
+        name: weekdays
+        description: Days of the week
+        entries:
+          - Monday
+          - Tuesday
+          - Wednesday
+          - Thursday
+          - Friday
     DataRegisterCreate:
       type: object
       required:
@@ -70,6 +80,9 @@ components:
     description: >
       Retrieves the data registers that have both a definition and a data document, i.e. the registers manageable
       through this API. Requires the form-service admin role or the configuration-service configuration-admin role.
+      Core users with either role must set `tenantId`.
+    parameters:
+      - $ref: '#/components/parameters/FormTenantId'
     responses:
       200:
         description: Successfully retrieved the list of data registers.
@@ -103,7 +116,9 @@ components:
     description: >
       Creates a new data register: its definition in the shared platform/configuration-service document, followed
       by its entries in a data-register/<name> configuration document. Requires the form-service admin role or the
-      configuration-service configuration-admin role.
+      configuration-service configuration-admin role. Core users with either role must set `tenantId`.
+    parameters:
+      - $ref: '#/components/parameters/FormTenantId'
     requestBody:
       required: true
       content:
@@ -154,7 +169,7 @@ components:
       - Form
     description: >
       Retrieves a data register by name. Requires the form-service admin role or the configuration-service
-      configuration-admin role.
+      configuration-admin role. Core users with either role must set `tenantId`.
     parameters:
       - name: name
         description: Name of the data register.
@@ -163,6 +178,7 @@ components:
         schema:
           type: string
           pattern: '^[a-zA-Z0-9\-_](?:[a-zA-Z0-9\-_ ]{0,48}[a-zA-Z0-9\-_])?$'
+      - $ref: '#/components/parameters/FormTenantId'
     responses:
       200:
         description: Successfully retrieved the data register.
@@ -199,7 +215,8 @@ components:
       Updates the description and/or entries of an existing data register. Only provided fields are changed:
       sending description alone leaves the entries unchanged, and vice versa. Entries are written to the latest
       revision; if an older revision is pinned as active, the pin moves to that revision so the new entries are
-      live. Requires the form-service admin role or the configuration-service configuration-admin role.
+      live. Requires the form-service admin role or the configuration-service configuration-admin role. Core users
+      with either role must set `tenantId`.
     parameters:
       - name: name
         description: Name of the data register.
@@ -208,6 +225,7 @@ components:
         schema:
           type: string
           pattern: '^[a-zA-Z0-9\-_](?:[a-zA-Z0-9\-_ ]{0,48}[a-zA-Z0-9\-_])?$'
+      - $ref: '#/components/parameters/FormTenantId'
     requestBody:
       required: true
       content:
@@ -246,7 +264,8 @@ components:
     description: >
       Deletes a data register: its entries and its definition. Removes whichever of the two parts still exists, so
       a retry after a partial failure succeeds. Forms that reference the register in a dropdown or list will lose
-      its options. Requires the form-service admin role or the configuration-service configuration-admin role.
+      its options. Requires the form-service admin role or the configuration-service configuration-admin role. Core
+      users with either role must set `tenantId`.
     parameters:
       - name: name
         description: Name of the data register to delete.
@@ -255,6 +274,7 @@ components:
         schema:
           type: string
           pattern: '^[a-zA-Z0-9\-_](?:[a-zA-Z0-9\-_ ]{0,48}[a-zA-Z0-9\-_])?$'
+      - $ref: '#/components/parameters/FormTenantId'
     responses:
       204:
         description: Successfully deleted the data register.

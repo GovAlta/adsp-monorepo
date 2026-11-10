@@ -10,6 +10,14 @@ module.exports = {
       name: 'Form',
       description: 'API to managed forms.',
     },
+    {
+      name: 'Form Submission',
+      description: 'API to review and disposition form submissions.',
+    },
+    {
+      name: 'Form schedules',
+      description: 'API to manage the scheduled intake periods of form definitions.',
+    },
   ],
   components: {
     securitySchemes: {
