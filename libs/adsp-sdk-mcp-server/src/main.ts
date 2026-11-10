@@ -1,9 +1,7 @@
 #!/usr/bin/env node
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
-import { McpServerConfig, readConfig } from './config';
-import { createMcpHttpApp, createMcpHttpServer } from './http';
-import { createGracefulShutdown, createLifecycle } from './lifecycle';
-import { startMetricsFromEnv } from './metrics';
+import { readConfig } from './config';
+import { startMcpHttpServer } from './hosted';
 import { createAdspMcpServer } from './server';
 import { configureLiveToolLimit } from './tools/liveToolLimit';
 
@@ -22,39 +20,12 @@ async function main(): Promise<void> {
   console.error(`[adsp-sdk-mcp-server] transport=${transport}`);
 
   if (transport === 'http') {
-    await startHttp(config);
+    await startMcpHttpServer({ config });
   } else {
     configureLiveToolLimit({ maxConcurrent: config.liveToolMaxConcurrent, waitMs: config.inFlightWaitMs });
     const server = createAdspMcpServer();
     await server.connect(new StdioServerTransport());
   }
-}
-
-async function startHttp(config: McpServerConfig): Promise<void> {
-  const port = parseInt(process.env['PORT'] ?? '3000', 10);
-  // Started before the app so the docs index build, which the app triggers, is recorded.
-  const metrics = await startMetricsFromEnv();
-  const lifecycle = createLifecycle();
-  const app = createMcpHttpApp({ config, lifecycle });
-
-  return new Promise((resolve) => {
-    const httpServer = createMcpHttpServer(app).listen(port, () => {
-      console.error(`[adsp-sdk-mcp-server] HTTP server listening on :${port}`);
-      resolve();
-    });
-
-    const shutdown = createGracefulShutdown({
-      httpServer,
-      lifecycle,
-      delayMs: config.shutdownDelayMs,
-      timeoutMs: config.shutdownTimeoutMs,
-      flush: () => metrics?.shutdown() ?? Promise.resolve(),
-      exit: (code) => process.exit(code),
-    });
-
-    process.on('SIGTERM', shutdown);
-    process.on('SIGINT', shutdown);
-  });
 }
 
 main().catch((err) => {
