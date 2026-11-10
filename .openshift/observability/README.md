@@ -176,6 +176,7 @@ overwritten. Export and commit when you are happy with a change.
 | `configuration-service-performance.json` | The same, narrowed to configuration-service, plus its internal benchmark phases. |
 | `adsp-service-dependencies.json` | What is a service waiting on? Outbound latency per callee, service graph edges, event bus depth. |
 | `adsp-event-bus-rabbitmq.json` | Is the event bus about to block, and are domain events flowing without loss? Broker-side view. |
+| `adsp-sdk-mcp-server.json` | Is the hosted MCP server keeping up? Load, latency by method and tool, overload-guard rejections, live-tool upstream errors, and per-replica event-loop delay and memory. |
 
 `adsp-event-bus-rabbitmq.json` covers only per-node aggregates, because
 `prometheus.return_per_object_metrics` is deliberately off -- per-object series scale with
