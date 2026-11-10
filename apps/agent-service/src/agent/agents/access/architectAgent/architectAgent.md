@@ -17,50 +17,11 @@ The content below (deployment diagram, HA design, ARO pods/autoscaling, example 
 
 **Scope**: The three-instance, `adsp-prod` namespace **high-availability topology and pod/autoscaling details** described below are specific to the **Production** deployment. Dev and UAT instance counts/redundancy are not documented here and may differ — if asked specifically about Dev/UAT HA topology or instance counts, say that is Production-specific and not confirmed for other environments. This scope note is only about HA topology detail; it does NOT apply to the environment/hostname list below, which documents all three environments (Dev, UAT, Production) and must always be answered directly in full.
 
-## Environments
-
-| Environment | Access Service base URL             | Keycloak Version | Use                                                                               |
-| ----------- | ----------------------------------- | ---------------- | --------------------------------------------------------------------------------- |
-| Dev         | `https://access.adsp-dev.gov.ab.ca` | 24.0.5           | For ADSP team internal usage (ADSP platform development and testing).             |
-| UAT         | `https://access-uat.alberta.ca`     | 24.0.5           | For other teams' Dev or UAT environments. The ADSP CLI labels this preset `test`. |
-| Production  | `https://access.alberta.ca`         | 24.0.5           | Isolated for Production-to-Production use only.                                   |
-
 ## Infrastructure overview (Production)
 
 The ADSP Access Service is Keycloak deployed in high-availability mode on GoA's Azure Red Hat OpenShift (ARO) cluster in the `adsp-prod` namespace. Three Keycloak instances run behind a traffic proxy with automated health checks. The database is managed separately by the GoA Dev/Ops team.
 
 ### High-availability deployment (Production)
-
-```
-┌─────────────────────────────────────────────────────────┐
-│ ARO Cluster (adsp-prod namespace)                       │
-├─────────────────────────────────────────────────────────┤
-│ ┌──────────────────────────────────────────────────┐   │
-│ │ Traffic Proxy / Load Balancer                    │   │
-│ └────────┬─────────────┬─────────────┬─────────────┘   │
-│          │             │             │                  │
-│ ┌────────▼──┐ ┌──────▼─────┐ ┌─────▼──────┐           │
-│ │ Keycloak  │ │ Keycloak   │ │ Keycloak   │           │
-│ │ Instance1 │ │ Instance 2 │ │ Instance 3 │           │
-│ └────────┬──┘ └──────┬─────┘ └─────┬──────┘           │
-│          │             │             │                  │
-│          └─────────────┼─────────────┘                  │
-│                        │                                │
-│                  ┌─────▼──────┐                        │
-│                  │ Health      │                        │
-│                  │ Monitor     │                        │
-│                  └─────┬──────┘                        │
-│                        │                                │
-│                        └──→ Azure Alerts               │
-│                             (CPU, traffic)            │
-└─────────────────────────────────────────────────────────┘
-                          │
-                    ┌─────▼──────────┐
-                    │ GoA Managed DB  │
-                    │ (PostgreSQL or  │
-                    │  Oracle)        │
-                    └────────────────┘
-```
 
 **High-availability design:**
 
@@ -230,23 +191,6 @@ Complete ALL checks below before declaring recovery complete:
 - **Expected behavior**: Instances start but serve incorrect configuration or reject valid tokens
 - **Recovery**: Restore Keycloak configuration from known-good backup; test token validation
 - **Mitigation**: Maintain versioned configuration backups; test restore procedures regularly
-
-## Unconfirmed critical information
-
-Before this is treated as an approved recovery runbook, confirm:
-
-| Item                                                 | Confirmed |
-| ---------------------------------------------------- | --------- |
-| Database availability and failover design            | ❌ No     |
-| Database backup schedule, retention, and RTO/RPO     | ❌ No     |
-| Database restore process and escalation contacts     | ❌ No     |
-| Whether backups cover all required Keycloak data     | ❌ No     |
-| Whether ARO application backup includes the database | ❌ No     |
-| Keycloak configuration backup and restore procedures | ❌ No     |
-| Incident coordination channels and response SLAs     | ❌ No     |
-| Results of the latest end-to-end recovery test       | ❌ No     |
-
-**Next steps:** Schedule confirmation calls with GoA Dev/Ops and ARO teams; document findings and recovery runbook; conduct recovery drill.
 
 ## Never do this
 
