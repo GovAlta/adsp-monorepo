@@ -16,9 +16,18 @@ export function configureLiveToolLimit({ maxConcurrent, waitMs }: { maxConcurren
   permitWaitMs = waitMs;
 }
 
+const CANCELLED_RESULT_TEXT = 'Cancelled: the client went away before the call ran.';
+
 /** Runs a live tool's upstream calls under a shared per-process cap, so they can't fan out without bound. */
-export async function withLiveToolPermit(run: () => Promise<CallToolResult>): Promise<CallToolResult> {
-  const release = await permits.acquire(permitWaitMs);
+export async function withLiveToolPermit(
+  run: () => Promise<CallToolResult>,
+  signal?: AbortSignal
+): Promise<CallToolResult> {
+  const release = await permits.acquire(permitWaitMs, signal);
+  if (signal?.aborted) {
+    release?.();
+    return { isError: true, content: [{ type: 'text', text: CANCELLED_RESULT_TEXT }] };
+  }
   if (!release) {
     getMetrics().recordRejection('live_tool_cap');
     const busy: CallToolResult = {

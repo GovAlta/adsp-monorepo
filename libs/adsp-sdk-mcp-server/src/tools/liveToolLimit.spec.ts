@@ -187,3 +187,92 @@ describe('live-tool upstream cap', () => {
     });
   });
 });
+
+describe('live-tool calls from a client that went away', () => {
+  let releaseUpstream: () => void;
+
+  function upstreamCalls(): number {
+    return mockGetServiceRoles.mock.calls.length + mockGetSchemas.mock.calls.length;
+  }
+
+  beforeEach(() => {
+    const upstreamHeld = new Promise<void>((resolve) => (releaseUpstream = resolve));
+    mockGetAccessToken.mockResolvedValue({ status: 'ok', token: 'token-abc' });
+    mockGetDirectoryServiceUrl.mockReturnValue('https://directory.example.test');
+    mockGetServiceRoles.mockImplementation(async () => {
+      await upstreamHeld;
+      return [];
+    });
+    mockGetSchemas.mockImplementation(async () => {
+      await upstreamHeld;
+      return [];
+    });
+  });
+
+  afterEach(() => {
+    releaseUpstream();
+    configureLiveToolLimit({ maxConcurrent: 8, waitMs: 1000 });
+    jest.resetAllMocks();
+  });
+
+  it('drops a queued call whose client disconnected, without calling ADSP or counting it as busy', async () => {
+    configureLiveToolLimit({ maxConcurrent: 1, waitMs: 5000 });
+    const kit = createMetricsTestKit();
+    const { uninstall } = installMetrics(kit.provider);
+    try {
+      const held = listServiceRoles.handler({});
+      await new Promise((resolve) => setTimeout(resolve, 20));
+      const abort = new AbortController();
+      const abandoned = getConfigurationSchema.handler({}, { signal: abort.signal });
+      const next = listServiceRoles.handler({});
+
+      abort.abort();
+      const dropped = await abandoned;
+      releaseUpstream();
+      await Promise.all([held, next]);
+      await kit.collect();
+
+      expect(dropped.isError).toBe(true);
+      expect(isBusyResult(dropped)).toBe(false);
+      expect(upstreamCalls()).toBe(2);
+      expect(mockGetSchemas).not.toHaveBeenCalled();
+      expect(kit.points('mcp.requests.rejected')).toEqual([]);
+    } finally {
+      uninstall();
+      await kit.shutdown();
+    }
+  });
+
+  it('skips the upstream calls when the client has already gone', async () => {
+    const abort = new AbortController();
+    abort.abort();
+
+    const result = await listServiceRoles.handler({}, { signal: abort.signal });
+
+    expect(result.isError).toBe(true);
+    expect(mockGetAccessToken).not.toHaveBeenCalled();
+    expect(upstreamCalls()).toBe(0);
+  });
+
+  it('cancels a queued call when the MCP client cancels the request', async () => {
+    configureLiveToolLimit({ maxConcurrent: 1, waitMs: 5000 });
+    const client = await connectInMemoryClient(createAdspMcpServer({ docsRoot: FIXTURE_DOCS_ROOT }));
+    const held = client.callTool({ name: 'list_service_roles', arguments: {} });
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    const abort = new AbortController();
+    const cancelled = client
+      .callTool({ name: 'get_service_configuration_schema', arguments: {} }, undefined, { signal: abort.signal })
+      .catch(() => 'cancelled');
+
+    abort.abort();
+    expect(await cancelled).toBe('cancelled');
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    releaseUpstream();
+    await held;
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    await client.close();
+
+    expect(mockGetServiceRoles).toHaveBeenCalledTimes(1);
+    expect(mockGetSchemas).not.toHaveBeenCalled();
+  });
+});

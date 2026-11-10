@@ -73,7 +73,7 @@ export function createServiceRolesTools(): LiveToolDefinition[] {
         'authentication: run `npx @abgov/adsp-cli login` once in a terminal (interactive), or set ' +
         'ADSP_CLIENT_ID and ADSP_CLIENT_SECRET environment variables for non-interactive/CI use.',
       inputSchema: { type: 'object', properties: {} },
-      handler: () =>
+      handler: (_args, context) =>
         withLiveToolPermit(async () => {
           const tokenResult = await getAccessToken();
 
@@ -97,7 +97,7 @@ export function createServiceRolesTools(): LiveToolDefinition[] {
             getMetrics().recordUpstreamError('list_service_roles', classifyUpstreamError(err));
             return { isError: true, content: [{ type: 'text', text: describeError(err) }] };
           }
-        }),
+        }, context?.signal),
     },
   ];
 }

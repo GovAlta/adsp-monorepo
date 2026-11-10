@@ -65,7 +65,7 @@ export function createAdspMcpServer(options: CreateAdspMcpServerOptions = {}): S
     tools: tools.map(({ name, description, inputSchema }) => ({ name, description, inputSchema })),
   }));
 
-  server.setRequestHandler(CallToolRequestSchema, async (request) => {
+  server.setRequestHandler(CallToolRequestSchema, async (request, extra) => {
     const started = performance.now();
     const tool = toolsByName.get(request.params.name);
     if (!tool) {
@@ -76,7 +76,7 @@ export function createAdspMcpServer(options: CreateAdspMcpServerOptions = {}): S
 
     try {
       // clean-code-ignore: 2.18 — ToolDefinition.handler is documented (tools/types.ts) as a pure, side-effect-free lookup.
-      const result = await tool.handler(request.params.arguments ?? {});
+      const result = await tool.handler(request.params.arguments ?? {}, { signal: extra.signal });
       getMetrics().recordToolCall(tool.name, secondsSince(started), toolErrorType(result));
       return result;
     } catch (err) {

@@ -58,7 +58,7 @@ export function createConfigurationSchemaTools(): LiveToolDefinition[] {
           },
         },
       },
-      handler: (args: { serviceId?: string }) =>
+      handler: (args: { serviceId?: string }, context) =>
         withLiveToolPermit(async () => {
           const tokenResult = await getAccessToken();
 
@@ -86,7 +86,7 @@ export function createConfigurationSchemaTools(): LiveToolDefinition[] {
             getMetrics().recordUpstreamError('get_service_configuration_schema', classifyUpstreamError(err));
             return { isError: true, content: [{ type: 'text', text: describeError(err) }] };
           }
-        }),
+        }, context?.signal),
     },
   ];
 }
