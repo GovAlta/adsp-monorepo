@@ -2,8 +2,9 @@ import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/
 import * as express from 'express';
 import { performance } from 'perf_hooks';
 import { McpServerConfig, readConfig } from './config';
-import { createCorsAndOriginGuard, createRateLimit } from './guards';
+import { createCorsAndOriginGuard, createInFlightGate, createRateLimit } from './guards';
 import { bucketMcpMethod, getMetrics } from './metrics';
+import { Semaphore } from './semaphore';
 import { createAdspMcpServer, CreateAdspMcpServerOptions, loadAdspMcpTools } from './server';
 
 const MAX_REQUEST_BODY_BYTES = 1024 * 1024;
@@ -19,7 +20,6 @@ function createStatelessPostHandler(options: CreateAdspMcpServerOptions): expres
     const metrics = getMetrics();
     let method = 'unparsed';
     let messagesSeen = 0;
-    metrics.addInFlight(1);
 
     const server = createAdspMcpServer(options);
     const transport = new StreamableHTTPServerTransport({
@@ -31,7 +31,6 @@ function createStatelessPostHandler(options: CreateAdspMcpServerOptions): expres
     res.on('close', () => {
       transport.close();
       server.close();
-      metrics.addInFlight(-1);
       // Node leaves statusCode at 200 when the client goes away before a response is written.
       const outcome = res.writableFinished ? res.statusCode : 'aborted';
       metrics.recordRequest(method, outcome, (performance.now() - started) / 1000);
@@ -81,7 +80,12 @@ export function createMcpHttpApp({ config = readConfig(), ...serverOptions }: Mc
   });
 
   app.use('/mcp', createCorsAndOriginGuard(config.corsOrigins));
-  app.post('/mcp', createRateLimit(config.rateLimitPerMinute), createStatelessPostHandler(serverOptions));
+  app.post(
+    '/mcp',
+    createRateLimit(config.rateLimitPerMinute),
+    createInFlightGate(new Semaphore(config.maxInFlight, { maxWaiters: config.maxInFlight }), config.inFlightWaitMs),
+    createStatelessPostHandler(serverOptions)
+  );
   app.get('/mcp', methodNotAllowed);
   app.delete('/mcp', methodNotAllowed);
 

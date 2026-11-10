@@ -1,3 +1,7 @@
+import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'fs';
+import { tmpdir } from 'os';
+import { join } from 'path';
 import { McpServerConfig } from './config';
 import { FIXTURE_DOCS_ROOT } from './fixtures/toolContract';
 import {
@@ -8,10 +12,12 @@ import {
   stop,
   testConfig,
   TOOLS_LIST_REQUEST,
+  waitFor,
 } from './fixtures/httpTestKit';
 import { createMetricsTestKit, MetricsTestKit } from './fixtures/metricsTestKit';
 import { createMcpHttpApp } from './http';
 import { installMetrics } from './metrics';
+import * as quickstartModule from './tools/registerQuickstartTool';
 
 const ALLOWED = 'http://allowed.test';
 
@@ -227,5 +233,198 @@ describe('rate limit', () => {
     for (let i = 0; i < 3; i++) statuses.push((await fetch(running.health)).status);
 
     expect(statuses).toEqual([200, 200, 200]);
+  });
+});
+
+describe('in-flight gate', () => {
+  const QUICKSTART_CALL = {
+    jsonrpc: '2.0',
+    id: 7,
+    method: 'tools/call',
+    params: { name: 'get_platform_quickstart', arguments: {} },
+  };
+  let running: RunningApp;
+  let docsRoot: string;
+  let kit: MetricsTestKit;
+  let uninstall: () => void;
+  let unhandledRejection: jest.Mock;
+  let handlerCalls: number;
+  let releaseHeld: () => void;
+
+  async function start(config: Partial<McpServerConfig>) {
+    running = await listen(createMcpHttpApp({ docsRoot, config: testConfig({ rateLimitPerMinute: 0, ...config }) }));
+  }
+
+  function callHeldTool(signal?: AbortSignal): Promise<number> {
+    return postMcp(running.endpoint, QUICKSTART_CALL, {}, signal).then(async (response) => {
+      await response.text();
+      return response.status;
+    });
+  }
+
+  function inFlight(): unknown {
+    return kit.points('mcp.requests.in_flight')[0]?.value;
+  }
+
+  const pause = (ms: number) => new Promise((resolveTick) => setTimeout(resolveTick, ms));
+
+  beforeEach(() => {
+    unhandledRejection = jest.fn();
+    process.on('unhandledRejection', unhandledRejection);
+    kit = createMetricsTestKit();
+    ({ uninstall } = installMetrics(kit.provider));
+    handlerCalls = 0;
+    const held = new Promise<void>((resolve) => (releaseHeld = resolve));
+    docsRoot = mkdtempSync(join(tmpdir(), 'adsp-gate-'));
+    mkdirSync(join(docsRoot, 'services'));
+    writeFileSync(join(docsRoot, 'services', 'event-service.md'), '---\ntitle: Event service\n---\n\nRoutes events.');
+    jest.spyOn(quickstartModule, 'createQuickstartTool').mockReturnValue([
+      {
+        name: 'get_platform_quickstart',
+        description: 'Quickstart that waits for the test.',
+        inputSchema: { type: 'object' },
+        handler: async () => {
+          handlerCalls += 1;
+          await held;
+          return { content: [{ type: 'text', text: 'done' }] };
+        },
+      },
+    ]);
+  });
+
+  afterEach(async () => {
+    releaseHeld();
+    await new Promise((resolveTick) => setImmediate(resolveTick));
+    process.off('unhandledRejection', unhandledRejection);
+    jest.restoreAllMocks();
+    await stop(running);
+    uninstall();
+    await kit.shutdown();
+    rmSync(docsRoot, { recursive: true, force: true });
+
+    expect(unhandledRejection).not.toHaveBeenCalled();
+  });
+
+  it('lets a brief overflow wait and complete', async () => {
+    await start({ maxInFlight: 2, inFlightWaitMs: 500 });
+
+    const statuses = Promise.all([callHeldTool(), callHeldTool(), callHeldTool(), callHeldTool()]);
+    await waitFor(() => handlerCalls === 2);
+    setTimeout(releaseHeld, 100);
+
+    expect(await statuses).toEqual([200, 200, 200, 200]);
+    expect(handlerCalls).toBe(4);
+  });
+
+  it('answers 503 with Retry-After once the wait expires, and in-flight requests still complete', async () => {
+    await start({ maxInFlight: 2, inFlightWaitMs: 100 });
+    const held = [callHeldTool(), callHeldTool()];
+    await waitFor(() => handlerCalls === 2);
+
+    const rejected = await postMcp(running.endpoint, TOOLS_LIST_REQUEST);
+
+    expect(rejected.status).toBe(503);
+    expect(rejected.headers.get('retry-after')).toBe('1');
+    expect(await rejected.json()).toEqual(JSON_RPC_ERROR('Server busy'));
+    releaseHeld();
+    expect(await Promise.all(held)).toEqual([200, 200]);
+  });
+
+  it('rejects at once when the wait queue is full', async () => {
+    await start({ maxInFlight: 1, inFlightWaitMs: 5000 });
+    const held = callHeldTool();
+    await waitFor(() => handlerCalls === 1);
+    const queued = callHeldTool();
+    await pause(50);
+
+    const started = Date.now();
+    const rejected = await postMcp(running.endpoint, TOOLS_LIST_REQUEST);
+
+    expect(rejected.status).toBe(503);
+    expect(Date.now() - started).toBeLessThan(1000);
+    releaseHeld();
+    expect(await Promise.all([held, queued])).toEqual([200, 200]);
+  });
+
+  it('does not admit a queued request whose client disconnected', async () => {
+    await start({ maxInFlight: 1, inFlightWaitMs: 5000 });
+    const held = callHeldTool();
+    await waitFor(() => handlerCalls === 1);
+    const abort = new AbortController();
+    const queued = callHeldTool(abort.signal).catch(() => 'aborted');
+    await pause(50);
+
+    abort.abort();
+    expect(await queued).toBe('aborted');
+    await pause(50);
+    releaseHeld();
+    expect(await held).toBe(200);
+    await pause(50);
+
+    await kit.collect();
+    expect(handlerCalls).toBe(1);
+    expect(inFlight()).toBe(0);
+    expect((await postMcp(running.endpoint, TOOLS_LIST_REQUEST)).status).toBe(200);
+  });
+
+  it('releases the slot on every response path', async () => {
+    jest.spyOn(console, 'error').mockImplementation(() => undefined);
+    await start({ maxInFlight: 1, inFlightWaitMs: 200 });
+    const raw = (body: string) =>
+      fetch(running.endpoint, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', accept: 'application/json, text/event-stream' },
+        body,
+      }).then(async (response) => {
+        await response.text();
+        return response.status;
+      });
+    const nextRequestStatus = async () => (await postMcp(running.endpoint, TOOLS_LIST_REQUEST)).status;
+
+    expect(await raw('{bad')).toBe(400);
+    expect(await nextRequestStatus()).toBe(200);
+
+    expect(await raw(JSON.stringify({ ...TOOLS_LIST_REQUEST, padding: 'x'.repeat(1024 * 1024 + 1) }))).toBe(413);
+    expect(await nextRequestStatus()).toBe(200);
+
+    jest.spyOn(StreamableHTTPServerTransport.prototype, 'handleRequest').mockRejectedValueOnce(new Error('boom'));
+    expect(await raw(JSON.stringify(TOOLS_LIST_REQUEST))).toBe(500);
+    expect(await nextRequestStatus()).toBe(200);
+
+    const abort = new AbortController();
+    const aborted = callHeldTool(abort.signal).catch(() => 'aborted');
+    await waitFor(() => handlerCalls === 1);
+    abort.abort();
+    await aborted;
+    await pause(50);
+    expect(await nextRequestStatus()).toBe(200);
+
+    await kit.collect();
+    expect(inFlight()).toBe(0);
+  });
+
+  it('counts an in_flight_cap rejection', async () => {
+    await start({ maxInFlight: 1, inFlightWaitMs: 50 });
+    const held = callHeldTool();
+    await waitFor(() => handlerCalls === 1);
+
+    await (await postMcp(running.endpoint, TOOLS_LIST_REQUEST)).text();
+    releaseHeld();
+    await held;
+    await kit.collect();
+
+    expect(kit.points('mcp.requests.rejected').map((point) => [point.attributes['reason'], point.value])).toEqual([
+      ['in_flight_cap', 1],
+    ]);
+  });
+
+  it('does not gate /health', async () => {
+    await start({ maxInFlight: 1, inFlightWaitMs: 50 });
+    const held = callHeldTool();
+    await waitFor(() => handlerCalls === 1);
+
+    expect((await fetch(running.health)).status).toBe(200);
+    releaseHeld();
+    await held;
   });
 });

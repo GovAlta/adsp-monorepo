@@ -2,6 +2,7 @@ import type * as express from 'express';
 import { rateLimit } from 'express-rate-limit';
 import { McpServerConfig } from './config';
 import { getMetrics } from './metrics';
+import { Semaphore } from './semaphore';
 
 const RATE_LIMIT_WINDOW_MS = 60_000;
 
@@ -64,4 +65,34 @@ export function createRateLimit(limitPerMinute: number): express.RequestHandler 
       sendJsonRpcError(res, 429, 'Rate limit exceeded');
     },
   });
+}
+
+/** Holds each admitted request's slot until its response closes; `mcp.requests.in_flight` counts admitted requests. */
+export function createInFlightGate(semaphore: Semaphore, waitMs: number): express.RequestHandler {
+  return async (_req, res, next) => {
+    const closed = new AbortController();
+    res.on('close', () => closed.abort());
+
+    const release = await semaphore.acquire(waitMs, closed.signal);
+    if (!release) {
+      if (!closed.signal.aborted) {
+        getMetrics().recordRejection('in_flight_cap');
+        res.setHeader('Retry-After', '1');
+        sendJsonRpcError(res, 503, 'Server busy');
+      }
+      return;
+    }
+    if (closed.signal.aborted) {
+      release();
+      return;
+    }
+
+    const metrics = getMetrics();
+    metrics.addInFlight(1);
+    res.on('close', () => {
+      release();
+      metrics.addInFlight(-1);
+    });
+    next();
+  };
 }
