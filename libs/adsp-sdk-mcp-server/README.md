@@ -92,11 +92,14 @@ client `adsp-mcp` (PKCE, no secret).
   `<ADSP_ACCESS_SERVICE_URL>/auth/realms/<realm>`, its audience includes `urn:ads:platform:adsp-sdk-mcp-server`, and
   it hasn't expired (30 s clock tolerance). Anything else gets `401` with `error="invalid_token"`. A realm's token is
   never accepted on another realm's URL.
-- The server keeps no secret. It verifies tokens with each realm's public signing keys, cached for 10 minutes. If a
-  realm's keys can't be fetched within 5 s, requests for that realm get `503` with `Retry-After` for the next 60 s.
-  A realm that doesn't exist looks the same to the server, so a mistyped realm in the URL also gets `503`.
-  Key fetches are capped at 20 a minute across all realms, so made-up realm names can't make the server send
-  unbounded traffic to Keycloak.
+- The server keeps no secret. It verifies tokens with each realm's public signing keys, refreshed after 10 minutes.
+  A token with a key id the server hasn't seen triggers a refresh at most once every 30 s, so rotated keys are
+  picked up and junk key ids can't drive traffic. If a refresh fails, the realm keeps working with its last keys.
+- If a realm's keys have never been fetched and can't be within 5 s, requests for that realm get `503` with
+  `Retry-After` for the next 60 s. A realm that doesn't exist looks the same to the server, so a mistyped realm in the
+  URL also gets `503`. Key fetches are capped at 20 a minute across all realms per process, so made-up realm names
+  can't make the server send unbounded traffic to Keycloak, and they never push out a realm whose keys are known.
+  After a restart, each replica can therefore start verifying at most 20 new realms a minute.
 - Every request is checked on its own token, and nothing from one request is kept for the next. Tokens are never
   logged or written to disk.
 

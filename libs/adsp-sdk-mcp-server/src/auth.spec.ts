@@ -133,6 +133,62 @@ describe('createTokenVerifier', () => {
 
     expect(kit.fetchCount('lru-a')).toBe(2);
   });
+
+  it('keeps verifying a known realm while made-up realms use up the fetch budget', async () => {
+    const v = createTokenVerifier({ accessServiceUrl: kit.accessServiceUrl, maxRealms: 2, maxFetchesPerMinute: 3, fetchTimeoutMs: 500 });
+    await v.verify('evict-known', kit.sign('evict-known'));
+
+    for (let i = 0; i < 6; i++) {
+      kit.setMode(`evict-made-up-${i}`, 'missing');
+      await v.verify(`evict-made-up-${i}`, kit.sign(`evict-made-up-${i}`)).catch(() => undefined);
+    }
+
+    await expect(v.verify('evict-known', kit.sign('evict-known'))).resolves.toMatchObject({ extra: { realm: 'evict-known' } });
+  });
+
+  it('rejects unknown key ids on a known realm without refetching, so they cannot use up the budget', async () => {
+    const v = createTokenVerifier({ accessServiceUrl: kit.accessServiceUrl, maxFetchesPerMinute: 3, fetchTimeoutMs: 500 });
+    await v.verify('kid-known', kit.sign('kid-known'));
+
+    for (let i = 0; i < 5; i++) {
+      await expect(v.verify('kid-known', kit.sign('kid-known', {}, { keyid: `random-${i}` }))).rejects.toBeInstanceOf(
+        InvalidTokenError
+      );
+    }
+
+    expect(kit.fetchCount('kid-known')).toBe(1);
+    await expect(v.verify('kid-other', kit.sign('kid-other'))).resolves.toMatchObject({ extra: { realm: 'kid-other' } });
+  });
+
+  it('refetches for an unknown key id once the refetch interval has passed, so rotated keys are picked up', async () => {
+    const v = createTokenVerifier({ accessServiceUrl: kit.accessServiceUrl, refetchMinMs: 20, fetchTimeoutMs: 500 });
+    await v.verify('rotate-realm', kit.sign('rotate-realm'));
+    await new Promise((resolveTick) => setTimeout(resolveTick, 40));
+
+    await v.verify('rotate-realm', kit.sign('rotate-realm', {}, { keyid: 'rotated-in' })).catch(() => undefined);
+
+    expect(kit.fetchCount('rotate-realm')).toBe(2);
+  });
+
+  it('keeps using the last good keys when a refresh fails', async () => {
+    const v = createTokenVerifier({ accessServiceUrl: kit.accessServiceUrl, keyCacheMs: 20, fetchTimeoutMs: 500 });
+    await v.verify('stale-realm', kit.sign('stale-realm'));
+    await new Promise((resolveTick) => setTimeout(resolveTick, 40));
+    kit.setMode('stale-realm', 'down');
+
+    await expect(v.verify('stale-realm', kit.sign('stale-realm'))).resolves.toMatchObject({ extra: { realm: 'stale-realm' } });
+    await expect(v.verify('stale-realm', kit.sign('stale-realm'))).resolves.toBeDefined();
+
+    expect(kit.fetchCount('stale-realm')).toBe(2);
+  });
+
+  it('shares one fetch between concurrent first requests for a realm', async () => {
+    const v = verifier();
+
+    await Promise.all(Array.from({ length: 5 }, () => v.verify('burst-realm', kit.sign('burst-realm'))));
+
+    expect(kit.fetchCount('burst-realm')).toBe(1);
+  });
 });
 
 describe('auth middleware and metadata', () => {
@@ -213,6 +269,15 @@ describe('auth middleware and metadata', () => {
 
     expect(response.status).toBe(200);
     expect((await response.json()).auth).toMatchObject({ token, clientId: 'adsp-mcp', extra: { realm: REALM } });
+  });
+
+  it.each(['bearer', 'BEARER'])('accepts the %s scheme, which RFC 7235 makes case-insensitive', async (scheme) => {
+    const response = await fetch(`${base}/mcp/${REALM}`, {
+      method: 'POST',
+      headers: { authorization: `${scheme} ${kit.sign(REALM)}` },
+    });
+
+    expect(response.status).toBe(200);
   });
 
   it('answers 503 with Retry-After when the realm keys cannot be fetched, and counts it', async () => {

@@ -1,7 +1,7 @@
 import type { AuthInfo } from '@modelcontextprotocol/sdk/server/auth/types.js';
 import type * as express from 'express';
 import { decode, JwtPayload, verify } from 'jsonwebtoken';
-import { JwksClient, SigningKeyNotFoundError } from 'jwks-rsa';
+import { JwksClient } from 'jwks-rsa';
 import { sendJsonRpcError } from './guards';
 import { getMetrics } from './metrics';
 
@@ -13,6 +13,20 @@ export const REALM_PATTERN = /^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$/;
 const FETCH_WINDOW_MS = 60_000;
 const KEY_CACHE_MS = 10 * 60_000;
 const CLOCK_TOLERANCE_SECONDS = 30;
+const REFETCH_MIN_MS = 30_000;
+
+interface RealmKeys {
+  keys: Map<string, string>;
+  fetchedAt: number;
+}
+
+/** A token without a kid can only match a realm that publishes a single key. */
+function keyById({ keys }: RealmKeys, kid: string | undefined): string | undefined {
+  if (kid !== undefined) {
+    return keys.get(kid);
+  }
+  return keys.size === 1 ? keys.values().next().value : undefined;
+}
 
 export class InvalidTokenError extends Error {}
 
@@ -28,6 +42,8 @@ export interface TokenVerifierOptions {
   negativeCacheMs?: number;
   maxFetchesPerMinute?: number;
   fetchTimeoutMs?: number;
+  keyCacheMs?: number;
+  refetchMinMs?: number;
 }
 
 export interface TokenVerifier {
@@ -44,10 +60,14 @@ export function createTokenVerifier({
   negativeCacheMs = 60_000,
   maxFetchesPerMinute = 20,
   fetchTimeoutMs = 5_000,
+  keyCacheMs = KEY_CACHE_MS,
+  refetchMinMs = REFETCH_MIN_MS,
 }: TokenVerifierOptions): TokenVerifier {
   // Insertion-ordered maps used as LRUs, so a stream of made-up realm names can't grow memory without bound.
-  const clients = new Map<string, JwksClient>();
+  // Only realms whose keys were fetched successfully enter realmKeys, so made-up realms can't evict real ones.
+  const realmKeys = new Map<string, RealmKeys>();
   const unavailableUntil = new Map<string, number>();
+  const pendingFetches = new Map<string, Promise<RealmKeys>>();
   const fetchTimes: number[] = [];
 
   const issuerFor = (realm: string) => `${accessServiceUrl}/auth/realms/${realm}`;
@@ -78,38 +98,71 @@ export function createTokenVerifier({
     return JSON.parse(await response.text()) as { keys: unknown[] };
   }
 
-  function clientFor(realm: string): JwksClient {
-    const client =
-      clients.get(realm) ??
-      new JwksClient({
-        jwksUri: `${issuerFor(realm)}/protocol/openid-connect/certs`,
-        cache: true,
-        cacheMaxAge: KEY_CACHE_MS,
-        fetcher: fetchJwks,
-      });
-    remember(clients, realm, client);
-    return client;
+  function refreshKeys(realm: string): Promise<RealmKeys> {
+    const pending = pendingFetches.get(realm);
+    if (pending) {
+      return pending;
+    }
+    const client = new JwksClient({ jwksUri: `${issuerFor(realm)}/protocol/openid-connect/certs`, fetcher: fetchJwks });
+    const fetching = client
+      .getSigningKeys()
+      .then((signingKeys) => {
+        const fresh = { keys: new Map(signingKeys.map((key) => [key.kid, key.getPublicKey()])), fetchedAt: Date.now() };
+        remember(realmKeys, realm, fresh);
+        unavailableUntil.delete(realm);
+        return fresh;
+      })
+      .finally(() => pendingFetches.delete(realm));
+    pendingFetches.set(realm, fetching);
+    return fetching;
   }
 
   async function signingKeyFor(realm: string, kid: string | undefined): Promise<string> {
+    const known = realmKeys.get(realm);
+    if (known) {
+      remember(realmKeys, realm, known);
+    }
+    const knownKey = known && keyById(known, kid);
+    const age = known ? Date.now() - known.fetchedAt : Infinity;
+    if (knownKey && age < keyCacheMs) {
+      return knownKey;
+    }
+    // Refetching for every unknown kid would let junk tokens spend the shared fetch budget.
+    if (known && !knownKey && age < refetchMinMs) {
+      throw new InvalidTokenError('Unknown signing key');
+    }
+
     const blockedUntil = unavailableUntil.get(realm);
     if (blockedUntil !== undefined && blockedUntil > Date.now()) {
+      if (knownKey) {
+        return knownKey;
+      }
       throw new AuthUnavailableError(retryAfter(blockedUntil));
     }
+
+    let latest: RealmKeys;
     try {
-      return (await clientFor(realm).getSigningKey(kid)).getPublicKey();
+      latest = await refreshKeys(realm);
     } catch (err) {
-      if (err instanceof AuthUnavailableError) {
-        throw err;
+      let unavailable = err;
+      if (!(err instanceof AuthUnavailableError)) {
+        const until = Date.now() + negativeCacheMs;
+        remember(unavailableUntil, realm, until);
+        console.error(`[adsp-sdk-mcp-server] Could not fetch sign-in keys for realm ${realm}.`);
+        unavailable = new AuthUnavailableError(retryAfter(until));
       }
-      if (err instanceof SigningKeyNotFoundError) {
-        throw new InvalidTokenError('Unknown signing key');
+      // Stale keys beat refusing every sign-in for the realm while Keycloak is unreachable.
+      if (knownKey) {
+        return knownKey;
       }
-      const until = Date.now() + negativeCacheMs;
-      remember(unavailableUntil, realm, until);
-      console.error(`[adsp-sdk-mcp-server] Could not fetch sign-in keys for realm ${realm}.`);
-      throw new AuthUnavailableError(retryAfter(until));
+      throw unavailable;
     }
+
+    const key = keyById(latest, kid);
+    if (!key) {
+      throw new InvalidTokenError('Unknown signing key');
+    }
+    return key;
   }
 
   return {
@@ -168,8 +221,7 @@ export function createAuthMiddleware({
     }
 
     const resourceMetadata = `resource_metadata="${metadataUrl(publicUrl, realm)}"`;
-    const header = req.headers.authorization;
-    const token = header?.startsWith('Bearer ') ? header.slice('Bearer '.length).trim() : '';
+    const token = /^Bearer\s+(\S+)\s*$/i.exec(req.headers.authorization ?? '')?.[1] ?? '';
     if (!token) {
       res.setHeader('WWW-Authenticate', `Bearer ${resourceMetadata}`);
       sendJsonRpcError(res, 401, 'Sign-in required');
