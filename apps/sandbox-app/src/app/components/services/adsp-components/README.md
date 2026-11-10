@@ -47,8 +47,14 @@ Sign in, then open **Services → ADSP components → Theming**, or go to `/<ten
 | `AdspFileDownloadExample.spec.tsx`    | Covers the client setup, file list and each example                                                                         |
 | `AdspFileDownloadSideBySide.tsx`      | The file download page's Examples with code tab: four examples, each next to all the code it needs                          |
 | `AdspFileDownloadSideBySide.spec.tsx` | Covers each example on the Examples with code tab and the state before a file is picked                                     |
+| `AdspFileUploadExample.tsx`           | File upload page: default, linked to a record, missing file type, `canUpload={false}`, with the code for each               |
+| `AdspFileUploadExample.spec.tsx`      | Covers the client setup, file type list and each example                                                                    |
+| `AdspFileUploadSideBySide.tsx`        | The file upload page's Examples with code tab: four examples, each next to all the code it needs                            |
+| `AdspFileUploadSideBySide.spec.tsx`   | Covers each example on the Examples with code tab and the state before a file type is picked                                |
 
 The file download page (`/<tenant>/services/adsp-components/file-download`) lists files the signed-in user can read in the tenant. To see the permission and pending-scan messages, enter the ID of a file whose type you can't read, or of a file uploaded moments ago.
+
+The file upload page (`/<tenant>/services/adsp-components/file-upload`) lists the File Types the signed-in user can use and uploads real files to the selected one. To see the permission message, enter the ID of a File Type you can't upload to.
 
 The ADSP stylesheet is loaded once, in `src/app/app.tsx`, next to the GoA stylesheets. The landing page that links here is `../AdspComponentsMain.tsx`.
 

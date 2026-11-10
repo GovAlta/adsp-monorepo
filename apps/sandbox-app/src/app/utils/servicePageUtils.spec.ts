@@ -194,6 +194,12 @@ describe('servicePageUtils', () => {
           url: '/testTenant/services/adsp-components/file-download',
           testId: 'adspFileDownload',
         },
+        {
+          id: 'adspFileUpload',
+          name: 'File upload',
+          url: '/testTenant/services/adsp-components/file-upload',
+          testId: 'adspFileUpload',
+        },
       ]);
     });
   });

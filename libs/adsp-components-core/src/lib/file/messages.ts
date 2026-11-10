@@ -13,3 +13,17 @@ const FILE_ERROR_MESSAGES: Readonly<Record<FileServiceErrorReason, string>> = {
 export function getFileErrorMessage(reason: FileServiceErrorReason): string {
   return FILE_ERROR_MESSAGES[reason];
 }
+
+const FILE_UPLOAD_ERROR_MESSAGES: Readonly<Record<FileServiceErrorReason, string>> = {
+  'not-found': "Files can't be uploaded here because the file type isn't set up.",
+  unauthenticated: 'Sign in to upload files.',
+  forbidden: "You don't have permission to upload files here.",
+  // File service only reports a pending scan for downloads; listed so every reason has an upload message.
+  'scan-pending': 'This file is still being checked for viruses. Try again in a moment.',
+  unavailable: "File service didn't accept this file. Check the file and try again.",
+  unexpected: 'Something went wrong while uploading this file.',
+};
+
+export function getFileUploadErrorMessage(reason: FileServiceErrorReason): string {
+  return FILE_UPLOAD_ERROR_MESSAGES[reason];
+}

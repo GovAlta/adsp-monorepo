@@ -38,6 +38,27 @@ export type FileServiceErrorReason =
   | 'unavailable'
   | 'unexpected';
 
+export interface FileTypeInfo { // clean-code-ignore: RULE-19 (types only; no runtime code to test)
+  id: string;
+  name: string;
+  anonymousRead: boolean;
+}
+
+export interface UploadFileOptions {
+  /** Associates the file with a record in the application, such as a form submission. */
+  recordId?: string;
+  /** Called as the content is sent, with the fraction sent from 0 to 1. */
+  onProgress?: (fraction: number) => void;
+  /** Aborting it cancels the upload, which then rejects with an AbortError. */
+  signal?: AbortSignal;
+}
+
+export interface IFileUploadClient {
+  /** The File Type's configuration, which also confirms that the user may use it. */
+  getFileType(fileTypeId: string): Promise<FileTypeInfo>;
+  uploadFile(fileTypeId: string, file: File, options?: UploadFileOptions): Promise<FileMetadata>;
+}
+
 export interface IFileClient {
   getFile(fileId: string): Promise<FileMetadata>;
   downloadFile(fileId: string): Promise<DownloadedFile>;
