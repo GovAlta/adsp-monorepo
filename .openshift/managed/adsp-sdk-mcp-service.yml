@@ -95,16 +95,21 @@ objects:
           containers:
             - image: >-
                 image-registry.openshift-image-registry.svc:5000/adsp-build/${APP_NAME}@${DEPLOY_TAG}
+              # Optional so a missing configuration (CI never applies it) can't stop pods starting: without the ConfigMap
+              # the server runs with metrics off, and the Secret is deliberately empty for now.
               envFrom:
                 - configMapRef:
                     name: ${APP_NAME}
+                    optional: true
                 - secretRef:
                     name: ${APP_NAME}
+                    optional: true
               env:
                 - name: PORT
                   value: "3333"
+                # Longer than the router's reload interval, so it stops sending traffic before the port closes.
                 - name: MCP_SHUTDOWN_DELAY_MS
-                  value: "5000"
+                  value: "10000"
                 - name: MCP_SHUTDOWN_TIMEOUT_MS
                   value: "30000"
               imagePullPolicy: IfNotPresent
@@ -187,7 +192,8 @@ objects:
       name: ${APP_NAME}
       namespace: ${NAMESPACE}
       annotations:
-        # Covers the slowest tool call: requests are answered within the 30 s request and drain deadlines.
+        # Tool calls have no server-side deadline; docs tools answer from memory in milliseconds, and the live tools give
+        # up after 1 s waiting for an upstream slot, so 60 s covers the slowest expected call with room to spare.
         haproxy.router.openshift.io/timeout: 60s
         # Stateless, so sticky-session cookies would only skew load across replicas.
         haproxy.router.openshift.io/disable_cookies: "true"
