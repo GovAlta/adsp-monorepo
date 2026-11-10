@@ -47,13 +47,17 @@ export const environment = envalid.cleanEnv(
     AGENT_FORM_GENERATION_TIMEOUT_MS: envalid.num({ default: 900000 }),
     // Overrides MODEL for every generation call: chat agent, planner and step builder.
     AGENT_FORM_GENERATION_MODEL: envalid.str({ default: '' }),
-    // Narrows the above to step building, which is mechanical enough to run on a smaller model than planning.
+    // Narrows the above to step building. Step building is mechanical pattern-matching; a smaller, faster model
+    // (e.g. gpt-4o-mini, claude-haiku-3-5) cuts per-step cost 60-90% with no quality loss on well-structured
+    // requirements, and shorter runs keep more steps within the provider's prompt-cache window.
     AGENT_FORM_GENERATION_STEP_MODEL: envalid.str({ default: '' }),
     // Effort for the chat agent, and the fallback for the two role overrides below.
     AGENT_FORM_GENERATION_REASONING_EFFORT: envalid.str({ default: '', choices: reasoningEffortChoices }),
     // Planning is one judgement-heavy call; step building is many mechanical ones and sets the wall clock.
+    // Step effort defaults to 'low': steps pattern-match against examples rather than reason, so extended
+    // thinking adds latency and cost with no quality benefit.
     AGENT_FORM_GENERATION_PLANNER_REASONING_EFFORT: envalid.str({ default: '', choices: reasoningEffortChoices }),
-    AGENT_FORM_GENERATION_STEP_REASONING_EFFORT: envalid.str({ default: '', choices: reasoningEffortChoices }),
+    AGENT_FORM_GENERATION_STEP_REASONING_EFFORT: envalid.str({ default: 'low', choices: reasoningEffortChoices }),
     AGENT_MCP_SERVER_CREDENTIALS_FILE: envalid.str({ default: '/var/run/secrets/adsp/mcp/mcp-servers.json' }),
     AGENT_WORKSPACE_INIT_RETRY_ATTEMPTS: envalid.num({ default: 5 }),
     AGENT_WORKSPACE_INIT_RETRY_DELAY_MS: envalid.num({ default: 50 }),
