@@ -1,10 +1,11 @@
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
-import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
+import { CallToolRequestSchema, CallToolResult, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
 import { join, resolve } from 'path';
 import { performance } from 'perf_hooks';
 import { DocsRepository } from './docs/docsRepository';
-import { getMetrics } from './metrics';
+import { getMetrics, ToolErrorType } from './metrics';
 import { createConfigurationSchemaTools } from './tools/registerConfigurationSchemaTool';
+import { isBusyResult } from './tools/liveToolLimit';
 import { createDocsTools } from './tools/registerDocsTools';
 import { createQuickstartTool } from './tools/registerQuickstartTool';
 import { createServiceRolesTools } from './tools/registerServiceRolesTool';
@@ -76,7 +77,7 @@ export function createAdspMcpServer(options: CreateAdspMcpServerOptions = {}): S
     try {
       // clean-code-ignore: 2.18 — ToolDefinition.handler is documented (tools/types.ts) as a pure, side-effect-free lookup.
       const result = await tool.handler(request.params.arguments ?? {});
-      getMetrics().recordToolCall(tool.name, secondsSince(started), result.isError ? 'tool_error' : undefined);
+      getMetrics().recordToolCall(tool.name, secondsSince(started), toolErrorType(result));
       return result;
     } catch (err) {
       getMetrics().recordToolCall(tool.name, secondsSince(started), 'exception');
@@ -85,6 +86,13 @@ export function createAdspMcpServer(options: CreateAdspMcpServerOptions = {}): S
   });
 
   return server;
+}
+
+function toolErrorType(result: CallToolResult): ToolErrorType | undefined {
+  if (isBusyResult(result)) {
+    return 'busy';
+  }
+  return result.isError ? 'tool_error' : undefined;
 }
 
 function secondsSince(started: number): number {

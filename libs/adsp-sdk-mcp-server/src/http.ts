@@ -6,6 +6,7 @@ import { createCorsAndOriginGuard, createInFlightGate, createRateLimit } from '.
 import { bucketMcpMethod, getMetrics } from './metrics';
 import { Semaphore } from './semaphore';
 import { createAdspMcpServer, CreateAdspMcpServerOptions, loadAdspMcpTools } from './server';
+import { configureLiveToolLimit } from './tools/liveToolLimit';
 
 const MAX_REQUEST_BODY_BYTES = 1024 * 1024;
 
@@ -70,6 +71,7 @@ function methodNotAllowed(_req: express.Request, res: express.Response): void {
 
 export function createMcpHttpApp({ config = readConfig(), ...serverOptions }: McpHttpAppOptions = {}): express.Express {
   loadAdspMcpTools(serverOptions);
+  configureLiveToolLimit({ maxConcurrent: config.liveToolMaxConcurrent, waitMs: config.inFlightWaitMs });
 
   // No express.json(): the transport reads the body so parse and size errors come back as JSON-RPC.
   const app = express();

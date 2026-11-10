@@ -1,8 +1,10 @@
 #!/usr/bin/env node
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
+import { McpServerConfig, readConfig } from './config';
 import { createMcpHttpApp } from './http';
 import { startMetricsFromEnv } from './metrics';
 import { createAdspMcpServer } from './server';
+import { configureLiveToolLimit } from './tools/liveToolLimit';
 
 type Transport = 'stdio' | 'http';
 
@@ -15,21 +17,23 @@ function resolveTransport(): Transport {
 
 async function main(): Promise<void> {
   const transport = resolveTransport();
+  const config = readConfig();
   console.error(`[adsp-sdk-mcp-server] transport=${transport}`);
 
   if (transport === 'http') {
-    await startHttp();
+    await startHttp(config);
   } else {
+    configureLiveToolLimit({ maxConcurrent: config.liveToolMaxConcurrent, waitMs: config.inFlightWaitMs });
     const server = createAdspMcpServer();
     await server.connect(new StdioServerTransport());
   }
 }
 
-async function startHttp(): Promise<void> {
+async function startHttp(config: McpServerConfig): Promise<void> {
   const port = parseInt(process.env['PORT'] ?? '3000', 10);
   // Started before the app so the docs index build, which the app triggers, is recorded.
   const metrics = await startMetricsFromEnv();
-  const app = createMcpHttpApp();
+  const app = createMcpHttpApp({ config });
 
   return new Promise((resolve) => {
     const httpServer = app.listen(port, () => {
