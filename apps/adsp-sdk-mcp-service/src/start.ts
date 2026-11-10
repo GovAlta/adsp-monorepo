@@ -1,4 +1,4 @@
-import { startMcpHttpServer, StartedMcpHttpServer, StartMcpHttpServerOptions } from '@abgov/adsp-sdk-mcp-server';
+import { startMcpHttpServer, StartedMcpHttpServer, StartMcpHttpServerOptions } from '@abgov/adsp-sdk-mcp-server/hosted';
 import * as path from 'path';
 
 export interface StartServiceOptions extends Omit<StartMcpHttpServerOptions, 'docsRoot'> {
