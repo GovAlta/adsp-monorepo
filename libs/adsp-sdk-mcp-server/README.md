@@ -84,11 +84,14 @@ there is no stream to open and no session to delete.
 3. **In-flight cap.** With `MCP_MAX_IN_FLIGHT` requests already running, a request waits up to
    `MCP_IN_FLIGHT_WAIT_MS` for a slot, so a short burst completes. A request still waiting after that, or arriving
    when as many requests are already waiting as `MCP_MAX_IN_FLIGHT`, gets `503` with `Retry-After: 1`
-   (`Server busy`). Requests already running are never affected.
+   (`Server busy`). Requests already running are never affected. A request is admitted before its body arrives, so
+   the server allows 20 s for the headers and 30 s for the whole request. A client that sends more slowly is closed
+   and its slot freed. These limits don't apply to how long a tool call takes.
 
 The live tools also share `MCP_LIVE_TOOL_MAX_CONCURRENT` slots for their calls to ADSP. A live-tool call that can't
 get one within `MCP_IN_FLIGHT_WAIT_MS` answers with the tool error `ADSP upstream is busy. Retry shortly.` instead of
-waiting on a slow upstream. This applies in stdio mode too.
+waiting on a slow upstream. A live-tool call whose client cancels it or disconnects while it waits gives up its
+place and never calls ADSP. This applies in stdio mode too.
 
 Things to know when sizing and tuning these:
 
