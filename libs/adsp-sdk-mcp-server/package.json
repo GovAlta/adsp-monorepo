@@ -15,6 +15,7 @@
     "@opentelemetry/resources": "2.10.0",
     "@opentelemetry/sdk-metrics": "2.10.0",
     "express": "^4.21.0",
+    "express-rate-limit": "^7.1.4",
     "tslib": "^2.3.0",
     "zod": "^4.6.7"
   }
