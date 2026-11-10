@@ -16,8 +16,8 @@ Pushes data, such as form submissions, to SharePoint lists owned by tenant teams
 | `PUT /connections/{id}/credentials` `{ clientSecret }` | `sharepoint-admin` | Stores the secret encrypted and clears the cached token. Returns `{ isSet: true, updatedAt }`. Returns 404 if the connection isn't in this tenant's configuration |
 | `GET /connections/{id}/credentials` | `sharepoint-admin` | `{ isSet, updatedAt }`. Never the secret |
 | `DELETE /connections/{id}/credentials` | `sharepoint-admin` | Deletes the secret. Returns 204 |
-| `POST /destinations/{id}/test` with the data as the body | `sharepoint-admin` | Pushes the data through the same logic as a real push, even if the destination is disabled. Returns `{ ok: true }` or `{ ok: false, errorCode, column? }`; `row-identity-missing` means the data has no value for a row identity field |
-| `POST /destinations/{id}/data` with the data as the body | `sharepoint-writer` (core service accounts with `?tenantId=`). Tenant admins check destinations with Test instead | Returns 200 `{ dataId, date }`, where `dataId` is the SharePoint item ID. Nothing is stored. Failures: 400 data missing a row identity field, 404 unknown destination or connection, 409 `destination-disabled` or `credential-not-set`, 502 `{ errorCode, retryable, column? }` |
+| `POST /destinations/{id}/test` with the data as the body | `sharepoint-admin` | Pushes the data through the same logic as a real push, even if the destination is disabled. Returns `{ ok: true, outcome }` or `{ ok: false, errorCode, column? }`; `row-identity-missing` means the data has no value for a row identity field |
+| `POST /destinations/{id}/data` with the data as the body | `sharepoint-writer` (core service accounts with `?tenantId=`). Tenant admins check destinations with Test instead | Returns 200 `{ dataId, outcome, date }`, where `dataId` is the SharePoint item ID and `outcome` is `created` or `updated`. Nothing is stored. Failures: 400 data missing a row identity field, 404 unknown destination or connection, 409 `destination-disabled` or `credential-not-set`, 502 `{ errorCode, retryable, column? }` |
 Error codes are `entra:AADSTS<code>`, `graph:<code>`, `network` or `unknown`. Payload values never appear in responses or logs.
 
 ## Environment
@@ -84,11 +84,12 @@ Invoke-RestMethod -Method Post http://localhost:3399/_mock/reset
 
 - **Core realm:**
   - Create a confidential client `urn:ads:platform:sharepoint-service` with a service account.
-  - Give the service account the roles `urn:ads:platform:tenant-service:platform-service`, `urn:ads:platform:configuration-service:configured-service` and `urn:ads:platform:push-service:stream-listener`. Without `stream-listener`, the service logs `User not authorized to connect` and doesn't see configuration changes until its cache expires.
+  - Give the service account the roles `urn:ads:platform:tenant-service:platform-service` and `urn:ads:platform:configuration-service:configured-service`.
+  - Add an **Audience** mapper to the client's dedicated scope with the included client audience `urn:ads:platform:push-service`, added to the access token. Without it, the service logs `User not authorized to connect` and doesn't see configuration changes until its cache expires.
   - Create the client role `sharepoint-writer` and grant it to `service-account-urn:ads:platform:form-service`.
-- **Tenant realm:**
-  - Create a client `urn:ads:platform:sharepoint-service` that holds the role `sharepoint-admin`.
-  - Assign that role to the tenant admins who manage connections.
+- **Tenant realm:** tenants created after the service has registered get the client automatically, with `sharepoint-admin` included in `tenant-admin`. For an existing tenant:
+  - Create a client `urn:ads:platform:sharepoint-service` with every authentication flow off, holding the role `sharepoint-admin`.
+  - Add `sharepoint-admin` to the associated roles of `urn:ads:platform:tenant-service` `tenant-admin`, so every tenant admin has it.
 
 ## Development
 

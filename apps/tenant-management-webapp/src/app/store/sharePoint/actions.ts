@@ -45,7 +45,9 @@ export interface SharepointCredentialStatus {
   updatedAt?: string;
 }
 
-export type SharepointTestResult = { ok: true } | { ok: false; errorCode: string; column?: string };
+export type SharepointTestResult =
+  | { ok: true; outcome: 'created' | 'updated' }
+  | { ok: false; errorCode: string; column?: string };
 
 export interface FetchSharepointConfigurationAction {
   type: typeof FETCH_SHAREPOINT_CONFIGURATION_ACTION;

@@ -26,4 +26,11 @@ export interface SharePointConfiguration {
   destinations?: Record<string, SharePointDestination>;
 }
 
-export type TestResult = { ok: true } | { ok: false; errorCode: string; column?: string };
+export type PushOutcome = 'created' | 'updated';
+
+export interface PushResult {
+  itemId: string;
+  outcome: PushOutcome;
+}
+
+export type TestResult = { ok: true; outcome: PushOutcome } | { ok: false; errorCode: string; column?: string };

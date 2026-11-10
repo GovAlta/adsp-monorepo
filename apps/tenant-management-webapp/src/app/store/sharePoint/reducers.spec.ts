@@ -43,7 +43,10 @@ describe('sharepointReducer', () => {
   });
 
   it('clears the old result when a test starts and stores the new one', () => {
-    let state = sharepointReducer(undefined, testSharepointDestinationSuccess('hr-intake', { ok: true }));
+    let state = sharepointReducer(
+      undefined,
+      testSharepointDestinationSuccess('hr-intake', { ok: true, outcome: 'created' }),
+    );
     state = sharepointReducer(state, testSharepointDestination('hr-intake', {}));
     expect(state.testResults['hr-intake']).toBeUndefined();
     state = sharepointReducer(

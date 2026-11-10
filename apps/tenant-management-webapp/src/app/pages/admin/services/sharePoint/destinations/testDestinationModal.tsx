@@ -88,7 +88,9 @@ export const TestDestinationModal = ({ destination, onClose }: TestDestinationMo
       )}
       {hasRun && result?.ok === true && (
         <GoabCallout type="success" heading="Test passed">
-          The test data was written to the list.
+          {result.outcome === 'updated'
+            ? 'The test data updated the existing row with this key.'
+            : 'The test data was added to the list as a new row.'}
         </GoabCallout>
       )}
       {hasRun && result && result.ok === false && (

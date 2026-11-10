@@ -9,7 +9,7 @@ import { GraphTokenProvider } from './graph';
 import { RowIdentityMissingError } from './mapper';
 import { SharePointPusher } from './push';
 import { ServiceRoles } from './roles';
-import { SharePointConfiguration, TestResult } from './types';
+import { PushResult, SharePointConfiguration, TestResult } from './types';
 
 const ID_PATTERN = /^[a-zA-Z0-9-_]{1,50}$/;
 
@@ -120,13 +120,13 @@ export function testDestination(pusher: SharePointPusher, logger: Logger): Reque
 
       let result: TestResult;
       try {
-        await pusher.test(tenantId, configuration, destinationId, req.body);
-        result = { ok: true };
+        const { outcome } = await pusher.test(tenantId, configuration, destinationId, req.body);
+        result = { ok: true, outcome };
       } catch (err) {
         result = toTestFailure(err);
       }
       logger.info(
-        `Tested SharePoint destination '${destinationId}' with result: ${result.ok === true ? 'ok' : result.errorCode}.`,
+        `Tested SharePoint destination '${destinationId}' with result: ${result.ok === true ? result.outcome : result.errorCode}.`,
         logContext(tenantId),
       );
       res.send(result);
@@ -144,9 +144,9 @@ export function pushData(pusher: SharePointPusher, logger: Logger): RequestHandl
       const { destinationId } = req.params;
       const configuration = await getTenantConfiguration(req);
 
-      let dataId: string;
+      let result: PushResult;
       try {
-        dataId = await pusher.push(tenantId, configuration, destinationId, req.body);
+        result = await pusher.push(tenantId, configuration, destinationId, req.body);
       } catch (err) {
         if (err instanceof DestinationDisabledError) {
           logger.warn(
@@ -179,8 +179,11 @@ export function pushData(pusher: SharePointPusher, logger: Logger): RequestHandl
         throw err;
       }
 
-      logger.info(`Pushed item '${dataId}' to SharePoint destination '${destinationId}'.`, logContext(tenantId));
-      res.send({ dataId, date: new Date().toISOString() });
+      logger.info(
+        `Pushed item '${result.itemId}' (${result.outcome}) to SharePoint destination '${destinationId}'.`,
+        logContext(tenantId),
+      );
+      res.send({ dataId: result.itemId, outcome: result.outcome, date: new Date().toISOString() });
     } catch (err) {
       next(err);
     }

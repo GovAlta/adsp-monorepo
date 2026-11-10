@@ -3,7 +3,7 @@ import { NotFoundError } from '@core-services/core-common';
 import { DestinationDisabledError, SharePointError } from './errors';
 import { GraphClient, GraphTokenProvider } from './graph';
 import { ITEM_KEY_COLUMN, itemKeyFor, mapFields } from './mapper';
-import { SharePointConfiguration, SharePointConnection, SharePointDestination } from './types';
+import { PushResult, SharePointConfiguration, SharePointConnection, SharePointDestination } from './types';
 
 const REJECTED_TOKEN_CODE = 'graph:InvalidAuthenticationToken';
 
@@ -28,13 +28,12 @@ export class SharePointPusher {
     return { destination, connection };
   }
 
-  /** Returns the SharePoint item ID that was created or overwritten. */
   async push(
     tenantId: AdspId,
     configuration: SharePointConfiguration | undefined,
     destinationId: string,
     data: Record<string, unknown>,
-  ): Promise<string> {
+  ): Promise<PushResult> {
     const { destination, connection } = this.resolve(configuration, destinationId);
     if (destination.enabled === false) {
       throw new DestinationDisabledError(destinationId);
@@ -48,10 +47,10 @@ export class SharePointPusher {
     configuration: SharePointConfiguration | undefined,
     destinationId: string,
     data: Record<string, unknown>,
-  ): Promise<void> {
+  ): Promise<PushResult> {
     const { destination, connection } = this.resolve(configuration, destinationId);
     const key = itemKeyFor(destination.idempotencyFields, data);
-    await this.writeWithRetry(tenantId, connection, destination, key, data);
+    return this.writeWithRetry(tenantId, connection, destination, key, data);
   }
 
   private async writeWithRetry(
@@ -60,7 +59,7 @@ export class SharePointPusher {
     destination: SharePointDestination,
     key: string | null,
     data: Record<string, unknown>,
-  ): Promise<string> {
+  ): Promise<PushResult> {
     const fields = mapFields(destination.fieldMappings, data, key);
     try {
       return await this.write(tenantId, connection, destination, key, fields);
@@ -79,16 +78,17 @@ export class SharePointPusher {
     destination: SharePointDestination,
     key: string | null,
     fields: Record<string, unknown>,
-  ): Promise<string> {
+  ): Promise<PushResult> {
     const token = await this.tokens.getToken(tenantId, connection);
-    const itemId =
+    const existingId =
       key === null
         ? null
         : await this.graph.findItemIdByKey(token, connection.siteId, destination.listId, ITEM_KEY_COLUMN, key);
-    if (itemId) {
-      await this.graph.updateItemFields(token, connection.siteId, destination.listId, itemId, fields);
-      return itemId;
+    if (existingId) {
+      await this.graph.updateItemFields(token, connection.siteId, destination.listId, existingId, fields);
+      return { itemId: existingId, outcome: 'updated' };
     }
-    return this.graph.createItem(token, connection.siteId, destination.listId, fields);
+    const itemId = await this.graph.createItem(token, connection.siteId, destination.listId, fields);
+    return { itemId, outcome: 'created' };
   }
 }

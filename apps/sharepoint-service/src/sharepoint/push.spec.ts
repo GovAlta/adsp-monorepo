@@ -46,13 +46,13 @@ describe('SharePointPusher', () => {
   });
 
   it('creates the row when no row has the key, writing the key to AdspItemKey', async () => {
-    const dataId = await pusher.push(tenantId, configuration, 'hr-intake', {
+    const result = await pusher.push(tenantId, configuration, 'hr-intake', {
       applicationNumber: 'A-1',
       applicant: { firstName: 'Ada' },
       amount: 5,
     });
 
-    expect(dataId).toBe('item-new');
+    expect(result).toEqual({ itemId: 'item-new', outcome: 'created' });
     expect(graph.findItemIdByKey).toHaveBeenCalledWith('token-1', siteId, 'list-1', 'AdspItemKey', 'A-1');
     expect(graph.createItem).toHaveBeenCalledWith('token-1', siteId, 'list-1', {
       FirstName: 'Ada',
@@ -64,9 +64,9 @@ describe('SharePointPusher', () => {
   it('overwrites the row that already has the key', async () => {
     graph.findItemIdByKey.mockResolvedValueOnce('item-7');
 
-    const dataId = await pusher.push(tenantId, configuration, 'hr-intake', { applicationNumber: 'A-1', amount: 6 });
+    const result = await pusher.push(tenantId, configuration, 'hr-intake', { applicationNumber: 'A-1', amount: 6 });
 
-    expect(dataId).toBe('item-7');
+    expect(result).toEqual({ itemId: 'item-7', outcome: 'updated' });
     expect(graph.updateItemFields).toHaveBeenCalledWith('token-1', siteId, 'list-1', 'item-7', {
       Amount: 6,
       AdspItemKey: 'A-1',
@@ -89,8 +89,9 @@ describe('SharePointPusher', () => {
   });
 
   it('tests a destination with the normal push logic, even when disabled', async () => {
-    await pusher.test(tenantId, configuration, 'hr-off', { applicationNumber: 'T-1', amount: 1 });
+    const result = await pusher.test(tenantId, configuration, 'hr-off', { applicationNumber: 'T-1', amount: 1 });
 
+    expect(result).toEqual({ itemId: 'item-new', outcome: 'created' });
     expect(graph.findItemIdByKey).toHaveBeenCalledWith('token-1', siteId, 'list-1', 'AdspItemKey', 'T-1');
     expect(graph.createItem).toHaveBeenCalledWith('token-1', siteId, 'list-1', { Amount: 1, AdspItemKey: 'T-1' });
   });

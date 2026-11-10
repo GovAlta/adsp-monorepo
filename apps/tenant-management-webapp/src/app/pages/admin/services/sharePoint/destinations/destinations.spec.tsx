@@ -220,6 +220,23 @@ describe('TestDestinationModal', () => {
   it('leaves the row key out when every push adds a row', () => {
     expect(helpText()).not.toMatch(/_adsp/);
   });
+
+  it.each([
+    ['created', 'The test data was added to the list as a new row.'],
+    ['updated', 'The test data updated the existing row with this key.'],
+  ])('says whether the test %s a row', (outcome, message) => {
+    const { baseElement } = render(
+      <Provider
+        store={configureStore([])({ sharepoint: { testResults: { 'hr-intake': { ok: true, outcome } } } })}
+      >
+        <TestDestinationModal destination={destination} onClose={jest.fn()} />
+      </Provider>,
+    );
+    act(() => {
+      baseElement.querySelector('goa-button[testid="test-destination-run"]').dispatchEvent(new CustomEvent('_click'));
+    });
+    expect(baseElement.querySelector('goa-callout[type="success"]')).toHaveTextContent(message);
+  });
 });
 
 describe('DestinationModal editing', () => {

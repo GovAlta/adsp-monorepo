@@ -75,7 +75,10 @@ describe('SharePoint router', () => {
 
   beforeEach(() => {
     logger = { debug: jest.fn(), info: jest.fn(), warn: jest.fn(), error: jest.fn() };
-    pusher = { push: jest.fn().mockResolvedValue('item-7'), test: jest.fn().mockResolvedValue(undefined) };
+    pusher = {
+      push: jest.fn().mockResolvedValue({ itemId: 'item-7', outcome: 'updated' }),
+      test: jest.fn().mockResolvedValue({ itemId: 'item-8', outcome: 'created' }),
+    };
     tokens = { evict: jest.fn() };
     currentUser = admin;
 
@@ -164,7 +167,7 @@ describe('SharePoint router', () => {
       const res = await push(data);
 
       expect(res.status).toBe(200);
-      expect(res.body).toEqual({ dataId: 'item-7', date: expect.any(String) });
+      expect(res.body).toEqual({ dataId: 'item-7', outcome: 'updated', date: expect.any(String) });
       expect(pusher.push).toHaveBeenCalledWith(tenantId, configuration, 'hr-intake', data);
     });
 
@@ -235,7 +238,7 @@ describe('SharePoint router', () => {
   describe('test', () => {
     it('runs the test with the body as the data', async () => {
       const res = await runTest({ applicant: { firstName: 'Ada' } });
-      expect(res.body).toEqual({ ok: true });
+      expect(res.body).toEqual({ ok: true, outcome: 'created' });
       expect(pusher.test).toHaveBeenCalledWith(tenantId, configuration, 'hr-intake', {
         applicant: { firstName: 'Ada' },
       });
