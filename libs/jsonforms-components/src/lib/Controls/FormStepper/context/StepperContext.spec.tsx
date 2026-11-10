@@ -542,4 +542,140 @@ describe('JsonFormsStepperContext', () => {
     // Assert
     expect(screen.getByText('Context Missing')).toBeInTheDocument();
   });
+
+  describe('step info', () => {
+    const twoStepUischema = (variant: 'stepper' | 'pages') => ({
+      type: 'Categorization',
+      elements: [
+        { type: 'Category', label: 'First', elements: [{ type: 'Control', scope: '#/properties/firstName' }] },
+        { type: 'Category', label: 'Second', elements: [{ type: 'Control', scope: '#/properties/lastName' }] },
+      ],
+      options: { variant },
+    });
+
+    const StepInfoProbe = (): JSX.Element => {
+      const { selectStepInfo, goToPage } = useContext(JsonFormsStepperContext) as JsonFormsStepperContextProps;
+      return (
+        <div>
+          <div data-testid="step-info">{JSON.stringify(selectStepInfo())}</div>
+          <button data-testid="to-first" onClick={() => goToPage(0)} />
+          <button data-testid="to-second" onClick={() => goToPage(1)} />
+          <button data-testid="to-review" onClick={() => goToPage(2)} />
+        </div>
+      );
+    };
+
+    const renderStepInfo = (
+      onStepChange: jest.Mock,
+      variant: 'stepper' | 'pages' = 'stepper',
+      data: Record<string, unknown> = {},
+    ) => (
+      <JsonFormContext.Provider value={{ onStepChange }}>
+        <JsonFormsStepperContextProvider
+          StepperProps={
+            {
+              ...stepperBaseProps,
+              uischema: twoStepUischema(variant),
+              data,
+            } as CategorizationStepperLayoutRendererProps
+          }
+        >
+          <StepInfoProbe />
+        </JsonFormsStepperContextProvider>
+      </JsonFormContext.Provider>
+    );
+
+    const first = { isFirstStep: true, isLastStep: false, currentStep: 1, isOnReview: false, isOnTaskList: false };
+    const second = { isFirstStep: false, isLastStep: true, currentStep: 2, isOnReview: false, isOnTaskList: false };
+    const review = { isFirstStep: false, isLastStep: false, currentStep: 0, isOnReview: true, isOnTaskList: false };
+
+    test('reports the first step on mount for the stepper variant', () => {
+      // Arrange
+      const onStepChange = jest.fn();
+
+      // Act
+      render(renderStepInfo(onStepChange));
+
+      // Assert
+      expect(onStepChange).toHaveBeenCalledTimes(1);
+      expect(onStepChange).toHaveBeenCalledWith(first);
+      expect(JSON.parse(screen.getByTestId('step-info').textContent ?? '')).toEqual(first);
+    });
+
+    test('reports the task list on mount for the pages variant', () => {
+      // Arrange
+      const onStepChange = jest.fn();
+
+      // Act
+      render(renderStepInfo(onStepChange, 'pages'));
+
+      // Assert
+      expect(onStepChange).toHaveBeenCalledWith(expect.objectContaining({ currentStep: 0, isOnTaskList: true }));
+    });
+
+    test('reports each step change once, including the review page', () => {
+      // Arrange
+      const onStepChange = jest.fn();
+      render(renderStepInfo(onStepChange));
+
+      // Act
+      fireEvent.click(screen.getByTestId('to-second'));
+      fireEvent.click(screen.getByTestId('to-second'));
+      fireEvent.click(screen.getByTestId('to-review'));
+
+      // Assert
+      expect(onStepChange.mock.calls.map(([info]) => info)).toEqual([first, second, review]);
+    });
+
+    test('does not report again when only the data or the callback identity changes', () => {
+      // Arrange
+      const onStepChange = jest.fn();
+      const { rerender } = render(renderStepInfo(onStepChange));
+      const nextCallback = jest.fn();
+
+      // Act
+      rerender(renderStepInfo(nextCallback, 'stepper', { firstName: 'Alex' }));
+
+      // Assert
+      expect(onStepChange).toHaveBeenCalledTimes(1);
+      expect(nextCallback).not.toHaveBeenCalled();
+    });
+
+    test('reports to the latest callback the host provided', () => {
+      // Arrange
+      const onStepChange = jest.fn();
+      const { rerender } = render(renderStepInfo(onStepChange));
+      const nextCallback = jest.fn();
+      rerender(renderStepInfo(nextCallback));
+
+      // Act
+      fireEvent.click(screen.getByTestId('to-second'));
+
+      // Assert
+      expect(nextCallback).toHaveBeenCalledWith(second);
+      expect(onStepChange).toHaveBeenCalledTimes(1);
+    });
+
+    test('reaches the host through the ContextProvider onStepChange prop', () => {
+      // Arrange
+      const ContextProvider = ContextProviderFactory();
+      const onStepChange = jest.fn();
+
+      // Act
+      render(
+        <ContextProvider onStepChange={onStepChange}>
+          <JsonFormsStepperContextProvider
+            StepperProps={
+              { ...stepperBaseProps, uischema: twoStepUischema('stepper') } as CategorizationStepperLayoutRendererProps
+            }
+          >
+            <StepInfoProbe />
+          </JsonFormsStepperContextProvider>
+        </ContextProvider>,
+      );
+
+      // Assert
+      expect(onStepChange).toHaveBeenCalledWith(first);
+    });
+  });
 });

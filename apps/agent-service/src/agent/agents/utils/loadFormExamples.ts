@@ -57,10 +57,7 @@ import * as conditionalComputed from '../data/form-examples/computed/conditional
 import * as sumArrayAggregate from '../data/form-examples/computed/sum-array-aggregate.json';
 import * as roundingFunctions from '../data/form-examples/computed/rounding-functions.json';
 import * as minMaxComparison from '../data/form-examples/computed/min-max-comparison.json';
-import * as percentageRatio from '../data/form-examples/computed/percentage-ratio.json';
-import * as nestedTernaryLogic from '../data/form-examples/computed/nested-ternary-logic.json';
 import * as grantEligibilityCalculator from '../data/form-examples/computed/grant-eligibility-calculator.json';
-import * as exponentSqrtMath from '../data/form-examples/computed/exponent-sqrt-math.json';
 import * as mixedComputedOverview from '../data/form-examples/computed/mixed-computed-overview.json';
 // Best practices and anti-patterns
 import * as bestPractices from '../data/form-examples/best-practices.json';
@@ -214,10 +211,7 @@ const computedExamples: FormExample[] = [
   sumArrayAggregate,
   roundingFunctions,
   minMaxComparison,
-  percentageRatio,
-  nestedTernaryLogic,
   grantEligibilityCalculator,
-  exponentSqrtMath,
   mixedComputedOverview,
 ] as FormExample[];
 

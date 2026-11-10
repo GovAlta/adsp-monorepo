@@ -22,6 +22,7 @@ jobs:
             pii-service,
             verify-service,
             task-app,
+            form-admin-app,
           ]
     steps:
       - uses: actions/checkout@v5

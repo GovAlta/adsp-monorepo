@@ -13,7 +13,8 @@ import { CategorizationStepperLayoutRendererProps } from '../types';
 import { Categorization, deriveLabelForUISchemaElement, isEnabled, isVisible } from '@jsonforms/core';
 import { pickPropertyValues } from '../util/helpers';
 import { stepperReducer } from './reducer';
-import { StepperContextDataType, CategoryState } from './types';
+import { StepperContextDataType, CategoryState, StepInfo } from './types';
+import { useStepInfo } from './useStepInfo';
 import { JsonFormStepperDispatch } from './reducer';
 import { JsonSchema7, JsonSchema } from '@jsonforms/core';
 import { ErrorObject } from 'ajv';
@@ -48,6 +49,7 @@ export interface JsonFormsStepperContextProps {
   validatePage: (id: number) => void;
   selectNumberOfCompletedCategories: () => number;
   selectStepperOptions: () => StepperPageOptions;
+  selectStepInfo: () => StepInfo;
   isProvided?: boolean;
 }
 
@@ -159,6 +161,7 @@ export const JsonFormsStepperContextProvider = ({
   const formId = formCtx?.formId as string | undefined;
   const navigationTarget = formCtx?.navigationTarget as NavigationTarget | undefined;
   const onNavigationChange = formCtx?.onNavigationChange as ((outcome: NavigationOutcome) => void) | undefined;
+  const onStepChange = formCtx?.onStepChange as ((stepInfo: StepInfo) => void) | undefined;
   // Steps opened in an earlier session. Seeding these on first mount is what keeps a step the user
   // has been through from dropping back to NotStarted on resume — including the case where they
   // edited an auto-populated field and then restored the original value, which leaves nothing in
@@ -220,6 +223,8 @@ export const JsonFormsStepperContextProvider = ({
     return computed;
   }, [stepperState, data, schema, ajv]);
 
+  const stepInfo = useStepInfo(snapshot, onStepChange);
+
   const context = useMemo(() => {
     return {
       isProvided: true,
@@ -250,6 +255,7 @@ export const JsonFormsStepperContextProvider = ({
         return snapshot.path;
       },
       selectStepperOptions: () => getStepperPageOptions(uischema),
+      selectStepInfo: () => stepInfo,
       selectCategory: (id: number) => {
         return snapshot.categories[id];
       },
@@ -271,7 +277,7 @@ export const JsonFormsStepperContextProvider = ({
         });
       },
     };
-  }, [stepperDispatch, snapshot, doValidatePage, uischema]);
+  }, [stepperDispatch, snapshot, stepInfo, doValidatePage, uischema]);
 
   /* istanbul ignore next */
   useEffect(() => {

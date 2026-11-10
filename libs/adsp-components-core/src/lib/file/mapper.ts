@@ -1,5 +1,5 @@
 import { FileServiceError } from './fileServiceError';
-import type { FileMetadata, FileServiceErrorReason } from './types';
+import type { FileMetadata, FileServiceErrorReason, FileTypeInfo } from './types';
 
 // The response of GET /file/v1/files/{fileId}; see mapFile in apps/file-service/src/file/mapper.ts.
 export interface FileServiceFile {
@@ -69,17 +69,41 @@ export function toErrorReason(status: number, errorMessage?: string): FileServic
 }
 
 export async function toResponseError(response: Response, operation: string): Promise<FileServiceError> {
-  let errorMessage: string | undefined;
+  let body: string | undefined;
   try {
-    const body = (await response.json()) as { errorMessage?: string };
-    errorMessage = body?.errorMessage;
+    body = await response.text();
   } catch {
-    // Not every error response has a JSON body, for example the 500 from the error handler.
+    // An unreadable body is treated like an empty one.
   }
 
+  return toStatusError(response.status, body, operation);
+}
+
+// Not every error response has a JSON body, for example the 500 from the error handler.
+function getErrorMessage(body: string | undefined): string | undefined {
+  try {
+    return (body ? (JSON.parse(body) as { errorMessage?: string }) : undefined)?.errorMessage;
+  } catch {
+    return undefined;
+  }
+}
+
+export function toStatusError(status: number, body: string | undefined, operation: string): FileServiceError {
+  const errorMessage = getErrorMessage(body);
   return new FileServiceError(
-    toErrorReason(response.status, errorMessage),
-    `${operation} failed with status ${response.status}${errorMessage ? `: ${errorMessage}` : '.'}`,
-    response.status,
+    toErrorReason(status, errorMessage),
+    `${operation} failed with status ${status}${errorMessage ? `: ${errorMessage}` : '.'}`,
+    status,
   );
+}
+
+// The response of GET /file/v1/types/{fileTypeId}; see mapFileType in apps/file-service/src/file/mapper.ts.
+export interface FileServiceFileType {
+  id: string;
+  name: string;
+  anonymousRead?: boolean;
+}
+
+export function mapFileType(type: FileServiceFileType): FileTypeInfo {
+  return { id: type.id, name: type.name, anonymousRead: type.anonymousRead ?? false };
 }

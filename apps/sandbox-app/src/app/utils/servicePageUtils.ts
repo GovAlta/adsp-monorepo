@@ -27,6 +27,12 @@ export const addJsonformsPages = (tenantName: string) => {
       url: `${prefix}/review-responsive`,
       testId: 'jsonformsReviewResponsive',
     },
+    {
+      id: 'jsonformsStepChange',
+      name: 'Track the current step (onStepChange)',
+      url: `${prefix}/step-change`,
+      testId: 'jsonformsStepChange',
+    },
   ];
 
   return jsonformsPages;
@@ -86,6 +92,12 @@ export const addAdspComponentsPages = (tenantName: string) => {
       name: 'File download',
       url: `${prefix}/file-download`,
       testId: 'adspFileDownload',
+    },
+    {
+      id: 'adspFileUpload',
+      name: 'File upload',
+      url: `${prefix}/file-upload`,
+      testId: 'adspFileUpload',
     },
   ];
 
