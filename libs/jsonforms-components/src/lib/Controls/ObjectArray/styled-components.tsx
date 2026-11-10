@@ -141,6 +141,7 @@ export const FlexTabsWithMargin = styled.div`
   flex: 1;
   overflow-y: auto !important;
   margin-right: 1.5rem;
+  min-width: 10rem;
 
   flex-shrink: 1;
   // max-height: 500px;
@@ -149,6 +150,7 @@ export const FlexTabsWithMargin = styled.div`
   @media (max-width: 639px) {
     flex: none;
     height: auto !important;
+    min-width: 0;
     margin-right: 0;
     margin-bottom: var(--goa-space-m);
   }
@@ -157,7 +159,8 @@ export const FlexTabsWithMargin = styled.div`
 export const FlexForm = styled.div`
   flex-direction: column;
   flex: 3;
-  flex-shrink: 0;
+  /* Shrink rather than squeeze the item tabs to nothing at tablet widths. */
+  min-width: 0;
   overflow-y: visible;
 
   @media (max-width: 639px) {

@@ -56,11 +56,15 @@ describe('list-with-details layout', () => {
     expect(tabs.desktop).toContain('flex:1');
     expect(tabs.desktop).toContain('margin-right:1.5rem');
     expect(tabs.desktop).not.toContain('height:auto');
+    expect(tabs.desktop).toContain('min-width:10rem');
     expect(tabs.narrow).toContain('flex:none');
+    expect(tabs.narrow).toContain('min-width:0');
 
     const form = rulesFor(getByTestId('form'));
     expect(form.desktop).toContain('flex:3');
-    expect(form.desktop).toContain('flex-shrink:0');
+    // The form must be able to shrink, or it squeezes the item tabs to nothing at tablet widths.
+    expect(form.desktop).toContain('min-width:0');
+    expect(form.desktop).not.toContain('flex-shrink:0');
     expect(form.desktop).not.toContain('flex:none');
     expect(form.narrow).toContain('flex:none');
   });
