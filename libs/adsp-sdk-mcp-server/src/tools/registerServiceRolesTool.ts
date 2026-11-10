@@ -5,7 +5,9 @@ import {
   HttpRequestError,
   ServiceNotInDirectoryError,
 } from '@abgov/adsp-cli';
+import { getMetrics } from '../metrics';
 import { LiveToolDefinition } from './types';
+import { classifyUpstreamError } from './upstreamErrors';
 
 function describeError(err: unknown): string {
   if (err instanceof ServiceNotInDirectoryError) {
@@ -74,6 +76,7 @@ export function createServiceRolesTools(): LiveToolDefinition[] {
         const tokenResult = await getAccessToken();
 
         if (tokenResult.status === 'not-authenticated') {
+          getMetrics().recordUpstreamError('list_service_roles', 'not_authenticated');
           return {
             isError: true,
             content: [
@@ -89,6 +92,7 @@ export function createServiceRolesTools(): LiveToolDefinition[] {
             content: [{ type: 'text', text: SERVICE_ROLES_PREAMBLE + JSON.stringify(roles, null, 2) }],
           };
         } catch (err) {
+          getMetrics().recordUpstreamError('list_service_roles', classifyUpstreamError(err));
           return { isError: true, content: [{ type: 'text', text: describeError(err) }] };
         }
       },

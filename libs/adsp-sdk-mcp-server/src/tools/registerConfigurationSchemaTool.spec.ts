@@ -25,6 +25,8 @@ import {
   ServiceNotInDirectoryError,
 } from '@abgov/adsp-cli';
 import { createConfigurationSchemaTools } from './registerConfigurationSchemaTool';
+import { createMetricsTestKit, MetricsTestKit } from '../fixtures/metricsTestKit';
+import { installMetrics } from '../metrics';
 
 const mockGetAccessToken = getAccessToken as jest.Mock;
 const mockGetDirectoryServiceUrl = getDirectoryServiceUrl as jest.Mock;
@@ -149,5 +151,65 @@ describe('get_service_configuration_schema', () => {
 
     expect(result.isError).toBe(true);
     expect(getText(result)).toContain('Could not reach the ADSP platform');
+  });
+});
+
+describe('get_service_configuration_schema upstream error metrics', () => {
+  let kit: MetricsTestKit;
+  let uninstall: () => void;
+
+  function upstreamErrors() {
+    return kit.points('mcp.live_tool.upstream.errors').map((point) => ({ attributes: point.attributes, value: point.value }));
+  }
+
+  beforeEach(() => {
+    kit = createMetricsTestKit();
+    ({ uninstall } = installMetrics(kit.provider));
+    mockGetDirectoryServiceUrl.mockReturnValue('https://directory.example.test');
+  });
+
+  afterEach(async () => {
+    uninstall();
+    await kit.shutdown();
+  });
+
+  it.each([
+    [new MockHttpRequestError(503, 'unavailable'), 'http_5xx'],
+    [new MockHttpRequestError(404, 'not found'), 'http_4xx'],
+    [new MockHttpRequestError(401, 'unauthorized'), 'http_4xx'],
+    [new MockServiceNotInDirectoryError('urn:ads:platform:configuration-service'), 'not_in_directory'],
+    [new TypeError('fetch failed'), 'network'],
+    [new Error('something else'), 'other'],
+  ])('counts %p as %s', async (error, errorType) => {
+    mockGetAccessToken.mockResolvedValue({ status: 'ok', token: 'token-abc' });
+    mockGetServiceConfigurationSchemas.mockRejectedValue(error);
+
+    await getConfigurationSchemaTool.handler({});
+    await kit.collect();
+
+    expect(upstreamErrors()).toEqual([
+      { attributes: { 'mcp.tool.name': 'get_service_configuration_schema', 'error.type': errorType }, value: 1 },
+    ]);
+  });
+
+  it('counts a not-authenticated result as not_authenticated', async () => {
+    mockGetAccessToken.mockResolvedValue({ status: 'not-authenticated' });
+
+    await getConfigurationSchemaTool.handler({});
+    await kit.collect();
+
+    expect(upstreamErrors()).toEqual([
+      { attributes: { 'mcp.tool.name': 'get_service_configuration_schema', 'error.type': 'not_authenticated' }, value: 1 },
+    ]);
+  });
+
+  it('counts nothing when the upstream call succeeds', async () => {
+    mockGetAccessToken.mockResolvedValue({ status: 'ok', token: 'token-abc' });
+    mockGetServiceConfigurationSchemas.mockResolvedValue([]);
+
+    await getConfigurationSchemaTool.handler({});
+    await kit.collect();
+
+    expect(upstreamErrors()).toEqual([]);
   });
 });
