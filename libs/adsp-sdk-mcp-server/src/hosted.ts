@@ -1,6 +1,6 @@
 import type { Server as HttpServer } from 'http';
 import type { AddressInfo } from 'net';
-import { McpServerConfig, readConfig } from './config';
+import { McpServerConfig, readHostedConfig } from './config';
 import { createMcpHttpApp, createMcpHttpServer } from './http';
 import { createGracefulShutdown, createLifecycle } from './lifecycle';
 import { startMetricsFromEnv } from './metrics';
@@ -11,7 +11,7 @@ export interface StartMcpHttpServerOptions extends CreateAdspMcpServerOptions {
   port?: number;
   host?: string;
   env?: NodeJS.ProcessEnv;
-  /** Defaults to `readConfig(env)`. */
+  /** Defaults to `readHostedConfig(env)`. */
   config?: McpServerConfig;
   /** Where SIGTERM and SIGINT arrive; defaults to `process`. */
   signals?: NodeJS.EventEmitter;
@@ -28,7 +28,7 @@ export async function startMcpHttpServer({
   port,
   host,
   env = process.env,
-  config = readConfig(env),
+  config = readHostedConfig(env),
   signals = process,
   exit = (code) => process.exit(code),
   ...serverOptions

@@ -108,6 +108,10 @@ export function readConfig(env: NodeJS.ProcessEnv = process.env): McpServerConfi
     corsOrigins: readCorsOrigins(env),
     shutdownDelayMs,
     shutdownTimeoutMs,
-    auth: readHostedAuth(env),
   };
+}
+
+/** HTTP mode only: stdio users may set ADSP_ACCESS_SERVICE_URL or ADSP_DIRECTORY_SERVICE_URL as adsp-cli overrides. */
+export function readHostedConfig(env: NodeJS.ProcessEnv = process.env): McpServerConfig {
+  return { ...readConfig(env), auth: readHostedAuth(env) };
 }

@@ -3,7 +3,7 @@ import * as express from 'express';
 import { createServer, Server as HttpServer } from 'http';
 import { performance } from 'perf_hooks';
 import { createAuthMiddleware, createProtectedResourceMetadataHandler, createTokenVerifier } from './auth';
-import { McpServerConfig, readConfig } from './config';
+import { McpServerConfig, readHostedConfig } from './config';
 import { createCorsAndOriginGuard, createInFlightGate, createRateLimit } from './guards';
 import { createLifecycle, ServerLifecycle } from './lifecycle';
 import { bucketMcpMethod, getMetrics } from './metrics';
@@ -14,7 +14,7 @@ import { configureLiveToolLimit } from './tools/liveToolLimit';
 const MAX_REQUEST_BODY_BYTES = 1024 * 1024;
 
 export interface McpHttpAppOptions extends CreateAdspMcpServerOptions {
-  /** Defaults to `readConfig()` over `process.env`. */
+  /** Defaults to `readHostedConfig()` over `process.env`. */
   config?: McpServerConfig;
   /** Drives `/ready`; shutdown flips it. */
   lifecycle?: ServerLifecycle;
@@ -75,7 +75,7 @@ function methodNotAllowed(_req: express.Request, res: express.Response): void {
 }
 
 export function createMcpHttpApp({
-  config = readConfig(),
+  config = readHostedConfig(),
   lifecycle = createLifecycle(),
   ...serverOptions
 }: McpHttpAppOptions = {}): express.Express {

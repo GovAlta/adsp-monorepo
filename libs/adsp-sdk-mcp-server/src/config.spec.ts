@@ -1,4 +1,4 @@
-import { readConfig } from './config';
+import { readConfig, readHostedConfig } from './config';
 
 describe('readConfig', () => {
   it('uses the defaults when nothing is set', () => {
@@ -102,11 +102,25 @@ describe('readConfig', () => {
     };
 
     it('leaves auth unset when none of the three is set', () => {
-      expect(readConfig({}).auth).toBeUndefined();
+      expect(readHostedConfig({}).auth).toBeUndefined();
+    });
+
+    it('is not read by readConfig, so stdio users can keep the adsp-cli URL overrides', () => {
+      const adspCliOverrides = {
+        ADSP_ACCESS_SERVICE_URL: 'http://access.internal.example',
+        ADSP_DIRECTORY_SERVICE_URL: 'https://directory.override.example.com',
+      };
+
+      expect(() => readConfig(adspCliOverrides)).not.toThrow();
+      expect(readConfig({ ...adspCliOverrides, MCP_PUBLIC_URL: 'https://mcp.example.test' }).auth).toBeUndefined();
+    });
+
+    it('keeps the shared settings', () => {
+      expect(readHostedConfig({ ...AUTH_ENV, MCP_MAX_IN_FLIGHT: '7' }).maxInFlight).toBe(7);
     });
 
     it('reads and normalises all three', () => {
-      expect(readConfig(AUTH_ENV).auth).toEqual({
+      expect(readHostedConfig(AUTH_ENV).auth).toEqual({
         publicUrl: 'https://mcp.example.test',
         accessServiceUrl: 'https://access.example.test',
         directoryServiceUrl: 'https://directory.example.test',
@@ -114,7 +128,7 @@ describe('readConfig', () => {
     });
 
     it('names the settings that are missing when only some are set', () => {
-      expect(() => readConfig({ MCP_PUBLIC_URL: AUTH_ENV.MCP_PUBLIC_URL })).toThrow(
+      expect(() => readHostedConfig({ MCP_PUBLIC_URL: AUTH_ENV.MCP_PUBLIC_URL })).toThrow(
         /ADSP_ACCESS_SERVICE_URL.*ADSP_DIRECTORY_SERVICE_URL/
       );
     });
@@ -122,12 +136,12 @@ describe('readConfig', () => {
     it.each(['http://access.example.test', 'not a url', 'ftp://access.example.test'])(
       'rejects %p as an access service URL',
       (value) => {
-        expect(() => readConfig({ ...AUTH_ENV, ADSP_ACCESS_SERVICE_URL: value })).toThrow(/ADSP_ACCESS_SERVICE_URL/);
+        expect(() => readHostedConfig({ ...AUTH_ENV, ADSP_ACCESS_SERVICE_URL: value })).toThrow(/ADSP_ACCESS_SERVICE_URL/);
       }
     );
 
     it.each(['http://127.0.0.1:4321', 'http://localhost:4321'])('allows plain http on loopback (%p)', (value) => {
-      expect(readConfig({ ...AUTH_ENV, MCP_PUBLIC_URL: value }).auth?.publicUrl).toBe(value);
+      expect(readHostedConfig({ ...AUTH_ENV, MCP_PUBLIC_URL: value }).auth?.publicUrl).toBe(value);
     });
   });
 });
