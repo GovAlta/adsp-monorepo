@@ -5,6 +5,10 @@ npm as `@abgov/adsp-cli`. Developers use the CLI from a terminal. Developer tool
 [`@abgov/adsp-sdk-mcp-server`](../adsp-sdk-mcp-server/README.md) for its `list_service_roles` and
 `get_service_configuration_schema` tools.
 
+The package is built to be reusable rather than tied to one consumer. Other ADSP developer tooling can adopt it too:
+for example, the `nx-adsp` Nx plugin has its own duplicate login and token cache implementation that could move to
+this package as a separate follow-up.
+
 ## Install
 
 ```bash
@@ -26,8 +30,12 @@ The CLI and the library don't call each other. They share files under `~/.adsp-c
   token, or gets one with client credentials when `ADSP_CLIENT_ID`/`ADSP_CLIENT_SECRET` are set. Consumers then call
   `getServiceUrls()`, `getConfiguration()` and so on themselves.
 
-The interactive login function is not exported. A consumer that gets `'not-authenticated'` from `getAccessToken()`
-should tell the user to run `adsp login`.
+This split exists because library consumers, such as an MCP server tool handler, must never block waiting for a
+person. The CLI is the only process that waits for the user.
+
+`loginInteractive` (the interactive login function) is deliberately **not** part of the public API; only the CLI entry
+(`src/main.ts`) calls it. A consumer that gets `'not-authenticated'` from `getAccessToken()` should tell the user to
+run `adsp login`, not try to log in itself.
 
 ## Logging in
 
