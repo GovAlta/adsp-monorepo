@@ -84,7 +84,7 @@ export function createMcpHttpApp({
       'HTTP mode needs MCP_PUBLIC_URL, ADSP_ACCESS_SERVICE_URL and ADSP_DIRECTORY_SERVICE_URL so callers can sign in.'
     );
   }
-  const { publicUrl, accessServiceUrl } = config.auth;
+  const { publicUrl, accessServiceUrl, directoryServiceUrl } = config.auth;
   const verifier = createTokenVerifier({ accessServiceUrl });
 
   loadAdspMcpTools(serverOptions);
@@ -133,7 +133,7 @@ export function createMcpHttpApp({
     // Before the gate, so requests without a valid token never hold an in-flight slot.
     createAuthMiddleware({ verifier, publicUrl }),
     createInFlightGate(new Semaphore(config.maxInFlight, { maxWaiters: config.maxInFlight }), config.inFlightWaitMs),
-    createStatelessPostHandler(serverOptions)
+    createStatelessPostHandler({ ...serverOptions, hostedAuth: { directoryServiceUrl } })
   );
   app.get('/mcp/:tenantRealm', methodNotAllowed);
   app.delete('/mcp/:tenantRealm', methodNotAllowed);

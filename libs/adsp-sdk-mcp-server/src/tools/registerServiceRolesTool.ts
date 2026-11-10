@@ -8,18 +8,27 @@ import {
 import { getMetrics } from '../metrics';
 import { LiveToolDefinition } from './types';
 import { withLiveToolPermit } from './liveToolLimit';
-import { classifyUpstreamError } from './upstreamErrors';
+import { CALLER_SIGN_IN_REJECTED, classifyUpstreamError } from './upstreamErrors';
 
-function describeError(err: unknown): string {
+function describeError(err: unknown, signedInCaller: boolean): string {
   if (err instanceof ServiceNotInDirectoryError) {
     return err.message;
   }
 
   if (err instanceof HttpRequestError) {
     if (err.status === 401) {
+      if (signedInCaller) {
+        return CALLER_SIGN_IN_REJECTED;
+      }
       return 'Access token was rejected (401). Run `npx @abgov/adsp-cli login` again to refresh it.';
     }
     if (err.status === 403) {
+      if (signedInCaller) {
+        return (
+          'Access denied (403) reading tenant-service configuration. This is more likely the wrong tenant realm ' +
+          'than a missing role — check the realm in your MCP server URL.'
+        );
+      }
       return (
         'Access denied (403) reading tenant-service configuration. This is more likely the wrong tenant realm ' +
         'or environment than a missing role — check ADSP_TENANT_REALM and ADSP_ENV.'
@@ -75,7 +84,8 @@ export function createServiceRolesTools(): LiveToolDefinition[] {
       inputSchema: { type: 'object', properties: {} },
       handler: (_args, context) =>
         withLiveToolPermit(async () => {
-          const tokenResult = await getAccessToken();
+          const caller = context?.caller;
+          const tokenResult = caller ? { status: 'ok' as const, token: caller.accessToken } : await getAccessToken();
 
           if (tokenResult.status === 'not-authenticated') {
             getMetrics().recordUpstreamError('list_service_roles', 'not_authenticated');
@@ -88,14 +98,14 @@ export function createServiceRolesTools(): LiveToolDefinition[] {
           }
 
           try {
-            const directoryServiceUrl = getDirectoryServiceUrl();
+            const directoryServiceUrl = caller ? caller.directoryServiceUrl : getDirectoryServiceUrl();
             const roles = await getServiceRoles(tokenResult.token, directoryServiceUrl);
             return {
               content: [{ type: 'text', text: SERVICE_ROLES_PREAMBLE + JSON.stringify(roles, null, 2) }],
             };
           } catch (err) {
             getMetrics().recordUpstreamError('list_service_roles', classifyUpstreamError(err));
-            return { isError: true, content: [{ type: 'text', text: describeError(err) }] };
+            return { isError: true, content: [{ type: 'text', text: describeError(err, caller !== undefined) }] };
           }
         }, context?.signal),
     },
