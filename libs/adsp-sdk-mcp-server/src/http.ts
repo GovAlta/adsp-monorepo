@@ -2,6 +2,7 @@ import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/
 import * as express from 'express';
 import { createServer, Server as HttpServer } from 'http';
 import { performance } from 'perf_hooks';
+import { createAuthMiddleware, createProtectedResourceMetadataHandler, createTokenVerifier } from './auth';
 import { McpServerConfig, readConfig } from './config';
 import { createCorsAndOriginGuard, createInFlightGate, createRateLimit } from './guards';
 import { createLifecycle, ServerLifecycle } from './lifecycle';
@@ -78,6 +79,14 @@ export function createMcpHttpApp({
   lifecycle = createLifecycle(),
   ...serverOptions
 }: McpHttpAppOptions = {}): express.Express {
+  if (!config.auth) {
+    throw new Error(
+      'HTTP mode needs MCP_PUBLIC_URL, ADSP_ACCESS_SERVICE_URL and ADSP_DIRECTORY_SERVICE_URL so callers can sign in.'
+    );
+  }
+  const { publicUrl, accessServiceUrl } = config.auth;
+  const verifier = createTokenVerifier({ accessServiceUrl });
+
   loadAdspMcpTools(serverOptions);
   configureLiveToolLimit({ maxConcurrent: config.liveToolMaxConcurrent, waitMs: config.inFlightWaitMs });
 
@@ -111,15 +120,23 @@ export function createMcpHttpApp({
     res.json({ status: 'ready' });
   });
 
-  app.use('/mcp', createCorsAndOriginGuard(config.corsOrigins));
+  const corsAndOrigin = createCorsAndOriginGuard(config.corsOrigins);
+  const metadataPath = '/.well-known/oauth-protected-resource/mcp/:tenantRealm';
+  app.use(metadataPath, corsAndOrigin);
+  app.get(metadataPath, createProtectedResourceMetadataHandler({ publicUrl, accessServiceUrl }));
+
+  // Each tenant realm is its own issuer, so the endpoint names the realm; there is no shared, unauthenticated /mcp.
+  app.use('/mcp/:tenantRealm', corsAndOrigin);
   app.post(
-    '/mcp',
+    '/mcp/:tenantRealm',
     createRateLimit(config.rateLimitPerMinute),
+    // Before the gate, so requests without a valid token never hold an in-flight slot.
+    createAuthMiddleware({ verifier, publicUrl }),
     createInFlightGate(new Semaphore(config.maxInFlight, { maxWaiters: config.maxInFlight }), config.inFlightWaitMs),
     createStatelessPostHandler(serverOptions)
   );
-  app.get('/mcp', methodNotAllowed);
-  app.delete('/mcp', methodNotAllowed);
+  app.get('/mcp/:tenantRealm', methodNotAllowed);
+  app.delete('/mcp/:tenantRealm', methodNotAllowed);
 
   return app;
 }

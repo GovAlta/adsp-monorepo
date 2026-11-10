@@ -3,7 +3,15 @@ import type { Server as HttpServer } from 'http';
 import type { AddressInfo } from 'net';
 import { tmpdir } from 'os';
 import { join } from 'path';
-import { postMcp, testConfig, TOOLS_LIST_REQUEST, waitFor } from './fixtures/httpTestKit';
+import {
+  endpointFor,
+  postMcp,
+  startTestAuth,
+  stopTestAuth,
+  testConfig,
+  TOOLS_LIST_REQUEST,
+  waitFor,
+} from './fixtures/httpTestKit';
 import { createMcpHttpApp, createMcpHttpServer } from './http';
 import { createGracefulShutdown, createLifecycle, ServerLifecycle } from './lifecycle';
 import * as quickstartModule from './tools/registerQuickstartTool';
@@ -16,6 +24,9 @@ const QUICKSTART_CALL = {
 };
 
 const pause = (ms: number) => new Promise((resolveTick) => setTimeout(resolveTick, ms));
+
+beforeAll(startTestAuth);
+afterAll(stopTestAuth);
 
 describe('graceful shutdown', () => {
   let docsRoot: string;
@@ -35,7 +46,7 @@ describe('graceful shutdown', () => {
   }
 
   function callHeldTool(): Promise<number> {
-    return postMcp(new URL(`${base}/mcp`), QUICKSTART_CALL).then(async (response) => {
+    return postMcp(endpointFor(base), QUICKSTART_CALL).then(async (response) => {
       await response.text();
       return response.status;
     });
@@ -95,7 +106,7 @@ describe('graceful shutdown', () => {
   it('asks clients to close the connection while draining', async () => {
     lifecycle.beginDrain();
 
-    const response = await postMcp(new URL(`${base}/mcp`), TOOLS_LIST_REQUEST);
+    const response = await postMcp(endpointFor(base), TOOLS_LIST_REQUEST);
     await response.text();
 
     expect(response.status).toBe(200);
@@ -103,7 +114,7 @@ describe('graceful shutdown', () => {
   });
 
   it('asks the client to close the connection on a request that was already running when draining began', async () => {
-    const held = postMcp(new URL(`${base}/mcp`), QUICKSTART_CALL);
+    const held = postMcp(endpointFor(base), QUICKSTART_CALL);
     await waitFor(() => handlerCalls === 1);
 
     lifecycle.beginDrain();
@@ -125,7 +136,7 @@ describe('graceful shutdown', () => {
     await waitFor(() => handlerCalls === 1);
 
     shutdownWith({ delayMs: 500, timeoutMs: 5000, flush })();
-    const duringDelay = await postMcp(new URL(`${base}/mcp`), TOOLS_LIST_REQUEST);
+    const duringDelay = await postMcp(endpointFor(base), TOOLS_LIST_REQUEST);
     await duringDelay.text();
     await pause(600);
     releaseHeld();
@@ -142,7 +153,7 @@ describe('graceful shutdown', () => {
 
     shutdownWith({ delayMs: 20, timeoutMs: 5000 })();
     await pause(100);
-    const refused = await postMcp(new URL(`${base}/mcp`), TOOLS_LIST_REQUEST).then(
+    const refused = await postMcp(endpointFor(base), TOOLS_LIST_REQUEST).then(
       () => 'accepted',
       () => 'refused'
     );

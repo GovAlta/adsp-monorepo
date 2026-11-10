@@ -25,8 +25,8 @@ export function createCorsAndOriginGuard(corsOrigins: McpServerConfig['corsOrigi
   return (req, res, next) => {
     res.vary('Origin');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, mcp-session-id, mcp-protocol-version');
-    res.setHeader('Access-Control-Expose-Headers', 'mcp-session-id');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, mcp-session-id, mcp-protocol-version');
+    res.setHeader('Access-Control-Expose-Headers', 'mcp-session-id, WWW-Authenticate');
 
     const origin = req.headers.origin;
     if (origin !== undefined) {
