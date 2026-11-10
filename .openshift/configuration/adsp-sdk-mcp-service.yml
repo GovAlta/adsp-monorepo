@@ -1,0 +1,24 @@
+apiVersion: v1
+kind: List
+items:
+  - apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      labels:
+        app: adsp-sdk-mcp-service
+        component: api
+      name: adsp-sdk-mcp-service
+    data:
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
+      # Unset CORS_ORIGIN allows no browser origins; MCP clients send no Origin header and are unaffected.
+  - apiVersion: v1
+    kind: Secret
+    metadata:
+      labels:
+        app: adsp-sdk-mcp-service
+        component: api
+      name: adsp-sdk-mcp-service
+    # Deliberately no ADSP_CLIENT_ID / ADSP_CLIENT_SECRET until per-caller auth (CS-5617): with them, every caller
+    # would act as this pod. Without them, list_service_roles and get_service_configuration_schema answer
+    # "not authenticated" and only the docs and SDK reference tools work.
+    stringData: {}
