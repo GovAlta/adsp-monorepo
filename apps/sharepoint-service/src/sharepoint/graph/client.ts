@@ -28,7 +28,6 @@ export class GraphClient {
         params: {
           $filter: `fields/${keyColumn} eq '${key.replace(/'/g, "''")}'`,
           $select: 'id',
-          $expand: `fields($select=${keyColumn})`,
         },
       });
       return data.value[0]?.id ?? null;
