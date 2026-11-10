@@ -625,5 +625,17 @@ describe('Service router', () => {
         expect.objectContaining({ resource: { type: 'application', id: bobsAppKey } }),
       );
     });
+    it('does not audit when the delete fails', async () => {
+      const repo = {
+        getApp: jest.fn().mockResolvedValue({ name: 'Bob', url: 'http://a' }),
+        findStatus: jest.fn().mockResolvedValue(null),
+        deleteApp: jest.fn().mockRejectedValue(new Error('boom')),
+      } as unknown as ApplicationRepo;
+      const handler = deleteApplication(loggerMock, repo, eventServiceMock, auditServiceMock);
+      const req = { user: { tenantId, id: 'test', roles: ['test-updater'] }, params: { appKey: bobsAppKey } };
+      await handler(req as unknown as Request, resMock, nextMock);
+      expect(auditServiceMock.record).not.toHaveBeenCalledWith(ApplicationDeletedAuditAction, expect.anything());
+      expect(nextMock).toHaveBeenCalled();
+    });
   });
 });

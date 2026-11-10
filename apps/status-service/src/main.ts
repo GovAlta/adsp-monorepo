@@ -277,7 +277,10 @@ instrumentAxios(logger);
     stopping = true;
     // Fallback in case the flush or close hangs.
     setTimeout(() => process.exit(1), 15000).unref();
-    server.close();
+    await new Promise<void>((resolve) => {
+      server.close(() => resolve());
+      server.closeIdleConnections();
+    });
     try {
       await auditService.flush();
       process.exit(0);

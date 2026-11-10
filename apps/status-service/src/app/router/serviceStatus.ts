@@ -268,7 +268,7 @@ export const deleteApplication =
         eventService.send(applicationStatusToStopped(app, user));
       }
 
-      applicationRepo.deleteApp(appKey, user);
+      await applicationRepo.deleteApp(appKey, user);
       auditStatus(
         auditService,
         logger,
