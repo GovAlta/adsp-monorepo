@@ -163,6 +163,62 @@ export const ADSP_CLI_CLIENT_SCOPE_MAPPINGS = [
   { client: 'urn:ads:platform:directory-service', roles: ['directory-admin'] },
 ];
 
+export const ADSP_MCP_CLIENT_ID = 'adsp-mcp';
+
+/** The hosted MCP server's live tools only read configuration, so its callers' tokens carry nothing else. */
+export const ADSP_MCP_CLIENT_SCOPE_MAPPINGS = [
+  { client: 'urn:ads:platform:configuration-service', roles: ['configuration-admin'] },
+];
+
+const audienceMapper = (
+  name: string,
+  audience: 'included.client.audience' | 'included.custom.audience',
+  value: string,
+) => ({
+  name,
+  protocol: 'openid-connect',
+  protocolMapper: 'oidc-audience-mapper',
+  config: { [audience]: value, 'id.token.claim': 'false', 'access.token.claim': 'true' },
+});
+
+export const createAdspMcpPublicClientConfig = (id: string): ClientRepresentation => ({
+  id,
+  clientId: ADSP_MCP_CLIENT_ID,
+  enabled: true,
+  publicClient: true,
+  standardFlowEnabled: true,
+  implicitFlowEnabled: false,
+  directAccessGrantsEnabled: false,
+  serviceAccountsEnabled: false,
+  consentRequired: true,
+  fullScopeAllowed: false,
+  attributes: {
+    'pkce.code.challenge.method': 'S256',
+  },
+  // Exact URIs, one group per supported MCP client: Claude Code, VS Code, Cursor, MCP Inspector.
+  redirectUris: [
+    'http://localhost:33419/callback',
+    'http://127.0.0.1:33419/callback',
+    'http://127.0.0.1:33418',
+    'http://127.0.0.1:33418/',
+    'https://vscode.dev/redirect',
+    'http://localhost:8787/callback',
+    'cursor://anysphere.cursor-mcp/oauth/callback',
+    'http://localhost:6274/oauth/callback',
+    'http://127.0.0.1:6276/oauth/callback',
+  ],
+  // Browser-hosted clients exchange the code from the page, so the token endpoint must allow their origin.
+  webOrigins: ['https://vscode.dev', 'http://localhost:6274'],
+  // One audience mapper honours either a client or a custom audience, not both.
+  protocolMappers: [
+    audienceMapper('adsp-sdk-mcp-server-aud', 'included.custom.audience', 'urn:ads:platform:adsp-sdk-mcp-server'),
+    audienceMapper('configuration-service-aud', 'included.client.audience', 'urn:ads:platform:configuration-service'),
+  ],
+  description:
+    'Public client for MCP clients (Claude Code, VS Code, Cursor, MCP Inspector) signing in to the hosted ADSP SDK ' +
+    'MCP server. PKCE-only, consent required. Scope restricted to configuration-admin via clientScopeMappings.',
+});
+
 export const ADSP_CLI_CI_CLIENT_ID = 'adsp-cli-ci';
 
 /**
