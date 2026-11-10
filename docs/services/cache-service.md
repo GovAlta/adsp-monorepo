@@ -1,7 +1,6 @@
 ---
 layout: page
 title: Cache service
-nav_order: 20
 parent: Services
 ---
 

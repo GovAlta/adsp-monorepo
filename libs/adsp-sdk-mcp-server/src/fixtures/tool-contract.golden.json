@@ -1,0 +1,113 @@
+{
+  "calls": [
+    {
+      "call": {
+        "name": "search_adsp_docs",
+        "arguments": {
+          "query": "event service"
+        }
+      },
+      "outcome": {
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "[\n  {\n    \"path\": \"services/event-service.md\",\n    \"title\": \"Event service\",\n    \"snippet\": \"The event service lets a service send a domain event. Each event is routed over RabbitMQ and kept in the event log. Use the directory to find the event service API…\",\n    \"score\": 18\n  },\n  {\n    \"path\": \"services/directory-service.md\",\n    \"title\": \"Directory service\",\n    \"snippet\": \"The directory service maps a service URN to its URL, so a client can find a service without a hardcoded endpoint.\",\n    \"score\": 8\n  }\n]"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "call": {
+        "name": "search_adsp_docs",
+        "arguments": {
+          "query": "directory",
+          "limit": 1
+        }
+      },
+      "outcome": {
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "[\n  {\n    \"path\": \"services/directory-service.md\",\n    \"title\": \"Directory service\",\n    \"snippet\": \"The directory service maps a service URN to its URL, so a client can find a service without a hardcoded endpoint.\",\n    \"score\": 6\n  }\n]"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "call": {
+        "name": "search_adsp_docs",
+        "arguments": {
+          "query": "the of and"
+        }
+      },
+      "outcome": {
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "[]"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "call": {
+        "name": "read_adsp_doc",
+        "arguments": {
+          "path": "services/event-service.md"
+        }
+      },
+      "outcome": {
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "# Event service\n\nThe event service lets a service send a domain event. Each event is routed over RabbitMQ and kept in the event log.\n\nUse the directory to find the event service API."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "call": {
+        "name": "read_adsp_doc",
+        "arguments": {
+          "path": "platform/platform-dotnet-sdk.md"
+        }
+      },
+      "outcome": {
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "No doc found at path \"platform/platform-dotnet-sdk.md\". Use search_adsp_docs to find a valid path."
+            }
+          ],
+          "isError": true
+        }
+      }
+    },
+    {
+      "call": {
+        "name": "no_such_tool",
+        "arguments": {}
+      },
+      "outcome": {
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "Unknown tool: no_such_tool"
+            }
+          ],
+          "isError": true
+        }
+      }
+    }
+  ]
+}

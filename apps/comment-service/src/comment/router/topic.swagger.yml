@@ -1,7 +1,126 @@
 components:
+  parameters:
+    CommentTenantId:
+      name: tenantId
+      description: >
+        ID of the tenant to act on. Only used for core (platform) users and service accounts; tenant users always act
+        on the tenant of their token and this parameter is ignored. Core users must set it, since topic types,
+        topics, and comments all belong to a tenant. A value that is not a tenant URN responds 400.
+      in: query
+      required: false
+      schema:
+        type: string
+      example: urn:ads:platform:tenant-service:v2:/tenants/61f2e3a8c9b1d2e3f4a5b6c7
+    TopicTypeId:
+      name: topicTypeId
+      description: ID of the topic type.
+      in: path
+      required: true
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 50
+        pattern: '^[a-zA-Z0-9-_ ]{1,50}$'
+      example: case-notes
+    TopicId:
+      name: topicId
+      description: ID of the topic.
+      in: path
+      required: true
+      schema:
+        type: integer
+      example: 42
+    CommentId:
+      name: commentId
+      description: ID of the comment.
+      in: path
+      required: true
+      schema:
+        type: integer
+      example: 1203
+    CommentTop:
+      name: top
+      description: Maximum number of results to return. Defaults to 10.
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 5000
+        default: 10
+      example: 10
+    CommentAfter:
+      name: after
+      description: >
+        Cursor of the page to retrieve. Use the `page.next` value of the previous response to page sequentially
+        through the results.
+      in: query
+      required: false
+      schema:
+        type: string
+      example: MTA=
+  responses:
+    CommentBadRequest:
+      description: >
+        Request is invalid, for example a path, query, or body parameter failed validation, the request body is not
+        valid JSON, or the tenantId query parameter is not a tenant URN.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CommentError'
+          example:
+            errorMessage: 'Validation failed with error(s): topicId (params) - Invalid value'
+    CommentUnauthorized:
+      description: Request does not include a valid bearer token.
+      content:
+        text/plain:
+          schema:
+            type: string
+          example: Unauthorized
+    CommentForbidden:
+      description: User does not have a role required for the operation.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CommentError'
+          example:
+            errorMessage: 'User Test User (ID: 7d3c2a1b-4e5f-4a6b-8c9d-0e1f2a3b4c5d) not permitted to post comment.'
+    CommentNotFound:
+      description: Topic type, topic, or comment not found in the tenant.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CommentError'
+          example:
+            errorMessage: topic with ID '42' could not be found.
   schemas:
+    CommentError:
+      type: object
+      properties:
+        errorMessage:
+          type: string
+    CommentResultsPage:
+      type: object
+      description: Paging information of a result set.
+      properties:
+        after:
+          type: string
+          description: Cursor of the page that was returned.
+        next:
+          type: string
+          description: Cursor of the next page. Not set when there are no more results.
+        size:
+          type: integer
+          description: Number of results returned.
+      example:
+        after: MTA=
+        next: MjA=
+        size: 10
     TopicType:
       type: object
+      description: >
+        Topic type, which sets the roles permitted to administer, comment on, and read topics of the type. Roles are
+        held in the topic's tenant; the comment-admin role always grants administrator access.
       properties:
         id:
           type: string
@@ -9,18 +128,34 @@ components:
           type: string
         adminRoles:
           type: array
+          description: Roles that can read and comment on topics of the type, and update or delete any comment on them.
           items:
             type: string
         readerRoles:
           type: array
+          description: Roles that can read topics of the type and their comments.
           items:
             type: string
         commenterRoles:
           type: array
+          description: Roles that can read topics of the type, post comments, and update or delete their own comments.
           items:
             type: string
         securityClassification:
           type: string
+          nullable: true
+          enum:
+            - public
+            - protected a
+            - protected b
+            - protected c
+      example:
+        id: case-notes
+        name: Case notes
+        adminRoles: [case-supervisor]
+        readerRoles: [case-auditor]
+        commenterRoles: [case-worker]
+        securityClassification: protected b
     Topic:
       type: object
       properties:
@@ -28,20 +163,31 @@ components:
           $ref: '#/components/schemas/TopicType'
         id:
           type: integer
+          readOnly: true
         urn:
           type: string
+          readOnly: true
+          description: URN of the topic, for example for use as the resource ID of other ADSP resources.
         resourceId:
           type: string
+          description: ID or URN of the entity the topic is about.
         name:
           type: string
         description:
           type: string
+          nullable: true
         commenters:
           type: array
+          description: >
+            IDs of additional users who can read and comment on the topic, for example the person a case is about.
+            Names of other users are removed from comments returned to these users.
           items:
             type: string
         securityClassification:
           type: string
+          readOnly: true
+          nullable: true
+          description: Security classification of the topic, set from its topic type when the topic is created.
           enum:
             - public
             - protected a
@@ -49,14 +195,45 @@ components:
             - protected c
         requiresAttention:
           type: boolean
-
-    Comment:
+          readOnly: true
+          description: Set or cleared by the requiresAttention flag of a new comment.
+      example:
+        type:
+          id: case-notes
+          name: Case notes
+          adminRoles: [case-supervisor]
+          readerRoles: [case-auditor]
+          commenterRoles: [case-worker]
+          securityClassification: protected b
+        id: 42
+        urn: urn:ads:platform:comment-service:v1:/topics/42
+        resourceId: urn:ads:demo:case-service:v1:/cases/case-123
+        name: Comments on case-123
+        description: Notes about the case.
+        commenters: [3f2b1c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d]
+        securityClassification: protected b
+        requiresAttention: false
+    CommentUser:
       type: object
       properties:
         id:
+          type: string
+        name:
+          type: string
+          nullable: true
+          description: Name of the user. Null when the comment is returned to a topic commenter who is not its author.
+    Comment:
+      type: object
+      properties:
+        topicId:
           type: integer
+          readOnly: true
+        id:
+          type: integer
+          readOnly: true
         title:
           type: string
+          nullable: true
         content:
           type: string
         context:
@@ -64,48 +241,99 @@ components:
           description: Arbitrary JSON context data associated with the comment.
           additionalProperties: true
         createdBy:
-          type: object
-          properties:
-            id:
-              type: string
-            name:
-              type: string
+          allOf:
+            - $ref: '#/components/schemas/CommentUser'
+          readOnly: true
         createdOn:
           type: string
           format: date-time
+          readOnly: true
         lastUpdatedBy:
-          type: object
-          properties:
-            id:
-              type: string
-            name:
-              type: string
+          allOf:
+            - $ref: '#/components/schemas/CommentUser'
+          readOnly: true
         lastUpdatedOn:
           type: string
           format: date-time
+          readOnly: true
+      example:
+        topicId: 42
+        id: 1203
+        title: Follow up call
+        content: Called the applicant to confirm the mailing address.
+        context:
+          step: address-verification
+        createdBy:
+          id: 7d3c2a1b-4e5f-4a6b-8c9d-0e1f2a3b4c5d
+          name: Test User
+        createdOn: '2026-11-02T16:20:00.000Z'
+        lastUpdatedBy:
+          id: 7d3c2a1b-4e5f-4a6b-8c9d-0e1f2a3b4c5d
+          name: Test User
+        lastUpdatedOn: '2026-11-02T16:20:00.000Z'
 
 /comment/v1/topic-types:
   get:
     tags:
       - Topic
-    description: Retrieves all topic types for the tenant.
+    description: >
+      Retrieves the topic types available to the tenant. Requires the comment-admin or topic-setter role, held in the
+      tenant or as a core (platform) role. The response separates the tenant's own types (`tenant`) from the platform
+      types (`core`), each keyed by type ID. Topics can use either; a tenant type with the ID of a platform type
+      replaces it. Core users that don't set tenantId receive only the platform types.
+    parameters:
+      - $ref: '#/components/parameters/CommentTenantId'
     responses:
       200:
         description: Topic types retrieved successfully.
         content:
           application/json:
             schema:
-              type: array
-              items:
-                $ref: '#/components/schemas/TopicType'
+              type: object
+              properties:
+                tenant:
+                  type: object
+                  description: Topic types configured by the tenant, keyed by ID.
+                  additionalProperties:
+                    $ref: '#/components/schemas/TopicType'
+                core:
+                  type: object
+                  description: Platform topic types, keyed by ID.
+                  additionalProperties:
+                    $ref: '#/components/schemas/TopicType'
+            example:
+              tenant:
+                case-notes:
+                  id: case-notes
+                  name: Case notes
+                  adminRoles: [case-supervisor]
+                  readerRoles: [case-auditor]
+                  commenterRoles: [case-worker]
+                  securityClassification: protected b
+              core:
+                form-questions:
+                  id: form-questions
+                  name: Form questions
+                  adminRoles: []
+                  readerRoles: []
+                  commenterRoles: []
+                  securityClassification: protected a
+      400:
+        $ref: '#/components/responses/CommentBadRequest'
       401:
-        description: Not authenticated.
+        $ref: '#/components/responses/CommentUnauthorized'
       403:
-        description: User not permitted for requested operation.
+        $ref: '#/components/responses/CommentForbidden'
   post:
     tags:
       - Topic
-    description: Creates a new topic type for the tenant.
+    description: >
+      Creates a topic type in the tenant's comment service configuration. Requires the comment-admin or topic-setter
+      role, held in the tenant or as a core (platform) role. Core users must set tenantId. The new type has no admin
+      roles; set them with an update. The service responds 409 if the tenant or platform already has a type with the
+      ID, or a type with a different ID has the same name.
+    parameters:
+      - $ref: '#/components/parameters/CommentTenantId'
     requestBody:
       required: true
       content:
@@ -116,56 +344,75 @@ components:
               id:
                 type: string
                 description: ID of the topic type.
-                example: case
+                minLength: 1
+                maxLength: 50
+                pattern: '^[a-zA-Z0-9-_ ]{1,50}$'
               name:
                 type: string
                 description: Name of the topic type.
-                example: Case
-              adminRoles:
-                type: array
-                description: Optional roles allowed to read/write topics of this type.
-                items:
-                  type: string
+                minLength: 1
+                maxLength: 50
               readerRoles:
                 type: array
-                description: Optional roles allowed to read topics of this type.
+                description: Roles that can read topics of the type.
                 items:
                   type: string
-              commenterRoles:
+              readRoles:
                 type: array
-                description: Optional roles allowed to write comments on topics of this type.
+                deprecated: true
+                description: Alternative name for readerRoles, used when readerRoles is not set.
+                items:
+                  type: string
+              writeRoles:
+                type: array
+                description: Roles that can comment on topics of the type. Saved as the type's commenterRoles.
                 items:
                   type: string
             required: [id, name]
+          example:
+            id: case-notes
+            name: Case notes
+            readerRoles: [case-auditor]
+            writeRoles: [case-worker]
     responses:
       200:
-        description: Request completed successfully.
+        description: Topic type created successfully.
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                id:
-                  type: string
+              $ref: '#/components/schemas/TopicType'
+            example:
+              id: case-notes
+              name: Case notes
+              adminRoles: []
+              readerRoles: [case-auditor]
+              commenterRoles: [case-worker]
+      400:
+        $ref: '#/components/responses/CommentBadRequest'
       401:
-        description: Not authenticated.
+        $ref: '#/components/responses/CommentUnauthorized'
       403:
-        description: User not permitted for requested operation.
+        $ref: '#/components/responses/CommentForbidden'
       409:
-        description: Topic type name already exists.
+        description: A topic type with the ID or name already exists.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommentError'
+            example:
+              errorMessage: Topic type 'Case notes' already exists.
 
-/comment/v1/topic-types/{topic-type-id}:
+/comment/v1/topic-types/{topicTypeId}:
   get:
     tags:
       - Topic
-    description: Retrieves a specific topic type for the tenant.
+    description: >
+      Retrieves a topic type configured by the tenant. Requires the comment-admin or topic-setter role, held in the
+      tenant or as a core (platform) role. Core users must set tenantId. Only the tenant's own types are found;
+      platform types respond 404, so use the topic types list to read them.
     parameters:
-      - name: topic-type-id
-        description: ID of the topic type to retrieve.
-        in: path
-        required: true
-        schema:
-          type: string
+      - $ref: '#/components/parameters/TopicTypeId'
+      - $ref: '#/components/parameters/CommentTenantId'
     responses:
       200:
         description: Topic type retrieved successfully.
@@ -173,23 +420,24 @@ components:
           application/json:
             schema:
               $ref: '#/components/schemas/TopicType'
+      400:
+        $ref: '#/components/responses/CommentBadRequest'
       401:
-        description: Not authenticated.
+        $ref: '#/components/responses/CommentUnauthorized'
       403:
-        description: User not permitted for requested operation.
+        $ref: '#/components/responses/CommentForbidden'
       404:
-        description: Topic type not found.
+        $ref: '#/components/responses/CommentNotFound'
   patch:
     tags:
       - Topic
-    description: Updates a topic type for the tenant.
+    description: >
+      Updates a topic type configured by the tenant. Properties not in the request keep their values. Requires the
+      comment-admin or topic-setter role, held in the tenant or as a core (platform) role. Core users must set
+      tenantId. Platform types respond 404.
     parameters:
-      - name: topic-type-id
-        description: ID of the topic type to update.
-        in: path
-        required: true
-        schema:
-          type: string
+      - $ref: '#/components/parameters/TopicTypeId'
+      - $ref: '#/components/parameters/CommentTenantId'
     requestBody:
       required: true
       content:
@@ -200,31 +448,35 @@ components:
               name:
                 type: string
                 description: Name of the topic type.
-                example: Case
+                minLength: 1
+                maxLength: 50
               adminRoles:
                 type: array
-                description: Optional roles allowed to read/write topics of this type.
+                description: Roles that can administer topics of the type.
                 items:
                   type: string
-              readRoles:
+              readerRoles:
                 type: array
-                description: Optional roles allowed to read topics of this type.
+                description: Roles that can read topics of the type.
                 items:
                   type: string
-              writeRoles:
+              commenterRoles:
                 type: array
-                description: Optional roles allowed to write comments on topics of this type.
+                description: Roles that can comment on topics of the type.
                 items:
                   type: string
               securityClassification:
                 type: string
-                description: Security classification for the topic type.
+                description: Security classification for new topics of the type.
                 enum:
                   - public
                   - protected a
                   - protected b
                   - protected c
-
+          example:
+            adminRoles: [case-supervisor]
+            commenterRoles: [case-worker]
+            securityClassification: protected b
     responses:
       200:
         description: Topic type updated successfully.
@@ -232,23 +484,24 @@ components:
           application/json:
             schema:
               $ref: '#/components/schemas/TopicType'
+      400:
+        $ref: '#/components/responses/CommentBadRequest'
       401:
-        description: Not authenticated.
+        $ref: '#/components/responses/CommentUnauthorized'
       403:
-        description: User not permitted for requested operation.
+        $ref: '#/components/responses/CommentForbidden'
       404:
-        description: Topic type not found.
+        $ref: '#/components/responses/CommentNotFound'
   delete:
     tags:
       - Topic
-    description: Permanently deletes a topic type for the tenant.
+    description: >
+      Deletes a topic type configured by the tenant. Requires the comment-admin or topic-setter role, held in the
+      tenant or as a core (platform) role. Core users must set tenantId. The service responds 409 while any topic of
+      the type exists; delete those topics first. Platform types respond 404.
     parameters:
-      - name: topic-type-id
-        description: ID of the topic type to delete.
-        in: path
-        required: true
-        schema:
-          type: string
+      - $ref: '#/components/parameters/TopicTypeId'
+      - $ref: '#/components/parameters/CommentTenantId'
     responses:
       200:
         description: Topic type deleted successfully.
@@ -261,14 +514,19 @@ components:
                   type: boolean
                 id:
                   type: string
+            example:
+              deleted: true
+              id: case-notes
+      400:
+        $ref: '#/components/responses/CommentBadRequest'
       401:
-        description: Not authenticated.
+        $ref: '#/components/responses/CommentUnauthorized'
       403:
-        description: User not permitted for requested operation.
+        $ref: '#/components/responses/CommentForbidden'
       404:
-        description: Topic type not found.
+        $ref: '#/components/responses/CommentNotFound'
       409:
-        description: Topic type has associated topics that must be deleted first.
+        description: Topics of the type exist and must be deleted first.
         content:
           application/json:
             schema:
@@ -278,27 +536,28 @@ components:
                   type: string
                 topics:
                   type: integer
+                  description: Number of topics of the type.
+            example:
+              errorMessage: Topic type 'case-notes' cannot be deleted because 3 topic(s) are associated with it.
+              topics: 3
 
 /comment/v1/topics:
   get:
     tags:
       - Topic
-    description: Retrieves topics.
+    description: >
+      Retrieves topics of the tenant, in order of ID. Available to any authenticated user, but results only include
+      the topics the user can read: users with the type's admin, commenter, or reader roles (or comment-admin) in the
+      tenant, users listed in the topic's commenters, and users with the comment-admin or topic-setter role in the
+      tenant or as a core role. Users with the export-service export-job role (`urn:ads:platform:export-service:export-job`)
+      receive all matching topics. A page can therefore hold fewer than `top` results while `page.next` is set. Core
+      users must set tenantId.
     parameters:
-      - name: top
-        description: Number of topics to return.
-        in: query
-        required: false
-        schema:
-          type: integer
-      - name: after
-        description: Cursor for the page to retrieve.  Use the _page.next_ value returned in the previous call to page sequentially through the data.
-        in: query
-        required: false
-        schema:
-          type: string
+      - $ref: '#/components/parameters/CommentTenantId'
+      - $ref: '#/components/parameters/CommentTop'
+      - $ref: '#/components/parameters/CommentAfter'
       - name: criteria
-        description: Criteria for topics to retrieve.
+        description: Criteria for the topics to retrieve, as URL-encoded JSON. Must be valid JSON.
         in: query
         required: false
         content:
@@ -310,11 +569,16 @@ components:
                   type: string
                 resourceIdEquals:
                   type: string
+                  description: ID or URN of the entity the topics are about.
                 requiresAttention:
                   type: boolean
+                  description: When true, only topics that require attention. False is the same as not setting it.
+            example:
+              typeIdEquals: case-notes
+              resourceIdEquals: urn:ads:demo:case-service:v1:/cases/case-123
     responses:
       200:
-        description: Request completed successfully.
+        description: Topics retrieved successfully.
         content:
           application/json:
             schema:
@@ -325,28 +589,40 @@ components:
                   items:
                     $ref: '#/components/schemas/Topic'
                 page:
-                  type: object
-                  properties:
-                    after:
-                      type: string
-                      description: cursor representing the set of data returned.
-                      example: Mw==
-                    next:
-                      type: string
-                      description: cursor representing the next set of data to be returned.
-                      example: Ng==
-                    size:
-                      description: The number of topics returned by the query.
-                      example: 10
-                      type: integer
+                  $ref: '#/components/schemas/CommentResultsPage'
+            example:
+              results:
+                - type:
+                    id: case-notes
+                    name: Case notes
+                    adminRoles: [case-supervisor]
+                    readerRoles: [case-auditor]
+                    commenterRoles: [case-worker]
+                    securityClassification: protected b
+                  id: 42
+                  urn: urn:ads:platform:comment-service:v1:/topics/42
+                  resourceId: urn:ads:demo:case-service:v1:/cases/case-123
+                  name: Comments on case-123
+                  description: Notes about the case.
+                  commenters: []
+                  securityClassification: protected b
+                  requiresAttention: false
+              page:
+                next: MTA=
+                size: 10
+      400:
+        $ref: '#/components/responses/CommentBadRequest'
       401:
-        description: Not authorized.
-      403:
-        description: User not permitted for requested operation.
+        $ref: '#/components/responses/CommentUnauthorized'
   post:
     tags:
       - Topic
-    description: Creates a new topic.
+    description: >
+      Creates a topic in the tenant. Requires the comment-admin or topic-setter role, held in the tenant or as a core
+      (platform) role. Core users must set tenantId. The topic type can be one of the tenant's types or a platform
+      type. The topic's security classification is taken from its type.
+    parameters:
+      - $ref: '#/components/parameters/CommentTenantId'
     requestBody:
       required: true
       content:
@@ -356,85 +632,87 @@ components:
             properties:
               typeId:
                 type: string
-                description: ID of the topic type associated with the topic to create.
+                description: ID of the topic type of the topic.
+                minLength: 1
+                maxLength: 50
               name:
                 type: string
-                description: The name of the topic.
-                example: Case ABC-12
+                description: Name of the topic.
+                minLength: 1
+                maxLength: 50
               description:
                 type: string
-                description: A description of the topic.
-                example: Comments on the case.
-              securityClassification:
-                description: The security classification type of the topic.
-                type: string
-                default: protected a
-                enum:
-                  - public
-                  - protected a
-                  - protected b
-                  - protected c
-
+                description: Description of the topic.
               commenters:
                 type: array
                 items:
                   type: string
-                description: Array containing IDs of additional users allowed to comment on the topic.
+                description: IDs of additional users who can read and comment on the topic.
               resourceId:
                 type: string
-                description: URN of the ADSP resource associated with the topic.
-                example: urn:ads:support:case:v1:/cases/abc-123
+                description: ID or URN of the entity the topic is about.
+                minLength: 1
+                maxLength: 1200
             required: [name, typeId]
+          example:
+            typeId: case-notes
+            name: Comments on case-123
+            description: Notes about the case.
+            resourceId: urn:ads:demo:case-service:v1:/cases/case-123
+            commenters: [3f2b1c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d]
     responses:
       200:
-        description: Request completed successfully.
+        description: Topic created successfully.
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/Topic'
+      400:
+        $ref: '#/components/responses/CommentBadRequest'
       401:
-        description: Not authorized.
+        $ref: '#/components/responses/CommentUnauthorized'
       403:
-        description: User not permitted for requested operation.
+        $ref: '#/components/responses/CommentForbidden'
       404:
-        description: Topic type not found.
+        $ref: '#/components/responses/CommentNotFound'
 
 /comment/v1/topics/{topicId}:
   get:
     tags:
       - Topic
-    description: Retrieves a topic.
+    description: >
+      Retrieves a topic of the tenant. Requires read access to the topic: the topic type's admin, commenter, or reader
+      roles (or comment-admin) in the tenant, being listed in the topic's commenters, or the comment-admin or
+      topic-setter role in the tenant or as a core role. The directory service resource-resolver role
+      (`urn:ads:platform:directory-service:resource-resolver`) can also retrieve it. Core users must set tenantId.
+      Topics of another tenant respond 404.
     parameters:
-      - name: topicId
-        description: ID of the topic.
-        in: path
-        required: true
-        schema:
-          type: integer
+      - $ref: '#/components/parameters/TopicId'
+      - $ref: '#/components/parameters/CommentTenantId'
     responses:
       200:
-        description: Request completed successfully.
+        description: Topic retrieved successfully.
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/Topic'
+      400:
+        $ref: '#/components/responses/CommentBadRequest'
       401:
-        description: Not authorized.
+        $ref: '#/components/responses/CommentUnauthorized'
       403:
-        description: User not permitted for requested operation.
+        $ref: '#/components/responses/CommentForbidden'
       404:
-        description: Topic not found.
+        $ref: '#/components/responses/CommentNotFound'
   patch:
     tags:
       - Topic
-    description: Updates a topic.
+    description: >
+      Updates a topic of the tenant. Requires the comment-admin or topic-setter role, held in the tenant or as a core
+      (platform) role. Core users must set tenantId. Topics of another tenant respond 404.
     parameters:
-      - name: topicId
-        description: ID of the topic.
-        in: path
-        required: true
-        schema:
-          type: integer
+      - $ref: '#/components/parameters/TopicId'
+      - $ref: '#/components/parameters/CommentTenantId'
     requestBody:
       required: true
       content:
@@ -444,41 +722,44 @@ components:
             properties:
               name:
                 type: string
-                description: The name of the topic.
-                example: Case ABC-12
+                description: Name of the topic.
+                minLength: 1
+                maxLength: 50
               description:
                 type: string
-                description: A description of the topic.
-                example: Comments on the case.
+                description: Description of the topic.
               commenters:
                 type: array
                 items:
                   type: string
-                description: Array containing IDs of additional users allowed to comment on the topic.
+                description: IDs of additional users who can read and comment on the topic. Replaces the existing list.
+          example:
+            name: Comments on case-123
+            commenters: [3f2b1c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d, 9a8b7c6d-5e4f-4a3b-8c2d-1e0f9a8b7c6d]
     responses:
       200:
-        description: Request completed successfully.
+        description: Topic updated successfully.
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/Topic'
+      400:
+        $ref: '#/components/responses/CommentBadRequest'
       401:
-        description: Not authorized.
+        $ref: '#/components/responses/CommentUnauthorized'
       403:
-        description: User not permitted for requested operation.
+        $ref: '#/components/responses/CommentForbidden'
       404:
-        description: Topic not found.
+        $ref: '#/components/responses/CommentNotFound'
   delete:
     tags:
       - Topic
-    description: Deletes a topic and associated comments.
+    description: >
+      Deletes a topic of the tenant and its comments. Requires the comment-admin or topic-setter role, held in the
+      tenant or as a core (platform) role. Core users must set tenantId. Topics of another tenant respond 404.
     parameters:
-      - name: topicId
-        description: ID of the topic.
-        in: path
-        required: true
-        schema:
-          type: integer
+      - $ref: '#/components/parameters/TopicId'
+      - $ref: '#/components/parameters/CommentTenantId'
     responses:
       200:
         description: Request completed successfully.
@@ -489,55 +770,56 @@ components:
               properties:
                 deleted:
                   type: boolean
+            example:
+              deleted: true
+      400:
+        $ref: '#/components/responses/CommentBadRequest'
       401:
-        description: Not authorized.
+        $ref: '#/components/responses/CommentUnauthorized'
       403:
-        description: User not permitted for requested operation.
+        $ref: '#/components/responses/CommentForbidden'
       404:
-        description: Topic not found.
+        $ref: '#/components/responses/CommentNotFound'
 
 /comment/v1/topics/{topicId}/comments:
   get:
     tags:
       - Topic
-    description: Retrieves topic comments.
+    description: >
+      Retrieves comments of a topic, newest first. Requires read access to the topic: the topic type's admin,
+      commenter, or reader roles (or comment-admin) in the tenant, being listed in the topic's commenters, or the
+      comment-admin or topic-setter role in the tenant or as a core role. Core users must set tenantId. Topics of
+      another tenant respond 404.
     parameters:
-      - name: topicId
-        description: ID of the topic.
-        in: path
-        required: true
-        schema:
-          type: integer
-      - name: top
-        description: Number of topics to return.
-        in: query
-        required: false
-        schema:
-          type: integer
-      - name: after
-        description: Cursor for the page to retrieve.  Use the _page.next_ value returned in the previous call to page sequentially through the data.
-        in: query
-        required: false
-        schema:
-          type: string
+      - $ref: '#/components/parameters/TopicId'
+      - $ref: '#/components/parameters/CommentTenantId'
+      - $ref: '#/components/parameters/CommentTop'
+      - $ref: '#/components/parameters/CommentAfter'
       - name: criteria
-        description: Criteria for comments to retrieve.
+        description: >
+          Criteria for the comments to retrieve, as URL-encoded JSON. Must be valid JSON. The text criteria are
+          PostgreSQL full text searches of a single word or phrase.
         in: query
         required: false
-        schema:
-          type: object
-          properties:
-            titleLike:
-              type: string
-            contentLike:
-              type: string
-            titleOrContentLike:
-              type: string
-            idGreaterThan:
-              type: number
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                titleLike:
+                  type: string
+                contentLike:
+                  type: string
+                titleOrContentLike:
+                  type: string
+                idGreaterThan:
+                  type: integer
+                  description: Only comments with a greater ID, for example to get comments posted since the last read.
+            example:
+              idGreaterThan: 1200
     responses:
       200:
-        description: Request completed successfully.
+        description: Comments retrieved successfully.
         content:
           application/json:
             schema:
@@ -548,37 +830,44 @@ components:
                   items:
                     $ref: '#/components/schemas/Comment'
                 page:
-                  type: object
-                  properties:
-                    after:
-                      type: string
-                      description: cursor representing the set of data returned.
-                      example: Mw==
-                    next:
-                      type: string
-                      description: cursor representing the next set of data to be returned.
-                      example: Ng==
-                    size:
-                      description: The number of comments returned by the query.
-                      example: 10
-                      type: integer
+                  $ref: '#/components/schemas/CommentResultsPage'
+            example:
+              results:
+                - topicId: 42
+                  id: 1203
+                  title: Follow up call
+                  content: Called the applicant to confirm the mailing address.
+                  context:
+                    step: address-verification
+                  createdBy:
+                    id: 7d3c2a1b-4e5f-4a6b-8c9d-0e1f2a3b4c5d
+                    name: Test User
+                  createdOn: '2026-11-02T16:20:00.000Z'
+                  lastUpdatedBy:
+                    id: 7d3c2a1b-4e5f-4a6b-8c9d-0e1f2a3b4c5d
+                    name: Test User
+                  lastUpdatedOn: '2026-11-02T16:20:00.000Z'
+              page:
+                after: MTA=
+                size: 1
+      400:
+        $ref: '#/components/responses/CommentBadRequest'
       401:
-        description: Not authorized.
+        $ref: '#/components/responses/CommentUnauthorized'
       403:
-        description: User not permitted for requested operation.
+        $ref: '#/components/responses/CommentForbidden'
       404:
-        description: Topic not found.
+        $ref: '#/components/responses/CommentNotFound'
   post:
     tags:
       - Topic
-    description: Creates a topic comment.
+    description: >
+      Posts a comment on a topic. Requires comment access to the topic: the topic type's admin or commenter roles (or
+      comment-admin) in the tenant, or being listed in the topic's commenters. Core users must set tenantId. Topics of
+      another tenant respond 404.
     parameters:
-      - name: topicId
-        description: ID of the topic.
-        in: path
-        required: true
-        schema:
-          type: integer
+      - $ref: '#/components/parameters/TopicId'
+      - $ref: '#/components/parameters/CommentTenantId'
     requestBody:
       required: true
       content:
@@ -588,76 +877,84 @@ components:
             properties:
               title:
                 type: string
+                nullable: true
                 description: Title of the comment.
+                minLength: 1
+                maxLength: 255
               content:
                 type: string
                 description: Content of the comment.
+                minLength: 1
               context:
                 type: object
-                description: Optional arbitrary JSON context data associated with the comment.
+                description: Arbitrary JSON context data associated with the comment.
                 additionalProperties: true
+              requiresAttention:
+                type: boolean
+                nullable: true
+                description: Sets (true) or clears (false) the topic's requiresAttention flag.
+            required: [content]
+          example:
+            title: Follow up call
+            content: Called the applicant to confirm the mailing address.
+            context:
+              step: address-verification
+            requiresAttention: true
     responses:
       200:
-        description: Request completed successfully.
+        description: Comment created successfully.
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/Comment'
+      400:
+        $ref: '#/components/responses/CommentBadRequest'
       401:
-        description: Not authorized.
+        $ref: '#/components/responses/CommentUnauthorized'
       403:
-        description: User not permitted for requested operation.
+        $ref: '#/components/responses/CommentForbidden'
       404:
-        description: Topic not found.
+        $ref: '#/components/responses/CommentNotFound'
 
 /comment/v1/topics/{topicId}/comments/{commentId}:
   get:
     tags:
       - Topic
-    description: Retrieves a topic comment.
+    description: >
+      Retrieves a comment of a topic. Requires read access to the topic: the topic type's admin, commenter, or reader
+      roles (or comment-admin) in the tenant, being listed in the topic's commenters, or the comment-admin or
+      topic-setter role in the tenant or as a core role. Core users must set tenantId. Topics and comments of
+      another tenant respond 404.
     parameters:
-      - name: topicId
-        description: ID of the topic.
-        in: path
-        required: true
-        schema:
-          type: integer
-      - name: commentId
-        description: ID of the comment.
-        in: path
-        required: true
-        schema:
-          type: integer
+      - $ref: '#/components/parameters/TopicId'
+      - $ref: '#/components/parameters/CommentId'
+      - $ref: '#/components/parameters/CommentTenantId'
     responses:
       200:
-        description: Request completed successfully.
+        description: Comment retrieved successfully.
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/Comment'
+      400:
+        $ref: '#/components/responses/CommentBadRequest'
       401:
-        description: Not authorized.
+        $ref: '#/components/responses/CommentUnauthorized'
       403:
-        description: User not permitted for requested operation.
+        $ref: '#/components/responses/CommentForbidden'
       404:
-        description: Topic or comment not found.
+        $ref: '#/components/responses/CommentNotFound'
   patch:
     tags:
       - Topic
-    description: Updates a topic comment.
+    description: >
+      Updates a comment of a topic. Requires the topic type's admin roles (or comment-admin) in the tenant, or comment
+      access to the topic for the author of the comment. Core users must set tenantId. Topics and comments of another
+      tenant respond 404.
     parameters:
-      - name: topicId
-        description: ID of the topic.
-        in: path
-        required: true
-        schema:
-          type: integer
-      - name: commentId
-        description: ID of the comment.
-        in: path
-        required: true
-        schema:
-          type: integer
+      - $ref: '#/components/parameters/TopicId'
+      - $ref: '#/components/parameters/CommentId'
+      - $ref: '#/components/parameters/CommentTenantId'
     requestBody:
       required: true
       content:
@@ -667,48 +964,49 @@ components:
             properties:
               title:
                 type: string
-                description: Title of the comment.
+                nullable: true
+                description: Title of the comment. A null value keeps the existing title.
+                minLength: 1
+                maxLength: 255
               content:
                 type: string
                 description: Content of the comment.
+                minLength: 1
               context:
                 type: object
-                description: Optional arbitrary JSON context data. When supplied, it replaces the existing context.
+                description: Arbitrary JSON context data. When supplied, it replaces the existing context.
                 additionalProperties: true
+          example:
+            content: Called the applicant to confirm the mailing and residential addresses.
     responses:
       200:
-        description: Request completed successfully.
+        description: Comment updated successfully.
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/Comment'
+      400:
+        $ref: '#/components/responses/CommentBadRequest'
       401:
-        description: Not authorized.
+        $ref: '#/components/responses/CommentUnauthorized'
       403:
-        description: User not permitted for requested operation.
+        $ref: '#/components/responses/CommentForbidden'
       404:
-        description: Topic or comment not found.
+        $ref: '#/components/responses/CommentNotFound'
   delete:
     tags:
       - Topic
-    description: Deletes a topic and associated comments.
+    description: >
+      Deletes a comment of a topic. Requires the topic type's admin roles (or comment-admin) in the tenant, or comment
+      access to the topic for the author of the comment. Core users must set tenantId. Topics and comments of another
+      tenant respond 404.
     parameters:
-      - name: topicId
-        description: ID of the topic.
-        in: path
-        required: true
-        schema:
-          type: integer
-      - name: commentId
-        description: ID of the comment.
-        in: path
-        required: true
-        schema:
-          type: integer
-
+      - $ref: '#/components/parameters/TopicId'
+      - $ref: '#/components/parameters/CommentId'
+      - $ref: '#/components/parameters/CommentTenantId'
     responses:
       200:
-        description: Request completed successfully.
+        description: Comment deleted successfully.
         content:
           application/json:
             schema:
@@ -716,9 +1014,13 @@ components:
               properties:
                 deleted:
                   type: boolean
+            example:
+              deleted: true
+      400:
+        $ref: '#/components/responses/CommentBadRequest'
       401:
-        description: Not authorized.
+        $ref: '#/components/responses/CommentUnauthorized'
       403:
-        description: User not permitted for requested operation.
+        $ref: '#/components/responses/CommentForbidden'
       404:
-        description: Topic or comment not found.
+        $ref: '#/components/responses/CommentNotFound'

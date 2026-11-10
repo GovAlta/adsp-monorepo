@@ -1,7 +1,6 @@
 ---
 layout: page
 title: Value service
-nav_order: 6
 parent: Services
 ---
 

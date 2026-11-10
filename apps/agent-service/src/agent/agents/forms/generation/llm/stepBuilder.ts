@@ -44,7 +44,7 @@ export async function generateStepPayload({
 }: GenerateStepInput): Promise<IncrementPayload> {
   const isBranch = step.type === 'branch';
   const builder = isBranch ? agents.branchStepBuilder : agents.categoryStepBuilder;
-  const prompt = buildStepPrompt({ plan, step, documents, context, previousErrors });
+  const prompt = buildStepPrompt({ plan, step, documents, context, previousErrors, log });
   log.record('step-prompt', { index: step.index, stepType: step.type, label: step.label, prompt });
 
   const result = await builder.generate(prompt, {
@@ -76,8 +76,16 @@ function buildStepPrompt({
   documents,
   context,
   previousErrors,
-}: Pick<GenerateStepInput, 'plan' | 'step' | 'documents' | 'context' | 'previousErrors'>): string {
-  const source = stepSourceText(documents, step.sectionId);
+  log,
+}: Pick<GenerateStepInput, 'plan' | 'step' | 'documents' | 'context' | 'previousErrors' | 'log'>): string {
+  const { text: source, usedFallback } = stepSourceText(documents, step.sectionId);
+  if (usedFallback) {
+    log.record('step-source-fallback', {
+      index: step.index,
+      sectionId: step.sectionId,
+      documentCount: documents.length,
+    });
+  }
 
   return `Build increment ${step.index} of ${plan.steps.length} for this form.
 

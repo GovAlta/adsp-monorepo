@@ -48,6 +48,7 @@ import { ADSPGoACalendarExample } from './services/adsp-components/ADSPGoACalend
 import { AuditServiceMain } from './services/AuditServiceMain';
 import { AdspConversationExample } from './services/adsp-components/AdspConversationExample';
 import { AdspFileDownloadExample } from './services/adsp-components/AdspFileDownloadExample';
+import { AdspFileUploadExample } from './services/adsp-components/AdspFileUploadExample';
 
 export const SandBoxTenant = () => {
   const { tenant: tenantName } = useParams<{ tenant: string }>();
@@ -104,6 +105,7 @@ export const SandBoxTenant = () => {
                 />
                 <Route path="/services/adsp-components/conversation" element={<AdspConversationExample />} />
                 <Route path="/services/adsp-components/file-download" element={<AdspFileDownloadExample />} />
+                <Route path="/services/adsp-components/file-upload" element={<AdspFileUploadExample />} />
 
                 <Route path="/services/agent" element={<AgentServiceMain tenantName={tenantName} />} />
                 <Route path="/services/audit" element={<AuditServiceMain tenantName={tenantName} />} />

@@ -1,7 +1,6 @@
 ---
 layout: page
 title: Access service
-nav_order: 2
 parent: Services
 ---
 

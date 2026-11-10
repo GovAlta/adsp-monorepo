@@ -42,6 +42,24 @@ Add it to your MCP client's server config, run via `npx`:
 }
 ```
 
+### HTTP transport
+
+To host the server instead of running it per user, start it with `MCP_TRANSPORT=http`. It serves Streamable HTTP
+at `POST /mcp`, with a liveness check at `GET /health`.
+
+| Variable | Default | Purpose |
+|---|---|---|
+| `MCP_TRANSPORT` | `stdio` | `http` to serve HTTP |
+| `PORT` | `3000` | Port to listen on |
+| `CORS_ORIGIN` | `*` | Value of `Access-Control-Allow-Origin` |
+
+HTTP mode is stateless: each `POST /mcp` gets its own MCP server, the response is JSON (the server never streams),
+and nothing is kept between requests. The response carries no `Mcp-Session-Id`, so any replica can serve any request
+and an idle client never loses its session. `GET /mcp` and `DELETE /mcp` return `405` with `Allow: POST`, because
+there is no stream to open and no session to delete.
+
+`SESSION_TTL_MINUTES` has been removed and is ignored: there are no sessions to expire.
+
 ### Using `list_service_roles`
 
 That one tool needs a real ADSP environment and a logged-in session (via `@abgov/adsp-cli`, a separate package this
@@ -69,6 +87,11 @@ nx build adsp-sdk-mcp-server
 nx test adsp-sdk-mcp-server
 nx lint adsp-sdk-mcp-server
 ```
+
+`src/fixtures/tool-contract.golden.json` is maintained by hand. It pins only the docs tools' and the unknown tool's
+output over the fixture docs in `src/fixtures/docs`; the other tools are checked for equal output across transports
+instead, so SDK reference and quickstart edits don't touch it. If you change docs search or the docs tools' output on
+purpose, update the matching entry.
 
 To try it locally against a real MCP client, point the client config's `command`/`args` at the built entry point
 instead of `npx`:

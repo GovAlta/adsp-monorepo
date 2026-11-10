@@ -14,6 +14,8 @@ import { FileEntity, FileTypeEntity } from '../model';
 import { FileType } from '../types';
 import { deleteFile, deleteFiles, downloadFile, fileOperation, uploadFile } from './file';
 
+jest.mock('file-type', () => ({ fileTypeFromBuffer: jest.fn() }));
+
 describe('file router audit', () => {
   const serviceId = adspId`urn:ads:platform:file-service`;
   const apiId = adspId`${serviceId}:v1`;

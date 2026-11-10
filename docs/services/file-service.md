@@ -1,7 +1,6 @@
 ---
 layout: page
 title: File service
-nav_order: 8
 parent: Services
 ---
 
