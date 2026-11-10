@@ -1,4 +1,6 @@
 import type { BatchObservableCallback, MeterProvider } from '@opentelemetry/api';
+import { readFileSync } from 'fs';
+import { join } from 'path';
 import { monitorEventLoopDelay } from 'perf_hooks';
 
 export type RejectionReason = 'in_flight_cap' | 'rate_limit' | 'origin' | 'live_tool_cap';
@@ -122,6 +124,65 @@ export function installMetrics(meterProvider: MeterProvider): { uninstall(): voi
       current = NOOP_METRICS;
     },
   };
+}
+
+export interface StartedMetrics {
+  shutdown(): Promise<void>;
+}
+
+const DEFAULT_EXPORT_INTERVAL_MS = 60_000;
+const EXPORT_TIMEOUT_MS = 30_000;
+
+function readPackageVersion(): string {
+  try {
+    return JSON.parse(readFileSync(join(__dirname, '..', 'package.json'), 'utf8')).version ?? 'unknown';
+  } catch {
+    return 'unknown';
+  }
+}
+
+function readExportIntervalMs(env: NodeJS.ProcessEnv): number {
+  const interval = parseInt(env['OTEL_METRIC_EXPORT_INTERVAL'] ?? '', 10);
+  return interval > 0 ? interval : DEFAULT_EXPORT_INTERVAL_MS;
+}
+
+export async function startMetricsFromEnv(env: NodeJS.ProcessEnv = process.env): Promise<StartedMetrics | undefined> {
+  const endpoint = env['OTEL_EXPORTER_OTLP_ENDPOINT']?.trim().replace(/\/+$/, '');
+  if (!endpoint) {
+    return undefined;
+  }
+
+  try {
+    // Loaded only here so processes without an endpoint never load the OTel SDK.
+    const { MeterProvider, PeriodicExportingMetricReader } = await import('@opentelemetry/sdk-metrics');
+    const { OTLPMetricExporter } = await import('@opentelemetry/exporter-metrics-otlp-http');
+    const { defaultResource, resourceFromAttributes } = await import('@opentelemetry/resources');
+
+    const provider = new MeterProvider({
+      resource: defaultResource().merge(
+        resourceFromAttributes({ 'service.name': 'adsp-sdk-mcp-server', 'service.version': readPackageVersion() })
+      ),
+      readers: [
+        new PeriodicExportingMetricReader({
+          exporter: new OTLPMetricExporter({ url: `${endpoint}/v1/metrics` }),
+          exportIntervalMillis: readExportIntervalMs(env),
+          exportTimeoutMillis: EXPORT_TIMEOUT_MS,
+        }),
+      ],
+    });
+    const { uninstall } = installMetrics(provider);
+    console.error(`[adsp-sdk-mcp-server] metrics -> ${endpoint}`);
+
+    return {
+      async shutdown() {
+        uninstall();
+        await provider.shutdown();
+      },
+    };
+  } catch (err) {
+    console.error(`[adsp-sdk-mcp-server] Metrics disabled: ${err instanceof Error ? err.message : String(err)}`);
+    return undefined;
+  }
 }
 
 const KNOWN_MCP_METHODS = new Set([
