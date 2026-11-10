@@ -626,6 +626,28 @@ describe('subscription router documented behaviour', () => {
       expect(res.status).toBe(200);
       expect(res.body.subscriptions).toEqual([]);
     });
+
+    it('allows a user to update their own subscriber', async () => {
+      const res = await request(createApp(applicant))
+        .patch(`/subscription/v1/subscribers/${applicantSubscriberId}`)
+        .send({ addressAs: 'Changed' });
+      expect(res.status).toBe(200);
+      expect(res.body.addressAs).toBe('Changed');
+    });
+
+    it('allows a user to delete their own subscriber', async () => {
+      const res = await request(createApp(applicant)).delete(`/subscription/v1/subscribers/${applicantSubscriberId}`);
+      expect(res.status).toBe(200);
+      expect(res.body).toEqual({ deleted: true });
+    });
+
+    it('allows a user to get the subscriptions of their own subscriber', async () => {
+      const res = await request(createApp(applicant)).get(
+        `/subscription/v1/subscribers/${applicantSubscriberId}/subscriptions`,
+      );
+      expect(res.status).toBe(200);
+      expect(res.body.results).toEqual([]);
+    });
   });
 
   describe('POST /subscribers/:subscriber operations', () => {

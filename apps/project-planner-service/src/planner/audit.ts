@@ -23,7 +23,7 @@ const SPECIALIST_CHAT_RESOURCE_TYPE = 'specialist-chat';
 const MAX_JSON_FIELD_BYTES = 16 * 1024;
 
 export const SolutionCreatedAuditAction: AuditAction = {
-  name: 'planner.solution.created',
+  name: 'solution.created',
   version: 1,
   category: AuditCategories.Administrative,
   severity: AuditSeverities.Info,
@@ -32,7 +32,7 @@ export const SolutionCreatedAuditAction: AuditAction = {
 };
 
 export const SolutionDeletedAuditAction: AuditAction = {
-  name: 'planner.solution.deleted',
+  name: 'solution.deleted',
   version: 1,
   category: AuditCategories.Administrative,
   severity: AuditSeverities.Warning,
@@ -41,7 +41,7 @@ export const SolutionDeletedAuditAction: AuditAction = {
 };
 
 export const SolutionExportedAuditAction: AuditAction = {
-  name: 'planner.solution.exported',
+  name: 'solution.exported',
   version: 1,
   category: AuditCategories.DataAccess,
   severity: AuditSeverities.Info,
@@ -50,7 +50,7 @@ export const SolutionExportedAuditAction: AuditAction = {
 };
 
 export const SolutionAdminAccessedAuditAction: AuditAction = {
-  name: 'planner.solution.admin-accessed',
+  name: 'solution.admin-accessed',
   version: 1,
   category: AuditCategories.DataAccess,
   severity: AuditSeverities.Info,
@@ -59,7 +59,7 @@ export const SolutionAdminAccessedAuditAction: AuditAction = {
 };
 
 export const SolutionAnalyzedAuditAction: AuditAction = {
-  name: 'planner.solution.analyzed',
+  name: 'solution.analyzed',
   version: 1,
   category: AuditCategories.Runtime,
   severity: AuditSeverities.Info,
@@ -68,7 +68,7 @@ export const SolutionAnalyzedAuditAction: AuditAction = {
 };
 
 export const PatternCreatedAuditAction: AuditAction = {
-  name: 'planner.pattern.created',
+  name: 'pattern.created',
   version: 1,
   category: AuditCategories.Administrative,
   severity: AuditSeverities.Info,
@@ -77,7 +77,7 @@ export const PatternCreatedAuditAction: AuditAction = {
 };
 
 export const PatternUpdatedAuditAction: AuditAction = {
-  name: 'planner.pattern.updated',
+  name: 'pattern.updated',
   version: 1,
   category: AuditCategories.Administrative,
   severity: AuditSeverities.Info,
@@ -87,7 +87,7 @@ export const PatternUpdatedAuditAction: AuditAction = {
 };
 
 export const PatternDeletedAuditAction: AuditAction = {
-  name: 'planner.pattern.deleted',
+  name: 'pattern.deleted',
   version: 1,
   category: AuditCategories.Administrative,
   severity: AuditSeverities.Warning,
@@ -97,7 +97,7 @@ export const PatternDeletedAuditAction: AuditAction = {
 
 // Exporting all chats has no single chat resource, so this action does not fix the resource type.
 export const SpecialistChatExportedAuditAction: AuditAction = {
-  name: 'planner.specialist-chat.exported',
+  name: 'specialist-chat.exported',
   version: 1,
   category: AuditCategories.DataAccess,
   severity: AuditSeverities.Info,
@@ -105,7 +105,7 @@ export const SpecialistChatExportedAuditAction: AuditAction = {
 };
 
 export const SpecialistChatDeletedAuditAction: AuditAction = {
-  name: 'planner.specialist-chat.deleted',
+  name: 'specialist-chat.deleted',
   version: 1,
   category: AuditCategories.Administrative,
   severity: AuditSeverities.Info,
@@ -225,7 +225,7 @@ export function createAuditRecorder(auditService: AuditService, logger: Logger):
 }
 
 /**
- * Records planner.solution.admin-accessed when a planner admin successfully acts on a solution owned by another
+ * Records solution.admin-accessed when a planner admin successfully acts on a solution owned by another
  * user. Use after the middleware that loads the solution; the record is sent once the response succeeds.
  */
 export const auditAdminAccess =

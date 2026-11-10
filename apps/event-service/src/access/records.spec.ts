@@ -78,26 +78,26 @@ describe('toAccessAuditRecord', () => {
 
   describe('admin events', () => {
     it.each([
-      ['CREATE-USER', `users/${userId}`, userRepresentation, 'access.user.created'],
-      ['UPDATE-USER', `users/${userId}`, userRepresentation, 'access.user.updated'],
-      ['DELETE-USER', `users/${userId}`, null, 'access.user.deleted'],
+      ['CREATE-USER', `users/${userId}`, userRepresentation, 'user.created'],
+      ['UPDATE-USER', `users/${userId}`, userRepresentation, 'user.updated'],
+      ['DELETE-USER', `users/${userId}`, null, 'user.deleted'],
       [
         'CREATE-CLIENT_ROLE_MAPPING',
         `users/${userId}/role-mappings/clients/${clientUuid}`,
         roleRepresentation,
-        'access.user.role-assigned',
+        'user.role-assigned',
       ],
       [
         'DELETE-CLIENT_ROLE_MAPPING',
         `users/${userId}/role-mappings/clients/${clientUuid}`,
         roleRepresentation,
-        'access.user.role-removed',
+        'user.role-removed',
       ],
-      ['CREATE-CLIENT', `clients/${clientUuid}`, clientRepresentation, 'access.service-account.created'],
-      ['DELETE-CLIENT', `clients/${clientUuid}`, null, 'access.service-account.deleted'],
-      ['ACTION-CLIENT', `clients/${clientUuid}/client-secret`, null, 'access.service-account.credential-rotated'],
-      ['UPDATE-REALM', null, '{"realm":"test-tenant-realm"}', 'access.realm.configuration-changed'],
-      ['UPDATE-REALM', 'events/config', '{"eventsEnabled":true}', 'access.realm.configuration-changed'],
+      ['CREATE-CLIENT', `clients/${clientUuid}`, clientRepresentation, 'service-account.created'],
+      ['DELETE-CLIENT', `clients/${clientUuid}`, null, 'service-account.deleted'],
+      ['ACTION-CLIENT', `clients/${clientUuid}/client-secret`, null, 'service-account.credential-rotated'],
+      ['UPDATE-REALM', null, '{"realm":"test-tenant-realm"}', 'realm.configuration-changed'],
+      ['UPDATE-REALM', 'events/config', '{"eventsEnabled":true}', 'realm.configuration-changed'],
     ])('records %s on %s as %s', (name, resourcePath, representation, action) => {
       const event = adminEvent(name, { resourcePath, representation });
 
@@ -320,7 +320,7 @@ describe('toAccessAuditRecord', () => {
 
       const record = toAccessAuditRecord(event);
 
-      expect(record).toMatchObject({ action: { name: 'access.user.login-failed' }, details: { status: 'failure' } });
+      expect(record).toMatchObject({ action: { name: 'user.login-failed' }, details: { status: 'failure' } });
     });
 
     it('identifies the record by the Keycloak event ID', () => {

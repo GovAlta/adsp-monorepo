@@ -1,4 +1,4 @@
-import { AdspId, ServiceDirectory, TokenProvider, User } from '@abgov/adsp-service-sdk';
+import { AdspId, AuditService, ServiceDirectory, TokenProvider, User } from '@abgov/adsp-service-sdk';
 import {
   assertAuthenticatedHandler,
   InvalidValueError,
@@ -16,11 +16,21 @@ import { applicationStatusToStarted, applicationStatusToStopped, applicationStat
 import { ApplicationRepo } from './ApplicationRepo';
 import { WebhookRepo } from './WebhookRepo';
 import { monitoredServiceDown, monitoredServiceUp } from '../events';
+import {
+  ApplicationCreatedAuditAction,
+  ApplicationDeletedAuditAction,
+  ApplicationStatusChangedAuditAction,
+  ApplicationUpdatedAuditAction,
+  auditStatus,
+  HealthCheckConfiguredAuditAction,
+  toApplicationAuditDetails,
+} from '../audit';
 
 export interface ServiceStatusRouterProps {
   logger: Logger;
   tenantService: TenantService;
   eventService: EventService;
+  auditService: AuditService;
   serviceStatusRepository: ServiceStatusRepository;
   endpointStatusEntryRepository: EndpointStatusEntryRepository;
   tokenProvider: TokenProvider;
@@ -66,7 +76,7 @@ export const getApplications = (logger: Logger, applicationRepo: ApplicationRepo
 };
 
 export const enableApplication =
-  (logger: Logger, applicationRepo: ApplicationRepo): RequestHandler =>
+  (logger: Logger, applicationRepo: ApplicationRepo, auditService: AuditService): RequestHandler =>
   async (req, res, next) => {
     try {
       logger.info(req.method, req.url);
@@ -79,6 +89,13 @@ export const enableApplication =
 
       const appStatus = await applicationRepo.getStatus(user, appKey);
       const updatedApplication = await appStatus.enable({ ...req.user } as User);
+      auditStatus(
+        auditService,
+        logger,
+        HealthCheckConfiguredAuditAction,
+        user,
+        toApplicationAuditDetails(appKey, app.name, { url: app.url, monitoringEnabled: true }),
+      );
       res.json(applicationRepo.mergeApplicationData(user.tenantId.toString(), app, updatedApplication));
     } catch (err) {
       logger.error(`Failed to enable application: ${err.message}`);
@@ -87,7 +104,7 @@ export const enableApplication =
   };
 
 export const disableApplication =
-  (logger: Logger, applicationRepo: ApplicationRepo): RequestHandler =>
+  (logger: Logger, applicationRepo: ApplicationRepo, auditService: AuditService): RequestHandler =>
   async (req, res, next) => {
     try {
       logger.info(req.method, req.url);
@@ -101,6 +118,13 @@ export const disableApplication =
 
       const appStatus = await applicationRepo.getStatus(user, appKey);
       const updatedApplication = await appStatus.disable({ ...req.user } as User);
+      auditStatus(
+        auditService,
+        logger,
+        HealthCheckConfiguredAuditAction,
+        user,
+        toApplicationAuditDetails(appKey, app.name, { url: app.url, monitoringEnabled: false }),
+      );
       res.json(applicationRepo.mergeApplicationData(user.tenantId.toString(), app, updatedApplication));
     } catch (err) {
       logger.error(`Failed to disable application: ${err.message}`);
@@ -109,7 +133,12 @@ export const disableApplication =
   };
 
 export const createNewApplication =
-  (logger: Logger, applicationRepo: ApplicationRepo, tenantService: TenantService): RequestHandler =>
+  (
+    logger: Logger,
+    applicationRepo: ApplicationRepo,
+    tenantService: TenantService,
+    auditService: AuditService,
+  ): RequestHandler =>
   async (req, res, next) => {
     const user = req.user as User;
     const tenant = await tenantService.getTenant(user.tenantId);
@@ -134,6 +163,13 @@ export const createNewApplication =
         tenant,
         user,
       );
+      auditStatus(
+        auditService,
+        logger,
+        ApplicationCreatedAuditAction,
+        user,
+        toApplicationAuditDetails(newAppKey, name, { url: endpoint.url, monitorOnly: !!monitorOnly, status }),
+      );
       res.status(201).json(newApp);
     } catch (err) {
       logger.error(`Failed to create new application: ${err.message}`);
@@ -142,7 +178,7 @@ export const createNewApplication =
   };
 
 export const updateApplication =
-  (logger: Logger, applicationRepo: ApplicationRepo): RequestHandler =>
+  (logger: Logger, applicationRepo: ApplicationRepo, auditService: AuditService): RequestHandler =>
   async (req, res, next) => {
     try {
       logger.info(`${req.method} - ${req.url}`);
@@ -170,6 +206,29 @@ export const updateApplication =
       };
       await applicationRepo.updateApp(update, tenantId);
 
+      const urlChanged = app.url !== update.url;
+      const changedFields: string[] = (['name', 'description', 'monitorOnly', 'autoChangeStatus'] as const).filter(
+        (field) => app[field] !== update[field],
+      );
+      if (urlChanged) {
+        changedFields.push('url');
+      }
+      auditStatus(
+        auditService,
+        logger,
+        ApplicationUpdatedAuditAction,
+        user,
+        toApplicationAuditDetails(appKey, name, { changedFields }),
+      );
+      if (urlChanged) {
+        auditStatus(
+          auditService,
+          logger,
+          HealthCheckConfiguredAuditAction,
+          user,
+          toApplicationAuditDetails(appKey, name, { previousUrl: app.url, url: update.url }),
+        );
+      }
       const status = await applicationRepo.findStatus(appKey);
 
       res.json(applicationRepo.mergeApplicationData(tenantId, update, status));
@@ -180,7 +239,12 @@ export const updateApplication =
   };
 
 export const deleteApplication =
-  (logger: Logger, applicationRepo: ApplicationRepo, eventService: EventService): RequestHandler =>
+  (
+    logger: Logger,
+    applicationRepo: ApplicationRepo,
+    eventService: EventService,
+    auditService: AuditService,
+  ): RequestHandler =>
   async (req, res, next) => {
     try {
       const user = req.user as User;
@@ -204,7 +268,14 @@ export const deleteApplication =
         eventService.send(applicationStatusToStopped(app, user));
       }
 
-      applicationRepo.deleteApp(appKey, user);
+      await applicationRepo.deleteApp(appKey, user);
+      auditStatus(
+        auditService,
+        logger,
+        ApplicationDeletedAuditAction,
+        user,
+        toApplicationAuditDetails(appKey, app.name, { url: app.url }),
+      );
       res.sendStatus(204);
     } catch (err) {
       logger.error(`Failed to delete application: ${err.message}`);
@@ -213,7 +284,12 @@ export const deleteApplication =
   };
 
 export const updateApplicationStatus =
-  (logger: Logger, applicationRepo: ApplicationRepo, eventService: EventService): RequestHandler =>
+  (
+    logger: Logger,
+    applicationRepo: ApplicationRepo,
+    eventService: EventService,
+    auditService: AuditService,
+  ): RequestHandler =>
   async (req, res, next) => {
     try {
       logger.info(`${req.method} - ${req.url}`);
@@ -234,6 +310,18 @@ export const updateApplicationStatus =
 
       const updatedStatus = await appStatus.setStatus(user, status as PublicServiceStatusType);
       eventService.send(applicationStatusChange(app, status, originalStatus, user));
+      auditStatus(
+        auditService,
+        logger,
+        ApplicationStatusChangedAuditAction,
+        user,
+        toApplicationAuditDetails(
+          appKey,
+          app.name,
+          { previousStatus: originalStatus, newStatus: status },
+          { before: { status: originalStatus }, after: { status } },
+        ),
+      );
       res.json(applicationRepo.mergeApplicationData(user.tenantId.toString(), app, updatedStatus));
     } catch (err) {
       logger.error(`Failed to update application: ${err.message}`);
@@ -242,7 +330,12 @@ export const updateApplicationStatus =
   };
 
 export const toggleApplication =
-  (logger: Logger, applicationRepo: ApplicationRepo, eventService: EventService): RequestHandler =>
+  (
+    logger: Logger,
+    applicationRepo: ApplicationRepo,
+    eventService: EventService,
+    auditService: AuditService,
+  ): RequestHandler =>
   async (req, res, next) => {
     try {
       const user = req.user as User;
@@ -260,7 +353,15 @@ export const toggleApplication =
         eventService.send(applicationStatusToStopped(app, user));
       }
 
-      const updatedApplication = await (appStatus.enabled === true ? appStatus.disable(user) : appStatus.enable(user));
+      const enabling = !appStatus.enabled;
+      const updatedApplication = await (enabling ? appStatus.enable(user) : appStatus.disable(user));
+      auditStatus(
+        auditService,
+        logger,
+        HealthCheckConfiguredAuditAction,
+        user,
+        toApplicationAuditDetails(appKey, app.name, { url: app.url, monitoringEnabled: enabling }),
+      );
       res.json(applicationRepo.mergeApplicationData(user.tenantId.toString(), app, updatedApplication));
     } catch (err) {
       logger.error(`Failed to toggle application: ${err.message}`);
@@ -372,6 +473,7 @@ export function createServiceStatusRouter({
   serviceStatusRepository,
   tenantService,
   eventService,
+  auditService,
   endpointStatusEntryRepository,
   tokenProvider,
   directory,
@@ -394,36 +496,44 @@ export function createServiceStatusRouter({
   router.get('/applications', assertAuthenticatedHandler, getApplications(logger, applicationRepo));
 
   // Enable the service
-  router.patch('/applications/:appKey/enable', assertAuthenticatedHandler, enableApplication(logger, applicationRepo));
+  router.patch(
+    '/applications/:appKey/enable',
+    assertAuthenticatedHandler,
+    enableApplication(logger, applicationRepo, auditService),
+  );
 
   // Disable the service
   router.patch(
     '/applications/:appKey/disable',
     assertAuthenticatedHandler,
-    disableApplication(logger, applicationRepo),
+    disableApplication(logger, applicationRepo, auditService),
   );
   // add application
   router.post(
     '/applications',
     assertAuthenticatedHandler,
-    createNewApplication(logger, applicationRepo, tenantService),
+    createNewApplication(logger, applicationRepo, tenantService, auditService),
   );
-  router.put('/applications/:appKey', assertAuthenticatedHandler, updateApplication(logger, applicationRepo));
+  router.put(
+    '/applications/:appKey',
+    assertAuthenticatedHandler,
+    updateApplication(logger, applicationRepo, auditService),
+  );
   router.delete(
     '/applications/:appKey',
     assertAuthenticatedHandler,
-    deleteApplication(logger, applicationRepo, eventService),
+    deleteApplication(logger, applicationRepo, eventService, auditService),
   );
   router.patch(
     '/applications/:appKey/status',
     assertAuthenticatedHandler,
-    updateApplicationStatus(logger, applicationRepo, eventService),
+    updateApplicationStatus(logger, applicationRepo, eventService, auditService),
   );
 
   router.patch(
     '/applications/:appKey/toggle',
     assertAuthenticatedHandler,
-    toggleApplication(logger, applicationRepo, eventService),
+    toggleApplication(logger, applicationRepo, eventService, auditService),
   );
 
   router.get(

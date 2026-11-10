@@ -1,4 +1,44 @@
 components:
+  parameters:
+    FormTenantId:
+      name: tenantId
+      description: >
+        ID of the tenant to act on. Required for core (platform) users. Tenant users always act on the tenant of their
+        token, and this parameter is ignored for them.
+      in: query
+      required: false
+      schema:
+        type: string
+      example: urn:ads:platform:tenant-service:v2:/tenants/61f2e3a8c9b1d2e3f4a5b6c7
+    FormDefinitionIdPath:
+      name: definitionId
+      description: ID of the form definition.
+      in: path
+      required: true
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 50
+        pattern: '^[a-zA-Z0-9-]+$'
+      example: business-licence-application
+    FormIdPath:
+      name: formId
+      description: ID of the form.
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      example: 5f1e2d3c-4b5a-4f6e-8d7c-9b0a1c2d3e4f
+    FormSubmissionIdPath:
+      name: submissionId
+      description: ID of the form submission.
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      example: 6a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d
   responses:
     FormBadRequest:
       description: Request is invalid, for example a path, query, or body parameter failed validation.
@@ -19,19 +59,47 @@ components:
           example:
             errorMessage: 'User Test User (ID: 1234) not permitted to find submissions.'
     FormNotFound:
-      description: Form definition, form, or submission not found.
+      description: >
+        Form definition, form, or submission not found. Forms and submissions of another tenant also respond 404.
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/FormError'
           example:
             errorMessage: Form submission with ID '5f1e2d3c-4b5a-4f6e-8d7c-9b0a1c2d3e4f' could not be found.
+    FormDefinitionNotFound:
+      description: Form definition not found.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/FormError'
+          example:
+            errorMessage: form definition with ID 'business-licence-application' could not be found.
   schemas:
     FormError:
       type: object
       properties:
         errorMessage:
           type: string
+    FormResultsPageInfo:
+      type: object
+      properties:
+        after:
+          type: string
+          description: Cursor of this page.
+        next:
+          type: string
+          description: Cursor of the next page. Not set on the last page.
+        size:
+          type: number
+          description: Number of results in this page.
+        total:
+          type: number
+          description: Total number of available results before filters are applied.
+      example:
+        next: MTA=
+        size: 1
+        total: 24
     FormDefinition:
       type: object
       required:
@@ -43,12 +111,18 @@ components:
         id:
           type: string
           readOnly: true
-          description: Unique identifier for the form definition. Always auto-generated from the name in kebab-case format. Cannot be set by the client.
+          description: >
+            Unique identifier for the form definition. Generated from the name in kebab-case when the definition is
+            created, and taken from the path on update.
+        revision:
+          type: number
+          readOnly: true
+          description: Revision of the definition in the configuration service.
         created:
           type: string
           format: date-time
           readOnly: true
-          description: Date the form definition (latest revision) was created.
+          description: Date the form definition (latest revision) was created. Only returned when listing definitions.
         name:
           type: string
         description:
@@ -71,6 +145,7 @@ components:
             type: string
         clerkRoles:
           type: array
+          description: Roles allowed to fill in and submit forms on behalf of applicants.
           items:
             type: string
         formDraftUrlTemplate:
@@ -78,7 +153,9 @@ components:
           minLength: 6
           maxLength: 500
           pattern: '^https?://.+$'
-          description: Optional URL template for linking applicants back to their draft. Use '{{id}}' as a placeholder for the form ID (e.g. https://example.com/form/{{id}}). Must be between 6 and 500 characters.
+          description: >
+            Optional URL template for linking applicants back to their draft. Use '{{ id }}' as a placeholder for the
+            form ID (e.g. https://example.com/form/{{ id }}). Must be between 6 and 500 characters.
         dataSchema:
           type: object
         uiSchema:
@@ -94,21 +171,33 @@ components:
                 type: string
               description:
                 type: string
+        generatesPdf:
+          type: boolean
+          readOnly: true
+          description: Whether a PDF is generated for submissions. Anonymous application definitions never generate one.
         submissionRecords:
           type: boolean
         submissionPdfTemplate:
           type: string
+          writeOnly: true
+          description: PDF service template used for the submission PDF. Not returned by the form APIs.
         scheduledIntakes:
           type: boolean
           description: Allow this form definition to accept schedule intakes
         supportTopic:
           type: boolean
+        registeredId:
+          type: string
+          readOnly: true
         securityClassification:
           type: string
           enum: [public, 'protected a', 'protected b', 'protected c']
-          description: The security classification for the form definition
+          writeOnly: true
+          description: The security classification for the form definition. Not returned by the form definition APIs.
         queueTaskToProcess:
           type: object
+          writeOnly: true
+          description: Task queue that a task is created in for each submission. Not returned by the form APIs.
           properties:
             queueNameSpace:
               type: string
@@ -116,6 +205,8 @@ components:
               type: string
         customSubmissionEvent:
           type: object
+          writeOnly: true
+          description: Additional event sent when a form is submitted. Not returned by the form APIs.
           properties:
             namespace:
               type: string
@@ -123,6 +214,8 @@ components:
               type: string
         includeDataInSubmission:
           type: boolean
+          writeOnly: true
+          description: Whether submitted data is included in the form-submitted event. Not returned by the form APIs.
         reviewConfiguration:
           type: object
           description: Ordered form data fields shown as columns in the Form Admin submission and form lists.
@@ -149,6 +242,8 @@ components:
           type: boolean
         intake:
           type: object
+          readOnly: true
+          nullable: true
           properties:
             urn:
               type: string
@@ -173,6 +268,40 @@ components:
             isUpcoming:
               type: boolean
               description: Is the form schedule intake upcoming
+      example:
+        id: business-licence-application
+        revision: 3
+        name: Business licence application
+        description: Application for a municipal business licence.
+        anonymousApply: false
+        oneFormPerApplicant: true
+        applicantRoles: [business-licence-applicant]
+        assessorRoles: [business-licence-assessor]
+        clerkRoles: []
+        formDraftUrlTemplate: https://form.alberta.ca/business-licence-application/{{ id }}
+        dataSchema:
+          type: object
+          properties:
+            businessName:
+              type: string
+          required: [businessName]
+        uiSchema:
+          type: VerticalLayout
+          elements:
+            - type: Control
+              scope: '#/properties/businessName'
+        dispositionStates:
+          - id: approved
+            name: Approved
+            description: Licence is approved.
+        generatesPdf: true
+        submissionRecords: true
+        scheduledIntakes: false
+        supportTopic: false
+        reviewConfiguration:
+          columns:
+            - path: businessName
+        intake: null
     FormDefinitionCreate:
       type: object
       description: Payload for creating a new form definition. Only name and description are accepted; all other fields are set to defaults.
@@ -185,6 +314,9 @@ components:
         description:
           type: string
       additionalProperties: false
+      example:
+        name: Business licence application
+        description: Application for a municipal business licence.
     FormDefinitionPatch:
       type: object
       description: Partial update payload for a form definition. Only provided fields will be updated; omitted fields will not be changed.
@@ -199,6 +331,32 @@ components:
         uiSchema:
           type: object
       additionalProperties: false
+      example:
+        description: Application for a municipal business licence, including home-based businesses.
+    FormDefinitionPage:
+      type: object
+      properties:
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/FormDefinition'
+        page:
+          $ref: '#/components/schemas/FormResultsPageInfo'
+      example:
+        results:
+          - id: business-licence-application
+            revision: 3
+            name: Business licence application
+            description: Application for a municipal business licence.
+            anonymousApply: false
+            applicantRoles: [business-licence-applicant]
+            assessorRoles: [business-licence-assessor]
+            clerkRoles: []
+            created: '2026-09-14T16:20:00.000Z'
+        page:
+          next: MTA=
+          size: 1
+          total: 24
     Form:
       type: object
       properties:
@@ -208,6 +366,8 @@ components:
           type: string
         jobId:
           type: string
+          nullable: true
+          description: ID of the PDF generation job, when submitting the form generates a PDF.
         definition:
           type: object
           properties:
@@ -219,6 +379,7 @@ components:
               type: string
         applicant:
           type: object
+          nullable: true
           properties:
             addressAs:
               type: string
@@ -259,9 +420,11 @@ components:
         locked:
           type: string
           format: date-time
+          nullable: true
         submitted:
           type: string
           format: date-time
+          nullable: true
         submission:
           type: object
           description: submission for the form if form is submitted.
@@ -270,16 +433,72 @@ components:
               type: string
             urn:
               type: string
+      example:
+        urn: urn:ads:platform:form-service:v1:/forms/5f1e2d3c-4b5a-4f6e-8d7c-9b0a1c2d3e4f
+        id: 5f1e2d3c-4b5a-4f6e-8d7c-9b0a1c2d3e4f
+        jobId: null
+        securityClassification: protected b
+        definition:
+          id: business-licence-application
+          name: Business licence application
+          description: Application for a municipal business licence.
+        formDraftUrl: https://form.alberta.ca/business-licence-application/5f1e2d3c-4b5a-4f6e-8d7c-9b0a1c2d3e4f
+        status: draft
+        created: '2026-10-02T15:04:05.000Z'
+        createdBy:
+          id: 0f9e8d7c-6b5a-4f3e-9d2c-1b0a9f8e7d6c
+          name: Test User
+        locked: null
+        submitted: null
+        lastAccessed: '2026-10-02T15:04:05.000Z'
+        applicant:
+          addressAs: Test User
+    FormPage:
+      type: object
+      properties:
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Form'
+        page:
+          $ref: '#/components/schemas/FormResultsPageInfo'
+      example:
+        results:
+          - urn: urn:ads:platform:form-service:v1:/forms/5f1e2d3c-4b5a-4f6e-8d7c-9b0a1c2d3e4f
+            id: 5f1e2d3c-4b5a-4f6e-8d7c-9b0a1c2d3e4f
+            definition:
+              id: business-licence-application
+              name: Business licence application
+            status: submitted
+            created: '2026-10-02T15:04:05.000Z'
+            createdBy:
+              id: 0f9e8d7c-6b5a-4f3e-9d2c-1b0a9f8e7d6c
+              name: Test User
+            submitted: '2026-10-03T09:30:00.000Z'
+        page:
+          next: MTA=
+          size: 1
+          total: 312
     FormData:
       type: object
       properties:
+        id:
+          type: string
+          description: ID of the form.
         data:
           type: object
         files:
           type: object
+          description: File-service URNs of the files referenced in the data, keyed by their path in the data.
           additionalProperties:
             type: string
-            format: uri
+      example:
+        id: 5f1e2d3c-4b5a-4f6e-8d7c-9b0a1c2d3e4f
+        data:
+          businessName: Example Bakery Ltd.
+          proofOfRegistration: urn:ads:platform:file-service:v1:/files/3c2b1a0f-9e8d-4c7b-a6f5-e4d3c2b1a0f9
+        files:
+          proofOfRegistration: urn:ads:platform:file-service:v1:/files/3c2b1a0f-9e8d-4c7b-a6f5-e4d3c2b1a0f9
     FormSubmissionCriteria:
       type: object
       properties:
@@ -365,6 +584,65 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/FormSubmissionNote'
+      example:
+        urn: urn:ads:platform:form-service:v1:/submissions/6a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d
+        id: 6a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d
+        formId: 5f1e2d3c-4b5a-4f6e-8d7c-9b0a1c2d3e4f
+        formDefinitionId: business-licence-application
+        formDefinitionRevision: 3
+        formData:
+          businessName: Example Bakery Ltd.
+        formFiles: {}
+        securityClassification: protected b
+        hash: 2fd4e1c67a2d28fced849ee1bb76e7391b93eb12
+        created: '2026-10-03T09:30:00.000Z'
+        createdBy:
+          id: 0f9e8d7c-6b5a-4f3e-9d2c-1b0a9f8e7d6c
+          name: Test User
+        updated: '2026-10-06T14:00:00.000Z'
+        updatedBy:
+          id: 1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d
+          name: Test Assessor
+        disposition:
+          id: 9d8c7b6a-5f4e-4d3c-8b2a-1f0e9d8c7b6a
+          status: Approved
+          reason: Application meets all eligibility criteria.
+          date: '2026-10-06T14:00:00.000Z'
+        notes:
+          - id: 7b3c4d5e-6f7a-4b8c-9d0e-1f2a3b4c5d6e
+            content: Called applicant to confirm their mailing address.
+            created: '2026-10-05T10:15:00.000Z'
+            createdBy:
+              id: 1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d
+              name: Test Assessor
+    FormSubmissionPage:
+      type: object
+      properties:
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/FormSubmission'
+        page:
+          $ref: '#/components/schemas/FormResultsPageInfo'
+      example:
+        results:
+          - urn: urn:ads:platform:form-service:v1:/submissions/6a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d
+            id: 6a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d
+            formId: 5f1e2d3c-4b5a-4f6e-8d7c-9b0a1c2d3e4f
+            formDefinitionId: business-licence-application
+            formDefinitionRevision: 3
+            formData:
+              businessName: Example Bakery Ltd.
+            created: '2026-10-03T09:30:00.000Z'
+            createdBy:
+              id: 0f9e8d7c-6b5a-4f3e-9d2c-1b0a9f8e7d6c
+              name: Test User
+            disposition: null
+            notes: []
+        page:
+          next: MTAw
+          size: 1
+          total: 87
     FormSubmissionNote:
       type: object
       properties:
@@ -382,6 +660,13 @@ components:
               type: string
             name:
               type: string
+    FormDeleteResult:
+      type: object
+      properties:
+        deleted:
+          type: boolean
+      example:
+        deleted: true
     SendCodeOperation:
       type: object
       properties:
@@ -400,6 +685,9 @@ components:
         operation:
           type: string
           enum: [submit]
+        dryRun:
+          type: boolean
+          description: Validate and simulate the submission without saving it.
     ArchiveFormOperation:
       type: object
       properties:
@@ -423,7 +711,6 @@ components:
       properties:
         name:
           type: string
-          minLength: 1
         description:
           type: string
         start:
@@ -445,14 +732,19 @@ components:
   get:
     tags:
       - Form
-    description: Retrieves form definitions with optional name search. Requires the form-service admin role.
+    description: >
+      Retrieves the form definitions of the tenant, with optional name search. Requires the form-service admin role
+      (`urn:ads:platform:form-service:form-admin`) in the tenant; core users are not accepted, and anonymous requests
+      respond 403.
     parameters:
       - name: top
-        description: Number of definitions to return in a page.
+        description: Number of definitions to return in a page. Passed to the configuration service, which accepts 1 to 1000.
         in: query
         required: false
         schema:
-          type: number
+          type: integer
+          minimum: 1
+          maximum: 1000
       - name: after
         description: Cursor for retrieving additional pages.
         in: query
@@ -485,49 +777,31 @@ components:
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                results:
-                  type: array
-                  items:
-                    $ref: '#/components/schemas/FormDefinition'
-                page:
-                  type: object
-                  properties:
-                    after:
-                      type: string
-                    next:
-                      type: string
-                    size:
-                      type: number
-                    total:
-                      type: number
-                      description: Total number of available form definitions before filters are applied.
+              $ref: '#/components/schemas/FormDefinitionPage'
       400:
         $ref: '#/components/responses/FormBadRequest'
-      401:
-        $ref: '#/components/responses/FormUnauthorized'
       403:
         $ref: '#/components/responses/FormForbidden'
   post:
     tags:
       - Form
     description: |
-      Creates a new form definition. Requires the form-service admin role.
+      Creates a new form definition in the tenant. Requires the form-service admin role
+      (`urn:ads:platform:form-service:form-admin`). Core users with the role must set `tenantId`.
 
       Only `name` and `description` are accepted in the request body. All other fields are set automatically:
       - `id`: auto-generated from `name` in kebab-case
       - `anonymousApply`: `false`
-      - `applicantRoles`: `[]`
-      - `assessorRoles`: `[]`
+      - `applicantRoles`, `assessorRoles`, and `clerkRoles`: `[]`
+      - `securityClassification`: `protected b`
+    parameters:
+      - $ref: '#/components/parameters/FormTenantId'
     requestBody:
       required: true
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/FormDefinitionCreate'
-          example:
-            name: My Application Form
     responses:
       201:
         description: Successfully created the form definition.
@@ -536,34 +810,46 @@ components:
             schema:
               $ref: '#/components/schemas/FormDefinition'
       400:
-        description: Validation failed or ID could not be generated from the provided name.
+        description: >
+          Validation failed, the ID could not be generated from the provided name, or the configuration service rejected
+          the definition.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FormError'
+            example:
+              errorMessage: Form definition ID could not be generated from the provided name.
       401:
-        description: User is not authorized to create form definitions.
+        $ref: '#/components/responses/FormUnauthorized'
+      403:
+        $ref: '#/components/responses/FormForbidden'
       409:
         description: Form definition with the generated ID already exists.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FormError'
+            example:
+              errorMessage: Form definition with ID 'business-licence-application' already exists.
 
 /form/v1/definitions/{definitionId}:
   get:
     tags:
       - Form
     description: >
-      Retrieves a form definition. Requires the form-service admin or intake-application role, or one of the
-      definition's applicant or clerk roles.
+      Retrieves a form definition, with its current scheduled intake if it uses scheduled intakes. Requires the
+      form-service admin or intake-application role, or one of the definition's applicant or clerk roles, in the
+      tenant of the definition.
 
 
-      If the definition allows anonymous applications, the request does not need a bearer token. Anonymous
-      requests have no token to determine the tenant from, so they must include the tenantId query parameter.
+      If the definition allows anonymous applications, any user can read it and the request does not need a bearer
+      token. Anonymous requests have no token to determine the tenant from, so they must include the tenantId query
+      parameter.
     security:
       - {}
       - accessToken: []
     parameters:
-      - name: definitionId
-        description: ID of the form definition.
-        required: true
-        in: path
-        schema:
-          type: string
-          maxLength: 50
+      - $ref: '#/components/parameters/FormDefinitionIdPath'
       - name: version
         description: Revision of the form definition to retrieve. Defaults to the active revision.
         in: query
@@ -571,7 +857,9 @@ components:
         schema:
           type: number
       - name: tenantId
-        description: ID of the tenant of the definition. Required for anonymous requests.
+        description: >
+          ID of the tenant of the definition. Required for anonymous requests and core users; ignored for tenant
+          users.
         in: query
         required: false
         schema:
@@ -595,18 +883,17 @@ components:
       403:
         $ref: '#/components/responses/FormForbidden'
       404:
-        $ref: '#/components/responses/FormNotFound'
+        $ref: '#/components/responses/FormDefinitionNotFound'
   patch:
     tags:
       - Form
-    description: Partially updates an existing form definition. Requires the form-service admin role. Only the provided fields are changed; omitted fields are left unchanged.
+    description: >
+      Partially updates an existing form definition. Requires the form-service admin role
+      (`urn:ads:platform:form-service:form-admin`); core users with the role must set `tenantId`. Only the provided
+      fields are changed; omitted fields are left unchanged.
     parameters:
-      - name: definitionId
-        description: ID of the form definition to patch.
-        required: true
-        in: path
-        schema:
-          type: string
+      - $ref: '#/components/parameters/FormDefinitionIdPath'
+      - $ref: '#/components/parameters/FormTenantId'
     requestBody:
       required: true
       content:
@@ -620,27 +907,46 @@ components:
           application/json:
             schema:
               $ref: '#/components/schemas/FormDefinition'
+      400:
+        $ref: '#/components/responses/FormBadRequest'
       401:
-        description: User is not authorized to patch form definitions.
+        $ref: '#/components/responses/FormUnauthorized'
+      403:
+        $ref: '#/components/responses/FormForbidden'
       404:
-        description: Form definition not found.
+        $ref: '#/components/responses/FormDefinitionNotFound'
   put:
     tags:
       - Form
-    description: Updates an existing form definition. Requires the form-service admin role.
+    description: >
+      Replaces a form definition with the request body, creating it if it does not exist. Requires the form-service
+      admin role (`urn:ads:platform:form-service:form-admin`); core users with the role must set `tenantId`. The `id`
+      of the definition is taken from the path.
     parameters:
-      - name: definitionId
-        description: ID of the form definition to update.
-        required: true
-        in: path
-        schema:
-          type: string
+      - $ref: '#/components/parameters/FormDefinitionIdPath'
+      - $ref: '#/components/parameters/FormTenantId'
     requestBody:
       required: true
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/FormDefinition'
+          example:
+            name: Business licence application
+            description: Application for a municipal business licence.
+            anonymousApply: false
+            oneFormPerApplicant: true
+            applicantRoles: [business-licence-applicant]
+            assessorRoles: [business-licence-assessor]
+            clerkRoles: []
+            formDraftUrlTemplate: https://form.alberta.ca/business-licence-application/{{ id }}
+            dataSchema:
+              type: object
+              properties:
+                businessName:
+                  type: string
+            submissionRecords: true
+            securityClassification: protected b
     responses:
       200:
         description: Successfully updated the form definition.
@@ -648,41 +954,41 @@ components:
           application/json:
             schema:
               $ref: '#/components/schemas/FormDefinition'
+      400:
+        $ref: '#/components/responses/FormBadRequest'
       401:
-        description: User is not authorized to update form definitions.
-      404:
-        description: Form definition not found.
+        $ref: '#/components/responses/FormUnauthorized'
+      403:
+        $ref: '#/components/responses/FormForbidden'
   delete:
     tags:
       - Form
-    description: Deletes a form definition. Requires the form-service admin role.
+    description: >
+      Deletes a form definition. Requires the form-service admin role (`urn:ads:platform:form-service:form-admin`);
+      core users with the role must set `tenantId`. Deleting a definition that does not exist also responds 204.
     parameters:
-      - name: definitionId
-        description: ID of the form definition to delete.
-        required: true
-        in: path
-        schema:
-          type: string
+      - $ref: '#/components/parameters/FormDefinitionIdPath'
+      - $ref: '#/components/parameters/FormTenantId'
     responses:
       204:
         description: Successfully deleted the form definition.
+      400:
+        $ref: '#/components/responses/FormBadRequest'
       401:
-        description: User is not authorized to delete form definitions.
-      404:
-        description: Form definition not found.
+        $ref: '#/components/responses/FormUnauthorized'
+      403:
+        $ref: '#/components/responses/FormForbidden'
 
 /form/v1/definitions/{definitionId}/schemas:
   put:
     tags:
       - Form
-    description: Updates the data and UI schemas for an existing form definition. Requires the form-service admin role.
+    description: >
+      Updates the data and UI schemas for an existing form definition. Requires the form-service admin role
+      (`urn:ads:platform:form-service:form-admin`); core users with the role must set `tenantId`.
     parameters:
-      - name: definitionId
-        description: ID of the form definition whose schemas are to be updated.
-        required: true
-        in: path
-        schema:
-          type: string
+      - $ref: '#/components/parameters/FormDefinitionIdPath'
+      - $ref: '#/components/parameters/FormTenantId'
     requestBody:
       required: true
       content:
@@ -696,30 +1002,41 @@ components:
               ui-schema:
                 type: object
                 description: UI schema describing the layout and controls of the form. If omitted, the existing UI schema is preserved.
+          example:
+            data-schema:
+              type: object
+              properties:
+                businessName:
+                  type: string
+              required: [businessName]
+            ui-schema:
+              type: VerticalLayout
+              elements:
+                - type: Control
+                  scope: '#/properties/businessName'
     responses:
       204:
         description: Schemas updated successfully. No content is returned.
       400:
-        description: Request body does not conform to the required schema.
+        $ref: '#/components/responses/FormBadRequest'
       401:
-        description: User is not authenticated.
+        $ref: '#/components/responses/FormUnauthorized'
       403:
-        description: User does not have the form-admin role.
+        $ref: '#/components/responses/FormForbidden'
       404:
-        description: Form definition not found.
+        $ref: '#/components/responses/FormDefinitionNotFound'
 
 /form/v1/definitions/{definitionId}/roles:
   put:
     tags:
       - Form
-    description: Replaces the applicant, assessor, and clerk roles of an existing form definition. Requires the form-service admin role. The provided roles replace the existing roles entirely; any role array omitted from the request is reset to empty.
+    description: >
+      Replaces the applicant, assessor, and clerk roles of an existing form definition. Requires the form-service
+      admin role (`urn:ads:platform:form-service:form-admin`); core users with the role must set `tenantId`. The
+      provided roles replace the existing roles entirely; any role array omitted from the request is reset to empty.
     parameters:
-      - name: definitionId
-        description: ID of the form definition whose roles are to be replaced.
-        required: true
-        in: path
-        schema:
-          type: string
+      - $ref: '#/components/parameters/FormDefinitionIdPath'
+      - $ref: '#/components/parameters/FormTenantId'
     requestBody:
       required: true
       content:
@@ -743,6 +1060,10 @@ components:
                 items:
                   type: string
                 description: Roles permitted to act as clerks. Replaces the existing clerk roles entirely.
+          example:
+            applicantRoles: [business-licence-applicant]
+            assessorRoles: [business-licence-assessor]
+            clerkRoles: [business-licence-clerk]
     responses:
       200:
         description: Successfully replaced form definition roles.
@@ -751,26 +1072,25 @@ components:
             schema:
               $ref: '#/components/schemas/FormDefinition'
       400:
-        description: Request body does not conform to the required schema.
+        $ref: '#/components/responses/FormBadRequest'
       401:
-        description: User is not authenticated.
+        $ref: '#/components/responses/FormUnauthorized'
       403:
-        description: User does not have the form-admin role.
+        $ref: '#/components/responses/FormForbidden'
       404:
-        description: Form definition not found.
+        $ref: '#/components/responses/FormDefinitionNotFound'
 
 /form/v1/definitions/{definitionId}/lifecycle:
   patch:
     tags:
       - Form
-    description: Partially updates the lifecycle settings of an existing form definition. Requires the form-service admin role. Only provided fields are changed; omitted fields are left unchanged.
+    description: >
+      Partially updates the lifecycle settings of an existing form definition. Requires the form-service admin role
+      (`urn:ads:platform:form-service:form-admin`); core users with the role must set `tenantId`. Only provided fields
+      are changed; omitted fields are left unchanged.
     parameters:
-      - name: definitionId
-        description: ID of the form definition whose lifecycle settings are to be updated.
-        required: true
-        in: path
-        schema:
-          type: string
+      - $ref: '#/components/parameters/FormDefinitionIdPath'
+      - $ref: '#/components/parameters/FormTenantId'
     requestBody:
       required: true
       content:
@@ -786,7 +1106,7 @@ components:
                 description: Whether an applicant can submit more than one form. When false, only one form per applicant is allowed.
               createSupportTopic:
                 type: boolean
-                description: Whether a support topic is created when the form is submitted.
+                description: Whether a support topic is created for each new form.
               securityClassification:
                 type: string
                 enum:
@@ -795,6 +1115,11 @@ components:
                   - protected c
                   - public
                 description: Security classification of the form definition.
+          example:
+            allowAnonymousApplication: false
+            allowMultipleFormsPerApplicant: true
+            createSupportTopic: true
+            securityClassification: protected b
     responses:
       200:
         description: Successfully updated lifecycle settings.
@@ -803,26 +1128,25 @@ components:
             schema:
               $ref: '#/components/schemas/FormDefinition'
       400:
-        description: Request body does not conform to the required schema.
+        $ref: '#/components/responses/FormBadRequest'
       401:
-        description: User is not authenticated.
+        $ref: '#/components/responses/FormUnauthorized'
       403:
-        description: User does not have the form-admin role.
+        $ref: '#/components/responses/FormForbidden'
       404:
-        description: Form definition not found.
+        $ref: '#/components/responses/FormDefinitionNotFound'
 
 /form/v1/definitions/{definitionId}/submission-actions:
   patch:
     tags:
       - Form
-    description: Partially updates the actions invoked when a form is submitted. Requires the form-service admin role. Only provided fields are changed; omitted fields are left unchanged.
+    description: >
+      Partially updates the actions invoked when a form is submitted. Requires the form-service admin role
+      (`urn:ads:platform:form-service:form-admin`); core users with the role must set `tenantId`. Only provided fields
+      are changed; omitted fields are left unchanged. Properties other than those listed respond 400.
     parameters:
-      - name: definitionId
-        description: ID of the form definition whose submission actions are to be updated.
-        required: true
-        in: path
-        schema:
-          type: string
+      - $ref: '#/components/parameters/FormDefinitionIdPath'
+      - $ref: '#/components/parameters/FormTenantId'
     requestBody:
       required: true
       content:
@@ -863,6 +1187,19 @@ components:
                       type: string
                     description:
                       type: string
+          example:
+            createPDF: true
+            createSubmissionRecords: true
+            event: business-licence:application-received
+            includeDataInEvent: false
+            taskQueue: business-licence:intake
+            dispositionStates:
+              - id: approved
+                name: Approved
+                description: Licence is approved.
+              - id: rejected
+                name: Rejected
+                description: Licence is rejected.
     responses:
       200:
         description: Successfully updated submission actions.
@@ -871,13 +1208,51 @@ components:
             schema:
               $ref: '#/components/schemas/FormDefinition'
       400:
-        description: Request body does not conform to the required schema.
+        $ref: '#/components/responses/FormBadRequest'
       401:
-        description: User is not authenticated.
+        $ref: '#/components/responses/FormUnauthorized'
       403:
-        description: User does not have the form-admin role.
+        $ref: '#/components/responses/FormForbidden'
       404:
-        description: Form definition not found.
+        $ref: '#/components/responses/FormDefinitionNotFound'
+
+/form/v1/definitions/{definitionId}/schedule:
+  put:
+    tags:
+      - Form schedules
+    description: >
+      Updates the scheduled intake period of a form definition, by updating its event in the calendar service.
+      Requires the form-service admin role (`urn:ads:platform:form-service:form-admin`); core users with the role must
+      set `tenantId`. Responds with the form definition and its updated intake. A definition that does not exist
+      responds 400.
+    parameters:
+      - $ref: '#/components/parameters/FormDefinitionIdPath'
+      - $ref: '#/components/parameters/FormTenantId'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/PutIntakeParameters'
+    responses:
+      200:
+        description: Successfully updated the intake schedule.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FormDefinition'
+      400:
+        description: Request is invalid, or the form definition does not exist.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FormError'
+            example:
+              errorMessage: Form definition not found
+      401:
+        $ref: '#/components/responses/FormUnauthorized'
+      403:
+        $ref: '#/components/responses/FormForbidden'
 
 /form/v1/forms:
   get:
@@ -887,8 +1262,9 @@ components:
       Find forms. Users with the form-service admin role, or the export-service export-job role, can find all
       forms of the tenant. When the criteria include definitionIdEquals, users with one of that definition's
       assessor roles can find its submitted forms. Other users only find the forms they created, and cannot
-      use includeData.
+      use includeData. Core users must set `tenantId`.
     parameters:
+      - $ref: '#/components/parameters/FormTenantId'
       - name: top
         description: Number of forms to return in a page. Defaults to 10.
         in: query
@@ -917,6 +1293,8 @@ components:
         required: false
         schema:
           type: string
+          minLength: 1
+          maxLength: 100
       - name: sortDirection
         description: Direction of the sort. Defaults to descending.
         in: query
@@ -925,7 +1303,7 @@ components:
           type: string
           enum: [asc, desc]
       - name: criteria
-        description: Criteria for the forms to retrieve.
+        description: Criteria for the forms to retrieve, as JSON. Date values must be ISO-8601 strings.
         in: query
         required: false
         content:
@@ -946,6 +1324,12 @@ components:
                 lockedBefore:
                   type: string
                   format: date-time
+                createDateBefore:
+                  type: string
+                  format: date-time
+                createDateAfter:
+                  type: string
+                  format: date-time
                 createdByIdEquals:
                   type: string
                 hashEquals:
@@ -956,30 +1340,16 @@ components:
                     Values to match in the form data, keyed by the path into the data (e.g. 'applicant.lastName').
                     Text values are case-insensitive partial matches.
                   additionalProperties: true
+            example:
+              definitionIdEquals: business-licence-application
+              statusEquals: submitted
     responses:
       200:
         description: Successfully retrieved forms.
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                results:
-                  type: array
-                  items:
-                    $ref: '#/components/schemas/Form'
-                page:
-                  type: object
-                  properties:
-                    after:
-                      type: string
-                    next:
-                      type: string
-                    size:
-                      type: number
-                    total:
-                      type: number
-                      description: Total number of available forms before filters are applied.
+              $ref: '#/components/schemas/FormPage'
       400:
         $ref: '#/components/responses/FormBadRequest'
       401:
@@ -989,7 +1359,19 @@ components:
   post:
     tags:
       - Form
-    description: Creates a draft form.
+    description: >
+      Creates a draft form of a definition in the tenant, optionally with data, and optionally submits it straight
+      away. Requires one of the definition's applicant or clerk roles; if the definition allows anonymous
+      applications, the form-service intake-application role is also accepted. When the definition uses scheduled
+      intakes, forms can only be created during an active intake, unless the user has the form-service form-tester
+      role or the request is a dry run.
+
+
+      An applicant who creates their own form is set as the form's applicant (and notified by email) when applicant
+      information is included or the definition allows one form per applicant. Clerks and intake applications can
+      provide the details of the applicant they act for.
+    parameters:
+      - $ref: '#/components/parameters/FormTenantId'
     requestBody:
       required: true
       content:
@@ -999,6 +1381,8 @@ components:
             properties:
               definitionId:
                 type: string
+                minLength: 1
+                maxLength: 50
               applicant:
                 type: object
                 properties:
@@ -1022,14 +1406,41 @@ components:
                       required: [channel, address]
               data:
                 type: object
+                description: Initial form data. File references can be embedded as file-service URNs.
               files:
                 type: object
+                deprecated: true
+                description: Not used; file references are resolved from the data.
                 additionalProperties:
                   type: string
-                  format: uri
               submit:
                 type: boolean
+                description: Submit the form immediately after it is created.
+              dryRun:
+                type: boolean
+                description: Validate and simulate the request without saving the form.
             required: [definitionId]
+          examples:
+            applicant:
+              summary: Applicant creates their own draft
+              value:
+                definitionId: business-licence-application
+            anonymousApplicant:
+              summary: Intake application creates a draft for an anonymous applicant
+              value:
+                definitionId: business-licence-application
+                applicant:
+                  addressAs: Test User
+                  channels:
+                    - channel: email
+                      address: test.user@gov.ab.ca
+            createAndSubmit:
+              summary: Create with data and submit
+              value:
+                definitionId: business-licence-application
+                data:
+                  businessName: Example Bakery Ltd.
+                submit: true
     responses:
       200:
         description: Successfully created a form.
@@ -1037,19 +1448,35 @@ components:
           application/json:
             schema:
               $ref: '#/components/schemas/Form'
+      400:
+        description: >
+          Request is invalid, the definition has no active intake, or the data is not valid for the definition when
+          the form is submitted.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FormError'
+            example:
+              errorMessage: Cannot create form as there is no active intake.
+      401:
+        $ref: '#/components/responses/FormUnauthorized'
+      403:
+        $ref: '#/components/responses/FormForbidden'
+      404:
+        $ref: '#/components/responses/FormDefinitionNotFound'
 
 /form/v1/forms/{formId}:
   parameters:
-    - name: formId
-      description: ID of the form.
-      required: true
-      in: path
-      schema:
-        type: string
+    - $ref: '#/components/parameters/FormIdPath'
+    - $ref: '#/components/parameters/FormTenantId'
   get:
     tags:
       - Form
-    description: Retrieves a form.
+    description: >
+      Retrieves a form, and its submission if it is submitted. Requires the form-service admin or intake-application
+      role, one of the definition's clerk or assessor roles, or one of its applicant roles for the form's creator
+      (unless the form is archived). Including the data needs the form data access described for
+      `GET /form/v1/forms/{formId}/data`, and fails for locked forms. Core users must set `tenantId`.
     parameters:
       - name: includeData
         description: Flag indicating if data should be included in results.
@@ -1064,10 +1491,29 @@ components:
           application/json:
             schema:
               $ref: '#/components/schemas/Form'
+      400:
+        $ref: '#/components/responses/FormBadRequest'
+      401:
+        $ref: '#/components/responses/FormUnauthorized'
+      403:
+        $ref: '#/components/responses/FormForbidden'
+      404:
+        $ref: '#/components/responses/FormNotFound'
   post:
     tags:
       - Form
-    description: Executes a form operation.
+    description: |
+      Executes a form operation. The user must be able to read the form (see `GET /form/v1/forms/{formId}`), and
+      each operation needs a further role:
+      - `send-code`: the form-service intake-application role. Sends a verification code to the applicant.
+      - `unlock`: the form-service admin role. Only locked forms can be unlocked.
+      - `submit`: one of the definition's clerk roles, or an applicant role for the form's creator. Only draft forms
+        can be submitted, and the data must be valid for the definition's data schema.
+      - `to-draft`: the form-service admin role or one of the definition's assessor roles. Only submitted forms can be
+        set back to draft.
+      - `archive`: the form-service admin role.
+
+      Core users must set `tenantId`.
     requestBody:
       required: true
       content:
@@ -1087,6 +1533,27 @@ components:
                 archive: '#/components/schemas/ArchiveFormOperation'
                 send-code: '#/components/schemas/SendCodeOperation'
                 to-draft: '#/components/schemas/SetToDraftOperation'
+          examples:
+            submit:
+              summary: Submit the form
+              value:
+                operation: submit
+            sendCode:
+              summary: Send a verification code to the applicant
+              value:
+                operation: send-code
+            unlock:
+              summary: Unlock a locked form
+              value:
+                operation: unlock
+            toDraft:
+              summary: Set a submitted form back to draft
+              value:
+                operation: to-draft
+            archive:
+              summary: Archive the form
+              value:
+                operation: archive
     responses:
       200:
         description: Successfully executed operation.
@@ -1094,51 +1561,101 @@ components:
           application/json:
             schema:
               $ref: '#/components/schemas/Form'
+      400:
+        description: >
+          Request is invalid, the form is not in a status that allows the operation, or the data is not valid for the
+          definition on submit.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FormError'
+            example:
+              errorMessage: Cannot submit form not in draft.
+      401:
+        $ref: '#/components/responses/FormUnauthorized'
+      403:
+        $ref: '#/components/responses/FormForbidden'
+      404:
+        $ref: '#/components/responses/FormNotFound'
   delete:
     tags:
       - Form
-    description: Deletes a form.
+    description: >
+      Deletes a form and its files. Requires the form-service admin role. Draft forms can also be deleted by users
+      with one of the definition's clerk roles, and by their creator with one of the definition's applicant roles.
+      The user must also be able to read the form (see `GET /form/v1/forms/{formId}`). Core users must set
+      `tenantId`.
     responses:
       200:
         description: Successfully deleted the form.
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                deleted:
-                  type: boolean
+              $ref: '#/components/schemas/FormDeleteResult'
+      400:
+        $ref: '#/components/responses/FormBadRequest'
+      401:
+        $ref: '#/components/responses/FormUnauthorized'
+      403:
+        $ref: '#/components/responses/FormForbidden'
+      404:
+        $ref: '#/components/responses/FormNotFound'
 
 /form/v1/forms/{formId}/data:
   parameters:
-    - name: formId
-      description: ID of the form.
-      required: true
-      in: path
-      schema:
-        type: string
+    - $ref: '#/components/parameters/FormIdPath'
+    - $ref: '#/components/parameters/FormTenantId'
   get:
     tags:
       - Form
-    description: Retrieves form data.
+    description: >
+      Retrieves form data. Requires the form-service admin role, one of the definition's applicant roles for the
+      form's creator, one of its clerk roles while the form is a draft, or one of its assessor roles once it is
+      submitted. Alternatively, a user with the form-service intake-application role can provide the verification code
+      sent to the applicant. Locked forms cannot be read. Core users must set `tenantId`.
     parameters:
       - name: code
-        description: Verify code for accessing the form data.
+        description: Verification code sent to the applicant with the send-code operation.
         required: false
         in: query
         schema:
           type: string
+          minLength: 1
+          maxLength: 10
     responses:
       200:
-        description: Successfully retrieved the form.
+        description: Successfully retrieved the form data.
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/FormData'
+      400:
+        description: Request is invalid, or the form is locked.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FormError'
+            example:
+              errorMessage: Locked form cannot be read.
+      401:
+        description: Request does not include a valid bearer token, or the provided code could not be verified.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FormError'
+            example:
+              errorMessage: Provided code could not be verified.
+      403:
+        $ref: '#/components/responses/FormForbidden'
+      404:
+        $ref: '#/components/responses/FormNotFound'
   put:
     tags:
       - Form
-    description: Sets the form data.
+    description: >
+      Sets the form data of a draft form. Requires one of the definition's clerk roles, or one of its applicant roles
+      for the form's creator. Files that are no longer referenced in the data are deleted. Core users must set
+      `tenantId`.
     requestBody:
       required: true
       content:
@@ -1150,6 +1667,10 @@ components:
                 type: object
                 description: Form data. File references can be embedded directly as file-service URNs anywhere in this object.
             required: [data]
+          example:
+            data:
+              businessName: Example Bakery Ltd.
+              proofOfRegistration: urn:ads:platform:file-service:v1:/files/3c2b1a0f-9e8d-4c7b-a6f5-e4d3c2b1a0f9
     responses:
       200:
         description: Successfully updated the form.
@@ -1157,26 +1678,32 @@ components:
           application/json:
             schema:
               $ref: '#/components/schemas/FormData'
+      400:
+        description: Request is invalid, or the form is not a draft.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FormError'
+            example:
+              errorMessage: Cannot update form not in draft.
+      401:
+        $ref: '#/components/responses/FormUnauthorized'
+      403:
+        $ref: '#/components/responses/FormForbidden'
+      404:
+        $ref: '#/components/responses/FormNotFound'
 
 /form/v1/forms/{formId}/submissions/{submissionId}:
   parameters:
-    - name: formId
-      description: ID of the form.
-      required: true
-      in: path
-      schema:
-        type: string
-    - name: submissionId
-      description: ID of the submission.
-      required: true
-      in: path
-      schema:
-        type: string
+    - $ref: '#/components/parameters/FormIdPath'
+    - $ref: '#/components/parameters/FormSubmissionIdPath'
+    - $ref: '#/components/parameters/FormTenantId'
   get:
     tags:
       - Form Submission
     description: >
       Retrieves a form submission. Requires the form-service admin role or one of the definition's assessor roles.
+      Core users must set `tenantId`.
     responses:
       200:
         description: Successfully retrieved the form submission.
@@ -1198,6 +1725,7 @@ components:
     description: >
       Update the form disposition for the form submission. Requires the form-service admin role or one of the
       definition's assessor roles. The status must match the ID or name of one of the definition's disposition states.
+      Core users must set `tenantId`.
     responses:
       200:
         description: Successfully updated the form submission.
@@ -1222,8 +1750,10 @@ components:
             properties:
               dispositionStatus:
                 type: string
+                minLength: 1
               dispositionReason:
                 type: string
+                minLength: 1
             required: [dispositionStatus, dispositionReason]
           example:
             dispositionStatus: approved
@@ -1231,24 +1761,15 @@ components:
 
 /form/v1/forms/{formId}/submissions/{submissionId}/notes:
   parameters:
-    - name: formId
-      description: ID of the form.
-      required: true
-      in: path
-      schema:
-        type: string
-    - name: submissionId
-      description: ID of the submission.
-      required: true
-      in: path
-      schema:
-        type: string
+    - $ref: '#/components/parameters/FormIdPath'
+    - $ref: '#/components/parameters/FormSubmissionIdPath'
+    - $ref: '#/components/parameters/FormTenantId'
   post:
     tags:
       - Form Submission
     description: >
       Adds a reviewer note to the form submission. Requires the form-service admin role or one of the definition's
-      assessor roles.
+      assessor roles. Core users must set `tenantId`.
     requestBody:
       required: true
       content:
@@ -1281,30 +1802,22 @@ components:
 
 /form/v1/forms/{formId}/submissions/{submissionId}/notes/{noteId}:
   parameters:
-    - name: formId
-      description: ID of the form.
-      required: true
-      in: path
-      schema:
-        type: string
-    - name: submissionId
-      description: ID of the submission.
-      required: true
-      in: path
-      schema:
-        type: string
+    - $ref: '#/components/parameters/FormIdPath'
+    - $ref: '#/components/parameters/FormSubmissionIdPath'
     - name: noteId
       description: ID of the note.
       required: true
       in: path
       schema:
         type: string
+        format: uuid
+    - $ref: '#/components/parameters/FormTenantId'
   delete:
     tags:
       - Form Submission
     description: >
       Removes a reviewer note from the form submission. Requires the form-service admin role or one of the
-      definition's assessor roles.
+      definition's assessor roles. Core users must set `tenantId`.
     responses:
       200:
         description: Successfully removed the note from the form submission.
@@ -1323,25 +1836,16 @@ components:
 
 /form/v1/forms/{formId}/submissions:
   parameters:
-    - name: formId
-      description: ID of the form.
-      required: true
-      in: path
-      schema:
-        type: string
+    - $ref: '#/components/parameters/FormIdPath'
+    - $ref: '#/components/parameters/FormTenantId'
   get:
     tags:
       - Form Submission
     description: |
       Retrieves submissions of a specified form matching search criteria. Requires the form-service admin role,
-      one of the form definition's assessor roles, or the export-service export-job role.
+      one of the form definition's assessor roles, or the export-service export-job role. Core users must set
+      `tenantId`.
     parameters:
-      - name: formId
-        description: ID of the form.
-        in: path
-        required: true
-        schema:
-          type: string
       - name: top
         description: Number of submissions to return in a page. Defaults to 100.
         in: query
@@ -1365,6 +1869,8 @@ components:
         required: false
         schema:
           type: string
+          minLength: 1
+          maxLength: 100
       - name: sortDirection
         description: Direction of the sort. Defaults to descending.
         in: query
@@ -1373,7 +1879,7 @@ components:
           type: string
           enum: [asc, desc]
       - name: criteria
-        description: Criteria for form submissions to retrieve.
+        description: Criteria for form submissions to retrieve, as JSON. Date values must be ISO-8601 strings.
         in: query
         required: false
         content:
@@ -1418,30 +1924,15 @@ components:
                     Text values are case-insensitive partial matches.
                   type: object
                   additionalProperties: true
+            example:
+              dispositioned: false
     responses:
       200:
         description: Successfully retrieves the form submissions.
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                results:
-                  type: array
-                  items:
-                    $ref: '#/components/schemas/FormSubmission'
-                page:
-                  type: object
-                  properties:
-                    after:
-                      type: string
-                    next:
-                      type: string
-                    size:
-                      type: number
-                    total:
-                      type: number
-                      description: Total number of available submissions before filters are applied.
+              $ref: '#/components/schemas/FormSubmissionPage'
       400:
         $ref: '#/components/responses/FormBadRequest'
       401:
@@ -1454,10 +1945,11 @@ components:
     tags:
       - Form Submission
     description: |
-      Retrieves submissions matching search criteria. Requires the form-service admin role or the export-service
-      export-job role. Users with one of a definition's assessor roles can retrieve its submissions by including
-      definitionIdEquals in the criteria.
+      Retrieves submissions of the tenant matching search criteria. Requires the form-service admin role or the
+      export-service export-job role. Users with one of a definition's assessor roles can retrieve its submissions by
+      including definitionIdEquals in the criteria. Core users must set `tenantId`.
     parameters:
+      - $ref: '#/components/parameters/FormTenantId'
       - name: top
         description: Number of submissions to return in a page. Defaults to 100.
         in: query
@@ -1481,6 +1973,8 @@ components:
         required: false
         schema:
           type: string
+          minLength: 1
+          maxLength: 100
       - name: sortDirection
         description: Direction of the sort. Defaults to descending.
         in: query
@@ -1489,7 +1983,7 @@ components:
           type: string
           enum: [asc, desc]
       - name: criteria
-        description: Criteria for form submissions to retrieve.
+        description: Criteria for form submissions to retrieve, as JSON. Date values must be ISO-8601 strings.
         in: query
         required: false
         content:
@@ -1534,30 +2028,16 @@ components:
                     Text values are case-insensitive partial matches.
                   type: object
                   additionalProperties: true
+            example:
+              definitionIdEquals: business-licence-application
+              dispositioned: false
     responses:
       200:
         description: Successfully retrieves the form submissions.
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                results:
-                  type: array
-                  items:
-                    $ref: '#/components/schemas/FormSubmission'
-                page:
-                  type: object
-                  properties:
-                    after:
-                      type: string
-                    next:
-                      type: string
-                    size:
-                      type: number
-                    total:
-                      type: number
-                      description: Total number of available submissions before filters are applied.
+              $ref: '#/components/schemas/FormSubmissionPage'
       400:
         $ref: '#/components/responses/FormBadRequest'
       401:
@@ -1566,17 +2046,14 @@ components:
         $ref: '#/components/responses/FormForbidden'
 /form/v1/submissions/{submissionId}:
   parameters:
-    - name: submissionId
-      description: ID of the submission.
-      required: true
-      in: path
-      schema:
-        type: string
+    - $ref: '#/components/parameters/FormSubmissionIdPath'
+    - $ref: '#/components/parameters/FormTenantId'
   get:
     tags:
       - Form Submission
     description: >
       Retrieves a form submission. Requires the form-service admin role or one of the definition's assessor roles.
+      Core users must set `tenantId`.
     responses:
       200:
         description: Successfully retrieved the form submission.
@@ -1595,59 +2072,19 @@ components:
   delete:
     tags:
       - Form Submission
-    description: Deletes a form submission. Requires the form-service admin role.
+    description: >
+      Deletes a form submission. Requires the form-service admin role. Core users must set `tenantId`. A submission
+      that does not exist responds 200 with `deleted: false`.
     responses:
       200:
-        description: Successfully deleted the form submission.
+        description: Successfully deleted the form submission, or no submission was found.
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                deleted:
-                  type: boolean
-            example:
-              deleted: true
+              $ref: '#/components/schemas/FormDeleteResult'
       400:
         $ref: '#/components/responses/FormBadRequest'
       401:
         $ref: '#/components/responses/FormUnauthorized'
       403:
         $ref: '#/components/responses/FormForbidden'
-      404:
-        $ref: '#/components/responses/FormNotFound'
-/form/v1/definitions/{definitionId}/schedule:
-  put:
-    tags:
-      - Form schedules
-    description: >
-      Updates the scheduled intake period of a form definition. Requires the form-service admin role. Responds with
-      the form definition and its updated intake.
-    parameters:
-      - name: definitionId
-        description: ID of the form definition.
-        required: true
-        in: path
-        schema:
-          type: string
-    requestBody:
-      required: true
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/PutIntakeParameters'
-    responses:
-      200:
-        description: Successfully updated the intake schedule.
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/FormDefinition'
-      400:
-        description: Validation failed  for JSON object
-      401:
-        description: Request does not include a valid bearer token.
-      403:
-        description: User is not authorized to update the intake schedule.
-      404:
-        description: Schedule intake not found.

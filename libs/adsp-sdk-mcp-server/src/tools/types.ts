@@ -6,6 +6,11 @@ export interface JsonSchemaObject {
   required?: string[];
 }
 
+export interface ToolCallContext {
+  /** Aborted when the client cancels the call or disconnects. */
+  signal?: AbortSignal;
+}
+
 export interface ToolDefinition {
   name: string;
   description: string;
@@ -16,7 +21,7 @@ export interface ToolDefinition {
    * is the MCP protocol's standard way to signal a handled failure (e.g. an unknown doc path); it is not a hidden
    * side effect, just a normal part of the result shape.
    */
-  handler: (args: Record<string, unknown>) => Promise<CallToolResult> | CallToolResult;
+  handler: (args: Record<string, unknown>, context?: ToolCallContext) => Promise<CallToolResult> | CallToolResult;
 }
 
 export interface LiveToolDefinition {
@@ -29,5 +34,5 @@ export interface LiveToolDefinition {
    * side-effect-free lookup. Kept as a distinct type so that invariant stays true and checkable
    * for every ToolDefinition-typed tool in this package.
    */
-  handler: (args: Record<string, unknown>) => Promise<CallToolResult> | CallToolResult;
+  handler: (args: Record<string, unknown>, context?: ToolCallContext) => Promise<CallToolResult> | CallToolResult;
 }

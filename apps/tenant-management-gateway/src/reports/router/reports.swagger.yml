@@ -1,4 +1,52 @@
 components:
+  responses:
+    ReportBadRequest:
+      description: >
+        Request is invalid. A path or query parameter failed validation, `from` or `to` is not a real calendar date, or
+        `from` is after `to`.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ReportError'
+          examples:
+            validation:
+              summary: Parameter failed validation
+              value:
+                errorMessage: 'Validation failed with error(s): from (query) - Invalid value'
+            calendarDate:
+              summary: Date is not a real calendar date
+              value:
+                errorMessage: from and to must be valid calendar dates.
+            periodOrder:
+              summary: from is after to
+              value:
+                errorMessage: from must be on or before to.
+    ReportUnauthorized:
+      description: >
+        Request has no bearer token, or value-service rejected the forwarded token (responded 401 or 403), for example
+        because the user does not have the value-service `value-reader` role. Both cases respond with 401 rather than
+        403.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ReportError'
+          examples:
+            missingToken:
+              summary: No bearer token
+              value:
+                errorMessage: Bearer token is required.
+            rejected:
+              summary: value-service rejected the token
+              value:
+                errorMessage: Not authorized to read report data.
+    ReportNotFound:
+      description: The service has no report, or does not offer that section yet.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ReportError'
+          example:
+            errorMessage: report section with ID 'pdf/trends' could not be found.
   schemas:
     ReportPeriod:
       type: object
@@ -14,13 +62,20 @@ components:
         to:
           type: string
           format: date
-          description: Inclusive end date after clipping today (incomplete UTC day is excluded).
+          description: >
+            Inclusive end date, clipped to the last completed UTC day (the current UTC day is excluded). When `from` is
+            after the last completed UTC day, `to` is earlier than `from` and the period is empty.
           example: '2026-09-17'
+      example:
+        from: '2026-08-20'
+        to: '2026-09-17'
     ReportError:
       type: object
       properties:
         errorMessage:
           type: string
+      example:
+        errorMessage: report section with ID 'pdf/trends' could not be found.
     PdfSummaryData:
       type: object
       description: Keys match TMW pdfReport.summaryMetrics ids. Missing activity is 0, not null.
@@ -82,6 +137,20 @@ components:
             - $ref: '#/components/schemas/PdfSummaryData'
             - type: object
               additionalProperties: true
+      example:
+        serviceId: pdf
+        sectionId: summary
+        period:
+          from: '2026-08-20'
+          to: '2026-09-17'
+        data:
+          pdfRequested: 15
+          pdfGenerated: 11
+          pdfFailed: 4
+          unreconciled: 4
+          generationDuration: 2.9
+          generationDurationMax: 4
+          templatesUsed: 6
 
 /api/tenant/v1/reports/{serviceId}/{sectionId}:
   get:
@@ -89,64 +158,73 @@ components:
       - Reports
     summary: Get one report section for a service and period
     description: |
-      Generic reports read API. The caller's JWT is forwarded to value-service, which checks the token and the tenant.
+      Generic reports read API. Returns one section of a service usage report for the caller's tenant.
+
+      **Roles and tenancy:** the gateway only checks that the request has a bearer token; it does not verify the token
+      or check roles itself. It forwards the token to value-service, which requires a tenant user or service account
+      with the `urn:ads:platform:value-service:value-reader` role, and reads the data of the token's tenant. There is
+      no `tenantId` parameter, so core (platform) tokens are not supported. A token that value-service rejects responds
+      with 401.
 
       Implemented now:
       - `pdf` / `summary`
 
-      Unknown `serviceId`/`sectionId` pairs return 404 so later sections (trends, topResources, insights, apiDrilldown) can be added without a new URL shape.
+      Unknown `serviceId`/`sectionId` pairs return 404 so later sections (trends, topResources, insights, apiDrilldown)
+      can be added without a new URL shape.
+
+      The period is inclusive and `to` is clipped to the last completed UTC day. If the clipped period is empty (for
+      example `from` is today), the PDF summary responds with zeros.
     parameters:
       - name: serviceId
         in: path
         required: true
-        description: TMW report registry id (kebab-case, not the service URN). `pdf` is first.
+        description: TMW report registry id (kebab-case, not the service URN). `pdf` is the only service implemented.
         schema:
           type: string
+          minLength: 1
+          maxLength: 50
           example: pdf
       - name: sectionId
         in: path
         required: true
-        description: Report section. Only `summary` is implemented for PDF in this ticket.
+        description: >
+          Report section. Planned sections are `summary`, `trends`, `topResources`, `insights` and `apiDrilldown`; only
+          `summary` is implemented for `pdf`. Any other value responds with 404.
         schema:
           type: string
-          enum:
-            - summary
-            - trends
-            - topResources
-            - insights
-            - apiDrilldown
+          minLength: 1
+          maxLength: 50
+          example: summary
       - name: from
         in: query
         required: true
-        description: Inclusive period start (yyyy-mm-dd).
+        description: Inclusive period start (yyyy-mm-dd). Must be a real calendar date on or before `to`.
         schema:
           type: string
           format: date
+          pattern: '^\d{4}-\d{2}-\d{2}$'
           example: '2026-08-20'
       - name: to
         in: query
         required: true
-        description: Inclusive period end (yyyy-mm-dd). Clipped to the last completed UTC day.
+        description: Inclusive period end (yyyy-mm-dd). Must be a real calendar date. Clipped to the last completed UTC day.
         schema:
           type: string
           format: date
+          pattern: '^\d{4}-\d{2}-\d{2}$'
           example: '2026-09-18'
       - name: preset
         in: query
         required: false
-        description: UI preset name. Logged only; from/to are the source of truth.
+        description: >
+          UI preset name, for example `last7Days`, `last30Days`, `last90Days`, `last12Months` or `custom`. Not used by
+          the gateway; `from` and `to` are the source of truth. Any string is accepted.
         schema:
           type: string
-          enum:
-            - last7Days
-            - last30Days
-            - last90Days
-            - last12Months
-            - custom
           example: last30Days
     responses:
       200:
-        description: Section payload for the current tenant and period.
+        description: Section payload for the token's tenant and the effective period.
         content:
           application/json:
             schema:
@@ -168,25 +246,25 @@ components:
                     generationDuration: 2.9
                     generationDurationMax: 4
                     templatesUsed: 6
+              emptyPeriod:
+                summary: Period with no completed days
+                value:
+                  serviceId: pdf
+                  sectionId: summary
+                  period:
+                    from: '2026-09-18'
+                    to: '2026-09-17'
+                  data:
+                    pdfRequested: 0
+                    pdfGenerated: 0
+                    pdfFailed: 0
+                    unreconciled: 0
+                    generationDuration: 0
+                    generationDurationMax: 0
+                    templatesUsed: 0
       400:
-        description: Invalid dates, or from after to.
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ReportError'
+        $ref: '#/components/responses/ReportBadRequest'
       401:
-        description: Missing bearer token, or value-service rejected the token.
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ReportError'
+        $ref: '#/components/responses/ReportUnauthorized'
       404:
-        description: Unknown serviceId, or this service does not offer that section yet.
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ReportError'
-            example:
-              errorMessage: report section with ID 'pdf/trends' could not be found.
-      500:
-        description: Unexpected gateway or upstream failure.
+        $ref: '#/components/responses/ReportNotFound'

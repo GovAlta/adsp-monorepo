@@ -1,4 +1,16 @@
 components:
+  parameters:
+    FileTenantId:
+      name: tenantId
+      description: >
+        ID of the tenant to act on. Only used for core (platform) users; tenant users and tenant service accounts
+        always act on the tenant of their token and this parameter is ignored. Must be a tenant URN; an invalid value
+        responds 400.
+      in: query
+      required: false
+      schema:
+        type: string
+      example: urn:ads:platform:tenant-service:v2:/tenants/61f2e3a8c9b1d2e3f4a5b6c7
   responses:
     FileBadRequest:
       description: Request is invalid, for example a parameter failed validation or the operation is not allowed for the file.
@@ -83,24 +95,54 @@ components:
             example: urn:ads:platform:tenant-service:platform-service
             type: string
         allowedFileTypes:
-          description: File types accepted for upload to the collection.
+          description: >
+            File extensions accepted for upload to the collection, including the leading period. The extension is
+            detected from the file content when possible, otherwise taken from the filename. Any extension is accepted
+            when the list is empty or not set.
           type: array
           items:
-            description: An accepted file type.
-            example: application/pdf
+            description: An accepted file extension.
+            example: .pdf
             type: string
         rules:
           description: Rules applied to files of the type, such as retention.
           type: object
+          nullable: true
+          properties:
+            retention:
+              type: object
+              nullable: true
+              description: >
+                When active, a daily job deletes files of the type that have not been accessed for deleteInDays days.
+              properties:
+                active:
+                  type: boolean
+                  example: true
+                deleteInDays:
+                  type: integer
+                  example: 90
           additionalProperties: true
+      example:
+        id: supporting-documents
+        name: Supporting Documents
+        anonymousRead: false
+        readRoles: [assessor]
+        updateRoles: [applicant]
+        allowedFileTypes: [.pdf, .jpg]
+        rules:
+          retention:
+            active: true
+            deleteInDays: 90
     File:
       type: object
       properties:
         urn:
+          readOnly: true
           description: A unique, Universal Resource Name, identifying the file.  The URN can be used to lookup the files URL with ADSP's Directory Service
           example: urn:ads:platform:file-service:v1:/files/ced3fbdd-7597-455e-84c6-1d0b3d03a274
           type: string
         id:
+          readOnly: true
           description: A unique file identifier, used in by the APIs to identify a file.
           example: ced3fbdd-7597-455e-84c6-1d0b3d03a274
           type: string
@@ -109,10 +151,12 @@ components:
           example: test_2023-04-03T21-27-13.pdf
           type: string
         size:
+          readOnly: true
           description: The size of the file, in bytes.
           example: 112845
           type: number
         typeName:
+          readOnly: true
           description: The File Type collection name to which the file belongs, if any.
           example: Generated PDF
           type: string
@@ -125,11 +169,13 @@ components:
           example: application/pdf
           type: string
         created:
+          readOnly: true
           description: Date the file was uploaded.
           example: 2023-04-03T21:27:17.102Z
           type: string
           format: date-time
         createdBy:
+          readOnly: true
           type: object
           properties:
             id:
@@ -141,19 +187,23 @@ components:
               example: service-account-urn:ads:platform:pdf-service
               type: string
         scanned:
+          readOnly: true
           description: True if the file was scanned for malware when uploaded.
           example: true
           type: boolean
         infected:
+          readOnly: true
           description: True if the file was scanned when uploaded, and malware was found.
           example: false
           type: boolean
         lastAccessed:
+          readOnly: true
           description: Date the file was last accessed via the File Service APIs.
           example: 2023-04-03T21:27:20.245Z
           type: string
           format: date-time
         securityClassification:
+          readOnly: true
           description: The data security classification for the file type.  If a security classification is empty that indicates the file type was created before the security classication was implemented.
           type: string
           default: protected a
@@ -163,9 +213,48 @@ components:
             - protected b
             - protected c
         digest:
+          readOnly: true
           description: Digest of the file prefixed with the hash algorithm.  This can be used to verify integrity of downloaded file.
           example: sha256-vVEAaGCkdyXB56ABe6NxEU+Fsym7bieZg/97hN7+HyQ=
           type: string
+        _links:
+          readOnly: true
+          type: object
+          properties:
+            self:
+              type: object
+              properties:
+                href:
+                  type: string
+                  example: urn:ads:platform:file-service:v1:/files/ced3fbdd-7597-455e-84c6-1d0b3d03a274
+            download:
+              type: object
+              properties:
+                href:
+                  type: string
+                  example: urn:ads:platform:file-service:v1:/files/ced3fbdd-7597-455e-84c6-1d0b3d03a274/download
+      example:
+        urn: urn:ads:platform:file-service:v1:/files/ced3fbdd-7597-455e-84c6-1d0b3d03a274
+        id: ced3fbdd-7597-455e-84c6-1d0b3d03a274
+        filename: proof-of-income.pdf
+        size: 112845
+        typeName: Supporting Documents
+        recordId: 864f975b-8d57-450b-b581-72ff42299bdf
+        mimeType: application/pdf
+        created: '2026-09-24T17:00:00.000Z'
+        createdBy:
+          id: 21fabd96-34f7-4b0f-a8b6-9f80b9a9ab0d
+          name: Test User
+        lastAccessed: '2026-09-25T15:30:00.000Z'
+        scanned: true
+        infected: false
+        securityClassification: protected a
+        digest: sha256-vVEAaGCkdyXB56ABe6NxEU+Fsym7bieZg/97hN7+HyQ=
+        _links:
+          self:
+            href: urn:ads:platform:file-service:v1:/files/ced3fbdd-7597-455e-84c6-1d0b3d03a274
+          download:
+            href: urn:ads:platform:file-service:v1:/files/ced3fbdd-7597-455e-84c6-1d0b3d03a274/download
     CopyFileOperation:
       type: object
       properties:
@@ -189,7 +278,15 @@ components:
       - File Type
     description: >
       Retrieves the file types the user can access: types with anonymousRead, types where the user has one of the
-      readRoles or updateRoles, or every type for users with the file-service-admin role.
+      readRoles or updateRoles, or every type for users with the file-service-admin role. Requires an authenticated
+      user.
+
+
+      Returns the file types of the tenant combined with the platform (core) file types; a platform type replaces a
+      tenant type with the same ID. Core users set tenantId to read the types of a tenant; without it only the
+      platform types are returned.
+    parameters:
+      - $ref: '#/components/parameters/FileTenantId'
     responses:
       200:
         description: Request successful.
@@ -200,11 +297,19 @@ components:
               items:
                 $ref: '#/components/schemas/FileType'
             example:
+              - id: supporting-documents
+                name: Supporting Documents
+                anonymousRead: false
+                readRoles: [assessor]
+                updateRoles: [applicant]
+                allowedFileTypes: [.pdf, .jpg]
               - id: generated-pdf
                 name: Generated PDF
                 anonymousRead: false
                 readRoles: [urn:ads:platform:pdf-service:pdf-generator]
                 updateRoles: [urn:ads:platform:pdf-service:pdf-generator]
+      400:
+        $ref: '#/components/responses/FileBadRequest'
       401:
         $ref: '#/components/responses/FileUnauthorized'
 
@@ -213,16 +318,18 @@ components:
     tags:
       - File Type
     description: >
-      Retrieves a file type. The type must allow anonymous read, or the user must have one of its readRoles or
-      updateRoles, or the file-service-admin role.
+      Retrieves a file type. Requires an authenticated user. The type must allow anonymous read, or the user must
+      have one of its readRoles or updateRoles, or the file-service-admin role. Core users set tenantId to read a
+      type of a tenant; without it only platform types are found.
     parameters:
       - name: typeId
         description: ID of the file type.
-        example: generated-pdf
+        example: supporting-documents
         in: path
         required: true
         schema:
           type: string
+      - $ref: '#/components/parameters/FileTenantId'
     responses:
       200:
         description: Request successful.
@@ -230,6 +337,8 @@ components:
           application/json:
             schema:
               $ref: '#/components/schemas/FileType'
+      400:
+        $ref: '#/components/responses/FileBadRequest'
       401:
         $ref: '#/components/responses/FileUnauthorized'
       403:
@@ -242,14 +351,53 @@ components:
     tags:
       - File
     description: >
-      Upload a file. Requires one of the file type's updateRoles, or the file-service-admin role.
+      Uploads a file to the tenant of the file type. Requires an authenticated user with one of the file type's
+      updateRoles, or the file-service-admin role; otherwise the request responds 401. Core users set tenantId to
+      upload to a tenant file type; platform file types cannot be uploaded to without a tenant context.
 
 
-      The metadata fields (type, recordId, filename, mimeType) must come before the file part in the multipart
-      body, since the file is streamed to storage as it is received. They can also be provided as query parameters.
+      Send the request as multipart/form-data with exactly one file part named `file`, up to 3 GB, and at most 10
+      other fields. The metadata fields (type, recordId, filename, mimeType) must come before the file part in the
+      multipart body, since the file is streamed to storage as it is received. They can also be provided as query
+      parameters; body fields take precedence.
 
 
-      Example: `curl -H "Authorization: Bearer $TOKEN" -F type=generated-pdf -F filename=report.pdf -F file=@report.pdf https://file-service.adsp.alberta.ca/file/v1/files`
+      The MIME type and extension are detected from the file content when possible. When the file type sets
+      allowedFileTypes, a file with any other extension is rejected with 400. The file is scanned for malware after
+      the upload completes, so the response shows scanned as false.
+
+
+      Example: `curl -H "Authorization: Bearer $TOKEN" -F type=supporting-documents -F filename=proof-of-income.pdf -F file=@proof-of-income.pdf https://file-service.adsp.alberta.ca/file/v1/files`
+    parameters:
+      - $ref: '#/components/parameters/FileTenantId'
+      - name: type
+        description: ID of the file type. Alternative to the type field of the multipart body.
+        example: supporting-documents
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: recordId
+        description: Record ID of the file. Alternative to the recordId field of the multipart body.
+        example: 864f975b-8d57-450b-b581-72ff42299bdf
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: filename
+        description: Name of the file. Alternative to the filename field of the multipart body.
+        example: proof-of-income.pdf
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: mimeType
+        description: Default MIME type of the file. Alternative to the mimeType field of the multipart body.
+        example: application/pdf
+        in: query
+        required: false
+        schema:
+          type: string
     requestBody:
       required: true
       content:
@@ -258,26 +406,30 @@ components:
             type: object
             properties:
               type:
-                description: ID of the File Type collection the file is associated with.
-                example: generated-pdf
+                description: ID of the File Type collection the file is associated with. Required here or as a query parameter.
+                example: supporting-documents
                 type: string
               recordId:
                 description: An optional, application-supplied ID, for use in cross-referencing the file.
                 example: 864f975b-8d57-450b-b581-72ff42299bdf
                 type: string
               filename:
-                description: The application-supplied name of the file. Defaults to the name of the uploaded file.
-                example: TestFile23
+                description: >
+                  The application-supplied name of the file. Defaults to the name of the uploaded file. Must be a valid
+                  filename, for example without path separators.
+                example: proof-of-income.pdf
                 type: string
               mimeType:
-                description: Default MIME type of the file unless detected to be different.
+                description: >
+                  Default MIME type of the file, used when the type cannot be detected from the content. Defaults to
+                  application/octet-stream.
                 example: application/octet-stream
                 type: string
               file:
-                description: File contents.
+                description: File contents, up to 3 GB.
                 type: string
                 format: binary
-            required: [type, file]
+            required: [file]
           encoding:
             file:
               contentType: application/octet-stream
@@ -291,20 +443,28 @@ components:
             example:
               urn: urn:ads:platform:file-service:v1:/files/ced3fbdd-7597-455e-84c6-1d0b3d03a274
               id: ced3fbdd-7597-455e-84c6-1d0b3d03a274
-              filename: report.pdf
+              filename: proof-of-income.pdf
               size: 112845
-              typeName: Generated PDF
+              typeName: Supporting Documents
               recordId: 864f975b-8d57-450b-b581-72ff42299bdf
               mimeType: application/pdf
               created: '2026-09-24T17:00:00.000Z'
               createdBy:
                 id: 21fabd96-34f7-4b0f-a8b6-9f80b9a9ab0d
                 name: Test User
+              lastAccessed: '2026-09-24T17:00:00.000Z'
               scanned: false
               infected: false
               securityClassification: protected a
+              _links:
+                self:
+                  href: urn:ads:platform:file-service:v1:/files/ced3fbdd-7597-455e-84c6-1d0b3d03a274
+                download:
+                  href: urn:ads:platform:file-service:v1:/files/ced3fbdd-7597-455e-84c6-1d0b3d03a274/download
       400:
-        description: Invalid parameters, for example no file uploaded, no file type specified, or an invalid filename.
+        description: >
+          Invalid request, for example no file uploaded, no file type specified, an invalid filename, an extension not
+          in the type's allowedFileTypes, no tenant context, or an invalid tenantId.
         content:
           application/json:
             schema:
@@ -319,7 +479,9 @@ components:
     tags:
       - File
     description: |
-      Retrieves files of the tenant. Only files the user can access are included: files the user uploaded, files of types with anonymousRead or where the user has one of the readRoles, or every file for users with the file-service-admin role. Files marked for deletion are excluded.
+      Retrieves files of the tenant. Requires an authenticated user. Only files the user can access are included: files the user uploaded, files of types with anonymousRead or where the user has one of the readRoles, or every file for users with the file-service-admin role. Files marked for deletion are excluded.
+
+      Requires a tenant context: core users must set tenantId, otherwise the request responds 400.
 
       Uses a simple paging algorithm, which works as follows:
       - You begin by asking for the top (first) N files, e.g. ```top=N&criteria={"filenameContains": "Bob"}```.  If unspecified, top defaults to 50.
@@ -330,13 +492,16 @@ components:
       Since inaccessible files are filtered from each page, a page can have fewer than top results even when more are available.
 
     parameters:
+      - $ref: '#/components/parameters/FileTenantId'
       - name: top
-        description: Number of files to return in the page, e.g. the top N files.
+        description: Number of files to return in the page, e.g. the top N files. Defaults to 50.
         example: 10
         in: query
         required: false
         schema:
-          type: number
+          type: integer
+          minimum: 1
+          maximum: 5000
       - name: after
         description: Cursor for retrieving additional pages.  Use the **next** value returned by the previous call to GET /file/v1/files.
         example: Mw==
@@ -345,7 +510,7 @@ components:
         schema:
           type: string
       - name: criteria
-        description: Criteria for files to retrieve.
+        description: Criteria for files to retrieve, as a JSON object. Must be valid JSON.
         in: query
         required: false
         content:
@@ -355,7 +520,7 @@ components:
               properties:
                 typeEquals:
                   description: The ID of the File Type collection associated with a file when it is created. There is a one-to-many relationship between a File Type collection and files.
-                  example: generated-pdf
+                  example: supporting-documents
                   type: string
                 recordIdEquals:
                   description: An application-defined record ID; associated with a file when it is created. There is a one-to-many relationship between a record ID and files.
@@ -370,13 +535,16 @@ components:
                   example: Bob
                   type: string
                 lastAccessedBefore:
-                  description: Returns all files with lastAccessed before (exclusive) the ISO 8061 timestamp provided.
+                  description: Returns all files with lastAccessed before (exclusive) the ISO 8601 timestamp provided.
                   type: string
                   format: date-time
                 lastAccessedAfter:
-                  description: Returns all files with lastAccessed after (exclusive) the ISO 8061 timestamp provided.
+                  description: Returns all files with lastAccessed after (exclusive) the ISO 8601 timestamp provided.
                   type: string
                   format: date-time
+            example:
+              typeEquals: supporting-documents
+              filenameContains: income
 
     responses:
       200:
@@ -407,6 +575,33 @@ components:
                         as it will just repeat the set just returned.
                       example: Mw==
                       type: string
+            example:
+              results:
+                - urn: urn:ads:platform:file-service:v1:/files/ced3fbdd-7597-455e-84c6-1d0b3d03a274
+                  id: ced3fbdd-7597-455e-84c6-1d0b3d03a274
+                  filename: proof-of-income.pdf
+                  size: 112845
+                  typeName: Supporting Documents
+                  recordId: 864f975b-8d57-450b-b581-72ff42299bdf
+                  mimeType: application/pdf
+                  created: '2026-09-24T17:00:00.000Z'
+                  createdBy:
+                    id: 21fabd96-34f7-4b0f-a8b6-9f80b9a9ab0d
+                    name: Test User
+                  lastAccessed: '2026-09-25T15:30:00.000Z'
+                  scanned: true
+                  infected: false
+                  securityClassification: protected a
+                  digest: sha256-vVEAaGCkdyXB56ABe6NxEU+Fsym7bieZg/97hN7+HyQ=
+                  _links:
+                    self:
+                      href: urn:ads:platform:file-service:v1:/files/ced3fbdd-7597-455e-84c6-1d0b3d03a274
+                    download:
+                      href: urn:ads:platform:file-service:v1:/files/ced3fbdd-7597-455e-84c6-1d0b3d03a274/download
+              page:
+                after: Mw==
+                next: NA==
+                size: 1
       400:
         $ref: '#/components/responses/FileBadRequest'
       401:
@@ -416,12 +611,17 @@ components:
       - File
     description: >
       Marks multiple files for deletion. File deletion is not immediate, but files will eventually disappear.
-      Users with the file-service-admin role can delete any file; other users can only delete files they uploaded
-      and still have one of the file type's updateRoles for. Stops at the first file that is not found or cannot be
-      deleted.
+      Requires an authenticated user. Users with the file-service-admin role can delete any file of their tenant;
+      other users can only delete files they uploaded and still have one of the file type's updateRoles for.
+
+
+      Files are processed in order, and the request stops at the first file that is not found (404) or cannot be
+      deleted (401). Files before it stay marked for deletion.
     parameters:
       - name: files
-        description: File IDs to delete, provided as a comma-separated query string.
+        description: >
+          IDs (UUIDs) of the files to delete, as a comma-separated list. A bracketed list (`[id1,id2]`) and repeated
+          files parameters are also accepted. At least one ID is required.
         example: '53fca659-362d-407f-9c4d-c2c8c6427bdb,ced3fbdd-7597-455e-84c6-1d0b3d03a274'
         in: query
         required: true
@@ -474,9 +674,10 @@ components:
     tags:
       - File
     description: >
-      Marks a file for deletion.  File deletion is not immediate, but it will eventually disappear. Users with the
-      file-service-admin role can delete any file; other users can only delete files they uploaded and still have
-      one of the file type's updateRoles for.
+      Marks a file for deletion.  File deletion is not immediate, but it will eventually disappear. Requires an
+      authenticated user who can read the file (see GET), otherwise 403. Users with the file-service-admin role can
+      delete any file of their tenant; other users can only delete files they uploaded and still have one of the
+      file type's updateRoles for, otherwise 401.
     responses:
       200:
         description: Delete result
@@ -502,8 +703,8 @@ components:
       - File
     description: >
       Retrieves a file's metadata. The user must have uploaded the file, have one of the file type's readRoles or
-      the file-service-admin role, or the file type must allow anonymous read. A bearer token is not required for
-      files of types with anonymousRead.
+      the file-service-admin role in the file's tenant, or the file type must allow anonymous read. A bearer token is
+      not required for files of types with anonymousRead.
 
 
       Platform services with the directory-service resource-resolver role (urn:ads:platform:directory-service:resource-resolver)
@@ -530,8 +731,11 @@ components:
       - File
     description: >
       Executes a file operation. The copy operation copies the file to a new file, optionally of a different type.
-      The user must be able to read the source file (see GET), and must have one of the destination file type's
-      updateRoles or the file-service-admin role.
+      Requires an authenticated user who can read the source file (see GET), otherwise 403, and who has one of the
+      destination file type's updateRoles or the file-service-admin role, otherwise 401. The destination type is
+      looked up in the tenant of the request, so core users who set type must also set tenantId.
+    parameters:
+      - $ref: '#/components/parameters/FileTenantId'
     requestBody:
       required: true
       content:
@@ -545,23 +749,46 @@ components:
                 copy: '#/components/schemas/CopyFileOperation'
           example:
             operation: copy
-            type: generated-pdf
-            filename: report-copy.pdf
+            type: supporting-documents
+            filename: proof-of-income-copy.pdf
             recordId: 864f975b-8d57-450b-b581-72ff42299bdf
     responses:
       200:
-        description: Result of the operation
+        description: Result of the operation. For copy, the new file, which is scanned for malware after the copy.
         content:
           application/json:
             schema:
               oneOf:
                 - $ref: '#/components/schemas/File'
+            example:
+              urn: urn:ads:platform:file-service:v1:/files/0d9c8b7a-6f5e-4d3c-8b2a-1f0e9d8c7b6a
+              id: 0d9c8b7a-6f5e-4d3c-8b2a-1f0e9d8c7b6a
+              filename: proof-of-income-copy.pdf
+              size: 112845
+              typeName: Supporting Documents
+              recordId: 864f975b-8d57-450b-b581-72ff42299bdf
+              mimeType: application/pdf
+              created: '2026-09-26T10:00:00.000Z'
+              createdBy:
+                id: 21fabd96-34f7-4b0f-a8b6-9f80b9a9ab0d
+                name: Test User
+              lastAccessed: '2026-09-26T10:00:00.000Z'
+              scanned: false
+              infected: false
+              securityClassification: protected a
+              _links:
+                self:
+                  href: urn:ads:platform:file-service:v1:/files/0d9c8b7a-6f5e-4d3c-8b2a-1f0e9d8c7b6a
+                download:
+                  href: urn:ads:platform:file-service:v1:/files/0d9c8b7a-6f5e-4d3c-8b2a-1f0e9d8c7b6a/download
       400:
-        description: Operation not recognized, or a parameter failed validation.
+        description: Operation not recognized, a parameter failed validation, or tenantId is invalid.
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/FileError'
+            example:
+              errorMessage: 'Validation failed with error(s): operation (body) - Invalid value'
       401:
         $ref: '#/components/responses/FileUnauthorized'
       403:
@@ -574,19 +801,21 @@ components:
     tags:
       - File
     description: |
-      Downloads a file.  The file is normally downloaded as an octet stream, and this call can safely be used in an anchor tag to trigger a browser download, e.g.
+      Downloads a file.  By default the file is sent as an attachment, so this call can safely be used in an anchor tag to trigger a browser download, e.g.
 
-      ```<a href="https://adsp.alberta.ca/file/v1/files/{fileId}/download"/>```
+      ```<a href="https://file-service.adsp.alberta.ca/file/v1/files/{fileId}/download"/>```
 
       However, to embed images and other documents into a browser page, you would use the *embed* query parameter, e.g.
 
-      ```<img src="https://adsp.alberta.ca/file/v1/files/{fileId}/download?embed=true"/>```
+      ```<img src="https://file-service.adsp.alberta.ca/file/v1/files/{fileId}/download?embed=true"/>```
 
       Access follows the same rules as retrieving the file's metadata (except for the resource-resolver role). Links like the ones above only work without a bearer token when the file type has anonymousRead set; otherwise the request must include a bearer token.
 
+      The response Content-Type is the MIME type of the file (application/octet-stream when it is unknown; SVG images have `;base64` appended). Content-Disposition is `attachment`, or `inline` with embed=true, and carries the filename. Cache-Control is `no-store`, except `public` for embedded files of types with anonymousRead.
+
       A file that was not scanned when it was uploaded is considered unsafe, and will not download by default.  You can override this behaviour by setting unsafe=true. Infected files and files marked for deletion cannot be downloaded.
 
-      Single byte ranges are supported with the Range header, in which case the response is 206 Partial Content.
+      Single byte ranges are supported with the Range header, in which case the response is 206 Partial Content. Multiple ranges and ranges outside the file respond 400.
     security:
       - {}
       - accessToken: []
@@ -622,29 +851,60 @@ components:
           type: string
     responses:
       200:
-        description: Request successful.
+        description: Request successful. The body is the file content.
+        headers:
+          Content-Type:
+            description: MIME type of the file.
+            schema:
+              type: string
+              example: application/pdf
+          Content-Disposition:
+            description: attachment, or inline with embed=true, with the filename.
+            schema:
+              type: string
+              example: "attachment; filename*=UTF-8''proof-of-income.pdf"
+          Content-Length:
+            description: Size of the file in bytes.
+            schema:
+              type: integer
+              example: 112845
+          Accept-Ranges:
+            schema:
+              type: string
+              example: bytes
         content:
-          application/octet-stream:
+          '*/*':
             schema:
               type: string
               format: binary
       206:
         description: Requested range of the file.
+        headers:
+          Content-Range:
+            description: Range of the file in the body, and the size of the file.
+            schema:
+              type: string
+              example: bytes 0-1023/112845
+          Content-Length:
+            description: Size of the range in bytes.
+            schema:
+              type: integer
+              example: 1024
         content:
-          application/octet-stream:
+          '*/*':
             schema:
               type: string
               format: binary
       400:
-        description: File scan pending, file is infected or marked for deletion, or the range is not supported.
+        description: >
+          File scan pending, file is infected or marked for deletion, the range is not supported, or a parameter failed
+          validation.
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/FileError'
             example:
               errorMessage: File scan pending.
-      401:
-        $ref: '#/components/responses/FileUnauthorized'
       403:
         $ref: '#/components/responses/FileForbidden'
       404:

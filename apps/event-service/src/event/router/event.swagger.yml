@@ -1,10 +1,84 @@
 components:
+  parameters:
+    EventTenantId:
+      name: tenantId
+      description: >
+        ID of the tenant to act on, as a tenant URN. Only used for core (platform) users; tenant users always act on
+        the tenant of their token and this parameter is ignored.
+      in: query
+      required: false
+      schema:
+        type: string
+      example: urn:ads:platform:tenant-service:v2:/tenants/61f2e3a8c9b1d2e3f4a5b6c7
+    EventDefinitionNamespace:
+      name: namespace
+      description: Namespace of the event definition.
+      in: path
+      required: true
+      schema:
+        type: string
+        pattern: '^[a-zA-Z0-9-_ ]{1,50}$'
+      example: application-events
+    EventDefinitionName:
+      name: name
+      description: Name of the event definition.
+      in: path
+      required: true
+      schema:
+        type: string
+        pattern: '^[a-zA-Z0-9-_ ]{1,50}$'
+      example: user-registration
+  responses:
+    EventBadRequest:
+      description: >
+        Request is invalid, for example a query, path, or body parameter failed validation, or there is no tenant
+        context.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/EventError'
+          example:
+            errorMessage: 'Validation failed with error(s): timestamp (body) - Invalid value'
+    EventUnauthorized:
+      description: Request does not include a valid bearer token.
+      content:
+        text/plain:
+          schema:
+            type: string
+          example: Unauthorized
+    EventForbidden:
+      description: User does not have the role required for the operation.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/EventError'
+          example:
+            errorMessage: 'User Test User (ID: 1234) not permitted to send event.'
+    EventDefinitionNotFound:
+      description: >
+        Event definition not found. Definitions of other tenants are never visible, so their IDs also respond 404.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/EventError'
+          example:
+            errorMessage: "event definition with ID 'application-events:user-registration' could not be found."
+    EventDefinitionConflict:
+      description: An event definition with the same namespace and name already exists in the tenant.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/EventError'
+          example:
+            errorMessage: "Event definition 'application-events:user-registration' already exists."
   schemas:
     EventError:
       type: object
       properties:
         errorMessage:
           type: string
+      example:
+        errorMessage: 'Validation failed with error(s): timestamp (body) - Invalid value'
     EventDefinition:
       type: object
       properties:
@@ -20,40 +94,107 @@ components:
         payloadSchema:
           type: object
           description: JSON schema used to validate the payload of events sent with this namespace and name.
+        interval:
+          type: object
+          description: >
+            Set by platform services only. Identifies an earlier event with the same correlation ID; the event log
+            records the duration between the two events as a metric.
+          properties:
+            namespace:
+              type: string
+            name:
+              type: string
+            metric:
+              oneOf:
+                - type: string
+                - type: array
+                  items:
+                    type: string
+            context:
+              oneOf:
+                - type: string
+                - type: array
+                  items:
+                    type: string
+        log:
+          type: object
+          description: Set by platform services only. Controls whether events are written to the event log.
+          properties:
+            skip:
+              type: boolean
         isCore:
           type: boolean
+          readOnly: true
           description: True if the definition is a core (platform) definition rather than tenant specific.
+      example:
+        namespace: application-events
+        name: user-registration
+        description: A new user registered.
+        payloadSchema:
+          type: object
+          properties:
+            userId:
+              type: string
+          required:
+            - userId
+        isCore: false
+    EventDefinitionRequest:
+      type: object
+      properties:
+        description:
+          type: string
+          nullable: true
+          description: >
+            Description of the event. The configuration service requires the property, so send null when there is no
+            description.
+        payloadSchema:
+          type: object
+          description: JSON schema (draft-07) that the payload of events with this namespace and name must match.
+      required:
+        - description
+        - payloadSchema
+      description: >
+        Description and payload schema of an event definition. Other properties, such as `interval` and `log`, are not
+        supported for tenant definitions.
+    EventDefinitionDeleted:
+      type: object
+      properties:
+        deleted:
+          type: boolean
+      example:
+        deleted: true
     EventCount:
       type: object
       properties:
         count:
           type: integer
           description: Number of logged events matching the supplied criteria.
+      example:
+        count: 1024
 
 /event/v1/events:
   post:
     tags:
       - Event
     description: >
-      Send an event. Requires the event-sender role. The event is sent in the tenant of the user; core (platform)
-      users can send an event for a specific tenant with the tenantId query parameter or body property.
+      Send an event. Requires the event-sender role.
 
 
-      If the tenant has an event definition for the namespace and name, the payload is validated against the
-      definition's payload schema. If there is no matching definition, the event is treated as an ad hoc event:
+      Tenant users and tenant service accounts always send the event in the tenant of their token; a `tenantId` in
+      the body is ignored. Core (platform) service accounts send an event on behalf of a tenant by setting the
+      `tenantId` query parameter or the `tenantId` body property. A core user without either responds 400.
+
+
+      If there is an event definition (tenant or core) for the namespace and name, the payload is validated against
+      the definition's payload schema. If there is no matching definition, the event is treated as an ad hoc event:
       it is still sent and logged, but the payload is not validated.
 
 
-      Event definitions, the event log, and event streams are provided by the configuration, value, and push
-      services; see the [event service guide](https://govalta.github.io/adsp-monorepo/services/event-service.html).
+      Sent events are written to the event log in the value service, routed to subscribers such as the notification
+      service, and streamed by the push service; see the
+      [event service guide](https://govalta.github.io/adsp-monorepo/services/event-service.html).
     parameters:
-      - name: tenantId
-        description: ID of the tenant to send the event for. Only used for core (platform) users.
-        in: query
-        required: false
-        schema:
-          type: string
-        example: urn:ads:platform:tenant-service:v2:/tenants/61f2e3a8c9b1d2e3f4a5b6c7
+      - $ref: '#/components/parameters/EventTenantId'
     requestBody:
       required: true
       content:
@@ -63,13 +204,13 @@ components:
             properties:
               namespace:
                 type: string
-                description: The namespace of the event definition.
+                description: The namespace of the event.
                 minLength: 1
                 maxLength: 50
                 example: application-events
               name:
                 type: string
-                description: The name of the event definition.
+                description: The name of the event.
                 minLength: 1
                 maxLength: 50
                 example: user-registration
@@ -89,34 +230,55 @@ components:
                 format: date-time
               payload:
                 type: object
-                description: An object with values matching the schema specified in the Event Definition that can be used by the event receiver.
+                description: >
+                  An object with values matching the payload schema of the event definition, if there is one.
               tenantId:
                 type: string
                 description: >
-                  ID of the tenant to send the event for. Only core (platform) users can specify a tenant other than
-                  their own.
+                  Tenant URN to send the event for. Only used for core (platform) users, when the `tenantId` query
+                  parameter is not set.
             required:
               - namespace
               - name
               - timestamp
               - payload
-          example:
-            namespace: application-events
-            name: user-registration
-            correlationId: Bobs-user-id
-            context:
-              applicationId: application-1234
-            timestamp: '2026-09-24T17:00:00.000Z'
-            payload:
-              userId: Bobs-user-id
-              registeredOn: '2026-09-24'
+          examples:
+            tenant:
+              summary: Tenant service account sends an event in its own tenant
+              value:
+                namespace: application-events
+                name: user-registration
+                correlationId: Bobs-user-id
+                context:
+                  applicationId: application-1234
+                timestamp: '2026-09-24T17:00:00.000Z'
+                payload:
+                  userId: Bobs-user-id
+                  registeredOn: '2026-09-24'
+            core:
+              summary: Core service account sends an event on behalf of a tenant
+              value:
+                tenantId: urn:ads:platform:tenant-service:v2:/tenants/61f2e3a8c9b1d2e3f4a5b6c7
+                namespace: form-service
+                name: form-submitted
+                correlationId: urn:ads:platform:form-service:v1:/forms/9f1c2d3e-4b5a-4c6d-8e7f-0a1b2c3d4e5f
+                timestamp: '2026-09-24T17:00:00.000Z'
+                payload:
+                  form:
+                    id: 9f1c2d3e-4b5a-4c6d-8e7f-0a1b2c3d4e5f
     responses:
       200:
         description: Event successfully sent.
+        content:
+          text/plain:
+            schema:
+              type: string
+            example: OK
       400:
         description: >
           Event is invalid, for example namespace or name is missing or too long, the timestamp is not in ISO 8601
-          format, the payload does not match the event definition schema, or there is no tenant context.
+          format, the payload does not match the event definition schema, the body `tenantId` is not a valid URN, or
+          there is no tenant context.
         content:
           application/json:
             schema:
@@ -124,9 +286,9 @@ components:
             example:
               errorMessage: 'Validation failed with error(s): timestamp (body) - Invalid value'
       401:
-        description: Request does not include a valid bearer token.
+        $ref: '#/components/responses/EventUnauthorized'
       403:
-        description: User does not have the event-sender role, or is sending an event for another tenant.
+        description: User does not have the event-sender role.
         content:
           application/json:
             schema:
@@ -139,14 +301,20 @@ components:
     tags:
       - Event
     description: >
-      Count logged events matching the supplied criteria. Requires the event-reader or value service reader role and a tenant context.
-      Namespace and event name are each optional and independent of one another; other supplied criteria
-      (timestamp range, correlation ID) are combined with namespace and name from the context when determining the count. The
-      count represents all events accessible to the tenant that match the supplied criteria.
+      Count logged events matching the supplied criteria. Requires the event-reader role or the value service
+      value-reader role (`urn:ads:platform:value-service:value-reader`), and a tenant context. Tenant users count the
+      events of their own tenant; core users with either role set the `tenantId` query parameter, and without it the
+      request responds 400.
 
-      Event logging is provided via the value service, but consumers of this API do not need to call the value
+
+      Namespace and event name are each optional and independent of one another; other supplied criteria
+      (timestamp range, correlation ID, context) are combined with namespace and name when determining the count.
+
+
+      The event log is stored in the value service, but consumers of this API do not need to call the value
       service directly.
     parameters:
+      - $ref: '#/components/parameters/EventTenantId'
       - name: namespace
         description: Namespace of the logged events to count.
         in: query
@@ -155,6 +323,7 @@ components:
           type: string
           minLength: 1
           maxLength: 50
+        example: application-events
       - name: name
         description: Name of the logged events to count.
         in: query
@@ -163,6 +332,7 @@ components:
           type: string
           minLength: 1
           maxLength: 50
+        example: user-registration
       - name: timestampMin
         description: Inclusive minimum value of the event timestamp.
         in: query
@@ -170,6 +340,7 @@ components:
         schema:
           type: string
           format: date-time
+        example: '2026-09-01T00:00:00.000Z'
       - name: timestampMax
         description: Inclusive maximum value of the event timestamp.
         in: query
@@ -177,18 +348,23 @@ components:
         schema:
           type: string
           format: date-time
+        example: '2026-10-01T00:00:00.000Z'
       - name: correlationId
         description: Correlation ID associated with the events.
         in: query
         required: false
         schema:
           type: string
+        example: Bobs-user-id
       - name: context
-        description: JSON object of context values the events must match. Namespace and name take precedence over matching keys.
+        description: >
+          JSON object of context values the events must match. The namespace and name parameters take precedence over
+          matching keys.
         in: query
         required: false
         schema:
           type: string
+        example: '{"applicationId":"application-1234"}'
     responses:
       200:
         description: Events successfully counted.
@@ -196,12 +372,10 @@ components:
           application/json:
             schema:
               $ref: '#/components/schemas/EventCount'
-            example:
-              count: 1024
       400:
         description: >
-          Request is invalid, for example namespace or name is too long, a timestamp is not in ISO 8601 format,
-          or there is no tenant context.
+          Request is invalid, for example namespace or name is empty or too long, a timestamp is not in ISO 8601
+          format, context is not a JSON object, or there is no tenant context.
         content:
           application/json:
             schema:
@@ -209,9 +383,9 @@ components:
             example:
               errorMessage: 'Validation failed with error(s): timestampMin (query) - Invalid value'
       401:
-        description: Request does not include a valid bearer token.
+        $ref: '#/components/responses/EventUnauthorized'
       403:
-        description: User does not have the event-reader role, or the tenant context does not match the user's tenant.
+        description: User does not have the event-reader or value-reader role.
         content:
           application/json:
             schema:
@@ -224,8 +398,15 @@ components:
     tags:
       - Event Definition
     description: >
-      Retrieves event definitions for the tenant of the user as well as core (platform) definitions, as a flat
-      array. Requires configuration-reader or event-admin roles
+      Retrieves the event definitions of the tenant and the core (platform) definitions, as a flat array with tenant
+      definitions first. Requires the event-admin role or the configuration service configuration-reader role
+      (`urn:ads:platform:configuration-service:configuration-reader`).
+
+
+      Tenant users read the definitions of their own tenant. Core users with either role set the `tenantId` query
+      parameter to include a tenant's definitions; without it, only core definitions are returned.
+    parameters:
+      - $ref: '#/components/parameters/EventTenantId'
     responses:
       200:
         description: Event definitions successfully retrieved.
@@ -236,37 +417,48 @@ components:
               items:
                 $ref: '#/components/schemas/EventDefinition'
       401:
-        description: Request does not include a valid bearer token.
+        $ref: '#/components/responses/EventUnauthorized'
       403:
         description: User does not have the event-admin or configuration-reader role.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EventError'
+            example:
+              errorMessage: 'User Test User (ID: 1234) not permitted to find event definitions.'
   post:
     tags:
       - Event Definition
     description: >
-      Creates an event definition in the tenant of the user, merging it into its namespace. Requires the
-      event-admin role. Core (platform) definitions are not writable via this endpoint.
+      Creates an event definition in the tenant, merging it into its namespace. Requires the event-admin role. Tenant
+      users create definitions in their own tenant; core users with the role must set the `tenantId` query parameter,
+      and without it the request responds 400. Core (platform) definitions are not writable via this endpoint.
+
+
+      The payload schema must be a valid JSON schema. Changes are applied through the configuration service, so they
+      may take a few minutes to apply to sent events.
+    parameters:
+      - $ref: '#/components/parameters/EventTenantId'
     requestBody:
       required: true
       content:
         application/json:
           schema:
-            type: object
-            properties:
-              namespace:
-                type: string
-                description: Namespace of the event definition.
-              name:
-                type: string
-                description: Name of the event definition.
-              description:
-                type: string
-                nullable: true
-              payloadSchema:
-                type: object
-            required:
-              - namespace
-              - name
-              - payloadSchema
+            allOf:
+              - type: object
+                properties:
+                  namespace:
+                    type: string
+                    description: Namespace of the event definition.
+                    pattern: '^[a-zA-Z0-9-_ ]{1,50}$'
+                  name:
+                    type: string
+                    description: Name of the event definition.
+                    pattern: '^[a-zA-Z0-9-_ ]{1,50}$'
+                required:
+                  - namespace
+                  - name
+              - $ref: '#/components/schemas/EventDefinitionRequest'
           example:
             namespace: application-events
             name: user-registration
@@ -286,48 +478,38 @@ components:
             schema:
               $ref: '#/components/schemas/EventDefinition'
       400:
-        description: Request is invalid, for example the payload schema is not a valid JSON schema, or there is no tenant context.
+        description: >
+          Request is invalid, for example namespace or name does not match the pattern, the payload schema is not a
+          valid JSON schema, or there is no tenant context.
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/EventError'
+            example:
+              errorMessage: "Event definition 'application-events:user-registration' has an invalid JSON schema: schema is invalid: data/type must be equal to one of the allowed values, data/type must be array, data/type must match a schema in anyOf"
       401:
-        description: Request does not include a valid bearer token.
+        $ref: '#/components/responses/EventUnauthorized'
       403:
-        description: User does not have the event-admin role.
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/EventError'
+        $ref: '#/components/responses/EventForbidden'
       409:
-        description: An event definition with the same namespace and name already exists.
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/EventError'
+        $ref: '#/components/responses/EventDefinitionConflict'
 
 /event/v1/definitions/{namespace}/{name}:
   get:
     tags:
       - Event Definition
     description: >
-      Retrieves a single tenant or core event definition.
-      Requires configuration-reader and event-reader roles.
+      Retrieves a single event definition. A tenant definition takes precedence over a core definition with the same
+      namespace and name. Requires the event-admin role or the configuration service configuration-reader role
+      (`urn:ads:platform:configuration-service:configuration-reader`).
+
+
+      Tenant users read definitions of their own tenant and core definitions. Core users with either role set the
+      `tenantId` query parameter to read a tenant's definitions; without it, only core definitions are found.
     parameters:
-      - name: namespace
-        description: Namespace of the event definition.
-        in: path
-        required: true
-        schema:
-          type: string
-        example: application-events
-      - name: name
-        description: Name of the event definition.
-        in: path
-        required: true
-        schema:
-          type: string
-        example: user-registration
+      - $ref: '#/components/parameters/EventDefinitionNamespace'
+      - $ref: '#/components/parameters/EventDefinitionName'
+      - $ref: '#/components/parameters/EventTenantId'
     responses:
       200:
         description: Event definition successfully retrieved.
@@ -335,57 +517,52 @@ components:
           application/json:
             schema:
               $ref: '#/components/schemas/EventDefinition'
-      401:
-        description: Request does not include a valid bearer token.
-      403:
-        description: User does not have the event-admin or configuration-reader role.
-      404:
-        description: Event definition not found.
+      400:
+        description: Namespace or name does not match the pattern.
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/EventError'
+            example:
+              errorMessage: 'Validation failed with error(s): namespace (params) - Invalid value'
+      401:
+        $ref: '#/components/responses/EventUnauthorized'
+      403:
+        description: User does not have the event-admin or configuration-reader role.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EventError'
+            example:
+              errorMessage: 'User Test User (ID: 1234) not permitted to find event definition.'
+      404:
+        $ref: '#/components/responses/EventDefinitionNotFound'
   patch:
     tags:
       - Event Definition
     description: >
-      Updates an event definition in the tenant of the user, merging it into its namespace. Requires the
-      event-admin role. Core (platform) definitions are not writable via this endpoint.
+      Replaces the description and payload schema of a tenant event definition. Requires the event-admin role. Tenant
+      users update definitions in their own tenant; core users with the role must set the `tenantId` query parameter,
+      and without it the request responds 400. Core (platform) definitions are not writable via this endpoint, and
+      respond 404.
     parameters:
-      - name: namespace
-        description: Namespace of the event definition.
-        in: path
-        required: true
-        schema:
-          type: string
-        example: application-events
-      - name: name
-        description: Name of the event definition.
-        in: path
-        required: true
-        schema:
-          type: string
-        example: user-registration
+      - $ref: '#/components/parameters/EventDefinitionNamespace'
+      - $ref: '#/components/parameters/EventDefinitionName'
+      - $ref: '#/components/parameters/EventTenantId'
     requestBody:
       required: true
       content:
         application/json:
           schema:
-            type: object
-            properties:
-              description:
-                type: string
-                nullable: true
-              payloadSchema:
-                type: object
-            required:
-              - payloadSchema
+            $ref: '#/components/schemas/EventDefinitionRequest'
           example:
             description: A new user registered.
             payloadSchema:
               type: object
               properties:
                 userId:
+                  type: string
+                email:
                   type: string
               required:
                 - userId
@@ -397,61 +574,45 @@ components:
             schema:
               $ref: '#/components/schemas/EventDefinition'
       400:
-        description: Request is invalid, for example the payload schema is not a valid JSON schema, or there is no tenant context.
+        description: >
+          Request is invalid, for example namespace or name does not match the pattern, the payload schema is not a
+          valid JSON schema, or there is no tenant context.
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/EventError'
+            example:
+              errorMessage: 'Validation failed with error(s): payloadSchema (body) - Invalid value'
       401:
-        description: Request does not include a valid bearer token.
+        $ref: '#/components/responses/EventUnauthorized'
       403:
-        description: User does not have the event-admin role.
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/EventError'
+        $ref: '#/components/responses/EventForbidden'
       404:
-        description: Event definition not found in the tenant configuration.
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/EventError'
+        $ref: '#/components/responses/EventDefinitionNotFound'
   delete:
     tags:
       - Event Definition
     description: >
-      Deletes an event definition from the tenant of the user. Requires the event-admin role. Core (platform)
-      definitions are not deletable via this endpoint. The namespace itself is removed when its last definition
-      is deleted.
+      Deletes an event definition from the tenant. Requires the event-admin role. Tenant users delete definitions in
+      their own tenant; core users with the role must set the `tenantId` query parameter, and without it the request
+      responds 400. Core (platform) definitions are not deletable via this endpoint, and respond 404. The namespace
+      itself is removed when its last definition is deleted.
     parameters:
-      - name: namespace
-        description: Namespace of the event definition.
-        in: path
-        required: true
-        schema:
-          type: string
-        example: application-events
-      - name: name
-        description: Name of the event definition.
-        in: path
-        required: true
-        schema:
-          type: string
-        example: user-registration
+      - $ref: '#/components/parameters/EventDefinitionNamespace'
+      - $ref: '#/components/parameters/EventDefinitionName'
+      - $ref: '#/components/parameters/EventTenantId'
     responses:
       200:
         description: Event definition successfully deleted.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EventDefinitionDeleted'
+      400:
+        $ref: '#/components/responses/EventBadRequest'
       401:
-        description: Request does not include a valid bearer token.
+        $ref: '#/components/responses/EventUnauthorized'
       403:
-        description: User does not have the event-admin role.
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/EventError'
+        $ref: '#/components/responses/EventForbidden'
       404:
-        description: Event definition not found in the tenant configuration.
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/EventError'
+        $ref: '#/components/responses/EventDefinitionNotFound'

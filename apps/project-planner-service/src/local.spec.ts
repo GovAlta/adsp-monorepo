@@ -277,13 +277,13 @@ describe('local', () => {
       const { auditService } = await startLocal();
 
       const outcome = await auditService.record(
-        { name: 'planner.solution.created', version: 1, category: 'administrative', severity: 'info' },
+        { name: 'solution.created', version: 1, category: 'administrative', severity: 'info' },
         { tenantId, actor: { id: 'local-dev-user', type: 'user' } },
       );
 
       expect(outcome).toEqual({ status: 'recorded', eventId: 'local' });
       expect(mockLogger.debug).toHaveBeenCalledWith(
-        expect.stringMatching(new RegExp(`^audit: planner\\.solution\\.created .*"tenantId":"${tenantId.toString()}"`)),
+        expect.stringMatching(new RegExp(`^audit: solution\\.created .*"tenantId":"${tenantId.toString()}"`)),
       );
     });
   });

@@ -47,6 +47,8 @@ All endpoints are under `https://notification-service.adsp.alberta.ca/subscripti
 
 There are no separate template or event endpoints. Templates are part of each notification type's `events`, and events are sent through the [event service](event-service.md).
 
+`POST /provider/v1/bot/messages` is the Bot Framework webhook used by the `bot` channel provider. Only the Bot Framework calls it, so it is not part of the API documentation.
+
 ## Concepts
 ### Notification type
 Notification type represents a bundled set of notifications that can be subscribed to and provides the access roles for that set. For example, an 'Application Progress' type could include notifications for submission of the application, processing started, and application processed. A subscriber has a subscription to the set and cannot subscribe to the individual notifications in the set. Notification types are configured in the [configuration service](configuration-service.md) under the `platform:notification-service` namespace and name.

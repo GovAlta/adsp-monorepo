@@ -1264,7 +1264,7 @@ As of **Jan. 2025** you can use markdown for help content, significantly simplif
 
 ### File Uploads {#target-uploads}
 
-For when the user needs to upload supporting documentation. For a more complete description of file uploads, see [the documentation](/adsp-monorepo/tutorials/form-service/file-uploader.md).
+For when the user needs to upload supporting documentation. For a more complete description of file uploads, see [the documentation](/adsp-monorepo/tutorials/form-service/file-uploader.html).
 
 <table>
   <tr>

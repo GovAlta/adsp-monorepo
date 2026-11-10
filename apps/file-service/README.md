@@ -1,60 +1,44 @@
 # File service
 
-The file service provides the capability to upload and download files.
-Consumers are registered with their own space (tenant) containing file types
-that include role based access policy, and can associate files to domain records.
+Implements the ADSP file service (`urn:ads:platform:file-service`). See the [File service documentation](https://govalta.github.io/adsp-monorepo/services/file-service.html) for what it does, its roles, file types, events and audit actions.
 
-## Getting Started
+## Run locally
 
-### Prerequisites
+The service needs Keycloak, MongoDB and RabbitMQ. Uploads are virus scanned with ClamAV (`AV_HOST`, `AV_PORT`).
 
-- Keycloak
-- MongoDB
-- RabbitMQ (Optional)
-
-### Configuration
-
-Configure connection settings for JWT, Database, and AMQP in
-src/environments/environment.ts
-
-### Running the service
-
-Start the service using:
-
-```
-nx serve file-service
+```bash
+npx nx serve file-service
 ```
 
-Health endpoint at /health
+The service listens on `PORT` (default `3337`). The health endpoint is at `/health`. Set `POD_TYPE=job` to run the job pod, which also runs the daily retention job.
 
-API doc endpoint at /swagger/docs/v1
+## Test and lint
 
-### Creating a space
-
-```
-curl -X PUT |
--H "Content-Type: application/json" |
--H "Authorization: Bearer {access token}" |
--d '{ "name": "My Space", "spaceAdminRole": "my-space-admin" }' |
-http://localhost:3337/space/v1/spaces/{spaceId}
-
+```bash
+npx nx test file-service
+npx nx lint file-service
 ```
 
-The access token provided with the request must include a role of 'file-service-admin'.
+## Environment variables
 
-### Environment Variables
+Variables are loaded with [dotenv](https://www.npmjs.com/package/dotenv) and validated in `src/environments/environment.ts`, which holds the full list and the defaults. Do not commit `.env`.
 
-[Dotenv](https://www.npmjs.com/package/dotenv) is used to manage the environment variables. The .env.sample file provides the schema of the environment variables used for local development.
+| Variable                                                    | Purpose                                                                |
+| ----------------------------------------------------------- | ---------------------------------------------------------------------- |
+| `MONGO_URI`, `MONGO_DB`, `MONGO_USER`, `MONGO_PASSWORD`     | File metadata database connection                                      |
+| `KEYCLOAK_ROOT_URL`                                         | Keycloak server                                                        |
+| `CLIENT_ID`, `CLIENT_SECRET`                                | Service account of the file service                                    |
+| `DIRECTORY_URL`                                             | Directory service                                                      |
+| `AMQP_HOST`, `AMQP_USER`, `AMQP_PASSWORD`                   | RabbitMQ, for the scan and delete work queue and configuration updates |
+| `STORAGE_PROVIDER`                                          | `file` (default) for the local file system, or `blob` for Azure Blob   |
+| `FILE_PATH`                                                 | Directory for the `file` storage provider                              |
+| `BLOB_ACCOUNT_URL`, `BLOB_ACCOUNT_NAME`, `BLOB_ACCOUNT_KEY` | Azure Blob storage account, for the `blob` storage provider            |
+| `AV_PROVIDER`, `AV_HOST`, `AV_PORT`                         | Anti-virus scanner (default `clam` on `localhost:3310`)                |
+| `POD_TYPE`                                                  | `api` (default) or `job`                                               |
+| `FILE_AUDIT_ENABLED`                                        | Turns audit recording on or off; see the service documentation         |
 
-```
-mv .env.sample .env
-```
+Ask the team for the dev Keycloak client secrets.
 
-Secrets of dev keycloak which might be used during development are listed as follows:
-| Variable Name | Secret URI |
-| --------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
-| KEYCLOAK_TENANT_API_CLIENT_SECRET | [Click](https://console.os99.gov.ab.ca:8443/console/project/core-services-dev/browse/secrets/tenant-management-api) |
+## API documentation
 
-Please do not commit .env to the repository.
-
-## Modifying this to force a deployment 4
+The OpenAPI spec is built from `src/**/*.swagger.yml` (see `swagger.config.js`) and served at `/swagger/docs/v1`. `src/file/router/file.docs.spec.ts` checks that the router's responses match the documented operations.

@@ -249,6 +249,51 @@ describe('Object Array Renderer', () => {
     expect(messageInput).toHaveAttribute('value', 'The rain in Spain');
   });
 
+  it('opens the new item on its own edit page and returns to the list on Continue', async () => {
+    const { baseElement } = render(getForm({ messages: [] }));
+    const addButton = baseElement.querySelector("goa-button[testId='object-array-toolbar-Messages']");
+    expect(baseElement.querySelector("goa-button[testId='next-list-button']")).not.toBeInTheDocument();
+
+    fireEvent(addButton!, new CustomEvent('_click'));
+
+    await waitFor(() => {
+      expect(baseElement.querySelector("goa-button[testId='next-list-button']")).toBeInTheDocument();
+    });
+    expect(baseElement.querySelector("goa-input[testId='#/properties/name-input']")).toBeInTheDocument();
+    expect(addButton).toHaveAttribute('disabled', 'true');
+
+    fireEvent(baseElement.querySelector("goa-button[testId='next-list-button']")!, new CustomEvent('_click'));
+
+    await waitFor(() => {
+      expect(baseElement.querySelector("goa-button[testId='next-list-button']")).not.toBeInTheDocument();
+    });
+    expect(baseElement.querySelector("goa-input[testId='#/properties/name-input']")).not.toBeInTheDocument();
+    expect(addButton).not.toHaveAttribute('disabled', 'true');
+  });
+
+  it('generates inputs for every item property when the uischema has no detail', async () => {
+    const { baseElement } = render(
+      <JsonForms
+        data={{ messages: [] }}
+        schema={rootSchema}
+        uischema={{ type: 'ListWithDetail', scope: '#/properties/messages' } as UISchemaElement}
+        ajv={new Ajv({ allErrors: true, verbose: true })}
+        renderers={GoARenderers}
+        cells={GoACells}
+      />,
+    );
+
+    fireEvent(
+      baseElement.querySelector("goa-button[testId='object-array-toolbar-Messages']")!,
+      new CustomEvent('_click'),
+    );
+
+    await waitFor(() => {
+      expect(baseElement.querySelector("goa-input[testId='#/properties/name-input']")).toBeInTheDocument();
+    });
+    expect(baseElement.querySelector("goa-input[testId='#/properties/message-input']")).toBeInTheDocument();
+  });
+
   it('can open the delete dialog', () => {
     const data = { messages: [] };
     const { baseElement } = render(getForm(data));
@@ -328,6 +373,19 @@ describe('Object Array Renderer', () => {
   });
 
   describe('Object Array Renderer old', () => {
+    it('shows the item list and the selected item detail together with left tab', async () => {
+      const { baseElement } = render(getFormLeftTab({ messages: [{ name: 'Bob' }, { name: 'Ann' }] }));
+
+      await waitFor(() => {
+        expect(baseElement.querySelector("goa-input[testId='#/properties/name-input']")).toBeInTheDocument();
+      });
+      const detail = baseElement.querySelector("goa-input[testId='#/properties/name-input']")!;
+      const row = detail.closest('[tabindex="-1"]')!.parentElement!;
+      expect(row.children).toHaveLength(2);
+      expect(row.children[0].textContent).toContain('2');
+      expect(baseElement.querySelector("goa-button[testId='next-list-button']")).not.toBeInTheDocument();
+    });
+
     it('can add a new item with left tab', async () => {
       const data = { messages: [] };
       const { baseElement } = render(getFormLeftTab(data));

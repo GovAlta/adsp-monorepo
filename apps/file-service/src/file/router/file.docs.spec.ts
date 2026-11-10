@@ -1,4 +1,4 @@
-import { adspId, User } from '@abgov/adsp-service-sdk';
+import { adspId, AdspId, User } from '@abgov/adsp-service-sdk';
 import { createErrorHandler } from '@core-services/core-common';
 import { createDocumentedResponseRecorder } from '@core-services/core-common/testing';
 import * as express from 'express';
@@ -68,15 +68,29 @@ describe('file router documented behaviour', () => {
   const uploader = user('uploader', ['uploader']);
   const plain = user('plain', []);
 
-  function createApp(currentUser: User | null): Express {
+  const core = user('core', [ServiceUserRoles.Admin], {
+    isCore: true,
+    tenantId: adspId`urn:ads:platform:tenant-service:v2:/tenants/core`,
+  });
+
+  function createApp(currentUser: User | null, configuration: Record<string, FileTypeEntity> = types): Express {
     const app = express();
     app.use(documented.middleware);
     app.use(express.json());
     app.use((req, _res, next) => {
       req.user = currentUser;
       req.isAuthenticated = (() => !!currentUser) as typeof req.isAuthenticated;
-      req.tenant = currentUser ? ({ id: tenantId } as typeof req.tenant) : undefined;
-      req.getConfiguration = jest.fn().mockResolvedValue(types);
+      req.getConfiguration = jest.fn().mockResolvedValue(configuration);
+      // Stands in for the SDK tenantHandler mounted in main.ts: tenant users act on the tenant of their token, and
+      // core users on the tenant in the tenantId query parameter, if any.
+      req.tenant = currentUser && !currentUser.isCore ? ({ id: tenantId } as typeof req.tenant) : undefined;
+      if (currentUser?.isCore && req.query.tenantId) {
+        try {
+          req.tenant = { id: AdspId.parse(req.query.tenantId as string) } as typeof req.tenant;
+        } catch (err) {
+          return next(err);
+        }
+      }
       next();
     });
     app.use(
@@ -157,6 +171,11 @@ describe('file router documented behaviour', () => {
       const res = await request(createApp(null)).get('/file/v1/types');
       expect(res.status).toBe(401);
     });
+
+    it('responds 400 for a core user with an invalid tenantId', async () => {
+      const res = await request(createApp(core)).get('/file/v1/types?tenantId=not-a-urn');
+      expect(res.status).toBe(400);
+    });
   });
 
   describe('GET /types/:typeId', () => {
@@ -183,6 +202,16 @@ describe('file router documented behaviour', () => {
       const res = await request(createApp(admin)).get('/file/v1/types/unknown');
       expect(res.status).toBe(404);
     });
+
+    it('responds 401 without an authenticated user', async () => {
+      const res = await request(createApp(null)).get('/file/v1/types/public');
+      expect(res.status).toBe(401);
+    });
+
+    it('responds 400 for a core user with an invalid tenantId', async () => {
+      const res = await request(createApp(core)).get('/file/v1/types/private?tenantId=not-a-urn');
+      expect(res.status).toBe(400);
+    });
   });
 
   describe('GET /files', () => {
@@ -203,6 +232,27 @@ describe('file router documented behaviour', () => {
       expect(res.status).toBe(400);
     });
 
+    it('responds 401 without an authenticated user', async () => {
+      const res = await request(createApp(null)).get('/file/v1/files');
+      expect(res.status).toBe(401);
+    });
+
+    it('responds 400 for a core user without a tenantId', async () => {
+      const res = await request(createApp(core)).get('/file/v1/files');
+      expect(res.status).toBe(400);
+    });
+
+    it('lists the files of the tenant in tenantId for a core user', async () => {
+      const res = await request(createApp(core)).get(`/file/v1/files?tenantId=${encodeURIComponent(`${tenantId}`)}`);
+      expect(res.status).toBe(200);
+      expect(`${repositoryMock.find.mock.calls[0][0]}`).toBe(`${tenantId}`);
+    });
+
+    it('responds 400 for criteria that is not JSON', async () => {
+      const res = await request(createApp(admin)).get('/file/v1/files?criteria=not-json');
+      expect(res.status).toBe(400);
+    });
+
     it('responds 400 for a lastAccessedBefore that is not ISO 8601', async () => {
       const criteria = encodeURIComponent(JSON.stringify({ lastAccessedBefore: 'yesterday' }));
       const res = await request(createApp(admin)).get(`/file/v1/files?criteria=${criteria}`);
@@ -211,6 +261,64 @@ describe('file router documented behaviour', () => {
   });
 
   describe('POST /files', () => {
+    it('uploads a file with the metadata fields before the file part', async () => {
+      storageProviderMock.saveFile.mockResolvedValueOnce(true);
+      const res = await request(createApp(uploader))
+        .post('/file/v1/files')
+        .field('type', 'private')
+        .field('recordId', 'record-1')
+        .field('filename', 'renamed.txt')
+        .attach('file', Buffer.from('content'), 'test.txt');
+      expect(res.status).toBe(200);
+      expect(res.body).toMatchObject({ filename: 'renamed.txt', recordId: 'record-1', typeName: 'private' });
+      expect(eventServiceMock.send).toHaveBeenCalledWith(expect.objectContaining({ name: 'file-uploaded' }));
+    });
+
+    it('accepts the metadata as query parameters', async () => {
+      storageProviderMock.saveFile.mockResolvedValueOnce(true);
+      const res = await request(createApp(uploader))
+        .post('/file/v1/files?type=private')
+        .attach('file', Buffer.from('content'), 'test.txt');
+      expect(res.status).toBe(200);
+      expect(res.body.filename).toBe('test.txt');
+    });
+
+    it('responds 400 for an extension not in allowedFileTypes', async () => {
+      const app = createApp(uploader, { ...types, pdf: type('pdf', { allowedFileTypes: ['.pdf'] }) });
+      const res = await request(app)
+        .post('/file/v1/files')
+        .field('type', 'pdf')
+        .attach('file', Buffer.from('x'), 'a.txt');
+      expect(res.status).toBe(400);
+      expect(storageProviderMock.saveFile).not.toHaveBeenCalled();
+    });
+
+    it('responds 400 for a platform type without a tenant context', async () => {
+      const app = createApp(core, { platform: type('platform', { tenantId: undefined }) });
+      const res = await request(app)
+        .post('/file/v1/files')
+        .field('type', 'platform')
+        .attach('file', Buffer.from('content'), 'test.txt');
+      expect(res.status).toBe(400);
+    });
+
+    it('responds 400 for an invalid filename', async () => {
+      const res = await request(createApp(uploader))
+        .post('/file/v1/files')
+        .field('type', 'private')
+        .field('filename', 'a/b.txt')
+        .attach('file', Buffer.from('content'), 'test.txt');
+      expect(res.status).toBe(400);
+    });
+
+    it('responds 401 without an authenticated user', async () => {
+      const res = await request(createApp(null))
+        .post('/file/v1/files')
+        .field('type', 'private')
+        .attach('file', Buffer.from('content'), 'test.txt');
+      expect(res.status).toBe(401);
+    });
+
     it('responds 400 when no file is included', async () => {
       const res = await request(createApp(uploader)).post('/file/v1/files').send({ type: 'private' });
       expect(res.status).toBe(400);
@@ -338,6 +446,11 @@ describe('file router documented behaviour', () => {
       expect(res.status).toBe(400);
     });
 
+    it('responds 404 for an unknown file', async () => {
+      const res = await request(createApp(reader)).get(`/file/v1/files/${unknownId}/download`);
+      expect(res.status).toBe(404);
+    });
+
     it('responds 400 for an embed value that is not boolean', async () => {
       const res = await request(createApp(reader)).get(`/file/v1/files/${fileIds.private}/download?embed=yes`);
       expect(res.status).toBe(400);
@@ -360,6 +473,21 @@ describe('file router documented behaviour', () => {
       const formerUploader = user('uploader', ['reader']);
       const res = await request(createApp(formerUploader)).delete(`/file/v1/files/${fileIds.private}`);
       expect(res.status).toBe(401);
+    });
+
+    it('responds 403 for a user who cannot read the file', async () => {
+      const res = await request(createApp(plain)).delete(`/file/v1/files/${fileIds.private}`);
+      expect(res.status).toBe(403);
+    });
+
+    it('responds 404 for an unknown file', async () => {
+      const res = await request(createApp(admin)).delete(`/file/v1/files/${unknownId}`);
+      expect(res.status).toBe(404);
+    });
+
+    it('responds 400 for a file ID that is not a UUID', async () => {
+      const res = await request(createApp(admin)).delete('/file/v1/files/not-a-uuid');
+      expect(res.status).toBe(400);
     });
 
     it('rejects a user with an update role who did not upload the file', async () => {

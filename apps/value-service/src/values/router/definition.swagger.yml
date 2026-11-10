@@ -8,6 +8,14 @@ components:
             $ref: '#/components/schemas/ValueError'
           example:
             errorMessage: Value definition 'test-service:response-time' already exists.
+    ValueDefinitionNotFound:
+      description: Value definition not found in the tenant (or, for reads, in the core definitions).
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ValueError'
+          example:
+            errorMessage: value definition with ID 'test-service:response-time' could not be found.
   schemas:
     ValueDefinition:
       type: object
@@ -25,6 +33,13 @@ components:
         sendWriteEvent:
           type: boolean
           description: Whether a value-written event is sent when a value is written.
+      example:
+        name: response-time
+        displayName: Response time
+        description: Response time of the test service.
+        jsonSchema:
+          type: number
+        sendWriteEvent: false
     ValueDefinitionUpdate:
       type: object
       properties:
@@ -36,6 +51,8 @@ components:
           type: object
         sendWriteEvent:
           type: boolean
+      example:
+        description: Response time of the test service in milliseconds.
     ValueDefinitionResponse:
       allOf:
         - $ref: '#/components/schemas/ValueDefinition'
@@ -46,6 +63,15 @@ components:
             isCore:
               type: boolean
               description: Whether the definition is a core (platform) definition rather than a tenant definition.
+      example:
+        namespace: test-service
+        name: response-time
+        displayName: Response time
+        description: Response time of the test service.
+        jsonSchema:
+          type: number
+        sendWriteEvent: false
+        isCore: false
     ValueNamespace:
       type: object
       properties:
@@ -55,6 +81,14 @@ components:
           type: object
           additionalProperties:
             $ref: '#/components/schemas/ValueDefinition'
+      example:
+        name: test-service
+        definitions:
+          response-time:
+            name: response-time
+            description: Response time of the test service.
+            jsonSchema:
+              type: number
 
 /value/v1/definitions:
   get:
@@ -62,7 +96,10 @@ components:
       - Value definition
     description: >
       Retrieves the tenant and core value definitions, grouped by namespace. Requires the value-reader or
-      value-writer role. Core users without a tenant context receive only core definitions.
+      value-writer role. Tenant users receive the definitions of their own tenant; core users with the role receive
+      those of the tenant set by tenantId, or only core definitions (with an empty tenant) when it is not set.
+    parameters:
+      - $ref: '#/components/parameters/ValueTenantId'
     responses:
       200:
         description: Value definitions successfully retrieved.
@@ -90,6 +127,14 @@ components:
                   type: object
                   additionalProperties:
                     $ref: '#/components/schemas/ValueNamespace'
+      400:
+        description: tenantId is not a valid tenant URN.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ValueError'
+            example:
+              errorMessage: 'ADSP ID (not-a-tenant) must begin with: urn:ads:'
       401:
         $ref: '#/components/responses/ValueUnauthorized'
       403:
@@ -99,7 +144,11 @@ components:
       - Value definition
     description: >
       Creates a value definition in the tenant configuration, adding the namespace if it does not exist. Requires the
-      value-writer role. The JSON schema must be a valid JSON schema.
+      value-writer role and a tenant context: tenant users create definitions in their own tenant, and core users must
+      set tenantId. The JSON schema must be a valid JSON schema. Responds 409 if a tenant or core definition with the
+      same namespace and name already exists.
+    parameters:
+      - $ref: '#/components/parameters/ValueTenantId'
     requestBody:
       required: true
       content:
@@ -110,6 +159,7 @@ components:
             description: Response time of the test service.
             jsonSchema:
               type: number
+            sendWriteEvent: false
           schema:
             allOf:
               - $ref: '#/components/schemas/ValueDefinition'
@@ -146,18 +196,25 @@ components:
       required: true
       schema:
         type: string
+        pattern: '^[a-zA-Z0-9-_ ]{1,50}$'
+      example: test-service
     - name: name
       description: Name of the value definition.
       in: path
       required: true
       schema:
         type: string
+        pattern: '^[a-zA-Z0-9-_ ]{1,50}$'
+      example: response-time
+    - $ref: '#/components/parameters/ValueTenantId'
   get:
     tags:
       - Value definition
     description: >
       Retrieves a value definition. The tenant definition is returned if it exists, otherwise the core definition.
-      Requires the value-reader or value-writer role.
+      Requires the value-reader or value-writer role. Tenant users read their own tenant's definitions; core users read
+      those of the tenant set by tenantId, or only core definitions when it is not set. Definitions of other tenants
+      respond 404.
     responses:
       200:
         description: Value definition successfully retrieved.
@@ -172,13 +229,15 @@ components:
       403:
         $ref: '#/components/responses/ValueForbidden'
       404:
-        $ref: '#/components/responses/ValueNotFound'
+        $ref: '#/components/responses/ValueDefinitionNotFound'
   patch:
     tags:
       - Value definition
     description: >
       Updates a tenant value definition. Properties not included in the request are left unchanged. Requires the
-      value-writer role. The JSON schema must be a valid JSON schema.
+      value-writer role and a tenant context: tenant users update their own tenant's definitions, and core users must
+      set tenantId. Core definitions and definitions of other tenants respond 404. The JSON schema must be a valid JSON
+      schema.
     requestBody:
       required: true
       content:
@@ -201,13 +260,14 @@ components:
       403:
         $ref: '#/components/responses/ValueForbidden'
       404:
-        $ref: '#/components/responses/ValueNotFound'
+        $ref: '#/components/responses/ValueDefinitionNotFound'
   delete:
     tags:
       - Value definition
     description: >
       Deletes a tenant value definition. The namespace is removed when its last definition is deleted. Requires the
-      value-writer role.
+      value-writer role and a tenant context: tenant users delete their own tenant's definitions, and core users must
+      set tenantId. Core definitions and definitions of other tenants respond 404.
     responses:
       200:
         description: Value definition successfully deleted.
@@ -218,6 +278,8 @@ components:
               properties:
                 deleted:
                   type: boolean
+            example:
+              deleted: true
       400:
         $ref: '#/components/responses/ValueBadRequest'
       401:
@@ -225,4 +287,4 @@ components:
       403:
         $ref: '#/components/responses/ValueForbidden'
       404:
-        $ref: '#/components/responses/ValueNotFound'
+        $ref: '#/components/responses/ValueDefinitionNotFound'

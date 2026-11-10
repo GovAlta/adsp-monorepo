@@ -37,6 +37,7 @@ describe('pdf router documented behaviour', () => {
   const fileServiceMock = { typeExists: jest.fn(), upload: jest.fn() };
   const queueServiceMock = { enqueue: jest.fn(), getItems: jest.fn(), isConnected: jest.fn() };
   const tokenProviderMock = { getAccessToken: jest.fn().mockResolvedValue('token') };
+  const auditServiceMock = { record: jest.fn(), query: jest.fn(), flush: jest.fn(), droppedEventCount: 0 };
   const directoryMock = {
     getServiceUrl: jest.fn().mockResolvedValue(new URL('https://configuration-service.adsp.alberta.ca/')),
     getResourceUrl: jest.fn(),
@@ -84,6 +85,7 @@ describe('pdf router documented behaviour', () => {
         fileService: fileServiceMock,
         directory: directoryMock,
         tokenProvider: tokenProviderMock,
+        auditService: auditServiceMock,
       }),
     );
     app.use(createErrorHandler(loggerMock));
