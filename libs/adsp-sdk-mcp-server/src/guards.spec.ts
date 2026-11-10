@@ -1,5 +1,6 @@
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'fs';
+import { connect, AddressInfo } from 'net';
 import { tmpdir } from 'os';
 import { join } from 'path';
 import { McpServerConfig } from './config';
@@ -15,7 +16,7 @@ import {
   waitFor,
 } from './fixtures/httpTestKit';
 import { createMetricsTestKit, MetricsTestKit } from './fixtures/metricsTestKit';
-import { createMcpHttpApp } from './http';
+import { createMcpHttpApp, createMcpHttpServer } from './http';
 import { installMetrics } from './metrics';
 import * as quickstartModule from './tools/registerQuickstartTool';
 
@@ -426,5 +427,48 @@ describe('in-flight gate', () => {
     expect((await fetch(running.health)).status).toBe(200);
     releaseHeld();
     await held;
+  });
+});
+
+describe('slow request bodies', () => {
+  it('frees the slot of a client that never finishes sending its body', async () => {
+    const app = createMcpHttpApp({
+      docsRoot: FIXTURE_DOCS_ROOT,
+      config: testConfig({ maxInFlight: 1, inFlightWaitMs: 100, rateLimitPerMinute: 0 }),
+    });
+    const httpServer = createMcpHttpServer(app, {
+      requestTimeoutMs: 300,
+      headersTimeoutMs: 200,
+      connectionsCheckingIntervalMs: 50,
+    });
+    await new Promise<void>((resolveListening) => httpServer.listen(0, '127.0.0.1', resolveListening));
+    const { port } = httpServer.address() as AddressInfo;
+    const endpoint = new URL(`http://127.0.0.1:${port}/mcp`);
+    const stalled = connect(port, '127.0.0.1');
+    stalled.on('error', () => undefined);
+
+    try {
+      stalled.write(
+        'POST /mcp HTTP/1.1\r\nHost: 127.0.0.1\r\nContent-Type: application/json\r\n' +
+          'Accept: application/json, text/event-stream\r\nContent-Length: 100\r\n\r\n{"jsonrpc":'
+      );
+      await new Promise((resolveTick) => setTimeout(resolveTick, 50));
+      expect((await postMcp(endpoint, TOOLS_LIST_REQUEST)).status).toBe(503);
+
+      await new Promise((resolveTick) => setTimeout(resolveTick, 600));
+
+      expect((await postMcp(endpoint, TOOLS_LIST_REQUEST)).status).toBe(200);
+    } finally {
+      stalled.destroy();
+      httpServer.closeAllConnections();
+      await new Promise((resolveClosed) => httpServer.close(resolveClosed));
+    }
+  });
+
+  it('uses request and header timeouts shorter than Node defaults', () => {
+    const httpServer = createMcpHttpServer(createMcpHttpApp({ docsRoot: FIXTURE_DOCS_ROOT, config: testConfig() }));
+
+    expect(httpServer.requestTimeout).toBe(30_000);
+    expect(httpServer.headersTimeout).toBe(20_000);
   });
 });

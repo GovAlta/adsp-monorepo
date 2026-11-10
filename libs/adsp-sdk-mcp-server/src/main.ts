@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { McpServerConfig, readConfig } from './config';
-import { createMcpHttpApp } from './http';
+import { createMcpHttpApp, createMcpHttpServer } from './http';
 import { startMetricsFromEnv } from './metrics';
 import { createAdspMcpServer } from './server';
 import { configureLiveToolLimit } from './tools/liveToolLimit';
@@ -36,7 +36,7 @@ async function startHttp(config: McpServerConfig): Promise<void> {
   const app = createMcpHttpApp({ config });
 
   return new Promise((resolve) => {
-    const httpServer = app.listen(port, () => {
+    const httpServer = createMcpHttpServer(app).listen(port, () => {
       console.error(`[adsp-sdk-mcp-server] HTTP server listening on :${port}`);
       resolve();
     });

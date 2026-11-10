@@ -1,5 +1,6 @@
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import * as express from 'express';
+import { createServer, Server as HttpServer } from 'http';
 import { performance } from 'perf_hooks';
 import { McpServerConfig, readConfig } from './config';
 import { createCorsAndOriginGuard, createInFlightGate, createRateLimit } from './guards';
@@ -92,4 +93,25 @@ export function createMcpHttpApp({ config = readConfig(), ...serverOptions }: Mc
   app.delete('/mcp', methodNotAllowed);
 
   return app;
+}
+
+export interface McpHttpServerOptions {
+  requestTimeoutMs?: number;
+  headersTimeoutMs?: number;
+  connectionsCheckingIntervalMs?: number;
+}
+
+/**
+ * The in-flight gate admits a request before its body arrives, so a client that never finishes sending one would hold
+ * a slot until Node's 300 s default. These limits only cover receiving the request, not how long a tool call takes.
+ */
+export function createMcpHttpServer(app: express.Express, options: McpHttpServerOptions = {}): HttpServer {
+  return createServer(
+    {
+      requestTimeout: options.requestTimeoutMs ?? 30_000,
+      headersTimeout: options.headersTimeoutMs ?? 20_000,
+      connectionsCheckingInterval: options.connectionsCheckingIntervalMs ?? 5_000,
+    },
+    app
+  );
 }
