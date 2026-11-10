@@ -14,19 +14,19 @@ describe('audit', () => {
 
   it('defines the PDF service action catalog', () => {
     expect(auditDefinitions(PdfAuditActions)).toEqual({
-      'pdf.job.created': expect.objectContaining({ category: 'runtime', severity: 'info', resourceType: 'pdf-job' }),
-      'pdf.job.generated': expect.objectContaining({ category: 'runtime', severity: 'info', resourceType: 'pdf-job' }),
-      'pdf.template.created': expect.objectContaining({
+      'job.created': expect.objectContaining({ category: 'runtime', severity: 'info', resourceType: 'pdf-job' }),
+      'job.generated': expect.objectContaining({ category: 'runtime', severity: 'info', resourceType: 'pdf-job' }),
+      'template.created': expect.objectContaining({
         category: 'administrative',
         severity: 'info',
         resourceType: 'pdf-template',
       }),
-      'pdf.template.updated': expect.objectContaining({
+      'template.updated': expect.objectContaining({
         category: 'administrative',
         severity: 'warning',
         resourceType: 'pdf-template',
       }),
-      'pdf.template.deleted': expect.objectContaining({
+      'template.deleted': expect.objectContaining({
         category: 'administrative',
         severity: 'warning',
         resourceType: 'pdf-template',
@@ -37,11 +37,11 @@ describe('audit', () => {
   it('derives retention classes from the categories', () => {
     PdfAuditActions.forEach((action) => expect(action.retentionClass).toBeUndefined());
     expect(Object.fromEntries(PdfAuditActions.map((action) => [action.name, resolveRetentionClass(action)]))).toEqual({
-      'pdf.job.created': 'standard',
-      'pdf.job.generated': 'standard',
-      'pdf.template.created': 'compliance',
-      'pdf.template.updated': 'compliance',
-      'pdf.template.deleted': 'compliance',
+      'job.created': 'standard',
+      'job.generated': 'standard',
+      'template.created': 'compliance',
+      'template.updated': 'compliance',
+      'template.deleted': 'compliance',
     });
   });
 

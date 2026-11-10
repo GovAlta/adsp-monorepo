@@ -22,22 +22,20 @@ Security-sensitive changes in a tenant realm and failed logins are recorded in t
 
 | action | severity | resource type | recorded when |
 |:-|:-|:-|:-|
-| access.user.created | info | user | A user is created. |
-| access.user.updated | info | user | A user is updated. |
-| access.user.deleted | critical | user | A user is deleted. |
-| access.user.role-assigned | warning | user | Client roles are assigned to a user. |
-| access.user.role-removed | warning | user | Client roles are removed from a user. |
-| access.service-account.created | warning | service-account | A client is created. |
-| access.service-account.credential-rotated | critical | service-account | The secret of a client is regenerated. |
-| access.service-account.deleted | critical | service-account | A client is deleted. |
-| access.realm.configuration-changed | critical | realm | The realm settings, including its event settings, are updated. |
-| access.user.login-failed | warning | user, when known | A login attempt fails (`LOGIN_ERROR`). Recorded with `failure` status. |
+| user.created | info | user | A user is created. |
+| user.updated | info | user | A user is updated. |
+| user.deleted | critical | user | A user is deleted. |
+| user.role-assigned | warning | user | Client roles are assigned to a user. |
+| user.role-removed | warning | user | Client roles are removed from a user. |
+| service-account.created | warning | service-account | A client is created. |
+| service-account.credential-rotated | critical | service-account | The secret of a client is regenerated. |
+| service-account.deleted | critical | service-account | A client is deleted. |
+| realm.configuration-changed | critical | realm | The realm settings, including its event settings, are updated. |
+| user.login-failed | warning | user, when known | A login attempt fails (`LOGIN_ERROR`). Recorded with `failure` status. |
 
 Every client is recorded as a `service-account` resource, since a deleted client cannot be told apart from other clients. Resources are identified by their Keycloak ID: users are named by username and created clients by client ID when available. Realm resources use the realm ID of the event.
 
 The actor of an admin action is the administrator's Keycloak user ID. Its metadata includes `realm`, `operationType`, `resourcePath` and `actorRealm` (the administrator's realm); role changes add the `roles` names and the `clientId` (Keycloak client ID) of the roles. The actor of a failed login is the user. When Keycloak does not know the user, the actor ID is `unknown` and the attempted username, truncated to 255 characters, is the actor name. Its metadata includes `realm`, `clientId` (also truncated to 255 characters) and the Keycloak error as `reason`.
-
-Action names start with `access.` so they do not take generic names such as `user.created` from tenant catalogs. Audit Service rejects a tenant action whose name matches any Core action.
 
 Records never include the Keycloak representation itself, regenerated client secrets, IP addresses, or login details other than the username.
 

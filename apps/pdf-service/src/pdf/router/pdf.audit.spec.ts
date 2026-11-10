@@ -52,7 +52,7 @@ describe('pdf router audit', () => {
   });
 
   describe('createPdfTemplate', () => {
-    it('records pdf.template.created', async () => {
+    it('records template.created', async () => {
       const req = {
         tenant: { id: tenantId },
         user: admin,
@@ -116,7 +116,7 @@ describe('pdf router audit', () => {
   });
 
   describe('updatePdfTemplate', () => {
-    it('records pdf.template.updated with the changed fields', async () => {
+    it('records template.updated with the changed fields', async () => {
       const req = {
         tenant: { id: tenantId },
         user: admin,
@@ -161,7 +161,7 @@ describe('pdf router audit', () => {
   });
 
   describe('deletePdfTemplate', () => {
-    it('records pdf.template.deleted', async () => {
+    it('records template.deleted', async () => {
       const req = {
         tenant: { id: tenantId },
         user: admin,
@@ -216,7 +216,7 @@ describe('pdf router audit', () => {
         auditServiceMock,
       );
 
-    it('records pdf.job.created for a service account', async () => {
+    it('records job.created for a service account', async () => {
       const req = {
         tenant: { id: tenantId },
         user: {

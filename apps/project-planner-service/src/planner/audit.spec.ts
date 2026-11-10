@@ -67,61 +67,61 @@ describe('planner audit', () => {
         ]),
       ),
     ).toEqual({
-      'planner.solution.created': {
+      'solution.created': {
         category: 'administrative',
         severity: 'info',
         retentionClass: 'compliance',
         resourceType: 'solution',
       },
-      'planner.solution.deleted': {
+      'solution.deleted': {
         category: 'administrative',
         severity: 'warning',
         retentionClass: 'compliance',
         resourceType: 'solution',
       },
-      'planner.solution.exported': {
+      'solution.exported': {
         category: 'data-access',
         severity: 'info',
         retentionClass: 'compliance',
         resourceType: 'solution',
       },
-      'planner.solution.admin-accessed': {
+      'solution.admin-accessed': {
         category: 'data-access',
         severity: 'info',
         retentionClass: 'compliance',
         resourceType: 'solution',
       },
-      'planner.solution.analyzed': {
+      'solution.analyzed': {
         category: 'runtime',
         severity: 'info',
         retentionClass: 'standard',
         resourceType: 'solution',
       },
-      'planner.pattern.created': {
+      'pattern.created': {
         category: 'administrative',
         severity: 'info',
         retentionClass: 'compliance',
         resourceType: 'pattern',
       },
-      'planner.pattern.updated': {
+      'pattern.updated': {
         category: 'administrative',
         severity: 'info',
         retentionClass: 'compliance',
         resourceType: 'pattern',
         captureChangeSet: true,
       },
-      'planner.pattern.deleted': {
+      'pattern.deleted': {
         category: 'administrative',
         severity: 'warning',
         retentionClass: 'compliance',
         resourceType: 'pattern',
       },
-      'planner.specialist-chat.exported': {
+      'specialist-chat.exported': {
         category: 'data-access',
         severity: 'info',
         retentionClass: 'compliance',
       },
-      'planner.specialist-chat.deleted': {
+      'specialist-chat.deleted': {
         category: 'administrative',
         severity: 'info',
         retentionClass: 'compliance',
@@ -273,7 +273,7 @@ describe('planner audit', () => {
       await new Promise((resolve) => setImmediate(resolve));
 
       expect(logger.warn).toHaveBeenCalledWith(
-        expect.stringContaining('planner.solution.admin-accessed: Error: audit unavailable'),
+        expect.stringContaining('solution.admin-accessed: Error: audit unavailable'),
         expect.anything(),
       );
     });
