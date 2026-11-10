@@ -1,5 +1,7 @@
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import * as express from 'express';
+import { performance } from 'perf_hooks';
+import { bucketMcpMethod, getMetrics } from './metrics';
 import { createAdspMcpServer, CreateAdspMcpServerOptions, loadAdspMcpTools } from './server';
 
 const MAX_REQUEST_BODY_BYTES = 1024 * 1024;
@@ -18,6 +20,12 @@ function applyCorsHeaders(req: express.Request, res: express.Response, next: exp
 
 function createStatelessPostHandler(options: CreateAdspMcpServerOptions): express.RequestHandler {
   return async (req, res) => {
+    const started = performance.now();
+    const metrics = getMetrics();
+    let method = 'unparsed';
+    let messagesSeen = 0;
+    metrics.addInFlight(1);
+
     const server = createAdspMcpServer(options);
     const transport = new StreamableHTTPServerTransport({
       sessionIdGenerator: undefined,
@@ -28,10 +36,19 @@ function createStatelessPostHandler(options: CreateAdspMcpServerOptions): expres
     res.on('close', () => {
       transport.close();
       server.close();
+      metrics.addInFlight(-1);
+      metrics.recordRequest(method, res.statusCode, (performance.now() - started) / 1000);
     });
 
     try {
       await server.connect(transport);
+      const deliver = transport.onmessage;
+      // The transport parses the body itself, so the JSON-RPC method is only visible as messages arrive.
+      transport.onmessage = (message, extra) => {
+        messagesSeen += 1;
+        method = messagesSeen > 1 ? 'batch' : bucketMcpMethod(message);
+        deliver?.(message, extra);
+      };
       await transport.handleRequest(req, res);
     } catch (err) {
       console.error('[adsp-sdk-mcp-server] Failed to handle MCP request:', err);
