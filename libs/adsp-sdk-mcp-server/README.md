@@ -74,8 +74,8 @@ there is no stream to open and no session to delete.
 
 #### Health and shutdown
 
-- `GET /health` is liveness: it answers `200` while the process is up, including during shutdown, so a pod that is
-  still finishing requests isn't restarted.
+- `GET /health` is liveness: it answers `200` while the process is up, including during the shutdown delay, so a pod
+  that is still finishing requests isn't restarted. Once the delay ends the port is closed.
 - `GET /ready` is readiness. The server only listens once the docs index is built, so the check fails while the index
   loads. It answers `200` after that, and `503` from the moment shutdown starts.
 
@@ -83,10 +83,12 @@ On `SIGTERM` or `SIGINT`:
 
 1. `/ready` starts failing, and responses carry `Connection: close` so clients reconnect elsewhere.
 2. The server keeps serving for `MCP_SHUTDOWN_DELAY_MS`, while the router takes the pod out of rotation.
-3. It stops accepting connections, lets requests already running finish, flushes metrics, and exits `0`.
+3. It stops accepting new connections, lets requests already running finish, flushes metrics, and exits `0`. A
+   request already on an open connection is still answered, with `Connection: close`.
 4. If a request is still running at `MCP_SHUTDOWN_TIMEOUT_MS`, it exits `1` anyway.
 
-Set the pod's `terminationGracePeriodSeconds` above `MCP_SHUTDOWN_TIMEOUT_MS`.
+Set the pod's `terminationGracePeriodSeconds` above `MCP_SHUTDOWN_TIMEOUT_MS`, and keep `MCP_SHUTDOWN_DELAY_MS` longer
+than it takes the router to stop sending traffic to a pod that fails readiness.
 
 #### Overload guards
 
