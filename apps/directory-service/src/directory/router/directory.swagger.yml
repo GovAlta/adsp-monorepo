@@ -1,24 +1,105 @@
 components:
+  parameters:
+    DirectoryNamespace:
+      name: namespace
+      description: >
+        Namespace of the directory, which is the name of a tenant in kebab case (for example `test-tenant` for the
+        tenant named Test Tenant). The namespace must match the name of a tenant; hyphens are read as spaces and the
+        match ignores case. Read operations respond 400 when the namespace is empty or longer than 50 characters.
+      in: path
+      required: true
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 50
+      example: test-tenant
+    DirectoryServiceName:
+      name: service
+      description: Name of the service, for example `form-service`.
+      in: path
+      required: true
+      schema:
+        type: string
+      example: form-service
+    DirectoryApiName:
+      name: api
+      description: Name of the service API, usually its version, for example `v1`.
+      in: path
+      required: true
+      schema:
+        type: string
+      example: v1
+  responses:
+    DirectoryBadRequest:
+      description: Request is invalid, for example a path parameter failed validation.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/DirectoryError'
+          example:
+            errorMessage: 'Validation failed with error(s): namespace (params) - Invalid value'
+    DirectoryForbidden:
+      description: >
+        User does not have the directory-admin role in the tenant of the namespace. Anonymous requests, core users,
+        and users of other tenants also receive this response.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/DirectoryError'
+          example:
+            errorMessage: 'User Test User (ID: 7c3e1a52-1f0b-4bd3-9a41-2b8f6c5d9e10) not permitted to updated directory.'
+    DirectoryNamespaceNotFound:
+      description: No tenant has the name of the namespace.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/DirectoryError'
+          example:
+            errorMessage: directory namespace with ID 'test-tenant' could not be found.
+    DirectoryConflict:
+      description: An entry with the name already exists in the namespace. The response has no body.
   schemas:
+    DirectoryError:
+      type: object
+      properties:
+        errorMessage:
+          type: string
     DirectoryEntry:
       title: Directory entry
       type: object
       properties:
         urn:
           type: string
-          description: ADSP urn of the service or API.
+          description: ADSP URN of the service or API.
         url:
           type: string
-          description: Url of the service or API.
+          description: URL of the service or API.
         service:
           type: string
-          description: Name of the service.
-        api:
-          type: string
-          description: Name of the API.
+          description: >
+            Name of the entry: the service name for a service entry, or `{service}:{api}` for an API entry.
         namespace:
           type: string
           description: Namespace of the directory entry.
+      example:
+        urn: urn:ads:test-tenant:form-service:v1
+        url: https://form-service.test.gov.ab.ca/form/v1
+        service: form-service:v1
+        namespace: test-tenant
+    DirectoryService:
+      title: Directory service entry
+      description: Entry as stored in the directory.
+      type: object
+      properties:
+        service:
+          type: string
+          description: Name of the entry; `{service}:{api}` for an API entry.
+        host:
+          type: string
+          description: URL of the service or API.
+      example:
+        service: form-service:v1
+        host: https://form-service.test.gov.ab.ca/form/v1
     Link:
       type: object
       properties:
@@ -45,7 +126,7 @@ components:
                 - type: array
                   items:
                     $ref: '#/components/schemas/Link'
-            doc:
+            docs:
               $ref: '#/components/schemas/Link'
             health:
               $ref: '#/components/schemas/Link'
@@ -55,42 +136,85 @@ components:
               - type: array
                 items:
                   $ref: '#/components/schemas/Link'
+      example:
+        name: Form service
+        description: Service for submitting forms.
+        _links:
+          self:
+            href: https://form-service.test.gov.ab.ca/
+          health:
+            href: https://form-service.test.gov.ab.ca/health
+          api:
+            href: https://form-service.test.gov.ab.ca/form/v1
+          docs:
+            href: https://form-service.test.gov.ab.ca/swagger/docs/v1
+
+'/directory/v2/namespaces':
+  post:
+    tags:
+      - Directory
+    description: >
+      Creates the directory namespace of the current user's tenant, with no entries. The namespace name is the tenant
+      name in kebab case. Requires the directory-admin role in the user's tenant. The request has no body and the
+      response has no body. Requires a tenant user or service account; core (platform) users have no tenant to
+      create a namespace for.
+    responses:
+      201:
+        description: Namespace created.
+      400:
+        description: The namespace of the tenant already exists.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DirectoryError'
+            example:
+              errorMessage: 'Value not valid for Create new namespace: namespace test-tenant exists'
+      403:
+        description: User does not have the directory-admin role.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DirectoryError'
+            example:
+              errorMessage: 'User Test User (ID: 7c3e1a52-1f0b-4bd3-9a41-2b8f6c5d9e10) not permitted to create namespace.'
 
 '/directory/v2/namespaces/{namespace}/entries':
   get:
     tags:
       - Directory
-    description: Fetch all directory entries by namespace
+    description: >
+      Retrieves all entries (services and APIs) of the namespace. Anonymous access is allowed; no role is required.
+      Responds with an empty array when the namespace has no entries.
+    security:
+      - {}
+      - accessToken: []
     parameters:
-      - name: namespace
-        description: namespace of the directory entry
-        in: path
-        required: true
-        schema:
-          type: string
+      - $ref: '#/components/parameters/DirectoryNamespace'
     responses:
       200:
-        description: Request completed successfully.
+        description: Entries of the namespace.
         content:
           application/json:
             schema:
               type: array
               items:
                 $ref: '#/components/schemas/DirectoryEntry'
+      400:
+        $ref: '#/components/responses/DirectoryBadRequest'
+      404:
+        $ref: '#/components/responses/DirectoryNamespaceNotFound'
 
 '/directory/v2/namespaces/{namespace}/services':
   post:
     tags:
       - Directory
-    description: Add a new service to the directory
+    description: >
+      Adds a service entry to the namespace. Requires the directory-admin role in the tenant of the namespace;
+      core users and users of other tenants are not permitted. Creates the namespace if it does not exist.
     parameters:
-      - name: namespace
-        description: namespace of the directory entry
-        in: path
-        required: true
-        schema:
-          type: string
+      - $ref: '#/components/parameters/DirectoryNamespace'
     requestBody:
+      required: true
       content:
         application/json:
           schema:
@@ -98,37 +222,55 @@ components:
             properties:
               service:
                 type: string
+                description: Name of the service.
               url:
                 type: string
+                description: URL of the service.
+            required: [service, url]
+          example:
+            service: form-service
+            url: https://form-service.test.gov.ab.ca
     responses:
       201:
-        description: Directory entry is successfully added
-      400:
-        description: Bad request
-      401:
-        description: Unauthorized
+        description: Service entry added.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DirectoryService'
+            example:
+              service: form-service
+              host: https://form-service.test.gov.ab.ca
+      403:
+        $ref: '#/components/responses/DirectoryForbidden'
+      404:
+        $ref: '#/components/responses/DirectoryNamespaceNotFound'
+      409:
+        $ref: '#/components/responses/DirectoryConflict'
 
 '/directory/v2/namespaces/{namespace}/services/{service}':
   get:
     tags:
       - Directory
-    description: Fetch the service data
+    description: >
+      Retrieves the service entry with the metadata of the service. The directory requests the metadata from the
+      service URL, and caches it for 5 minutes. Anonymous access is allowed; no role is required.
+    security:
+      - {}
+      - accessToken: []
     parameters:
-      - name: namespace
-        description: namespace of the directory entry
-        in: path
-        required: true
-        schema:
-          type: string
+      - $ref: '#/components/parameters/DirectoryNamespace'
       - name: service
-        description: name of the service
+        description: Name of the service, for example `form-service`.
         in: path
         required: true
         schema:
           type: string
+          minLength: 1
+          maxLength: 50
+        example: form-service
     responses:
       200:
-        description: Returns the service's metadata
+        description: Service entry with its metadata.
         content:
           application/json:
             schema:
@@ -136,32 +278,58 @@ components:
               properties:
                 _id:
                   type: string
+                  readOnly: true
                 service:
                   type: string
                 host:
                   type: string
                 metadata:
                   $ref: '#/components/schemas/ServiceMetadata'
-      401:
-        description: Unauthorized
+            example:
+              _id: 64f1c2a3b4c5d6e7f8a9b0c1
+              service: form-service
+              host: https://form-service.test.gov.ab.ca
+              metadata:
+                name: Form service
+                description: Service for submitting forms.
+                _links:
+                  self:
+                    href: https://form-service.test.gov.ab.ca/
+                  health:
+                    href: https://form-service.test.gov.ab.ca/health
+                  api:
+                    href: https://form-service.test.gov.ab.ca/form/v1
+      400:
+        description: >
+          A path parameter failed validation, or the service is not in the namespace. When the namespace has no
+          directory, the response is the plain text `Bad Request`.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DirectoryError'
+            example:
+              errorMessage: 'Value not valid for Update service: Cannot find service: form-service'
+      404:
+        $ref: '#/components/responses/DirectoryNamespaceNotFound'
+      424:
+        description: The metadata could not be retrieved from the service URL, or it is not a JSON object.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DirectoryError'
+            example:
+              errorMessage: Failed to fetch data from remote server
   patch:
     tags:
       - Directory
-    description: Update the url of the specified service
+    description: >
+      Updates the URL of the service entry. Requires the directory-admin role in the tenant of the namespace; core
+      users and users of other tenants are not permitted. Responds 201 with no body on success.
     parameters:
-      - name: namespace
-        description: namespace of the directory entry
-        in: path
-        required: true
-        schema:
-          type: string
-      - name: service
-        description: name of the service to be updated
-        in: path
-        required: true
-        schema:
-          type: string
+      - $ref: '#/components/parameters/DirectoryNamespace'
+      - $ref: '#/components/parameters/DirectoryServiceName'
     requestBody:
+      required: true
       content:
         application/json:
           schema:
@@ -169,98 +337,121 @@ components:
             properties:
               url:
                 type: string
+                description: New URL of the service.
+            required: [url]
+          example:
+            url: https://form-service.test.gov.ab.ca
     responses:
       201:
-        description: Directory entry is successfully updated
+        description: Service entry updated.
       400:
-        description: Bad request
-      401:
-        description: Unauthorized
-
+        description: The service is not in the namespace.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                errors:
+                  type: string
+            example:
+              errors: form-service does not exist in test-tenant
+      403:
+        $ref: '#/components/responses/DirectoryForbidden'
+      404:
+        $ref: '#/components/responses/DirectoryNamespaceNotFound'
   delete:
     tags:
       - Directory
-    description: Delete the specified service entry
+    description: >
+      Deletes the service entry. API entries of the service are not deleted. Requires the directory-admin role in
+      the tenant of the namespace; core users and users of other tenants are not permitted. Responds 200 with no
+      JSON body on success.
     parameters:
-      - name: namespace
-        description: namespace of the directory entry
-        in: path
-        required: true
-        schema:
-          type: string
-      - name: service
-        description: name of the service to be deleted
-        in: path
-        required: true
-        schema:
-          type: string
+      - $ref: '#/components/parameters/DirectoryNamespace'
+      - $ref: '#/components/parameters/DirectoryServiceName'
     responses:
       200:
-        description: The entry was successfully deleted.
-      401:
-        description: Unauthorized
+        description: Service entry deleted.
+      400:
+        description: The namespace has no directory, or the service is not in the namespace.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DirectoryError'
+            example:
+              errorMessage: 'Value not valid for Delete namespace service: Cannot find form-service'
+      403:
+        $ref: '#/components/responses/DirectoryForbidden'
+      404:
+        $ref: '#/components/responses/DirectoryNamespaceNotFound'
 
 '/directory/v2/namespaces/{namespace}/services/{service}/apis':
   get:
     tags:
       - Directory
-    description: Fetch the API entries for the specified service.
+    description: >
+      Retrieves the entry of the service and the entries of its APIs. Anonymous access is allowed; no role is
+      required. Characters other than letters, spaces, and hyphens are removed from the service name before
+      matching.
+    security:
+      - {}
+      - accessToken: []
     parameters:
-      - name: namespace
-        description: namespace of the directory entry
-        in: path
-        required: true
-        schema:
-          type: string
-      - name: service
-        description: Name of the service
-        in: path
-        required: true
-        schema:
-          type: string
+      - $ref: '#/components/parameters/DirectoryNamespace'
+      - $ref: '#/components/parameters/DirectoryServiceName'
     responses:
       200:
-        description: Request completed successfully.
+        description: Service entry and its API entries.
         content:
           application/json:
             schema:
               type: object
               properties:
                 service:
-                  type: object
-                  description: The directory entries for the requested service apis.
-                  properties:
-                    namespace:
-                      type: string
-                    service:
-                      type: string
-                    url:
-                      type: string
-                    urn:
-                      type: string
+                  allOf:
+                    - $ref: '#/components/schemas/DirectoryEntry'
+                  nullable: true
+                  description: Entry of the service, or null if only API entries are registered.
                 apis:
                   type: array
-                  description: A list of service API entries for the requested service.
+                  description: Entries of the service APIs.
                   items:
                     $ref: '#/components/schemas/DirectoryEntry'
+            example:
+              service:
+                urn: urn:ads:test-tenant:form-service
+                url: https://form-service.test.gov.ab.ca
+                service: form-service
+                namespace: test-tenant
+              apis:
+                - urn: urn:ads:test-tenant:form-service:v1
+                  url: https://form-service.test.gov.ab.ca/form/v1
+                  service: form-service:v1
+                  namespace: test-tenant
+      400:
+        $ref: '#/components/responses/DirectoryBadRequest'
+      404:
+        description: >
+          No tenant has the name of the namespace, or the namespace has no entry for the service or its APIs. The
+          second case responds with the plain text `Not Found`.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DirectoryError'
+            example:
+              errorMessage: directory namespace with ID 'test-tenant' could not be found.
   post:
     tags:
       - Directory
-    description: Add a new service API to the directory
+    description: >
+      Adds an API entry for the service, named `{service}:{api}`. The service entry does not need to exist.
+      Requires the directory-admin role in the tenant of the namespace; core users and users of other tenants are
+      not permitted. Creates the namespace if it does not exist.
     parameters:
-      - name: namespace
-        description: namespace of the directory entry
-        in: path
-        required: true
-        schema:
-          type: string
-      - name: service
-        description: name of the service to which the API will be added
-        in: path
-        required: true
-        schema:
-          type: string
+      - $ref: '#/components/parameters/DirectoryNamespace'
+      - $ref: '#/components/parameters/DirectoryServiceName'
     requestBody:
+      required: true
       content:
         application/json:
           schema:
@@ -268,41 +459,72 @@ components:
             properties:
               api:
                 type: string
+                description: Name of the API, usually its version.
               url:
                 type: string
+                description: URL of the API.
+            required: [api, url]
+          example:
+            api: v1
+            url: https://form-service.test.gov.ab.ca/form/v1
     responses:
       201:
-        description: Directory entry is successfully added
-      400:
-        description: Bad request
-      401:
-        description: Unauthorized
+        description: API entry added.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DirectoryService'
+      403:
+        $ref: '#/components/responses/DirectoryForbidden'
+      404:
+        $ref: '#/components/responses/DirectoryNamespaceNotFound'
+      409:
+        $ref: '#/components/responses/DirectoryConflict'
 
 '/directory/v2/namespaces/{namespace}/services/{service}/apis/{api}':
+  get:
+    tags:
+      - Directory
+    description: >
+      Retrieves the entry of the service API. Anonymous access is allowed; no role is required.
+    security:
+      - {}
+      - accessToken: []
+    parameters:
+      - $ref: '#/components/parameters/DirectoryNamespace'
+      - $ref: '#/components/parameters/DirectoryServiceName'
+      - $ref: '#/components/parameters/DirectoryApiName'
+    responses:
+      200:
+        description: Entry of the service API.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DirectoryEntry'
+      400:
+        $ref: '#/components/responses/DirectoryBadRequest'
+      404:
+        description: >
+          No tenant has the name of the namespace, or the API is not in the namespace. The second case responds with
+          the plain text `Not Found`.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DirectoryError'
+            example:
+              errorMessage: directory namespace with ID 'test-tenant' could not be found.
   patch:
     tags:
       - Directory
-    description: Update the url of the specified service API
+    description: >
+      Updates the URL of the service API entry. Requires the directory-admin role in the tenant of the namespace;
+      core users and users of other tenants are not permitted. Responds 201 with no body on success.
     parameters:
-      - name: namespace
-        description: namespace of the directory entry
-        in: path
-        required: true
-        schema:
-          type: string
-      - name: service
-        description: name of the service
-        in: path
-        required: true
-        schema:
-          type: string
-      - name: api
-        description: name of the service API
-        in: path
-        required: true
-        schema:
-          type: string
+      - $ref: '#/components/parameters/DirectoryNamespace'
+      - $ref: '#/components/parameters/DirectoryServiceName'
+      - $ref: '#/components/parameters/DirectoryApiName'
     requestBody:
+      required: true
       content:
         application/json:
           schema:
@@ -310,39 +532,50 @@ components:
             properties:
               url:
                 type: string
+                description: New URL of the API.
+            required: [url]
+          example:
+            url: https://form-service.test.gov.ab.ca/form/v1
     responses:
       201:
-        description: Directory entry is successfully updated
+        description: API entry updated.
       400:
-        description: Bad request
-      401:
-        description: Unauthorized
-
+        description: The API is not in the namespace.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                errors:
+                  type: string
+            example:
+              errors: form-service:v1 does not exist in test-tenant
+      403:
+        $ref: '#/components/responses/DirectoryForbidden'
+      404:
+        $ref: '#/components/responses/DirectoryNamespaceNotFound'
   delete:
     tags:
       - Directory
-    description: Delete the specified service API entry
+    description: >
+      Deletes the service API entry. Requires the directory-admin role in the tenant of the namespace; core users
+      and users of other tenants are not permitted. Responds 200 with no JSON body on success.
     parameters:
-      - name: namespace
-        description: namespace of the entry
-        in: path
-        required: true
-        schema:
-          type: string
-      - name: service
-        description: name of the service
-        in: path
-        required: true
-        schema:
-          type: string
-      - name: api
-        description: name of the service API
-        in: path
-        required: true
-        schema:
-          type: string
+      - $ref: '#/components/parameters/DirectoryNamespace'
+      - $ref: '#/components/parameters/DirectoryServiceName'
+      - $ref: '#/components/parameters/DirectoryApiName'
     responses:
       200:
-        description: The entry was successfully deleted
-      401:
-        description: Unauthorized
+        description: API entry deleted.
+      400:
+        description: The namespace has no directory, or the API is not in the namespace.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DirectoryError'
+            example:
+              errorMessage: 'Value not valid for Delete namespace service: Cannot find form-service:v1'
+      403:
+        $ref: '#/components/responses/DirectoryForbidden'
+      404:
+        $ref: '#/components/responses/DirectoryNamespaceNotFound'

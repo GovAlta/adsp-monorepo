@@ -56,6 +56,13 @@ describe('pdf', () => {
     getAccessToken: jest.fn(),
   };
 
+  const auditServiceMock = {
+    record: jest.fn(),
+    query: jest.fn(),
+    flush: jest.fn(),
+    droppedEventCount: 0,
+  };
+
   const configuration = {
     test: {
       id: 'test',
@@ -85,6 +92,7 @@ describe('pdf', () => {
     axiosMock.patch.mockReset();
     serviceDirectoryMock.getServiceUrl.mockClear();
     tokenProviderMock.getAccessToken.mockReset();
+    auditServiceMock.record.mockReset();
   });
 
   const serviceDirectoryMock = {
@@ -99,6 +107,7 @@ describe('pdf', () => {
       repository: repositoryMock,
       queueService: queueServiceMock,
       eventService: eventServiceMock,
+      auditService: auditServiceMock,
       fileService: fileServiceMock,
       directory: serviceDirectoryMock,
       tokenProvider: tokenProviderMock,
@@ -123,7 +132,7 @@ describe('pdf', () => {
       tokenProviderMock.getAccessToken.mockResolvedValueOnce('test-token');
       axiosMock.patch.mockResolvedValueOnce({ data: {} });
 
-      await createPdfTemplate(serviceDirectoryMock, tokenProviderMock)(
+      await createPdfTemplate(serviceDirectoryMock, tokenProviderMock, auditServiceMock)(
         req as unknown as Request,
         res as unknown as Response,
         next,
@@ -179,7 +188,7 @@ describe('pdf', () => {
       tokenProviderMock.getAccessToken.mockResolvedValueOnce('test-token');
       axiosMock.patch.mockResolvedValueOnce({ data: {} });
 
-      await createPdfTemplate(serviceDirectoryMock, tokenProviderMock)(
+      await createPdfTemplate(serviceDirectoryMock, tokenProviderMock, auditServiceMock)(
         req as unknown as Request,
         res as unknown as Response,
         next,
@@ -227,7 +236,7 @@ describe('pdf', () => {
       tokenProviderMock.getAccessToken.mockResolvedValueOnce('test-token');
       axiosMock.patch.mockResolvedValueOnce({ data: {} });
 
-      await createPdfTemplate(serviceDirectoryMock, tokenProviderMock)(
+      await createPdfTemplate(serviceDirectoryMock, tokenProviderMock, auditServiceMock)(
         req as unknown as Request,
         res as unknown as Response,
         next,
@@ -260,7 +269,7 @@ describe('pdf', () => {
       const res = createMockResponse();
       const next = jest.fn();
 
-      await createPdfTemplate(serviceDirectoryMock, tokenProviderMock)(
+      await createPdfTemplate(serviceDirectoryMock, tokenProviderMock, auditServiceMock)(
         req as unknown as Request,
         res as unknown as Response,
         next,
@@ -291,7 +300,7 @@ describe('pdf', () => {
       tokenProviderMock.getAccessToken.mockResolvedValueOnce('test-token');
       axiosMock.patch.mockRejectedValueOnce(error);
 
-      await createPdfTemplate(serviceDirectoryMock, tokenProviderMock)(
+      await createPdfTemplate(serviceDirectoryMock, tokenProviderMock, auditServiceMock)(
         req as unknown as Request,
         res as unknown as Response,
         next,
@@ -312,7 +321,7 @@ describe('pdf', () => {
       const res = createMockResponse();
       const next = jest.fn();
 
-      await createPdfTemplate(serviceDirectoryMock, tokenProviderMock)(
+      await createPdfTemplate(serviceDirectoryMock, tokenProviderMock, auditServiceMock)(
         req as unknown as Request,
         res as unknown as Response,
         next,
@@ -462,7 +471,7 @@ describe('pdf', () => {
     };
 
     it('can create handler', () => {
-      const handler = updatePdfTemplate(serviceDirectoryMock, tokenProviderMock);
+      const handler = updatePdfTemplate(serviceDirectoryMock, tokenProviderMock, auditServiceMock);
       expect(handler).toBeTruthy();
     });
 
@@ -481,7 +490,7 @@ describe('pdf', () => {
       tokenProviderMock.getAccessToken.mockResolvedValueOnce('test-token');
       axiosMock.patch.mockResolvedValueOnce({ data: {} });
 
-      await updatePdfTemplate(serviceDirectoryMock, tokenProviderMock)(
+      await updatePdfTemplate(serviceDirectoryMock, tokenProviderMock, auditServiceMock)(
         req as unknown as Request,
         res as unknown as Response,
         next,
@@ -539,7 +548,7 @@ describe('pdf', () => {
       tokenProviderMock.getAccessToken.mockResolvedValueOnce('test-token');
       axiosMock.patch.mockResolvedValueOnce({ data: {} });
 
-      await updatePdfTemplate(serviceDirectoryMock, tokenProviderMock)(
+      await updatePdfTemplate(serviceDirectoryMock, tokenProviderMock, auditServiceMock)(
         req as unknown as Request,
         res as unknown as Response,
         next,
@@ -579,7 +588,7 @@ describe('pdf', () => {
       tokenProviderMock.getAccessToken.mockResolvedValueOnce('test-token');
       axiosMock.patch.mockResolvedValueOnce({ data: {} });
 
-      await updatePdfTemplate(serviceDirectoryMock, tokenProviderMock)(
+      await updatePdfTemplate(serviceDirectoryMock, tokenProviderMock, auditServiceMock)(
         req as unknown as Request,
         res as unknown as Response,
         next,
@@ -610,7 +619,7 @@ describe('pdf', () => {
       tokenProviderMock.getAccessToken.mockResolvedValueOnce('test-token');
       axiosMock.patch.mockResolvedValueOnce({ data: {} });
 
-      await updatePdfTemplate(serviceDirectoryMock, tokenProviderMock)(
+      await updatePdfTemplate(serviceDirectoryMock, tokenProviderMock, auditServiceMock)(
         req as unknown as Request,
         res as unknown as Response,
         next,
@@ -637,7 +646,7 @@ describe('pdf', () => {
       const res = createMockResponse();
       const next = jest.fn();
 
-      await updatePdfTemplate(serviceDirectoryMock, tokenProviderMock)(
+      await updatePdfTemplate(serviceDirectoryMock, tokenProviderMock, auditServiceMock)(
         req as unknown as Request,
         res as unknown as Response,
         next,
@@ -664,7 +673,7 @@ describe('pdf', () => {
       tokenProviderMock.getAccessToken.mockResolvedValueOnce('test-token');
       axiosMock.patch.mockRejectedValueOnce(error);
 
-      await updatePdfTemplate(serviceDirectoryMock, tokenProviderMock)(
+      await updatePdfTemplate(serviceDirectoryMock, tokenProviderMock, auditServiceMock)(
         req as unknown as Request,
         res as unknown as Response,
         next,
@@ -685,7 +694,7 @@ describe('pdf', () => {
       const res = createMockResponse();
       const next = jest.fn();
 
-      await updatePdfTemplate(serviceDirectoryMock, tokenProviderMock)(
+      await updatePdfTemplate(serviceDirectoryMock, tokenProviderMock, auditServiceMock)(
         req as unknown as Request,
         res as unknown as Response,
         next,
@@ -698,7 +707,7 @@ describe('pdf', () => {
 
   describe('deletePdfTemplate', () => {
     it('can create handler', () => {
-      const handler = deletePdfTemplate(serviceDirectoryMock, tokenProviderMock);
+      const handler = deletePdfTemplate(serviceDirectoryMock, tokenProviderMock, auditServiceMock);
       expect(handler).toBeTruthy();
     });
 
@@ -715,7 +724,7 @@ describe('pdf', () => {
       tokenProviderMock.getAccessToken.mockResolvedValueOnce('test-token');
       axiosMock.patch.mockResolvedValueOnce({ data: {} });
 
-      await deletePdfTemplate(serviceDirectoryMock, tokenProviderMock)(
+      await deletePdfTemplate(serviceDirectoryMock, tokenProviderMock, auditServiceMock)(
         req as unknown as Request,
         res as unknown as Response,
         next,
@@ -751,7 +760,7 @@ describe('pdf', () => {
       const res = createMockResponse();
       const next = jest.fn();
 
-      await deletePdfTemplate(serviceDirectoryMock, tokenProviderMock)(
+      await deletePdfTemplate(serviceDirectoryMock, tokenProviderMock, auditServiceMock)(
         req as unknown as Request,
         res as unknown as Response,
         next,
@@ -778,7 +787,7 @@ describe('pdf', () => {
       tokenProviderMock.getAccessToken.mockResolvedValueOnce('test-token');
       axiosMock.patch.mockRejectedValueOnce(error);
 
-      await deletePdfTemplate(serviceDirectoryMock, tokenProviderMock)(
+      await deletePdfTemplate(serviceDirectoryMock, tokenProviderMock, auditServiceMock)(
         req as unknown as Request,
         res as unknown as Response,
         next,
@@ -800,7 +809,7 @@ describe('pdf', () => {
 
       serviceDirectoryMock.getServiceUrl.mockRejectedValueOnce(error);
 
-      await deletePdfTemplate(serviceDirectoryMock, tokenProviderMock)(
+      await deletePdfTemplate(serviceDirectoryMock, tokenProviderMock, auditServiceMock)(
         req as unknown as Request,
         res as unknown as Response,
         next,
@@ -823,7 +832,7 @@ describe('pdf', () => {
       serviceDirectoryMock.getServiceUrl.mockResolvedValueOnce(new URL('http://localhost:80'));
       tokenProviderMock.getAccessToken.mockRejectedValueOnce(error);
 
-      await deletePdfTemplate(serviceDirectoryMock, tokenProviderMock)(
+      await deletePdfTemplate(serviceDirectoryMock, tokenProviderMock, auditServiceMock)(
         req as unknown as Request,
         res as unknown as Response,
         next,
@@ -844,7 +853,7 @@ describe('pdf', () => {
       serviceDirectoryMock.getServiceUrl.mockResolvedValueOnce(new URL('http://localhost:80'));
       tokenProviderMock.getAccessToken.mockResolvedValueOnce('test-token');
 
-      await deletePdfTemplate(serviceDirectoryMock, tokenProviderMock)(
+      await deletePdfTemplate(serviceDirectoryMock, tokenProviderMock, auditServiceMock)(
         req as unknown as Request,
         res as unknown as Response,
         next,
@@ -864,6 +873,7 @@ describe('pdf', () => {
         fileServiceMock,
         queueServiceMock,
         loggerMock,
+        auditServiceMock,
       );
       expect(handler).toBeTruthy();
     });
@@ -901,6 +911,7 @@ describe('pdf', () => {
         fileServiceMock,
         queueServiceMock,
         loggerMock,
+        auditServiceMock,
       );
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(next).not.toHaveBeenCalled();
@@ -954,6 +965,7 @@ describe('pdf', () => {
         fileServiceMock,
         queueServiceMock,
         loggerMock,
+        auditServiceMock,
       );
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(next).not.toHaveBeenCalled();
@@ -1000,6 +1012,7 @@ describe('pdf', () => {
         fileServiceMock,
         queueServiceMock,
         loggerMock,
+        auditServiceMock,
       );
       await handler(req as unknown as Request, res as unknown as Response, next);
 
@@ -1050,6 +1063,7 @@ describe('pdf', () => {
         fileServiceMock,
         queueServiceMock,
         loggerMock,
+        auditServiceMock,
       );
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(next).not.toHaveBeenCalled();
@@ -1104,6 +1118,7 @@ describe('pdf', () => {
         fileServiceMock,
         queueServiceMock,
         loggerMock,
+        auditServiceMock,
       );
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(next).toHaveBeenCalledWith(expect.any(InvalidOperationError));
@@ -1140,6 +1155,7 @@ describe('pdf', () => {
         fileServiceMock,
         queueServiceMock,
         loggerMock,
+        auditServiceMock,
       );
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedUserError));

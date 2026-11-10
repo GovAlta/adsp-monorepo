@@ -33,23 +33,32 @@ export function plannerSourceText(documents: DocumentOutline[]): string {
   );
 }
 
+export interface StepSourceResult {
+  text: string;
+  /** True when sectionId had no match and all sections were returned as fallback. */
+  usedFallback: boolean;
+}
+
 /** Verbatim text for one planned step, so field labels keep the document's exact wording. */
-export function stepSourceText(documents: DocumentOutline[], sectionId?: string): string {
+export function stepSourceText(documents: DocumentOutline[], sectionId?: string): StepSourceResult {
   if (!documents.length) {
-    return '';
+    return { text: '', usedFallback: false };
   }
 
   for (const document of documents) {
     const section = document.sections.find((candidate) => candidate.sectionId === sectionId);
     if (section) {
-      return formatSection(document.filename, section).slice(0, STEP_SOURCE_CHAR_CAP);
+      return { text: formatSection(document.filename, section).slice(0, STEP_SOURCE_CHAR_CAP), usedFallback: false };
     }
   }
 
-  return capSections(
-    documents.flatMap((document) => document.sections.map((section) => formatSection(document.filename, section))),
-    STEP_SOURCE_CHAR_CAP,
-  );
+  return {
+    text: capSections(
+      documents.flatMap((document) => document.sections.map((section) => formatSection(document.filename, section))),
+      STEP_SOURCE_CHAR_CAP,
+    ),
+    usedFallback: true,
+  };
 }
 
 export function describeSections(documents: DocumentOutline[]): string {

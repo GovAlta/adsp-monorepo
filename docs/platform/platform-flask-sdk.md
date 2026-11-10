@@ -1,7 +1,6 @@
 ---
 layout: page
 title: Service SDK (Flask)
-nav_order: 5
 parent: Platform development
 ---
 

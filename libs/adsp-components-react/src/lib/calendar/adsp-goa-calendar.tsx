@@ -13,17 +13,17 @@ import { GoabButton } from '@abgov/react-components';
 import type { DateRange } from '@abgov/adsp-components-core';
 import { useAdspThemeStyle } from '../theme/adsp-theme-provider';
 import { useCalendarEvents } from './useCalendarEvents';
-import { AdspGoACalendarProps, FULL_CALENDAR_VIEW, VIEW_BUTTON_LABEL } from './types';
+import { ADSPCalendarProps, FULL_CALENDAR_VIEW, VIEW_BUTTON_LABEL } from './types';
 import { getDefaultDateRange } from './calendarUtils';
 
-export const AdspGoACalendar = ({
+export const ADSPCalendar = ({
   client,
   calendar,
   defaultView = 'month',
   initialDateRange,
   themeOverrides,
   testId,
-}: AdspGoACalendarProps) => {
+}: ADSPCalendarProps) => {
   const themeStyle = useAdspThemeStyle('calendar', themeOverrides);
 
   const [range, setRange] = useState<DateRange>(() => initialDateRange ?? getDefaultDateRange());

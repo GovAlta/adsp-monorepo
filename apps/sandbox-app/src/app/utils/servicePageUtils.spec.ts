@@ -41,6 +41,12 @@ describe('servicePageUtils', () => {
           url: '/testTenant/services/jsonforms/review-responsive',
           testId: 'jsonformsReviewResponsive',
         },
+        {
+          id: 'jsonformsStepChange',
+          name: 'Track the current step (onStepChange)',
+          url: '/testTenant/services/jsonforms/step-change',
+          testId: 'jsonformsStepChange',
+        },
       ]);
     });
 
@@ -77,6 +83,12 @@ describe('servicePageUtils', () => {
           name: 'Review layout with long values',
           url: '//services/jsonforms/review-responsive',
           testId: 'jsonformsReviewResponsive',
+        },
+        {
+          id: 'jsonformsStepChange',
+          name: 'Track the current step (onStepChange)',
+          url: '//services/jsonforms/step-change',
+          testId: 'jsonformsStepChange',
         },
       ]);
     });
@@ -187,6 +199,18 @@ describe('servicePageUtils', () => {
           name: 'Conversation',
           url: '/testTenant/services/adsp-components/conversation',
           testId: 'adspConversation',
+        },
+        {
+          id: 'adspFileDownload',
+          name: 'File download',
+          url: '/testTenant/services/adsp-components/file-download',
+          testId: 'adspFileDownload',
+        },
+        {
+          id: 'adspFileUpload',
+          name: 'File upload',
+          url: '/testTenant/services/adsp-components/file-upload',
+          testId: 'adspFileUpload',
         },
       ]);
     });

@@ -1,7 +1,6 @@
 ---
 layout: page
 title: Notification service
-nav_order: 9
 parent: Services
 ---
 
@@ -47,6 +46,8 @@ All endpoints are under `https://notification-service.adsp.alberta.ca/subscripti
 | | `GET /subscribers/my-subscriber` | Any authenticated user |
 
 There are no separate template or event endpoints. Templates are part of each notification type's `events`, and events are sent through the [event service](event-service.md).
+
+`POST /provider/v1/bot/messages` is the Bot Framework webhook used by the `bot` channel provider. Only the Bot Framework calls it, so it is not part of the API documentation.
 
 ## Concepts
 ### Notification type

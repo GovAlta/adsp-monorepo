@@ -4,7 +4,7 @@ components:
       type: object
       properties:
         id:
-          description: A unique ID used to identify an application.
+          description: A unique ID used to identify an application; the application key.
           example: my-application
           type: string
         name:
@@ -14,30 +14,51 @@ components:
         description:
           description: An optional, brief, description of the application being monitored.
           type: string
-          example: The application which is mine!
+          example: Online application for a benefit program.
         status:
-          description: The operational status of the Application, set via the API or through the Tenant Admin Webapp
+          description: >
+            The published status of the application, set via the API or through the Tenant Admin Webapp. An empty
+            string means no status has been set.
           type: string
-          enum: [operational, reported-issues, maintenance, outage]
+          enum: [operational, reported-issues, maintenance, outage, '']
+          example: operational
+        monitorOnly:
+          description: >
+            If true, the application is monitored but not meant to be displayed on the public status page. Clients
+            displaying statuses should filter these out.
+          type: boolean
+          example: false
         lastUpdated:
-          description: Timestamp indicating when the status was last updated.
+          description: Timestamp indicating when the status was last updated, or null if never set.
           type: string
           format: date-time
+          nullable: true
+          example: '2026-11-10T16:00:00.000Z'
+      example:
+        id: my-application
+        name: My Application
+        description: Online application for a benefit program.
+        status: operational
+        monitorOnly: false
+        lastUpdated: '2026-11-10T16:00:00.000Z'
 
 /public_status/v1/applications/{tenant}:
   get:
     tags: ['Application Status']
-    description: Retrieves tenant applications and their statuses.
+    description: >
+      Retrieves the applications of a tenant and their published statuses, sorted by name. Public; anonymous
+      requests are accepted and any bearer token is ignored. The tenant is identified by name in the path.
+    security:
+      - {}
     parameters:
       - name: tenant
-        description: Name of the tenant to retrieve applications for.
+        description: Name of the tenant to retrieve applications for (case insensitive).
         in: path
         required: true
         schema:
           type: string
+        example: my-tenant
     responses:
-      404:
-        description: Tenant not found.
       200:
         description: Successfully retrieved statuses.
         content:
@@ -46,30 +67,11 @@ components:
               type: array
               items:
                 $ref: '#/components/schemas/Public-application'
-
-/status/v1/applications/{appKey}/status:
-  patch:
-    tags: ['Application Status']
-    description: Sets the operational status to the input value
-    parameters:
-      - name: appKey
-        description: Identifies the application on which to set the status.
-        in: path
-        required: true
-        schema:
-          type: string
-    requestBody:
-      required: true
-      content:
-        application/json:
-          schema:
-            description: The application status.
-            type: string
-            enum: [operational, outage, maintenance, reported-issues]
-    responses:
-      200:
-        description: Successfully updated status.
+      404:
+        description: Tenant not found.
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Application'
+              $ref: '#/components/schemas/StatusError'
+            example:
+              errorMessage: tenant with ID 'my-tenant' could not be found.

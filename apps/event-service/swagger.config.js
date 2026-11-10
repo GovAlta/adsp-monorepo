@@ -19,6 +19,10 @@ by the API described below.
       name: 'Event',
       description: 'API to send domain events.',
     },
+    {
+      name: 'Event Definition',
+      description: 'API to manage the tenant event definitions used to validate event payloads.',
+    },
   ],
   components: {
     securitySchemes: {

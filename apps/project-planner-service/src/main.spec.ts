@@ -5,6 +5,7 @@ const mockInitializePlatform = jest.fn();
 const mockLogger = { info: jest.fn(), error: jest.fn(), debug: jest.fn() };
 const mockApplyPlannerMiddleware = jest.fn();
 const mockCreateRepositories = jest.fn();
+const mockCreateShutdownHandler = jest.fn();
 const mockEnvironment: Record<string, unknown> = {};
 
 jest.mock('express', () => mockExpress);
@@ -33,19 +34,27 @@ jest.mock('./environments/environment', () => ({ environment: mockEnvironment })
 jest.mock('./planner', () => ({
   applyPlannerMiddleware: mockApplyPlannerMiddleware,
   createLlmFromEnv: jest.fn(),
+  PlannerAuditActions: ['planner-audit-actions'],
   PlannerServiceRoles: {},
 }));
 jest.mock('./postgres', () => ({ createRepositories: mockCreateRepositories }));
+jest.mock('./shutdown', () => ({ createShutdownHandler: mockCreateShutdownHandler }));
 
 describe('main', () => {
   const healthCheck = jest.fn();
   const configurationService = { getConfiguration: jest.fn() };
   const tokenProvider = { getAccessToken: jest.fn() };
+  const auditService = { record: jest.fn() };
+  const shutdownTelemetry = jest.fn();
+  const shutdown = jest.fn();
+  const server = { on: jest.fn() };
+  let processOnce: jest.SpyInstance;
   const postgresRepositories = {
     solutionRepository: { name: 'solutions' },
     patternRepository: { name: 'patterns' },
     specialistChatRepository: { name: 'chats' },
     isConnected: jest.fn().mockResolvedValue(true),
+    close: jest.fn(),
   };
 
   const startMain = async () => {
@@ -62,13 +71,23 @@ describe('main', () => {
       DB_HOST: 'db.example',
     });
     mockExpress.mockReturnValue(mockApp);
-    mockApp.listen.mockReturnValue({ on: jest.fn() });
+    mockApp.listen.mockReturnValue(server);
     mockReadFile.mockImplementation((_path, _encoding, callback) => callback(null, '{}'));
-    mockInitializePlatform.mockResolvedValue({ healthCheck, configurationService, tokenProvider });
+    mockInitializePlatform.mockResolvedValue({
+      healthCheck,
+      configurationService,
+      tokenProvider,
+      auditService,
+      shutdownTelemetry,
+    });
     mockCreateRepositories.mockResolvedValue(postgresRepositories);
+    mockCreateShutdownHandler.mockReturnValue(shutdown);
+    // Keep test runs from registering real signal listeners.
+    processOnce = jest.spyOn(process, 'once').mockImplementation(() => process);
   });
 
   afterEach(() => {
+    processOnce.mockRestore();
     jest.clearAllMocks();
   });
 
@@ -123,6 +142,46 @@ describe('main', () => {
         specialistChatRepository: postgresRepositories.specialistChatRepository,
       }),
     );
+  });
+
+  it('registers the audit action catalog', async () => {
+    await startMain();
+
+    expect(mockInitializePlatform).toHaveBeenCalledWith(
+      expect.objectContaining({ auditActions: ['planner-audit-actions'] }),
+      expect.anything(),
+    );
+  });
+
+  it.each([undefined, false, true])('passes PROJECT_PLANNER_AUDIT_ENABLED=%p to the audit client', async (enabled) => {
+    mockEnvironment.PROJECT_PLANNER_AUDIT_ENABLED = enabled;
+    await startMain();
+
+    expect(mockInitializePlatform.mock.calls[0][0].audit).toEqual({ enabled });
+  });
+
+  it('passes the audit service to the planner middleware', async () => {
+    await startMain();
+
+    expect(mockApplyPlannerMiddleware).toHaveBeenCalledWith(mockApp, expect.objectContaining({ auditService }));
+  });
+
+  it('creates the shutdown handler with the server, audit client, telemetry and database', async () => {
+    await startMain();
+
+    expect(mockCreateShutdownHandler).toHaveBeenCalledWith({
+      server,
+      auditService,
+      shutdownTelemetry,
+      closeDatabase: postgresRepositories.close,
+      logger: mockLogger,
+    });
+  });
+
+  it.each(['SIGTERM', 'SIGINT'])('shuts down gracefully on %s', async (signal) => {
+    await startMain();
+
+    expect(processOnce).toHaveBeenCalledWith(signal, shutdown);
   });
 
   it('reports platform health together with the database connection state', async () => {

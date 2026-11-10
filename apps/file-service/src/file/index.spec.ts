@@ -11,6 +11,8 @@ import { FileStorageProvider } from './storage';
 import { applyFileMiddleware } from './index';
 import { ScanService } from './scan';
 
+jest.mock('file-type', () => ({ fileTypeFromBuffer: jest.fn() }));
+
 jest.mock('node-cache', () => {
   return jest.fn().mockImplementation(() => ({
     set: jest.fn(),

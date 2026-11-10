@@ -10,6 +10,8 @@ import { FileEntity } from '../model';
 import { FileDeletedAuditAction, FileServiceJobAuditActor } from '../audit';
 import { Results } from '@core-services/core-common';
 
+jest.mock('file-type', () => ({ fileTypeFromBuffer: jest.fn() }));
+
 describe('Delete old files', () => {
   it('can return correct before last accessed date', () => {
     timekeeper.freeze(new Date('2023-07-01T00:00:00.000Z'));

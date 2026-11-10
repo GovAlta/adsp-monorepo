@@ -1,13 +1,12 @@
 ---
 layout: page
 title: Value service
-nav_order: 6
 parent: Services
 ---
 
 # Value service
 
-Value service provides an append only time series data store. It serves as the underlying store for the event log.
+Value service provides an append only time series data store. It serves as the underlying store for the event log: [event service](event-service.md) writes every logged domain event as a record of a value.
 
 ## Client roles
 
@@ -21,11 +20,53 @@ client `urn:ads:platform:value-service`
 
 The export service's `urn:ads:platform:export-service:export-job` role can also read values, so that export jobs can read the event log.
 
+## Tenancy
+
+Values, metrics and value definitions belong to a tenant. Every record is stored with the tenant it was written to, and reads only return records of the tenant they act on.
+
+- **Which tenant is used.** Tenant users and service accounts always act on the tenant of their token. Core (platform) users act on the tenant set by the `tenantId` query parameter; writes also accept `tenantId` in the body. An invalid `tenantId` responds 400.
+- **Writing values.** Tenant users write to their own tenant; setting a `tenantId` for another tenant responds 403. Core users must set a tenant, otherwise the write responds 400. Event service writes the event log this way, as a core service account.
+- **Reading records.** `GET /value/v1/{namespace}/values/{name}` responds 400 for a tenant user without a tenant context. Core users with `value-reader` can leave out `tenantId` to read the records of all tenants.
+- **Counts and metrics.** Counting records and reading metrics require a tenant context, so core users must set `tenantId`; without it the request responds 400.
+- **Platform metrics.** `GET /value/v1/{namespace}/values/{name}/platform-metrics` is the only endpoint that combines tenants in one response. It needs a core user with `value-platform-metrics-reader`, and labels each interval with its tenant.
+- **Latest values of a namespace.** `GET /value/v1/{namespace}/values` acts on the tenant of the caller's token. Core users reading a tenant should read each value with `tenantId` instead.
+- **Platform versus tenant definitions.** Value definitions come from the tenant's configuration and from core (platform) configuration. When reading a single definition, a tenant definition takes precedence over a core definition with the same namespace and name. Tenants can't change core definitions through this API, and can't create a definition whose namespace and name are already used by a core definition (409).
+- **Isolation.** Records of other tenants are never returned, and definitions of other tenants respond 404.
+- **Role scope.** Roles are checked in the tenant being acted on. Core users with the same role are also allowed.
+
+## API overview
+
+All endpoints are under `https://value-service.adsp.alberta.ca/value/v1`. See the [API documentation](https://api.adsp.alberta.ca) for request and response schemas.
+
+| Endpoint                                                   | Purpose                                                      | Required role                                     |
+| :--------------------------------------------------------- | :----------------------------------------------------------- | :------------------------------------------------ |
+| `POST /value/v1/{namespace}/values/{name}`                 | Write one or more records of a value, with optional metrics. | `value-writer`                                    |
+| `GET /value/v1/{namespace}/values/{name}`                  | Read records of a value, newest first, with filters.         | `value-reader`, or export service `export-job`    |
+| `GET /value/v1/{namespace}/values/{name}/count`            | Count records of a value.                                    | `value-reader`                                    |
+| `GET /value/v1/{namespace}/values`                         | Read the latest record of each defined value in a namespace. | `value-reader`                                    |
+| `GET /value/v1/{namespace}/values/{name}/metrics`          | Read interval aggregates of a value's metrics.               | `value-reader`                                    |
+| `GET /value/v1/{namespace}/values/{name}/metrics/{metric}` | Read interval aggregates of one metric.                      | `value-reader`                                    |
+| `GET /value/v1/{namespace}/values/{name}/platform-metrics` | Read a value's metrics across all tenants.                   | `value-platform-metrics-reader` (core users only) |
+| `POST /value/v1/service-metric-rollups/run`                | Run the service metric rollup for completed days.            | `value-writer`                                    |
+| `GET /value/v1/definitions`                                | List tenant and core value definitions.                      | `value-reader` or `value-writer`                  |
+| `POST /value/v1/definitions`                               | Create a tenant value definition.                            | `value-writer`                                    |
+| `GET /value/v1/definitions/{namespace}/{name}`             | Get a value definition (tenant, otherwise core).             | `value-reader` or `value-writer`                  |
+| `PATCH /value/v1/definitions/{namespace}/{name}`           | Update a tenant value definition.                            | `value-writer`                                    |
+| `DELETE /value/v1/definitions/{namespace}/{name}`          | Delete a tenant value definition.                            | `value-writer`                                    |
+
+The event log has no endpoints of its own in value service. Event log consumers should use the [event service](event-service.md) API, which reads and counts the event log value for them.
+
 ## Concepts
+
+### Value
+
+A value represents a particular time series stream, identified by a namespace and name (for example `support` and `application-stats`). Each write results in a new record with a timestamp. It differs from a typical transactional record in that the record has no unique identity; instead it represents another entry in the set of entries for the value. Consumers can write scalars or json objects to values.
+
+A record has a `timestamp` (the time of the write unless set), an optional `correlationId` that links related records, an optional `context` object used to filter reads, and the `value` itself. Writing does not require a value definition. A write can be a full record, a bare JSON object that is written as the value, or an array of either.
 
 ### Value definition
 
-Value definition is an optional metadata description for a particular _value_ (identified by a specific namespace and name). The definition provides write-time validation via json schema, and can enable a `value-written` event on each write with `sendWriteEvent`.
+Value definition is an optional metadata description for a particular _value_ (identified by a specific namespace and name). The definition provides write-time validation via json schema, and can enable a `value-written` event on each write with `sendWriteEvent`. Records that fail validation are skipped, and the rest of the write goes ahead. Only values with a definition are returned when reading the latest values of a namespace.
 
 Value definitions are managed through the value service definitions API (`/value/v1/definitions`). The value service checks the user's roles and then stores the definitions in the [configuration service](configuration-service.md) under the `platform:value-service` namespace and name, using its own service account. Clients do not need configuration service roles to manage value definitions.
 
@@ -35,23 +76,23 @@ Value definitions are managed through the value service definitions API (`/value
 - Creating a definition adds its namespace if it does not exist, and fails with a 409 if a tenant or core definition with the same namespace and name already exists.
 - Deleting the last definition in a namespace removes the namespace.
 
+### Event log
+
+The event log is a value written by [event service](event-service.md): every logged domain event is written as a record of the `event` value in the `event-service` namespace (`/value/v1/event-service/values/event`), to the tenant of the event. The record's `context` holds the event's context plus its `namespace`, `name` and `trace`, and its `value` is `{ payload }`. Event service also writes metrics with each record: `total:count`, `{namespace}:{name}:count`, and, for event definitions with an interval, a `:duration` metric in seconds since the event that started the interval.
+
 > Counting events in the event log is exposed by the [event service](event-service.md#count-events-in-the-event-log).
 > Consumers of the event log count should use that API rather than calling value service directly.
 
-Event log reads support exact payload searching with either `payloadPath` and `payloadValue`, or a JSON object in
+Reads of the event log support exact payload searching with either `payloadPath` and `payloadValue`, or a JSON object in
 `payload`. Both `timestampMin` and `timestampMax` are required for payload searches, and the two search forms are
 mutually exclusive. Every property in a multi-condition `payload` object must match (`AND`). See
 [Search the event log](event-service.md#search-the-event-log) for examples and scalar type handling.
 
-### Value
-
-A value represents a particular time series stream. Each write results in a new record with a timestamp. It differs from a typical transactional record in that the record has no unique identity; instead it represents another entry in the set of entries for the value. Consumers can write scalars or json objects to values.
-
 ### Metrics
 
-Metrics are numeric values that can be included in value writes as a `metrics` object of metric name to number. They are aggregated into time intervals (`one_minute`, `five_minutes`, `hourly`, `daily`, `weekly` and `monthly`) with `sum`, `avg`, `min`, `max` and `count` for each interval, and can be used for basic KPIs.
+Metrics are numeric values that can be included in value writes as a `metrics` object of metric name to number; non-numeric entries are ignored, and metrics are not returned with the record. For a value with a definition, a `metrics` property inside the written `value` object is also moved into the record's metrics. Metrics are aggregated into time intervals (`one_minute`, `five_minutes`, `hourly`, `daily`, `weekly` and `monthly`) with `sum`, `avg`, `min`, `max` and `count` for each interval, and can be used for basic KPIs.
 
-Read a value's metrics from `/value/v1/{namespace}/values/{name}/metrics`, or a single metric from `/value/v1/{namespace}/values/{name}/metrics/{metric}`. The `interval` defaults to `daily`, and the JSON `criteria` accepts `intervalMin`, `intervalMax` and (for all metrics) `metricLike`. Without a range, the last month is read.
+Read a value's metrics from `/value/v1/{namespace}/values/{name}/metrics`, or a single metric from `/value/v1/{namespace}/values/{name}/metrics/{metric}`. The `interval` defaults to `daily`; any value other than the six intervals responds 400. The `criteria` query parameter is a JSON object that accepts `intervalMin`, `intervalMax` and (for all metrics) `metricLike`, and must be valid JSON. Without a range, the last month is read. Results are newest first and paged `top` interval rows at a time (default 100, maximum 5000); pass `page.next` back as `after` for the next page.
 
 Core users with the `value-platform-metrics-reader` role can read a value's metrics across all tenants, labelled by tenant, from `/value/v1/{namespace}/values/{name}/platform-metrics`. This only reads the materialised rollups described below and is not paginated.
 
@@ -92,6 +133,16 @@ A daily job summarises tenant activity for `pdf-service`, `form-service` and `no
 The job is off by default. Set `SERVICE_METRIC_ROLLUP_JOB_ENABLED=true` to run it daily at 02:00, recomputing the last `SERVICE_METRIC_ROLLUP_TRAILING_DAYS` completed days (default 3). Set `SERVICE_METRIC_ROLLUP_BACKFILL_ON_STARTUP=true` to roll up the full history once when the table is empty.
 
 A rollup can also be run on demand with `POST /value/v1/service-metric-rollups/run` and the `value-writer` role. The body can set `start` and `end` dates, which default to the trailing days. Core users can set `tenantId` or leave it out to roll up all tenants; tenant users always roll up their own tenant. The current partial day and future days are rejected.
+
+## Events
+
+Value service sends one domain event:
+
+| Event           | Sent when                                                                                                                                                                                             |
+| :-------------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `value-written` | A record is written to a value whose definition has `sendWriteEvent` set. The payload has `timestamp`, `value` and `writtenBy`, and the context has the record's context plus `namespace` and `name`. |
+
+`value-written` events are not written to the event log. Value service doesn't consume domain events; event service writes the event log by calling the value service API, not through an event subscription.
 
 ## Audit
 
@@ -154,6 +205,39 @@ const { page, ...result } = await response.json();
 const records = result[namespace][name];
 ```
 
+### Read the latest values of a namespace
+
+```typescript
+const namespace = 'support';
+const response = await fetch(
+  `https://value-service.adsp.alberta.ca/value/v1/${namespace}/values?names=application-stats`,
+  {
+    method: 'GET',
+    headers: { Authorization: `Bearer ${accessToken}` },
+  },
+);
+
+// Keyed by namespace, then name; each is the latest record.
+const { [namespace]: latest } = await response.json();
+const { timestamp, value } = latest['application-stats'];
+```
+
+### Count records
+
+```typescript
+const namespace = 'support';
+const name = 'application-stats';
+const response = await fetch(
+  `https://value-service.adsp.alberta.ca/value/v1/${namespace}/values/${name}/count?timestampMin=2026-09-01T00:00:00Z`,
+  {
+    method: 'GET',
+    headers: { Authorization: `Bearer ${accessToken}` },
+  },
+);
+
+const { count } = await response.json();
+```
+
 ### Read metrics
 
 ```typescript
@@ -169,6 +253,7 @@ const response = await fetch(
 );
 
 // Keyed by metric name; each has values of { interval, sum, avg, min, max, count }, newest first.
+// page.intervalMax is the end of the window actually read.
 const { page, ...metrics } = await response.json();
 ```
 

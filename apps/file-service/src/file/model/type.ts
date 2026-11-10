@@ -20,6 +20,7 @@ export class FileTypeEntity implements FileType {
   securityClassification?: string;
   readRoles: string[] = [];
   updateRoles: string[] = [];
+  allowedFileTypes?: string[];
   rules?: FileTypeRules;
 
   static create(
@@ -30,7 +31,7 @@ export class FileTypeEntity implements FileType {
     readRoles: string[],
     updateRoles: string[],
     rules?: FileTypeRules,
-    securityClassification?: string
+    securityClassification?: string,
   ): FileTypeEntity {
     const newType: FileType = {
       tenantId,
@@ -52,6 +53,7 @@ export class FileTypeEntity implements FileType {
     this.anonymousRead = type.anonymousRead;
     this.readRoles = type.readRoles || [];
     this.updateRoles = type.updateRoles || [];
+    this.allowedFileTypes = type.allowedFileTypes;
     this.rules = type?.rules;
     this.securityClassification = type?.securityClassification;
   }

@@ -2,6 +2,8 @@ import { AdspTheme } from './adsp-theme';
 import { deepFreeze } from './deep-freeze';
 import { defaultCalendarTheme } from '../calendar/calendarTheme';
 import { defaultConversationTheme } from '../conversation/conversationTheme';
+import { defaultFileDownloadTheme } from '../file/fileDownloadTheme';
+import { defaultFileUploadTheme } from '../file/fileUploadTheme';
 
 // Values reference GoA design token custom properties so the theme tracks the design system, dark theme included.
 const standard: AdspTheme = {
@@ -126,6 +128,8 @@ const standard: AdspTheme = {
   components: {
     calendar: defaultCalendarTheme,
     conversation: defaultConversationTheme,
+    fileDownload: defaultFileDownloadTheme,
+    fileUpload: defaultFileUploadTheme,
   },
 };
 

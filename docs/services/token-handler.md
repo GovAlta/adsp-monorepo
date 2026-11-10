@@ -1,7 +1,6 @@
 ---
 layout: page
 title: Token handler
-nav_order: 17
 parent: Services
 ---
 
@@ -16,6 +15,34 @@ client `urn:ads:platform:token-handler`
 | name | description |
 |:-|:-|
 | token-handler-admin | Administrator role for token handler allowed to register clients. |
+
+## Tenancy
+
+- **Administration endpoints.** The client endpoints that take a bearer token act on the tenant of the token, and need the `token-handler-admin` role in that tenant. Only tokens from tenant realms are accepted; core (platform) tokens respond 401, and there is no `tenantId` parameter.
+- **Sign in.** The sign in endpoint is anonymous, so the tenant is given by the `X-ADSP-TENANT` header (for example set by the app's reverse proxy) or the `tenant` query parameter, as a tenant name or tenant URN. The header is used if both are set. The tenant is kept in the session, so the callback uses the tenant that sign in was started with, unless the header is set. Without a tenant, sign in responds 400, and an unknown tenant responds 404.
+- **Sessions and targets.** After sign in, the session belongs to the tenant of the client that the user signed in with. Session information, logout, and target requests use that session; they take no tenant parameter.
+- **Platform and tenant clients.** A tenant has its own clients and the clients of the core configuration. When both have a client with the same ID, the core client is used, so a tenant cannot change or replace it. Each tenant registers core clients separately, in its own realm. See [Core (platform) clients](#core-platform-clients).
+- **Isolation.** A client ID that is not configured for the tenant or in the core configuration responds 404. A target ID that is not a target of the session's client responds 404.
+
+## API overview
+
+The API is under `/token-handler/v1` on the token handler host; the examples use `https://token-handler.example.ca` as a placeholder for it. Frontend applications call the browser endpoints through a reverse proxy on their own site (see [Reverse proxy](#reverse-proxy)), not at this URL. See the [API documentation](https://api.adsp.alberta.ca) for request and response schemas.
+
+| Endpoint | Purpose | Access |
+| :- | :- | :- |
+| `GET /token-handler/v1/clients` | List the clients of the tenant and the core configuration, with their registration status. | `token-handler-admin` |
+| `GET /token-handler/v1/clients/{clientId}` | Get a client and its registration. | `token-handler-admin` |
+| `POST /token-handler/v1/clients/{clientId}` | Register a client in access service. | `token-handler-admin` |
+| `PUT /token-handler/v1/clients/{clientId}` | Update the redirect URIs of a registered client. | `token-handler-admin` |
+| `GET /token-handler/v1/clients/{clientId}/auth` | Start sign in; redirects (302) to access service. | Anonymous (browser) |
+| `GET /token-handler/v1/clients/{clientId}/callback` | Complete sign in; starts the session and redirects (302) to the client's success or failure URL. | Anonymous (browser) |
+| `GET /token-handler/v1/clients/{clientId}/logout` | End the session; redirects (302) to the site root or access service. | Signed in user (session cookie) |
+| `GET /token-handler/v1/sessions` | Get the session of the signed in user. | Signed in user (session cookie) |
+| `GET`, `POST`, `PUT`, `PATCH`, `DELETE /token-handler/v1/targets/{targetId}/*` | Proxy a request to the upstream of a target, with the user's access token. | Signed in user (session cookie), plus the `X-XSRF-TOKEN` header for requests other than `GET` |
+
+The sign in, callback, and logout endpoints are rate limited to 100 requests per 5 minutes per client IP address, and respond 429 above it. Responses of target requests are the responses of the upstream; the token handler only adds 400 (invalid CSRF token, path, or upstream), 401 (no session), and 404 (unknown target). The OpenAPI documentation shows target paths as a single `{targetPath}` parameter, because OpenAPI cannot express a path with any number of segments.
+
+Clients and targets are configured in the [configuration service](configuration-service.md); token handler has no endpoints of its own for changing them.
 
 ## Concepts
 
@@ -108,6 +135,14 @@ There are some special considerations for local development workflows when using
 }
 ```
 
+## Events
+
+| Event | Description |
+| :- | :- |
+| `token-handler:client-registered` | Sent when a client is registered (`POST /token-handler/v1/clients/{clientId}`), and when its redirect URIs are updated (`PUT /token-handler/v1/clients/{clientId}`). The payload has the `client` (`id`, `name`, `clientId`, `authCallbackUrl`) and `registeredBy` (`id`, `name`). |
+
+Token handler does not consume domain events of its own, but it receives configuration updates from the [configuration service](configuration-service.md) to invalidate its cached configuration, so changes to clients and targets take effect without a restart.
+
 ## Code examples
 
 ### Register a client
@@ -115,7 +150,7 @@ Registering a client creates a confidential client in access service and securel
 
 ```typescript
   const response = await fetch(
-    `https://adsp.alberta.ca/api/token-handler/v1/clients/${clientId}`,
+    `https://token-handler.example.ca/token-handler/v1/clients/${clientId}`,
     {
       method: 'POST',
       headers: {
@@ -139,7 +174,7 @@ Updating a client's registration allows changing the registered redirect URIs in
 
 ```typescript
   const response = await fetch(
-    `https://adsp.alberta.ca/api/token-handler/v1/clients/${clientId}`,
+    `https://token-handler.example.ca/token-handler/v1/clients/${clientId}`,
     {
       method: 'PUT',
       headers: {
@@ -161,15 +196,37 @@ Updating a client's registration allows changing the registered redirect URIs in
 ```
 
 ### Retrieving session information
-Frontend application can determine if the user is logged in and access their session information via the sessions endpoint.
+Frontend applications can find out if the user is signed in, and who they are, with the sessions endpoint through their reverse proxy. The session cookie is sent by the browser. The endpoint responds 401 when no user is signed in.
 
 ```typescript
-  const response = await fetch(
-    '/sessions',
-    {
-      method: 'GET',
-    }
-  );
+  const response = await fetch('/token-handler/sessions');
 
-  const [session] = await response.json();
+  if (response.status === 401) {
+    // Not signed in; navigate to sign in.
+    window.location.href =
+      `/token-handler/clients/${clientId}/auth?tenant=my-tenant&callbackUrl=${encodeURIComponent(callbackUrl)}`;
+  } else {
+    const [{ id, name, email, roles, expiry }] = await response.json();
+  }
+```
+
+### Making a request to a target
+Frontend applications make API requests to a target through their reverse proxy. The token handler adds the user's access token. Requests other than `GET` need the value of the `XSRF-TOKEN` cookie in the `X-XSRF-TOKEN` header.
+
+```typescript
+  const csrfToken = document.cookie
+    .split('; ')
+    .find((cookie) => cookie.startsWith('XSRF-TOKEN='))
+    ?.split('=')[1];
+
+  const response = await fetch('/token-handler/targets/form-service/form/v1/forms', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-XSRF-TOKEN': csrfToken,
+    },
+    body: JSON.stringify({ definitionId: 'my-form-definition' }),
+  });
+
+  const { id, status } = await response.json();
 ```
