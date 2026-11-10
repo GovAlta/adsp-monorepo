@@ -9,6 +9,8 @@ describe('readConfig', () => {
       liveToolMaxConcurrent: 8,
       trustedProxy: 'uniquelocal',
       corsOrigins: [],
+      shutdownDelayMs: 5000,
+      shutdownTimeoutMs: 30000,
     });
   });
 
@@ -35,6 +37,8 @@ describe('readConfig', () => {
       liveToolMaxConcurrent: 2,
       trustedProxy: 'loopback',
       corsOrigins: ['https://a.test'],
+      shutdownDelayMs: 5000,
+      shutdownTimeoutMs: 30000,
     });
   });
 
@@ -75,5 +79,18 @@ describe('readConfig', () => {
     ['10.0.0.0/8, loopback', '10.0.0.0/8, loopback'],
   ])('parses TRUSTED_PROXY %p', (value, expected) => {
     expect(readConfig({ TRUSTED_PROXY: value }).trustedProxy).toEqual(expected);
+  });
+
+  it('parses the shutdown delay and timeout', () => {
+    expect(readConfig({ MCP_SHUTDOWN_DELAY_MS: '0', MCP_SHUTDOWN_TIMEOUT_MS: '45000' })).toMatchObject({
+      shutdownDelayMs: 0,
+      shutdownTimeoutMs: 45000,
+    });
+  });
+
+  it('rejects a shutdown delay that is not shorter than the timeout', () => {
+    expect(() => readConfig({ MCP_SHUTDOWN_DELAY_MS: '30000', MCP_SHUTDOWN_TIMEOUT_MS: '30000' })).toThrow(
+      /MCP_SHUTDOWN_DELAY_MS/
+    );
   });
 });
