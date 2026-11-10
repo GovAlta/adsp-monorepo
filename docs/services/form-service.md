@@ -14,18 +14,64 @@ client `urn:ads:platform:form-service`
 
 | name | description |
 |:-|:-|
-| form-admin | Administrator role for form service. This role allows a user to query and unlock forms, and to manage data registers.  |
-| intake-application | Intake application role for form service. This role is used to grant a service account the ability to retrieve draft forms and submit forms on behalf of an anonymous applicant.  |
+| form-admin | Administrator role for form service. This role allows a user to manage form definitions, find and read all forms and submissions of the tenant, unlock, archive and delete forms, delete submissions, and manage data registers. |
+| intake-application | Intake application role for form service. This role is used to grant a service account the ability to retrieve draft forms and submit forms on behalf of an anonymous applicant. |
+| form-applicant | Applicant role for form service that allows a user to apply from the form app. It permits subscribing to the submitted form PDF and form question update streams. |
+| form-support | Support role for viewing and responding to form question topics. It is a commenter role of the form questions comment topic type, and a subscriber role of the form message reviewer notifications. |
+| form-file-reader | File reader role that allows assessors and clerks to review uploaded supporting documents. |
+| form-file-uploader | File uploader role that allows applicants to upload supporting documents for the form. |
+| form-tester | Tester role for form service that allows access to forms without open intakes. |
+| form-service | Form service role used to permit deletion of orphaned form support document files. |
 
-The data register API also accepts the configuration service role `urn:ads:platform:configuration-service:configuration-admin`, which tenant administrators have by default.
+The data register API also accepts the configuration service role `urn:ads:platform:configuration-service:configuration-admin`, which tenant administrators have by default. Form and submission searches also accept the export service role `urn:ads:platform:export-service:export-job`.
 
+Each form definition also names its own **applicant**, **clerk** and **assessor** roles. These are tenant roles, and they control who can create and fill in forms of the definition, and who can review its submissions.
+
+## Tenancy
+- **Which tenant is used.** Tenant users and service accounts act on the tenant of their token. Core (platform) users set the `tenantId` query parameter to choose the tenant. The form definition, form, submission, data register and intake schedule endpoints act on one tenant, so core users must set `tenantId` on them.
+- **Anonymous requests.** Only `GET /form/v1/definitions/{definitionId}` allows anonymous requests, for definitions that allow anonymous applications. Anonymous requests have no token to determine the tenant from, so they must include `tenantId`; without it the request responds 400.
+- **Form definitions.** Form definitions are tenant configuration in the [configuration service](configuration-service.md). Form service uses the tenant's own definitions and does not fall back to platform definitions.
+- **Isolation.** Forms and submissions are stored with the ID of their tenant. A form or submission ID from another tenant responds 404, not 403.
+- **Role scope.** The roles of a form definition must be held in the tenant. Most `form-admin` checks also accept a core user with the role, but listing definitions, reading a definition, finding submissions and setting a form back to draft need the role in the tenant. The `export-job` role is accepted from core service accounts.
+
+## API overview
+All endpoints are under `https://form-service.adsp.alberta.ca/form/v1`. See the [API documentation](https://api.adsp.alberta.ca) for request and response schemas.
+
+| Endpoint | Purpose | Required role |
+|:-|:-|:-|
+| `GET /form/v1/definitions` | List and search form definitions. | `form-admin` |
+| `POST /form/v1/definitions` | Create a form definition from a name and description. | `form-admin` |
+| `GET /form/v1/definitions/{definitionId}` | Read a form definition and its current intake. | `form-admin`, `intake-application`, or the definition's applicant or clerk roles; anonymous for definitions that allow anonymous applications |
+| `PUT`, `PATCH`, `DELETE /form/v1/definitions/{definitionId}` | Replace, update or delete a form definition. | `form-admin` |
+| `PUT /form/v1/definitions/{definitionId}/schemas` | Update the data and UI schemas. | `form-admin` |
+| `PUT /form/v1/definitions/{definitionId}/roles` | Replace the applicant, assessor and clerk roles. | `form-admin` |
+| `PATCH /form/v1/definitions/{definitionId}/lifecycle` | Update the anonymous application, applicant limit, support topic and security classification settings. | `form-admin` |
+| `PATCH /form/v1/definitions/{definitionId}/submission-actions` | Update what happens when a form is submitted. | `form-admin` |
+| `PUT /form/v1/definitions/{definitionId}/schedule` | Update the scheduled intake period. | `form-admin` |
+| `GET /form/v1/forms` | Find forms. | Any signed-in user; `form-admin` and `export-job` find all forms, assessors find the submitted forms of their definition, and other users find the forms they created |
+| `POST /form/v1/forms` | Create a draft form, and optionally submit it. | The definition's applicant or clerk roles; `intake-application` for definitions that allow anonymous applications |
+| `GET /form/v1/forms/{formId}` | Read a form. | `form-admin`, `intake-application`, the definition's clerk or assessor roles, or the applicant who created it |
+| `POST /form/v1/forms/{formId}` | Run a form operation: `send-code`, `unlock`, `submit`, `to-draft` or `archive`. | Depends on the operation (see the API documentation) |
+| `DELETE /form/v1/forms/{formId}` | Delete a form and its files. | `form-admin`; the definition's clerk roles or the applicant who created it, for draft forms |
+| `GET`, `PUT /form/v1/forms/{formId}/data` | Read or update the form data. | The applicant who created it or the definition's clerk roles; reading also allows `form-admin`, assessors of submitted forms, and `intake-application` with a verification code |
+| `GET /form/v1/submissions`, `GET /form/v1/forms/{formId}/submissions` | Find submissions. | `form-admin`, `export-job`, or the definition's assessor roles |
+| `GET /form/v1/submissions/{submissionId}`, `GET /form/v1/forms/{formId}/submissions/{submissionId}` | Read a submission. | `form-admin` or the definition's assessor roles |
+| `POST /form/v1/forms/{formId}/submissions/{submissionId}` | Disposition a submission. | `form-admin` or the definition's assessor roles |
+| `POST /form/v1/forms/{formId}/submissions/{submissionId}/notes`, `DELETE .../notes/{noteId}` | Add or remove a reviewer note. | `form-admin` or the definition's assessor roles |
+| `DELETE /form/v1/submissions/{submissionId}` | Delete a submission. | `form-admin` |
+| `/form/v1/registers` | Manage data registers (see [Data registers](#data-registers)). | `form-admin` or `configuration-admin` |
+
+Form definitions are stored in the configuration service, so they can also be managed through the configuration service API.
 
 ## Concepts
 ### Form definition
-Form definition describes a type of form including the allowed applicant and assessor roles and whether anonymous applicants are permitted. Form definitions are configured in the [configuration service](configuration-service.md) under the `platform:form-service` namespace and name.
+Form definition describes a type of form including the allowed applicant and assessor roles and whether anonymous applicants are permitted. Form definitions are configured in the [configuration service](configuration-service.md) under the `form-service` namespace, with the definition ID as the name.
 
 ### Form
 Form represents a particular instance of an application including the information entered by the *applicant*. Each form is associated with a *definition* and has a status. Statuses represent the lifecycle steps of the form and include: Draft, Locked, Submitted, and Archived.
+
+### Submission
+When a form is submitted and its definition has submission records enabled, form service creates a *submission* with a copy of the form data. Assessors review submissions, add notes, and record a *disposition* using one of the definition's disposition states. A form that is set back to draft and submitted again gets a new submission.
 
 ### Draft expiry
 Draft forms include an expiry process so that information entered into draft forms are purged if the draft is abandoned. If a draft form is not accessed for some expiry period, the form is locked and the applicant is notified. In this state, the form cannot be accessed by the applicant but can be unlocked by an administrator. If the form remains in a locked state for some additional expiry period, the form is deleted so that applicant information is not unnecessarily retained.
@@ -67,6 +113,30 @@ Registers are returned as `{ namespace: 'data-register', name, description, entr
 
 Form service does not emit its own events for data registers. Configuration service emits `configuration-updated` and `configuration-deleted` for the underlying configuration.
 
+## Events
+Form service sends these domain events in the `form-service` namespace. Form events use the form ID as the correlation ID.
+
+| name | sent when |
+|:-|:-|
+| form-created | A draft form is created. When a form is created with `submit: true`, `form-submitted` is sent instead. |
+| form-locked | The draft expiry job locks a draft that has not been accessed. |
+| form-unlocked | An administrator unlocks a locked form. |
+| form-submitted | A form is submitted. The form data is included when the definition sets `includeDataInSubmission`. |
+| form-to-draft | A submitted form is set back to draft. |
+| form-archived | A form is archived. |
+| form-deleted | A form is deleted through the API or by the draft expiry job. |
+| submission-dispositioned | A submission is dispositioned. |
+| submission-deleted | A submission is deleted. |
+| form-message-to-applicant | A reviewer posts a message on a form's questions topic. |
+| form-message-to-reviewer | An applicant posts a message and a reviewer is part of the conversation. |
+| form-message-forwarded | An applicant posts a message, no reviewer is part of the conversation, and the definition sets an address to forward questions to. |
+
+When a definition sets a custom submission event (`event` in the submission actions), form service also sends that event, in the namespace and with the name it configures, each time a form is submitted.
+
+Form service registers the `form-status-updates`, `form-message-notifications` and `form-message-reviewer-notifications` notification types, which notify applicants and reviewers of these events. It also registers two push service streams: `submitted-form-pdf-updates` (PDF service PDF generation events) and `form-questions-updates` (comment service events on form question topics).
+
+Form service consumes the comment service `comment-created` event for form question topics to send the message events above.
+
 ## Audit actions
 Form service records audit events in the `form-service` namespace of the [audit service](audit-service.md). Records are written to the tenant of the form, submission or data register. Form records use the form as the resource (`{ type: 'form', id: <form ID> }`) and correlation ID, with the form `definitionId`, `status` (after the operation), `anonymousApplicant` and `dryRun` in the metadata. Form data and applicant details are never recorded. All actions are version 1.
 
@@ -98,6 +168,43 @@ Draft data is saved frequently, so form service sends audit events in batches of
 Audit recording is on by default. Set the environment variable `FORM_AUDIT_ENABLED=false` on form service to turn it off, or `true` to turn it on regardless of the SDK `AUDIT_ENABLED` variable, which applies when `FORM_AUDIT_ENABLED` is not set. The action catalog is still registered while recording is off, so turning it back on needs only a restart.
 
 ## Code examples
+### Create a form definition
+```typescript
+  const response = await fetch(
+    'https://form-service.adsp.alberta.ca/form/v1/definitions',
+    {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        name: 'Business licence application',
+        description: 'Application for a municipal business licence.',
+      }),
+    }
+  );
+
+  // The ID is generated from the name, for example 'business-licence-application'.
+  const { id, revision } = await response.json();
+
+  // Set who can apply and who can assess submissions.
+  await fetch(
+    `https://form-service.adsp.alberta.ca/form/v1/definitions/${id}/roles`,
+    {
+      method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        applicantRoles: ['business-licence-applicant'],
+        assessorRoles: ['business-licence-assessor'],
+      }),
+    }
+  );
+```
+
 ### Create a draft form for an anonymous applicant
 ```typescript
   const form = {
@@ -125,12 +232,12 @@ Audit recording is on by default. Set the environment variable `FORM_AUDIT_ENABL
 
   const {
     id,
-    definitionId,
+    definition,
     status,
     created,
     createdBy,
     lastAccessed,
-  } = response.json();
+  } = await response.json();
 ```
 
 ### Access form data using a time limited code.
@@ -167,12 +274,13 @@ Intake applications can retrieve form data on behalf of anonymous applicants by 
 ```
 
 ### Update data in a draft form
+Files are referenced by their file service URN in the data. Form service finds the file references using the data schema, and returns them in `files`.
 ```typescript
   const formData = {
-    data: {}
-    files: {
-      'proof-of-status': fileUrn,
-    }
+    data: {
+      businessName: 'Example Bakery Ltd.',
+      proofOfStatus: fileUrn,
+    },
   }
 
   const response = await fetch(
@@ -213,5 +321,37 @@ Intake applications can retrieve form data on behalf of anonymous applicants by 
     id,
     status,
     submitted,
+    submission,
   } = await response.json();
+```
+
+### Disposition a submission
+Assessors find the submissions of a definition that are waiting for a decision, and record a disposition using one of the definition's disposition states.
+```typescript
+  const criteria = JSON.stringify({ definitionIdEquals: definitionId, dispositioned: false });
+  const response = await fetch(
+    `https://form-service.adsp.alberta.ca/form/v1/submissions?criteria=${encodeURIComponent(criteria)}`,
+    {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    }
+  );
+  const { results, page } = await response.json();
+
+  const [{ id: submissionId, formId }] = results;
+  const dispositionResponse = await fetch(
+    `https://form-service.adsp.alberta.ca/form/v1/forms/${formId}/submissions/${submissionId}`,
+    {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        dispositionStatus: 'Approved',
+        dispositionReason: 'Application meets all eligibility criteria.',
+      }),
+    }
+  );
+
+  const { disposition } = await dispositionResponse.json();
 ```
