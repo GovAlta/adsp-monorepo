@@ -1,21 +1,19 @@
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import * as express from 'express';
+import { createServer, Server as HttpServer } from 'http';
 import { performance } from 'perf_hooks';
+import { McpServerConfig, readConfig } from './config';
+import { createCorsAndOriginGuard, createInFlightGate, createRateLimit } from './guards';
 import { bucketMcpMethod, getMetrics } from './metrics';
+import { Semaphore } from './semaphore';
 import { createAdspMcpServer, CreateAdspMcpServerOptions, loadAdspMcpTools } from './server';
+import { configureLiveToolLimit } from './tools/liveToolLimit';
 
 const MAX_REQUEST_BODY_BYTES = 1024 * 1024;
 
-function applyCorsHeaders(req: express.Request, res: express.Response, next: express.NextFunction): void {
-  res.setHeader('Access-Control-Allow-Origin', process.env['CORS_ORIGIN'] ?? '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, mcp-session-id, mcp-protocol-version');
-  res.setHeader('Access-Control-Expose-Headers', 'mcp-session-id');
-  if (req.method === 'OPTIONS') {
-    res.sendStatus(204);
-    return;
-  }
-  next();
+export interface McpHttpAppOptions extends CreateAdspMcpServerOptions {
+  /** Defaults to `readConfig()` over `process.env`. */
+  config?: McpServerConfig;
 }
 
 function createStatelessPostHandler(options: CreateAdspMcpServerOptions): express.RequestHandler {
@@ -24,7 +22,6 @@ function createStatelessPostHandler(options: CreateAdspMcpServerOptions): expres
     const metrics = getMetrics();
     let method = 'unparsed';
     let messagesSeen = 0;
-    metrics.addInFlight(1);
 
     const server = createAdspMcpServer(options);
     const transport = new StreamableHTTPServerTransport({
@@ -36,7 +33,6 @@ function createStatelessPostHandler(options: CreateAdspMcpServerOptions): expres
     res.on('close', () => {
       transport.close();
       server.close();
-      metrics.addInFlight(-1);
       // Node leaves statusCode at 200 when the client goes away before a response is written.
       const outcome = res.writableFinished ? res.statusCode : 'aborted';
       metrics.recordRequest(method, outcome, (performance.now() - started) / 1000);
@@ -74,20 +70,48 @@ function methodNotAllowed(_req: express.Request, res: express.Response): void {
     .json({ jsonrpc: '2.0', error: { code: -32000, message: 'Method not allowed.' }, id: null });
 }
 
-export function createMcpHttpApp(options: CreateAdspMcpServerOptions = {}): express.Express {
-  loadAdspMcpTools(options);
+export function createMcpHttpApp({ config = readConfig(), ...serverOptions }: McpHttpAppOptions = {}): express.Express {
+  loadAdspMcpTools(serverOptions);
+  configureLiveToolLimit({ maxConcurrent: config.liveToolMaxConcurrent, waitMs: config.inFlightWaitMs });
 
   // No express.json(): the transport reads the body so parse and size errors come back as JSON-RPC.
   const app = express();
-  app.use(applyCorsHeaders);
+  app.set('trust proxy', config.trustedProxy);
 
   app.get('/health', (_req, res) => {
     res.json({ status: 'ok' });
   });
 
-  app.post('/mcp', createStatelessPostHandler(options));
+  app.use('/mcp', createCorsAndOriginGuard(config.corsOrigins));
+  app.post(
+    '/mcp',
+    createRateLimit(config.rateLimitPerMinute),
+    createInFlightGate(new Semaphore(config.maxInFlight, { maxWaiters: config.maxInFlight }), config.inFlightWaitMs),
+    createStatelessPostHandler(serverOptions)
+  );
   app.get('/mcp', methodNotAllowed);
   app.delete('/mcp', methodNotAllowed);
 
   return app;
+}
+
+export interface McpHttpServerOptions {
+  requestTimeoutMs?: number;
+  headersTimeoutMs?: number;
+  connectionsCheckingIntervalMs?: number;
+}
+
+/**
+ * The in-flight gate admits a request before its body arrives, so a client that never finishes sending one would hold
+ * a slot until Node's 300 s default. These limits only cover receiving the request, not how long a tool call takes.
+ */
+export function createMcpHttpServer(app: express.Express, options: McpHttpServerOptions = {}): HttpServer {
+  return createServer(
+    {
+      requestTimeout: options.requestTimeoutMs ?? 30_000,
+      headersTimeout: options.headersTimeoutMs ?? 20_000,
+      connectionsCheckingInterval: options.connectionsCheckingIntervalMs ?? 5_000,
+    },
+    app
+  );
 }

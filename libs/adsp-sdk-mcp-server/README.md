@@ -51,9 +51,17 @@ at `POST /mcp`, with a liveness check at `GET /health`.
 |---|---|---|
 | `MCP_TRANSPORT` | `stdio` | `http` to serve HTTP |
 | `PORT` | `3000` | Port to listen on |
-| `CORS_ORIGIN` | `*` | Value of `Access-Control-Allow-Origin` |
+| `CORS_ORIGIN` | unset | Comma-separated browser origins allowed to call `/mcp`, for example `https://a.example,https://b.example`. Unset allows none; `*` allows any (not for hosted use) |
+| `MCP_MAX_IN_FLIGHT` | `64` | `POST /mcp` requests handled at once per process |
+| `MCP_IN_FLIGHT_WAIT_MS` | `1000` | How long a request waits for a free slot before getting `503`. Also how long a live tool waits for a free upstream slot |
+| `MCP_RATE_LIMIT_PER_MINUTE` | `1200` | `POST /mcp` requests allowed per client IP per minute, per process. `0` turns the limit off |
+| `MCP_LIVE_TOOL_MAX_CONCURRENT` | `8` | Live-tool calls to ADSP running at once per process, across both live tools |
+| `TRUSTED_PROXY` | `uniquelocal` | Express [`trust proxy`](https://expressjs.com/en/guide/behind-proxies.html) setting, so the client IP comes from the router's `X-Forwarded-For` |
 | `OTEL_EXPORTER_OTLP_ENDPOINT` | unset | OTLP/HTTP collector base URL. When set, metrics are exported to `<endpoint>/v1/metrics` |
 | `OTEL_METRIC_EXPORT_INTERVAL` | `60000` | Metric export interval, in milliseconds |
+
+An invalid value for one of the `MCP_*` numbers, or `*` mixed with origins in `CORS_ORIGIN`, stops the server at
+startup with an error naming the variable.
 
 HTTP mode is stateless: each `POST /mcp` gets its own MCP server, the response is JSON (the server never streams),
 and nothing is kept between requests. The response carries no `Mcp-Session-Id`, so any replica can serve any request
@@ -61,6 +69,46 @@ and an idle client never loses its session. `GET /mcp` and `DELETE /mcp` return 
 there is no stream to open and no session to delete.
 
 `SESSION_TTL_MINUTES` has been removed and is ignored: there are no sessions to expire.
+
+#### Overload guards
+
+`POST /mcp` passes these checks in order. `GET /health` skips all of them. Every rejection is a JSON-RPC error body
+(`code: -32000`) and is counted in `mcp.requests.rejected`.
+
+1. **Origin.** A request with an `Origin` header not in `CORS_ORIGIN` gets `403` (`Origin not allowed`), as the MCP
+   specification requires. `Origin: null` is never allowed. A request without an `Origin` header, which is what
+   non-browser clients such as agent-service and the MCP SDK send, passes. `Access-Control-Allow-Origin` is sent only
+   for an allowed origin.
+2. **Rate limit.** Over `MCP_RATE_LIMIT_PER_MINUTE` from one client IP, a request gets `429` with `Retry-After`
+   (`Rate limit exceeded`).
+3. **In-flight cap.** With `MCP_MAX_IN_FLIGHT` requests already running, a request waits up to
+   `MCP_IN_FLIGHT_WAIT_MS` for a slot, so a short burst completes. A request still waiting after that, or arriving
+   when as many requests are already waiting as `MCP_MAX_IN_FLIGHT`, gets `503` with `Retry-After: 1`
+   (`Server busy`). Requests already running are never affected. A request is admitted before its body arrives, so
+   the server allows 20 s for the headers and 30 s for the whole request. A client that sends more slowly is closed
+   and its slot freed. These limits don't apply to how long a tool call takes.
+
+The live tools also share `MCP_LIVE_TOOL_MAX_CONCURRENT` slots for their calls to ADSP. A live-tool call that can't
+get one within `MCP_IN_FLIGHT_WAIT_MS` answers with the tool error `ADSP upstream is busy. Retry shortly.` instead of
+waiting on a slow upstream. A live-tool call whose client cancels it or disconnects while it waits gives up its
+place and never calls ADSP. This applies in stdio mode too.
+
+Things to know when sizing and tuning these:
+
+- **The limits are per process.** With N replicas, the cluster takes about N times each limit.
+- **The rate limit is per client IP until authentication is added.** Every agent-service pod is then one client, and
+  so is any group of users behind one NAT or proxy. Connecting and calling one tool is 3 `POST`s, so the default
+  allows about 400 such client sessions a minute from one IP. Retune it once the deployment shows which client IPs
+  reach the pod.
+- **Clients don't retry.** Measured locally with `MCP_MAX_IN_FLIGHT=2` and both slots held:
+
+  | Client | Over the cap for longer than `MCP_IN_FLIGHT_WAIT_MS` | Over the cap briefly (`MCP_IN_FLIGHT_WAIT_MS=3000`, slots freed after 0.5 s) |
+  |---|---|---|
+  | `@modelcontextprotocol/sdk` 1.32.1 | `connect()` throws `StreamableHTTPError` (code 503) after the wait. One request, no retry, `Retry-After` ignored | Connects and calls the tool after about 0.5 s |
+  | `@mastra/mcp` 1.8.1 | Logs `MCP_CLIENT_GET_TOOLS_FAILED` and `listTools()` returns no tools from this server, without throwing. One request, no retry | Lists all six tools and calls one after about 0.5 s |
+
+  So a `503` becomes a failed tool call, or an agent turn with no ADSP tools at all. Size `MCP_MAX_IN_FLIGHT` and
+  the replica count so it stays rare, and watch `mcp.requests.rejected`.
 
 #### Metrics
 
@@ -70,7 +118,7 @@ OpenTelemetry SDK isn't loaded. Stdio mode never exports metrics.
 
 | Name | Kind | Unit | Labels | Meaning |
 |---|---|---|---|---|
-| `mcp.requests.in_flight` | UpDownCounter | `{request}` | none | `POST /mcp` requests being handled |
+| `mcp.requests.in_flight` | UpDownCounter | `{request}` | none | `POST /mcp` requests admitted by the in-flight cap and not yet answered (waiting requests aren't counted) |
 | `mcp.requests.rejected` | Counter | `{request}` | `reason` | Requests or tool calls refused by an overload guard |
 | `mcp.request.duration` | Histogram | `s` | `mcp.method.name`, and `http.response.status_code` or `error.type=aborted` | Time to answer a `POST /mcp` request, or until the client disconnected |
 | `mcp.tool.duration` | Histogram | `s` | `mcp.tool.name`, `error.type` (absent on success) | Time to run a tool call |
@@ -93,9 +141,6 @@ Every label takes a value from a fixed set:
   `not_authenticated` or `other`. `not_authenticated` covers both a missing `adsp-cli` login and a failed token
   request, which `adsp-cli` reports the same way.
 - `reason` on `mcp.requests.rejected`: `in_flight_cap`, `rate_limit`, `origin` or `live_tool_cap`.
-
-This version has no overload guards yet, so `mcp.requests.rejected` and the `busy` error type are defined but never
-recorded.
 
 ### Using `list_service_roles`
 
