@@ -1,4 +1,4 @@
-import { adspId, User } from '@abgov/adsp-service-sdk';
+import { adspId, AuditService, User } from '@abgov/adsp-service-sdk';
 import { createErrorHandler } from '@core-services/core-common';
 import { createDocumentedResponseRecorder } from '@core-services/core-common/testing';
 import * as express from 'express';
@@ -30,6 +30,7 @@ describe('notice router documented behaviour', () => {
     getTenantByRealm: jest.fn(),
   };
   const eventServiceMock = { send: jest.fn() };
+  const auditServiceMock = { record: jest.fn(), flush: jest.fn() } as unknown as AuditService;
   const noticeRepositoryMock = {
     find: jest.fn(),
     get: jest.fn(),
@@ -85,6 +86,7 @@ describe('notice router documented behaviour', () => {
         tenantService: tenantServiceMock,
         noticeRepository: noticeRepositoryMock as unknown as NoticeRepository,
         eventService: eventServiceMock,
+        auditService: auditServiceMock,
       }),
     );
     expressApp.use(createErrorHandler(loggerMock));

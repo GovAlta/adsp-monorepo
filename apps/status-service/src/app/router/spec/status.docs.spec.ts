@@ -1,4 +1,4 @@
-import { adspId, AdspId, ConfigurationService, User } from '@abgov/adsp-service-sdk';
+import { adspId, AdspId, AuditService, ConfigurationService, User } from '@abgov/adsp-service-sdk';
 import { createErrorHandler } from '@core-services/core-common';
 import { createDocumentedResponseRecorder } from '@core-services/core-common/testing';
 import axios from 'axios';
@@ -36,6 +36,7 @@ describe('status router documented behaviour', () => {
     getTenantByRealm: jest.fn(),
   };
   const eventServiceMock = { send: jest.fn() };
+  const auditServiceMock = { record: jest.fn(), flush: jest.fn() } as unknown as AuditService;
   const tokenProviderMock = { getAccessToken: jest.fn() };
   const directoryMock = { getServiceUrl: jest.fn(), getResourceUrl: jest.fn() };
   const configurationServiceMock = { getConfiguration: jest.fn() };
@@ -118,6 +119,7 @@ describe('status router documented behaviour', () => {
         logger: loggerMock,
         tenantService: tenantServiceMock,
         eventService: eventServiceMock,
+        auditService: auditServiceMock,
         serviceStatusRepository: serviceStatusRepositoryMock as unknown as ServiceStatusRepository,
         endpointStatusEntryRepository: endpointStatusEntryRepositoryMock as unknown as EndpointStatusEntryRepository,
         tokenProvider: tokenProviderMock,

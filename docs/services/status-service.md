@@ -89,6 +89,18 @@ The service consumes its own `health-check-started` and `health-check-stopped` e
 
 It also registers two notification types: `status-application-health-change` (health check started, stopped, healthy, and unhealthy; for `status-admin` subscribers) and `status-application-status-change` (status changed and notice published).
 
+## Audit
+Changes made by status administrators are recorded in the [audit service](/adsp-monorepo/services/audit-service.html) under the `status-service` namespace. The actor is the administrator (ID, name and roles, without the email address), not the service account.
+
+| Action | Resource | Notes |
+|---|---|---|
+| `application.created` / `application.updated` / `application.deleted` | application | |
+| `application.status-changed` | application | Change set holds the previous and new status; each transition is its own record. |
+| `notice.created` / `notice.updated` / `notice.deleted` | notice | Metadata holds the message, dates and mode. |
+| `health-check.configured` | application | Health check URL changed, or monitoring enabled or disabled. |
+
+Health check polling results, automatic status changes and public reads are not audited. Set `STATUS_AUDIT_ENABLED` to `false` to disable; when unset it follows the SDK `AUDIT_ENABLED` variable (on by default).
+
 ## Code examples
 
 ### Add an application and start health checks
