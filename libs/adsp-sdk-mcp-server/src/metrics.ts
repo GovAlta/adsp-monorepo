@@ -158,6 +158,7 @@ export async function startMetricsFromEnv(env: NodeJS.ProcessEnv = process.env):
     const { OTLPMetricExporter } = await import('@opentelemetry/exporter-metrics-otlp-http');
     const { defaultResource, resourceFromAttributes } = await import('@opentelemetry/resources');
 
+    const exportIntervalMillis = readExportIntervalMs(env);
     const provider = new MeterProvider({
       resource: defaultResource().merge(
         resourceFromAttributes({ 'service.name': 'adsp-sdk-mcp-server', 'service.version': readPackageVersion() })
@@ -165,8 +166,9 @@ export async function startMetricsFromEnv(env: NodeJS.ProcessEnv = process.env):
       readers: [
         new PeriodicExportingMetricReader({
           exporter: new OTLPMetricExporter({ url: `${endpoint}/v1/metrics` }),
-          exportIntervalMillis: readExportIntervalMs(env),
-          exportTimeoutMillis: EXPORT_TIMEOUT_MS,
+          exportIntervalMillis,
+          // The reader rejects a timeout longer than the interval.
+          exportTimeoutMillis: Math.min(EXPORT_TIMEOUT_MS, exportIntervalMillis),
         }),
       ],
     });

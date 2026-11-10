@@ -73,6 +73,18 @@ describe('startMetricsFromEnv', () => {
     });
 
     expect(mockReader).toHaveBeenCalledWith(expect.objectContaining({ exportIntervalMillis: 2000 }));
+    expect(started).toBeDefined();
+    expect(getMetrics()).not.toBe(noopMetrics);
+  });
+
+  it('keeps the export timeout within a short export interval', async () => {
+    started = await startMetricsFromEnv({
+      OTEL_EXPORTER_OTLP_ENDPOINT: 'http://collector.test:4318',
+      OTEL_METRIC_EXPORT_INTERVAL: '2000',
+    });
+
+    expect(mockReader).toHaveBeenCalledWith(expect.objectContaining({ exportTimeoutMillis: 2000 }));
+    expect(consoleError).not.toHaveBeenCalledWith(expect.stringContaining('Metrics disabled'));
   });
 
   it('restores the no-op recorder on shutdown', async () => {
@@ -81,6 +93,21 @@ describe('startMetricsFromEnv', () => {
     started = undefined;
 
     expect(getMetrics()).toBe(noopMetrics);
+  });
+
+  it('flushes recorded metrics to the exporter on shutdown', async () => {
+    started = await startMetricsFromEnv({ OTEL_EXPORTER_OTLP_ENDPOINT: 'http://collector.test:4318' });
+    getMetrics().recordToolCall('search_adsp_docs', 0.01);
+    await started?.shutdown();
+    started = undefined;
+
+    const exporter = mockExporter.mock.results[0].value;
+    const names = exporter
+      .getMetrics()
+      .flatMap((resourceMetrics) => resourceMetrics.scopeMetrics)
+      .flatMap((scope) => scope.metrics)
+      .map((metric) => metric.descriptor.name);
+    expect(names).toContain('mcp.tool.duration');
   });
 
   it('logs and continues without metrics when the exporter throws', async () => {
