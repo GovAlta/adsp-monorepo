@@ -17,7 +17,10 @@ import {
   TOOL_CONTRACT,
   TRANSPORT_EQUIVALENCE_CALLS,
 } from './fixtures/toolContract';
+import { createMetricsTestKit, histogramCount, MetricsTestKit } from './fixtures/metricsTestKit';
+import { testConfig } from './fixtures/httpTestKit';
 import { createMcpHttpApp } from './http';
+import { installMetrics } from './metrics';
 import * as quickstartModule from './tools/registerQuickstartTool';
 import { createAdspMcpServer } from './server';
 
@@ -165,22 +168,25 @@ describe('HTTP startup', () => {
 });
 
 describe('HTTP CORS', () => {
+  const ALLOWED_ORIGIN = 'http://allowed.test';
   let running: RunningApp;
 
   beforeEach(async () => {
-    running = await listen(createMcpHttpApp({ docsRoot: FIXTURE_DOCS_ROOT }));
+    running = await listen(
+      createMcpHttpApp({ docsRoot: FIXTURE_DOCS_ROOT, config: testConfig({ corsOrigins: [ALLOWED_ORIGIN] }) })
+    );
   });
 
   afterEach(() => stop(running));
 
   it('answers a CORS preflight with 204', async () => {
-    const response = await fetch(running.endpoint, { method: 'OPTIONS' });
+    const response = await fetch(running.endpoint, { method: 'OPTIONS', headers: { origin: ALLOWED_ORIGIN } });
 
     expect(response.status).toBe(204);
   });
 
   it('allows the mcp-protocol-version request header', async () => {
-    const response = await fetch(running.endpoint, { method: 'OPTIONS' });
+    const response = await fetch(running.endpoint, { method: 'OPTIONS', headers: { origin: ALLOWED_ORIGIN } });
 
     expect(response.headers.get('access-control-allow-headers')?.split(', ')).toContain('mcp-protocol-version');
   });
@@ -341,10 +347,23 @@ describe('HTTP request failures', () => {
     });
   });
 
-  it('sends CORS headers when it rejects a request body', async () => {
-    const response = await postRawMcp(running.endpoint, '{not json');
+  it('sends CORS headers when it rejects a request body from an allowed Origin', async () => {
+    const allowedOrigin = 'http://allowed.test';
+    const allowingApp = await listen(
+      createMcpHttpApp({ docsRoot: FIXTURE_DOCS_ROOT, config: testConfig({ corsOrigins: [allowedOrigin] }) })
+    );
+    try {
+      const response = await fetch(allowingApp.endpoint, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', accept: 'application/json, text/event-stream', origin: allowedOrigin },
+        body: '{not json',
+      });
 
-    expect(response.headers.get('access-control-allow-origin')).toBe('*');
+      expect(response.status).toBe(400);
+      expect(response.headers.get('access-control-allow-origin')).toBe(allowedOrigin);
+    } finally {
+      await stop(allowingApp);
+    }
   });
 
   it('answers a malformed JSON body without crashing', async () => {
@@ -417,9 +436,120 @@ describe('stateless HTTP startup', () => {
   it('does not schedule an idle-session sweep', () => {
     const setIntervalSpy = jest.spyOn(global, 'setInterval');
 
-    createMcpHttpApp({ docsRoot: FIXTURE_DOCS_ROOT });
+    // The rate limiter's store resets its window on an unref'd interval, which isn't a session sweep.
+    createMcpHttpApp({ docsRoot: FIXTURE_DOCS_ROOT, config: testConfig({ rateLimitPerMinute: 0 }) });
 
     expect(setIntervalSpy).not.toHaveBeenCalled();
     setIntervalSpy.mockRestore();
+  });
+});
+
+describe('HTTP request metrics', () => {
+  let kit: MetricsTestKit;
+  let uninstall: () => void;
+  let running: RunningApp;
+
+  async function collectUntil(condition: () => boolean, timeoutMs = 2000): Promise<void> {
+    const deadline = Date.now() + timeoutMs;
+    for (;;) {
+      await kit.collect();
+      if (condition()) return;
+      if (Date.now() > deadline) throw new Error(`metrics condition not met within ${timeoutMs} ms`);
+      await new Promise((resolveTick) => setTimeout(resolveTick, 10));
+    }
+  }
+
+  function requestCounts(): Record<string, number> {
+    return Object.fromEntries(
+      kit
+        .points('mcp.request.duration')
+        .map((point) => [
+          `${point.attributes['mcp.method.name']} ${point.attributes['http.response.status_code']}`,
+          histogramCount(point),
+        ])
+    );
+  }
+
+  function inFlight(): unknown {
+    return kit.points('mcp.requests.in_flight')[0]?.value;
+  }
+
+  beforeEach(async () => {
+    kit = createMetricsTestKit();
+    ({ uninstall } = installMetrics(kit.provider));
+    running = await listen(createMcpHttpApp({ docsRoot: FIXTURE_DOCS_ROOT }));
+  });
+
+  afterEach(async () => {
+    jest.restoreAllMocks();
+    await stop(running);
+    uninstall();
+    await kit.shutdown();
+  });
+
+  it('records request duration by MCP method', async () => {
+    await (await postMcp(running.endpoint, INITIALIZE_REQUEST)).text();
+    await (await postMcp(running.endpoint, TOOLS_LIST_REQUEST)).text();
+
+    await collectUntil(() => Object.keys(requestCounts()).length === 2);
+    expect(requestCounts()).toEqual({ 'initialize 200': 1, 'tools/list 200': 1 });
+  });
+
+  it('records unparsed for a malformed body', async () => {
+    await (await postRawMcp(running.endpoint, '{bad')).text();
+
+    await collectUntil(() => Object.keys(requestCounts()).length === 1);
+    expect(requestCounts()).toEqual({ 'unparsed 400': 1 });
+  });
+
+  it('labels a batch body as batch', async () => {
+    await (await postMcp(running.endpoint, [TOOLS_LIST_REQUEST, { ...TOOLS_LIST_REQUEST, id: 3 }])).text();
+
+    await collectUntil(() => Object.keys(requestCounts()).length === 1);
+    expect(Object.keys(requestCounts())).toEqual([expect.stringMatching(/^batch /)]);
+  });
+
+  it('records each request exactly once', async () => {
+    for (let i = 0; i < 3; i++) {
+      await (await postMcp(running.endpoint, TOOLS_LIST_REQUEST)).text();
+    }
+
+    await collectUntil(() => requestCounts()['tools/list 200'] === 3);
+    await new Promise((resolveTick) => setTimeout(resolveTick, 50));
+    await kit.collect();
+    expect(requestCounts()).toEqual({ 'tools/list 200': 3 });
+  });
+
+  it('returns in-flight to zero after requests finish, including an aborted one', async () => {
+    await (await postMcp(running.endpoint, TOOLS_LIST_REQUEST)).text();
+    const handleRequest = jest
+      .spyOn(StreamableHTTPServerTransport.prototype, 'handleRequest')
+      .mockImplementationOnce(() => new Promise(() => undefined));
+    const abort = new AbortController();
+    const pending = postMcp(running.endpoint, TOOLS_LIST_REQUEST, { signal: abort.signal }).catch(() => undefined);
+    await waitFor(() => handleRequest.mock.calls.length > 0);
+    await collectUntil(() => inFlight() === 1);
+
+    abort.abort();
+    await pending;
+
+    await collectUntil(() => inFlight() === 0);
+    expect(inFlight()).toBe(0);
+  });
+
+  it('records a client abort as aborted, not as a 200', async () => {
+    const handleRequest = jest
+      .spyOn(StreamableHTTPServerTransport.prototype, 'handleRequest')
+      .mockImplementationOnce(() => new Promise(() => undefined));
+    const abort = new AbortController();
+    const pending = postMcp(running.endpoint, TOOLS_LIST_REQUEST, { signal: abort.signal }).catch(() => undefined);
+    await waitFor(() => handleRequest.mock.calls.length > 0);
+    abort.abort();
+    await pending;
+
+    await collectUntil(() => kit.points('mcp.request.duration').length === 1);
+    const [point] = kit.points('mcp.request.duration');
+    expect(point.attributes).toEqual({ 'mcp.method.name': 'unparsed', 'error.type': 'aborted' });
+    expect(histogramCount(point)).toBe(1);
   });
 });

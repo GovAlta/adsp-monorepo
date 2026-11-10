@@ -262,7 +262,7 @@ For additional examples and option reference material, see the [cheat sheet](/ad
 ADSP has added several enhancements to the form builder in order to help designers and developers create professional looking forms. These include:
 
 - Adding [text, images, and links](/adsp-monorepo/tutorials/form-service/instructions.html) to forms in order to help clarify the information that is needed from end-users when filling them out.
-- A [file upload widget](/adsp-monorepo/tutorials/form-service/file-uploader.md)
+- A [file upload widget](/adsp-monorepo/tutorials/form-service/file-uploader.html)
 - Data registries
 
 ## Learn More

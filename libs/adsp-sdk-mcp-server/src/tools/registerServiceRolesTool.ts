@@ -5,7 +5,10 @@ import {
   HttpRequestError,
   ServiceNotInDirectoryError,
 } from '@abgov/adsp-cli';
+import { getMetrics } from '../metrics';
 import { LiveToolDefinition } from './types';
+import { withLiveToolPermit } from './liveToolLimit';
+import { classifyUpstreamError } from './upstreamErrors';
 
 function describeError(err: unknown): string {
   if (err instanceof ServiceNotInDirectoryError) {
@@ -70,28 +73,31 @@ export function createServiceRolesTools(): LiveToolDefinition[] {
         'authentication: run `npx @abgov/adsp-cli login` once in a terminal (interactive), or set ' +
         'ADSP_CLIENT_ID and ADSP_CLIENT_SECRET environment variables for non-interactive/CI use.',
       inputSchema: { type: 'object', properties: {} },
-      handler: async () => {
-        const tokenResult = await getAccessToken();
+      handler: (_args, context) =>
+        withLiveToolPermit(async () => {
+          const tokenResult = await getAccessToken();
 
-        if (tokenResult.status === 'not-authenticated') {
-          return {
-            isError: true,
-            content: [
-              { type: 'text', text: 'Not authenticated. Run `npx @abgov/adsp-cli login` in a terminal, then retry.' },
-            ],
-          };
-        }
+          if (tokenResult.status === 'not-authenticated') {
+            getMetrics().recordUpstreamError('list_service_roles', 'not_authenticated');
+            return {
+              isError: true,
+              content: [
+                { type: 'text', text: 'Not authenticated. Run `npx @abgov/adsp-cli login` in a terminal, then retry.' },
+              ],
+            };
+          }
 
-        try {
-          const directoryServiceUrl = getDirectoryServiceUrl();
-          const roles = await getServiceRoles(tokenResult.token, directoryServiceUrl);
-          return {
-            content: [{ type: 'text', text: SERVICE_ROLES_PREAMBLE + JSON.stringify(roles, null, 2) }],
-          };
-        } catch (err) {
-          return { isError: true, content: [{ type: 'text', text: describeError(err) }] };
-        }
-      },
+          try {
+            const directoryServiceUrl = getDirectoryServiceUrl();
+            const roles = await getServiceRoles(tokenResult.token, directoryServiceUrl);
+            return {
+              content: [{ type: 'text', text: SERVICE_ROLES_PREAMBLE + JSON.stringify(roles, null, 2) }],
+            };
+          } catch (err) {
+            getMetrics().recordUpstreamError('list_service_roles', classifyUpstreamError(err));
+            return { isError: true, content: [{ type: 'text', text: describeError(err) }] };
+          }
+        }, context?.signal),
     },
   ];
 }

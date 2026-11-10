@@ -1,8 +1,11 @@
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
-import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
+import { CallToolRequestSchema, CallToolResult, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
 import { join, resolve } from 'path';
+import { performance } from 'perf_hooks';
 import { DocsRepository } from './docs/docsRepository';
+import { getMetrics, ToolErrorType } from './metrics';
 import { createConfigurationSchemaTools } from './tools/registerConfigurationSchemaTool';
+import { isBusyResult } from './tools/liveToolLimit';
 import { createDocsTools } from './tools/registerDocsTools';
 import { createQuickstartTool } from './tools/registerQuickstartTool';
 import { createServiceRolesTools } from './tools/registerServiceRolesTool';
@@ -31,6 +34,7 @@ export function loadAdspMcpTools(options: CreateAdspMcpServerOptions = {}): Adsp
     return cached;
   }
 
+  const started = performance.now();
   const tools = [
     ...createDocsTools(new DocsRepository(docsRoot)),
     ...createSdkTools(),
@@ -40,6 +44,7 @@ export function loadAdspMcpTools(options: CreateAdspMcpServerOptions = {}): Adsp
   ];
   const loaded = { tools, toolsByName: new Map(tools.map((tool) => [tool.name, tool])) };
   toolsByDocsRoot.set(docsRoot, loaded);
+  getMetrics().recordDocsIndexBuild(secondsSince(started));
   return loaded;
 }
 
@@ -60,15 +65,36 @@ export function createAdspMcpServer(options: CreateAdspMcpServerOptions = {}): S
     tools: tools.map(({ name, description, inputSchema }) => ({ name, description, inputSchema })),
   }));
 
-  server.setRequestHandler(CallToolRequestSchema, async (request) => {
+  server.setRequestHandler(CallToolRequestSchema, async (request, extra) => {
+    const started = performance.now();
     const tool = toolsByName.get(request.params.name);
     if (!tool) {
+      // The label is fixed so client-supplied names can't create new metric series.
+      getMetrics().recordToolCall('unknown', secondsSince(started), 'unknown_tool');
       return { isError: true, content: [{ type: 'text', text: `Unknown tool: ${request.params.name}` }] };
     }
 
-    // clean-code-ignore: 2.18 — ToolDefinition.handler is documented (tools/types.ts) as a pure, side-effect-free lookup.
-    return tool.handler(request.params.arguments ?? {});
+    try {
+      // clean-code-ignore: 2.18 — ToolDefinition.handler is documented (tools/types.ts) as a pure, side-effect-free lookup.
+      const result = await tool.handler(request.params.arguments ?? {}, { signal: extra.signal });
+      getMetrics().recordToolCall(tool.name, secondsSince(started), toolErrorType(result));
+      return result;
+    } catch (err) {
+      getMetrics().recordToolCall(tool.name, secondsSince(started), 'exception');
+      throw err;
+    }
   });
 
   return server;
+}
+
+function toolErrorType(result: CallToolResult): ToolErrorType | undefined {
+  if (isBusyResult(result)) {
+    return 'busy';
+  }
+  return result.isError ? 'tool_error' : undefined;
+}
+
+function secondsSince(started: number): number {
+  return (performance.now() - started) / 1000;
 }

@@ -5,17 +5,16 @@ paths:
         - Retention
       summary: Get the configured retention periods for the caller's tenant.
       description: |
-        Requires audit-reader. Returns the retention periods as the service applies them at write time: the active
-        configuration revision (falling back to the latest), with Core settings merged. Only configured periods are
-        returned, not the built-in defaults. Application entries are included for registered action catalogs that
-        override at least one class. Precedence is built-in defaults, then `tenant`, then the application entry.
-        Without a tenant context (Core callers not naming a tenant) both properties are empty.
+        Requires the `audit-reader` role, held in the tenant or as a Core role. Returns the retention periods as the
+        service applies them at write time: the active configuration revision (falling back to the latest), with Core
+        settings merged. Only configured periods are returned, not the built-in defaults. Application entries are
+        included for registered action catalogs that override at least one class. Precedence is built-in defaults,
+        then `tenant`, then the application entry.
+
+        Tenant callers read their token's tenant. Core callers select a tenant with `tenantId`; without it both
+        properties are empty.
       parameters:
-        - in: query
-          name: tenantId
-          description: Tenant URN. Available to Core service accounts only; tenant callers cannot select another tenant.
-          schema:
-            type: string
+        - $ref: '#/components/parameters/TenantId'
       responses:
         '200':
           description: Configured retention periods.
@@ -33,30 +32,43 @@ paths:
                     type: object
                     additionalProperties:
                       $ref: '#/components/schemas/RetentionClasses'
+                example:
+                  tenant:
+                    standard:
+                      days: 120
+                  applications:
+                    case-service:
+                      compliance:
+                        days: 730
         '400':
-          description: Invalid tenant identifier.
+          $ref: '#/components/responses/AuditBadRequest'
         '401':
-          description: Missing or invalid bearer token.
+          $ref: '#/components/responses/AuditUnauthorized'
         '403':
-          description: Missing `audit-reader` role, or a tenant caller attempting to select another tenant.
+          $ref: '#/components/responses/AuditForbidden'
         '503':
           description: Retention settings could not be resolved or are out of bounds. Retry.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuditError'
+              example:
+                errorMessage: Audit retention settings are temporarily unavailable.
   /audit/v1/actions:
     get:
       tags:
         - Action catalogs
       summary: List all action catalogs visible to the caller.
       description: |
-        Requires audit-reader, including for Core callers. Returns every catalog registered in audit-service:actions-<application>
-        for the caller's tenant and for Core (such as the platform services), so a client can discover the available
-        namespaces and actions. As for the single-namespace endpoint, each catalog merges tenant and Core actions with Core winning.
-        Without a tenant context (Core callers not naming a tenant) only Core catalogs are returned.
+        Requires the `audit-reader` role, held in the tenant or as a Core role. Returns every catalog registered in
+        audit-service:actions-<application> for the caller's tenant and for Core (such as the platform services), so a
+        client can discover the available namespaces and actions. As for the single-namespace endpoint, each catalog
+        merges tenant and Core actions with Core winning.
+
+        Tenant callers read their token's tenant. Core callers select a tenant with `tenantId`; without it only Core
+        catalogs are returned.
       parameters:
-        - in: query
-          name: tenantId
-          description: Tenant URN. Available to Core service accounts only; tenant callers cannot select another tenant.
-          schema:
-            type: string
+        - $ref: '#/components/parameters/TenantId'
       responses:
         '200':
           description: Catalogs ordered by application; an empty array means none are registered.
@@ -67,36 +79,29 @@ paths:
                 items:
                   $ref: '#/components/schemas/AuditActionCatalog'
         '400':
-          description: Invalid tenant identifier.
+          $ref: '#/components/responses/AuditBadRequest'
         '401':
-          description: Missing or invalid bearer token.
+          $ref: '#/components/responses/AuditUnauthorized'
         '403':
-          description: Missing `audit-reader` role, or a tenant caller attempting to select another tenant.
+          $ref: '#/components/responses/AuditForbidden'
         '503':
-          description: Catalogs could not be listed or resolved. Retry; do not re-register actions.
+          $ref: '#/components/responses/AuditCatalogUnavailable'
   /audit/v1/{namespace}/actions:
     get:
       tags:
         - Action catalogs
       summary: List a namespace's action definitions.
       description: |
-        Requires audit-reader, including for Core callers. Returns a JSON array of action definitions from the caller's
-        tenant merged with Core, with Core winning on duplicate action names.
+        Requires the `audit-reader` role, held in the tenant or as a Core role. Returns a JSON array of action
+        definitions from the caller's tenant merged with Core, with Core winning on duplicate action names.
         The namespace is the application identifier in audit-service:actions-<application>.
         This endpoint does not require ownership of the namespace.
+
+        Tenant callers read their token's tenant. Core callers select a tenant with `tenantId`; without it only the
+        Core catalog is read.
       parameters:
-        - in: path
-          name: namespace
-          required: true
-          schema:
-            type: string
-            maxLength: 40
-            pattern: '^[a-z0-9]+(?:-[a-z0-9]+)*$'
-        - in: query
-          name: tenantId
-          description: Tenant URN. Available to Core service accounts only; tenant callers cannot select another tenant.
-          schema:
-            type: string
+        - $ref: '#/components/parameters/AuditNamespace'
+        - $ref: '#/components/parameters/TenantId'
       responses:
         '200':
           description: Resolved definitions; an empty array means the catalog is registered but empty.
@@ -107,53 +112,144 @@ paths:
                 items:
                   $ref: '#/components/schemas/AuditAction'
         '400':
-          description: Invalid namespace or tenant identifier.
+          $ref: '#/components/responses/AuditBadRequest'
         '401':
-          description: Missing or invalid bearer token.
+          $ref: '#/components/responses/AuditUnauthorized'
         '403':
-          description: Missing `audit-reader` role (have it granted to the caller), or a tenant caller attempting to select another tenant.
+          $ref: '#/components/responses/AuditForbidden'
         '404':
           description: No action catalog is registered for this namespace (neither Core nor the tenant supplied one). Register the namespace's actions in the audit-service configuration (actions-<application>) and retry. Configuration HTTP or converter failures handled by the SDK can also produce this response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuditError'
+              example:
+                errorMessage: action catalog with ID 'case-service' could not be found.
         '503':
-          description: A propagated SDK error or application-name consistency failure. Retry; do not re-register actions.
+          $ref: '#/components/responses/AuditCatalogUnavailable'
     post:
       tags:
         - Action catalogs
       summary: Add an action to the caller's tenant catalog for a namespace.
       description: |
-        Requires audit-admin; the caller's token is forwarded to the configuration service, so configuration write
-        permission is also required. The name is compared in full and case-insensitively with fresh configuration, not
-        the cache: 409 when it already exists in the namespace, when the namespace is a Core namespace, or when it
-        exists in any Core namespace. Partial matches (for example a `.succeeded` suffix) are not conflicts.
+        Requires the `audit-admin` role, held in the tenant or as a Core role. The caller's token is forwarded to the
+        configuration service, so configuration write permission is also required; without it the request responds
+        401. The action is added to the tenant's actions-<namespace> catalog, which is created if missing.
+
+        Tenant callers add to their token's tenant. Core callers must select a tenant with `tenantId`; without it the
+        request responds 400.
+
+        The name is compared in full and case-insensitively with fresh configuration, not the cache: 409 when it
+        already exists in the namespace, when the namespace is a Core namespace, or when it exists in any Core
+        namespace. Partial matches (for example a `.succeeded` suffix) are not conflicts.
       parameters:
-        - in: path
-          name: namespace
-          required: true
-          schema:
-            type: string
-            maxLength: 40
-            pattern: '^[a-z0-9]+(?:-[a-z0-9]+)*$'
+        - $ref: '#/components/parameters/AuditNamespace'
+        - $ref: '#/components/parameters/TenantId'
       requestBody:
         required: true
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/AuditAction'
+            example:
+              name: case.update
+              version: 1
+              category: administrative
+              severity: info
+              retentionClass: compliance
+              description: A case worker updated a case.
+              resourceType: case
+              captureChangeSet: true
       responses:
         '201':
-          description: The action was added.
+          description: The action was added. The response echoes the added definition.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuditAction'
         '400':
-          description: Invalid action definition or missing tenant context.
+          $ref: '#/components/responses/AuditBadRequest'
         '401':
-          description: Missing or invalid bearer token.
+          description: >-
+            Missing or invalid bearer token (plain-text `Unauthorized` body), or the caller lacks permission to change
+            configuration (JSON body).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuditError'
+              example:
+                errorMessage: Writing the action catalog requires permission to change configuration.
         '403':
-          description: Missing `audit-admin` role.
+          $ref: '#/components/responses/AuditForbidden'
         '409':
           description: The action name conflicts with the namespace's own catalog or a Core namespace.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuditError'
+              example:
+                errorMessage: Action "case.update" already exists in the case-service catalog.
         '503':
-          description: Catalogs could not be checked. Retry.
+          $ref: '#/components/responses/AuditCatalogUnavailable'
 components:
+  parameters:
+    AuditNamespace:
+      in: path
+      name: namespace
+      required: true
+      description: Audit namespace, the application name of the writing service (for example `case-service`).
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 40
+        pattern: '^[a-z0-9]+(?:-[a-z0-9]+)*$'
+      example: case-service
+  responses:
+    AuditBadRequest:
+      description: >-
+        The request is invalid: a path or query parameter failed validation, `tenantId` is not a tenant URN, or a
+        required tenant context is missing. Fix the request; do not retry unchanged.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/AuditError'
+          example:
+            errorMessage: 'Validation failed with error(s): namespace (params) - Invalid value'
+    AuditUnauthorized:
+      description: Missing or invalid bearer token. Obtain a valid token and retry.
+      content:
+        text/plain:
+          schema:
+            type: string
+          example: Unauthorized
+    AuditForbidden:
+      description: >-
+        The caller lacks the role the operation requires, or a tenant caller set `tenantId` to another tenant. Have the
+        role granted to the caller; provisioning a role in the realm does not assign it.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/AuditError'
+          example:
+            errorMessage: 'User Case reader (ID: 4f9e2d1c-8a7b-4c6d-9e5f-1a2b3c4d5e6f) not permitted to access audit data requiring audit-reader.'
+    AuditCatalogUnavailable:
+      description: Action catalogs could not be read or checked. Retry; do not re-register actions.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/AuditError'
+          example:
+            errorMessage: Action catalog is temporarily unavailable. Retry the request; do not re-register actions.
   schemas:
+    AuditError:
+      type: object
+      required:
+        - errorMessage
+      properties:
+        errorMessage:
+          type: string
+      example:
+        errorMessage: 'Validation failed with error(s): top (query) - Invalid value'
     RetentionClasses:
       type: object
       description: Retention class name to period.
@@ -185,6 +281,18 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/AuditAction'
+      example:
+        application: case-service
+        core: false
+        actions:
+          - name: case.update
+            version: 1
+            category: administrative
+            severity: info
+            retentionClass: compliance
+            resourceType: case
+            captureChangeSet: true
+            forwardToSiem: false
     AuditAction:
       type: object
       required:
@@ -192,11 +300,13 @@ components:
         - version
         - category
         - severity
-        - captureChangeSet
-        - forwardToSiem
       properties:
         name:
           type: string
+          minLength: 1
+          maxLength: 100
+          pattern: '^[a-zA-Z0-9]+(?:[._:-][a-zA-Z0-9]+)*$'
+          description: Base action name, without a terminal `.succeeded` or `.failed` suffix.
           example: case.update
         version:
           type: integer
@@ -209,14 +319,17 @@ components:
           enum: [info, warning, critical]
         retentionClass:
           type: string
+          pattern: '^[a-z0-9]+(?:-[a-z0-9]+)*$'
           description: >-
             Named retention class; custom classes are allowed. Never a duration. Optional: when omitted, the class
             is derived from the category (administrative and data-access: compliance, security: security,
             runtime and diagnostic: standard). A class set on the action overrides the category default.
         description:
           type: string
+          minLength: 1
         resourceType:
           type: string
+          minLength: 1
         captureChangeSet:
           type: boolean
           default: false
@@ -227,3 +340,13 @@ components:
           type: object
           additionalProperties: true
           description: Optional JSON Schema draft-07 for metadata; omitted means no action-specific metadata constraint.
+      example:
+        name: case.update
+        version: 1
+        category: administrative
+        severity: info
+        retentionClass: compliance
+        description: A case worker updated a case.
+        resourceType: case
+        captureChangeSet: true
+        forwardToSiem: false

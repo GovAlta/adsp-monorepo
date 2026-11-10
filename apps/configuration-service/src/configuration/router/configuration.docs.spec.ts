@@ -1,5 +1,5 @@
 import { adspId, AdspId, User } from '@abgov/adsp-service-sdk';
-import { AjvValidationService, createErrorHandler } from '@core-services/core-common';
+import { AjvValidationService, createErrorHandler, InvalidOperationError } from '@core-services/core-common';
 import { createDocumentedResponseRecorder } from '@core-services/core-common/testing';
 import * as express from 'express';
 import { Express } from 'express';
@@ -67,7 +67,13 @@ describe('configuration router documented behaviour', () => {
   const reader = user('reader', [ConfigurationServiceRoles.Reader]);
   const plain = user('plain', []);
 
-  function createApp(currentUser: User | null): Express {
+  const coreUser = (id: string, roles: string[]) => user(id, roles, { isCore: true, tenantId: undefined });
+
+  // The tenant handler sets the tenant from the token of tenant users, and from tenantId for core users.
+  function createApp(
+    currentUser: User | null,
+    requestTenantId: AdspId | null = currentUser ? tenantId : null,
+  ): Express {
     const app = express();
     app.use(documented.middleware);
     app.use(express.json());
@@ -75,7 +81,7 @@ describe('configuration router documented behaviour', () => {
       req.user = currentUser;
       // Passport always sets isAuthenticated on the request, including for anonymous requests.
       req.isAuthenticated = (() => !!currentUser) as typeof req.isAuthenticated;
-      req.tenant = currentUser ? ({ id: tenantId } as typeof req.tenant) : undefined;
+      req.tenant = requestTenantId ? ({ id: requestTenantId } as typeof req.tenant) : undefined;
       next();
     });
     app.use(
@@ -153,6 +159,30 @@ describe('configuration router documented behaviour', () => {
       const res = await request(createApp(null)).get('/configuration/v2/configuration/app');
       expect(res.status).toBe(401);
     });
+
+    it('responds 403 for a core user with only the configuration-admin role', async () => {
+      const res = await request(createApp(coreUser('core', [ConfigurationServiceRoles.ConfigurationAdmin]))).get(
+        '/configuration/v2/configuration/app',
+      );
+      expect(res.status).toBe(403);
+    });
+
+    it('finds core configuration for a core user without tenantId', async () => {
+      const res = await request(createApp(coreUser('core', [ConfigurationServiceRoles.ConfiguredService]), null)).get(
+        '/configuration/v2/configuration/app',
+      );
+      expect(res.status).toBe(200);
+      expect(repositoryMock.find.mock.calls.at(-1)[0].tenantIdEquals).toBeUndefined();
+    });
+
+    it('does not let criteria override the tenant', async () => {
+      const otherTenant = 'urn:ads:platform:tenant-service:v2:/tenants/other';
+      const res = await request(createApp(admin)).get(
+        `/configuration/v2/configuration/app?criteria=${encodeURIComponent(JSON.stringify({ tenantIdEquals: otherTenant }))}`,
+      );
+      expect(res.status).toBe(200);
+      expect(repositoryMock.find.mock.calls.at(-1)[0].tenantIdEquals).toBe(tenantId);
+    });
   });
 
   describe('GET /configuration/:namespace/:name', () => {
@@ -181,6 +211,37 @@ describe('configuration router documented behaviour', () => {
     it('responds 400 for a name longer than 50 characters', async () => {
       const res = await request(createApp(admin)).get(`/configuration/v2/configuration/app/${'a'.repeat(51)}`);
       expect(res.status).toBe(400);
+    });
+
+    it('responds 401 without an authenticated user', async () => {
+      const res = await request(createApp(null)).get('/configuration/v2/configuration/app/settings');
+      expect(res.status).toBe(401);
+    });
+
+    it('reads tenant configuration for a core user with tenantId', async () => {
+      const res = await request(createApp(coreUser('core', [ConfigurationServiceRoles.Reader]), tenantId)).get(
+        `/configuration/v2/configuration/app/settings?tenantId=${encodeURIComponent(tenantId.toString())}`,
+      );
+      expect(res.status).toBe(200);
+      expect(repositoryMock.get).toHaveBeenLastCalledWith('app', 'settings', tenantId, expect.anything());
+    });
+
+    it('reads core configuration for a core user without tenantId', async () => {
+      const res = await request(createApp(coreUser('core', [ConfigurationServiceRoles.Reader]), null)).get(
+        '/configuration/v2/configuration/app/settings',
+      );
+      expect(res.status).toBe(200);
+      expect(repositoryMock.get).toHaveBeenLastCalledWith('app', 'settings', undefined, expect.anything());
+    });
+
+    it('responds 403 for a tenant user reading configuration of another tenant', async () => {
+      const otherTenantUser = user('other', [ConfigurationServiceRoles.Reader], {
+        tenantId: adspId`urn:ads:platform:tenant-service:v2:/tenants/other`,
+      });
+      const res = await request(createApp(otherTenantUser, tenantId)).get(
+        '/configuration/v2/configuration/app/settings',
+      );
+      expect(res.status).toBe(403);
     });
   });
 
@@ -220,6 +281,29 @@ describe('configuration router documented behaviour', () => {
       const res = await request(createApp(admin)).patch('/configuration/v2/configuration/app/settings').send(body);
       expect(res.status).toBe(400);
     });
+
+    it('responds 401 without an authenticated user', async () => {
+      const res = await request(createApp(null))
+        .patch('/configuration/v2/configuration/app/settings')
+        .send({ operation: 'UPDATE', update: { theme: 'light' } });
+      expect(res.status).toBe(401);
+    });
+
+    it('replaces the latest revision', async () => {
+      const res = await request(createApp(admin))
+        .patch('/configuration/v2/configuration/app/settings')
+        .send({ operation: 'REPLACE', configuration: { theme: 'light' } });
+      expect(res.status).toBe(200);
+      expect(res.body.latest.configuration).toEqual({ theme: 'light' });
+    });
+
+    it('removes a property with DELETE', async () => {
+      const res = await request(createApp(admin))
+        .patch('/configuration/v2/configuration/app/settings')
+        .send({ operation: 'DELETE', property: 'theme' });
+      expect(res.status).toBe(200);
+      expect(res.body.latest.configuration).toEqual({});
+    });
   });
 
   describe('POST /configuration/:namespace/:name', () => {
@@ -257,6 +341,23 @@ describe('configuration router documented behaviour', () => {
       const res = await request(createApp(admin)).post('/configuration/v2/configuration/app/settings').send(body);
       expect(res.status).toBe(400);
     });
+
+    it('responds 400 when the revision to set as active does not exist', async () => {
+      repositoryMock.setActiveRevision.mockRejectedValueOnce(
+        new InvalidOperationError('Specified revision 9 to set as active cannot be found.'),
+      );
+      const res = await request(createApp(admin))
+        .post('/configuration/v2/configuration/app/settings')
+        .send({ operation: 'SET-ACTIVE-REVISION', revision: 9 });
+      expect(res.status).toBe(400);
+    });
+
+    it('responds 401 without an authenticated user', async () => {
+      const res = await request(createApp(null))
+        .post('/configuration/v2/configuration/app/settings')
+        .send({ operation: 'CREATE-REVISION' });
+      expect(res.status).toBe(401);
+    });
   });
 
   describe('DELETE /configuration/:namespace/:name', () => {
@@ -270,6 +371,24 @@ describe('configuration router documented behaviour', () => {
       const res = await request(createApp(configuredService)).delete('/configuration/v2/configuration/app/settings');
       expect(res.status).toBe(403);
       expect(repositoryMock.delete).not.toHaveBeenCalled();
+    });
+
+    it('responds with deleted false when there is nothing to delete', async () => {
+      repositoryMock.delete.mockResolvedValueOnce(false);
+      const res = await request(createApp(admin)).delete('/configuration/v2/configuration/app/settings');
+      expect(res.status).toBe(200);
+      expect(res.body).toEqual({ deleted: false });
+      expect(eventServiceMock.send).not.toHaveBeenCalled();
+    });
+
+    it('responds 400 for a namespace with invalid characters', async () => {
+      const res = await request(createApp(admin)).delete('/configuration/v2/configuration/app.settings/settings');
+      expect(res.status).toBe(400);
+    });
+
+    it('responds 401 without an authenticated user', async () => {
+      const res = await request(createApp(null)).delete('/configuration/v2/configuration/app/settings');
+      expect(res.status).toBe(401);
     });
   });
 
@@ -320,6 +439,19 @@ describe('configuration router documented behaviour', () => {
       }
       const res = await request(app).get(url);
       expect(res.status).toBe(200);
+    });
+
+    it('reads core configuration for an anonymous request without the tenant query parameter', async () => {
+      const res = await request(createApp(null)).get(`/configuration/v2/configuration/app/public-settings/${path}`);
+      expect(res.status).toBe(200);
+      expect(repositoryMock.get.mock.calls.at(-1).slice(0, 3)).toEqual(['app', 'public-settings', undefined]);
+    });
+
+    it('responds 400 for an anonymous request with a tenant that is not a URN', async () => {
+      const res = await request(createApp(null)).get(
+        `/configuration/v2/configuration/app/public-settings/${path}?tenant=my-tenant`,
+      );
+      expect(res.status).toBe(400);
     });
   });
 
@@ -384,6 +516,11 @@ describe('configuration router documented behaviour', () => {
       const res = await request(createApp(plain)).get('/configuration/v2/configuration/app/settings/revisions');
       expect(res.status).toBe(403);
     });
+
+    it('responds 401 without an authenticated user', async () => {
+      const res = await request(createApp(null)).get('/configuration/v2/configuration/app/settings/revisions');
+      expect(res.status).toBe(401);
+    });
   });
 
   describe('GET /configuration/:namespace/:name/revisions/:revision', () => {
@@ -406,6 +543,16 @@ describe('configuration router documented behaviour', () => {
         `/configuration/v2/configuration/app/settings/revisions/${revision}`,
       );
       expect(res.status).toBe(400);
+    });
+
+    it('responds 401 without an authenticated user', async () => {
+      const res = await request(createApp(null)).get('/configuration/v2/configuration/app/settings/revisions/0');
+      expect(res.status).toBe(401);
+    });
+
+    it('responds 403 without a configuration role', async () => {
+      const res = await request(createApp(plain)).get('/configuration/v2/configuration/app/settings/revisions/0');
+      expect(res.status).toBe(403);
     });
   });
 });

@@ -15,21 +15,21 @@ The _File Service_ has two main components;
 
 ### Tenant Admin Webapp
 
-Configuring the _File Service_ is about creating _File Type collections_, and setting up permissions and retention policies for them. You do this through our [Tenant Admin Webapp](https://adsp-uat.alberta.ca). See [File Type collections](/adsp-monorepo/tutorials/access-service/file-types.html) for more information.
+Configuring the _File Service_ is about creating _File Type collections_, and setting up permissions and retention policies for them. You do this through our [Tenant Admin Webapp](https://adsp-uat.alberta.ca). See [File Type collections](/adsp-monorepo/tutorials/file-service/file-types.html) for more information.
 
 ### API
 
 You can learn the specific details of how an API works from our [Swagger Documentation](https://api.adsp.alberta.ca/autotest/?urls.primaryName=File%20service); here we'll just give a brief overview of the functionality supplied through them.
 
-All API calls to the _File Service_ require authentication via Keycloak. See the instructions for [setting up a tenant and getting access tokens](/adsp-monorepo/tutorials/access-service/introduction.html) for details on how to do this.
+API calls to the _File Service_ require authentication via Keycloak, except reading and downloading files of File Type collections that allow public (anonymous) read. See the instructions for [setting up a tenant and getting access tokens](/adsp-monorepo/tutorials/access-service/introduction.html) for details on how to do this.
 
 ### Uploading
 
-Files are uploaded to Azure Blob Storage and stored as octet streams. In addition to the file, there is a small amount of metadata that gets created and stored along with it, as discussed below.
+Files are uploaded as `multipart/form-data` requests and stored in Azure Blob Storage. In addition to the file, there is a small amount of metadata that gets created and stored along with it, as discussed below.
 
 ### File Scanning
 
-When you upload a file, you can specify whether or not it should be scanned for viruses or other malicious software (defaults to scan). Scanning is provided by [ClamAV](https://docs.clamav.net/Introduction.html), an open-source anti-virus toolkit maintained by Cisco Systems Inc. The database is updated frequently, so you can be sure the File Service will be looking for the latest threats. The service is designed to be fast, but you may find there is some delay between uploading and being able to access your file. This should not be an issue with small files.
+Every uploaded file is scanned for viruses or other malicious software after the upload completes; a file cannot be downloaded until its scan is complete, unless the download explicitly sets `unsafe=true`. Scanning is provided by [ClamAV](https://docs.clamav.net/Introduction.html), an open-source anti-virus toolkit maintained by Cisco Systems Inc. The database is updated frequently, so you can be sure the File Service will be looking for the latest threats. The service is designed to be fast, but you may find there is some delay between uploading and being able to access your file. This should not be an issue with small files.
 
 ### Access Permission
 
@@ -62,4 +62,4 @@ You can search through your uploaded files using the following criteria
 
 ### Downloading
 
-Files are stored, and downloaded, as octet streams. Please see the [Swagger Documentation](https://api.adsp.alberta.ca/autotest/?urls.primaryName=File%20service#/File/get_file_v1_files__fileId__download) for more information on downloading via the APIs.
+Files are downloaded with the `Content-Type` of the file (for example `application/pdf`), as an attachment by default or inline with `embed=true`. Please see the [Swagger Documentation](https://api.adsp.alberta.ca/autotest/?urls.primaryName=File%20service#/File/get_file_v1_files__fileId__download) for more information on downloading via the APIs.
