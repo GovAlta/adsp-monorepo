@@ -518,4 +518,20 @@ describe('HTTP request metrics', () => {
     await collectUntil(() => inFlight() === 0);
     expect(inFlight()).toBe(0);
   });
+
+  it('records a client abort as aborted, not as a 200', async () => {
+    const handleRequest = jest
+      .spyOn(StreamableHTTPServerTransport.prototype, 'handleRequest')
+      .mockImplementationOnce(() => new Promise(() => undefined));
+    const abort = new AbortController();
+    const pending = postMcp(running.endpoint, TOOLS_LIST_REQUEST, { signal: abort.signal }).catch(() => undefined);
+    await waitFor(() => handleRequest.mock.calls.length > 0);
+    abort.abort();
+    await pending;
+
+    await collectUntil(() => kit.points('mcp.request.duration').length === 1);
+    const [point] = kit.points('mcp.request.duration');
+    expect(point.attributes).toEqual({ 'mcp.method.name': 'unparsed', 'error.type': 'aborted' });
+    expect(histogramCount(point)).toBe(1);
+  });
 });

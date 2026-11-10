@@ -37,7 +37,9 @@ function createStatelessPostHandler(options: CreateAdspMcpServerOptions): expres
       transport.close();
       server.close();
       metrics.addInFlight(-1);
-      metrics.recordRequest(method, res.statusCode, (performance.now() - started) / 1000);
+      // Node leaves statusCode at 200 when the client goes away before a response is written.
+      const outcome = res.writableFinished ? res.statusCode : 'aborted';
+      metrics.recordRequest(method, outcome, (performance.now() - started) / 1000);
     });
 
     try {

@@ -72,7 +72,7 @@ OpenTelemetry SDK isn't loaded. Stdio mode never exports metrics.
 |---|---|---|---|---|
 | `mcp.requests.in_flight` | UpDownCounter | `{request}` | none | `POST /mcp` requests being handled |
 | `mcp.requests.rejected` | Counter | `{request}` | `reason` | Requests or tool calls refused by an overload guard |
-| `mcp.request.duration` | Histogram | `s` | `mcp.method.name`, `http.response.status_code` | Time to answer a `POST /mcp` request |
+| `mcp.request.duration` | Histogram | `s` | `mcp.method.name`, and `http.response.status_code` or `error.type=aborted` | Time to answer a `POST /mcp` request, or until the client disconnected |
 | `mcp.tool.duration` | Histogram | `s` | `mcp.tool.name`, `error.type` (absent on success) | Time to run a tool call |
 | `mcp.live_tool.upstream.errors` | Counter | `{error}` | `mcp.tool.name`, `error.type` | Failed ADSP calls from `list_service_roles` and `get_service_configuration_schema` |
 | `nodejs.eventloop.delay.p50`, `.p99`, `.max` | Gauge | `s` | none | Event-loop delay since the previous export |
@@ -85,6 +85,8 @@ Every label takes a value from a fixed set:
 - `mcp.tool.name`: one of the six tool names, or `unknown` for any name the server doesn't have.
 - `mcp.method.name`: an MCP method such as `initialize`, `tools/list` or `tools/call`; `other` for any other method;
   `batch` for a JSON-RPC batch; `unparsed` when the body wasn't valid JSON-RPC or was too large.
+- `error.type` on `mcp.request.duration`: `aborted` when the client disconnected before the response was written; the
+  status code is then left out.
 - `error.type` on `mcp.tool.duration`: `tool_error` (the tool answered with `isError`), `exception` (the tool threw),
   `unknown_tool`, or `busy` (no live-tool slot was free in time).
 - `error.type` on `mcp.live_tool.upstream.errors`: `http_4xx`, `http_5xx`, `network`, `not_in_directory`,

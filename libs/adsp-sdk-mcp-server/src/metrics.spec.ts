@@ -90,6 +90,15 @@ describe('installed metrics', () => {
     );
   });
 
+  it('records an aborted request without a status code', async () => {
+    getMetrics().recordRequest('tools/call', 'aborted', 2.5);
+    await kit.collect();
+
+    expect(kit.points('mcp.request.duration').map((point) => point.attributes)).toEqual([
+      { 'mcp.method.name': 'tools/call', 'error.type': 'aborted' },
+    ]);
+  });
+
   it('counts live-tool upstream errors by tool and type', async () => {
     getMetrics().recordUpstreamError('list_service_roles', 'http_5xx');
     await kit.collect();

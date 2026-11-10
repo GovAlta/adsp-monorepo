@@ -17,7 +17,7 @@ export interface McpMetrics {
   addInFlight(delta: 1 | -1): void;
   recordRejection(reason: RejectionReason): void;
   /** `method` must already be bucketed with `bucketMcpMethod`. */
-  recordRequest(method: string, statusCode: number, durationSeconds: number): void;
+  recordRequest(method: string, outcome: number | 'aborted', durationSeconds: number): void;
   recordToolCall(toolName: string, durationSeconds: number, errorType?: ToolErrorType): void;
   recordUpstreamError(toolName: string, errorType: UpstreamErrorType): void;
   recordDocsIndexBuild(durationSeconds: number): void;
@@ -102,11 +102,13 @@ export function installMetrics(meterProvider: MeterProvider): { uninstall(): voi
   current = {
     addInFlight: (delta) => inFlight.add(delta),
     recordRejection: (reason) => rejected.add(1, { reason }),
-    recordRequest: (method, statusCode, durationSeconds) =>
-      requestDuration.record(durationSeconds, {
-        'mcp.method.name': method,
-        'http.response.status_code': statusCode,
-      }),
+    recordRequest: (method, outcome, durationSeconds) =>
+      requestDuration.record(
+        durationSeconds,
+        outcome === 'aborted'
+          ? { 'mcp.method.name': method, 'error.type': 'aborted' }
+          : { 'mcp.method.name': method, 'http.response.status_code': outcome }
+      ),
     recordToolCall: (toolName, durationSeconds, errorType) =>
       toolDuration.record(
         durationSeconds,
