@@ -5,6 +5,7 @@ import { body, param } from 'express-validator';
 import { Logger } from 'winston';
 import { CredentialStore } from './credentials';
 import { CredentialNotSetError, DestinationDisabledError, SharePointError } from './errors';
+import { SharePointFileService, FilesUploadResult } from './files';
 import { GraphTokenProvider } from './graph';
 import { RowIdentityMissingError } from './mapper';
 import { SharePointPusher } from './push';
@@ -190,14 +191,76 @@ export function pushData(pusher: SharePointPusher, logger: Logger): RequestHandl
   };
 }
 
+export function uploadFiles(fileService: SharePointFileService, logger: Logger): RequestHandler {
+  return async (req, res, next) => {
+    try {
+      assertRole(req, 'upload SharePoint files', [ServiceRoles.Writer, ServiceRoles.Admin], true);
+      const tenantId = requireTenant(req);
+      const { destinationId } = req.params;
+      const configuration = await getTenantConfiguration(req);
+
+      let result: FilesUploadResult;
+      try {
+        result = await fileService.upload(tenantId, configuration, destinationId, req.body);
+      } catch (err) {
+        if (err instanceof DestinationDisabledError) {
+          res.status(409).send({ errorCode: 'destination-disabled' });
+          return;
+        }
+        if (err instanceof CredentialNotSetError) {
+          res.status(409).send({ errorCode: 'credential-not-set' });
+          return;
+        }
+        if (err instanceof SharePointError) {
+          logger.warn(
+            `File upload to SharePoint destination '${destinationId}' failed with: ${err.errorCode}.`,
+            logContext(tenantId),
+          );
+          res.status(502).send({ errorCode: err.errorCode, retryable: err.retryable });
+          return;
+        }
+        throw err;
+      }
+
+      const failed = result.files.filter(({ status }) => status === 'failed').length;
+      const rowFailed = result.row?.written === false;
+      if (result.row?.written === false) {
+        logger.warn(
+          `Row write for SharePoint destination '${destinationId}' failed with: ${result.row.errorCode}.`,
+          logContext(tenantId),
+        );
+      }
+      logger.info(
+        `Uploaded ${result.files.length - failed} of ${result.files.length} files to SharePoint destination '${destinationId}'.`,
+        logContext(tenantId),
+      );
+
+      let status = 200;
+      if (failed > 0 || rowFailed) {
+        status = failed === result.files.length || rowFailed ? 502 : 207;
+      }
+      res.status(status).send(result);
+    } catch (err) {
+      next(err);
+    }
+  };
+}
+
 interface SharePointRouterProps {
   logger: Logger;
   credentialStore: CredentialStore;
   tokens: GraphTokenProvider;
   pusher: SharePointPusher;
+  fileService: SharePointFileService;
 }
 
-export function createSharePointRouter({ logger, credentialStore, tokens, pusher }: SharePointRouterProps): Router {
+export function createSharePointRouter({
+  logger,
+  credentialStore,
+  tokens,
+  pusher,
+  fileService,
+}: SharePointRouterProps): Router {
   const router = Router();
   const connectionId = () => param('connectionId').matches(ID_PATTERN);
   const destinationId = () => param('destinationId').matches(ID_PATTERN);
@@ -226,6 +289,19 @@ export function createSharePointRouter({ logger, credentialStore, tokens, pusher
     '/destinations/:destinationId/data',
     createValidationHandler(destinationId(), body().isObject()),
     pushData(pusher, logger),
+  );
+  router.post(
+    '/destinations/:destinationId/files',
+    createValidationHandler(
+      destinationId(),
+      body('submissionId').isString().isLength({ min: 1, max: 100 }),
+      body('files').isArray({ min: 1, max: 20 }),
+      body('files.*.field').isString().isLength({ min: 1, max: 200 }),
+      body('files.*.fileId').isString().isLength({ min: 1, max: 300 }),
+      body('data').optional().isObject(),
+      body('linkFormat').optional().isIn(['hyperlink', 'text']),
+    ),
+    uploadFiles(fileService, logger),
   );
 
   return router;

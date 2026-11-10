@@ -7,6 +7,7 @@ import * as request from 'supertest';
 import { Logger } from 'winston';
 import { CredentialRepository, CredentialStore, parseEncryptionKey, StoredCredential } from './credentials';
 import { CredentialNotSetError, DestinationDisabledError, SharePointError } from './errors';
+import { SharePointFileService } from './files';
 import { GraphTokenProvider } from './graph';
 import { RowIdentityMissingError } from './mapper';
 import { SharePointPusher } from './push';
@@ -69,6 +70,7 @@ describe('SharePoint router', () => {
 
   let logger: { debug: jest.Mock; info: jest.Mock; warn: jest.Mock; error: jest.Mock };
   let pusher: { push: jest.Mock; test: jest.Mock };
+  let fileService: { upload: jest.Mock };
   let tokens: { evict: jest.Mock };
   let currentUser: User;
   let app: express.Application;
@@ -79,6 +81,7 @@ describe('SharePoint router', () => {
       push: jest.fn().mockResolvedValue({ itemId: 'item-7', outcome: 'updated' }),
       test: jest.fn().mockResolvedValue({ itemId: 'item-8', outcome: 'created' }),
     };
+    fileService = { upload: jest.fn() };
     tokens = { evict: jest.fn() };
     currentUser = admin;
 
@@ -102,6 +105,7 @@ describe('SharePoint router', () => {
         credentialStore,
         tokens: tokens as unknown as GraphTokenProvider,
         pusher: pusher as unknown as SharePointPusher,
+        fileService: fileService as unknown as SharePointFileService,
       }),
     );
     app.use(createErrorHandler(logger as unknown as Logger));
@@ -265,6 +269,159 @@ describe('SharePoint router', () => {
       currentUser = writer;
       expect((await runTest()).status).toBe(403);
       expect(pusher.test).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('files', () => {
+    const body = {
+      submissionId: 'submission-1',
+      files: [{ field: 'proofOfIdentity', fileId: 'local:proof.pdf' }],
+      data: { applicant: { firstName: 'Ada' }, _adsp: { key: 'submission-1' } },
+    };
+    const uploaded = {
+      field: 'proofOfIdentity',
+      fileId: 'local:proof.pdf',
+      status: 'uploaded',
+      id: 'item-1',
+      name: 'proof.pdf',
+      url: 'https://sp.example/proof.pdf',
+      size: 10,
+    };
+    const failed = {
+      field: 'statement',
+      fileId: 'local:missing.pdf',
+      status: 'failed',
+      errorCode: 'file:not-found',
+      retryable: false,
+    };
+
+    const upload = (payload: unknown = body, destination = 'hr-intake') =>
+      request(app)
+        .post(`/sharepoint/v1/destinations/${destination}/files`)
+        .send(payload as object);
+
+    beforeEach(() => {
+      currentUser = writer;
+      fileService.upload.mockResolvedValue({
+        files: [uploaded],
+        row: { written: true, dataId: 'item-7', outcome: 'created' },
+      });
+    });
+
+    it('uploads the files and returns the results', async () => {
+      const res = await upload();
+
+      expect(res.status).toBe(200);
+      expect(res.body).toEqual({ files: [uploaded], row: { written: true, dataId: 'item-7', outcome: 'created' } });
+      expect(fileService.upload).toHaveBeenCalledWith(tenantId, configuration, 'hr-intake', body);
+    });
+
+    it('allows tenant admins', async () => {
+      currentUser = admin;
+      expect((await upload()).status).toBe(200);
+    });
+
+    it('forbids users without a writer or admin role', async () => {
+      currentUser = reader;
+      expect((await upload()).status).toBe(403);
+      expect(fileService.upload).not.toHaveBeenCalled();
+    });
+
+    it('returns 207 when some files fail', async () => {
+      fileService.upload.mockResolvedValueOnce({ files: [uploaded, failed] });
+      const res = await upload();
+
+      expect(res.status).toBe(207);
+      expect(res.body.files).toEqual([uploaded, failed]);
+    });
+
+    it('returns 502 when every file fails', async () => {
+      fileService.upload.mockResolvedValueOnce({ files: [failed] });
+      const res = await upload();
+
+      expect(res.status).toBe(502);
+      expect(res.body.files).toEqual([failed]);
+    });
+
+    it('returns 502 when the files upload but the row cannot be written', async () => {
+      fileService.upload.mockResolvedValueOnce({
+        files: [uploaded],
+        row: { written: false, errorCode: 'graph:invalidRequest', retryable: false },
+      });
+      const res = await upload();
+
+      expect(res.status).toBe(502);
+      expect(res.body.row).toEqual({ written: false, errorCode: 'graph:invalidRequest', retryable: false });
+      expect(logger.warn).toHaveBeenCalledWith(
+        expect.stringContaining('graph:invalidRequest'),
+        expect.objectContaining({ context: 'SharePointRouter' }),
+      );
+    });
+
+    it('returns 409 for a disabled destination', async () => {
+      fileService.upload.mockRejectedValueOnce(new DestinationDisabledError('hr-intake'));
+      const res = await upload();
+
+      expect(res.status).toBe(409);
+      expect(res.body).toEqual({ errorCode: 'destination-disabled' });
+    });
+
+    it('returns 409 when no credential is set', async () => {
+      fileService.upload.mockRejectedValueOnce(new CredentialNotSetError('hr-site'));
+      const res = await upload();
+
+      expect(res.status).toBe(409);
+      expect(res.body).toEqual({ errorCode: 'credential-not-set' });
+    });
+
+    it('returns 502 with the error code when Microsoft sign-in fails', async () => {
+      fileService.upload.mockRejectedValueOnce(new SharePointError('entra:AADSTS7000215', false));
+      const res = await upload();
+
+      expect(res.status).toBe(502);
+      expect(res.body).toEqual({ errorCode: 'entra:AADSTS7000215', retryable: false });
+    });
+
+    it('returns 404 for an unknown destination', async () => {
+      fileService.upload.mockRejectedValueOnce(new NotFoundError('SharePoint destination', 'missing'));
+      expect((await upload(body, 'missing')).status).toBe(404);
+    });
+
+    it('returns 400 when the data has no value for a row identity field', async () => {
+      fileService.upload.mockRejectedValueOnce(new RowIdentityMissingError('_adsp.key'));
+      expect((await upload()).status).toBe(400);
+    });
+
+    it.each([
+      ['no submission ID', { ...body, submissionId: undefined }],
+      ['an empty file list', { ...body, files: [] }],
+      ['more than 20 files', { ...body, files: Array.from({ length: 21 }, () => body.files[0]) }],
+      ['a file without a field', { ...body, files: [{ fileId: 'local:proof.pdf' }] }],
+      ['a file without an ID', { ...body, files: [{ field: 'proofOfIdentity' }] }],
+      ['data that is not an object', { ...body, data: 'text' }],
+      ['an unknown link format', { ...body, linkFormat: 'url' }],
+    ])('returns 400 for %s', async (_name, payload) => {
+      expect((await upload(payload)).status).toBe(400);
+      expect(fileService.upload).not.toHaveBeenCalled();
+    });
+
+    it('accepts a request without data and the text link format', async () => {
+      const res = await upload({ submissionId: 'submission-1', files: body.files, linkFormat: 'text' });
+
+      expect(res.status).toBe(200);
+      expect(fileService.upload).toHaveBeenCalledWith(tenantId, configuration, 'hr-intake', {
+        submissionId: 'submission-1',
+        files: body.files,
+        linkFormat: 'text',
+      });
+    });
+
+    it('never logs payload values', async () => {
+      await upload({ ...body, data: { applicant: { firstName: SENTINEL }, _adsp: { key: 'submission-1' } } });
+      fileService.upload.mockRejectedValueOnce(new SharePointError('graph:invalidRequest', false));
+      await upload({ ...body, data: { applicant: { firstName: SENTINEL }, _adsp: { key: 'submission-1' } } });
+
+      expect(loggedText()).not.toContain(SENTINEL);
     });
   });
 });

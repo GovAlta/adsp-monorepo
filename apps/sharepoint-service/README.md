@@ -18,6 +18,7 @@ Pushes data, such as form submissions, to SharePoint lists owned by tenant teams
 | `DELETE /connections/{id}/credentials` | `sharepoint-admin` | Deletes the secret. Returns 204 |
 | `POST /destinations/{id}/test` with the data as the body | `sharepoint-admin` | Pushes the data through the same logic as a real push, even if the destination is disabled. Returns `{ ok: true, outcome }` or `{ ok: false, errorCode, column? }`; `row-identity-missing` means the data has no value for a row identity field |
 | `POST /destinations/{id}/data` with the data as the body | `sharepoint-writer` (core service accounts with `?tenantId=`). Tenant admins check destinations with Test instead | Returns 200 `{ dataId, outcome, date }`, where `dataId` is the SharePoint item ID and `outcome` is `created` or `updated`. Nothing is stored. Failures: 400 data missing a row identity field, 404 unknown destination or connection, 409 `destination-disabled` or `credential-not-set`, 502 `{ errorCode, retryable, column? }` |
+| `POST /destinations/{id}/files` `{ submissionId, files: [{ field, fileId }], data?, linkFormat? }` | `sharepoint-writer` (core service accounts with `?tenantId=`) or `sharepoint-admin` | Reads each file from File Service by ID or file URN, uploads it to the site's default Documents library under `{submissionId}/{filename}`, then writes `data` as a list row with each file's link set at its `field` (a Hyperlink value, or plain text with `linkFormat: "text"`). Without `data`, only the files are uploaded. Returns `{ files: [{ field, fileId, status, id, name, url, size } or { field, fileId, status: "failed", errorCode, retryable }], row?: { written, dataId, outcome } or { written: false, errorCode, retryable } }`. 200 when everything succeeds, 207 when some files fail, 502 when every file fails or the row can't be written, 409 `destination-disabled` or `credential-not-set`, 404 unknown destination or connection, 400 invalid request or data missing a row identity field |
 Error codes are `entra:AADSTS<code>`, `graph:<code>`, `network` or `unknown`. Payload values never appear in responses or logs.
 
 ## Environment
@@ -33,6 +34,8 @@ Error codes are `entra:AADSTS<code>`, `graph:<code>`, `network` or `unknown`. Pa
 | `MONGO_URI`, `MONGO_DB`, `MONGO_USER`, `MONGO_PASSWORD`, `MONGO_TLS` | `mongodb://localhost:27017`, `sharepointDb`, empty, empty, `false` |
 | `ENTRA_AUTHORITY_URL` | `https://login.microsoftonline.com` |
 | `GRAPH_URL` | `https://graph.microsoft.com/v1.0` |
+| `FILE_UPLOAD_CONCURRENCY` | `3`; files uploaded at the same time per request |
+| `DEV_FILES_DIRECTORY` | empty; local development only. When set, `fileId` values such as `local:report.pdf` are read from this folder instead of File Service |
 | `PORT` | `3350` |
 
 Generate a key with `node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"`.

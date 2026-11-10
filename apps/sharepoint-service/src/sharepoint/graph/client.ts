@@ -15,6 +15,10 @@ export class GraphClient {
     return { Authorization: `Bearer ${token}` };
   }
 
+  private writeHeaders(token: string) {
+    return { ...this.headers(token), Prefer: 'apiversion=2.1' };
+  }
+
   async findItemIdByKey(
     token: string,
     siteId: string,
@@ -42,7 +46,7 @@ export class GraphClient {
       const { data } = await axios.post<{ id: string }>(
         this.itemsUrl(siteId, listId),
         { fields },
-        { headers: this.headers(token) },
+        { headers: this.writeHeaders(token) },
       );
       return data.id;
     } catch (err) {
@@ -59,7 +63,7 @@ export class GraphClient {
   ): Promise<void> {
     try {
       await axios.patch(`${this.itemsUrl(siteId, listId)}/${encodeSegment(itemId)}/fields`, fields, {
-        headers: this.headers(token),
+        headers: this.writeHeaders(token),
       });
     } catch (err) {
       throw toSharePointError(err);

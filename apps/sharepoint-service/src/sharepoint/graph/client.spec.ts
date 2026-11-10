@@ -8,6 +8,7 @@ describe('GraphClient', () => {
   const siteId = 'contoso.sharepoint.com,5a58bb09-1fba-41c1-8125-69da264370a0,9f2ec1da-0be4-4a74-9254-973f0add78fd';
   const itemsUrl = `https://graph.example/v1.0/sites/${siteId}/lists/list-1/items`;
   const auth = { headers: { Authorization: 'Bearer token-1' } };
+  const writeAuth = { headers: { Authorization: 'Bearer token-1', Prefer: 'apiversion=2.1' } };
   const client = new GraphClient('https://graph.example/v1.0/');
 
   beforeEach(() => {
@@ -21,7 +22,19 @@ describe('GraphClient', () => {
     axiosMock.post.mockResolvedValueOnce({ data: { id: '7' } });
 
     expect(await client.createItem('token-1', siteId, 'list-1', { AdspItemKey: 'k1', FirstName: 'Ada' })).toBe('7');
-    expect(axiosMock.post).toHaveBeenCalledWith(itemsUrl, { fields: { AdspItemKey: 'k1', FirstName: 'Ada' } }, auth);
+    expect(axiosMock.post).toHaveBeenCalledWith(
+      itemsUrl,
+      { fields: { AdspItemKey: 'k1', FirstName: 'Ada' } },
+      writeAuth,
+    );
+  });
+
+  it('writes a Hyperlink value as a Url and Description object', async () => {
+    axiosMock.post.mockResolvedValueOnce({ data: { id: '8' } });
+    const proof = { Url: 'https://sp.example/proof.pdf', Description: 'proof.pdf' };
+
+    await client.createItem('token-1', siteId, 'list-1', { ProofOfIdentity: proof });
+    expect(axiosMock.post).toHaveBeenCalledWith(itemsUrl, { fields: { ProofOfIdentity: proof } }, writeAuth);
   });
 
   it('finds an item by key with a filter on the key column', async () => {
@@ -60,7 +73,7 @@ describe('GraphClient', () => {
     axiosMock.patch.mockResolvedValueOnce({ data: {} });
 
     await client.updateItemFields('token-1', siteId, 'list-1', '7', { FirstName: 'Grace' });
-    expect(axiosMock.patch).toHaveBeenCalledWith(`${itemsUrl}/7/fields`, { FirstName: 'Grace' }, auth);
+    expect(axiosMock.patch).toHaveBeenCalledWith(`${itemsUrl}/7/fields`, { FirstName: 'Grace' }, writeAuth);
   });
 
   it('maps a Graph error to its code', async () => {

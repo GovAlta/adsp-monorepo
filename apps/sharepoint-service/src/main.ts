@@ -12,10 +12,14 @@ import {
   configurationSchema,
   createSharePointRouter,
   CredentialStore,
+  FileServiceSource,
   GraphClient,
+  GraphFileClient,
   GraphTokenProvider,
+  LocalFileSource,
   parseEncryptionKey,
   ServiceRoles,
+  SharePointFileService,
   SharePointPusher,
 } from './sharepoint';
 
@@ -40,10 +44,12 @@ const initializeApp = async (): Promise<express.Application> => {
   const {
     coreStrategy,
     configurationHandler,
+    directory,
     healthCheck,
     metricsHandler,
     tenantHandler,
     tenantStrategy,
+    tokenProvider,
     traceHandler,
   } = await initializePlatform(
     {
@@ -93,13 +99,27 @@ const initializeApp = async (): Promise<express.Application> => {
   const tokens = new GraphTokenProvider(environment.ENTRA_AUTHORITY_URL, credentialStore);
   const pusher = new SharePointPusher(tokens, new GraphClient(environment.GRAPH_URL));
 
+  if (environment.DEV_FILES_DIRECTORY) {
+    logger.warn(`Reading files for upload from local directory '${environment.DEV_FILES_DIRECTORY}'.`);
+  }
+  const fileSource = environment.DEV_FILES_DIRECTORY
+    ? new LocalFileSource(environment.DEV_FILES_DIRECTORY)
+    : new FileServiceSource(directory, tokenProvider);
+  const fileService = new SharePointFileService(
+    tokens,
+    new GraphFileClient(environment.GRAPH_URL),
+    fileSource,
+    pusher,
+    environment.FILE_UPLOAD_CONCURRENCY,
+  );
+
   app.use(
     '/sharepoint/v1',
     metricsHandler,
     passport.authenticate(['core', 'tenant'], { session: false }),
     tenantHandler,
     configurationHandler,
-    createSharePointRouter({ logger, credentialStore, tokens, pusher }),
+    createSharePointRouter({ logger, credentialStore, tokens, pusher, fileService }),
   );
 
   app.get('/health', async (_req, res) => {

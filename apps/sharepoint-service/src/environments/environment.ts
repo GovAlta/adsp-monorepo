@@ -24,6 +24,8 @@ export const environment = envalid.cleanEnv(
     CREDENTIALS_KEY_VERSION: envalid.num({ default: 1 }),
     ENTRA_AUTHORITY_URL: envalid.str({ default: 'https://login.microsoftonline.com' }),
     GRAPH_URL: envalid.str({ default: 'https://graph.microsoft.com/v1.0' }),
+    DEV_FILES_DIRECTORY: envalid.str({ default: '' }),
+    FILE_UPLOAD_CONCURRENCY: envalid.num({ default: 3 }),
   },
   {
     reporter: ({ errors }) => {
