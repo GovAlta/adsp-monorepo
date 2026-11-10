@@ -18,6 +18,7 @@ import {
   TRANSPORT_EQUIVALENCE_CALLS,
 } from './fixtures/toolContract';
 import { createMetricsTestKit, histogramCount, MetricsTestKit } from './fixtures/metricsTestKit';
+import { testConfig } from './fixtures/httpTestKit';
 import { createMcpHttpApp } from './http';
 import { installMetrics } from './metrics';
 import * as quickstartModule from './tools/registerQuickstartTool';
@@ -167,22 +168,25 @@ describe('HTTP startup', () => {
 });
 
 describe('HTTP CORS', () => {
+  const ALLOWED_ORIGIN = 'http://allowed.test';
   let running: RunningApp;
 
   beforeEach(async () => {
-    running = await listen(createMcpHttpApp({ docsRoot: FIXTURE_DOCS_ROOT }));
+    running = await listen(
+      createMcpHttpApp({ docsRoot: FIXTURE_DOCS_ROOT, config: testConfig({ corsOrigins: [ALLOWED_ORIGIN] }) })
+    );
   });
 
   afterEach(() => stop(running));
 
   it('answers a CORS preflight with 204', async () => {
-    const response = await fetch(running.endpoint, { method: 'OPTIONS' });
+    const response = await fetch(running.endpoint, { method: 'OPTIONS', headers: { origin: ALLOWED_ORIGIN } });
 
     expect(response.status).toBe(204);
   });
 
   it('allows the mcp-protocol-version request header', async () => {
-    const response = await fetch(running.endpoint, { method: 'OPTIONS' });
+    const response = await fetch(running.endpoint, { method: 'OPTIONS', headers: { origin: ALLOWED_ORIGIN } });
 
     expect(response.headers.get('access-control-allow-headers')?.split(', ')).toContain('mcp-protocol-version');
   });
@@ -343,10 +347,23 @@ describe('HTTP request failures', () => {
     });
   });
 
-  it('sends CORS headers when it rejects a request body', async () => {
-    const response = await postRawMcp(running.endpoint, '{not json');
+  it('sends CORS headers when it rejects a request body from an allowed Origin', async () => {
+    const allowedOrigin = 'http://allowed.test';
+    const allowingApp = await listen(
+      createMcpHttpApp({ docsRoot: FIXTURE_DOCS_ROOT, config: testConfig({ corsOrigins: [allowedOrigin] }) })
+    );
+    try {
+      const response = await fetch(allowingApp.endpoint, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', accept: 'application/json, text/event-stream', origin: allowedOrigin },
+        body: '{not json',
+      });
 
-    expect(response.headers.get('access-control-allow-origin')).toBe('*');
+      expect(response.status).toBe(400);
+      expect(response.headers.get('access-control-allow-origin')).toBe(allowedOrigin);
+    } finally {
+      await stop(allowingApp);
+    }
   });
 
   it('answers a malformed JSON body without crashing', async () => {

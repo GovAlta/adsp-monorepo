@@ -1,21 +1,16 @@
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import * as express from 'express';
 import { performance } from 'perf_hooks';
+import { McpServerConfig, readConfig } from './config';
+import { createCorsAndOriginGuard } from './guards';
 import { bucketMcpMethod, getMetrics } from './metrics';
 import { createAdspMcpServer, CreateAdspMcpServerOptions, loadAdspMcpTools } from './server';
 
 const MAX_REQUEST_BODY_BYTES = 1024 * 1024;
 
-function applyCorsHeaders(req: express.Request, res: express.Response, next: express.NextFunction): void {
-  res.setHeader('Access-Control-Allow-Origin', process.env['CORS_ORIGIN'] ?? '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, mcp-session-id, mcp-protocol-version');
-  res.setHeader('Access-Control-Expose-Headers', 'mcp-session-id');
-  if (req.method === 'OPTIONS') {
-    res.sendStatus(204);
-    return;
-  }
-  next();
+export interface McpHttpAppOptions extends CreateAdspMcpServerOptions {
+  /** Defaults to `readConfig()` over `process.env`. */
+  config?: McpServerConfig;
 }
 
 function createStatelessPostHandler(options: CreateAdspMcpServerOptions): express.RequestHandler {
@@ -74,18 +69,18 @@ function methodNotAllowed(_req: express.Request, res: express.Response): void {
     .json({ jsonrpc: '2.0', error: { code: -32000, message: 'Method not allowed.' }, id: null });
 }
 
-export function createMcpHttpApp(options: CreateAdspMcpServerOptions = {}): express.Express {
-  loadAdspMcpTools(options);
+export function createMcpHttpApp({ config = readConfig(), ...serverOptions }: McpHttpAppOptions = {}): express.Express {
+  loadAdspMcpTools(serverOptions);
 
   // No express.json(): the transport reads the body so parse and size errors come back as JSON-RPC.
   const app = express();
-  app.use(applyCorsHeaders);
 
   app.get('/health', (_req, res) => {
     res.json({ status: 'ok' });
   });
 
-  app.post('/mcp', createStatelessPostHandler(options));
+  app.use('/mcp', createCorsAndOriginGuard(config.corsOrigins));
+  app.post('/mcp', createStatelessPostHandler(serverOptions));
   app.get('/mcp', methodNotAllowed);
   app.delete('/mcp', methodNotAllowed);
 
