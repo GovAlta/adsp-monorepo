@@ -54,6 +54,16 @@ describe('Origin check', () => {
     expect(response.headers.get('access-control-allow-origin')).toBeNull();
   });
 
+  it('compares Origin exactly, without trimming the client value', async () => {
+    await start();
+
+    const trailingSlash = await postMcp(running.endpoint, TOOLS_LIST_REQUEST, { origin: `${ALLOWED}/` });
+    const manySlashes = await postMcp(running.endpoint, TOOLS_LIST_REQUEST, { origin: `${ALLOWED}${'/'.repeat(8000)}x` });
+
+    expect(trailingSlash.status).toBe(403);
+    expect(manySlashes.status).toBe(403);
+  });
+
   it('rejects Origin: null', async () => {
     await start();
 

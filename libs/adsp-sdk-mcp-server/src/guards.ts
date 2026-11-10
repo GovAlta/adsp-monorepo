@@ -15,7 +15,9 @@ function isAllowedOrigin(origin: string, corsOrigins: McpServerConfig['corsOrigi
   if (origin === 'null') {
     return false;
   }
-  return corsOrigins === '*' || corsOrigins.includes(origin.replace(/\/+$/, ''));
+  // Exact match: browsers send Origin as scheme://host[:port], and trimming the client's value with a regex is
+  // quadratic on a header full of slashes. CORS_ORIGIN entries are normalised once in readConfig instead.
+  return corsOrigins === '*' || corsOrigins.includes(origin);
 }
 
 /** MCP requires servers to validate Origin (2025-11-25). Requests without one come from non-browser clients and pass. */
