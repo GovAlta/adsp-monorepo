@@ -436,7 +436,8 @@ describe('stateless HTTP startup', () => {
   it('does not schedule an idle-session sweep', () => {
     const setIntervalSpy = jest.spyOn(global, 'setInterval');
 
-    createMcpHttpApp({ docsRoot: FIXTURE_DOCS_ROOT });
+    // The rate limiter's store resets its window on an unref'd interval, which isn't a session sweep.
+    createMcpHttpApp({ docsRoot: FIXTURE_DOCS_ROOT, config: testConfig({ rateLimitPerMinute: 0 }) });
 
     expect(setIntervalSpy).not.toHaveBeenCalled();
     setIntervalSpy.mockRestore();

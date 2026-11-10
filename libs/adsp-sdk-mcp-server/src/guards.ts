@@ -1,6 +1,9 @@
 import type * as express from 'express';
+import { rateLimit } from 'express-rate-limit';
 import { McpServerConfig } from './config';
 import { getMetrics } from './metrics';
+
+const RATE_LIMIT_WINDOW_MS = 60_000;
 
 export function sendJsonRpcError(res: express.Response, status: number, message: string): void {
   res.status(status).json({ jsonrpc: '2.0', error: { code: -32000, message }, id: null });
@@ -38,4 +41,27 @@ export function createCorsAndOriginGuard(corsOrigins: McpServerConfig['corsOrigi
     }
     next();
   };
+}
+
+/** Keyed by client IP until authentication lands; then this should return the authenticated client. */
+export function rateLimitKey(req: express.Request): string {
+  return req.ip ?? 'unknown';
+}
+
+export function createRateLimit(limitPerMinute: number): express.RequestHandler {
+  if (limitPerMinute === 0) {
+    return (_req, _res, next) => next();
+  }
+  return rateLimit({
+    windowMs: RATE_LIMIT_WINDOW_MS,
+    limit: limitPerMinute,
+    standardHeaders: 'draft-7',
+    legacyHeaders: false,
+    keyGenerator: rateLimitKey,
+    // With standardHeaders on, express-rate-limit sets Retry-After before calling the handler.
+    handler: (_req, res) => {
+      getMetrics().recordRejection('rate_limit');
+      sendJsonRpcError(res, 429, 'Rate limit exceeded');
+    },
+  });
 }

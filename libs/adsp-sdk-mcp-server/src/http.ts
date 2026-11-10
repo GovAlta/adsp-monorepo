@@ -2,7 +2,7 @@ import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/
 import * as express from 'express';
 import { performance } from 'perf_hooks';
 import { McpServerConfig, readConfig } from './config';
-import { createCorsAndOriginGuard } from './guards';
+import { createCorsAndOriginGuard, createRateLimit } from './guards';
 import { bucketMcpMethod, getMetrics } from './metrics';
 import { createAdspMcpServer, CreateAdspMcpServerOptions, loadAdspMcpTools } from './server';
 
@@ -74,13 +74,14 @@ export function createMcpHttpApp({ config = readConfig(), ...serverOptions }: Mc
 
   // No express.json(): the transport reads the body so parse and size errors come back as JSON-RPC.
   const app = express();
+  app.set('trust proxy', config.trustedProxy);
 
   app.get('/health', (_req, res) => {
     res.json({ status: 'ok' });
   });
 
   app.use('/mcp', createCorsAndOriginGuard(config.corsOrigins));
-  app.post('/mcp', createStatelessPostHandler(serverOptions));
+  app.post('/mcp', createRateLimit(config.rateLimitPerMinute), createStatelessPostHandler(serverOptions));
   app.get('/mcp', methodNotAllowed);
   app.delete('/mcp', methodNotAllowed);
 

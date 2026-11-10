@@ -128,3 +128,104 @@ describe('Origin check', () => {
     expect(response.status).toBe(200);
   });
 });
+
+describe('rate limit', () => {
+  let running: RunningApp;
+  let kit: MetricsTestKit;
+  let uninstall: () => void;
+
+  async function start(config: Partial<McpServerConfig>) {
+    running = await listen(
+      createMcpHttpApp({
+        docsRoot: FIXTURE_DOCS_ROOT,
+        config: testConfig({ trustedProxy: 'loopback', corsOrigins: [ALLOWED], ...config }),
+      })
+    );
+  }
+
+  async function postFrom(clientIp: string, headers: Record<string, string> = {}) {
+    const response = await postMcp(running.endpoint, TOOLS_LIST_REQUEST, { 'x-forwarded-for': clientIp, ...headers });
+    await response.clone().text();
+    return response;
+  }
+
+  beforeEach(() => {
+    kit = createMetricsTestKit();
+    ({ uninstall } = installMetrics(kit.provider));
+  });
+
+  afterEach(async () => {
+    jest.restoreAllMocks();
+    await stop(running);
+    uninstall();
+    await kit.shutdown();
+  });
+
+  it('answers 429 with Retry-After and a JSON-RPC body once a client exceeds the limit', async () => {
+    await start({ rateLimitPerMinute: 3 });
+
+    const statuses = [];
+    for (let i = 0; i < 3; i++) statuses.push((await postFrom('203.0.113.1')).status);
+    const limited = await postFrom('203.0.113.1');
+
+    expect(statuses).toEqual([200, 200, 200]);
+    expect(limited.status).toBe(429);
+    expect(Number(limited.headers.get('retry-after'))).toBeGreaterThanOrEqual(1);
+    expect(await limited.json()).toEqual(JSON_RPC_ERROR('Rate limit exceeded'));
+  });
+
+  it('keeps serving other clients while one is limited', async () => {
+    await start({ rateLimitPerMinute: 1 });
+    await postFrom('203.0.113.1');
+
+    expect((await postFrom('203.0.113.1')).status).toBe(429);
+    expect((await postFrom('203.0.113.2')).status).toBe(200);
+  });
+
+  it('ignores X-Forwarded-For from an untrusted peer', async () => {
+    jest.spyOn(console, 'error').mockImplementation(() => undefined);
+    await start({ rateLimitPerMinute: 1, trustedProxy: false });
+    await postFrom('203.0.113.1');
+
+    expect((await postFrom('203.0.113.2')).status).toBe(429);
+  });
+
+  it('counts a rate-limit rejection', async () => {
+    await start({ rateLimitPerMinute: 1 });
+    await postFrom('203.0.113.1');
+    await postFrom('203.0.113.1');
+    await kit.collect();
+
+    expect(kit.points('mcp.requests.rejected').map((point) => [point.attributes['reason'], point.value])).toEqual([
+      ['rate_limit', 1],
+    ]);
+  });
+
+  it('disables the limit when the limit is 0', async () => {
+    await start({ rateLimitPerMinute: 0 });
+
+    const statuses = [];
+    for (let i = 0; i < 5; i++) statuses.push((await postFrom('203.0.113.1')).status);
+
+    expect(statuses).toEqual([200, 200, 200, 200, 200]);
+  });
+
+  it('sends CORS headers on a 429 for an allowed Origin', async () => {
+    await start({ rateLimitPerMinute: 1 });
+    await postFrom('203.0.113.1', { origin: ALLOWED });
+
+    const limited = await postFrom('203.0.113.1', { origin: ALLOWED });
+
+    expect(limited.status).toBe(429);
+    expect(limited.headers.get('access-control-allow-origin')).toBe(ALLOWED);
+  });
+
+  it('does not rate-limit /health', async () => {
+    await start({ rateLimitPerMinute: 1 });
+
+    const statuses = [];
+    for (let i = 0; i < 3; i++) statuses.push((await fetch(running.health)).status);
+
+    expect(statuses).toEqual([200, 200, 200]);
+  });
+});
