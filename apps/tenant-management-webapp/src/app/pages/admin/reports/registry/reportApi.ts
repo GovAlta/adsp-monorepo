@@ -30,15 +30,13 @@ const isGatewaySectionNotFound = (err: unknown): boolean => {
 /** Builds a loader for one section. Section tickets call this instead of writing axios code. */
 export const createReportSectionLoader =
   <T>(sectionId: ReportSectionId): SectionLoader<T | null> =>
-  async ({ descriptor, period, token }) => {
+  async ({ descriptor, period, token, signal }) => {
     try {
-      const { data } = await axios.get<ReportSectionResponse<T>>(
-        `${REPORTS_API_BASE}/${descriptor.id}/${sectionId}`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-          params: { from: period.from, to: period.to, preset: period.preset },
-        }
-      );
+      const { data } = await axios.get<ReportSectionResponse<T>>(`${REPORTS_API_BASE}/${descriptor.id}/${sectionId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+        params: { from: period.from, to: period.to, preset: period.preset },
+        signal,
+      });
       return data?.data ?? null;
     } catch (err) {
       // Gateway JSON 404 = this service does not offer the section (empty, not an error).
