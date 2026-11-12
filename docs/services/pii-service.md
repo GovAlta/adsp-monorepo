@@ -35,7 +35,7 @@ Analyze and anonymize requests are recorded in the [audit service](/adsp-monorep
 
 The actor is the caller of the API, typically a service account (identified by its `client_id`), not the person whose text is processed. The resource is a `text-processing-request` identified by the request `correlation_id`, or a generated one if none is supplied. Metadata holds the `language`, `scoreThreshold`, the number of entities detected (`entitiesDetected`), the calling service (`azp` claim) and, for failures, the `errorType`. Client errors are recorded with status `failure` and service errors with status `error`. The submitted text, detected values and replacements are never recorded.
 
-The service account of PII service needs the audit service writer role. Set `AUDIT_ENABLED` to `false` to disable recording.
+The service account of PII service needs the audit service writer role. Set `PII_AUDIT_ENABLED` to `false` to disable recording for this service. When it is unset, the platform-wide `AUDIT_ENABLED` variable applies, and recording is on if neither is set.
 
 ## Code examples
 ### Anonymize text

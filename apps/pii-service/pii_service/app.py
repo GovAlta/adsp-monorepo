@@ -20,6 +20,7 @@ from flask import Flask, Response, g, jsonify, request
 from flask_cors import CORS
 from pii_service.audit import (
     AUDIT_ACTIONS,
+    get_audit_enabled,
     RESOURCE_TYPE,
     TEXT_ANALYZE_ERRORED,
     TEXT_ANALYZE_FAILED,
@@ -106,7 +107,7 @@ adsp = adsp_extension.init_app(
         ),
         "ADSP_SERVICE_ID": os.environ.get("SERVICE_ID", "urn:ads:platform:pii-service"),
         "ADSP_CLIENT_SECRET": os.environ.get("CLIENT_SECRET"),
-        "ADSP_AUDIT_ENABLED": os.environ.get("AUDIT_ENABLED", "true"),
+        "ADSP_AUDIT_ENABLED": get_audit_enabled(os.environ),
     },
 )
 

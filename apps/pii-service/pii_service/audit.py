@@ -4,13 +4,18 @@ Records must never contain request text, detected PII values or replacement stri
 value recorded is the count of detected entities.
 """
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Mapping, Optional
 
 from adsp_py_common.audit import SERVICE_ACCOUNT_PREFIX
 from adsp_service_flask_sdk import AuditAction
 from jwt import decode
 
 RESOURCE_TYPE = "text-processing-request"
+
+
+def get_audit_enabled(environ: Mapping[str, str]) -> str:
+    """Audit switch of the service. PII_AUDIT_ENABLED wins; unset falls back to the platform-wide AUDIT_ENABLED, which defaults to on."""
+    return environ.get("PII_AUDIT_ENABLED") or environ.get("AUDIT_ENABLED") or "true"
 
 
 def _security_action(name: str, severity: str, description: str) -> AuditAction:
