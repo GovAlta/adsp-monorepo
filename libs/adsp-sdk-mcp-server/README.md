@@ -5,20 +5,27 @@ An MCP (Model Context Protocol) server that gives an AI coding assistant grounde
 (`@abgov/adsp-service-sdk`), instead of guessing.
 
 It bundles the ADSP documentation site content and a curated reference of every `@abgov/adsp-service-sdk` export,
-and exposes them over stdio via five tools:
+and exposes them over stdio via seven tools:
 
 - `search_adsp_docs` — keyword search across ADSP platform docs (getting started, architecture, service concepts,
-  tutorials).
-- `read_adsp_doc` — read the full content of a doc page found via search.
+  tutorials). Common words people use that the docs don't, such as `websocket` or `auth`, also search for the
+  docs' own terms (`src/search/aliases.ts`).
+- `list_adsp_docs` — list the path and title of every bundled doc page, optionally under a path prefix such as
+  `services/`, for browsing when keyword search misses.
+- `read_adsp_doc` — read the full content of a doc page found via search or the list.
 - `search_sdk_reference` — search `@abgov/adsp-service-sdk` by symbol name, module, or keyword; returns full symbol
   details (kind, description, option/return shape, example, deprecated flag).
 - `get_platform_quickstart` — the canonical `initializeService` usage pattern (the common case for a tenant service
   built on top of ADSP) and a capabilities summary, for the most common question: how to start using ADSP from a
   Node service.
-- `list_service_roles` — **the one tool that talks to a real ADSP environment**, not bundled/offline data. Reads
-  every platform service's registered RBAC role live from tenant-service configuration, so an agent can pick a
-  least-privileged role instead of defaulting to an admin role. Requires logging in first (see below) — everything
-  else in this package works fully offline with no setup.
+- `list_service_roles` — **live: talks to a real ADSP environment**, not bundled/offline data. Reads every platform
+  service's registered RBAC role from tenant-service configuration, so an agent can pick a least-privileged role
+  instead of defaulting to an admin role.
+- `get_service_configuration_schema` — **live.** Reads platform services' configuration schemas from
+  configuration-service, for the shape of `serviceConfigurations` entries in `initializeService`.
+
+The two live tools require logging in first (see below). Everything else in this package works fully offline with no
+setup.
 
 This package covers the Node SDK only. Other language SDKs (`.NET`, Django, Flask, Spring) are out of scope for now.
 
@@ -105,7 +112,7 @@ Things to know when sizing and tuning these:
   | Client | Over the cap for longer than `MCP_IN_FLIGHT_WAIT_MS` | Over the cap briefly (`MCP_IN_FLIGHT_WAIT_MS=3000`, slots freed after 0.5 s) |
   |---|---|---|
   | `@modelcontextprotocol/sdk` 1.32.1 | `connect()` throws `StreamableHTTPError` (code 503) after the wait. One request, no retry, `Retry-After` ignored | Connects and calls the tool after about 0.5 s |
-  | `@mastra/mcp` 1.8.1 | Logs `MCP_CLIENT_GET_TOOLS_FAILED` and `listTools()` returns no tools from this server, without throwing. One request, no retry | Lists all six tools and calls one after about 0.5 s |
+  | `@mastra/mcp` 1.8.1 | Logs `MCP_CLIENT_GET_TOOLS_FAILED` and `listTools()` returns no tools from this server, without throwing. One request, no retry | Lists all tools and calls one after about 0.5 s |
 
   So a `503` becomes a failed tool call, or an agent turn with no ADSP tools at all. Size `MCP_MAX_IN_FLIGHT` and
   the replica count so it stays rare, and watch `mcp.requests.rejected`.
@@ -130,7 +137,7 @@ OpenTelemetry SDK isn't loaded. Stdio mode never exports metrics.
 
 Every label takes a value from a fixed set:
 
-- `mcp.tool.name`: one of the six tool names, or `unknown` for any name the server doesn't have.
+- `mcp.tool.name`: one of the seven tool names, or `unknown` for any name the server doesn't have.
 - `mcp.method.name`: an MCP method such as `initialize`, `tools/list` or `tools/call`; `other` for any other method;
   `batch` for a JSON-RPC batch; `unparsed` when the body wasn't valid JSON-RPC or was too large.
 - `error.type` on `mcp.request.duration`: `aborted` when the client disconnected before the response was written; the
@@ -142,9 +149,9 @@ Every label takes a value from a fixed set:
   request, which `adsp-cli` reports the same way.
 - `reason` on `mcp.requests.rejected`: `in_flight_cap`, `rate_limit`, `origin` or `live_tool_cap`.
 
-### Using `list_service_roles`
+### Using the live tools
 
-That one tool needs a real ADSP environment and a logged-in session (via `@abgov/adsp-cli`, a separate package this
+`list_service_roles` and `get_service_configuration_schema` need a real ADSP environment and a logged-in session (via `@abgov/adsp-cli`, a separate package this
 one depends on). One-time setup — no MCP client config changes needed:
 
 ```bash
@@ -158,7 +165,7 @@ client config. `ADSP_TENANT_REALM` remains available as an optional override (e.
 The same role data is also available directly from a terminal, without an MCP client at all: `npx @abgov/adsp-cli
 service-roles`.
 
-If `list_service_roles` is called without a valid login, it returns a clear, actionable error (telling you to run
+If either live tool is called without a valid login, it returns a clear, actionable error (telling you to run
 `npx @abgov/adsp-cli login`) rather than failing silently or hanging — it never opens a browser or blocks waiting for
 one itself.
 

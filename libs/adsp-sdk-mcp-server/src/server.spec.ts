@@ -96,6 +96,7 @@ describe('adsp-sdk-mcp-server', () => {
     expect(names).toEqual(
       expect.arrayContaining([
         'search_adsp_docs',
+        'list_adsp_docs',
         'read_adsp_doc',
         'search_sdk_reference',
         'get_platform_quickstart',
@@ -266,7 +267,7 @@ describe('shared tools', () => {
     const fromAlpha = await alphaClient.callTool({ name: 'search_adsp_docs', arguments: { query: 'beta' } });
     const fromBeta = await betaClient.callTool({ name: 'search_adsp_docs', arguments: { query: 'beta' } });
 
-    expect(JSON.parse(firstText(fromAlpha))).toEqual([]);
+    expect(firstText(fromAlpha)).toBe('No ADSP docs match "beta". Try other keywords, or call list_adsp_docs to browse.');
     expect(JSON.parse(firstText(fromBeta))[0].path).toBe('services/beta-service.md');
   });
 
