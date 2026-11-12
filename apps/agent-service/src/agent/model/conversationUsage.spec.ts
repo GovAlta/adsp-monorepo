@@ -236,6 +236,33 @@ describe('getConversationStatus', () => {
     expect(status.state).toBe('ok');
   });
 
+  it('suggests a new chat once the context reaches the long-conversation threshold, ahead of dropped messages', () => {
+    // Act
+    const status = getConversationStatus({
+      contextTokens: 9000,
+      contextWindowTokens: CONTEXT_WINDOW,
+      history: { storedMessages: 9, lastMessages: 8 },
+      longConversationTokens: 9000,
+    });
+
+    // Assert
+    expect(status).toMatchObject({ state: 'notice', reason: 'long-conversation' });
+  });
+
+  it('does not suggest a new chat below the threshold or when the threshold is off', () => {
+    // Act
+    const below = getConversationStatus({
+      contextTokens: 8999,
+      contextWindowTokens: CONTEXT_WINDOW,
+      longConversationTokens: 9000,
+    });
+    const off = getConversationStatus({ contextTokens: 50000, contextWindowTokens: CONTEXT_WINDOW });
+
+    // Assert
+    expect(below.state).toBe('ok');
+    expect(off.state).toBe('ok');
+  });
+
   it('warns at 70% of the context window, ahead of any memory reason', () => {
     // Arrange
     const memoryStatus = readMemoryStatus(omStatusPart(6000, 2000));

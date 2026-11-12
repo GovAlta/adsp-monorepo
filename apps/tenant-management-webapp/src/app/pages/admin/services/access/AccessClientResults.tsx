@@ -14,6 +14,28 @@ const CLIENT_TYPE_LABELS: Record<AccessClientType, string> = {
   'bearer-only': 'Bearer-only',
 };
 
+// Plain words for beginners, with the Keycloak term in brackets.
+const CLIENT_KIND_LABELS: Record<AccessClientType, string> = {
+  public: 'Browser or mobile app (public)',
+  confidential: 'Server app or service (confidential)',
+  'bearer-only': 'API only (bearer-only)',
+};
+
+const CLIENT_ORIGIN_LABELS: Record<NonNullable<AccessClientSummary['origin']>, string> = {
+  keycloak: 'Keycloak built-in',
+  platform: 'ADSP platform',
+  tenant: 'Your tenant',
+};
+
+function clientOriginLabel({ origin, builtIn }: AccessClientSummary): string {
+  return CLIENT_ORIGIN_LABELS[origin ?? (builtIn ? 'keycloak' : 'tenant')];
+}
+
+function clientKindLabel({ type, serviceAccount }: AccessClientSummary): string {
+  const kind = type ? (CLIENT_KIND_LABELS[type] ?? type) : NOT_RETURNED;
+  return serviceAccount ? `${kind}, has a service account` : kind;
+}
+
 const MAPPER_TOKEN_TARGETS: Array<[keyof MapperSettings, string]> = [
   ['addToAccessToken', 'Access token'],
   ['addToIdToken', 'ID token'],
@@ -94,7 +116,8 @@ export const ClientList: FunctionComponent<{
           <tr>
             <th>Client ID</th>
             <th>Name</th>
-            <th>Type</th>
+            <th>Kind</th>
+            <th>Belongs to</th>
             <th>Status</th>
           </tr>
         </thead>
@@ -103,16 +126,18 @@ export const ClientList: FunctionComponent<{
             <tr key={client.clientId}>
               <td>
                 <code>{client.clientId}</code>
-                {client.builtIn && ' (Keycloak built-in)'}
               </td>
               <td>{client.name ?? ''}</td>
-              <td>{clientTypeLabel(client.type)}</td>
+              <td>{clientKindLabel(client)}</td>
+              <td>{clientOriginLabel(client)}</td>
               <td>{enabledLabel(client.enabled)}</td>
             </tr>
           ))}
         </tbody>
       </table>
-      {truncated && <p>Only the first {clients.length} clients are shown. Search by client ID to narrow the list.</p>}
+      {truncated && (
+        <p>Only the first {clients.length} clients are shown. Search by name or client ID to narrow the list.</p>
+      )}
     </>
   );
 };

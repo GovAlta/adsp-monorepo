@@ -62,7 +62,7 @@ function definitionValue(container: HTMLElement, term: string): string | null {
 }
 
 describe('ClientList', () => {
-  it('lists each client with its type and status, and marks Keycloak built-in clients', () => {
+  it('lists each client with its kind in plain words, who it belongs to, and its status', () => {
     const { getAllByRole } = render(
       <ClientList
         clients={[
@@ -72,8 +72,16 @@ describe('ClientList', () => {
             type: 'public',
             enabled: true,
             builtIn: false,
+            origin: 'tenant',
           },
-          { clientId: 'realm-management', type: 'bearer-only', enabled: false, builtIn: true },
+          { clientId: 'realm-management', type: 'bearer-only', enabled: false, builtIn: true, origin: 'keycloak' },
+          {
+            clientId: 'urn:ads:platform:tenant-service',
+            type: 'confidential',
+            serviceAccount: true,
+            builtIn: false,
+            origin: 'platform',
+          },
           { clientId: 'limited', builtIn: false },
         ]}
       />,
@@ -84,9 +92,10 @@ describe('ClientList', () => {
         .slice(1)
         .map((row) => row.textContent),
     ).toEqual([
-      'urn:ads:tenant:demo:web-appDemo web appPublicEnabled',
-      'realm-management (Keycloak built-in)Bearer-onlyDisabled',
-      'limitedNot returnedNot returned',
+      'urn:ads:tenant:demo:web-appDemo web appBrowser or mobile app (public)Your tenantEnabled',
+      'realm-managementAPI only (bearer-only)Keycloak built-inDisabled',
+      'urn:ads:platform:tenant-serviceServer app or service (confidential), has a service accountADSP platformNot returned',
+      'limitedNot returnedYour tenantNot returned',
     ]);
   });
 
@@ -94,7 +103,7 @@ describe('ClientList', () => {
     const { getByText } = render(<ClientList clients={[{ clientId: 'app', builtIn: false }]} truncated />);
 
     expect(
-      getByText('Only the first 1 clients are shown. Search by client ID to narrow the list.'),
+      getByText('Only the first 1 clients are shown. Search by name or client ID to narrow the list.'),
     ).toBeInTheDocument();
   });
 
