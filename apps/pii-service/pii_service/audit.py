@@ -19,7 +19,6 @@ def _security_action(name: str, severity: str, description: str) -> AuditAction:
         category="security",
         severity=severity,
         description=description,
-        retention_class="security",
         resource_type=RESOURCE_TYPE,
     )
 

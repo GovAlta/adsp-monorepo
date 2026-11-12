@@ -22,7 +22,7 @@ Entities represent categories of objects found in language. Presidio is based on
 Recognizers are extensible components used by Presidio to identify PII entities. PII service adds recognizers for Canadian bank account number, passport, postal code, and social insurance number.
 
 ## Audit
-Analyze and anonymize requests are recorded in the [audit service](/adsp-monorepo/services/audit-service.html) under the `pii-service` namespace. All actions use the `security` category and retention class.
+Analyze and anonymize requests are recorded in the [audit service](/adsp-monorepo/services/audit-service.html) under the `pii-service` namespace. All actions use the `security` category, and their retention class is derived from it.
 
 | Action | Severity | Recorded when |
 |---|---|---|

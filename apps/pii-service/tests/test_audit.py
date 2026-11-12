@@ -25,7 +25,6 @@ def test_catalog_has_six_security_actions():
             "version": 1,
             "category": "security",
             "severity": severity,
-            "retentionClass": "security",
             "resourceType": "text-processing-request",
             "description": catalog[name]["description"],
         }
