@@ -52,13 +52,13 @@ Verify service records audit events in the `verify-service` namespace of the [au
 | action                         | category | severity | retention class | recorded when                                                                                                                                                       |
 | :----------------------------- | :------- | :------- | :-------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | code.generated                 | security | info     | security        | A new code is generated at a key, with its `expiresAt` in the metadata.                                                                                             |
-| code.verified.succeeded        | security | info     | security        | A submitted code matches the code at the key (`verified: true`).                                                                                                    |
-| code.verified.failed           | security | warning  | security        | A submitted code fails verification (`verified: false`, status `failure`), with `reason` of `mismatch`, or `not-found` when the code expired, was cleared or never existed. |
-| code.attempts-exceeded-cleared | security | warning  | security        | The code at a key is cleared after 10 failed verifications (`maxFailedVerifications` in the metadata), in addition to the `code.verified.failed` of the last attempt. |
+| code.verified                  | security | info     | security        | A submitted code matches the code at the key (`verified: true`).                                                                                                    |
+| code.rejected                  | security | warning  | security        | A submitted code fails verification (`verified: false`, status `failure`), with `reason` of `mismatch`, or `not-found` when the code expired, was cleared or never existed. |
+| code.attempts-exceeded-cleared | security | warning  | security        | The code at a key is cleared after 10 failed verifications (`maxFailedVerifications` in the metadata), in addition to the `code.rejected` of the last attempt.      |
 
-Multiple `code.verified.failed` records and a `code.attempts-exceeded-cleared` on the same key in a short window can indicate a brute-force attempt.
+Multiple `code.rejected` records and a `code.attempts-exceeded-cleared` on the same key in a short window can indicate a brute-force attempt.
 
-Expired codes are removed by Redis without verify service being involved, so expiry isn't recorded on its own. A verification after expiry is recorded as `code.verified.failed` with `reason: 'not-found'`. Requests rejected for validation or missing roles aren't recorded.
+Expired codes are removed by Redis without verify service being involved, so expiry isn't recorded on its own. A verification after expiry is recorded as `code.rejected` with `reason: 'not-found'`. Requests rejected for validation or missing roles aren't recorded.
 
 Records are written to the tenant of the caller's token. Core users set the tenant with the `tenantId` query parameter; operations of core users without it have no tenant to be recorded to and aren't recorded. Audit failures are logged by the SDK and do not fail the operation. The verify service account requires the `audit-writer` role of `urn:ads:platform:audit-service`.
 

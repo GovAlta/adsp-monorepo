@@ -8,10 +8,14 @@ describe('audit', () => {
     const security = { version: 1, category: 'security', retentionClass: 'security', resourceType: 'verify-code' };
     expect(auditDefinitions(VerifyAuditActions)).toEqual({
       'code.generated': expect.objectContaining({ ...security, severity: 'info' }),
-      'code.verified.succeeded': expect.objectContaining({ ...security, severity: 'info' }),
-      'code.verified.failed': expect.objectContaining({ ...security, severity: 'warning' }),
+      'code.verified': expect.objectContaining({ ...security, severity: 'info' }),
+      'code.rejected': expect.objectContaining({ ...security, severity: 'warning' }),
       'code.attempts-exceeded-cleared': expect.objectContaining({ ...security, severity: 'warning' }),
     });
+  });
+
+  it('does not end action names with a suffix the audit service reserves for outcomes', () => {
+    VerifyAuditActions.forEach(({ name }) => expect(name).not.toMatch(/\.(succeeded|failed)$/));
   });
 
   describe('toVerifyCodeAuditDetails', () => {
