@@ -4,6 +4,13 @@ import { RequestHandler } from 'express';
 import * as HttpStatusCodes from 'http-status-codes';
 import { pick } from 'lodash';
 import {
+  NotificationAuditor,
+  NotificationTypeCreatedAuditAction,
+  NotificationTypeDeletedAuditAction,
+  NotificationTypeUpdatedAuditAction,
+  toNotificationTypeAuditDetails,
+} from '../audit';
+import {
   NotificationConfiguration,
   NotificationConfigurationWriter,
   toNotificationTypeDefinition,
@@ -51,7 +58,10 @@ export const getNotificationTypeDefinitions: RequestHandler = async (req, res, n
   }
 };
 
-export function createNotificationType(writer: NotificationConfigurationWriter): RequestHandler {
+export function createNotificationType(
+  writer: NotificationConfigurationWriter,
+  auditor: NotificationAuditor,
+): RequestHandler {
   return async (req, res, next) => {
     try {
       const tenantId = req.tenant.id;
@@ -66,13 +76,17 @@ export function createNotificationType(writer: NotificationConfigurationWriter):
 
       const definition = await saveTypeDefinition(writer, tenantId, req.body);
       res.status(HttpStatusCodes.CREATED).json(definition);
+      auditor(NotificationTypeCreatedAuditAction, toNotificationTypeAuditDetails(tenantId, req.user, definition));
     } catch (err) {
       next(err);
     }
   };
 }
 
-export function updateNotificationType(writer: NotificationConfigurationWriter): RequestHandler {
+export function updateNotificationType(
+  writer: NotificationConfigurationWriter,
+  auditor: NotificationAuditor,
+): RequestHandler {
   return async (req, res, next) => {
     try {
       const tenantId = req.tenant.id;
@@ -81,20 +95,28 @@ export function updateNotificationType(writer: NotificationConfigurationWriter):
 
       // A platform type without a tenant customization is updated by saving a customization of it.
       const configuration = await req.getConfiguration<NotificationConfiguration, NotificationConfiguration>();
-      const existing = configuration.getTenantDefinition(type) || configuration.getCoreDefinition(type);
+      const tenantDefinition = configuration.getTenantDefinition(type);
+      const existing = tenantDefinition || configuration.getCoreDefinition(type);
       if (!existing) {
         throw new NotFoundError('Notification Type', type);
       }
 
       const definition = await saveTypeDefinition(writer, tenantId, { ...existing, ...req.body, id: type });
       res.json(definition);
+      auditor(
+        NotificationTypeUpdatedAuditAction,
+        toNotificationTypeAuditDetails(tenantId, req.user, definition, { customizesCoreType: !tenantDefinition }),
+      );
     } catch (err) {
       next(err);
     }
   };
 }
 
-export function deleteNotificationType(writer: NotificationConfigurationWriter): RequestHandler {
+export function deleteNotificationType(
+  writer: NotificationConfigurationWriter,
+  auditor: NotificationAuditor,
+): RequestHandler {
   return async (req, res, next) => {
     try {
       const tenantId = req.tenant.id;
@@ -103,12 +125,19 @@ export function deleteNotificationType(writer: NotificationConfigurationWriter):
 
       // Platform types can't be deleted; deleting the tenant customization of one reverts it to the platform type.
       const configuration = await req.getConfiguration<NotificationConfiguration, NotificationConfiguration>();
-      if (!configuration.getTenantDefinition(type)) {
+      const definition = configuration.getTenantDefinition(type);
+      if (!definition) {
         throw new NotFoundError('Notification Type', type);
       }
 
       await writer.delete(tenantId, type);
       res.json({ deleted: true });
+      auditor(
+        NotificationTypeDeletedAuditAction,
+        toNotificationTypeAuditDetails(tenantId, req.user, definition, {
+          revertsToCoreType: !!configuration.getCoreDefinition(type),
+        }),
+      );
     } catch (err) {
       next(err);
     }
