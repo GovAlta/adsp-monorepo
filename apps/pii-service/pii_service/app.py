@@ -21,8 +21,10 @@ from flask_cors import CORS
 from pii_service.audit import (
     AUDIT_ACTIONS,
     RESOURCE_TYPE,
+    TEXT_ANALYZE_ERRORED,
     TEXT_ANALYZE_FAILED,
     TEXT_ANALYZED,
+    TEXT_ANONYMIZE_ERRORED,
     TEXT_ANONYMIZE_FAILED,
     TEXT_ANONYMIZED,
     get_calling_service,
@@ -121,9 +123,10 @@ anonymizer_engine = AnonymizerEngine()
 atexit.register(adsp.audit_service.flush)
 
 
-def audited(success_action: AuditAction, failure_action: AuditAction):
+def audited(success_action: AuditAction, failure_action: AuditAction, error_action: AuditAction):
     """Audits the outcome of a request handler, without recording any request content.
 
+    Client errors (4xx) are recorded as failures; any other exception is a service error with a higher severity.
     The handler records the non-sensitive details it knows in `g.audit`.
     """
 
@@ -134,7 +137,10 @@ def audited(success_action: AuditAction, failure_action: AuditAction):
             try:
                 result = func(*args, **kwargs)
             except Exception as err:
-                _record_audit(failure_action, _failure_status(err), type(err).__name__)
+                if _is_client_error(err):
+                    _record_audit(failure_action, "failure", type(err).__name__)
+                else:
+                    _record_audit(error_action, "error", type(err).__name__)
                 raise
             _record_audit(success_action, "success")
             return result
@@ -144,10 +150,9 @@ def audited(success_action: AuditAction, failure_action: AuditAction):
     return decorator
 
 
-def _failure_status(err: Exception) -> str:
-    """Client errors (4xx) are failures; anything else is an error of the service."""
+def _is_client_error(err: Exception) -> bool:
     code = getattr(err, "code", None)
-    return "failure" if isinstance(code, int) and 400 <= code < 500 else "error"
+    return isinstance(code, int) and 400 <= code < 500
 
 
 def _record_audit(action: AuditAction, status: str, error_type: Optional[str] = None):
@@ -195,7 +200,7 @@ def supported_entities():
 
 @app.route("/pii/v1/analyze", methods=["POST"])
 @require_user(service_roles.ANALYZER, allow_core=True)
-@audited(TEXT_ANALYZED, TEXT_ANALYZE_FAILED)
+@audited(TEXT_ANALYZED, TEXT_ANALYZE_FAILED, TEXT_ANALYZE_ERRORED)
 def analyze():
     analyzer_request = AnalyzerRequest(request.get_json())
     _set_audit_request(analyzer_request)
@@ -233,7 +238,7 @@ def analyze():
 
 @app.route("/pii/v1/anonymize", methods=["POST"])
 @require_user(service_roles.ANALYZER, allow_core=True)
-@audited(TEXT_ANONYMIZED, TEXT_ANONYMIZE_FAILED)
+@audited(TEXT_ANONYMIZED, TEXT_ANONYMIZE_FAILED, TEXT_ANONYMIZE_ERRORED)
 def anonymize():
     analyzer_request = AnalyzerRequest(request.get_json())
     _set_audit_request(analyzer_request)

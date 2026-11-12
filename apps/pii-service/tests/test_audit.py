@@ -17,7 +17,7 @@ _spec.loader.exec_module(audit)
 SERVICE_USER = SimpleNamespace(name="service-account-urn:ads:platform:form-service")
 
 
-def test_catalog_has_four_security_actions():
+def test_catalog_has_six_security_actions():
     catalog = audit_definitions(audit.AUDIT_ACTIONS)
 
     assert catalog == {
@@ -34,6 +34,8 @@ def test_catalog_has_four_security_actions():
             ("text.anonymized", "info"),
             ("text.analyze-failed", "warning"),
             ("text.anonymize-failed", "warning"),
+            ("text.analyze-errored", "critical"),
+            ("text.anonymize-errored", "critical"),
         ]
     }
 

@@ -28,12 +28,20 @@ TEXT_ANALYZED = _security_action("text.analyzed", "info", "A PII analysis reques
 TEXT_ANONYMIZED = _security_action("text.anonymized", "info", "A PII anonymization request completed.")
 TEXT_ANALYZE_FAILED = _security_action("text.analyze-failed", "warning", "A PII analysis request failed.")
 TEXT_ANONYMIZE_FAILED = _security_action("text.anonymize-failed", "warning", "A PII anonymization request failed.")
+TEXT_ANALYZE_ERRORED = _security_action(
+    "text.analyze-errored", "critical", "A PII analysis request failed with a service error."
+)
+TEXT_ANONYMIZE_ERRORED = _security_action(
+    "text.anonymize-errored", "critical", "A PII anonymization request failed with a service error."
+)
 
 AUDIT_ACTIONS: List[AuditAction] = [
     TEXT_ANALYZED,
     TEXT_ANONYMIZED,
     TEXT_ANALYZE_FAILED,
     TEXT_ANONYMIZE_FAILED,
+    TEXT_ANALYZE_ERRORED,
+    TEXT_ANONYMIZE_ERRORED,
 ]
 
 
