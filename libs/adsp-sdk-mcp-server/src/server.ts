@@ -11,6 +11,7 @@ import { createQuickstartTool } from './tools/registerQuickstartTool';
 import { createServiceRolesTools } from './tools/registerServiceRolesTool';
 import { createSdkTools } from './tools/registerSdkTools';
 import { LiveToolDefinition, ToolDefinition } from './tools/types';
+import { readPackageVersion } from './version';
 
 export interface CreateAdspMcpServerOptions {
   /** Root directory of bundled ADSP docs. Defaults to the assets copied alongside the built package. */
@@ -59,7 +60,7 @@ export function createAdspMcpServer(options: CreateAdspMcpServerOptions = {}): S
   // would fix it but risks changing runtime behavior for unrelated consumers (e.g. agent-service's Mastra agent
   // config). Server + setRequestHandler avoids the SDK's zod-compat generics entirely; tools validate their own
   // args with zod as a plain value (see tools/*.ts), never passing a schema through the SDK's type machinery.
-  const server = new Server({ name: 'adsp-sdk-mcp-server', version: '0.0.1' }, { capabilities: { tools: {} } });
+  const server = new Server({ name: 'adsp-sdk-mcp-server', version: readPackageVersion() }, { capabilities: { tools: {} } });
 
   server.setRequestHandler(ListToolsRequestSchema, async () => ({
     tools: tools.map(({ name, description, inputSchema }) => ({ name, description, inputSchema })),
