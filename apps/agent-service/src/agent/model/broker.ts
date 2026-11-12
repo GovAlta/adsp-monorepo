@@ -1,4 +1,12 @@
-import { isAllowedUser, UnauthorizedUserError, AdspId, type User, EventService } from '@abgov/adsp-service-sdk';
+import {
+  isAllowedUser,
+  UnauthorizedUserError,
+  AdspId,
+  type AuditAction,
+  type AuditService,
+  type User,
+  EventService,
+} from '@abgov/adsp-service-sdk';
 import { InvalidOperationError } from '@core-services/core-common';
 import type { Agent, AgentExecutionOptions, ToolsInput } from '@mastra/core/agent';
 import type { CoreUserMessage } from '@mastra/core/llm';
@@ -7,8 +15,16 @@ import { Logger } from 'winston';
 import { environment } from '../../environments/environment';
 import type { IFileServiceClient } from '../clients';
 import { AgentConfiguration } from '../configuration';
-import { BrokerInputProcessor } from '../types';
+import { BrokerInputProcessor, THREAD_ID_KEY } from '../types';
 import { threadCreated, workspaceCreated, workspaceCreationFailed } from '../events';
+import {
+  AgentMessageSentAuditAction,
+  AgentResponseCompletedAuditAction,
+  describeMessage,
+  ThreadDeletedAuditAction,
+  toAgentAuditDetails,
+  toThreadAuditDetails,
+} from '../audit';
 import {
   clearThreadWorkspace,
   ManagedWorkspace,
@@ -84,6 +100,7 @@ export class AgentBroker<TAgentId extends string = string, TTools extends ToolsI
     private eventService?: EventService,
     private agentId?: string,
     private modelConfig?: AgentModelConfiguration,
+    private auditService?: AuditService,
   ) {
     this.userRoles = userRoles || [];
     this.limits = { maxSteps, timeoutMs };
@@ -158,6 +175,7 @@ export class AgentBroker<TAgentId extends string = string, TTools extends ToolsI
     requestContext.set('agentId', this.agentId);
     requestContext.set(MASTRA_THREAD_ID_KEY, threadId);
     requestContext.set(MASTRA_RESOURCE_ID_KEY, user.id);
+    requestContext.set(THREAD_ID_KEY, threadId);
 
     return requestContext;
   }
@@ -179,13 +197,38 @@ export class AgentBroker<TAgentId extends string = string, TTools extends ToolsI
     const requestContext = this.buildRequestContext(user, threadId, context);
     await this.updateThreadExpiry(user, threadId);
 
+    // Described before the input processors, which can replace attachment parts in place.
+    const message = describeMessage(input);
+
     // This is necessarily because normal Mastra input processors run after message normalization.
     // For example, assets already downloaded, so we cannot use an input processor to download files with a credential.
     for (const inputProcessor of this.inputProcessors) {
       await inputProcessor.processInput(requestContext, input);
     }
 
+    this.recordAgentAudit(AgentMessageSentAuditAction, user, threadId, message);
+
     return requestContext;
+  }
+
+  private recordAgentAudit(action: AuditAction, user: User, threadId: string, metadata: Record<string, unknown>): void {
+    if (this.auditService && this.agentId) {
+      void this.auditService.record(
+        action,
+        toAgentAuditDetails(this.tenantId, user, { id: this.agentId, name: this.agent.name }, threadId, metadata),
+      );
+    }
+  }
+
+  /**
+   * Records that the agent completed a reply to the user. Only the length of the reply and whether it has structured
+   * output are recorded, never their content.
+   */
+  public recordResponseCompleted(user: User, threadId: string, { text, output }: { text?: unknown; output?: unknown }) {
+    this.recordAgentAudit(AgentResponseCompletedAuditAction, user, threadId, {
+      responseLength: typeof text === 'string' ? text.length : 0,
+      hasStructuredOutput: output !== undefined && output !== null,
+    });
   }
 
   private async updateThreadExpiry(user: User, threadId: string): Promise<void> {
@@ -376,6 +419,13 @@ export class AgentBroker<TAgentId extends string = string, TTools extends ToolsI
       },
       { tenantId, userId: user.id, threadId },
     );
+
+    if (this.auditService) {
+      void this.auditService.record(
+        ThreadDeletedAuditAction,
+        toThreadAuditDetails(this.tenantId, user, this.agentId, threadId),
+      );
+    }
 
     return true;
   }
