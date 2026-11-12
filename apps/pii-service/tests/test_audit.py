@@ -17,7 +17,15 @@ _spec.loader.exec_module(audit)
 SERVICE_USER = SimpleNamespace(name="service-account-urn:ads:platform:form-service")
 
 
-def test_catalog_has_four_security_actions():
+def test_audit_enabled_prefers_service_flag_then_platform_flag_then_on():
+    assert audit.get_audit_enabled({}) == "true"
+    assert audit.get_audit_enabled({"AUDIT_ENABLED": "false"}) == "false"
+    assert audit.get_audit_enabled({"PII_AUDIT_ENABLED": "false", "AUDIT_ENABLED": "true"}) == "false"
+    assert audit.get_audit_enabled({"PII_AUDIT_ENABLED": "true", "AUDIT_ENABLED": "false"}) == "true"
+    assert audit.get_audit_enabled({"PII_AUDIT_ENABLED": ""}) == "true"
+
+
+def test_catalog_has_six_security_actions():
     catalog = audit_definitions(audit.AUDIT_ACTIONS)
 
     assert catalog == {
@@ -25,7 +33,6 @@ def test_catalog_has_four_security_actions():
             "version": 1,
             "category": "security",
             "severity": severity,
-            "retentionClass": "security",
             "resourceType": "text-processing-request",
             "description": catalog[name]["description"],
         }
@@ -34,6 +41,8 @@ def test_catalog_has_four_security_actions():
             ("text.anonymized", "info"),
             ("text.analyze-failed", "warning"),
             ("text.anonymize-failed", "warning"),
+            ("text.analyze-errored", "critical"),
+            ("text.anonymize-errored", "critical"),
         ]
     }
 
