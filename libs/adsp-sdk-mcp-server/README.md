@@ -8,7 +8,8 @@ It bundles the ADSP documentation site content and a curated reference of every 
 and exposes them over stdio via seven tools:
 
 - `search_adsp_docs` — keyword search across ADSP platform docs (getting started, architecture, service concepts,
-  tutorials).
+  tutorials). Common words people use that the docs don't, such as `websocket` or `auth`, also search for the
+  docs' own terms (`src/search/aliases.ts`).
 - `list_adsp_docs` — list the path and title of every bundled doc page, optionally under a path prefix such as
   `services/`, for browsing when keyword search misses.
 - `read_adsp_doc` — read the full content of a doc page found via search or the list.

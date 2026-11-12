@@ -32,6 +32,14 @@ describe('searchSdkReference', () => {
     expect(results.map((r) => r.name)).toContain('EventService');
   });
 
+  it('matches aliases of query terms', () => {
+    expect(searchSdkReference('upload').map((r) => r.name)).toContain('FileType');
+  });
+
+  it('ignores stop words in summary text', () => {
+    expect(searchSdkReference('how do i')).toEqual([]);
+  });
+
   it('returns an empty array for an empty query', () => {
     expect(searchSdkReference('   ')).toEqual([]);
   });
