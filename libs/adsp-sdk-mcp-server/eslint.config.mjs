@@ -4,6 +4,13 @@ import jsoncEslintParser from 'jsonc-eslint-parser';
 export default [
   ...baseConfig,
   {
+    // Node scripts run by nx targets (update-docs-lock, release).
+    files: ['scripts/**/*.mjs'],
+    languageOptions: {
+      globals: { console: 'readonly', process: 'readonly' },
+    },
+  },
+  {
     files: ['**/*.ts', '**/*.tsx', '**/*.js', '**/*.jsx'],
     // Override or add rules here
     rules: {},

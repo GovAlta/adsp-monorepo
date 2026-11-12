@@ -5,7 +5,7 @@ An MCP (Model Context Protocol) server that gives an AI coding assistant grounde
 (`@abgov/adsp-service-sdk`), instead of guessing.
 
 It bundles the ADSP documentation site content and a curated reference of every `@abgov/adsp-service-sdk` export,
-and exposes them over stdio via seven tools:
+and exposes them over stdio via eight tools:
 
 - `search_adsp_docs` — keyword search across ADSP platform docs (getting started, architecture, service concepts,
   tutorials). Common words people use that the docs don't, such as `websocket` or `auth`, also search for the
@@ -23,6 +23,9 @@ and exposes them over stdio via seven tools:
   instead of defaulting to an admin role.
 - `get_service_configuration_schema` — **live.** Reads platform services' configuration schemas from
   configuration-service, for the shape of `serviceConfigurations` entries in `initializeService`.
+- `get_adsp_mcp_server_info` — this server's version and where its bundled content came from: the docs source
+  commit, the `@abgov/adsp-service-sdk` version the SDK reference matches, and the release time. Lets an agent warn
+  that an answer may be stale.
 
 The two live tools require logging in first (see below). Everything else in this package works fully offline with no
 setup.
@@ -137,7 +140,7 @@ OpenTelemetry SDK isn't loaded. Stdio mode never exports metrics.
 
 Every label takes a value from a fixed set:
 
-- `mcp.tool.name`: one of the seven tool names, or `unknown` for any name the server doesn't have.
+- `mcp.tool.name`: one of the eight tool names, or `unknown` for any name the server doesn't have.
 - `mcp.method.name`: an MCP method such as `initialize`, `tools/list` or `tools/call`; `other` for any other method;
   `batch` for a JSON-RPC batch; `unparsed` when the body wasn't valid JSON-RPC or was too large.
 - `error.type` on `mcp.request.duration`: `aborted` when the client disconnected before the response was written; the
@@ -176,6 +179,20 @@ nx build adsp-sdk-mcp-server
 nx test adsp-sdk-mcp-server
 nx lint adsp-sdk-mcp-server
 ```
+
+### Refresh workflow
+
+The bundled content is refreshed from source on every release, not fetched live:
+
+- **Docs.** The build copies `docs/**/*.md` into the package. `src/docs/docs-lock.json` fingerprints those pages, and
+  `src/docs/docsLock.spec.ts` fails CI when `docs/` changes without it. In a PR that changes `docs/`, run
+  `npx nx run adsp-sdk-mcp-server:update-docs-lock` and commit the lock. The lock is inside this package, so the
+  change releases it: `.releaserc.json` releases a patch for `docs` commits as well as `feat` and `fix`.
+- **SDK reference.** Maintained by hand, and checked against the SDK source (below).
+- **Provenance.** The `release` target runs `scripts/provenance.mjs` before publishing. It writes
+  `provenance.json` into the package with the source commit, the last commit to `docs/`, the latest
+  `adsp-service-sdk` release tag and whether the SDK source has changed since. `get_adsp_mcp_server_info` reports it,
+  and reports no provenance when running from source or a local build.
 
 `src/sdk-reference/reference.ts` is maintained by hand. `reference.spec.ts` reads the root exports of
 `libs/adsp-service-sdk/src/index.ts` with the TypeScript compiler and fails when the reference drifts: a missing or
