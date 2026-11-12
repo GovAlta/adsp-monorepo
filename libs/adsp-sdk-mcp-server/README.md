@@ -170,6 +170,11 @@ nx test adsp-sdk-mcp-server
 nx lint adsp-sdk-mcp-server
 ```
 
+`src/sdk-reference/reference.ts` is maintained by hand. `reference.spec.ts` reads the root exports of
+`libs/adsp-service-sdk/src/index.ts` with the TypeScript compiler and fails when the reference drifts: a missing or
+stale name, or a different kind, module or deprecated flag, or a `seeAlso` with no entry. When you change what the SDK
+exports, update `reference.ts` in the same PR.
+
 `src/fixtures/tool-contract.golden.json` is maintained by hand. It pins only the docs tools' and the unknown tool's
 output over the fixture docs in `src/fixtures/docs`; the other tools are checked for equal output across transports
 instead, so SDK reference and quickstart edits don't touch it. If you change docs search or the docs tools' output on
