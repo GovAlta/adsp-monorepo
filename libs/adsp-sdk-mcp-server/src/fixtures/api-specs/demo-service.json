@@ -1,0 +1,46 @@
+{
+  "openapi": "3.0.0",
+  "info": { "title": "Demo service", "version": "1.0.0" },
+  "paths": {
+    "/demo/v1/files": {
+      "parameters": [{ "name": "tenantId", "in": "query", "schema": { "type": "string" } }],
+      "post": {
+        "tags": ["File"],
+        "summary": "Upload a file.",
+        "description": "Uploads a file to the tenant. Requires the demo-admin role, held in the tenant or as a Core role.",
+        "requestBody": {
+          "content": { "multipart/form-data": { "schema": { "$ref": "#/components/schemas/Upload" } } }
+        },
+        "responses": {
+          "200": {
+            "description": "The file.",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Node" } } }
+          }
+        }
+      },
+      "get": {
+        "tags": ["File"],
+        "summary": "List files.",
+        "description": "Lists files. Anonymous access is allowed; no role is required.",
+        "deprecated": true,
+        "responses": { "200": { "description": "The files." } }
+      }
+    },
+    "/demo/v1/events": {
+      "post": {
+        "tags": ["Event"],
+        "summary": "Send an event.",
+        "responses": { "200": { "description": "Sent." } }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Upload": { "type": "object", "properties": { "file": { "type": "string", "format": "binary" } } },
+      "Node": {
+        "type": "object",
+        "properties": { "name": { "type": "string" }, "child": { "$ref": "#/components/schemas/Node" } }
+      }
+    }
+  }
+}
