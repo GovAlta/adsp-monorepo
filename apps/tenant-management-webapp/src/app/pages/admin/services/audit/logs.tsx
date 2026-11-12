@@ -305,7 +305,6 @@ export const AuditLogs: FunctionComponent = () => {
             <GoabDropdown
               name="audit-namespace"
               filterable
-              relative
               leadingIcon="search"
               placeholder="All namespaces"
               size="compact"
@@ -331,7 +330,6 @@ export const AuditLogs: FunctionComponent = () => {
             <GoabDropdown
               name="audit-action"
               filterable
-              relative
               leadingIcon="search"
               placeholder="All actions"
               size="compact"
