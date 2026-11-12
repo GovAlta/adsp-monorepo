@@ -14,7 +14,10 @@ RESOURCE_TYPE = "text-processing-request"
 
 
 def get_audit_enabled(environ: Mapping[str, str]) -> str:
-    """Audit switch of the service. PII_AUDIT_ENABLED wins; unset falls back to the platform-wide AUDIT_ENABLED, which defaults to on."""
+    """Audit switch of the service.
+
+    PII_AUDIT_ENABLED wins; unset falls back to the platform-wide AUDIT_ENABLED, which defaults to on.
+    """
     return environ.get("PII_AUDIT_ENABLED") or environ.get("AUDIT_ENABLED") or "true"
 
 
