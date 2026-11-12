@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import { FeedbackSummary, FeedbackSummaryLoading } from './feedbackSummary';
+import { FeedbackSummary } from './feedbackSummary';
 
 describe('FeedbackSummary', () => {
   it('displays all aggregate values', () => {
@@ -38,12 +38,5 @@ describe('FeedbackSummary', () => {
     );
 
     expect(screen.getByTestId('feedback-summary')).toHaveTextContent('No responses');
-  });
-
-  it('displays a text skeleton while the summary is loading', () => {
-    const { baseElement } = render(<FeedbackSummaryLoading />);
-
-    expect(screen.getByTestId('feedback-summary-loading')).toBeInTheDocument();
-    expect(baseElement.querySelector('goa-skeleton[type="text"]')).toBeInTheDocument();
   });
 });

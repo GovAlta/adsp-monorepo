@@ -1,5 +1,6 @@
 import { SagaIterator } from '@redux-saga/core';
-import { call, put, select, takeEvery } from 'redux-saga/effects';
+import type { Task } from 'redux-saga';
+import { call, cancel, cancelled, fork, put, select, take } from 'redux-saga/effects';
 import axios from 'axios';
 import * as HttpStatusCodes from 'http-status-codes';
 import { getSectionLoader, getServiceReport } from '@pages/admin/reports/registry/serviceReportRegistry';
@@ -20,6 +21,7 @@ const isUnauthorized = (err: unknown): boolean =>
 
 export function* loadReportSection(action: LoadReportSectionAction): SagaIterator {
   const { serviceId, sectionId } = action;
+  const abortController = new AbortController();
 
   const descriptor = getServiceReport(serviceId);
   const loader = getSectionLoader(serviceId, sectionId);
@@ -48,6 +50,7 @@ export function* loadReportSection(action: LoadReportSectionAction): SagaIterato
       period: criteria.period,
       token,
       serviceUrls: serviceUrls || {},
+      signal: abortController.signal,
     };
 
     let data;
@@ -69,15 +72,32 @@ export function* loadReportSection(action: LoadReportSectionAction): SagaIterato
       return;
     }
     yield put(loadReportSectionSuccess(serviceId, sectionId, key, data));
-  } catch (err) {
+  } catch {
     const latestCriteria = yield select((state: RootState) => state.serviceReports.criteria);
     if (criteriaKey(latestCriteria) !== key) {
       return;
     }
     yield put(loadReportSectionFailure(serviceId, sectionId, key, REPORT_SECTION_LOAD_ERROR));
+  } finally {
+    if (yield cancelled()) {
+      abortController.abort();
+    }
   }
 }
 
-export function* watchServiceReportsSagas(): Generator {
-  yield takeEvery(LOAD_REPORT_SECTION_ACTION, loadReportSection);
+export function* watchServiceReportsSagas(): SagaIterator {
+  const sectionTasks = new Map<string, Task>();
+
+  while (true) {
+    const action: LoadReportSectionAction = yield take(LOAD_REPORT_SECTION_ACTION);
+    const sectionKey = `${action.serviceId}:${action.sectionId}`;
+    const previousTask = sectionTasks.get(sectionKey);
+
+    if (previousTask?.isRunning()) {
+      yield cancel(previousTask);
+    }
+
+    const task: Task = yield fork(loadReportSection, action);
+    sectionTasks.set(sectionKey, task);
+  }
 }

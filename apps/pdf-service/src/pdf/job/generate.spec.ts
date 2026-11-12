@@ -407,7 +407,7 @@ describe('generate', () => {
         templateEntity.generate.mockResolvedValueOnce('content');
       });
 
-      it('records pdf.job.generated with the resulting file ID', async () => {
+      it('records job.generated with the resulting file ID', async () => {
         fileServiceMock.upload.mockResolvedValueOnce({ id: 'file-1', urn: 'urn:file-1', filename: 'test.pdf' });
 
         const done = jest.fn();
@@ -421,7 +421,7 @@ describe('generate', () => {
         });
       });
 
-      it('records a failed pdf.job.generated when the job fails', async () => {
+      it('records a failed job.generated when the job fails', async () => {
         fileServiceMock.upload.mockRejectedValueOnce(new Error('oh noes!'));
 
         const done = jest.fn();

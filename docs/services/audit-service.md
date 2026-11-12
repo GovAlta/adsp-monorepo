@@ -179,10 +179,10 @@ const { name, version } = await response.json();
 ```
 
 The action is added to the caller's tenant catalog (`actions-<namespace>`, created if missing). The name is
-compared in full and case-insensitively with the namespace's own catalog and every Core catalog, read directly
-from the configuration service rather than the cache. `409` is returned when the name already exists in either,
-or when the namespace is itself a Core namespace; `503` when the check cannot be made, in which case nothing is
-written.
+compared in full and case-insensitively with the namespace's own catalog, read directly from the configuration
+service rather than the cache. Names in other namespaces, including Core ones, do not conflict. `409` is returned
+when the name already exists in the namespace, or when the namespace is itself a Core namespace; `503` when the
+check cannot be made, in which case nothing is written.
 
 ### Write events
 

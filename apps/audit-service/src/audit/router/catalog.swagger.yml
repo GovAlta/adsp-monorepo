@@ -139,9 +139,9 @@ paths:
         Tenant callers add to their token's tenant. Core callers must select a tenant with `tenantId`; without it the
         request responds 400.
 
-        The name is compared in full and case-insensitively with fresh configuration, not the cache: 409 when it
-        already exists in the namespace, when the namespace is a Core namespace, or when it exists in any Core
-        namespace. Partial matches (for example a `.succeeded` suffix) are not conflicts.
+        The name is compared in full and case-insensitively with the namespace's own catalog in fresh configuration,
+        not the cache: 409 when it already exists there or when the namespace is a Core namespace. Names in other
+        namespaces, including Core ones, are not conflicts.
       parameters:
         - $ref: '#/components/parameters/AuditNamespace'
         - $ref: '#/components/parameters/TenantId'
@@ -182,7 +182,7 @@ paths:
         '403':
           $ref: '#/components/responses/AuditForbidden'
         '409':
-          description: The action name conflicts with the namespace's own catalog or a Core namespace.
+          description: The action name exists in the namespace's own catalog, or the namespace is a Core namespace.
           content:
             application/json:
               schema:
