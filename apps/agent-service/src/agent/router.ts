@@ -81,15 +81,6 @@ async function readUsage(
   }
 }
 
-/** Text of a streamed reply, read once the stream is consumed. Only its length is recorded for audit. */
-async function readResponseText(result: { text?: unknown }): Promise<unknown> {
-  try {
-    return await result.text;
-  } catch {
-    return undefined;
-  }
-}
-
 /** Tells the user's client whether the conversation has grown long enough that the agent may miss earlier details. */
 async function emitConversationStatus(
   socket: Socket,
@@ -486,12 +477,13 @@ export function onIoConnection(logger: Logger) {
                 ...(usage ? { usage } : {}),
                 done: true,
               });
-              aiAgent.recordResponseCompleted(user, threadId, { text: await readResponseText(result), output });
+              await aiAgent.recordResponseCompleted(user, threadId, result, { output });
               await emitConversationStatus(socket, logger, aiAgent, user, streamMeta, {
                 contextTokens: usage?.contextTokens ?? 0,
                 memoryStatus,
               });
             } catch (err) {
+              void aiAgent.recordResponseCompleted(user, threadId, result, { error: err });
               if (!emitMappedStreamError(socket, streamMeta, err)) {
                 throw err;
               }
@@ -784,7 +776,6 @@ export function messageAgent(logger: Logger): RequestHandler {
         tenant: tenant?.id?.toString(),
         user: `${user.name} (ID: ${user.id})`,
       });
-      agent.recordResponseCompleted(user, threadId, { text: result.text, output: result.object });
 
       res.send({
         agent: agent.Agent.id,

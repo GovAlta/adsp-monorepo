@@ -3,6 +3,7 @@ import { RequestContext } from '@mastra/core/request-context';
 import { AgentMessageSentAuditAction, AgentResponseCompletedAuditAction, ThreadDeletedAuditAction } from '../audit';
 import { THREAD_ID_KEY } from '../types';
 import { AgentBroker } from './broker';
+import { AgentStreamAbortError } from './streamAbort';
 
 jest.mock('../workspace', () => ({
   ...jest.requireActual('../workspace'),
@@ -56,13 +57,13 @@ describe('AgentBroker audit', () => {
     await (broker[method as 'generate'] as AgentBroker['generate']).call(broker, user as never, 'thread-1', message);
 
     // Assert
-    expect(auditService.record).toHaveBeenCalledTimes(1);
-    expect(auditService.record).toHaveBeenCalledWith(AgentMessageSentAuditAction, {
+    expect(auditService.record).toHaveBeenNthCalledWith(1, AgentMessageSentAuditAction, {
       tenantId,
       actor: expect.objectContaining({ id: 'user-1', type: 'user' }),
       resource: { type: 'agent', id: 'builder', name: 'Builder' },
       correlationId: 'thread-1',
       metadata: { agentId: 'builder', threadId: 'thread-1', messageLength: 25, attachmentCount: 1 },
+      status: 'success',
     });
     expect(JSON.stringify(auditService.record.mock.calls)).not.toContain('confidential');
   });
@@ -94,33 +95,150 @@ describe('AgentBroker audit', () => {
     expect(auditService.record).not.toHaveBeenCalled();
   });
 
-  it.each([
-    [
-      { text: 'Done.', output: { status: 'ok' } },
-      { responseLength: 5, hasStructuredOutput: true },
-    ],
-    [
-      { text: 'Done!', output: null },
-      { responseLength: 5, hasStructuredOutput: false },
-    ],
-    [
-      { text: undefined, output: undefined },
-      { responseLength: 0, hasStructuredOutput: false },
-    ],
-  ])('records the completed response %p without its content', (response, metadata) => {
-    const broker = createBroker({});
+  function getResponseRecord() {
+    const call = auditService.record.mock.calls.find(([action]) => action === AgentResponseCompletedAuditAction);
+    return call?.[1];
+  }
 
-    broker.recordResponseCompleted(user as never, 'thread-1', response);
+  /** An agent method that aborts the request, as the broker does at the step limit, then settles. */
+  function abortingWith(settle: (reason: unknown) => Promise<unknown>) {
+    return jest.fn(async (_input, { requestContext }) => {
+      const reason = new AgentStreamAbortError('MAX_STEPS', 'Reached the step limit.');
+      (requestContext.get('abortController') as AbortController).abort(reason);
+      return settle(reason);
+    });
+  }
 
-    expect(auditService.record).toHaveBeenCalledWith(
-      AgentResponseCompletedAuditAction,
-      expect.objectContaining({
-        resource: { type: 'agent', id: 'builder', name: 'Builder' },
-        correlationId: 'thread-1',
-        metadata: { agentId: 'builder', threadId: 'thread-1', ...metadata },
-      }),
-    );
-    expect(JSON.stringify(auditService.record.mock.calls)).not.toMatch(/Done|status/);
+  describe('REST responses', () => {
+    it.each([
+      [
+        { text: 'Done.', object: { status: 'ok' } },
+        { responseLength: 5, hasStructuredOutput: true },
+      ],
+      [
+        { text: 'Done!', object: null },
+        { responseLength: 5, hasStructuredOutput: false },
+      ],
+    ])('records the completed response %p without its content', async (result, metadata) => {
+      // Arrange
+      const broker = createBroker({ generate: jest.fn().mockResolvedValue(result) });
+
+      // Act
+      await broker.generate(user as never, 'thread-1', message);
+
+      // Assert
+      expect(getResponseRecord()).toEqual(
+        expect.objectContaining({
+          status: 'success',
+          resource: { type: 'agent', id: 'builder', name: 'Builder' },
+          correlationId: 'thread-1',
+          metadata: { agentId: 'builder', threadId: 'thread-1', ...metadata },
+        }),
+      );
+      expect(JSON.stringify(auditService.record.mock.calls)).not.toMatch(/Done|"ok"/);
+    });
+
+    it('records a response that a guardrail blocks', async () => {
+      const result = { text: '', tripwire: { reason: 'Prompt injection detected', processorId: 'pii-guardrail' } };
+      const broker = createBroker({ generate: jest.fn().mockResolvedValue(result) });
+
+      await broker.generate(user as never, 'thread-1', message);
+
+      expect(getResponseRecord()).toEqual(
+        expect.objectContaining({
+          status: 'blocked',
+          metadata: expect.objectContaining({ errorCode: 'TRIPWIRE', processorId: 'pii-guardrail' }),
+        }),
+      );
+      expect(JSON.stringify(getResponseRecord())).not.toContain('Prompt injection detected');
+    });
+
+    it('records a failed response and rethrows its error', async () => {
+      const broker = createBroker({ generate: jest.fn().mockRejectedValue(new TypeError('model unavailable')) });
+
+      await expect(broker.generate(user as never, 'thread-1', message)).rejects.toThrow('model unavailable');
+
+      expect(getResponseRecord()).toEqual(
+        expect.objectContaining({
+          status: 'failure',
+          metadata: expect.objectContaining({ errorCode: 'TypeError', responseLength: 0 }),
+        }),
+      );
+    });
+
+    it('records the code of an abort', async () => {
+      const generate = abortingWith(() => Promise.reject(Object.assign(new Error('aborted'), { name: 'AbortError' })));
+      const broker = createBroker({ generate });
+
+      await expect(broker.generate(user as never, 'thread-1', message)).rejects.toThrow('aborted');
+
+      expect(getResponseRecord()).toEqual(
+        expect.objectContaining({ status: 'failure', metadata: expect.objectContaining({ errorCode: 'MAX_STEPS' }) }),
+      );
+    });
+  });
+
+  describe('streamed responses', () => {
+    it('records a streamed response once its stream is consumed', async () => {
+      // Arrange
+      const result = { text: Promise.resolve('Done.') };
+      const broker = createBroker({ stream: jest.fn().mockResolvedValue(result) });
+      const streamed = await broker.stream(user as never, 'thread-1', message);
+      expect(getResponseRecord()).toBeUndefined();
+
+      // Act
+      await broker.recordResponseCompleted(user as never, 'thread-1', streamed, { output: undefined });
+
+      // Assert
+      expect(getResponseRecord()).toEqual(
+        expect.objectContaining({
+          status: 'success',
+          metadata: { agentId: 'builder', threadId: 'thread-1', responseLength: 5, hasStructuredOutput: false },
+        }),
+      );
+    });
+
+    it('records the code of a stream that was aborted', async () => {
+      const broker = createBroker({ stream: abortingWith(async () => ({ text: Promise.resolve(''), tripwire: {} })) });
+      const streamed = await broker.stream(user as never, 'thread-1', message);
+
+      await broker.recordResponseCompleted(user as never, 'thread-1', streamed);
+
+      expect(getResponseRecord()).toEqual(
+        expect.objectContaining({ status: 'failure', metadata: expect.objectContaining({ errorCode: 'MAX_STEPS' }) }),
+      );
+    });
+
+    it.each([
+      [
+        'an error in the result',
+        () => ({ text: Promise.reject(new Error('no text')), error: new Error('provider failed') }),
+        {},
+      ],
+      [
+        'an error while streaming',
+        () => ({ text: Promise.resolve('Part') }),
+        { error: new RangeError('socket failed') },
+      ],
+    ])('records a streamed response that failed with %s', async (_case, createResult, options) => {
+      const broker = createBroker({ stream: jest.fn().mockImplementation(async () => createResult()) });
+      const streamed = await broker.stream(user as never, 'thread-1', message);
+
+      await broker.recordResponseCompleted(user as never, 'thread-1', streamed, options);
+
+      expect(getResponseRecord()).toEqual(expect.objectContaining({ status: 'failure' }));
+      expect(getResponseRecord().metadata.errorCode).toBe('error' in options ? 'RangeError' : 'Error');
+    });
+
+    it('records a failed response when the stream cannot start', async () => {
+      const broker = createBroker({ stream: jest.fn().mockRejectedValue(new Error('model unavailable')) });
+
+      await expect(broker.stream(user as never, 'thread-1', message)).rejects.toThrow('model unavailable');
+
+      expect(getResponseRecord()).toEqual(
+        expect.objectContaining({ status: 'failure', metadata: expect.objectContaining({ errorCode: 'Error' }) }),
+      );
+    });
   });
 
   describe('deleteThread', () => {

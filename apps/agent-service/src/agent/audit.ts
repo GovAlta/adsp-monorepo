@@ -2,6 +2,7 @@ import {
   AdspId,
   AuditAction,
   AuditCategories,
+  AuditEventStatus,
   AuditRecordDetails,
   AuditService,
   AuditSeverities,
@@ -11,13 +12,14 @@ import {
 } from '@abgov/adsp-service-sdk';
 import type { DelegationConfig, DelegationStartContext, DelegationStartResult } from '@mastra/core/agent';
 import type { CoreUserMessage } from '@mastra/core/llm';
+import { mapAgentStreamError } from './model/streamAbort';
 import { THREAD_ID_KEY } from './types';
 
 const AGENT_RESOURCE_TYPE = 'agent';
 const THREAD_RESOURCE_TYPE = 'thread';
 
 export const AgentMessageSentAuditAction: AuditAction = {
-  name: 'agent.message-sent',
+  name: 'agent.message.sent',
   version: 1,
   category: AuditCategories.DataAccess,
   severity: AuditSeverities.Info,
@@ -27,37 +29,28 @@ export const AgentMessageSentAuditAction: AuditAction = {
 };
 
 export const AgentResponseCompletedAuditAction: AuditAction = {
-  name: 'agent.response-completed',
+  name: 'agent.response.completed',
   version: 1,
   category: AuditCategories.Runtime,
   severity: AuditSeverities.Info,
   retentionClass: BuiltInRetentionClasses.Compliance,
   resourceType: AGENT_RESOURCE_TYPE,
-  description: 'An agent completes a response to a message, including any structured output.',
+  description:
+    'An agent finishes its response to a message. The status is failure when the response stops with an error, and blocked when a guardrail stops it.',
 };
 
 export const AgentToolInvokedAuditAction: AuditAction = {
-  name: 'agent.tool-invoked',
+  name: 'agent.tool.invoked',
   version: 1,
   category: AuditCategories.Runtime,
   severity: AuditSeverities.Info,
   retentionClass: BuiltInRetentionClasses.Compliance,
   resourceType: AGENT_RESOURCE_TYPE,
-  description: 'An agent calls a built-in, API, or MCP tool and the call completes.',
+  description: 'An agent calls a built-in, API, or MCP tool. The status is failure when the call fails.',
 };
 
-export const AgentToolFailedAuditAction: AuditAction = {
-  name: 'agent.tool-failed',
-  version: 1,
-  category: AuditCategories.Runtime,
-  severity: AuditSeverities.Warning,
-  retentionClass: BuiltInRetentionClasses.Compliance,
-  resourceType: AGENT_RESOURCE_TYPE,
-  description: 'An agent calls a built-in, API, or MCP tool and the call fails.',
-};
-
-export const AgentDelegatedAuditAction: AuditAction = {
-  name: 'agent.delegate-to-agent',
+export const AgentDelegationStartedAuditAction: AuditAction = {
+  name: 'agent.delegation.started',
   version: 1,
   category: AuditCategories.Runtime,
   severity: AuditSeverities.Info,
@@ -80,8 +73,7 @@ export const AgentAuditActions: AuditAction[] = [
   AgentMessageSentAuditAction,
   AgentResponseCompletedAuditAction,
   AgentToolInvokedAuditAction,
-  AgentToolFailedAuditAction,
-  AgentDelegatedAuditAction,
+  AgentDelegationStartedAuditAction,
   ThreadDeletedAuditAction,
 ];
 
@@ -153,7 +145,13 @@ export function describeMessage(input: CoreUserMessage | CoreUserMessage[]): {
   return { messageLength, attachmentCount };
 }
 
-function getErrorType(err: unknown): string {
+/** Code of an error for audit metadata: its own code when it has one, otherwise its name. The message is not used. */
+function getErrorCode(err: unknown): string {
+  const code = (err as { code?: unknown })?.code;
+  if (typeof code === 'string' && code) {
+    return code;
+  }
+
   return err instanceof Error ? err.name : typeof err;
 }
 
@@ -161,7 +159,7 @@ function getErrorType(err: unknown): string {
  * Works out whether a tool call that returned a result failed. Mastra returns input and output validation failures as
  * results with error true, and MCP servers report tool errors with isError true.
  */
-function getToolResultErrorType(result: unknown): string | undefined {
+function getToolResultErrorCode(result: unknown): string | undefined {
   if (typeof result !== 'object' || result === null) {
     return undefined;
   }
@@ -175,6 +173,39 @@ function getToolResultErrorType(result: unknown): string | undefined {
   }
 
   return undefined;
+}
+
+/** Outcome of an agent response as reported by Mastra once the response has finished. */
+export interface AgentResponseResult {
+  text?: unknown;
+  error?: unknown;
+  tripwire?: { processorId?: string };
+}
+
+/**
+ * Works out the audit status of a finished agent response. A guardrail processor that stops the response leaves a
+ * tripwire with its processor ID. Mastra reports an abort, such as the time or step limit, as a tripwire without a
+ * processor, so the reason of the abort signal gives its code.
+ */
+export function toResponseAuditOutcome(
+  { error, tripwire }: Pick<AgentResponseResult, 'error' | 'tripwire'>,
+  abortReason?: unknown,
+): { status: AuditEventStatus; metadata: Record<string, unknown> } {
+  if (error) {
+    // An abort surfaces as a generic error from the model call, so the reason of the abort signal is the better code.
+    const errorCode = mapAgentStreamError(abortReason)?.code ?? mapAgentStreamError(error)?.code ?? getErrorCode(error);
+    return { status: 'failure', metadata: { errorCode } };
+  }
+
+  if (tripwire?.processorId) {
+    return { status: 'blocked', metadata: { errorCode: 'TRIPWIRE', processorId: tripwire.processorId } };
+  }
+
+  if (tripwire) {
+    return { status: 'failure', metadata: { errorCode: mapAgentStreamError(abortReason)?.code ?? 'ABORTED' } };
+  }
+
+  return { status: 'success', metadata: {} };
 }
 
 interface AuditedToolProps {
@@ -191,8 +222,8 @@ interface ToolExecutionContextLike {
 }
 
 /**
- * Returns a copy of a tool that records agent.tool-invoked when a call completes and agent.tool-failed when it fails.
- * The actor is the user in the request context, so calls by delegated agents are attributed to the same user. The tool
+ * Returns a copy of a tool that records agent.tool.invoked for each call, with status failure when the call fails. The
+ * actor is the user in the request context, so calls by delegated agents are attributed to the same user. The tool
  * input and output are not recorded.
  */
 export function withToolAudit<T>(
@@ -204,22 +235,21 @@ export function withToolAudit<T>(
     return tool;
   }
 
-  const record = (context: ToolExecutionContextLike | undefined, errorType?: string) => {
+  const record = (context: ToolExecutionContextLike | undefined, errorCode?: string) => {
     const user = context?.requestContext?.get('user') as User | undefined;
     if (!user) {
       return;
     }
 
     const threadId = context.requestContext.get(THREAD_ID_KEY) as string | undefined;
-    const details = toAgentAuditDetails(tenantId, user, { id: agentId, name: agentName }, threadId, {
-      toolId,
-      toolType,
-      ...(errorType ? { errorType } : {}),
+    void auditService.record(AgentToolInvokedAuditAction, {
+      ...toAgentAuditDetails(tenantId, user, { id: agentId, name: agentName }, threadId, {
+        toolId,
+        toolType,
+        ...(errorCode ? { errorCode } : {}),
+      }),
+      status: errorCode ? 'failure' : 'success',
     });
-    void auditService.record(
-      errorType ? AgentToolFailedAuditAction : AgentToolInvokedAuditAction,
-      errorType ? { ...details, status: 'failure' } : details,
-    );
   };
 
   return Object.assign(Object.create(Object.getPrototypeOf(tool)), tool, {
@@ -228,18 +258,18 @@ export function withToolAudit<T>(
       try {
         result = await execute.call(tool, inputData, context);
       } catch (err) {
-        record(context, getErrorType(err));
+        record(context, getErrorCode(err));
         throw err;
       }
 
-      record(context, getToolResultErrorType(result));
+      record(context, getToolResultErrorCode(result));
       return result;
     },
   });
 }
 
 /**
- * Adds recording of agent.delegate-to-agent to the delegation hooks of a supervisor agent, keeping any existing hooks.
+ * Adds recording of agent.delegation.started to the delegation hooks of a supervisor agent, keeping any existing hooks.
  * A delegation that an existing start hook rejects or blocks is not recorded.
  */
 export function withDelegationAudit(
@@ -260,7 +290,7 @@ export function withDelegationAudit(
 
     const threadId = context.get(THREAD_ID_KEY) as string | undefined;
     void auditService.record(
-      AgentDelegatedAuditAction,
+      AgentDelegationStartedAuditAction,
       toAgentAuditDetails(tenantId, user, { id: parentAgentId, name: parentAgentName }, threadId, {
         delegateAgentId: primitiveId,
       }),

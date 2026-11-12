@@ -3,6 +3,7 @@ import {
   UnauthorizedUserError,
   AdspId,
   type AuditAction,
+  type AuditEventStatus,
   type AuditService,
   type User,
   EventService,
@@ -20,9 +21,11 @@ import { threadCreated, workspaceCreated, workspaceCreationFailed } from '../eve
 import {
   AgentMessageSentAuditAction,
   AgentResponseCompletedAuditAction,
+  type AgentResponseResult,
   describeMessage,
   ThreadDeletedAuditAction,
   toAgentAuditDetails,
+  toResponseAuditOutcome,
   toThreadAuditDetails,
 } from '../audit';
 import {
@@ -86,6 +89,8 @@ export class AgentBroker<TAgentId extends string = string, TTools extends ToolsI
   private userRoles: string[];
   private limits: { timeoutMs?: number; maxSteps?: number };
   private readonly threadTtlMs = Math.max(environment.AGENT_THREAD_TTL_MINUTES, 1) * 60 * 1000;
+  // Abort signals of streamed replies, so the code of an abort can be recorded once the stream is consumed.
+  private readonly responseAbortSignals = new WeakMap<object, AbortSignal>();
   public get Agent() {
     return this.agent;
   }
@@ -211,23 +216,63 @@ export class AgentBroker<TAgentId extends string = string, TTools extends ToolsI
     return requestContext;
   }
 
-  private recordAgentAudit(action: AuditAction, user: User, threadId: string, metadata: Record<string, unknown>): void {
+  private recordAgentAudit(
+    action: AuditAction,
+    user: User,
+    threadId: string,
+    metadata: Record<string, unknown>,
+    status: AuditEventStatus = 'success',
+  ): void {
     if (this.auditService && this.agentId) {
-      void this.auditService.record(
-        action,
-        toAgentAuditDetails(this.tenantId, user, { id: this.agentId, name: this.agent.name }, threadId, metadata),
-      );
+      void this.auditService.record(action, {
+        ...toAgentAuditDetails(this.tenantId, user, { id: this.agentId, name: this.agent.name }, threadId, metadata),
+        status,
+      });
     }
   }
 
+  private recordResponse(
+    user: User,
+    threadId: string,
+    { text, output, error, tripwire, abortReason }: AgentResponseResult & { output?: unknown; abortReason?: unknown },
+  ): void {
+    const { status, metadata } = toResponseAuditOutcome({ error, tripwire }, abortReason);
+    this.recordAgentAudit(
+      AgentResponseCompletedAuditAction,
+      user,
+      threadId,
+      {
+        responseLength: typeof text === 'string' ? text.length : 0,
+        hasStructuredOutput: output !== undefined && output !== null,
+        ...metadata,
+      },
+      status,
+    );
+  }
+
   /**
-   * Records that the agent completed a reply to the user. Only the length of the reply and whether it has structured
-   * output are recorded, never their content.
+   * Records that a streamed reply to the user finished, once its stream is consumed, or that it failed with an error.
+   * Only the length of the reply and whether it has structured output are recorded, never their content.
    */
-  public recordResponseCompleted(user: User, threadId: string, { text, output }: { text?: unknown; output?: unknown }) {
-    this.recordAgentAudit(AgentResponseCompletedAuditAction, user, threadId, {
-      responseLength: typeof text === 'string' ? text.length : 0,
-      hasStructuredOutput: output !== undefined && output !== null,
+  public async recordResponseCompleted(
+    user: User,
+    threadId: string,
+    result: AgentResponseResult | undefined,
+    { output, error }: { output?: unknown; error?: unknown } = {},
+  ): Promise<void> {
+    let text: unknown;
+    try {
+      text = await result?.text;
+    } catch {
+      text = undefined;
+    }
+
+    this.recordResponse(user, threadId, {
+      text,
+      output,
+      error: error ?? result?.error,
+      tripwire: result?.tripwire,
+      abortReason: result ? this.responseAbortSignals.get(result)?.reason : undefined,
     });
   }
 
@@ -462,7 +507,17 @@ export class AgentBroker<TAgentId extends string = string, TTools extends ToolsI
       requestContext.set(USAGE_RECORDER_KEY, usageRecorder);
     }
 
-    return this.agent.stream(input, this.getExecutionOptions(requestContext, user, threadId, true));
+    const options = this.getExecutionOptions(requestContext, user, threadId, true);
+    try {
+      const result = await this.agent.stream(input, options);
+      if (typeof result === 'object' && result !== null && options.abortSignal) {
+        this.responseAbortSignals.set(result, options.abortSignal);
+      }
+      return result;
+    } catch (err) {
+      this.recordResponse(user, threadId, { error: err, abortReason: options.abortSignal?.reason });
+      throw err;
+    }
   }
 
   /**
@@ -507,7 +562,21 @@ export class AgentBroker<TAgentId extends string = string, TTools extends ToolsI
   ) {
     const requestContext = await this.prepareAgentRequest(user, threadId, input, context);
 
-    return this.agent.generate(input, this.getExecutionOptions(requestContext, user, threadId));
+    const options = this.getExecutionOptions(requestContext, user, threadId);
+    try {
+      const result = await this.agent.generate(input, options);
+      this.recordResponse(user, threadId, {
+        text: result?.text,
+        output: result?.object,
+        error: result?.error,
+        tripwire: result?.tripwire,
+        abortReason: options.abortSignal?.reason,
+      });
+      return result;
+    } catch (err) {
+      this.recordResponse(user, threadId, { error: err, abortReason: options.abortSignal?.reason });
+      throw err;
+    }
   }
 }
 

@@ -4,15 +4,16 @@ import { RequestContext } from '@mastra/core/request-context';
 import { z } from 'zod';
 import {
   AgentAuditActions,
-  AgentDelegatedAuditAction,
-  AgentToolFailedAuditAction,
+  AgentDelegationStartedAuditAction,
   AgentToolInvokedAuditAction,
   describeMessage,
   toAgentAuditDetails,
+  toResponseAuditOutcome,
   toThreadAuditDetails,
   withDelegationAudit,
   withToolAudit,
 } from './audit';
+import { AgentStreamAbortError } from './model/streamAbort';
 import { THREAD_ID_KEY } from './types';
 
 describe('audit', () => {
@@ -34,32 +35,26 @@ describe('audit', () => {
 
   it('defines the agent service audit catalog', () => {
     expect(auditDefinitions(AgentAuditActions)).toEqual({
-      'agent.message-sent': expect.objectContaining({
+      'agent.message.sent': expect.objectContaining({
         version: 1,
         category: 'data-access',
         severity: 'info',
         retentionClass: 'compliance',
         resourceType: 'agent',
       }),
-      'agent.response-completed': expect.objectContaining({
+      'agent.response.completed': expect.objectContaining({
         category: 'runtime',
         severity: 'info',
         retentionClass: 'compliance',
         resourceType: 'agent',
       }),
-      'agent.tool-invoked': expect.objectContaining({
+      'agent.tool.invoked': expect.objectContaining({
         category: 'runtime',
         severity: 'info',
         retentionClass: 'compliance',
         resourceType: 'agent',
       }),
-      'agent.tool-failed': expect.objectContaining({
-        category: 'runtime',
-        severity: 'warning',
-        retentionClass: 'compliance',
-        resourceType: 'agent',
-      }),
-      'agent.delegate-to-agent': expect.objectContaining({
+      'agent.delegation.started': expect.objectContaining({
         category: 'runtime',
         severity: 'info',
         retentionClass: 'compliance',
@@ -126,6 +121,48 @@ describe('audit', () => {
     expect(describeMessage(input as never)).toEqual(expected);
   });
 
+  it.each([
+    ['a finished response', {}, undefined, { status: 'success', metadata: {} }],
+    [
+      'a model error',
+      { error: new Error('provider failed') },
+      undefined,
+      { status: 'failure', metadata: { errorCode: 'Error' } },
+    ],
+    [
+      'a stream that stops at the time limit',
+      { error: new AgentStreamAbortError('GENERATION_DEADLINE', 'Too long.') },
+      undefined,
+      { status: 'failure', metadata: { errorCode: 'GENERATION_DEADLINE' } },
+    ],
+    [
+      'a generic abort error with the step limit as the abort reason',
+      { error: Object.assign(new Error('aborted'), { name: 'AbortError' }) },
+      new AgentStreamAbortError('MAX_STEPS', 'Too many steps.'),
+      { status: 'failure', metadata: { errorCode: 'MAX_STEPS' } },
+    ],
+    [
+      'an abort reported as a tripwire without a processor',
+      { tripwire: {} },
+      new AgentStreamAbortError('MAX_STEPS', 'Too many steps.'),
+      { status: 'failure', metadata: { errorCode: 'MAX_STEPS' } },
+    ],
+    [
+      'an abort without a reason',
+      { tripwire: {} },
+      undefined,
+      { status: 'failure', metadata: { errorCode: 'ABORTED' } },
+    ],
+    [
+      'a guardrail tripwire',
+      { tripwire: { processorId: 'prompt-injection-detector' } },
+      undefined,
+      { status: 'blocked', metadata: { errorCode: 'TRIPWIRE', processorId: 'prompt-injection-detector' } },
+    ],
+  ])('works out the response outcome of %s', (_case, result, abortReason, expected) => {
+    expect(toResponseAuditOutcome(result, abortReason)).toEqual(expected);
+  });
+
   describe('withToolAudit', () => {
     const target = { tenantId, agentId: 'builder', agentName: 'Builder', toolId: 'formDataUpdateTool' };
 
@@ -151,6 +188,7 @@ describe('audit', () => {
       expect(auditService.record).toHaveBeenCalledWith(
         AgentToolInvokedAuditAction,
         expect.objectContaining({
+          status: 'success',
           tenantId,
           actor: expect.objectContaining({ id: 'user-1', type: 'user' }),
           resource: { type: 'agent', id: 'builder', name: 'Builder' },
@@ -189,13 +227,34 @@ describe('audit', () => {
       // Assert
       expect(auditService.record).toHaveBeenCalledTimes(1);
       expect(auditService.record).toHaveBeenCalledWith(
-        AgentToolFailedAuditAction,
+        AgentToolInvokedAuditAction,
         expect.objectContaining({
           status: 'failure',
-          metadata: expect.objectContaining({ toolType: 'api', errorType: 'TypeError' }),
+          metadata: expect.objectContaining({ toolType: 'api', errorCode: 'TypeError' }),
         }),
       );
       expect(JSON.stringify(auditService.record.mock.calls)).not.toContain('user input');
+    });
+
+    it('uses the code of an error that has one', async () => {
+      const tool = createTool({
+        id: 'formDataUpdateTool',
+        description: 'Updates form data.',
+        execute: async () => {
+          throw Object.assign(new Error('Request failed with status code 404'), { code: 'ERR_BAD_REQUEST' });
+        },
+      });
+      const audited = withToolAudit({ ...target, auditService, toolType: 'api' }, tool);
+
+      await expect(audited.execute({} as never, createContext() as never)).rejects.toThrow();
+
+      expect(auditService.record).toHaveBeenCalledWith(
+        AgentToolInvokedAuditAction,
+        expect.objectContaining({
+          status: 'failure',
+          metadata: expect.objectContaining({ errorCode: 'ERR_BAD_REQUEST' }),
+        }),
+      );
     });
 
     it('records a call with invalid input as failed', async () => {
@@ -213,8 +272,11 @@ describe('audit', () => {
 
       // Assert
       expect(auditService.record).toHaveBeenCalledWith(
-        AgentToolFailedAuditAction,
-        expect.objectContaining({ metadata: expect.objectContaining({ errorType: 'ValidationError' }) }),
+        AgentToolInvokedAuditAction,
+        expect.objectContaining({
+          status: 'failure',
+          metadata: expect.objectContaining({ errorCode: 'ValidationError' }),
+        }),
       );
     });
 
@@ -232,9 +294,10 @@ describe('audit', () => {
 
       // Assert
       expect(auditService.record).toHaveBeenCalledWith(
-        AgentToolFailedAuditAction,
+        AgentToolInvokedAuditAction,
         expect.objectContaining({
-          metadata: expect.objectContaining({ toolId: 'server_search', toolType: 'mcp', errorType: 'ToolError' }),
+          status: 'failure',
+          metadata: expect.objectContaining({ toolId: 'server_search', toolType: 'mcp', errorCode: 'ToolError' }),
         }),
       );
     });
@@ -276,7 +339,7 @@ describe('audit', () => {
 
       // Assert
       expect(auditService.record).toHaveBeenCalledWith(
-        AgentDelegatedAuditAction,
+        AgentDelegationStartedAuditAction,
         expect.objectContaining({
           tenantId,
           actor: expect.objectContaining({ id: 'user-1' }),
