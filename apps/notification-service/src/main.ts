@@ -261,8 +261,13 @@ initializeApp().then(({ app, auditService }) => {
       server.close(() => resolve());
       server.closeIdleConnections();
     });
-    await auditService.flush();
-    process.exit(0);
+    try {
+      await auditService.flush();
+      process.exit(0);
+    } catch (err) {
+      logger.error(`Error encountered flushing audit events on shutdown: ${err}`);
+      process.exit(1);
+    }
   };
   process.once('SIGTERM', shutdown);
   process.once('SIGINT', shutdown);
