@@ -11,6 +11,7 @@ import {
 } from './auth';
 import { AuthTestKit, createAuthTestKit } from './fixtures/authTestKit';
 import { createMetricsTestKit, MetricsTestKit } from './fixtures/metricsTestKit';
+import { createRateLimit } from './guards';
 import { installMetrics } from './metrics';
 
 const REALM = '0b4bd0b4-2c4f-4c8f-9e3a-2f6b1c2d3e4f';
@@ -202,9 +203,15 @@ describe('auth middleware and metadata', () => {
   beforeAll(async () => {
     const app = express();
     const verifier = createTokenVerifier({ accessServiceUrl: kit.accessServiceUrl, fetchTimeoutMs: 500 });
-    app.post('/mcp/:tenantRealm', createAuthMiddleware({ verifier, publicUrl: PUBLIC_URL }), (req, res) => {
-      res.json({ auth: (req as express.Request & { auth?: unknown }).auth });
-    });
+    // Same order as the HTTP app: the rate limit runs before sign-in. The limit is never reached here.
+    app.post(
+      '/mcp/:tenantRealm',
+      createRateLimit(10_000),
+      createAuthMiddleware({ verifier, publicUrl: PUBLIC_URL }),
+      (req, res) => {
+        res.json({ auth: (req as express.Request & { auth?: unknown }).auth });
+      },
+    );
     app.get(
       '/.well-known/oauth-protected-resource/mcp/:tenantRealm',
       createProtectedResourceMetadataHandler({ publicUrl: PUBLIC_URL, accessServiceUrl: kit.accessServiceUrl })
