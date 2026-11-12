@@ -10,7 +10,6 @@ import { pdfGenerationAgent } from './pdf';
 import { nxAdspAgent } from './nxAdsp';
 import { notificationEmailTemplateAgent } from './notification';
 import { accessServiceAgent } from './access/accessService';
-import { clientAgent, identityProviderAgent, tokenRoleAgent, architectAgent } from './access/specialists';
 import { ACCESS_SERVICE_AGENT_ID } from '../model/executionLimits';
 
 // clean-code-ignore: RULE-19
@@ -26,8 +25,4 @@ export const CoreAgents: AgentConfigurations = {
   nxAdspAgent,
   notificationEmailTemplateAgent,
   [ACCESS_SERVICE_AGENT_ID]: accessServiceAgent,
-  clientAgent,
-  tokenRoleAgent,
-  identityProviderAgent,
-  architectAgent,
 };
