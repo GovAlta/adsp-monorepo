@@ -34,6 +34,7 @@ In order to create the service account.
    1. Client `urn:ads:platform:tenant-service ` role `platform-service` is required.
    2. Client `urn:ads:platform:configuration-service` role `configured-service` is needed for registration and accessing service specific configuration
    3. Client `urn:ads:platform:event-service` role `event-sender` is needed for sending domain events.
+   4. Client `urn:ads:platform:audit-service` role `audit-writer` is needed for recording audit events.
 4. Additional audiences in the service account access token are required for some capabilities:
    1. Client `urn:ads:platform:push-service` needs to be include via an audience mapper for socket based configuration cache invalidation.
 
@@ -345,6 +346,49 @@ Domain events can be sent using the event service.
     )
     ...
 ```
+
+## Recording audit events
+Audit events can be recorded using the audit service. Define the audit actions of the service in `audit_actions`; the SDK registers them as the service's action catalog on startup. Recording an action that is not in the catalog raises a `ValueError`.
+
+`record` is non-blocking: it sends the event in the background, retries transient failures, and returns a `Future` of an `AuditRecordOutcome` (`recorded`, `rejected`, or `failed`). It does not raise for delivery failures. `audit_details_from_request` uses the current request user as the actor and the request tenant as the tenant. Core services must have a tenant for each record. Records without one are rejected with code `invalid_event`.
+
+```python
+  from adsp_service_flask_sdk import AuditAction, audit_details_from_request
+
+  HELLO_WORLD_ACTION = AuditAction(
+    "hello-world-requested",
+    "security",
+    "info",
+    description="Recorded when a hello world message is posted to the API.",
+  )
+
+  adsp = extension.init_app(
+    app,
+    AdspRegistration(
+      display_name="My platform service",
+      description="Hello world platform service.",
+      audit_actions=[HELLO_WORLD_ACTION],
+    )
+  )
+
+  # Send records still pending when the process exits.
+  atexit.register(adsp.audit_service.flush)
+
+  @app.route("hello-world/v1/hello")
+  @require_user()
+  def hello_world() -> str:
+    ...
+    adsp.audit_service.record(
+      HELLO_WORLD_ACTION,
+      audit_details_from_request(
+        resource={"type": "hello-world-message", "id": message_id},
+        metadata={"length": len(message)},
+      ),
+    )
+    ...
+```
+
+Set the `ADSP_AUDIT_ENABLED` configuration value to `false` to disable recording. Records are then returned with a `rejected` outcome and code `disabled`.
 
 ## Additional utilities
 The SDK provides several other useful utilities.
