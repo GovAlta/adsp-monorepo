@@ -139,7 +139,7 @@ export const AuditLogs: FunctionComponent = () => {
     .sort((a, b) => a.label.localeCompare(b.label));
 
   const selectAction = (value: string) => {
-    if (value === ANY) {
+    if (!value) {
       set('action', undefined);
     } else if (criteria.namespace) {
       set('action', value);
@@ -304,13 +304,15 @@ export const AuditLogs: FunctionComponent = () => {
           {namespaces.length > 0 ? (
             <GoabDropdown
               name="audit-namespace"
-              native
+              filterable
+              relative
+              leadingIcon="search"
+              placeholder="All namespaces"
               size="compact"
               width="100%"
-              value={criteria.namespace || ANY}
-              onChange={(d) => setNamespace(d.value === ANY ? undefined : (d.value as string))}
+              value={criteria.namespace || ''}
+              onChange={(d) => setNamespace((d.value as string) || undefined)}
             >
-              <GoabDropdownItem value={ANY} label="All namespaces" />
               {namespaces.map((n) => (
                 <GoabDropdownItem key={n} value={n} label={n} />
               ))}
@@ -328,13 +330,15 @@ export const AuditLogs: FunctionComponent = () => {
           {actionOptions.length > 0 ? (
             <GoabDropdown
               name="audit-action"
-              native
+              filterable
+              relative
+              leadingIcon="search"
+              placeholder="All actions"
               size="compact"
               width="100%"
-              value={criteria.action || ANY}
+              value={criteria.action || ''}
               onChange={(d) => selectAction(d.value as string)}
             >
-              <GoabDropdownItem value={ANY} label="All actions" />
               {actionOptions.map((o) => (
                 <GoabDropdownItem key={o.value} value={o.value} label={o.label} />
               ))}
