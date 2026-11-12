@@ -57,6 +57,58 @@
     },
     {
       "call": {
+        "name": "list_adsp_docs",
+        "arguments": {}
+      },
+      "outcome": {
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "[\n  {\n    \"path\": \"services/directory-service.md\",\n    \"title\": \"Directory service\"\n  },\n  {\n    \"path\": \"services/event-service.md\",\n    \"title\": \"Event service\"\n  }\n]"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "call": {
+        "name": "list_adsp_docs",
+        "arguments": {
+          "prefix": "services/event"
+        }
+      },
+      "outcome": {
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "[\n  {\n    \"path\": \"services/event-service.md\",\n    \"title\": \"Event service\"\n  }\n]"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "call": {
+        "name": "list_adsp_docs",
+        "arguments": {
+          "prefix": "platform/"
+        }
+      },
+      "outcome": {
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "No doc paths start with \"platform/\". Call list_adsp_docs without a prefix to see all."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "call": {
         "name": "read_adsp_doc",
         "arguments": {
           "path": "services/event-service.md"
@@ -85,7 +137,7 @@
           "content": [
             {
               "type": "text",
-              "text": "No doc found at path \"platform/platform-dotnet-sdk.md\". Use search_adsp_docs to find a valid path."
+              "text": "No doc found at path \"platform/platform-dotnet-sdk.md\". Use search_adsp_docs or list_adsp_docs to find a valid path."
             }
           ],
           "isError": true

@@ -96,6 +96,7 @@ describe('adsp-sdk-mcp-server', () => {
     expect(names).toEqual(
       expect.arrayContaining([
         'search_adsp_docs',
+        'list_adsp_docs',
         'read_adsp_doc',
         'search_sdk_reference',
         'get_platform_quickstart',
