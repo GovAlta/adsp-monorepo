@@ -4,8 +4,8 @@ import { Logger } from 'winston';
 import {
   CodeAttemptsExceededClearedAuditAction,
   CodeGeneratedAuditAction,
-  CodeVerifyFailedAuditAction,
-  CodeVerifySucceededAuditAction,
+  CodeRejectedAuditAction,
+  CodeVerifiedAuditAction,
   toVerifyCodeAuditDetails,
 } from './audit';
 import { CodeRepository } from './repository';
@@ -92,10 +92,10 @@ class VerifyServiceImpl implements VerifyService {
     }
 
     if (valid) {
-      this.record(CodeVerifySucceededAuditAction, user, tenantId, key, { verified: true });
+      this.record(CodeVerifiedAuditAction, user, tenantId, key, { verified: true });
     } else {
       const reason = record ? 'mismatch' : 'not-found';
-      this.record(CodeVerifyFailedAuditAction, user, tenantId, key, { verified: false, reason }, 'failure');
+      this.record(CodeRejectedAuditAction, user, tenantId, key, { verified: false, reason }, 'failure');
     }
     if (cleared) {
       this.record(CodeAttemptsExceededClearedAuditAction, user, tenantId, key, {

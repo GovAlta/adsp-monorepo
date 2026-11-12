@@ -3,8 +3,8 @@ import { Logger } from 'winston';
 import {
   CodeAttemptsExceededClearedAuditAction,
   CodeGeneratedAuditAction,
-  CodeVerifyFailedAuditAction,
-  CodeVerifySucceededAuditAction,
+  CodeRejectedAuditAction,
+  CodeVerifiedAuditAction,
 } from './audit';
 import { VerifyUserRoles } from './roles';
 import { createVerifyService } from './service';
@@ -272,7 +272,7 @@ describe('createVerifyService', () => {
         expect(auditServiceMock.record).not.toHaveBeenCalled();
       });
 
-      it('records code verified succeeded', async () => {
+      it('records code verified', async () => {
         repositoryMock.get.mockResolvedValueOnce({ key, code: 'CF4HKR', failures: 0 });
 
         const service = createVerifyService({
@@ -283,7 +283,7 @@ describe('createVerifyService', () => {
         await service.verify(serviceAccount, key, 'CF4HKR');
 
         expect(auditServiceMock.record).toHaveBeenCalledTimes(1);
-        expect(auditServiceMock.record).toHaveBeenCalledWith(CodeVerifySucceededAuditAction, {
+        expect(auditServiceMock.record).toHaveBeenCalledWith(CodeVerifiedAuditAction, {
           tenantId,
           status: 'success',
           actor: serviceActor,
@@ -292,7 +292,7 @@ describe('createVerifyService', () => {
         });
       });
 
-      it('records code verified failed for a code that does not match', async () => {
+      it('records code rejected for a code that does not match', async () => {
         repositoryMock.get.mockResolvedValueOnce({ key, code: 'CF4HKR', failures: 0 });
         repositoryMock.failed.mockResolvedValueOnce(false);
 
@@ -304,7 +304,7 @@ describe('createVerifyService', () => {
         await service.verify(serviceAccount, key, 'WRONG1');
 
         expect(auditServiceMock.record).toHaveBeenCalledTimes(1);
-        expect(auditServiceMock.record).toHaveBeenCalledWith(CodeVerifyFailedAuditAction, {
+        expect(auditServiceMock.record).toHaveBeenCalledWith(CodeRejectedAuditAction, {
           tenantId,
           status: 'failure',
           actor: serviceActor,
@@ -314,7 +314,7 @@ describe('createVerifyService', () => {
         expect(JSON.stringify(auditServiceMock.record.mock.calls)).not.toMatch(/CF4HKR|WRONG1/);
       });
 
-      it('records code verified failed when there is no code at the key', async () => {
+      it('records code rejected when there is no code at the key', async () => {
         repositoryMock.get.mockResolvedValueOnce(null);
 
         const service = createVerifyService({
@@ -327,7 +327,7 @@ describe('createVerifyService', () => {
         expect(repositoryMock.failed).not.toHaveBeenCalled();
         expect(auditServiceMock.record).toHaveBeenCalledTimes(1);
         expect(auditServiceMock.record).toHaveBeenCalledWith(
-          CodeVerifyFailedAuditAction,
+          CodeRejectedAuditAction,
           expect.objectContaining({
             status: 'failure',
             metadata: { codeKey: key, verified: false, reason: 'not-found' },
@@ -349,7 +349,7 @@ describe('createVerifyService', () => {
         }
 
         const actions = auditServiceMock.record.mock.calls.map(([action]) => action.name);
-        expect(actions.filter((name) => name === 'code.verified.failed')).toHaveLength(10);
+        expect(actions.filter((name) => name === 'code.rejected')).toHaveLength(10);
         expect(actions.filter((name) => name === 'code.attempts-exceeded-cleared')).toHaveLength(1);
         expect(actions[actions.length - 1]).toBe('code.attempts-exceeded-cleared');
         expect(CodeAttemptsExceededClearedAuditAction.severity).toBe('warning');
@@ -380,7 +380,7 @@ describe('createVerifyService', () => {
 
         expect(repositoryMock.get).toHaveBeenCalledWith(`core:${key}`);
         expect(auditServiceMock.record).toHaveBeenCalledWith(
-          CodeVerifySucceededAuditAction,
+          CodeVerifiedAuditAction,
           expect.objectContaining({
             tenantId,
             actor: expect.objectContaining({ id: 'core-service-account', type: 'service' }),
