@@ -3,7 +3,7 @@ components:
     VerifyBadRequest:
       description: >
         Request is invalid, for example the key is longer than 50 characters, expireIn is not a positive integer, code
-        is not a string, or the body is not valid JSON.
+        is not a string, a core user's tenantId is not a tenant ID, or the body is not valid JSON.
       content:
         application/json:
           schema:
@@ -83,8 +83,12 @@ components:
 
       Codes are isolated by tenant. Tenant users and service accounts generate and verify codes in the tenant of their
       token, and core (platform) users with the role in the core realm use a separate core namespace. A code generated
-      in one tenant can't be verified from another; the verification responds 200 with `verified: false`. The
-      `tenantId` query parameter is not supported.
+      in one tenant can't be verified from another; the verification responds 200 with `verified: false`. Core users
+      can set the `tenantId` query parameter to the tenant that audit records of the operation are attributed to; it
+      doesn't change the core namespace of the code.
+
+
+      Operations are recorded in the audit service under the verify-service namespace, with the key but never the code.
     parameters:
       - name: key
         description: >
@@ -108,6 +112,16 @@ components:
           minimum: 1
           default: 10
           example: 15
+      - name: tenantId
+        description: >
+          Tenant that audit records of the operation are attributed to, for core (platform) users acting on behalf of
+          a tenant. Ignored for tenant users, whose records are attributed to the tenant of their token. Codes of core
+          users are stored in the core namespace regardless of this parameter.
+        in: query
+        required: false
+        schema:
+          type: string
+          example: urn:ads:platform:tenant-service:v2:/tenants/61f2e3a8c9b1d2e3f4a5b6c7
     requestBody:
       required: false
       description: Omit the body, or the code, to generate a code. Include a non-empty code to verify it.
