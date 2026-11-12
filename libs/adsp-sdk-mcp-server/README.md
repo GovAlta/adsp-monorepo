@@ -193,6 +193,11 @@ The bundled content is refreshed from source on every release, not fetched live:
   `provenance.json` into the package with the source commit, the last commit to `docs/`, the latest
   `adsp-service-sdk` release tag and whether the SDK source has changed since. `get_adsp_mcp_server_info` reports it,
   and reports no provenance when running from source or a local build.
+- **Hosted builds from a branch** (the ARO deployment in `GovAlta-EMU/osp-mcp-servers` builds `main`, not a
+  release) run `node libs/adsp-sdk-mcp-server/scripts/provenance.mjs --source-build` after `nx build`, with a
+  `fetch-depth: 0` checkout. It records the same provenance and sets the built version to
+  `<latest release>+<branch>.<short sha>`, e.g. `1.25.0+main.8b3ef02`, instead of the source `package.json`
+  placeholder.
 
 `src/sdk-reference/reference.ts` is maintained by hand. `reference.spec.ts` reads the root exports of
 `libs/adsp-service-sdk/src/index.ts` with the TypeScript compiler and fails when the reference drifts: a missing or

@@ -5,10 +5,15 @@ import { SDK_REFERENCE } from '../sdk-reference/reference';
 import { readPackageVersion } from '../version';
 import { ToolDefinition } from './types';
 
-/** Written by scripts/provenance.mjs into the package root, next to package.json, when the package is released. */
+/**
+ * Written by scripts/provenance.mjs into the package root, next to package.json: by the release target (`release`),
+ * or by a deployment that builds from a branch (`source`).
+ */
 export interface Provenance {
-  releasedAt: string;
+  kind: 'release' | 'source';
+  builtAt: string;
   sourceCommit: string | null;
+  latestRelease: string | null;
   docsCommit: string | null;
   sdk: { version: string | null; commit: string | null; unreleasedChanges: boolean | null };
 }
@@ -23,16 +28,29 @@ export function readProvenance(path = PROVENANCE_PATH): Provenance | null {
   }
 }
 
+function describeProvenance(provenance: Provenance | null): string {
+  if (!provenance) {
+    return 'No provenance recorded: this server is running from source or a local build.';
+  }
+
+  const asOf = `Docs and the SDK reference are as of ${provenance.builtAt}`;
+  const source =
+    provenance.kind === 'source'
+      ? `, built from source commit ${provenance.sourceCommit ?? 'unknown'} after release ${provenance.latestRelease ?? 'unknown'}`
+      : '';
+  return (
+    `${asOf}${source}. The live docs are at https://govalta.github.io/adsp-monorepo; a newer version may have ` +
+    'newer content.'
+  );
+}
+
 export function createServerInfoTool(docs: DocsRepository, provenance = readProvenance()): ToolDefinition[] {
   const info = {
     name: 'adsp-sdk-mcp-server',
     version: readPackageVersion(),
     provenance,
     bundled: { docPages: docs.list().length, sdkReferenceSymbols: SDK_REFERENCE.length },
-    note: provenance
-      ? `Docs and the SDK reference are as of ${provenance.releasedAt}. The live docs are at ` +
-        'https://govalta.github.io/adsp-monorepo; a newer package version may have newer content.'
-      : 'No provenance recorded: this server is running from source or a local build, not a released package.',
+    note: describeProvenance(provenance),
   };
 
   return [

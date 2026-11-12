@@ -8,8 +8,10 @@ import { readPackageVersion } from '../version';
 import { createServerInfoTool, Provenance, readProvenance } from './registerServerInfoTool';
 
 const PROVENANCE: Provenance = {
-  releasedAt: '2026-11-12T20:00:00.000Z',
+  kind: 'release',
+  builtAt: '2026-11-12T20:00:00.000Z',
   sourceCommit: 'abc123',
+  latestRelease: '1.25.0',
   docsCommit: 'def456',
   sdk: { version: '2.36.1', commit: '789abc', unreleasedChanges: false },
 };
@@ -33,11 +35,17 @@ describe('get_adsp_mcp_server_info', () => {
     });
   });
 
-  it('says when there is no provenance because it is not a released package', async () => {
+  it('says a source build was built from a commit after a release', async () => {
+    const info = await callInfo({ ...PROVENANCE, kind: 'source' });
+
+    expect(info.note).toContain('built from source commit abc123 after release 1.25.0');
+  });
+
+  it('says when there is no provenance', async () => {
     const info = await callInfo(null);
 
     expect(info.provenance).toBeNull();
-    expect(info.note).toContain('not a released package');
+    expect(info.note).toContain('No provenance recorded');
   });
 });
 
