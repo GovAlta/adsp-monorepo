@@ -2,10 +2,12 @@ from typing import Any, Callable, Dict, NamedTuple, Optional
 
 from adsp_py_common.access import IssuerCache
 from adsp_py_common.adsp_id import AdspId
+from adsp_py_common.audit import AuditService
 from adsp_py_common.configuration import TC, ConfigurationService
 from adsp_py_common.constants import (
     CONFIG_ACCESS_URL,
     CONFIG_ALLOW_CORE,
+    CONFIG_AUDIT_ENABLED,
     CONFIG_CLIENT_SECRET,
     CONFIG_DIRECTORY_URL,
     CONFIG_REALM,
@@ -32,6 +34,13 @@ class AdspServices(NamedTuple):
     event_service: EventService
     get_configuration: Callable[[Optional[AdspId]], TC]
     metadata_blueprint: Blueprint
+    audit_service: AuditService
+
+
+def _is_enabled(value: Any) -> bool:
+    if isinstance(value, str):
+        return value.strip().lower() not in ("false", "0", "no")
+    return bool(value)
 
 
 class AdspExtension:
@@ -85,6 +94,14 @@ class AdspExtension:
         event_service = EventService(
             service_id, directory, token_provider, registration
         )
+        audit_service = AuditService(
+            service_id,
+            directory,
+            token_provider,
+            registration.audit_actions if registration else [],
+            is_core=(realm or "core") == "core",
+            enabled=_is_enabled(config.get(CONFIG_AUDIT_ENABLED, True)),
+        )
 
         registrar = ServiceRegistrar(service_id, directory, token_provider)
         registrar.register(registration)
@@ -105,4 +122,5 @@ class AdspExtension:
             event_service,
             get_configuration,
             metadata_blueprint,
+            audit_service,
         )

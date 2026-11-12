@@ -5,12 +5,37 @@ import type { ToolCall } from '@core-services/app-common';
 import styled from 'styled-components';
 import {
   AccessClientDetails,
+  AccessClientFinding,
+  AccessClientSetupValues,
   AccessClientSummary,
+  AccessClientUrlCheck,
+  AccessComparedPerson,
   AccessDiscoveryStatus,
   AccessEnvironmentSummary,
   AccessRealmKind,
+  AccessRoleDetails,
+  AccessRoleMember,
+  AccessServiceAccount,
+  AccessServiceCheck,
+  AccessServiceRolesEntry,
+  AccessSignInStatus,
+  AccessTokenPreview,
+  AccessUser,
+  AccessUserComparison,
+  AccessUserRoles,
 } from '@store/agent/model';
+import { ComparedPeopleSuggestions, ServiceChecks, UserComparison } from './AccessCheckResults';
+import { ACCESS_GUIDE_TOOL, AccessGuideToolCall } from './AccessGuideToolCall';
+import {
+  ClientFindings,
+  ClientSetupValues,
+  ClientUrlCheck,
+  ServiceAccountDetails,
+  TokenPreview,
+} from './AccessClientCheckResults';
 import { ClientDetails, ClientList, ClientSuggestions } from './AccessClientResults';
+import { RoleDetails, RoleMembers, ServiceRoleCatalog } from './AccessRoleResults';
+import { SignInStatus, UserIdentity, UserRoles, UserSuggestions } from './AccessUserResults';
 
 interface AccessRealm {
   realm: string;
@@ -33,7 +58,24 @@ interface AccessToolResult {
   clients?: AccessClientSummary[];
   truncated?: boolean;
   suggestions?: string[];
-  client?: AccessClientDetails;
+  client?: AccessClientDetails | AccessClientSummary;
+  user?: AccessUser;
+  roles?: AccessUserRoles;
+  signIn?: AccessSignInStatus;
+  services?: AccessServiceCheck[] | AccessServiceRolesEntry[];
+  notes?: string[];
+  first?: AccessComparedPerson;
+  second?: AccessComparedPerson;
+  comparison?: AccessUserComparison;
+  role?: AccessRoleDetails;
+  members?: AccessRoleMember[];
+  counts?: { direct: number; group: number; composite: number };
+  findings?: AccessClientFinding[];
+  setup?: AccessClientSetupValues;
+  secretCreatedAt?: string;
+  check?: AccessClientUrlCheck;
+  preview?: AccessTokenPreview;
+  serviceAccount?: AccessServiceAccount;
 }
 
 type CardStatus = 'pending' | 'complete' | 'notice' | 'error';
@@ -44,17 +86,53 @@ const TOOL_HEADINGS: Record<string, { pending: string; done: string }> = {
   getAccessRealmInfo: { pending: 'Checking realm details…', done: 'Realm details' },
   listAccessClients: { pending: 'Checking clients…', done: 'Clients in your realm' },
   getAccessClient: { pending: 'Checking client configuration…', done: 'Client configuration' },
+  checkAccessClientSetup: { pending: 'Checking app setup…', done: 'App setup check' },
+  checkAccessClientUrl: { pending: 'Checking app address…', done: 'App address check' },
+  previewAccessToken: { pending: 'Previewing token…', done: 'Token preview' },
+  getAccessServiceAccount: { pending: 'Checking service account…', done: 'Service account' },
+  findAccessUser: { pending: 'Looking up user…', done: 'User' },
+  getAccessUserRoles: { pending: 'Checking role assignments…', done: 'User role assignments' },
+  getAccessUserSignInStatus: { pending: 'Checking sign-in…', done: 'Sign-in status' },
+  checkAccessUserForService: { pending: 'Checking access to the service…', done: 'Access to a service' },
+  compareAccessUsers: { pending: 'Comparing access…', done: 'Access compared' },
+  listAccessServiceRoles: { pending: 'Checking service roles…', done: 'Service roles' },
+  getAccessRole: { pending: 'Checking role…', done: 'Role explained' },
+  listAccessRoleMembers: { pending: 'Checking who has the role…', done: 'Who has the role' },
 };
+
+const USER_TOOLS = new Set([
+  'findAccessUser',
+  'getAccessUserRoles',
+  'getAccessUserSignInStatus',
+  'checkAccessUserForService',
+]);
+const ROLE_TOOLS = new Set(['getAccessRole', 'listAccessRoleMembers']);
+
+// Tools whose summary line adds to the card; the original discovery and client cards already say it all.
+const SUMMARY_TOOLS = new Set([
+  ...USER_TOOLS,
+  ...ROLE_TOOLS,
+  'compareAccessUsers',
+  'listAccessServiceRoles',
+  'checkAccessClientSetup',
+  'checkAccessClientUrl',
+  'previewAccessToken',
+  'getAccessServiceAccount',
+]);
+
+const AMBIGUOUS_REASONS = new Set(['USER_AMBIGUOUS', 'ROLE_AMBIGUOUS']);
 
 const NOTICE_BADGES: Record<string, { type: GoabBadgeType; content: string }> = {
   unavailable: { type: 'important', content: 'Not available' },
   'not-found': { type: 'important', content: 'Not found' },
   unreachable: { type: 'important', content: 'No response' },
+  ambiguous: { type: 'information', content: 'Several matches' },
 };
 
 const REALM_KIND_LABELS: Record<AccessRealmKind, string> = { tenant: 'Tenant', core: 'Core' };
 
 const ENDPOINT_LABELS: Array<[string, string]> = [
+  ['openIdConfiguration', 'OpenID configuration'],
   ['authorization', 'Authorization'],
   ['token', 'Token'],
   ['userInfo', 'User info'],
@@ -69,10 +147,13 @@ export function isAccessDiscoveryTool(toolName?: string): boolean {
 }
 
 /**
- * Renders the Access Service discovery tools as status cards; returns null for any other tool so the chat
- * shows its default tool card instead.
+ * Renders the Access Service discovery tools as status cards and the guide tool as a single line; returns null for
+ * any other tool so the chat shows its default tool card instead.
  */
 export function renderAccessToolCall(toolCall: ToolCall): ReactNode {
+  if (toolCall.toolName === ACCESS_GUIDE_TOOL) {
+    return <AccessGuideToolCall toolCall={toolCall} />;
+  }
   return isAccessDiscoveryTool(toolCall.toolName) ? <AccessToolCall toolCall={toolCall} /> : null;
 }
 
@@ -96,7 +177,8 @@ const StatusBadge: FunctionComponent<{ status: CardStatus; result?: AccessToolRe
     case 'complete':
       return <GoabBadge type="information" content="Read-only" icon={false} />;
     case 'notice': {
-      const badge = NOTICE_BADGES[result?.status] ?? NOTICE_BADGES.unavailable;
+      const key = AMBIGUOUS_REASONS.has(result?.reason) ? 'ambiguous' : result?.status;
+      const badge = NOTICE_BADGES[key] ?? NOTICE_BADGES.unavailable;
       return <GoabBadge type={badge.type} content={badge.content} icon={false} />;
     }
     case 'error':
@@ -190,10 +272,87 @@ const AvailableResult: FunctionComponent<{ toolName: string; result: AccessToolR
       return <ClientList clients={result.clients ?? []} truncated={result.truncated} message={result.message} />;
     case 'getAccessClient':
       return result.client ? <ClientDetails client={result.client} /> : null;
+    case 'findAccessUser':
+      return result.user ? <UserIdentity user={result.user} /> : null;
+    case 'getAccessUserRoles':
+      return result.user && result.roles ? (
+        <>
+          <UserIdentity user={result.user} />
+          <UserRoles roles={result.roles} />
+        </>
+      ) : null;
+    case 'getAccessUserSignInStatus':
+      return result.signIn ? <SignInStatus signIn={result.signIn} /> : null;
+    case 'checkAccessUserForService':
+      return result.services ? <ServiceChecks services={result.services as AccessServiceCheck[]} /> : null;
+    case 'compareAccessUsers':
+      return result.comparison ? (
+        <UserComparison first={result.first} second={result.second} comparison={result.comparison} />
+      ) : null;
+    case 'listAccessServiceRoles':
+      return <ServiceRoleCatalog services={(result.services as AccessServiceRolesEntry[]) ?? []} />;
+    case 'getAccessRole':
+      return result.role ? <RoleDetails role={result.role} /> : null;
+    case 'listAccessRoleMembers':
+      return <RoleMembers members={result.members ?? []} counts={result.counts} truncated={result.truncated} />;
+    case 'checkAccessClientSetup':
+      return (
+        <>
+          <ClientFindings findings={result.findings ?? []} />
+          {result.setup && <ClientSetupValues setup={result.setup} secretCreatedAt={result.secretCreatedAt} />}
+        </>
+      );
+    case 'checkAccessClientUrl':
+      return result.check ? <ClientUrlCheck check={result.check} /> : null;
+    case 'previewAccessToken':
+      return result.preview ? <TokenPreview preview={result.preview} /> : null;
+    case 'getAccessServiceAccount':
+      return result.serviceAccount ? (
+        <>
+          <ServiceAccountDetails serviceAccount={result.serviceAccount} />
+          {result.services && <ServiceChecks services={result.services as AccessServiceCheck[]} />}
+          {result.roles && <UserRoles roles={result.roles} />}
+          {result.setup && <ClientSetupValues setup={result.setup} />}
+        </>
+      ) : null;
     default:
       return null;
   }
 };
+
+const NoticeSuggestions: FunctionComponent<{ toolName: string; result: AccessToolResult }> = ({ toolName, result }) => {
+  const ambiguous = AMBIGUOUS_REASONS.has(result.reason);
+  if (toolName === 'compareAccessUsers') {
+    return <ComparedPeopleSuggestions people={[result.first, result.second].filter(Boolean)} />;
+  }
+  if (USER_TOOLS.has(toolName) || (toolName === 'previewAccessToken' && result.reason?.startsWith('USER_'))) {
+    return <UserSuggestions suggestions={result.suggestions} ambiguous={ambiguous} />;
+  }
+  if (ROLE_TOOLS.has(toolName)) {
+    return result.suggestions?.length > 0 ? (
+      <div data-testid="access-role-suggestions">
+        <p>{ambiguous ? 'Roles with that name (choose one):' : 'Roles with similar names:'}</p>
+        <ul>
+          {result.suggestions.map((suggestion) => (
+            <li key={suggestion}>
+              <code>{suggestion}</code>
+            </li>
+          ))}
+        </ul>
+      </div>
+    ) : null;
+  }
+  return <ClientSuggestions suggestions={result.suggestions} />;
+};
+
+const Notes: FunctionComponent<{ notes?: string[] }> = ({ notes }) =>
+  notes?.length > 0 ? (
+    <ul data-testid="access-tool-notes">
+      {notes.map((note) => (
+        <li key={note}>{note}</li>
+      ))}
+    </ul>
+  ) : null;
 
 export const AccessToolCall: FunctionComponent<{ toolCall: ToolCall }> = ({ toolCall }) => {
   if (!isAccessDiscoveryTool(toolCall.toolName)) {
@@ -224,13 +383,18 @@ export const AccessToolCall: FunctionComponent<{ toolCall: ToolCall }> = ({ tool
               Missing role: <code>{result.missingRoles.join(', ')}</code>
             </p>
           )}
-          <ClientSuggestions suggestions={result.suggestions} />
+          <NoticeSuggestions toolName={toolCall.toolName} result={result} />
+          <Notes notes={result.notes} />
         </>
       )}
       {(status === 'complete' || status === 'notice') && result.environments?.length > 0 && (
         <EnvironmentsTable environments={result.environments} />
       )}
+      {status === 'complete' && SUMMARY_TOOLS.has(toolCall.toolName) && (
+        <p data-testid="access-tool-summary">{result.message}</p>
+      )}
       {status === 'complete' && <AvailableResult toolName={toolCall.toolName} result={result} />}
+      {status === 'complete' && <Notes notes={result.notes} />}
     </ToolCard>
   );
 };
@@ -277,6 +441,16 @@ const ToolCard = styled.div`
 
   & tr[data-inspectable='true'] td {
     font-weight: 600;
+  }
+
+  & tr[data-has='false'] td,
+  & dd[data-allowed='false'],
+  & li[data-severity='problem'] {
+    color: var(--goa-color-emergency-default);
+  }
+
+  & li[data-severity='warning'] {
+    color: var(--goa-color-warning-dark, var(--goa-color-text-default));
   }
 
   & ul {

@@ -69,6 +69,8 @@ function optionalSettingsSchema<K extends string, S extends z.ZodTypeAny>(table:
 
 const accessClientTypeSchema = z.enum(['public', 'confidential', 'bearer-only']);
 
+const PLATFORM_CLIENT_PREFIX = 'urn:ads:platform:';
+
 export const accessClientSummarySchema = z.object({
   clientId: z.string(),
   name: z.string().optional(),
@@ -77,6 +79,8 @@ export const accessClientSummarySchema = z.object({
   type: accessClientTypeSchema.optional(),
   protocol: z.string().optional(),
   builtIn: z.boolean(),
+  origin: z.enum(['keycloak', 'platform', 'tenant']),
+  serviceAccount: z.boolean().optional(),
 });
 
 const protocolMapperSchema = z.object({
@@ -186,6 +190,16 @@ function toClientType(client: KeycloakRepresentation): AccessClientType | undefi
   return undefined;
 }
 
+/**
+ * Who a client belongs to: Keycloak itself, the ADSP platform (urn:ads:platform:*), or the tenant.
+ */
+export function toClientOrigin(clientId: string): AccessClientSummary['origin'] {
+  if (KEYCLOAK_BUILT_IN_CLIENT_IDS.has(clientId)) {
+    return 'keycloak';
+  }
+  return clientId.startsWith(PLATFORM_CLIENT_PREFIX) ? 'platform' : 'tenant';
+}
+
 function summarize(clientId: string, client: KeycloakRepresentation): AccessClientSummary {
   return {
     clientId,
@@ -195,6 +209,8 @@ function summarize(clientId: string, client: KeycloakRepresentation): AccessClie
     type: toClientType(client),
     protocol: optionalString(client.protocol),
     builtIn: KEYCLOAK_BUILT_IN_CLIENT_IDS.has(clientId),
+    origin: toClientOrigin(clientId),
+    serviceAccount: optionalBoolean(client.serviceAccountsEnabled),
   };
 }
 

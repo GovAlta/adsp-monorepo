@@ -1,7 +1,6 @@
 ---
 layout: page
 title: Agent service
-nav_order: 21
 parent: Services
 ---
 
@@ -18,13 +17,44 @@ client `urn:ads:platform:agent-service`
 | agent-user | Role for users with access to agents. Included in tenant admin role.                                     |
 | agent-tool | Agent tool role assigned to agent service service account. Used to grant resource access to agent tools. |
 
-Users must have the `urn:ads:platform:agent-service:agent-user` client role to interact with agents. Additionally, agents can be configured with specific `userRoles` to restrict access to particular user roles.
+Access to agents is checked in two places:
+
+- **socket.io connections** require the `urn:ads:platform:agent-service:agent-user` role in the tenant. Connections without it are disconnected.
+- **Each agent** can be configured with `userRoles`. When it has any, the user needs at least one of them in the tenant to message the agent or delete its threads, over REST or socket.io. Agents without `userRoles` are open to any authenticated user of the REST API.
+
+The REST API itself only requires an authenticated user: listing agents, reading an agent, and `GET /access/scope` need no role, and the REST message and thread endpoints check only the agent's `userRoles`.
+
+The service also registers the `agent-attachments` file type for files users attach to messages. Users with `agent-user` can upload them, and only the agent service account (`agent-tool`) can read them. They are deleted after 7 days.
+
+## Tenancy
+
+Agents, threads, and workspaces are scoped to a tenant.
+
+- **Tenant users and service accounts** always act on the tenant of their token. Any `tenantId` query parameter, and the socket.io namespace, are ignored.
+- **Core (platform) users** act on the tenant in the `tenantId` query parameter (for example, `?tenantId=urn:ads:platform:tenant-service:v2:/tenants/{id}`). Without it they only see the platform agents. A `tenantId` that is not an ADSP ID responds `400`. Core users have no tenant roles, so they can only use agents without `userRoles`, and they can't connect over socket.io.
+- **Platform and tenant agents** are combined. The platform provides core agents (for example, `formGenerationAgent`) to every tenant, and tenants add their own in their `platform:agent-service` configuration. A platform agent replaces a tenant agent with the same ID, so give tenant agents distinct IDs.
+- **Threads** belong to the user and tenant that created them. Deleting another user's thread, or a thread from another tenant, responds `{ "deleted": false }` rather than an error, so callers can't tell whether it exists.
+
+## API overview
+
+REST endpoints are under `https://agent-service.adsp.alberta.ca/agent/v1` and require a bearer token. See the [API documentation](https://api.adsp.alberta.ca) for request and response schemas.
+
+| Area         | Endpoints                                     | Required role                                                             |
+| :----------- | :-------------------------------------------- | :------------------------------------------------------------------------ |
+| Access scope | `GET /access/scope`                           | Any authenticated user                                                    |
+| Agents       | `GET /agents`, `GET /agents/{agentId}`        | Any authenticated user                                                    |
+| Messages     | `POST /agents/{agentId}`                      | Any authenticated user, or one of the agent's `userRoles` when it has any |
+| Threads      | `DELETE /agents/{agentId}/threads/{threadId}` | Any authenticated user, or one of the agent's `userRoles` when it has any |
+
+`POST /agents/{agentId}` responds with the complete reply and starts a new thread for every request. Streaming replies, multi-turn conversations, and workspaces are only available over [socket.io](#socketio-interface). socket.io isn't a REST transport, so it isn't in the API documentation; its events are described below.
+
+Agents are configured through the [configuration service](configuration-service.md); there are no agent-service endpoints for changing them.
 
 ## Concepts
 
 ### Agent
 
-An agent is an AI assistant configured with specific instructions, tools, and optional access to other agents. Agents are configured in the [configuration service](configuration-service.md) under the `platform:agent-service` namespace and name.
+An agent is an AI assistant configured with specific instructions, tools, and optional access to other agents. Agents are configured in the [configuration service](configuration-service.md) under the `platform:agent-service` namespace and name. The service reloads agents when their configuration changes.
 
 Each agent configuration includes:
 
@@ -36,17 +66,23 @@ Each agent configuration includes:
 - **agents**: Optional array of other agent IDs this agent can delegate to
 - **tools**: Optional array of tools available to the agent
 - **mcp**: Optional MCP server configuration that adds tools from external MCP servers. You can optionally limit access with `capabilities` per server.
+- **maxSteps**: Optional maximum number of steps (model calls, including tool calls) in one reply.
+- **timeoutMs**: Optional time limit for one request, in milliseconds.
 
 ### Tools
 
 Tools extend agent capabilities by allowing them to perform specific actions. The service provides built-in tools and supports custom API request tools.
 
-Built-in tools:
+Built-in tools include:
 
 - `schemaDefinitionTool`: Retrieves JSON schema definitions
-- `formConfigurationRetrievalTool`: Retrieves form configurations
-- `formConfigurationUpdateTool`: Updates form configurations
-- `fileDownloadTool`: Downloads files from the file service
+- `formConfigurationRetrievalTool` and `formConfigurationUpdateTool`: Retrieve and update form configurations
+- `pdfConfigurationRetrievalTool` and `pdfConfigurationUpdateTool`: Retrieve and update PDF templates
+- `formDataRetrievalTool` and `formDataUpdateTool`: Retrieve and update form data
+- `fileDownloadTool`, `fileCopyTool`, and `documentExtractTool`: Download, copy, and extract text from files in the file service
+- `dataRegisterListTool`, `dataRegisterGetTool`, `dataRegisterCreateTool`, and `dataRegisterUpdateTool`: Manage data registers
+- `emailNotificationGenerateTool`: Generates notification email templates
+- `searchAdspDocsTool`, `readAdspDocTool`, and `searchAdspSdkReferenceTool`: Search the ADSP documentation and SDK reference
 
 Custom API tools can be configured to call external APIs on behalf of the agent.
 
@@ -54,7 +90,13 @@ Custom API tools can be configured to call external APIs on behalf of the agent.
 
 Conversations with agents are organized into threads. Each thread maintains context across multiple messages, allowing for coherent multi-turn conversations. Thread IDs can be provided by the client or generated automatically.
 
-A thread's context belongs only to that thread, so a client can start a fresh conversation by sending messages with a new thread ID. Threads expire after a period of inactivity and are then deleted; a user can also delete one of their own threads right away (see [Delete a thread](#delete-a-thread)).
+A thread's context belongs only to that thread, so a client can start a fresh conversation by sending messages with a new thread ID. Threads expire after a period of inactivity (`AGENT_THREAD_TTL_MINUTES`, 30 minutes by default) and are then deleted; a user can also delete one of their own threads right away (see [Delete a thread](#delete-a-thread)).
+
+Threads only carry context across messages sent over socket.io. Each REST `POST /agents/{agentId}` request uses a new thread.
+
+### Workspaces
+
+Some agents, such as the builder agents, work on files in a workspace that belongs to the thread. A client initializes the workspace from a file service tarball, can read and update its files, and receives `workspace-change` events when the agent changes them. Workspaces are deleted with their thread.
 
 ### Structured Output
 
@@ -67,11 +109,44 @@ Agents can be configured with a JSON Schema that defines the structure of their 
 
 The agent will attempt to return data matching the schema; if schema validation fails, the agent will fall back to text-only responses with a warning in the conversation logs.
 
+### socket.io interface
+
+Clients connect with [socket.io](https://socket.io) to stream replies and hold multi-turn conversations.
+
+- **Connect** to `https://agent-service.adsp.alberta.ca/<tenant name>` (or the default namespace `/`) with the access token in `auth.token`. The user needs the `agent-user` role in the tenant. The tenant of a tenant user's token is used whatever the namespace.
+- **Wait for ready**: once agent configuration is loaded, the service sends a `message` event (`Connected as user ... for tenant ...`). Send messages after it arrives.
+- **Token expiry**: shortly before the token expires the service sends `session-expired` (`{ code: 'USER_TOKEN_EXPIRED' }`) and disconnects, after any reply in progress is sent. Reconnect with a new token.
+- **Errors** in handling an event, such as an unknown agent or invalid payload, are sent as an `error` event with a message string.
+
+Events the client sends:
+
+| Event              | Payload                                                                                                                              | Service responds with                                                |
+| :----------------- | :----------------------------------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------- |
+| `message`          | `{ agent, threadId?, messageId?, content, context?, rawChunks? }`. `content` is a string or an array of text, image, and file parts. | `stream` events, then `conversation-status`                          |
+| `workspace-init`   | `{ agent, threadId?, workspaceTarball }`. `workspaceTarball` is the file service URN of a `.tar.gz` file.                            | `workspace-ready` with `revision` and `updatedAt`                    |
+| `workspace-read`   | `{ agent, threadId? }`                                                                                                               | `workspace-state` with `revision`, `updatedAt`, and `files`          |
+| `workspace-update` | `{ agent, threadId?, writes?: [{ path, content }], deletes?: [path] }`                                                               | `workspace-updated` with `revision`, `writeCount`, and `deleteCount` |
+
+A missing `threadId` or `messageId` is generated. `stream` events carry `agent`, `threadId`, `messageId` (of the reply), and `replyTo` (the message ID). By default each carries a text `content` delta. With `rawChunks: true`, each instead carries a `chunk` of `{ type, payload }`, including `tool-call`, `tool-result`, and `reasoning-delta` chunks, and the service also sends `workspace-change` events. In both modes the service sends a `chunk` of type `heartbeat` every 15 seconds while a reply is in progress. The last `stream` event has `done: true`, with `output` and `usage`; when a reply stops early, for example at the agent's time or step limit, it has an `error` chunk with a `code` of `GENERATION_DEADLINE` or `MAX_STEPS`.
+
+## Events
+
+The agent service sends the following domain events under the `agent-service` namespace:
+
+| Event                       | Description                                                      |
+| :-------------------------- | :--------------------------------------------------------------- |
+| `thread-created`            | A user started a conversation thread with an agent.              |
+| `thread-deleted`            | A thread was deleted, because the user deleted it or it expired. |
+| `workspace-created`         | A thread's workspace was created from an uploaded file.          |
+| `workspace-creation-failed` | Creating a thread's workspace from an uploaded file failed.      |
+
+The service doesn't consume domain events, but it listens for configuration service updates so that changed agent configuration applies without waiting for its cache to expire.
+
 ## Code examples
 
 ### Configure an agent
 
-Agents are configured using the [configuration service](configuration-service.md). Note that new configuration may take up to 15 mins to apply.
+Agents are configured using the [configuration service](configuration-service.md). This requires the configuration service `configuration-admin` role.
 
 ```typescript
 const configurationServiceUrl = 'https://configuration-service.adsp.alberta.ca';
@@ -111,12 +186,13 @@ const response = await fetch(`${agentServiceUrl}/agent/v1/agents`, {
   },
 });
 
+// For example: { agents: [{ id: 'formGenerationAgent', name: 'Form Generation Agent' }] }
 const { agents } = await response.json();
 ```
 
 ### Message an agent (REST API)
 
-Send a message to an agent and receive a complete response. If the agent has a `outputSchema` configured, the response will also include a `output` field with structured data.
+Send a message to an agent and receive a complete response. Each request starts a new thread, so include any earlier messages the agent needs in the request (the body can be an array of messages). If the agent has an `outputSchema` configured, the response will also include an `output` field with structured data.
 
 ```typescript
 const agentServiceUrl = 'https://agent-service.adsp.alberta.ca';
@@ -136,7 +212,7 @@ const response = await fetch(`${agentServiceUrl}/agent/v1/agents/${agentId}`, {
 const { agent, content, output } = await response.json();
 
 // content contains the text response
-// output contains structured data if outputSchema was configured (null otherwise)
+// output contains structured data if outputSchema was configured (absent otherwise)
 if (output) {
   console.log('Structured response:', output);
 }
@@ -144,7 +220,7 @@ if (output) {
 
 ### Stream agent responses (WebSocket)
 
-Connect via WebSocket for real-time streaming responses. The WebSocket endpoint uses Socket.IO and requires the tenant name as the namespace. When the response is complete, the done event will include any structured `output` if the agent has an `outputSchema` configured.
+Connect via WebSocket for real-time streaming responses. The WebSocket endpoint uses Socket.IO, with the tenant name as the namespace, and requires the `agent-user` role (see [socket.io interface](#socketio-interface)). When the response is complete, the done event will include any structured `output` if the agent has an `outputSchema` configured.
 
 ```typescript
 import { io } from 'socket.io-client';
@@ -155,25 +231,28 @@ const socket = io('https://agent-service.adsp.alberta.ca/My Tenant', {
   },
 });
 
-socket.on('connect', () => {
-  console.log('Connected to agent service');
-});
-
-// Send a message to an agent
-socket.send({
-  agent: 'my-assistant',
-  threadId: 'optional-thread-id',
-  messageId: 'optional-message-id',
-  content: 'Hello, can you help me?',
-  context: {
-    // Optional context data for the agent
-  },
+// The service sends a message once it is ready to receive messages.
+socket.once('message', () => {
+  // Send a message to an agent
+  socket.send({
+    agent: 'my-assistant',
+    threadId: 'optional-thread-id',
+    messageId: 'optional-message-id',
+    content: 'Hello, can you help me?',
+    context: {
+      // Optional context data for the agent
+    },
+  });
 });
 
 // Receive streaming response
 socket.on('stream', (data) => {
-  const { agent, threadId, messageId, replyTo, content, output, done } = data;
-  if (done) {
+  const { agent, threadId, messageId, replyTo, content, chunk, output, done } = data;
+  if (chunk?.type === 'heartbeat') {
+    return;
+  } else if (chunk?.type === 'error') {
+    console.error('Reply stopped:', chunk.payload.code, chunk.payload.message);
+  } else if (done) {
     console.log('Response complete');
     // If the agent has a outputSchema, structured data is included here
     if (output) {
@@ -189,24 +268,28 @@ socket.on('stream', (data) => {
 socket.on('error', (message) => {
   console.error('Agent error:', message);
 });
+
+socket.on('session-expired', () => {
+  // Reconnect with a fresh access token.
+});
 ```
 
 #### Token usage and conversation length
 
 When the provider reports token usage, the done event also includes `usage`:
 
-| Field                 | Meaning                                                                                              |
-| --------------------- | ---------------------------------------------------------------------------------------------------- |
-| `contextTokens`       | Input tokens of the agent's last model call: how much of the context window the conversation takes up |
-| `contextWindowTokens` | The model's context window, from `AGENT_MODEL_CONTEXT_TOKENS` (default 256,000)                       |
-| `totalTokens`         | Every token the reply used across its model calls, including calls tools make, such as form generation |
-| `outputTokens`        | Tokens the model wrote                                                                               |
-| `modelCalls`          | Number of model calls the reply made                                                                 |
+| Field                 | Meaning                                                                                                                                |
+| --------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| `contextTokens`       | Input tokens of the agent's last model call: how much of the context window the conversation takes up                                  |
+| `contextWindowTokens` | The model's context window, from `AGENT_MODEL_CONTEXT_TOKENS` (default 256,000)                                                        |
+| `totalTokens`         | Every token the reply used across its model calls, including calls tools make, such as form generation, and the prompt injection check |
+| `outputTokens`        | Tokens the model wrote                                                                                                                 |
+| `modelCalls`          | Number of model calls the reply made                                                                                                   |
 
 After each reply, a `conversation-status` event says how the conversation stands. `state` is one of:
 
 - `ok`: nothing to tell the user.
-- `notice`: memory has started keeping the conversation short, which is normal but means early details may be missed. `reason` is `summarised` (observational memory has replaced older messages with notes) or `older-messages-dropped` (an agent without observational memory now reads only its most recent `messageLimit` messages).
+- `notice`: memory has started keeping the conversation short, which is normal but means early details may be missed. `reason` is `summarised` (observational memory has replaced older messages with notes) or `older-messages-dropped` (an agent without observational memory now reads only its most recent `messageLimit` messages). For the Access Service agent, `reason` can also be `long-conversation`: the conversation takes up at least `AGENT_ACCESS_LONG_CONVERSATION_TOKENS` tokens (default 6,000), so a new chat would answer more cheaply.
 - `warning`: the conversation is close to what the assistant can handle well. `reason` is `near-context-limit` (it takes up at least 70% of the context window) or `notes-condensed` (observational memory has condensed its notes, which takes a very long conversation).
 
 ```typescript
@@ -219,11 +302,54 @@ socket.on('conversation-status', ({ threadId, contextTokens, contextWindowTokens
 
 Observational memory summarises older messages at `AGENT_OM_MESSAGE_TOKENS` unobserved tokens (default 30,000) and condenses its notes at `AGENT_OM_OBSERVATION_TOKENS` (default 40,000).
 
-### Delete a thread
+#### Shared token budget
 
-Delete one of your own threads, with its stored messages and context, for example when the user starts a new chat. The response is `{ "deleted": false }` when you have no thread with that ID, so repeating the request is harmless.
+Every agent uses the same model key, so the service can hold agents to a token budget for that key. Before a message reaches the model, the service estimates the reply from the agent's recent replies; when the estimate does not fit, the model is not called and the client gets a final stream event (`done: true`) with an error chunk with code `RATE_LIMITED` and a message saying how many seconds to wait. A rate-limit failure (HTTP 429) from the model provider during a reply is sent as an error chunk with the same code.
+
+| Variable                            | Default | Meaning                                                                                        |
+| ----------------------------------- | ------- | ---------------------------------------------------------------------------------------------- |
+| `AGENT_TOKEN_LIMIT_PER_MINUTE`      | `0`     | Tokens per minute across all agents; `0` is off                                                |
+| `AGENT_TOKEN_LIMIT_PER_5_MINUTES`   | `0`     | Tokens per 5 minutes across all agents; `0` is off                                             |
+| `AGENT_TOKEN_AGENT_SHARES`          | `''`    | Share of each limit an agent may use, such as `AccessServiceAgent=0.3,formGenerationAgent=0.5` |
+| `AGENT_USER_TOKEN_LIMIT_PER_MINUTE` | `0`     | Tokens per minute for one user; `0` is off                                                     |
+| `AGENT_TOKEN_WARN_RATIO`            | `0.7`   | Share of a limit at which a warning is logged, once each time usage crosses it                 |
+
+Shares are clamped to 0..1, and malformed entries are logged and ignored. Agents without a share, or with a share of 0, are held only to the overall limits. A message holds its estimate against the budget from the moment it is allowed until its reply's usage is known, so messages sent at the same time cannot overshoot a limit; a reply that fails keeps its estimate counted until it leaves the window. Each pod enforces its own budget, so with several pods set the limits to the key's limit divided by the number of pods.
 
 ```typescript
+socket.on('stream', ({ chunk }) => {
+  if (chunk?.type === 'error' && chunk.payload?.code === 'RATE_LIMITED') {
+    console.log(chunk.payload.message); // The AI service is busy right now. Please try again in about 40 seconds.
+  }
+});
+```
+
+#### Access Service agent
+
+`AccessServiceAgent` answers Access Service and Keycloak questions with read-only live tools and documented guidance. To keep each model call small:
+
+- Each call gets only the tools and instruction sections its question needs: environment and realm tools, client and app tools, or people and role tools, picked from the predefined question hint, the question's words (an ADSP ID such as `urn:ads:platform:form-service` brings the client and app tools) and the tools used in the last few messages. A question that matches none gets every tool.
+- How-to and concept questions are answered from the `getAccessGuide` tool, which returns one documented topic. The same topics are available without a model call at `GET /agent/v1/access/guide/:topic`, which returns `{ topic, title, markdown }`; the tenant admin app uses it to answer predefined questions about documented topics.
+- Tool results are shown to the user as cards, so the model gets a compact summary of each result, and results from turns before the previous one are replaced with a short note in later requests (the thread keeps them). After a tool whose card fully answers a request to list or show something, the reply ends without a written answer.
+- It keeps its own short history without observational memory.
+
+| Variable                                | Default | Meaning                                                   |
+| --------------------------------------- | ------- | --------------------------------------------------------- |
+| `AGENT_ACCESS_LAST_MESSAGES`            | `8`     | Messages of the thread the agent reads                    |
+| `AGENT_ACCESS_MAX_OUTPUT_TOKENS`        | `1000`  | Longest reply the model may write in one call             |
+| `AGENT_ACCESS_LONG_CONVERSATION_TOKENS` | `6000`  | Context tokens at which to suggest a new chat; `0` is off |
+
+```bash
+curl -H "Authorization: Bearer $TOKEN" "$AGENT_SERVICE_URL/agent/v1/access/guide/token-expiry"
+```
+
+### Delete a thread
+
+Delete one of your own threads, with its stored messages, context, and workspace, for example when the user starts a new chat. The response is `{ "deleted": false }` when you have no thread with that ID, so repeating the request is harmless. The thread ID is the `threadId` used on socket.io.
+
+```typescript
+const agentServiceUrl = 'https://agent-service.adsp.alberta.ca';
+
 const response = await fetch(`${agentServiceUrl}/agent/v1/agents/${agentId}/threads/${threadId}`, {
   method: 'DELETE',
   headers: {

@@ -1,7 +1,6 @@
 ---
 layout: page
 title: Platform deployment
-nav_order: 7
 parent: Platform development
 ---
 
@@ -73,7 +72,7 @@ Additional services can be modified to use RabbitMQ for configuration cache inva
 
 ## OpenShift configuration
 
-References for configuration in the form of ConfigMaps and Secrets are included in the `/.openshift/configuration` directory. These resources need to be manually created within the environment with configuration values. Other deployment resources are contained in templates under the `/.openshift/managed` directory and are automatically applied by the `deliver-ci` workflow.
+References for configuration in the form of ConfigMaps and Secrets are included in the `/.openshift/configuration` directory. These resources need to be manually created within the environment with configuration values. Other deployment resources are contained in templates under the `/.openshift/managed` directory and are automatically applied by the Delivery CI workflow (`.github/workflows/delivery-ci.yml`).
 
 1. Create projects for 'build', 'dev', 'uat', and 'prod' environments in OpenShift.
 2. Set appropriate values in the ConfigMaps and Secrets and apply to environments.

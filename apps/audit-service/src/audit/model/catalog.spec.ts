@@ -146,19 +146,12 @@ describe('CatalogService', () => {
     });
 
     it.each([
-      ['a Core action', 'retention.run'],
-      ['a Core action in a different case', 'Retention.RUN'],
-    ])('rejects %s', async (_label, name) => {
-      await expect(adding.addAction('sandbox-app', name, definition, tenantId, 'token')).rejects.toMatchObject({
-        extra: { statusCode: HttpStatusCodes.CONFLICT },
-      });
-      expect(store.saveAction).not.toHaveBeenCalled();
-    });
+      ['a Core action in another namespace', 'retention.run'],
+      ['a Core action in another namespace in a different case', 'Retention.RUN'],
+    ])('allows %s', async (_label, name) => {
+      await adding.addAction('sandbox-app', name, definition, tenantId, 'token');
 
-    it('allows a name that only extends a Core action name', async () => {
-      await adding.addAction('sandbox-app', 'retention.run.succeeded', definition, tenantId, 'token');
-
-      expect(store.saveAction).toHaveBeenCalled();
+      expect(store.saveAction).toHaveBeenCalledWith('sandbox-app', name, definition, 'token', tenantId);
     });
 
     it('rejects a name already in the namespace catalog, ignoring case', async () => {

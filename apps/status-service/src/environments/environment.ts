@@ -30,6 +30,8 @@ export const environment = envalid.cleanEnv(
     PLATFORM_TENANT_REALM: envalid.str({ default: '1b0dbf9a-58be-4604-b995-18ff15dcdfd5' }),
     HA_MODEL: envalid.bool({ default: false }),
     POD_TYPE: envalid.str({ default: POD_TYPES.api }), // FOR HA_MODEL = true only.
+    // Unset falls back to the SDK AUDIT_ENABLED variable, which defaults to on.
+    STATUS_AUDIT_ENABLED: envalid.bool({ default: undefined }),
   },
   {
     reporter: ({ errors }) => {

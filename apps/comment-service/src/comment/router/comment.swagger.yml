@@ -2,22 +2,36 @@
   get:
     tags:
       - Comment
-    description: Retrieves comments.
+    description: >
+      Searches comments across the topics of the tenant, newest first. Core users must set tenantId. With
+      `criteria.typeIdEquals`, requires read access to the topic type: its admin, commenter, or reader roles (or
+      comment-admin) in the tenant, or the export-service export-job role (`urn:ads:platform:export-service:export-job`)
+      in the tenant; an unknown type responds 404. Without it, requires the comment-admin or export-job role in the
+      tenant. Core roles don't grant access.
     parameters:
+      - $ref: '#/components/parameters/CommentTenantId'
       - name: top
-        description: Number of topics to return.
+        description: Maximum number of comments to return. Defaults to 10. Must be a positive integer.
         in: query
         required: false
         schema:
           type: integer
+          minimum: 1
+          default: 10
+        example: 10
       - name: after
-        description: Cursor for the page to retrieve.  Use the _page.next_ value returned in the previous call to page sequentially through the data.
+        description: >
+          Cursor of the page to retrieve. Use the `page.next` value of the previous response to page sequentially
+          through the results.
         in: query
         required: false
         schema:
           type: string
+        example: MTA=
       - name: criteria
-        description: Criteria for comments to retrieve.
+        description: >
+          Criteria for the comments to retrieve, as URL-encoded JSON. Must be valid JSON. The text criteria are
+          PostgreSQL full text searches of a single word or phrase.
         in: query
         required: false
         content:
@@ -27,6 +41,7 @@
               properties:
                 typeIdEquals:
                   type: string
+                  description: Only comments on topics of the topic type.
                 topicIdEquals:
                   type: integer
                 titleLike:
@@ -36,10 +51,13 @@
                 titleOrContentLike:
                   type: string
                 idGreaterThan:
-                  type: number
+                  type: integer
+            example:
+              typeIdEquals: case-notes
+              titleOrContentLike: address
     responses:
       200:
-        description: Request completed successfully.
+        description: Comments retrieved successfully.
         content:
           application/json:
             schema:
@@ -48,25 +66,33 @@
                 results:
                   type: array
                   items:
-                    $ref: "#/components/schemas/Comment"
+                    $ref: '#/components/schemas/Comment'
                 page:
-                  type: object
-                  properties:
-                    after:
-                      type: string
-                      description: cursor representing the set of data returned.
-                      example: Mw==
-                    next:
-                      type: string
-                      description: cursor representing the next set of data to be returned.
-                      example: Ng==
-                    size:
-                      description: The number of comments returned by the query.
-                      example: 10
-                      type: integer
+                  $ref: '#/components/schemas/CommentResultsPage'
+            example:
+              results:
+                - topicId: 42
+                  id: 1203
+                  title: Follow up call
+                  content: Called the applicant to confirm the mailing address.
+                  context:
+                    step: address-verification
+                  createdBy:
+                    id: 7d3c2a1b-4e5f-4a6b-8c9d-0e1f2a3b4c5d
+                    name: Test User
+                  createdOn: '2026-11-02T16:20:00.000Z'
+                  lastUpdatedBy:
+                    id: 7d3c2a1b-4e5f-4a6b-8c9d-0e1f2a3b4c5d
+                    name: Test User
+                  lastUpdatedOn: '2026-11-02T16:20:00.000Z'
+              page:
+                after: MTA=
+                size: 1
+      400:
+        $ref: '#/components/responses/CommentBadRequest'
       401:
-        description: Not authorized.
+        $ref: '#/components/responses/CommentUnauthorized'
       403:
-        description: User not permitted for requested operation.
+        $ref: '#/components/responses/CommentForbidden'
       404:
-        description: Topic type not found.
+        $ref: '#/components/responses/CommentNotFound'

@@ -14,9 +14,19 @@ module.exports = {
 Use **Authorize** with a bearer token to try requests from this page. Writing to a namespace you do not own returns \`403\`.`,
   },
   tags: [
-    { name: 'Audit events', description: 'Write and read audit events. Requires audit-writer to write and audit-reader to read.' },
-    { name: 'Action catalogs', description: 'Read the registered action definitions for a namespace. Requires audit-reader.' },
-    { name: 'Failed audit events', description: 'List and replay events parked after a storage failure. Requires audit-admin.' },
+    {
+      name: 'Audit events',
+      description: 'Write and read audit events. Requires audit-writer to write and audit-reader to read.',
+    },
+    {
+      name: 'Action catalogs',
+      description: 'Read the registered action definitions for a namespace. Requires audit-reader.',
+    },
+    {
+      name: 'Failed audit events',
+      description: 'List and replay events parked after a storage failure. Requires audit-admin.',
+    },
+    { name: 'Retention', description: 'Read the configured retention periods for a tenant. Requires audit-reader.' },
   ],
   components: {
     securitySchemes: {

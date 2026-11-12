@@ -5,6 +5,8 @@ import { FileType } from './types';
 import { FileTypeEntity } from './model';
 import { File } from './types';
 
+jest.mock('file-type', () => ({ fileTypeFromBuffer: jest.fn() }));
+
 describe('Events', () => {
   const serviceId = adspId`urn:ads:platform:file-service`;
   const apiId = adspId`${serviceId}:v1`;

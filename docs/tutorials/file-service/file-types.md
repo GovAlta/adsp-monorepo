@@ -8,7 +8,7 @@ grand_parent: Tutorials
 
 ## File Type collections
 
-A **File type** is a _named collection_ of files. You can assign certain file-properties to a collection, such as access permissions, and when files are added to it they will inherit them. So, for example, you can create a new file type named _public_, and assign it a _read-only_ file-property. Any files added to the _public_ collection will then be immutable, but accessible to anyone.
+A **File type** is a _named collection_ of files. You can assign certain file-properties to a collection, such as access permissions, and when files are added to it they will inherit them. So, for example, you can create a new file type named _public_, and grant it public read access. Any files added to the _public_ collection will then be readable by anyone, without signing in.
 
 This gives developers a means for organizing and managing files with shared properties. You would want to create a File Type collection to
 
@@ -30,6 +30,4 @@ There is also an option to grant public read-only permission for any file added 
 
 ### Retention Policy
 
-Note: Retention Policy is still under development.
-
-The _File Service_ gives you much more fine grained control through our [File Type collections](/adsp-monorepo/tutorials/file-service/file-types.html). You can set the retention policy for files in the collection, and those that have lived longer than the retention period will be automatically deleted.
+The _File Service_ gives you much more fine grained control through our [File Type collections](/adsp-monorepo/tutorials/file-service/file-types.html). You can set the retention policy for files in the collection, and files that have not been accessed for longer than the retention period will be automatically deleted by a daily job.

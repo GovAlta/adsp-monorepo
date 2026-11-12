@@ -34,7 +34,7 @@ _Submission records_ can be used to help manage _Form Disposition_; that is, the
 
 ### Submission Queues
 
-In addition, developers can also opt-in to have the submission record placed in a [Task Queue](/adsp-monorepo/tutorials/task-service.html) for further processing:
+In addition, developers can also opt-in to have the submission record placed in a [Task Queue](/adsp-monorepo/tutorials/task-service/task-queues.html) for further processing:
 
 ![](/adsp-monorepo/assets/form-service/submissionQueue.png){: width="400" }
 

@@ -1,7 +1,7 @@
-import { EventService } from '@abgov/adsp-service-sdk';
+import { AuditService, EventService } from '@abgov/adsp-service-sdk';
 import { createValidationHandler, InvalidOperationError, NotFoundError } from '@core-services/core-common';
 import { randomUUID } from 'crypto';
-import { Request, Router } from 'express';
+import { NextFunction, Request, Response, Router } from 'express';
 import { body, param, query } from 'express-validator';
 import * as multer from 'multer';
 import { Logger } from 'winston';
@@ -16,6 +16,27 @@ import {
   requireSolutionOwner,
 } from './access';
 import { acceptanceReferences, checkedAcceptanceCriteria, ruleAcceptanceCriteria } from './acceptance';
+import {
+  AdminAccessOperation,
+  AnalyzedAuditMetadata,
+  AnalyzedEndpoint,
+  auditAdminAccess,
+  createAuditRecorder,
+  PatternCreatedAuditAction,
+  PatternDeletedAuditAction,
+  PatternUpdatedAuditAction,
+  SolutionAdminAccessedAuditAction,
+  SolutionAnalyzedAuditAction,
+  SolutionCreatedAuditAction,
+  SolutionDeletedAuditAction,
+  SpecialistChatDeletedAuditAction,
+  SpecialistChatExportedAuditAction,
+  toPatternAuditDetails,
+  toPatternChangeSet,
+  toSolutionAuditDetails,
+  toSpecialistChatAuditDetails,
+  toAuditStatus,
+} from './audit';
 import {
   buildHypotheses,
   buildNextSteps,
@@ -95,6 +116,7 @@ interface PlannerRouterProps {
   specialistChatRepository: SpecialistChatRepository;
   solutionVersionRepository: SolutionVersionRepository;
   eventService: EventService;
+  auditService: AuditService;
   // When provided, AI analysis is available and is the default mode.
   llm?: PlannerLlm;
   // Reads the keys of the live ADSP configuration catalog, used to find services missing from the component map.
@@ -246,15 +268,83 @@ export function createPlannerRouter({
   specialistChatRepository,
   solutionVersionRepository,
   eventService,
+  auditService,
   llm,
   readAdspCatalog,
 }: PlannerRouterProps): Router {
   const router = Router();
   const validateId = createValidationHandler(param('id').isUUID());
+  const recordAudit = createAuditRecorder(auditService, logger);
+  const solutionFor = (operation: AdminAccessOperation) => [
+    getSolution(solutionRepository),
+    auditAdminAccess(recordAudit, operation),
+  ];
   const uploadProblemStatementFile = multer({
     storage: multer.memoryStorage(),
     limits: { fileSize: MAX_PROBLEM_STATEMENT_UPLOAD_BYTES },
   });
+
+  // Per request: whether solution content was sent to the AI model, whether any call fell back to rules, and the
+  // solution and result mode to audit.
+  interface AiUse {
+    called: boolean;
+    fellBack: boolean;
+    solution?: Solution;
+    mode?: AnalysisMode;
+  }
+  const aiUses = new WeakMap<Request, AiUse>();
+  const aiUse = (req: Request): AiUse => {
+    let use = aiUses.get(req);
+    if (!use) {
+      use = { called: false, fellBack: false };
+      aiUses.set(req, use);
+    }
+    return use;
+  };
+  const noteAiCall = (req: Request, fellBack: boolean) => {
+    const use = aiUse(req);
+    use.called = true;
+    use.fellBack = use.fellBack || fellBack;
+  };
+  const noteAnalyzed = (req: Request, solution: Solution, mode?: AnalysisMode) => {
+    Object.assign(aiUse(req), { solution, mode });
+  };
+
+  // Recorded when the request completes, including when it fails after content was sent to the model.
+  function recordAnalyzed(req: Request, endpoint: AnalyzedEndpoint, error?: unknown) {
+    const use = aiUses.get(req);
+    const solution = use?.solution ?? loaded(req);
+    if (!use?.called || !solution) {
+      return;
+    }
+    // The specialist is validated before the model is called, so the service is a known specialist here.
+    const service = endpoint === 'consult' || endpoint === 'specialist-chat' ? req.params.service : undefined;
+    const metadata: AnalyzedAuditMetadata = {
+      endpoint,
+      ...(!error && use.mode ? { mode: use.mode } : {}),
+      model: llm?.model ?? null,
+      fellBack: use.fellBack,
+      ...(service ? { service } : {}),
+    };
+    recordAudit(SolutionAnalyzedAuditAction, {
+      ...toSolutionAuditDetails(req.user, solution, { ...metadata }),
+      status: toAuditStatus(error),
+    });
+  }
+
+  const analyzing =
+    (endpoint: AnalyzedEndpoint, handler: (req: Request, res: Response, next: NextFunction) => Promise<void>) =>
+    async (req: Request, res: Response, next: NextFunction) => {
+      let error: unknown;
+      try {
+        await handler(req, res, (err?: unknown) => {
+          error = err;
+          next(err);
+        });
+      } finally {
+        recordAnalyzed(req, endpoint, error);
+      }
+    };
 
   // Undefined keys mean the catalog could not be read; candidates are live services missing from the component map.
   async function readCatalog(): Promise<{ keys?: string[]; candidates: string[] }> {
@@ -295,6 +385,7 @@ export function createPlannerRouter({
 
   // An undefined result means the caller should fall back to rule-based output.
   async function tryAi<T>(
+    req: Request,
     requestedMode: AnalysisMode,
     run: (llm: PlannerLlm) => Promise<T>,
     wording: AiFallbackWording,
@@ -306,22 +397,27 @@ export function createPlannerRouter({
       return { warning: wording.notConfigured };
     }
     try {
-      return { result: await run(llm) };
+      const result = await run(llm);
+      noteAiCall(req, false);
+      return { result };
     } catch (err) {
       const reason = (err as Error).message;
       logger.warn(`${wording.logFailure}: ${reason}`);
+      noteAiCall(req, true);
       return { warning: wording.warning(reason) };
     }
   }
 
   // Only the label records a fallback here; the reason is logged, not shown as a warning.
   async function buildAcceptance(
+    req: Request,
     blueprint: SolutionBlueprint,
     state: SolutionState,
     mode: AnalysisMode,
   ): Promise<BlueprintAcceptance> {
     const references = acceptanceReferences(blueprint, state);
     const { result: criteria } = await tryAi(
+      req,
       mode,
       async (llm) => {
         const { criteria: drafts } = await llm.acceptanceCriteria(blueprint, references);
@@ -416,6 +512,7 @@ export function createPlannerRouter({
     const requestedMode: AnalysisMode = mode || (llm ? 'ai' : 'rules');
     const now = new Date().toISOString();
     const ai = await tryAi(
+      req,
       requestedMode,
       async (llm): Promise<AnalysisResult> => {
         const analysis = await llm.analyze(text, patterns, solution.state.concepts, {
@@ -588,6 +685,10 @@ export function createPlannerRouter({
         }
         const pattern = await patternRepository.save(getTenantId(req), toPattern(id, req.body), req.user);
         res.status(201).send({ ...pattern, source: 'custom' });
+        recordAudit(
+          PatternCreatedAuditAction,
+          toPatternAuditDetails(req.user, getTenantId(req), pattern, { source: 'custom' }),
+        );
       } catch (err) {
         next(err);
       }
@@ -602,11 +703,23 @@ export function createPlannerRouter({
     async (req, res, next) => {
       try {
         const { patternId } = req.params;
-        if (!(await getPatterns(req, patternRepository)).some((p) => p.id === patternId)) {
+        const previous = (await getPatterns(req, patternRepository)).find((p) => p.id === patternId);
+        if (!previous) {
           throw new NotFoundError('pattern', patternId);
         }
-        const pattern = await patternRepository.save(getTenantId(req), toPattern(patternId, req.body), req.user);
-        res.send({ ...pattern, source: BUILT_IN_IDS.has(patternId) ? 'customized' : 'custom' });
+        const tenantId = getTenantId(req);
+        const pattern = await patternRepository.save(tenantId, toPattern(patternId, req.body), req.user);
+        const source = BUILT_IN_IDS.has(patternId) ? 'customized' : 'custom';
+        res.send({ ...pattern, source });
+        const { changeSet, changeSetOmitted } = toPatternChangeSet(previous, pattern);
+        recordAudit(PatternUpdatedAuditAction, {
+          ...toPatternAuditDetails(req.user, tenantId, pattern, {
+            source,
+            previousSource: previous.source,
+            ...(changeSetOmitted ? { changeSetOmitted } : {}),
+          }),
+          changeSet,
+        });
       } catch (err) {
         next(err);
       }
@@ -617,7 +730,9 @@ export function createPlannerRouter({
   router.delete('/patterns/:patternId', requirePlannerAdmin, async (req, res, next) => {
     try {
       const { patternId } = req.params;
-      const deleted = await patternRepository.delete(getTenantId(req), patternId);
+      const tenantId = getTenantId(req);
+      const stored = (await patternRepository.find(tenantId)).find((p) => p.id === patternId);
+      const deleted = await patternRepository.delete(tenantId, patternId);
       if (!deleted) {
         const exists = (await getPatterns(req, patternRepository)).some((p) => p.id === patternId);
         if (!exists) {
@@ -628,6 +743,15 @@ export function createPlannerRouter({
         );
       }
       res.sendStatus(204);
+      recordAudit(
+        PatternDeletedAuditAction,
+        toPatternAuditDetails(
+          req.user,
+          tenantId,
+          { id: patternId, name: stored?.name },
+          { source: BUILT_IN_IDS.has(patternId) ? 'customized' : 'custom' },
+        ),
+      );
     } catch (err) {
       next(err);
     }
@@ -742,6 +866,10 @@ export function createPlannerRouter({
         });
         res.status(201).send(solution);
         eventService.send(solutionCreated(req.user, solution));
+        recordAudit(
+          SolutionCreatedAuditAction,
+          toSolutionAuditDetails(req.user, solution, { scenario: solution.scenario }),
+        );
         logger.info(`Created solution ${solution.name} (ID: ${solution.id}).`, {
           context: 'PlannerRouter',
           tenantId: tenantId.toString(),
@@ -753,7 +881,7 @@ export function createPlannerRouter({
     },
   );
 
-  router.get('/solutions/:id', requirePlannerUser, validateId, getSolution(solutionRepository), (req, res) => {
+  router.get('/solutions/:id', requirePlannerUser, validateId, solutionFor('read'), (req, res) => {
     res.send(loaded(req));
   });
 
@@ -775,7 +903,7 @@ export function createPlannerRouter({
       body('questions').optional().isArray(),
       body('checkpoint').optional().isBoolean(),
     ),
-    getSolution(solutionRepository),
+    solutionFor('update'),
     async (req, res, next) => {
       try {
         const solution = loaded(req);
@@ -831,7 +959,7 @@ export function createPlannerRouter({
     '/solutions/:id',
     requirePlannerUser,
     validateId,
-    getSolution(solutionRepository),
+    solutionFor('delete'),
     requireSolutionOwner,
     async (req, res, next) => {
       try {
@@ -840,6 +968,10 @@ export function createPlannerRouter({
         res.send({ deleted });
         if (deleted) {
           eventService.send(solutionDeleted(req.user, solution));
+          recordAudit(
+            SolutionDeletedAuditAction,
+            toSolutionAuditDetails(req.user, solution, { scenario: solution.scenario, status: solution.status }),
+          );
         }
       } catch (err) {
         next(err);
@@ -856,26 +988,26 @@ export function createPlannerRouter({
       body('mode').optional().isIn(['ai', 'rules']),
       body('checkpoint').optional().isBoolean(),
     ),
-    getSolution(solutionRepository),
-    async (req, res, next) => {
+    solutionFor('update'),
+    analyzing('analyze', async (req, res, next) => {
       try {
         const solution = loaded(req);
         const text = req.body.text || solution.state.problemStatement;
         if (!text) {
           throw new InvalidOperationError('Solution has no problem statement to analyze.');
         }
-        res.send(
-          await runAnalysis(req, solution, {
-            text,
-            mode: req.body.mode,
-            announceDiscoveryUpdate: true,
-            checkpoint: req.body.checkpoint,
-          }),
-        );
+        const analyzed = await runAnalysis(req, solution, {
+          text,
+          mode: req.body.mode,
+          announceDiscoveryUpdate: true,
+          checkpoint: req.body.checkpoint,
+        });
+        res.send(analyzed);
+        noteAnalyzed(req, analyzed, analyzed.state.analysis?.mode);
       } catch (err) {
         next(err);
       }
-    },
+    }),
   );
 
   router.post(
@@ -888,8 +1020,8 @@ export function createPlannerRouter({
       body('force').optional().isBoolean(),
       body('restart').optional().isBoolean(),
     ),
-    getSolution(solutionRepository),
-    async (req, res, next) => {
+    solutionFor('update'),
+    analyzing('discovery', async (req, res, next) => {
       try {
         const solution = loaded(req);
         const problem = solution.state.problemStatement.trim();
@@ -904,6 +1036,7 @@ export function createPlannerRouter({
         const requestedMode: AnalysisMode = req.body.mode || (llm ? 'ai' : 'rules');
 
         const { result: aiDiscovery, warning } = await tryAi(
+          req,
           requestedMode,
           async (llm) => {
             const patterns = await getPatterns(req, patternRepository);
@@ -954,15 +1087,15 @@ export function createPlannerRouter({
             confidence: { score: confidence, threshold: DISCOVERY_THRESHOLD, factors },
           },
         };
-        res.send(
-          ready
-            ? await runAnalysis(req, withDiscovery, { text: problem, mode: requestedMode, skipConfidenceRefresh: true })
-            : await persist(req, withDiscovery, 'discovery'),
-        );
+        const saved = ready
+          ? await runAnalysis(req, withDiscovery, { text: problem, mode: requestedMode, skipConfidenceRefresh: true })
+          : await persist(req, withDiscovery, 'discovery');
+        res.send(saved);
+        noteAnalyzed(req, saved, mode);
       } catch (err) {
         next(err);
       }
-    },
+    }),
   );
 
   router.post(
@@ -973,18 +1106,22 @@ export function createPlannerRouter({
       body('message').isString().trim().isLength({ min: 1, max: 20000 }),
       body('mode').optional().isIn(['ai', 'rules']),
     ),
-    getSolution(solutionRepository),
-    async (req, res, next) => {
+    solutionFor('update'),
+    analyzing('chat', async (req, res, next) => {
       try {
         const solution = loaded(req);
         const message: string = req.body.message.trim();
-        res.send(
-          await runAnalysis(req, solution, { text: solution.state.problemStatement, mode: req.body.mode, message }),
-        );
+        const refined = await runAnalysis(req, solution, {
+          text: solution.state.problemStatement,
+          mode: req.body.mode,
+          message,
+        });
+        res.send(refined);
+        noteAnalyzed(req, refined, refined.state.analysis?.mode);
       } catch (err) {
         next(err);
       }
-    },
+    }),
   );
 
   router.put(
@@ -995,7 +1132,7 @@ export function createPlannerRouter({
       param('order').isInt({ min: 1 }),
       body('review').isIn(['not-reviewed', 'approved', 'rejected']),
     ),
-    getSolution(solutionRepository),
+    solutionFor('update'),
     async (req, res, next) => {
       try {
         const solution = loaded(req);
@@ -1015,7 +1152,13 @@ export function createPlannerRouter({
   );
 
   router.use(
-    createVersionRouter({ solutionRepository, specialistChatRepository, solutionVersionRepository, eventService }),
+    createVersionRouter({
+      solutionRepository,
+      specialistChatRepository,
+      solutionVersionRepository,
+      eventService,
+      recordAudit,
+    }),
   );
 
   router.post(
@@ -1027,8 +1170,8 @@ export function createPlannerRouter({
       body('proposal').optional().isString().isLength({ max: 5000 }),
       body('mode').optional().isIn(['ai', 'rules']),
     ),
-    getSolution(solutionRepository),
-    async (req, res, next) => {
+    solutionFor('update'),
+    analyzing('consult', async (req, res, next) => {
       try {
         const solution = loaded(req);
         const { result, state } = await runConsult(req, solution, req.params.service, {
@@ -1038,10 +1181,11 @@ export function createPlannerRouter({
         });
         const saved = await persist(req, { ...solution, state }, 'consult');
         res.send({ ...result, solution: saved });
+        noteAnalyzed(req, saved, result.advice ? 'ai' : 'rules');
       } catch (err) {
         next(err);
       }
-    },
+    }),
   );
 
   // Consults a specialist (AI with a rules fallback) and records the exchange in the user's saved chats.
@@ -1065,8 +1209,10 @@ export function createPlannerRouter({
       try {
         const consultation = await llm.consult(solution.state, getSpecialist(service), question, proposal);
         result = mergeConsultation(baseResult, consultation);
+        noteAiCall(req, false);
       } catch (err) {
         logger.warn(`AI consultation failed, using rule-based guidance: ${(err as Error).message}`);
+        noteAiCall(req, true);
       }
     }
     const specialists = [
@@ -1125,8 +1271,8 @@ export function createPlannerRouter({
       body('refreshConsultations').optional().isBoolean(),
       body('checkpoint').optional().isBoolean(),
     ),
-    getSolution(solutionRepository),
-    async (req, res, next) => {
+    solutionFor('update'),
+    analyzing('blueprint', async (req, res, next) => {
       try {
         const solution = loaded(req);
         const hypothesis = solution.state.hypotheses[0];
@@ -1180,6 +1326,7 @@ export function createPlannerRouter({
         const ruleCore = buildRuleBlueprint(solution.state, matchedPattern);
         const catalog = await readCatalog();
         const { result: generated, warning } = await tryAi(
+          req,
           requestedMode,
           async (llm) => {
             const draft = await llm.blueprint(solution.state, notes, catalog.candidates);
@@ -1216,7 +1363,7 @@ export function createPlannerRouter({
           generated?.notCoveredByAdsp,
           components,
         );
-        const acceptance = await buildAcceptance(blueprint, solution.state, mode);
+        const acceptance = await buildAcceptance(req, blueprint, solution.state, mode);
         const saved = await persist(
           req,
           { ...solution, state: { ...working.state, blueprint: { ...blueprint, acceptance } } },
@@ -1224,10 +1371,11 @@ export function createPlannerRouter({
           req.body.checkpoint ?? true,
         );
         res.send(saved);
+        noteAnalyzed(req, saved, mode);
       } catch (err) {
         next(err);
       }
-    },
+    }),
   );
 
   const userChatCriteria = (req: Request) => ({
@@ -1326,6 +1474,18 @@ export function createPlannerRouter({
         });
         res.setHeader('Content-Disposition', 'attachment; filename="planner-specialist-chats.json"');
         res.send({ exportedAt: new Date().toISOString(), chats: chats.map(exportChat) });
+        const service = req.query.service as string;
+        const solutionId = req.query.solutionId as string;
+        recordAudit(
+          SpecialistChatExportedAuditAction,
+          toSpecialistChatAuditDetails(req.user, getTenantId(req), undefined, {
+            scope: 'all',
+            chatCount: chats.length,
+            // Only known specialist services are recorded, since the filter is free text.
+            ...(service && getSpecialist(service) ? { service } : {}),
+            ...(solutionId ? { solutionId } : {}),
+          }),
+        );
       } catch (err) {
         next(err);
       }
@@ -1354,6 +1514,15 @@ export function createPlannerRouter({
         const chat = await loadChat(req, req.params.chatId);
         res.setHeader('Content-Disposition', `attachment; filename="planner-chat-${chat.id}.json"`);
         res.send({ exportedAt: new Date().toISOString(), ...exportChat(chat) });
+        recordAudit(
+          SpecialistChatExportedAuditAction,
+          toSpecialistChatAuditDetails(req.user, chat.tenantId, chat, {
+            scope: 'single',
+            chatCount: 1,
+            service: chat.service,
+            ...(chat.solutionId ? { solutionId: chat.solutionId } : {}),
+          }),
+        );
       } catch (err) {
         next(err);
       }
@@ -1369,6 +1538,13 @@ export function createPlannerRouter({
         const chat = await loadChat(req, req.params.chatId);
         await specialistChatRepository.delete(getTenantId(req), chat.id);
         res.sendStatus(204);
+        recordAudit(
+          SpecialistChatDeletedAuditAction,
+          toSpecialistChatAuditDetails(req.user, chat.tenantId, chat, {
+            service: chat.service,
+            ...(chat.solutionId ? { solutionId: chat.solutionId } : {}),
+          }),
+        );
       } catch (err) {
         next(err);
       }
@@ -1386,7 +1562,7 @@ export function createPlannerRouter({
       body('solutionId').optional().isUUID(),
       body('mode').optional().isIn(['ai', 'rules']),
     ),
-    async (req, res, next) => {
+    analyzing('specialist-chat', async (req, res, next) => {
       try {
         const specialist = getSpecialist(req.params.service);
         if (!specialist) {
@@ -1406,6 +1582,10 @@ export function createPlannerRouter({
         const solutionId: string = chat?.solutionId || req.body.solutionId;
         const solution = solutionId ? await loadSolution(solutionRepository, req, solutionId) : undefined;
         const state = solution?.state;
+        if (solution) {
+          // Without a solution no solution content is sent, so the chat is not audited as analysis.
+          noteAnalyzed(req, solution);
+        }
 
         const history: SpecialistChatMessage[] = [
           ...(chat?.messages || []).map(({ role, content }) => ({ role, content })),
@@ -1413,6 +1593,7 @@ export function createPlannerRouter({
         ];
         const mode: AnalysisMode = req.body.mode || (llm ? 'ai' : 'rules');
         const { result: aiReply, warning } = await tryAi(
+          req,
           mode,
           (llm) => llm.converse(specialist, history, intent, state),
           {
@@ -1460,10 +1641,23 @@ export function createPlannerRouter({
           ...reply,
           solution: updatedSolution,
         });
+        if (solution) {
+          const audited = updatedSolution || solution;
+          noteAnalyzed(req, audited, replyMode);
+          if (solution.createdById !== req.user.id && isPlannerAdmin(req.user, solution.tenantId)) {
+            recordAudit(
+              SolutionAdminAccessedAuditAction,
+              toSolutionAuditDetails(req.user, audited, {
+                ownerId: solution.createdById,
+                operation: updatedSolution ? 'update' : 'read',
+              }),
+            );
+          }
+        }
       } catch (err) {
         next(err);
       }
-    },
+    }),
   );
 
   return router;

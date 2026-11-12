@@ -4,6 +4,7 @@ import React, { createContext, useContext } from 'react';
 import axios, { AxiosRequestConfig, AxiosStatic } from 'axios';
 // clean-code-ignore: RULE-19 — navigation context behavior is covered by ./context.spec.tsx.
 import type { NavigationOutcome, NavigationTarget } from '../Controls/FormStepper/util/navigationTarget';
+import type { StepInfo } from '../Controls/FormStepper/context/types';
 
 interface AllData {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -48,6 +49,8 @@ export interface AutoPopulatedValue {
 export interface ExternalNavigationProps {
   navigationTarget?: NavigationTarget;
   onNavigationChange?: (outcome: NavigationOutcome) => void;
+  // Called on mount and whenever the step the user is on changes.
+  onStepChange?: (stepInfo: StepInfo) => void;
 }
 
 type Props = ExternalNavigationProps & {
@@ -86,6 +89,7 @@ const HOST_CONTROLLED_KEYS = [
   'formId',
   'navigationTarget',
   'onNavigationChange',
+  'onStepChange',
 ] as const;
 
 export class ContextProviderClass {
@@ -128,6 +132,7 @@ export class ContextProviderClass {
     formId?: string;
     navigationTarget?: NavigationTarget;
     onNavigationChange?: (outcome: NavigationOutcome) => void;
+    onStepChange?: (stepInfo: StepInfo) => void;
   };
 
   addFormContextData = (key: string, data: Record<string, unknown> | unknown[]) => {
@@ -223,6 +228,7 @@ export class ContextProviderClass {
       formId: props.formId,
       navigationTarget: props.navigationTarget,
       onNavigationChange: props.onNavigationChange,
+      onStepChange: props.onStepChange,
     };
 
     const hostControlledChanged = HOST_CONTROLLED_KEYS.some((key) => next[key] !== this.baseEnumerator[key]);

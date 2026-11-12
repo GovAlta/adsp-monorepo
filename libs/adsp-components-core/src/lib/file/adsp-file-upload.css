@@ -1,0 +1,41 @@
+.adsp-file-upload {
+  display: flex;
+  flex-direction: column;
+  gap: var(--adsp-spacing-s);
+  color: var(--adsp-color-text-default);
+  font-family: var(--adsp-typography-font-family);
+  font-size: var(--adsp-typography-body-m-font-size);
+  line-height: var(--adsp-typography-body-m-line-height);
+}
+
+.adsp-file-upload .adsp-file-upload__guidance {
+  margin: 0;
+  color: var(--adsp-components-file-upload-guidance-text-color);
+  font-size: var(--adsp-typography-body-s-font-size);
+  line-height: var(--adsp-typography-body-s-line-height);
+}
+
+.adsp-file-upload .adsp-file-upload__status {
+  margin: 0;
+  color: var(--adsp-components-file-upload-status-text-color);
+  font-size: var(--adsp-typography-body-s-font-size);
+  line-height: var(--adsp-typography-body-s-line-height);
+}
+
+.adsp-file-upload .adsp-file-upload__success {
+  margin: 0;
+  color: var(--adsp-components-file-upload-success-text-color);
+  font-size: var(--adsp-typography-body-s-font-size);
+  line-height: var(--adsp-typography-body-s-line-height);
+}
+
+.adsp-file-upload .adsp-file-upload__error {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--adsp-spacing-xs);
+  margin: 0;
+  color: var(--adsp-components-file-upload-error-text-color);
+  font-size: var(--adsp-typography-body-s-font-size);
+  line-height: var(--adsp-typography-body-s-line-height);
+}

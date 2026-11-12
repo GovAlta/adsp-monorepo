@@ -377,7 +377,6 @@ components:
           description: Notifications about changes to an application.
           manageSubscribe: true
           publicSubscribe: false
-          subscriberRoles: [applicant]
           channels: [email]
         criteria:
           - correlationId: application-1234
@@ -759,6 +758,23 @@ components:
                     $ref: '#/components/schemas/Subscription'
                 page:
                   $ref: '#/components/schemas/SubscriptionPage'
+            example:
+              results:
+                - typeId: application-status
+                  subscriberId: 63f5a0d2c9b1d2e3f4a5b6c7
+                  subscriber:
+                    id: 63f5a0d2c9b1d2e3f4a5b6c7
+                    addressAs: Test User
+                    channels:
+                      - channel: email
+                        address: test.user@gov.ab.ca
+                        verified: true
+                  criteria:
+                    correlationId: application-1234
+              page:
+                after: MTA=
+                size: 1
+                next: MjA=
       400:
         $ref: '#/components/responses/SubscriptionBadRequest'
       401:
@@ -873,7 +889,10 @@ components:
     description: >
       Adds or updates the subscription of a subscriber to the notification type. If a subscription exists, its
       criteria are replaced; otherwise a new subscription is created, which requires a single criteria object.
-      Same permissions as creating a subscription.
+      Users with the subscription-admin or subscription-app role can act on any subscriber of the tenant; other users
+      can only act on their own subscriber, and only when the type allows users to manage their own subscription and
+      is public or the user has one of the type's subscriber roles.
+      Responds 403 when updating an existing subscription without permission, and 401 when creating one.
     requestBody:
       required: true
       content:
@@ -914,8 +933,11 @@ components:
     tags:
       - Subscription
     description: >
-      Removes a subscription from a notification type. Same permissions as creating a subscription. Responds with
-      deleted false if the subscriber or subscription does not exist.
+      Removes a subscription from a notification type. Users with the subscription-admin or subscription-app role can act on any subscriber of the tenant; other users
+      can only act on their own subscriber, and only when the type allows users to manage their own subscription and
+      is public or the user has one of the type's subscriber roles.
+      Responds 401 when the user is not permitted to remove the subscription, and with deleted false if the
+      subscriber or subscription does not exist.
     responses:
       200:
         description: Subscription removal processed.
@@ -963,7 +985,10 @@ components:
   delete:
     tags:
       - Subscription
-    description: Removes a subscription criteria. Same permissions as creating a subscription.
+    description: >
+      Removes a subscription criteria. Users with the subscription-admin or subscription-app role can act on any subscriber of the tenant; other users
+      can only act on their own subscriber, and only when the type allows users to manage their own subscription and
+      is public or the user has one of the type's subscriber roles.
     responses:
       200:
         description: Subscription criteria removal processed.
@@ -1064,6 +1089,24 @@ components:
                         total:
                           type: number
                           description: Number of subscribers matching the criteria, across all pages.
+            example:
+              results:
+                - tenantId: urn:ads:platform:tenant-service:v2:/tenants/61f2e3a8c9b1d2e3f4a5b6c7
+                  urn: urn:ads:platform:notification-service:v1:/subscribers/63f5a0d2c9b1d2e3f4a5b6c7
+                  id: 63f5a0d2c9b1d2e3f4a5b6c7
+                  userId: 9c1f2b7e-4d3a-4f6b-8a2e-1b2c3d4e5f60
+                  addressAs: Test User
+                  channels:
+                    - channel: email
+                      address: test.user@gov.ab.ca
+                      verified: true
+                  created: '2026-09-01T17:00:00.000Z'
+                  updated: '2026-09-01T17:00:00.000Z'
+              page:
+                after: MTA=
+                size: 1
+                next: MjA=
+                total: 21
       400:
         $ref: '#/components/responses/SubscriptionBadRequest'
       401:
@@ -1151,7 +1194,9 @@ components:
   patch:
     tags:
       - Subscription
-    description: Updates a subscriber. Same permissions as retrieving the subscriber.
+    description: >
+      Updates a subscriber. Users with the subscription-admin or subscription-app role can act on any
+      subscriber of the tenant; other users can only act on their own subscriber.
     requestBody:
       required: true
       content:
@@ -1270,7 +1315,9 @@ components:
   delete:
     tags:
       - Subscription
-    description: Deletes a subscriber. Same permissions as retrieving the subscriber.
+    description: >
+      Deletes a subscriber. Users with the subscription-admin or subscription-app role can act on any
+      subscriber of the tenant; other users can only act on their own subscriber.
     responses:
       200:
         description: Subscriber successfully deleted.
@@ -1313,7 +1360,9 @@ components:
   get:
     tags:
       - Subscription
-    description: Retrieves subscriptions for a subscriber. Same permissions as retrieving the subscriber.
+    description: >
+      Retrieves subscriptions for a subscriber. Users with the subscription-admin or subscription-app role can act on any
+      subscriber of the tenant; other users can only act on their own subscriber.
     responses:
       200:
         description: Subscriptions successfully retrieved.
@@ -1328,6 +1377,21 @@ components:
                     $ref: '#/components/schemas/MySubscriberSubscriptions'
                 page:
                   $ref: '#/components/schemas/SubscriptionPage'
+            example:
+              results:
+                - typeId: application-status
+                  subscriberId: 63f5a0d2c9b1d2e3f4a5b6c7
+                  type:
+                    id: application-status
+                    name: Application status
+                    description: Notifications about changes to an application.
+                    manageSubscribe: true
+                    publicSubscribe: false
+                    channels: [email]
+                  criteria:
+                    correlationId: application-1234
+              page:
+                size: 1
       400:
         $ref: '#/components/responses/SubscriptionBadRequest'
       401:
@@ -1354,7 +1418,8 @@ components:
       - Subscription
     description: >
       Retrieves the channels of the subscriber that the notification type can send to, for the subscriber's
-      subscription to that type. Same permissions as retrieving the subscriber.
+      subscription to that type. Users with the subscription-admin or subscription-app role can act on any
+      subscriber of the tenant; other users can only act on their own subscriber.
     responses:
       200:
         description: Channels successfully retrieved.

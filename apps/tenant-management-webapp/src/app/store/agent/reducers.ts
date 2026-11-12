@@ -14,6 +14,7 @@ import {
   ERROR,
   GET_AGENTS_ACTION,
   GET_AGENTS_SUCCESS_ACTION,
+  LOCAL_ANSWER_ACTION,
   MESSAGE_AGENT_ACTION,
   NEW_PREVIEW_THREAD_ACTION,
   REASONING_DELTA,
@@ -30,7 +31,7 @@ import {
   UPDATE_AGENT_ACTION,
   UPDATE_AGENT_SUCCESS_ACTION,
 } from './actions';
-import { AgentState } from './model';
+import { ACCESS_SERVICE_AGENT_ID, AgentState } from './model';
 
 const defaultState: AgentState = {
   connected: false,
@@ -108,7 +109,6 @@ function streamErrorDetails(payload: { code?: string; message: string; details?:
 }
 
 const DEFAULT_STREAM_ERROR_MESSAGE = 'The agent stopped unexpectedly. Anything already saved is in the editor.';
-const ACCESS_SERVICE_AGENT_ID = 'AccessServiceAgent';
 
 function outputToText(output: unknown): string {
   if (typeof output === 'string') {
@@ -142,6 +142,9 @@ function outputToText(output: unknown): string {
 
     if (typeof candidate.content === 'string') {
       return candidate.content;
+    }
+    if (typeof candidate.markdown === 'string') {
+      return candidate.markdown;
     }
 
     try {
@@ -431,6 +434,23 @@ export default function (state: AgentState = defaultState, action: AgentActionTy
             content: action.content,
             from: 'user',
           },
+        },
+      };
+    case LOCAL_ANSWER_ACTION:
+      // The user may have reset the chat while the answer was being read.
+      if (!state.threads[action.threadId]) {
+        return state;
+      }
+      return {
+        ...state,
+        threadMessages: {
+          ...state.threadMessages,
+          [action.threadId]: [...(state.threadMessages[action.threadId] || []), action.question.id, action.answer.id],
+        },
+        messages: {
+          ...state.messages,
+          [action.question.id]: action.question,
+          [action.answer.id]: action.answer,
         },
       };
     case AGENT_RESPONSE_ACTION: {

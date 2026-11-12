@@ -359,7 +359,7 @@ The agent creates display-only help blocks using Markdown:
 > **You:**
 > "Add a help block at the top of the form that says: '## Community Event Permit\nUse this form to apply for a permit to host an event on public property. **All fields marked with an asterisk are required.**\n\nFor questions, contact [permits@edmonton.ca](mailto:permits@edmonton.ca).'"
 
-Supports: headings, **bold**, _italic_, [links](url), bullet lists, numbered lists, and images.
+Supports: headings, **bold**, _italic_, links (`[text](url)`), bullet lists, numbered lists, and images.
 
 ### Collapsible Details
 

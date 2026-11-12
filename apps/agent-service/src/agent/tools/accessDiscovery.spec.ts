@@ -2,6 +2,7 @@ import type { User } from '@abgov/adsp-service-sdk';
 import axios from 'axios';
 import * as HttpStatusCodes from 'http-status-codes';
 import { createAccessDiscoveryTools } from './accessDiscovery';
+import type { ModelTextOutput } from './accessModelOutput';
 
 jest.mock('axios', () => {
   const actual = jest.requireActual('axios');
@@ -132,6 +133,32 @@ describe('createAccessDiscoveryTools', () => {
       expect(result.environments.every(({ inspectable }) => !inspectable)).toBe(true);
       expect(result.environments.find(({ current }) => current)?.id).toBe('dev');
     });
+
+    it('gives the model each environment with its host and whether it can be inspected', async () => {
+      const result = await listAccessEnvironments.execute({}, contextFor(createUser()));
+
+      const { value } = listAccessEnvironments.toModelOutput(result) as ModelTextOutput;
+
+      expect(value).toBe(
+        [
+          'status: available',
+          'environments (3):',
+          `- Development (dev): ${DEV_HOST}, read-only, current, inspectable`,
+          '- UAT (uat): https://access-uat.alberta.ca, read-only, not current, not inspectable',
+          '- Production (prod): https://access.alberta.ca, read-only, not current, not inspectable',
+        ].join('\n'),
+      );
+    });
+
+    it('gives the model the reason and the missing roles when the user lacks the role', async () => {
+      const result = await listAccessEnvironments.execute({}, contextFor(createUser({ roles: [] })));
+
+      const { value } = listAccessEnvironments.toModelOutput(result) as ModelTextOutput;
+
+      expect(value).toMatch(
+        new RegExp(`^status: unavailable \\(MISSING_ROLE\\): .+\nmissing roles: ${AGENT_USER_ROLE}\n`),
+      );
+    });
   });
 
   describe('listAccessRealms', () => {
@@ -200,9 +227,39 @@ describe('createAccessDiscoveryTools', () => {
       expect(result).toMatchObject({ status: 'unavailable', reason: 'NO_SESSION', realms: [] });
       expect(mockedGet).not.toHaveBeenCalled();
     });
+
+    it('gives the model the realm the user can inspect on one line', async () => {
+      mockedGet.mockResolvedValueOnce(tenantResponse);
+      const result = await listAccessRealms.execute({}, contextFor(createUser()));
+
+      const { value } = listAccessRealms.toModelOutput(result) as ModelTextOutput;
+
+      expect(value).toBe(
+        'status: available\nenv: Development (dev, read-only)\nrealms: Tenant One (realm-1, tenant, active)',
+      );
+    });
   });
 
   describe('getAccessRealmInfo', () => {
+    it('gives the model the realm, its issuer and its OpenID endpoints', async () => {
+      mockedGet.mockResolvedValueOnce(tenantResponse).mockResolvedValueOnce(openIdResponse);
+      const result = await getAccessRealmInfo.execute({}, contextFor(createUser()));
+
+      const { value } = getAccessRealmInfo.toModelOutput(result) as ModelTextOutput;
+
+      expect(value).toBe(
+        [
+          'status: available',
+          'env: Development (dev, read-only); realm: Tenant One (realm-1, tenant, active)',
+          `issuer: ${DEV_HOST}/auth/realms/realm-1`,
+          `endpoints: openIdConfiguration=${DEV_HOST}/auth/realms/realm-1/.well-known/openid-configuration, ` +
+            `authorization=${DEV_HOST}/auth/realms/realm-1/protocol/openid-connect/auth, ` +
+            `token=${DEV_HOST}/auth/realms/realm-1/protocol/openid-connect/token, ` +
+            `jwks=${DEV_HOST}/auth/realms/realm-1/protocol/openid-connect/certs`,
+        ].join('\n'),
+      );
+    });
+
     it('returns basic identifying information for the realm', async () => {
       mockedGet.mockResolvedValueOnce(tenantResponse).mockResolvedValueOnce(openIdResponse);
 
@@ -219,6 +276,7 @@ describe('createAccessDiscoveryTools', () => {
           status: 'active',
           issuer: `${DEV_HOST}/auth/realms/realm-1`,
           endpoints: {
+            openIdConfiguration: `${DEV_HOST}/auth/realms/realm-1/.well-known/openid-configuration`,
             authorization: `${DEV_HOST}/auth/realms/realm-1/protocol/openid-connect/auth`,
             token: `${DEV_HOST}/auth/realms/realm-1/protocol/openid-connect/token`,
             userInfo: undefined,
