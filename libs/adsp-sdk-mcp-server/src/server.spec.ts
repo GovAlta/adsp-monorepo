@@ -267,7 +267,7 @@ describe('shared tools', () => {
     const fromAlpha = await alphaClient.callTool({ name: 'search_adsp_docs', arguments: { query: 'beta' } });
     const fromBeta = await betaClient.callTool({ name: 'search_adsp_docs', arguments: { query: 'beta' } });
 
-    expect(JSON.parse(firstText(fromAlpha))).toEqual([]);
+    expect(firstText(fromAlpha)).toBe('No ADSP docs match "beta". Try other keywords, or call list_adsp_docs to browse.');
     expect(JSON.parse(firstText(fromBeta))[0].path).toBe('services/beta-service.md');
   });
 

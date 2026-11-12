@@ -49,7 +49,25 @@
           "content": [
             {
               "type": "text",
-              "text": "[]"
+              "text": "\"the of and\" has only common words such as \"how\" or \"the\", so there is nothing to search for. Use a service or feature name, e.g. \"send a domain event\", or call list_adsp_docs to browse."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "call": {
+        "name": "search_adsp_docs",
+        "arguments": {
+          "query": "kubernetes"
+        }
+      },
+      "outcome": {
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "No ADSP docs match \"kubernetes\". Try other keywords, or call list_adsp_docs to browse."
             }
           ]
         }

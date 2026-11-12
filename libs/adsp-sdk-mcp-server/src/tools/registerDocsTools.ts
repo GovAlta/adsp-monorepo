@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { DocsRepository } from '../docs/docsRepository';
+import { queryTerms } from '../search/textSearch';
 import { ToolDefinition } from './types';
 
 const SearchArgs = z.object({
@@ -38,7 +39,32 @@ export function createDocsTools(docs: DocsRepository): ToolDefinition[] {
       },
       handler: (args) => {
         const { query, limit } = SearchArgs.parse(args);
-        return { content: [{ type: 'text', text: JSON.stringify(docs.search(query, limit ?? 5), null, 2) }] };
+        if (queryTerms(query).length === 0) {
+          return {
+            content: [
+              {
+                type: 'text',
+                text:
+                  `"${query}" has only common words such as "how" or "the", so there is nothing to search for. ` +
+                  'Use a service or feature name, e.g. "send a domain event", or call list_adsp_docs to browse.',
+              },
+            ],
+          };
+        }
+
+        const results = docs.search(query, limit ?? 5);
+        if (results.length === 0) {
+          return {
+            content: [
+              {
+                type: 'text',
+                text: `No ADSP docs match "${query}". Try other keywords, or call list_adsp_docs to browse.`,
+              },
+            ],
+          };
+        }
+
+        return { content: [{ type: 'text', text: JSON.stringify(results, null, 2) }] };
       },
     },
     {
