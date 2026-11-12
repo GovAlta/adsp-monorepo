@@ -31,7 +31,7 @@ Analyze and anonymize requests are recorded in the [audit service](/adsp-monorep
 | `text.analyze-failed` | warning | An analyze request fails. |
 | `text.anonymize-failed` | warning | An anonymize request fails. |
 
-The actor is the caller of the API, typically a service account (identified by its `client_id`), not the person whose text is processed. The resource is a `text-processing-request` identified by the request `correlation_id`, or a generated one if none is supplied. Metadata holds the `language`, `scoreThreshold`, the number of entities detected (`entitiesDetected`), the calling service (`azp` claim) and, for failures, the `errorType`. The submitted text, detected values and replacements are never recorded.
+The actor is the caller of the API, typically a service account (identified by its `client_id`), not the person whose text is processed. The resource is a `text-processing-request` identified by the request `correlation_id`, or a generated one if none is supplied. Metadata holds the `language`, `scoreThreshold`, the number of entities detected (`entitiesDetected`), the calling service (`azp` claim) and, for failures, the `errorType`. Failed requests have status `failure` for client errors (4xx), such as an unsupported language, and `error` for any other exception. The submitted text, detected values and replacements are never recorded.
 
 The service account of PII service needs the audit service writer role. Set `AUDIT_ENABLED` to `false` to disable recording.
 

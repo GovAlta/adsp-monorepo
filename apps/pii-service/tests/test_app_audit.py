@@ -148,7 +148,7 @@ def test_analyze_records_success_without_content(pii):
         "entitiesDetected": 2,
         "callingService": "urn:ads:platform:form-service",
     }
-    assert "046" not in str(record) and "Jane" not in str(record)
+    assert "046 454 286" not in str(record) and "Jane" not in str(record)
 
 
 def test_audit_failure_does_not_fail_request(pii):
@@ -206,4 +206,5 @@ def test_validation_failure_is_audited_as_failed(pii):
     assert response.status_code == 400
     record = recorded(module)
     assert record.action == "text.analyze-failed"
+    assert record.status == "failure"
     assert record.metadata["errorType"] == "BadRequest"

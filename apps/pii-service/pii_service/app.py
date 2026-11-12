@@ -134,7 +134,7 @@ def audited(success_action: AuditAction, failure_action: AuditAction):
             try:
                 result = func(*args, **kwargs)
             except Exception as err:
-                _record_audit(failure_action, "error", type(err).__name__)
+                _record_audit(failure_action, _failure_status(err), type(err).__name__)
                 raise
             _record_audit(success_action, "success")
             return result
@@ -142,6 +142,12 @@ def audited(success_action: AuditAction, failure_action: AuditAction):
         return wrapper
 
     return decorator
+
+
+def _failure_status(err: Exception) -> str:
+    """Client errors (4xx) are failures; anything else is an error of the service."""
+    code = getattr(err, "code", None)
+    return "failure" if isinstance(code, int) and 400 <= code < 500 else "error"
 
 
 def _record_audit(action: AuditAction, status: str, error_type: Optional[str] = None):
