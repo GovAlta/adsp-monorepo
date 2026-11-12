@@ -20,7 +20,15 @@
       "outputs": ["{workspaceRoot}/coverage/libs/adsp-sdk-mcp-server"],
       "options": {
         "jestConfig": "libs/adsp-sdk-mcp-server/jest.config.ts"
-      }
+      },
+      "inputs": [
+        "default",
+        "^production",
+        "{workspaceRoot}/jest.preset.js",
+        "{workspaceRoot}/apps/*/swagger.config.js",
+        "{workspaceRoot}/apps/*/src/**/*.swagger.yml",
+        "{workspaceRoot}/apps/pii-service/pii_service/resources/swagger.yml"
+      ]
     },
     "build": {
       "executor": "@nx/js:tsc",
@@ -37,8 +45,20 @@
             "input": "docs",
             "glob": "**/*.md",
             "output": "assets/docs"
+          },
+          {
+            "input": "libs/adsp-sdk-mcp-server/api-specs",
+            "glob": "*.json",
+            "output": "assets/api-specs"
           }
         ]
+      }
+    },
+    "generate-api-specs": {
+      "executor": "nx:run-commands",
+      "cache": false,
+      "options": {
+        "command": "node libs/adsp-sdk-mcp-server/scripts/api-specs.mjs --write"
       }
     },
     "release": {

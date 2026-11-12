@@ -187,6 +187,20 @@ output over the fixture docs in `src/fixtures/docs`; the other tools are checked
 instead, so SDK reference and quickstart edits don't touch it. If you change docs search or the docs tools' output on
 purpose, update the matching entry.
 
+### Bundled OpenAPI specs
+
+`api-specs/` holds each service's OpenAPI spec as minified JSON, plus `index.json` (app, service URN, name,
+operation count). `scripts/api-specs.mjs` generates them the way each service's webpack build does: `swagger-jsdoc`
+over `apps/<app>/swagger.config.js`, `apps/<app>/src/**/*.ts` and `apps/<app>/src/**/*.swagger.yml`. pii-service
+uses its static `swagger.yml`. The build copies them to `assets/api-specs`.
+
+`src/api-specs/apiSpecs.spec.ts` fails CI when a service's spec changes without regenerating, or when an app with a
+`swagger.config.js` is in neither `services` nor `excluded` in `scripts/api-services.json`. To regenerate:
+
+```bash
+npx nx run adsp-sdk-mcp-server:generate-api-specs
+```
+
 To try it locally against a real MCP client, point the client config's `command`/`args` at the built entry point
 instead of `npx`:
 

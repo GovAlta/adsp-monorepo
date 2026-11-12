@@ -1,0 +1,45 @@
+{
+  "$comment": "Services whose OpenAPI spec the MCP server bundles. Every apps/*/swagger.config.js must be listed under services or excluded. `spec` names a static OpenAPI file, for a service without a swagger.config.js.",
+  "services": [
+    { "app": "agent-service", "urn": "urn:ads:platform:agent-service", "name": "Agent service" },
+    { "app": "audit-service", "urn": "urn:ads:platform:audit-service", "name": "Audit service" },
+    { "app": "cache-service", "urn": "urn:ads:platform:cache-service", "name": "Cache service" },
+    { "app": "calendar-service", "urn": "urn:ads:platform:calendar-service", "name": "Calendar service" },
+    { "app": "comment-service", "urn": "urn:ads:platform:comment-service", "name": "Comment service" },
+    {
+      "app": "configuration-service",
+      "urn": "urn:ads:platform:configuration-service",
+      "name": "Configuration service"
+    },
+    { "app": "directory-service", "urn": "urn:ads:platform:directory-service", "name": "Directory service" },
+    { "app": "event-service", "urn": "urn:ads:platform:event-service", "name": "Event service" },
+    { "app": "export-service", "urn": "urn:ads:platform:export-service", "name": "Export service" },
+    { "app": "feedback-service", "urn": "urn:ads:platform:feedback-service", "name": "Feedback service" },
+    { "app": "file-service", "urn": "urn:ads:platform:file-service", "name": "File service" },
+    { "app": "form-service", "urn": "urn:ads:platform:form-service", "name": "Form service" },
+    { "app": "notification-service", "urn": "urn:ads:platform:notification-service", "name": "Notification service" },
+    { "app": "pdf-service", "urn": "urn:ads:platform:pdf-service", "name": "PDF service" },
+    {
+      "app": "pii-service",
+      "urn": "urn:ads:platform:pii-service",
+      "name": "PII service",
+      "spec": "apps/pii-service/pii_service/resources/swagger.yml"
+    },
+    {
+      "app": "project-planner-service",
+      "urn": "urn:ads:platform:project-planner-service",
+      "name": "Project planner service"
+    },
+    { "app": "push-service", "urn": "urn:ads:platform:push-service", "name": "Push service" },
+    { "app": "status-service", "urn": "urn:ads:platform:status-service", "name": "Status service" },
+    { "app": "task-service", "urn": "urn:ads:platform:task-service", "name": "Task service" },
+    { "app": "tenant-management-api", "urn": "urn:ads:platform:tenant-service", "name": "Tenant service" },
+    { "app": "token-handler", "urn": "urn:ads:platform:token-handler", "name": "Token handler" },
+    { "app": "value-service", "urn": "urn:ads:platform:value-service", "name": "Value service" },
+    { "app": "verify-service", "urn": "urn:ads:platform:verify-service", "name": "Verify service" }
+  ],
+  "excluded": {
+    "dashboard-metrics": "Internal metrics for the platform team's dashboard, not an API for product teams.",
+    "tenant-management-gateway": "Backend for the tenant admin web app; its routes overlap tenant-service."
+  }
+}
