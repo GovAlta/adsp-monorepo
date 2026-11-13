@@ -191,11 +191,17 @@ nx lint adsp-sdk-mcp-server
 
 ### Refresh workflow
 
-The bundled content is refreshed from source on every release, not fetched live:
+The bundled content is refreshed from source on every release, not fetched live. After changing `docs/`, a service's
+OpenAPI fragments or `swagger.config.js`, or `scripts/api-services.json`, run:
+
+```bash
+npx nx run adsp-sdk-mcp-server:sync-content
+```
+
+and commit what it changes in the same PR. In Claude Code, `/adsp-mcp-sync` does this and checks the SDK reference.
 
 - **Docs.** The build copies `docs/**/*.md` into the package. `src/docs/docs-lock.json` fingerprints those pages, and
-  `src/docs/docsLock.spec.ts` fails CI when `docs/` changes without it. In a PR that changes `docs/`, run
-  `npx nx run adsp-sdk-mcp-server:update-docs-lock` and commit the lock. The lock is inside this package, so the
+  `src/docs/docsLock.spec.ts` fails CI when `docs/` changes without it. `sync-content` updates it. The lock is inside this package, so the
   change releases it: `.releaserc.json` releases a patch for `docs` commits as well as `feat` and `fix`.
 - **SDK reference.** Maintained by hand, and checked against the SDK source (below).
 - **Provenance.** The `release` target runs `scripts/provenance.mjs` before publishing. It writes
@@ -226,11 +232,8 @@ over `apps/<app>/swagger.config.js`, `apps/<app>/src/**/*.ts` and `apps/<app>/sr
 uses its static `swagger.yml`. The build copies them to `assets/api-specs`.
 
 `src/api-specs/apiSpecs.spec.ts` fails CI when a service's spec changes without regenerating, or when an app with a
-`swagger.config.js` is in neither `services` nor `excluded` in `scripts/api-services.json`. To regenerate:
-
-```bash
-npx nx run adsp-sdk-mcp-server:generate-api-specs
-```
+`swagger.config.js` is in neither `services` nor `excluded` in `scripts/api-services.json`. `sync-content`
+regenerates them.
 
 To try it locally against a real MCP client, point the client config's `command`/`args` at the built entry point
 instead of `npx`:

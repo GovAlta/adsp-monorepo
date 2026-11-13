@@ -15,7 +15,7 @@ const LIB_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const WORKSPACE_ROOT = resolve(LIB_ROOT, '../..');
 const OUTPUT_DIR = join(LIB_ROOT, 'api-specs');
 const SERVICES = JSON.parse(readFileSync(join(LIB_ROOT, 'scripts/api-services.json'), 'utf8'));
-const UPDATE_COMMAND = 'npx nx run adsp-sdk-mcp-server:generate-api-specs';
+const UPDATE_COMMAND = 'npx nx run adsp-sdk-mcp-server:sync-content';
 const OPENAPI_KEYS = ['openapi', 'info', 'servers', 'paths', 'components', 'security', 'tags', 'externalDocs'];
 
 function sortKeys(object) {
