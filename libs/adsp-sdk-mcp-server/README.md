@@ -4,8 +4,8 @@ An MCP (Model Context Protocol) server that gives an AI coding assistant grounde
 [Alberta Digital Service Platform](https://govalta.github.io/adsp-monorepo) (ADSP) and the Node SDK
 (`@abgov/adsp-service-sdk`), instead of guessing.
 
-It bundles the ADSP documentation site content and a curated reference of every `@abgov/adsp-service-sdk` export,
-and exposes them over stdio via seven tools:
+It bundles the ADSP documentation site content, the OpenAPI specs of ADSP services, and a curated reference of every
+`@abgov/adsp-service-sdk` export, and exposes them over stdio via eleven tools:
 
 - `search_adsp_docs` — keyword search across ADSP platform docs (getting started, architecture, service concepts,
   tutorials). Common words people use that the docs don't, such as `websocket` or `auth`, also search for the
@@ -23,6 +23,18 @@ and exposes them over stdio via seven tools:
   instead of defaulting to an admin role.
 - `get_service_configuration_schema` — **live.** Reads platform services' configuration schemas from
   configuration-service, for the shape of `serviceConfigurations` entries in `initializeService`.
+- `get_adsp_mcp_server_info` — this server's version and where its bundled content came from: the docs source
+  commit, the `@abgov/adsp-service-sdk` version the SDK reference matches, and the release time. Lets an agent warn
+  that an answer may be stale.
+- `list_service_apis` — the ADSP services that publish a REST API, with URN and operation count.
+- `search_service_endpoints` — keyword search over those services' endpoints (path, summary, tags, description),
+  optionally within one service.
+- `read_service_endpoint` — one endpoint as its service's OpenAPI spec defines it: description, parameters, request
+  body and responses with schema references inlined. `access` quotes the description's sentences about roles,
+  tenancy and anonymous access; structured role metadata is planned (CS-5731).
+
+The three API tools read the bundled OpenAPI specs (see [Bundled OpenAPI specs](#bundled-openapi-specs)), the same
+content each service serves at `/swagger/docs/v1`, so they work offline.
 
 The two live tools require logging in first (see below). Everything else in this package works fully offline with no
 setup.
@@ -52,7 +64,7 @@ Add it to your MCP client's server config, run via `npx`:
 ### HTTP transport
 
 To host the server instead of running it per user, start it with `MCP_TRANSPORT=http`. It serves Streamable HTTP
-at `POST /mcp`, with a liveness check at `GET /health`.
+at `POST /mcp`, with a liveness check at `GET /health` and a readiness check at `GET /ready`.
 
 | Variable | Default | Purpose |
 |---|---|---|
@@ -63,6 +75,8 @@ at `POST /mcp`, with a liveness check at `GET /health`.
 | `MCP_IN_FLIGHT_WAIT_MS` | `1000` | How long a request waits for a free slot before getting `503`. Also how long a live tool waits for a free upstream slot |
 | `MCP_RATE_LIMIT_PER_MINUTE` | `1200` | `POST /mcp` requests allowed per client IP per minute, per process. `0` turns the limit off |
 | `MCP_LIVE_TOOL_MAX_CONCURRENT` | `8` | Live-tool calls to ADSP running at once per process, across both live tools |
+| `MCP_SHUTDOWN_DELAY_MS` | `5000` | After a shutdown signal, how long to keep serving with `/ready` failing, so the router stops sending traffic first |
+| `MCP_SHUTDOWN_TIMEOUT_MS` | `30000` | Hard deadline from the signal to exit, even if a request is still running. Must be longer than the delay |
 | `TRUSTED_PROXY` | `uniquelocal` | Express [`trust proxy`](https://expressjs.com/en/guide/behind-proxies.html) setting, so the client IP comes from the router's `X-Forwarded-For` |
 | `OTEL_EXPORTER_OTLP_ENDPOINT` | unset | OTLP/HTTP collector base URL. When set, metrics are exported to `<endpoint>/v1/metrics` |
 | `OTEL_METRIC_EXPORT_INTERVAL` | `60000` | Metric export interval, in milliseconds |
@@ -76,6 +90,24 @@ and an idle client never loses its session. `GET /mcp` and `DELETE /mcp` return 
 there is no stream to open and no session to delete.
 
 `SESSION_TTL_MINUTES` has been removed and is ignored: there are no sessions to expire.
+
+#### Health and shutdown
+
+- `GET /health` is liveness: it answers `200` while the process is up, including during the shutdown delay, so a pod
+  that is still finishing requests isn't restarted. Once the delay ends the port is closed.
+- `GET /ready` is readiness. The server only listens once the docs index is built, so the check fails while the index
+  loads. It answers `200` after that, and `503` from the moment shutdown starts.
+
+On `SIGTERM` or `SIGINT`:
+
+1. `/ready` starts failing, and responses carry `Connection: close` so clients reconnect elsewhere.
+2. The server keeps serving for `MCP_SHUTDOWN_DELAY_MS`, while the router takes the pod out of rotation.
+3. It stops accepting new connections, lets requests already running finish, flushes metrics, and exits `0`. A
+   request already on an open connection is still answered, with `Connection: close`.
+4. If a request is still running at `MCP_SHUTDOWN_TIMEOUT_MS`, it exits `1` anyway.
+
+Set the pod's `terminationGracePeriodSeconds` above `MCP_SHUTDOWN_TIMEOUT_MS`, and keep `MCP_SHUTDOWN_DELAY_MS` longer
+than it takes the router to stop sending traffic to a pod that fails readiness.
 
 #### Overload guards
 
@@ -137,7 +169,7 @@ OpenTelemetry SDK isn't loaded. Stdio mode never exports metrics.
 
 Every label takes a value from a fixed set:
 
-- `mcp.tool.name`: one of the seven tool names, or `unknown` for any name the server doesn't have.
+- `mcp.tool.name`: one of the eleven tool names, or `unknown` for any name the server doesn't have.
 - `mcp.method.name`: an MCP method such as `initialize`, `tools/list` or `tools/call`; `other` for any other method;
   `batch` for a JSON-RPC batch; `unparsed` when the body wasn't valid JSON-RPC or was too large.
 - `error.type` on `mcp.request.duration`: `aborted` when the client disconnected before the response was written; the
@@ -177,6 +209,31 @@ nx test adsp-sdk-mcp-server
 nx lint adsp-sdk-mcp-server
 ```
 
+### Refresh workflow
+
+The bundled content is refreshed from source on every release, not fetched live. After changing `docs/`, a service's
+OpenAPI fragments or `swagger.config.js`, or `scripts/api-services.json`, run:
+
+```bash
+npx nx run adsp-sdk-mcp-server:sync-content
+```
+
+and commit what it changes in the same PR. In Claude Code, `/adsp-mcp-sync` does this and checks the SDK reference.
+
+- **Docs.** The build copies `docs/**/*.md` into the package. `src/docs/docs-lock.json` fingerprints those pages, and
+  `src/docs/docsLock.spec.ts` fails CI when `docs/` changes without it. `sync-content` updates it. The lock is inside this package, so the
+  change releases it: `.releaserc.json` releases a patch for `docs` commits as well as `feat` and `fix`.
+- **SDK reference.** Maintained by hand, and checked against the SDK source (below).
+- **Provenance.** The `release` target runs `scripts/provenance.mjs` before publishing. It writes
+  `provenance.json` into the package with the source commit, the last commit to `docs/`, the latest
+  `adsp-service-sdk` release tag and whether the SDK source has changed since. `get_adsp_mcp_server_info` reports it,
+  and reports no provenance when running from source or a local build.
+- **Hosted builds from a branch** (the ARO deployment in `GovAlta-EMU/osp-mcp-servers` builds `main`, not a
+  release) run `node libs/adsp-sdk-mcp-server/scripts/provenance.mjs --source-build` after `nx build`, with a
+  `fetch-depth: 0` checkout. It records the same provenance and sets the built version to
+  `<latest release>+<branch>.<short sha>`, e.g. `1.25.0+main.8b3ef02`, instead of the source `package.json`
+  placeholder.
+
 `src/sdk-reference/reference.ts` is maintained by hand. `reference.spec.ts` reads the root exports of
 `libs/adsp-service-sdk/src/index.ts` with the TypeScript compiler and fails when the reference drifts: a missing or
 stale name, or a different kind, module or deprecated flag, or a `seeAlso` with no entry. When you change what the SDK
@@ -186,6 +243,17 @@ exports, update `reference.ts` in the same PR.
 output over the fixture docs in `src/fixtures/docs`; the other tools are checked for equal output across transports
 instead, so SDK reference and quickstart edits don't touch it. If you change docs search or the docs tools' output on
 purpose, update the matching entry.
+
+### Bundled OpenAPI specs
+
+`api-specs/` holds each service's OpenAPI spec as minified JSON, plus `index.json` (app, service URN, name,
+operation count). `scripts/api-specs.mjs` generates them the way each service's webpack build does: `swagger-jsdoc`
+over `apps/<app>/swagger.config.js`, `apps/<app>/src/**/*.ts` and `apps/<app>/src/**/*.swagger.yml`. pii-service
+uses its static `swagger.yml`. The build copies them to `assets/api-specs`.
+
+`src/api-specs/apiSpecs.spec.ts` fails CI when a service's spec changes without regenerating, or when an app with a
+`swagger.config.js` is in neither `services` nor `excluded` in `scripts/api-services.json`. `sync-content`
+regenerates them.
 
 To try it locally against a real MCP client, point the client config's `command`/`args` at the built entry point
 instead of `npx`:

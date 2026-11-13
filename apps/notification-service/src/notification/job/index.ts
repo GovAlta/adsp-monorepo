@@ -9,6 +9,7 @@ import {
   TokenProvider,
 } from '@abgov/adsp-service-sdk';
 import { DomainEventWorkItem, WorkQueueService } from '@core-services/core-common';
+import { NotificationAuditor } from '../audit';
 import { createProcessEventJob } from './processEvent';
 import { SubscriptionRepository } from '../repository';
 import { NotificationWorkItem, Providers } from '../types';
@@ -22,6 +23,7 @@ interface JobProps {
   directory: ServiceDirectory;
   configurationService: ConfigurationService;
   eventService: EventService;
+  auditor: NotificationAuditor;
   events: Observable<DomainEventWorkItem>;
   queueService: WorkQueueService<NotificationWorkItem>;
   subscriptionRepository: SubscriptionRepository;
@@ -36,6 +38,7 @@ export const createJobs = ({
   directory,
   configurationService,
   eventService,
+  auditor,
   events,
   queueService,
   subscriptionRepository,
@@ -44,6 +47,7 @@ export const createJobs = ({
   const sendNotificationJob = createSendNotificationJob({
     logger,
     eventService,
+    auditor,
     providers,
   });
 

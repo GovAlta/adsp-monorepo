@@ -298,6 +298,7 @@ Before completing any task, verify:
 - [ ] OpenAPI documentation updated
 - [ ] Error responses follow standard format
 - [ ] Proper HTTP status codes used
+- [ ] MCP server content synced: changes to `docs/`, `*.swagger.yml`, `swagger.config.js` or `adsp-service-sdk` exports need `npx nx run adsp-sdk-mcp-server:sync-content` (and `reference.ts` for SDK exports), committed in the same PR; `nx test adsp-sdk-mcp-server` fails otherwise
 
 ### New Features
 - [ ] Configuration is tenant-scoped appropriately

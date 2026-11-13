@@ -30,6 +30,7 @@ describe('toErrorReason', () => {
     [400, 'File scan pending.', 'scan-pending'],
     [400, 'Cannot access file marked for deletion.', 'unavailable'],
     [400, undefined, 'unavailable'],
+    [400, 'Value not valid for file type: Invalid file type extension: .mp4', 'unsupported-format'],
     [500, undefined, 'unexpected'],
     [503, undefined, 'unexpected'],
   ])('maps status %s with message %p to %s', (status, message, reason) => {

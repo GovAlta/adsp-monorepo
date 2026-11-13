@@ -102,6 +102,10 @@ describe('adsp-sdk-mcp-server', () => {
         'get_platform_quickstart',
         'list_service_roles',
         'get_service_configuration_schema',
+        'get_adsp_mcp_server_info',
+        'list_service_apis',
+        'search_service_endpoints',
+        'read_service_endpoint',
       ])
     );
   });

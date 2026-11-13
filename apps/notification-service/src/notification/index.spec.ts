@@ -2,6 +2,7 @@ import { Application } from 'express';
 import { Logger } from 'winston';
 import {
   AdspId,
+  AuditService,
   ConfigurationService,
   EventService,
   ServiceDirectory,
@@ -27,6 +28,7 @@ describe('applyNotificationMiddleware', () => {
   let configurationService: ConfigurationService;
   let directory: ServiceDirectory;
   let eventService: EventService;
+  let auditService: AuditService;
   let tenantService: TenantService;
   let eventSubscriber: DomainEventSubscriberService;
   let queueService: WorkQueueService<NotificationWorkItem>;
@@ -45,6 +47,7 @@ describe('applyNotificationMiddleware', () => {
     configurationService = {} as ConfigurationService;
     directory = {} as ServiceDirectory;
     eventService = {} as EventService;
+    auditService = { record: jest.fn() } as unknown as AuditService;
     tenantService = {} as TenantService;
     eventSubscriber = {
       getItems: jest.fn().mockReturnValue([]),
@@ -69,6 +72,7 @@ describe('applyNotificationMiddleware', () => {
       configurationService,
       directory,
       eventService,
+      auditService,
       tenantService,
       eventSubscriber,
       queueService,
@@ -85,6 +89,7 @@ describe('applyNotificationMiddleware', () => {
       configurationService,
       directory,
       eventService,
+      auditor: expect.any(Function),
       tenantService,
       events: [],
       queueService,
@@ -104,6 +109,7 @@ describe('applyNotificationMiddleware', () => {
       configurationService,
       directory,
       eventService,
+      auditService,
       tenantService,
       eventSubscriber,
       queueService,
@@ -118,6 +124,7 @@ describe('applyNotificationMiddleware', () => {
       logger,
       subscriptionRepository: repositories.subscriptionRepository,
       eventService,
+      auditor: expect.any(Function),
       verifyService,
       tenantService,
       directory,
@@ -135,6 +142,7 @@ describe('applyNotificationMiddleware', () => {
       configurationService,
       directory,
       eventService,
+      auditService,
       tenantService,
       eventSubscriber,
       queueService,

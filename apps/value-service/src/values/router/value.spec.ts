@@ -7,6 +7,7 @@ import { NamespaceEntity } from '../model';
 import { ServiceUserRoles } from '../types';
 import {
   assertUserCanWrite,
+  countDistinctEventResources,
   countValue,
   createValueRouter,
   readMetric,
@@ -223,11 +224,76 @@ describe('event router', () => {
       repository: repositoryMock,
       serviceMetricRollupRepository: serviceMetricRollupRepositoryMock,
       serviceMetricRollupTrailingDays: 3,
+      eventResourceRollupRepository: { countDistinct: jest.fn() } as never,
       eventService: eventServiceMock,
       auditService: auditServiceMock,
     });
 
     expect(router).toBeTruthy();
+  });
+
+  describe('countDistinctEventResources', () => {
+    const sources = [{ namespace: 'test-service', names: ['test-created', 'test-updated'], contextKey: 'testId' }];
+    const reader = {
+      tenantId,
+      id: 'test-reader',
+      roles: [ServiceUserRoles.Reader],
+    };
+
+    it('counts against the configured sources', async () => {
+      const repository = { countDistinct: jest.fn().mockResolvedValue(3) };
+      const req = {
+        tenant: { id: tenantId },
+        user: reader,
+        query: {
+          namespace: 'test-service',
+          contextKey: 'testId',
+          intervalMin: '2026-10-01T00:00:00.000Z',
+          intervalMax: '2026-11-01T00:00:00.000Z',
+        },
+      };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+
+      await countDistinctEventResources(repository as never, sources)(
+        req as unknown as Request,
+        res as unknown as Response,
+        next,
+      );
+
+      expect(next).not.toHaveBeenCalled();
+      expect(repository.countDistinct).toHaveBeenCalledWith(
+        expect.objectContaining({ namespace: 'test-service', names: ['test-created', 'test-updated'] }),
+      );
+      expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ count: 3 }));
+    });
+
+    it('trims the event names it is given', async () => {
+      const repository = { countDistinct: jest.fn().mockResolvedValue(1) };
+      const req = {
+        tenant: { id: tenantId },
+        user: reader,
+        query: {
+          namespace: 'test-service',
+          contextKey: 'testId',
+          names: 'test-created, test-updated',
+          intervalMin: '2026-10-01T00:00:00.000Z',
+          intervalMax: '2026-11-01T00:00:00.000Z',
+        },
+      };
+      const next = jest.fn();
+
+      await countDistinctEventResources(repository as never, sources)(
+        req as unknown as Request,
+        { send: jest.fn() } as unknown as Response,
+        next,
+      );
+
+      expect(next).not.toHaveBeenCalled();
+      expect(repository.countDistinct).toHaveBeenCalledWith(
+        expect.objectContaining({ names: ['test-created', 'test-updated'] }),
+      );
+    });
   });
 
   describe('runServiceMetricRollup', () => {

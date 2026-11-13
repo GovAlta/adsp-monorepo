@@ -128,6 +128,55 @@ describe('AuditLogs', () => {
     expect(baseElement.querySelector("goa-dropdown[name='audit-action']")).toBeInTheDocument();
   });
 
+  it('makes the namespace and action dropdowns searchable rather than native', () => {
+    const catalogs = [{ application: 'form-app', isCore: false, actions: [{ name: 'submit' }] }];
+    const { baseElement } = renderLogs(state(['audit-reader'], { catalogs }));
+    ['audit-namespace', 'audit-action'].forEach((name) => {
+      const dropdown = baseElement.querySelector(`goa-dropdown[name='${name}']`);
+      expect(dropdown).toHaveAttribute('filterable', 'true');
+      expect(dropdown).not.toHaveAttribute('native', 'true');
+    });
+  });
+
+  it('clears a previously selected action when a namespace is chosen', () => {
+    const catalogs = [
+      { application: 'form-app', isCore: false, actions: [{ name: 'submit' }] },
+      { application: 'file-app', isCore: false, actions: [{ name: 'upload' }] },
+    ];
+    const { store, baseElement } = renderLogs(state(['audit-reader'], { catalogs }));
+    const change = (name: string, value: string) =>
+      fireEvent(
+        baseElement.querySelector(`goa-dropdown[name='${name}']`),
+        new CustomEvent('_change', { detail: { name, value } }),
+      );
+    change('audit-action', 'form-app/submit');
+    change('audit-namespace', 'file-app');
+    fireEvent(baseElement.querySelector("goa-button[testId='audit-search']"), new CustomEvent('_click'));
+
+    const criteria = store.getActions().pop().criteria;
+    expect(criteria.namespace).toBe('file-app');
+    expect(criteria.action).toBeUndefined();
+  });
+
+  it('clears the filters when the dropdowns are cleared', () => {
+    const catalogs = [{ application: 'form-app', isCore: false, actions: [{ name: 'submit' }] }];
+    const { store, baseElement } = renderLogs(state(['audit-reader'], { catalogs }));
+    const change = (name: string, value: string) =>
+      fireEvent(
+        baseElement.querySelector(`goa-dropdown[name='${name}']`),
+        new CustomEvent('_change', { detail: { name, value } }),
+      );
+    change('audit-namespace', 'form-app');
+    change('audit-action', 'submit');
+    change('audit-action', '');
+    change('audit-namespace', '');
+    fireEvent(baseElement.querySelector("goa-button[testId='audit-search']"), new CustomEvent('_click'));
+
+    const criteria = store.getActions().pop().criteria;
+    expect(criteria.namespace).toBeUndefined();
+    expect(criteria.action).toBeUndefined();
+  });
+
   it('prefixes actions with their namespace and filters by both when one is chosen', () => {
     const catalogs = [
       { application: 'form-app', isCore: false, actions: [{ name: 'submit' }] },
@@ -135,7 +184,7 @@ describe('AuditLogs', () => {
     ];
     const { store, baseElement } = renderLogs(state(['audit-reader'], { catalogs }));
     const items = Array.from(baseElement.querySelectorAll("goa-dropdown[name='audit-action'] goa-dropdown-item"));
-    expect(items.map((i) => i.getAttribute('value'))).toEqual(['any', 'file-app/submit', 'form-app/submit']);
+    expect(items.map((i) => i.getAttribute('value'))).toEqual(['file-app/submit', 'form-app/submit']);
 
     const action = baseElement.querySelector("goa-dropdown[name='audit-action']");
     fireEvent(action, new CustomEvent('_change', { detail: { name: 'audit-action', value: 'form-app/submit' } }));

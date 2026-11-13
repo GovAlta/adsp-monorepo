@@ -116,6 +116,7 @@ describe('subscription router documented behaviour', () => {
         logger: loggerMock,
         subscriptionRepository: repositoryMock as never,
         eventService: eventServiceMock,
+        auditor: jest.fn(),
         verifyService: verifyServiceMock as never,
         tenantService: null,
         directory: directoryMock,

@@ -2,6 +2,7 @@ import { Application } from 'express';
 import { Logger } from 'winston';
 import {
   AdspId,
+  AuditService,
   ConfigurationService,
   EventService,
   ServiceDirectory,
@@ -9,6 +10,7 @@ import {
   TokenProvider,
 } from '@abgov/adsp-service-sdk';
 import { assertAuthenticatedHandler, DomainEventSubscriberService, WorkQueueService } from '@core-services/core-common';
+import { createNotificationAuditor } from './audit';
 import { Repositories } from './repository';
 import { createJobs } from './job';
 import { TemplateService } from './template';
@@ -17,6 +19,7 @@ import { createSubscriptionRouter } from './router';
 import { VerifyService } from './verify';
 
 export * from './types';
+export * from './audit';
 export * from './repository';
 export * from './model';
 export * from './template';
@@ -33,6 +36,7 @@ interface NotificationMiddlewareProps extends Repositories {
   tenantService: TenantService;
   directory: ServiceDirectory;
   eventService: EventService;
+  auditService: AuditService;
   eventSubscriber: DomainEventSubscriberService;
   queueService: WorkQueueService<NotificationWorkItem>;
   verifyService: VerifyService;
@@ -48,6 +52,7 @@ export const applyNotificationMiddleware = (
     configurationService,
     directory,
     eventService,
+    auditService,
     subscriptionRepository,
     tenantService,
     eventSubscriber,
@@ -56,6 +61,8 @@ export const applyNotificationMiddleware = (
     providers,
   }: NotificationMiddlewareProps
 ): Application => {
+  const auditor = createNotificationAuditor(auditService, logger);
+
   createJobs({
     serviceId,
     logger,
@@ -63,6 +70,7 @@ export const applyNotificationMiddleware = (
     configurationService,
     directory,
     eventService,
+    auditor,
     tenantService,
     events: eventSubscriber.getItems(),
     queueService,
@@ -75,6 +83,7 @@ export const applyNotificationMiddleware = (
     logger,
     subscriptionRepository,
     eventService,
+    auditor,
     verifyService,
     tenantService,
     directory,
