@@ -342,6 +342,111 @@ components:
       403:
         $ref: '#/components/responses/ValueForbidden'
 
+/value/v1/event-resources/distinct-count:
+  get:
+    tags:
+      - Value
+    description: >
+      Counts the distinct resources a tenant's events named over a period, for example the PDF templates used by
+      pdf-service events. Answered from a daily rollup of the event log; the current day, and any history the rollup
+      has not reached yet, are read from the event log for that span only. Only the resources the rollup maintains are
+      accepted: templateId for pdf-service and definitionId for form-service events. Requires the value-reader role
+      and a tenant context: tenant users count their own tenant, and core users must set tenantId.
+    parameters:
+      - $ref: '#/components/parameters/ValueTenantId'
+      - name: namespace
+        description: Namespace of the events, which is the service that sends them.
+        in: query
+        required: true
+        schema:
+          type: string
+          minLength: 1
+          maxLength: 50
+        example: pdf-service
+      - name: contextKey
+        description: Event log context property that names the resource.
+        in: query
+        required: true
+        schema:
+          type: string
+          minLength: 1
+          maxLength: 50
+        example: templateId
+      - name: names
+        description: >
+          Comma separated event names to count across. Defaults to every event the rollup maintains for the namespace,
+          and responds 400 if it names any other.
+        in: query
+        required: false
+        schema:
+          type: string
+        example: pdf-generation-queued,pdf-generated,pdf-generation-failed
+      - name: intervalMin
+        description: Inclusive start of the period (ISO 8601).
+        in: query
+        required: true
+        schema:
+          type: string
+          format: date-time
+        example: '2025-11-01T00:00:00.000Z'
+      - name: intervalMax
+        description: Exclusive end of the period (ISO 8601). The period can be at most 731 days.
+        in: query
+        required: true
+        schema:
+          type: string
+          format: date-time
+        example: '2026-11-01T00:00:00.000Z'
+    responses:
+      200:
+        description: Distinct resources counted.
+        content:
+          application/json:
+            example:
+              namespace: pdf-service
+              contextKey: templateId
+              names:
+                - pdf-generation-queued
+                - pdf-generated
+                - pdf-generation-failed
+              intervalMin: '2025-11-01T00:00:00.000Z'
+              intervalMax: '2026-11-01T00:00:00.000Z'
+              count: 12
+            schema:
+              type: object
+              properties:
+                namespace:
+                  type: string
+                contextKey:
+                  type: string
+                names:
+                  type: array
+                  items:
+                    type: string
+                intervalMin:
+                  type: string
+                  format: date-time
+                intervalMax:
+                  type: string
+                  format: date-time
+                count:
+                  type: integer
+                  description: Number of distinct resources named by the events in the period.
+      400:
+        description: >
+          A parameter failed validation, tenant context is missing, the namespace and contextKey are not rolled up,
+          names includes an event that is not rolled up, or the period is empty or longer than 731 days.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ValueError'
+            example:
+              errorMessage: Distinct templateId is not rolled up for test-service events.
+      401:
+        $ref: '#/components/responses/ValueUnauthorized'
+      403:
+        $ref: '#/components/responses/ValueForbidden'
+
 /value/v1/{namespace}/values:
   get:
     tags:
