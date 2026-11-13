@@ -18,6 +18,10 @@ module.exports = {
       name: 'Form schedules',
       description: 'API to manage the scheduled intake periods of form definitions.',
     },
+    {
+      name: 'Form registration',
+      description: 'API to request access to restricted forms and to approve or deny those requests.',
+    },
   ],
   components: {
     securitySchemes: {

@@ -7,6 +7,9 @@ export enum FormServiceRoles {
   FileUploader = 'form-file-uploader',
   FileReader = 'form-file-reader',
   Tester = 'form-tester',
+  RegistrationRequester = 'form-access-requester',
+  RegistrationReader = 'form-access-reader',
+  RegistrationWriter = 'form-access-writer',
 }
 
 export enum DirectoryServiceRoles {

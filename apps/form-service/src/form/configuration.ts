@@ -82,6 +82,28 @@ export const configurationSchema = {
         },
       },
     },
+    registration: {
+      type: 'object',
+      additionalProperties: false,
+      required: ['enabled'],
+      properties: {
+        enabled: { type: 'boolean' },
+        accessGroup: { type: 'string', minLength: 1, maxLength: 255 },
+        dataSchema: {
+          allOf: [
+            { $ref: 'http://json-schema.org/draft-07/schema#' },
+            {
+              properties: {
+                properties: {
+                  propertyNames: { not: { enum: ['firstName', 'lastName', 'email'] } },
+                },
+              },
+            },
+          ],
+        },
+        uiSchema: { type: 'object' },
+      },
+    },
   },
   required: ['id', 'name', 'anonymousApply', 'applicantRoles', 'assessorRoles'],
 };
