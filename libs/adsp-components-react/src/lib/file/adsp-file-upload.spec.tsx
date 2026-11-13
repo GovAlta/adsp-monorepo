@@ -338,4 +338,25 @@ describe('ADSPFileUpload', () => {
     await waitFor(() => expect(document.activeElement).toBe(screen.getByTestId('upload')));
     expect(screen.getByRole('status')).toHaveTextContent('Uploading Annual report.pdf...');
   });
+
+  test('Cancel on a failed card dismisses it', async () => {
+    // Arrange
+    const client = createClient({
+      getFileType: jest.fn().mockResolvedValue({ ...fileType, allowedFileTypes: ['.txt'] }),
+    });
+    await renderUpload(client);
+    selectFile(file);
+    await screen.findByRole('alert');
+
+    // Act
+    await act(async () => {
+      // GoA's card reports Cancel in its error state as a delete.
+      fireEvent(byGoaTestId('upload-card-0') as HTMLElement, new CustomEvent('_delete', { detail: {} }));
+    });
+
+    // Assert
+    expect(byGoaTestId('upload-card-0')).toBeNull();
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  });
 });
+

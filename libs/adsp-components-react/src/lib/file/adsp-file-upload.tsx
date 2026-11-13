@@ -152,6 +152,8 @@ export const ADSPFileUpload = ({
                       item.status === 'failed' && item.error ? getFileUploadErrorMessage(item.error.reason) : undefined
                     }
                     onCancel={withFocusRestore(() => remove(item.id), item.id)}
+                    // A card in its error state offers Cancel but reports it as a delete.
+                    onDelete={withFocusRestore(() => remove(item.id), item.id)}
                     testId={childTestId(`card-${index}`)}
                   />
                   {item.status === 'uploading' && (
