@@ -142,6 +142,37 @@ The agent service sends the following domain events under the `agent-service` na
 
 The service doesn't consume domain events, but it listens for configuration service updates so that changed agent configuration applies without waiting for its cache to expire.
 
+## Audit actions
+
+Agent service records audit events in the `agent-service` namespace of the [audit service](audit-service.md). Records are written to the tenant of the agent configuration. Agent interactions have the agent as the resource (`{ type: 'agent', id: <agent ID>, name: <agent name> }`); thread deletion has the thread as the resource (`{ type: 'thread', id: <thread ID> }`). The thread ID is the correlation ID, and `agentId` and `threadId` are in the metadata. All actions are version 1.
+
+| action                   | category       | severity | retention class | recorded when                                                                                                                               |
+| :----------------------- | :------------- | :------- | :-------------- | :------------------------------------------------------------------------------------------------------------------------------------------ |
+| agent.message.sent       | data-access    | info     | compliance      | A message to an agent is accepted, over REST or socket.io, with `messageLength` (characters of text) and `attachmentCount` in the metadata. |
+| agent.response.completed | runtime        | info     | compliance      | An agent's response finishes, with `responseLength` and `hasStructuredOutput` in the metadata. See the statuses below.                      |
+| agent.tool.invoked       | runtime        | info     | compliance      | An agent calls a tool, with `toolId` and `toolType` (`builtin`, `api` or `mcp`) in the metadata. See the statuses below.                    |
+| agent.delegation.started | runtime        | info     | compliance      | An agent delegates a subtask to another agent, with the delegating agent as the resource and `delegateAgentId` in the metadata.             |
+| thread.deleted           | administrative | info     | standard        | A user deletes one of their own threads through the API.                                                                                    |
+
+The outcome is in the `status` of the record, not in the action name, so failures can be found with the `status` query filter:
+
+- `agent.tool.invoked` has status `failure` when the tool throws, fails input or output validation, or an MCP tool returns an error. `errorCode` in the metadata is the code of the error, or its name when it has no code (for example `ValidationError`).
+- `agent.response.completed` has status `failure` when the response stops with an error, with `errorCode` such as `GENERATION_DEADLINE` (time limit), `MAX_STEPS` (step limit), `ABORTED`, or the error name. It has status `blocked` when a guardrail stops the response, with `errorCode: 'TRIPWIRE'` and the `processorId` of the guardrail.
+- Other records have status `success`.
+
+The actor is the user who sent the message, or the service account for service-triggered calls. Tool calls and delegations made by a delegated agent are recorded with that agent's ID and the same user and thread, so each delegation in an agentic loop has its own record. Each tool call produces one `agent.tool.invoked` record.
+
+Message and response content, tool inputs and outputs, delegation prompts, error messages, structured output values, and token counts are never recorded. Messages rejected because the user lacks a required role, or that cannot be processed (for example, an attachment cannot be read), are not recorded.
+
+Not recorded by agent service:
+
+- Changes to agent configuration. Agents are configured in the [configuration service](configuration-service.md), which records `configuration.updated` and `configuration.deleted` with a change set, including changes to `instructions`, `tools`, `userRoles` and `mcp`, in the `configuration-service` namespace.
+- Threads deleted when they expire. These are signalled by the `thread-deleted` event.
+
+Tool calls can be high volume, so agent service sends audit events in batches of up to 100 events, and sends any remaining events on shutdown. Audit failures are logged by the SDK and do not fail the agent interaction. The agent service account requires the `audit-writer` role of `urn:ads:platform:audit-service`.
+
+Audit recording is on by default. Set the environment variable `AGENT_AUDIT_ENABLED=false` on agent service to turn it off, or `true` to turn it on regardless of the SDK `AUDIT_ENABLED` variable, which applies when `AGENT_AUDIT_ENABLED` is not set. The action catalog is still registered while recording is off, so turning it back on needs only a restart.
+
 ## Code examples
 
 ### Configure an agent

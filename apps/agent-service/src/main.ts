@@ -1,4 +1,10 @@
-import { AdspId, initializePlatform, instrumentAxios, ServiceMetricsValueDefinition } from '@abgov/adsp-service-sdk';
+import {
+  AdspId,
+  AuditService,
+  initializePlatform,
+  instrumentAxios,
+  ServiceMetricsValueDefinition,
+} from '@abgov/adsp-service-sdk';
 import type { User } from '@abgov/adsp-service-sdk';
 import { createLogger, createErrorHandler, UnauthorizedError } from '@core-services/core-common';
 import * as compression from 'compression';
@@ -14,6 +20,7 @@ import { promisify } from 'util';
 import { environment } from './environments/environment';
 import {
   AgentAttachmentsFileType,
+  AgentAuditActions,
   AgentConfigurations,
   AgentServiceConfiguration,
   applyAgentMiddleware,
@@ -31,7 +38,7 @@ import { fromSocketHandshake, REQ_SOCKET_PROP } from './socket';
 const logger = createLogger('agent-service', environment.LOG_LEVEL);
 assertWorkspaceEnvironment();
 
-const initializeApp = async (): Promise<Server> => {
+const initializeApp = async (): Promise<{ server: Server; auditService: AuditService }> => {
   const app = express();
   const server = createServer(app);
 
@@ -60,6 +67,7 @@ const initializeApp = async (): Promise<Server> => {
     healthCheck,
     traceHandler,
     eventService,
+    auditService,
   } = await initializePlatform(
     {
       serviceId,
@@ -95,11 +103,23 @@ const initializeApp = async (): Promise<Server> => {
       useLongConfigurationCacheTTL: true,
       enableConfigurationInvalidation: true,
       combineConfiguration: (tenant: AgentConfigurations, core: AgentConfigurations, tenantId) =>
-        new AgentServiceConfiguration(logger, directory, tokenProvider, eventService, tenantId, tenant, core),
+        new AgentServiceConfiguration(
+          logger,
+          directory,
+          tokenProvider,
+          eventService,
+          tenantId,
+          tenant,
+          core,
+          auditService,
+        ),
       tracing: environment.OTEL_EXPORTER_OTLP_ENDPOINT,
       metrics: environment.OTEL_EXPORTER_OTLP_ENDPOINT,
       additionalExtractors: [fromSocketHandshake],
       serviceConfigurations: [{ serviceId, configuration: CoreAgents }],
+      auditActions: AgentAuditActions,
+      // Tool calls can be high volume, so audit events are sent in batches.
+      audit: { batchSize: 100, enabled: environment.AGENT_AUDIT_ENABLED },
     },
     { logger },
   );
@@ -190,13 +210,13 @@ const initializeApp = async (): Promise<Server> => {
   const errorHandler = createErrorHandler(logger);
   app.use(errorHandler);
 
-  return server;
+  return { server, auditService };
 };
 
 // Node exits immediately on SIGTERM by default, which would abandon a form generation run mid-build.
 const SHUTDOWN_DRAIN_MS = 15 * 60 * 1000;
 
-initializeApp().then((app) => {
+initializeApp().then(({ server: app, auditService }) => {
   const port = environment.PORT || 3380;
 
   const server = app.listen(port, () => {
@@ -204,12 +224,15 @@ initializeApp().then((app) => {
   });
   server.on('error', (err) => logger.error(`Error encountered in server: ${err}`));
 
+  // Send audit events still waiting in a partial batch.
+  const exit = () => void auditService.flush().finally(() => process.exit(0));
+
   process.on('SIGTERM', () => {
     logger.info('SIGTERM received; refusing new connections and draining in-flight agent runs.');
-    server.close(() => process.exit(0));
+    server.close(exit);
     setTimeout(() => {
       logger.warn('Drain window elapsed; exiting with agent runs still open.');
-      process.exit(0);
+      exit();
     }, SHUTDOWN_DRAIN_MS).unref();
   });
 });

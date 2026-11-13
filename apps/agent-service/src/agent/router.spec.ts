@@ -71,6 +71,7 @@ describe('onIoConnection workspace socket events', () => {
       getConversationStatus:
         brokerOverrides.getConversationStatus ??
         jest.fn().mockResolvedValue({ contextTokens: 0, contextWindowTokens: 256000, state: 'ok' }),
+      recordResponseCompleted: jest.fn(),
     };
 
     const getAgent = jest.fn().mockResolvedValue(mockBroker);
@@ -973,6 +974,77 @@ describe('onIoConnection workspace socket events', () => {
   // -------------------------------------------------------------------------
   // message latency logging
   // -------------------------------------------------------------------------
+
+  describe('response audit', () => {
+    function streamReplying(failWith?: Error) {
+      return jest.fn().mockResolvedValue({
+        fullStream: (async function* () {
+          yield { type: 'text-delta', payload: { text: 'Done.' } };
+          if (failWith) {
+            throw failWith;
+          }
+        })(),
+        textStream: (async function* () {
+          yield 'Done.';
+          if (failWith) {
+            throw failWith;
+          }
+        })(),
+        object: Promise.resolve({ status: 'ok' }),
+      });
+    }
+
+    it.each([
+      ['text', false],
+      ['raw chunks', true],
+    ])('records the finished %s reply with its stream result and structured output', async (_mode, rawChunks) => {
+      // Arrange
+      const stream = streamReplying();
+      const { eventHandlers, mockBroker } = await connect({ stream });
+
+      // Act
+      await eventHandlers['message']({ agent: 'builder', threadId: 'thread-1', content: 'Build it', rawChunks });
+
+      // Assert
+      const result = await stream.mock.results[0].value;
+      expect(mockBroker.recordResponseCompleted).toHaveBeenCalledTimes(1);
+      expect(mockBroker.recordResponseCompleted).toHaveBeenCalledWith(mockUser, 'thread-1', result, {
+        output: { status: 'ok' },
+      });
+    });
+
+    it.each([
+      ['text', false],
+      ['raw chunks', true],
+    ])('records a %s reply that fails while streaming', async (_mode, rawChunks) => {
+      // Arrange
+      const error = new Error('connection reset');
+      const stream = streamReplying(error);
+      const { socket, eventHandlers, mockBroker } = await connect({ stream });
+
+      // Act
+      await eventHandlers['message']({ agent: 'builder', threadId: 'thread-1', content: 'Build it', rawChunks });
+
+      // Assert
+      const result = await stream.mock.results[0].value;
+      expect(socket.emit).toHaveBeenCalledWith('error', 'connection reset');
+      expect(mockBroker.recordResponseCompleted).toHaveBeenCalledTimes(1);
+      expect(mockBroker.recordResponseCompleted).toHaveBeenCalledWith(mockUser, 'thread-1', result, { error });
+    });
+
+    it('leaves a reply that cannot start to the broker to record', async () => {
+      // Arrange
+      const stream = jest.fn().mockRejectedValue(new Error('model unavailable'));
+      const { socket, eventHandlers, mockBroker } = await connect({ stream });
+
+      // Act
+      await eventHandlers['message']({ agent: 'builder', threadId: 'thread-1', content: 'Build it' });
+
+      // Assert
+      expect(socket.emit).toHaveBeenCalledWith('error', expect.anything());
+      expect(mockBroker.recordResponseCompleted).not.toHaveBeenCalled();
+    });
+  });
 
   describe('message latency logging', () => {
     const PRE_STREAM_DELAY_MS = 25;
