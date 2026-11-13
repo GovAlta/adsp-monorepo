@@ -98,7 +98,7 @@ export class GraphFileClient {
       }
 
       if (!item || offset !== size) {
-        throw new SharePointError('file-size-mismatch', false);
+        throw new SharePointError('file:size-mismatch', false);
       }
       return toUploadedFile(item);
     } catch (err) {

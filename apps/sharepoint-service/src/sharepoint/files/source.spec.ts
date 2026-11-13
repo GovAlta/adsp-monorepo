@@ -127,6 +127,11 @@ describe('FileServiceSource', () => {
     'urn:ads:platform:configuration-service:v2:/configuration/x',
     'urn:ads:platform:file-service:v1',
     'urn:ads:platform:file-service:v1:/types/abc',
+    'urn:ads:platform:file-service:v1:/files/abc/download',
+    'urn:ads:platform:file-service:v1:/files/abc/def',
+    'urn:ads:platform:file-service:v1:/files/',
+    'urn:ads:autotest:file-service:v1:/files/abc-123',
+    'urn:ads:attacker:file-service:v1:/files/abc-123',
     'https://evil.example/file',
     'not a reference!',
     'a/b',
@@ -137,6 +142,7 @@ describe('FileServiceSource', () => {
     });
     expect(directory.getResourceUrl).not.toHaveBeenCalled();
     expect(axiosMock.get).not.toHaveBeenCalled();
+    expect(tokenProvider.getAccessToken).not.toHaveBeenCalled();
   });
 
   it.each([

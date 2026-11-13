@@ -5,7 +5,7 @@ import { body, param } from 'express-validator';
 import { Logger } from 'winston';
 import { CredentialStore } from './credentials';
 import { CredentialNotSetError, DestinationDisabledError, SharePointError } from './errors';
-import { SharePointFileService, FilesUploadResult } from './files';
+import { FilesUploadResult, MAX_FILES, SharePointFileService } from './files';
 import { GraphTokenProvider } from './graph';
 import { RowIdentityMissingError } from './mapper';
 import { SharePointPusher } from './push';
@@ -194,7 +194,7 @@ export function pushData(pusher: SharePointPusher, logger: Logger): RequestHandl
 export function uploadFiles(fileService: SharePointFileService, logger: Logger): RequestHandler {
   return async (req, res, next) => {
     try {
-      assertRole(req, 'upload SharePoint files', [ServiceRoles.Writer, ServiceRoles.Admin], true);
+      assertRole(req, 'upload SharePoint files', [ServiceRoles.Writer], true);
       const tenantId = requireTenant(req);
       const { destinationId } = req.params;
       const configuration = await getTenantConfiguration(req);
@@ -235,11 +235,7 @@ export function uploadFiles(fileService: SharePointFileService, logger: Logger):
         logContext(tenantId),
       );
 
-      let status = 200;
-      if (failed > 0 || rowFailed) {
-        status = failed === result.files.length || rowFailed ? 502 : 207;
-      }
-      res.status(status).send(result);
+      res.status(failed > 0 || rowFailed ? 502 : 200).send(result);
     } catch (err) {
       next(err);
     }
@@ -295,11 +291,10 @@ export function createSharePointRouter({
     createValidationHandler(
       destinationId(),
       body('submissionId').isString().isLength({ min: 1, max: 100 }),
-      body('files').isArray({ min: 1, max: 20 }),
+      body('files').isArray({ min: 1, max: MAX_FILES }),
       body('files.*.field').isString().isLength({ min: 1, max: 200 }),
       body('files.*.fileId').isString().isLength({ min: 1, max: 300 }),
       body('data').optional().isObject(),
-      body('linkFormat').optional().isIn(['hyperlink', 'text']),
     ),
     uploadFiles(fileService, logger),
   );

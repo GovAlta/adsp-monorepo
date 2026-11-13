@@ -9,7 +9,10 @@ export interface SharePointConnection {
 export interface FieldMapping {
   source: string;
   target: string;
+  linkFormat?: LinkFormat;
 }
+
+export type LinkFormat = 'hyperlink' | 'text';
 
 export interface SharePointDestination {
   id: string;

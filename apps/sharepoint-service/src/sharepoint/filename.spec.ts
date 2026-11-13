@@ -17,6 +17,22 @@ describe('sanitizePathSegment', () => {
     expect(sanitizePathSegment('  report.pdf. ', 'file')).toBe('report.pdf');
   });
 
+  it('removes non-breaking and other Unicode spaces at the edges', () => {
+    expect(sanitizePathSegment('\u00a0 report.pdf \u2003', 'file')).toBe('report.pdf');
+  });
+
+  it('keeps spaces and dots inside the name', () => {
+    expect(sanitizePathSegment('my  report..v2.pdf', 'file')).toBe('my  report..v2.pdf');
+  });
+
+  it('handles long runs of spaces without slowing down', () => {
+    const started = Date.now();
+
+    expect(sanitizePathSegment(`${' '.repeat(100000)}a${' '.repeat(100000)}x`, 'file')).toHaveLength(200);
+    expect(sanitizePathSegment(' '.repeat(200000), 'file')).toBe('file');
+    expect(Date.now() - started).toBeLessThan(1000);
+  });
+
   it('neutralises path traversal', () => {
     expect(sanitizePathSegment('../../etc/passwd', 'file')).toBe('_.._etc_passwd');
     expect(sanitizePathSegment('..', 'file')).toBe('file');

@@ -316,23 +316,24 @@ describe('SharePoint router', () => {
       expect(fileService.upload).toHaveBeenCalledWith(tenantId, configuration, 'hr-intake', body);
     });
 
-    it('allows tenant admins', async () => {
+    it('forbids tenant admins, who check destinations with Test instead', async () => {
       currentUser = admin;
-      expect((await upload()).status).toBe(200);
+      expect((await upload()).status).toBe(403);
+      expect(fileService.upload).not.toHaveBeenCalled();
     });
 
-    it('forbids users without a writer or admin role', async () => {
+    it('forbids users without the writer role', async () => {
       currentUser = reader;
       expect((await upload()).status).toBe(403);
       expect(fileService.upload).not.toHaveBeenCalled();
     });
 
-    it('returns 207 when some files fail', async () => {
+    it('returns 502 with the per-file results when some files fail', async () => {
       fileService.upload.mockResolvedValueOnce({ files: [uploaded, failed] });
       const res = await upload();
 
-      expect(res.status).toBe(207);
-      expect(res.body.files).toEqual([uploaded, failed]);
+      expect(res.status).toBe(502);
+      expect(res.body).toEqual({ files: [uploaded, failed] });
     });
 
     it('returns 502 when every file fails', async () => {
@@ -399,20 +400,18 @@ describe('SharePoint router', () => {
       ['a file without a field', { ...body, files: [{ fileId: 'local:proof.pdf' }] }],
       ['a file without an ID', { ...body, files: [{ field: 'proofOfIdentity' }] }],
       ['data that is not an object', { ...body, data: 'text' }],
-      ['an unknown link format', { ...body, linkFormat: 'url' }],
     ])('returns 400 for %s', async (_name, payload) => {
       expect((await upload(payload)).status).toBe(400);
       expect(fileService.upload).not.toHaveBeenCalled();
     });
 
-    it('accepts a request without data and the text link format', async () => {
-      const res = await upload({ submissionId: 'submission-1', files: body.files, linkFormat: 'text' });
+    it('accepts a request without data', async () => {
+      const res = await upload({ submissionId: 'submission-1', files: body.files });
 
       expect(res.status).toBe(200);
       expect(fileService.upload).toHaveBeenCalledWith(tenantId, configuration, 'hr-intake', {
         submissionId: 'submission-1',
         files: body.files,
-        linkFormat: 'text',
       });
     });
 

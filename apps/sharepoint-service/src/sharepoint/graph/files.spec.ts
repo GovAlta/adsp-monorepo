@@ -170,7 +170,7 @@ describe('GraphFileClient', () => {
 
       await expect(
         client.uploadFile('token-1', siteId, 'sub-1', 'proof.pdf', size, streamOf(6 * mebibyte)),
-      ).rejects.toMatchObject({ errorCode: 'file-size-mismatch', retryable: false });
+      ).rejects.toMatchObject({ errorCode: 'file:size-mismatch', retryable: false });
       expect(axiosMock.delete).toHaveBeenCalledWith(uploadUrl);
     });
 

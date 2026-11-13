@@ -8,8 +8,22 @@ const replaceForbidden = (value: string): string =>
     character.charCodeAt(0) < 32 || FORBIDDEN_CHARACTERS.has(character) ? '_' : character,
   ).join('');
 
+const isTrimmed = (character: string): boolean => character === '.' || character.trim() === '';
+
+function trimEdges(value: string): string {
+  let start = 0;
+  let end = value.length;
+  while (start < end && isTrimmed(value[start])) {
+    start++;
+  }
+  while (end > start && isTrimmed(value[end - 1])) {
+    end--;
+  }
+  return value.slice(start, end);
+}
+
 export function sanitizePathSegment(name: string, fallback: string): string {
-  let result = replaceForbidden(String(name ?? '')).replace(/^[\s.]+|[\s.]+$/g, '');
+  let result = trimEdges(replaceForbidden(String(name ?? '')));
 
   if (result.length > MAX_LENGTH) {
     const dot = result.lastIndexOf('.');

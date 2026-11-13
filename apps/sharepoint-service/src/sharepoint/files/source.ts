@@ -18,7 +18,8 @@ export interface FileSource {
 const LOCAL_PREFIX = 'local:';
 const PLAIN_ID_PATTERN = /^[a-zA-Z0-9-]{1,100}$/;
 const FILE_SERVICE = 'file-service';
-const FILES_RESOURCE_PREFIX = '/files/';
+const PLATFORM_NAMESPACE = 'platform';
+const FILE_RESOURCE_PATTERN = /^\/files\/[a-zA-Z0-9-]{1,100}$/;
 
 const invalidReference = () => new SharePointError('file:invalid-reference', false);
 
@@ -76,7 +77,7 @@ export class FileServiceSource implements FileSource {
 
   private toFileUrn(fileId: string): AdspId {
     if (PLAIN_ID_PATTERN.test(fileId)) {
-      return AdspId.parse(`urn:ads:platform:${FILE_SERVICE}:v1:${FILES_RESOURCE_PREFIX}${fileId}`);
+      return AdspId.parse(`urn:ads:${PLATFORM_NAMESPACE}:${FILE_SERVICE}:v1:/files/${fileId}`);
     }
 
     let urn: AdspId;
@@ -85,7 +86,12 @@ export class FileServiceSource implements FileSource {
     } catch {
       throw invalidReference();
     }
-    if (urn.type !== 'resource' || urn.service !== FILE_SERVICE || !urn.resource?.startsWith(FILES_RESOURCE_PREFIX)) {
+    if (
+      urn.type !== 'resource' ||
+      urn.namespace !== PLATFORM_NAMESPACE ||
+      urn.service !== FILE_SERVICE ||
+      !FILE_RESOURCE_PATTERN.test(urn.resource ?? '')
+    ) {
       throw invalidReference();
     }
     return urn;
