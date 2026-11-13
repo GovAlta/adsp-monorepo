@@ -20,6 +20,8 @@ Best practices for keeping an ADSP service's API documentation complete and accu
 | Documented-behaviour spec | `apps/<service>/src/<domain>/router/<resource>.docs.spec.ts` | Fails CI when a response code isn't documented |
 | Service guide | `docs/services/<service>.md` | Concepts, roles, tenancy, events, and code examples (GitHub Pages) |
 
+A change under `docs/` also needs `npx nx run adsp-sdk-mcp-server:sync-content`, with its changes committed in the same PR, because the MCP server bundles the docs (see `libs/adsp-sdk-mcp-server/README.md`, Refresh workflow).
+
 Node.js services bundle `*.swagger.yml` fragments (and any `@swagger` JSDoc comments) with `swagger-jsdoc-webpack-plugin`. Prefer YAML fragments over JSDoc, because the docs spec can read them. Services in other languages use their framework's OpenAPI tooling, but the same principles and checklist apply.
 
 ## Checklist: adding or changing an endpoint
@@ -56,6 +58,8 @@ npx nx test <service> --testFile=<resource>.docs.spec.ts
 npx nx build <service>   # Bundles fragments into swagger.json; YAML errors fail here.
 ```
 Then run `npx nx serve <service>` and open `/swagger/docs/v1` to confirm the operation and examples render.
+
+The MCP server bundles each service's spec. Run `npx nx run adsp-sdk-mcp-server:sync-content` and commit `libs/adsp-sdk-mcp-server/api-specs/` in the same PR; `nx test adsp-sdk-mcp-server` fails until you do. A new service with a `swagger.config.js` also needs an entry in `libs/adsp-sdk-mcp-server/scripts/api-services.json`.
 
 ## Status codes
 
