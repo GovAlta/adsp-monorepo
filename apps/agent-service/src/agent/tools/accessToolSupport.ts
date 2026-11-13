@@ -1,8 +1,20 @@
-import type { User } from '@abgov/adsp-service-sdk';
+import type { ServiceDirectory, User } from '@abgov/adsp-service-sdk';
 import type { ToolExecutionContext } from '@mastra/core/tools';
 import type { Logger } from 'winston';
 import z from 'zod';
-import { ACCESS_DISCOVERY_REASONS } from '../agents/access/discovery';
+import {
+  ACCESS_DISCOVERY_REASONS,
+  AccessDiscoveryProblem,
+  AccessDiscoveryReason,
+  AccessEnvironmentSummary,
+  AccessRealmRecord,
+  AdminReadTarget,
+  createProblem,
+  createRealmClient,
+  resolveAccessScope,
+  resolveRealmRecord,
+  toProblemFields,
+} from '../agents/access/discovery';
 import { AdspRequestContext } from '../types';
 
 /**
@@ -86,4 +98,82 @@ export function createAccessToolRunner({ logger, logContext, toolKind }: AccessT
       throw err;
     }
   };
+}
+
+export interface InspectionTarget {
+  environment: AccessEnvironmentSummary;
+  realm: AccessRealmRecord;
+  reader: AdminReadTarget;
+}
+
+export type InspectionTargetResult =
+  | { ok: true; value: InspectionTarget }
+  | { ok: false; problem: AccessDiscoveryProblem; environment?: AccessEnvironmentSummary };
+
+interface EnvironmentRule {
+  isAllowed: (environment: AccessEnvironmentSummary) => boolean;
+  reason: AccessDiscoveryReason;
+}
+
+interface InspectionTargetResolverProps {
+  directory: ServiceDirectory;
+  accessServiceUrl: URL;
+  environmentRule?: EnvironmentRule;
+}
+
+/**
+ * Creates a resolver for where Keycloak may be read from, using only the verified user token, never model input.
+ * An environment rule refuses an environment before anything is read from it.
+ */
+export function createInspectionTargetResolver({
+  directory,
+  accessServiceUrl,
+  environmentRule,
+}: InspectionTargetResolverProps) {
+  const realmClient = createRealmClient({ directory });
+
+  return async function resolveInspectionTarget(user: User | undefined): Promise<InspectionTargetResult> {
+    const scope = resolveAccessScope(user, accessServiceUrl);
+    if (scope.status !== 'available') {
+      return { ok: false, problem: scope, environment: scope.environment };
+    }
+    if (environmentRule && !environmentRule.isAllowed(scope.environment)) {
+      return {
+        ok: false,
+        problem: createProblem('unavailable', environmentRule.reason),
+        environment: scope.environment,
+      };
+    }
+
+    const realmRecord = await resolveRealmRecord(realmClient, user, scope);
+    if (realmRecord.ok === false) {
+      return { ok: false, problem: realmRecord.problem, environment: scope.environment };
+    }
+
+    return {
+      ok: true,
+      value: {
+        environment: scope.environment,
+        realm: realmRecord.value,
+        reader: { host: scope.environment.host, realm: realmRecord.value.realm, user },
+      },
+    };
+  };
+}
+
+/**
+ * Returns the problem fields of a failed target resolution, with the environment when it is known.
+ */
+export function toTargetProblemFields({
+  problem,
+  environment,
+}: {
+  problem: AccessDiscoveryProblem;
+  environment?: AccessEnvironmentSummary;
+}) {
+  return { ...toProblemFields(problem), ...(environment ? { environment } : {}) };
+}
+
+export function describeRealm({ environment, realm }: InspectionTarget): string {
+  return `realm ${realm.name} (${realm.realm}) in ${environment.label}`;
 }

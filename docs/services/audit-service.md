@@ -14,36 +14,24 @@ Use the `auditService` capability in `@abgov/adsp-service-sdk`, or call the REST
 There is no separate Audit SDK package. Action catalogs and retention settings live in
 Configuration Service; committed events live in PostgreSQL.
 
-## Prepare access
+## Client roles
+
+These client roles belong to `urn:ads:platform:audit-service` and are registered by the service on startup:
+
+| Role           | Permission                                                                                                                                           | Included in `tenant-admin`   |
+| -------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------- |
+| `audit-reader` | Read action catalogs, retention settings and audit history, and export history as CSV.                                                               | Yes, after provisioning.     |
+| `audit-writer` | Submit audit events. Assign to application service accounts.                                                                                         | No; assign explicitly.       |
+| `audit-admin`  | Add actions to a tenant catalog, list and replay failed events, and include actor name and email in CSV exports (which also require `audit-reader`). | No; assign only when needed. |
+
+`audit-admin` does not replace reader or writer permissions. Each role grants access when it is held in the
+caller's tenant, or as a Core role.
+
+### Grant access to an application
 
 Start with the [Node.js SDK service-account setup](../platform/platform-node-sdk.md#setting-up-a-service-account).
 Use an SDK release that includes `auditActions`, `auditService.record()` and `auditService.query()`.
 Keep client secrets in approved secret storage, never in source code.
-
-| Identifier | Example | Purpose |
-| --- | --- | --- |
-| Application client ID | `urn:ads:case-team:case-service` | Keycloak client and SDK `serviceId`. |
-| Audit namespace | `case-service` | The service component of the client ID: `serviceId.service`. |
-| Audit Service client | `urn:ads:platform:audit-service` | Owns the Audit roles and required token audience. |
-| API discovery ID | `urn:ads:platform:audit-service:v1` | Resolves the environment's Audit API URL. |
-| Action catalog | `audit-service:actions-case-service` | Configuration namespace and document name. |
-
-Audit namespaces must be lowercase kebab-case, at most 40 characters. A tenant writer can write
-only to the namespace derived from its verified client identity (`azp`). Readers can read all
-namespaces within their tenant. Core callers need the appropriate role and an explicit target
-tenant for event writes and history reads.
-
-### Roles and audience
-
-These client roles belong to `urn:ads:platform:audit-service`:
-
-| Role | Permission | Included in `tenant-admin` |
-| --- | --- | --- |
-| `audit-reader` | Read action definitions and audit history. | Yes, after provisioning. |
-| `audit-writer` | Submit audit events. | No; assign explicitly. |
-| `audit-admin` | Administer failed events and access protected actor identity. | No; assign only when needed. |
-
-`audit-admin` does not replace reader or writer permissions.
 
 1. In **Tenant Management App > Access > Service roles**, find Audit Service, including under
    **Core service roles**. Use **Action > +** to provision missing roles in the tenant realm.
@@ -62,6 +50,245 @@ ask an administrator to check the environment and tenant/Core registration views
 Action registration separately requires Configuration Service access and audience. The standard
 SDK registration path uses `configured-service`; creating and activating revisions requires an
 authorized `configuration-admin`. `audit-writer` alone cannot publish action definitions.
+
+## Tenancy
+
+Audit data is isolated by tenant: every stored event, failed event and tenant catalog belongs to one tenant.
+
+- **Tenant callers** always act on the tenant of their token. Setting the `tenantId` query parameter to any other
+  tenant responds 403; a value that is not a tenant URN (`urn:ads:platform:tenant-service:v2:/tenants/<id>`)
+  responds 400.
+- **Core callers** select the tenant with `tenantId`. It is required to write events (400 without it), to read,
+  list namespaces or export history (403 without it), to add actions (400) and to administer failed events (400).
+  Without it, `GET /actions` and `GET /{namespace}/actions` return only Core catalogs and `GET /retention` returns
+  empty settings.
+- **Namespace ownership.** A tenant writer can write only to the namespace that matches the service part of its
+  verified client ID (`azp`), for example `case-service` for `urn:ads:case-team:case-service`. Core writers may
+  write to any namespace. Readers can read every namespace in their tenant.
+- **Platform versus tenant catalogs.** Action catalogs and retention settings are merged from Core and the tenant.
+  For actions, Core wins on duplicate names and tenants cannot add actions to a Core namespace. For retention, the
+  tenant's `retention` settings override built-in defaults, and `retention-<application>` overrides both.
+- **Isolation.** An event or failed-event ID from another tenant responds 404, not 403.
+
+## API overview
+
+All endpoints are under `https://audit-service.adsp.alberta.ca/audit/v1`; resolve
+`urn:ads:platform:audit-service:v1` through the Directory Service to get the URL for other environments. See the
+[API documentation](https://api.adsp.alberta.ca) for request and response schemas; each environment also serves
+its OpenAPI document at the service root's `_links.docs.href` (`/swagger/docs/v1`).
+
+| Endpoint                                   | Purpose                                                | Required role  |
+| :----------------------------------------- | :----------------------------------------------------- | :------------- |
+| `GET /audit/v1/actions`                    | List all action catalogs visible to the tenant.        | `audit-reader` |
+| `GET /audit/v1/{namespace}/actions`        | List a namespace's effective action definitions.       | `audit-reader` |
+| `POST /audit/v1/{namespace}/actions`       | Add an action to the tenant's catalog for a namespace. | `audit-admin`  |
+| `GET /audit/v1/retention`                  | Read configured retention settings, without defaults.  | `audit-reader` |
+| `POST /audit/v1/{namespace}/events`        | Submit a batch of 1 to 500 events.                     | `audit-writer` |
+| `GET /audit/v1/events`                     | Read history across the tenant's namespaces.           | `audit-reader` |
+| `GET /audit/v1/{namespace}/events`         | Read history in one namespace.                         | `audit-reader` |
+| `GET /audit/v1/{namespace}/events/{id}`    | Read one stored event.                                 | `audit-reader` |
+| `GET /audit/v1/namespaces`                 | List namespaces with stored events.                    | `audit-reader` |
+| `GET /audit/v1/events/export`              | Stream matching events as CSV.                         | `audit-reader` |
+| `GET /audit/v1/{namespace}/events/export`  | Stream one namespace's events as CSV.                  | `audit-reader` |
+| `GET /audit/v1/failed-events`              | List failed (parked) events.                           | `audit-admin`  |
+| `POST /audit/v1/failed-events/{id}/replay` | Replay an open failed event; no body required.         | `audit-admin`  |
+
+Retention settings, application retention overrides and Core rate limits are configuration: change them through
+the [configuration service](configuration-service.md) in the `audit-service` namespace. The audit service has no
+endpoints of its own for writing them. The probes `/health`, `/health/live` and `/health/ready` are not part of
+the API documentation.
+
+## Concepts
+
+| Identifier            | Example                              | Purpose                                                      |
+| --------------------- | ------------------------------------ | ------------------------------------------------------------ |
+| Application client ID | `urn:ads:case-team:case-service`     | Keycloak client and SDK `serviceId`.                         |
+| Audit namespace       | `case-service`                       | The service component of the client ID: `serviceId.service`. |
+| Audit Service client  | `urn:ads:platform:audit-service`     | Owns the Audit roles and required token audience.            |
+| API discovery ID      | `urn:ads:platform:audit-service:v1`  | Resolves the environment's Audit API URL.                    |
+| Action catalog        | `audit-service:actions-case-service` | Configuration namespace and document name.                   |
+
+### Namespace
+
+A namespace groups the events of one application. It is the service part of the writer's client ID, and must be
+lowercase kebab-case, at most 40 characters.
+
+### Action catalog
+
+An action catalog lists the actions an application can record, each with a `version`, `category`, `severity` and
+optional retention class, resource type, metadata schema and change-set capture. Catalogs live in the
+configuration service as `audit-service:actions-<application>`, registered by Core or by a tenant. Registering an
+action does not create an audit record. See [Register and publish actions](#register-and-publish-actions).
+
+### Audit event
+
+An event records that an actor performed an action, with an outcome `status`, on an optional resource. The writer
+supplies the `eventId` (a UUID, unique per tenant and namespace, so a resend is a duplicate rather than a second
+record) and `occurredAt`. The service sets the tenant, namespace, `writtenBy`, `receivedAt`, category, severity,
+retention class and expiry, and assigns the `id` used to read the event back. The API never changes a stored
+event; the retention job deletes it after `retentionUntil`.
+
+### Retention class
+
+Actions name a retention class rather than a period. The class's period, resolved when the event is written,
+fixes the event's `retentionUntil`. See [Retention and administration](#retention-and-administration).
+
+### Failed event
+
+When storage fails after an event is accepted for writing, the event is parked in failed-event storage and the
+write reports it as rejected with code `storage_failed`. An `audit-admin` can list parked events and replay an open
+one, which stores it as a normal event.
+
+## Events
+
+The audit service doesn't send or consume domain events. Audit events are a separate concept: they are stored
+records, not messages.
+
+The service records its own sensitive operations as audit events in the `audit-service` namespace: history reads
+(`events.list`, `events.list-all`, `events.read`), exports (`events.export`), failed-event listing
+(`failed-events.list`) and replays (`failed-event.replay`). Read them like any other namespace.
+
+## Code examples
+
+The examples use `fetch` with a bearer token for a client that has the Audit audience and the role named in each
+example. Core callers also add `tenantId` with the tenant URN to each request.
+
+### Add an action
+
+Requires `audit-admin`. The caller's token is forwarded to the configuration service, so configuration write
+permission is required as well.
+
+```typescript
+const response = await fetch('https://audit-service.adsp.alberta.ca/audit/v1/case-service/actions', {
+  method: 'POST',
+  headers: {
+    Authorization: `Bearer ${accessToken}`,
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify({
+    name: 'case.update',
+    version: 1,
+    category: 'administrative',
+    severity: 'info',
+    resourceType: 'case',
+  }),
+});
+
+// 201 with the added definition; 409 if the name already exists.
+const { name, version } = await response.json();
+```
+
+The action is added to the caller's tenant catalog (`actions-<namespace>`, created if missing). The name is
+compared in full and case-insensitively with the namespace's own catalog, read directly from the configuration
+service rather than the cache. Names in other namespaces, including Core ones, do not conflict. `409` is returned
+when the name already exists in the namespace, or when the namespace is itself a Core namespace; `503` when the
+check cannot be made, in which case nothing is written.
+
+### Write events
+
+Requires `audit-writer`. Generate the `eventId` and `occurredAt` once and preserve both when retrying.
+
+```typescript
+const response = await fetch('https://audit-service.adsp.alberta.ca/audit/v1/case-service/events', {
+  method: 'POST',
+  headers: {
+    Authorization: `Bearer ${accessToken}`,
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify({
+    events: [
+      {
+        eventId: crypto.randomUUID(),
+        occurredAt: new Date().toISOString(),
+        action: 'case.update',
+        actionVersion: 1,
+        status: 'success',
+        actor: { id: 'test.user@gov.ab.ca', type: 'user' },
+        resource: { type: 'case', id: 'case-001' },
+        metadata: { reason: 'Address updated' },
+      },
+    ],
+  }),
+});
+
+// 202: { accepted: 1, duplicates: 0, rejected: [] }
+const { accepted, duplicates, rejected } = await response.json();
+```
+
+**202 alone does not mean every event succeeded.** Check all fields:
+`accepted + duplicates + rejected.length` accounts for the submitted events. Rejections include
+the zero-based input `index`, `code`, `reason`, and `eventId` when available.
+
+| Constraint              | Limit                                                                     |
+| ----------------------- | ------------------------------------------------------------------------- |
+| Events per request      | 1-500                                                                     |
+| Occurrence time         | Previous 7 days through 5 minutes into the future                         |
+| Metadata and change set | 16 KiB UTF-8 JSON each                                                    |
+| HTTP request body       | 20 MiB; enriched batches must also fit the smaller service buffer         |
+| Action version          | Omit to use the current catalog version; an explicit mismatch is rejected |
+
+### Read history
+
+Requires `audit-reader`. The writer role alone is insufficient.
+
+```typescript
+const params = new URLSearchParams({ resourceType: 'case', resourceId: 'case-001', top: '20' });
+const response = await fetch(`https://audit-service.adsp.alberta.ca/audit/v1/case-service/events?${params}`, {
+  headers: { Authorization: `Bearer ${accessToken}` },
+});
+
+const { results, page } = await response.json();
+for (const { id, action, occurredAt, actor } of results) {
+  console.log(id, action, occurredAt, actor.id);
+}
+// Pass page.next as `after`, with the same filters, for the next page.
+```
+
+Both REST lists and SDK `query()` return `{ results, page }`. Results are newest first.
+The detail endpoint (`GET /audit/v1/{namespace}/events/{id}`) uses the returned record's **`id`**, not the
+caller's `eventId`. Unlike `record()`, SDK query failures reject the promise.
+
+REST filters include `actor`, `resourceType`, `resourceId`, `action`, `status`, `category`,
+`severity`, `scope`, `correlationId`, `sessionId`, `occurredFrom` and `occurredTo`. Filters combine
+with AND; time bounds are inclusive. Free-text search is not supported. The SDK's typed criteria
+cover a subset; see [SDK types](https://github.com/GovAlta/adsp-monorepo/blob/main/libs/adsp-service-sdk/src/audit/types.ts).
+SDK query options also accept another readable `namespace` or an authorized user `token`.
+
+### Export history as CSV
+
+Requires `audit-reader`.
+
+```typescript
+const params = new URLSearchParams({ occurredFrom: '2026-11-01T00:00:00Z' });
+const response = await fetch(`https://audit-service.adsp.alberta.ca/audit/v1/events/export?${params}`, {
+  headers: { Authorization: `Bearer ${accessToken}` },
+});
+
+const csv = await response.text();
+```
+
+CSV exports use the same filters but ignore `top` and `after`; they are not capped to a page.
+Actor name/email columns require `audit-admin` in addition to reader access. An interrupted
+export may be incomplete. Removing an action definition does not delete or hide its stored history.
+
+### Replay a failed event
+
+Requires `audit-admin`. List the failed events, then replay an open one by its `id`.
+
+```typescript
+const headers = { Authorization: `Bearer ${accessToken}` };
+const list = await fetch('https://audit-service.adsp.alberta.ca/audit/v1/failed-events?top=20', { headers });
+const { results } = await list.json();
+
+const open = results.find(({ status }) => status === 'open');
+const replay = await fetch(`https://audit-service.adsp.alberta.ca/audit/v1/failed-events/${open.id}/replay`, {
+  method: 'POST',
+  headers,
+});
+
+// 200 with status 'replayed' and replayed_as set to the stored event's id.
+const { status, replayed_as } = await replay.json();
+```
 
 ## Integrate with the Node.js SDK
 
@@ -374,114 +601,6 @@ Before emitting a new action, check registration logs and use an `audit-reader` 
 query a controlled event. Do not use a fixed sleep as a readiness check. Configuration-read
 failures can appear as missing catalogs or unknown actions; a 404 alone does not prove that
 registration is absent.
-
-## Use the REST API
-
-Resolve `urn:ads:platform:audit-service:v1` through the target environment's Directory Service.
-The SDK handles discovery automatically. For full schemas, follow the service root's
-`_links.docs.href` to its OpenAPI document (`/swagger/docs/v1`).
-
-### Adding an action
-
-```http
-POST /audit/v1/{namespace}/actions
-Authorization: Bearer <token with audit-admin>
-Content-Type: application/json
-
-{ "name": "case.update", "version": 1, "category": "runtime", "severity": "info", "retentionClass": "standard" }
-```
-
-Adds the action to the caller's tenant catalog (`actions-<namespace>`, created if missing). The caller's token is
-forwarded to the configuration service, so configuration write permission is required as well. The name is compared
-in full and case-insensitively with the namespace's own catalog and every Core catalog, read directly from the
-configuration service rather than the cache. `409` is returned when the name already exists in either, or when the
-namespace is itself a Core namespace; `503` when the check cannot be made, in which case nothing is written.
-
-### Write an event
-
-Use a bearer token with the Audit audience and `audit-writer`. Replace the placeholders with
-a UUID and the current ISO 8601 UTC timestamp; preserve both when retrying.
-Core callers must also supply the URL-encoded tenant URN as the `tenantId` query parameter.
-
-```http
-POST /audit/v1/case-service/events
-Authorization: Bearer {{ACCESS_TOKEN}}
-Content-Type: application/json
-
-{
-  "events": [
-    {
-      "eventId": "{{EVENT_UUID}}",
-      "occurredAt": "{{CURRENT_UTC_TIMESTAMP}}",
-      "action": "case.update",
-      "actionVersion": 1,
-      "status": "success",
-      "actor": { "id": "onboarding-test-user", "type": "user" },
-      "resource": { "type": "case", "id": "onboarding-case-001" },
-      "metadata": { "reason": "Onboarding verification" }
-    }
-  ]
-}
-```
-
-A confirmed single-event write returns HTTP 202:
-
-```json
-{ "accepted": 1, "duplicates": 0, "rejected": [] }
-```
-
-**202 alone does not mean every event succeeded.** Check all fields:
-`accepted + duplicates + rejected.length` accounts for the submitted events. Rejections include
-the zero-based input `index`, `code`, `reason`, and `eventId` when available.
-
-| Constraint | Limit |
-| --- | --- |
-| Events per request | 1-500 |
-| Occurrence time | Previous 7 days through 5 minutes into the future |
-| Metadata and change set | 16 KiB UTF-8 JSON each |
-| HTTP request body | 20 MiB; enriched batches must also fit the smaller service buffer |
-| Action version | Omit to use the current catalog version; an explicit mismatch is rejected |
-
-### Read and export
-
-History reads require `audit-reader` and tenant context. The writer role alone is insufficient.
-
-```http
-GET /audit/v1/case-service/events?resourceType=case&resourceId=onboarding-case-001&top=20
-Authorization: Bearer {{ACCESS_TOKEN}}
-```
-
-Both REST lists and SDK `query()` return `{ results, page }`. Pass `page.next` as `after` for the
-next page, keeping the same filters; URL-encode it for REST. Results are newest first.
-The detail endpoint uses the returned record's **`id`**, not the caller's `eventId`.
-Unlike `record()`, SDK query failures reject the promise.
-
-REST filters include `actor`, `resourceType`, `resourceId`, `action`, `status`, `category`,
-`severity`, `scope`, `correlationId`, `sessionId`, `occurredFrom` and `occurredTo`. Filters combine
-with AND; time bounds are inclusive. Free-text search is not supported. The SDK's typed criteria
-cover a subset; see [SDK types](https://github.com/GovAlta/adsp-monorepo/blob/main/libs/adsp-service-sdk/src/audit/types.ts).
-SDK query options also accept another readable `namespace` or an authorized user `token`.
-
-All paths below are relative to `/audit/v1`.
-
-| Method and path | Role | Purpose |
-| --- | --- | --- |
-| `GET /{namespace}/actions` | `audit-reader` | Effective action definitions. |
-| `GET /actions` | `audit-reader` | All effective application catalogs. |
-| `GET /retention` | `audit-reader` | Configured retention settings, excluding implicit defaults. |
-| `POST /{namespace}/events` | `audit-writer` | Submit a batch of events. |
-| `GET /events` | `audit-reader` | History across the tenant's namespaces. |
-| `GET /{namespace}/events` | `audit-reader` | History in one namespace. |
-| `GET /{namespace}/events/{id}` | `audit-reader` | One stored record. |
-| `GET /namespaces` | `audit-reader` | Namespaces with stored events. |
-| `GET /events/export` | `audit-reader` | Stream matching events as CSV. |
-| `GET /{namespace}/events/export` | `audit-reader` | Stream one namespace's events as CSV. |
-| `GET /failed-events` | `audit-admin` | List failed events. |
-| `POST /failed-events/{id}/replay` | `audit-admin` | Replay an open failed event; no body required. |
-
-CSV exports use the same filters but ignore `top` and `after`; they are not capped to a page.
-Actor name/email columns require `audit-admin` in addition to reader access. An interrupted
-export may be incomplete. Removing an action definition does not delete or hide its stored history.
 
 ## Retention and administration
 

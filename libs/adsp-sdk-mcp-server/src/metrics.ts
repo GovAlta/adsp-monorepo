@@ -1,8 +1,7 @@
 import type { BatchObservableCallback, MeterProvider } from '@opentelemetry/api';
-import { readFileSync } from 'fs';
 import { hostname } from 'os';
-import { join } from 'path';
 import { monitorEventLoopDelay } from 'perf_hooks';
+import { readPackageVersion } from './version';
 
 export type RejectionReason = 'in_flight_cap' | 'rate_limit' | 'origin' | 'live_tool_cap';
 export type ToolErrorType = 'tool_error' | 'exception' | 'unknown_tool' | 'busy';
@@ -135,14 +134,6 @@ export interface StartedMetrics {
 
 const DEFAULT_EXPORT_INTERVAL_MS = 60_000;
 const EXPORT_TIMEOUT_MS = 30_000;
-
-function readPackageVersion(): string {
-  try {
-    return JSON.parse(readFileSync(join(__dirname, '..', 'package.json'), 'utf8')).version ?? 'unknown';
-  } catch {
-    return 'unknown';
-  }
-}
 
 function readExportIntervalMs(env: NodeJS.ProcessEnv): number {
   const interval = parseInt(env['OTEL_METRIC_EXPORT_INTERVAL'] ?? '', 10);

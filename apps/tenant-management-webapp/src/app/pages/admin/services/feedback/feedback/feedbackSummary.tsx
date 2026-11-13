@@ -1,6 +1,5 @@
 import React from 'react';
 import styled from 'styled-components';
-import { GoabSkeleton } from '@abgov/react-components';
 import { FeedbackSummary as FeedbackSummaryModel } from '@store/feedback/models';
 
 interface FeedbackSummaryProps {
@@ -14,19 +13,9 @@ const Summary = styled.div`
   line-height: 1.5;
 `;
 
-const SummarySkeleton = styled.div`
-  padding-top: var(--goa-space-l);
-`;
-
 const Separator = styled.span`
   margin: 0 var(--goa-space-s);
 `;
-
-export const FeedbackSummaryLoading = (): JSX.Element => (
-  <SummarySkeleton data-testid="feedback-summary-loading">
-    <GoabSkeleton type="text" />
-  </SummarySkeleton>
-);
 
 export const FeedbackSummary = ({ summary }: FeedbackSummaryProps): JSX.Element => {
   if (summary.totalResponses === 0) {

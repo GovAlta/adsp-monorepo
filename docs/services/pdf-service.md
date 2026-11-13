@@ -77,17 +77,17 @@ These events are available on the [push service](push-service.md) stream `pdf-ge
 
 ## Audit actions
 
-PDF service records audit events in the `pdf-service` namespace of the [audit service](audit-service.md). Action names start with `pdf.` so they do not take generic names such as `job.created` from tenant catalogs. Records are written to the tenant of the job or template. All actions are version 1, and their retention class is derived from the category.
+PDF service records audit events in the `pdf-service` namespace of the [audit service](audit-service.md). Records are written to the tenant of the job or template. All actions are version 1, and their retention class is derived from the category.
 
 | action | category | severity | retention class | recorded when |
 |:-|:-|:-|:-|:-|
-| pdf.job.created | runtime | info | standard | A PDF generation job is queued through `POST /pdf/v1/jobs`. |
-| pdf.job.generated | runtime | info | standard | A generation job finishes: status `success` when the PDF is stored in file service, with the resulting `fileId` in the metadata, or status `failure` when the job fails, with the `error` in the metadata. |
-| pdf.template.created | administrative | info | compliance | A template is created through `POST /pdf/v1/templates`. |
-| pdf.template.updated | administrative | warning | compliance | A template is updated through `PATCH /pdf/v1/templates/{templateId}`, with the names of the changed fields as `changedFields` in the metadata. |
-| pdf.template.deleted | administrative | warning | compliance | A template is deleted through `DELETE /pdf/v1/templates/{templateId}`. |
+| job.created | runtime | info | standard | A PDF generation job is queued through `POST /pdf/v1/jobs`. |
+| job.generated | runtime | info | standard | A generation job finishes: status `success` when the PDF is stored in file service, with the resulting `fileId` in the metadata, or status `failure` when the job fails, with the `error` in the metadata. |
+| template.created | administrative | info | compliance | A template is created through `POST /pdf/v1/templates`. |
+| template.updated | administrative | warning | compliance | A template is updated through `PATCH /pdf/v1/templates/{templateId}`, with the names of the changed fields as `changedFields` in the metadata. |
+| template.deleted | administrative | warning | compliance | A template is deleted through `DELETE /pdf/v1/templates/{templateId}`. |
 
-Job records have the job as the resource (`{ type: 'pdf-job', id: <job ID>, name: <filename> }`), the `recordId` of the generated file as the correlation ID, and the `templateId`, `filename`, `fileType` and `recordId` in the metadata. Since file service uses the same `recordId` as the correlation ID, the `fileId` and correlation ID link a job to the `file.uploaded` record of the generated file. `pdf.job.generated` is recorded by the job worker after generation completes, with the requester of the job as the actor; a failure is recorded only when the job is marked failed, not on an attempt that will be retried. Failures are found by filtering on `status=failure`.
+Job records have the job as the resource (`{ type: 'pdf-job', id: <job ID>, name: <filename> }`), the `recordId` of the generated file as the correlation ID, and the `templateId`, `filename`, `fileType` and `recordId` in the metadata. Since file service uses the same `recordId` as the correlation ID, the `fileId` and correlation ID link a job to the `file.uploaded` record of the generated file. `job.generated` is recorded by the job worker after generation completes, with the requester of the job as the actor; a failure is recorded only when the job is marked failed, not on an attempt that will be retried. Failures are found by filtering on `status=failure`.
 
 Template records have the template as the resource (`{ type: 'pdf-template', id: <template ID>, name: <name> }`) and the `templateId` and `name` in the metadata. Template changes made directly in the [configuration service](configuration-service.md) rather than through the PDF service API are recorded only in the `configuration-service` namespace; changes through the PDF service API are recorded in both. Reads of templates and job status are not recorded.
 

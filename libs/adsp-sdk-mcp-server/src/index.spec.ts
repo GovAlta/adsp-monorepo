@@ -14,7 +14,7 @@ describe('package entry point', () => {
   it('still exports the docs and SDK reference helpers', () => {
     jest.isolateModules(() => {
       const entry = require('./index');
-      expect(Object.keys(entry).sort()).toEqual(['DocsRepository', 'SDK_REFERENCE', 'loadDocs', 'searchSdkReference']);
+      expect(Object.keys(entry).sort()).toEqual(['ApiSpecsRepository', 'DocsRepository', 'SDK_REFERENCE', 'loadDocs', 'searchSdkReference']);
     });
   });
 });

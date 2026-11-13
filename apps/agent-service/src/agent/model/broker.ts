@@ -19,7 +19,7 @@ import {
   WorkspaceUpdateRequest,
   WorkspaceUpdateResult,
 } from '../workspace';
-import { getAgentExecutionLimits } from './executionLimits';
+import { ACCESS_SERVICE_AGENT_ID, getAgentExecutionLimits } from './executionLimits';
 import { AgentModelConfiguration, getAgentProviderOptions } from './modelConfiguration';
 import { abortExecution, STREAM_ERROR_CODES } from './streamAbort';
 import {
@@ -429,6 +429,8 @@ export class AgentBroker<TAgentId extends string = string, TTools extends ToolsI
       contextWindowTokens: environment.AGENT_MODEL_CONTEXT_TOKENS,
       memoryStatus,
       history: await this.getMessageHistory(user, threadId),
+      longConversationTokens:
+        this.agentId === ACCESS_SERVICE_AGENT_ID ? environment.AGENT_ACCESS_LONG_CONVERSATION_TOKENS : 0,
     });
   }
 

@@ -8,7 +8,7 @@ import * as helmet from 'helmet';
 import { createLogger, createErrorHandler } from '@core-services/core-common';
 import { environment, POD_TYPES } from './environments/environment';
 import { createRepositories } from './mongo';
-import { bindEndpoints, ServiceUserRoles } from './app';
+import { bindEndpoints, ServiceUserRoles, StatusAuditActions } from './app';
 import * as cors from 'cors';
 import { AdspId, initializePlatform, instrumentAxios, instrumentJob } from '@abgov/adsp-service-sdk';
 import type { User } from '@abgov/adsp-service-sdk';
@@ -54,6 +54,7 @@ instrumentAxios(logger);
     tenantStrategy,
     tenantService,
     eventService,
+    auditService,
     clearCached,
     tokenProvider,
     directory,
@@ -92,6 +93,8 @@ instrumentAxios(logger);
         MonitoredServiceDownDefinition,
       ],
       notifications: [StatusApplicationHealthChange, StatusApplicationStatusChange],
+      auditActions: StatusAuditActions,
+      audit: { enabled: environment.STATUS_AUDIT_ENABLED },
       clientSecret: environment.CLIENT_SECRET,
       accessServiceUrl,
       directoryUrl: new URL(environment.DIRECTORY_URL),
@@ -216,6 +219,7 @@ instrumentAxios(logger);
       tenantService,
       authenticate,
       eventService,
+      auditService,
       tokenProvider,
       directory,
       configurationService,
@@ -265,4 +269,26 @@ instrumentAxios(logger);
     logger.info(`Listening at http://localhost:${port}`);
   });
   server.on('error', (err) => logger.error(`Error encountered in server: ${err}`));
+
+  // Stop accepting requests, then deliver any buffered audit events before the process exits.
+  let stopping = false;
+  const shutdown = async () => {
+    if (stopping) return;
+    stopping = true;
+    // Fallback in case the flush or close hangs.
+    setTimeout(() => process.exit(1), 15000).unref();
+    await new Promise<void>((resolve) => {
+      server.close(() => resolve());
+      server.closeIdleConnections();
+    });
+    try {
+      await auditService.flush();
+      process.exit(0);
+    } catch (err) {
+      logger.error(`Error encountered flushing audit events on shutdown: ${err}`);
+      process.exit(1);
+    }
+  };
+  process.once('SIGTERM', shutdown);
+  process.once('SIGINT', shutdown);
 })();

@@ -171,7 +171,7 @@ describe('planner router audit', () => {
   });
 
   describe('solutions', () => {
-    it('records planner.solution.created without the problem statement', async () => {
+    it('records solution.created without the problem statement', async () => {
       const res = await request(buildApp())
         .post('/planner/v1/solutions')
         .send({ name: 'Grants', scenario: 'prototype', problemStatement: PROBLEM });
@@ -193,7 +193,7 @@ describe('planner router audit', () => {
       expect(auditService.record).not.toHaveBeenCalled();
     });
 
-    it('records planner.solution.deleted', async () => {
+    it('records solution.deleted', async () => {
       repository.get.mockResolvedValue(solutionOwnedBy('owner-1'));
       repository.delete.mockResolvedValue(true);
 
@@ -228,7 +228,7 @@ describe('planner router audit', () => {
   });
 
   describe('exports', () => {
-    it('records planner.solution.exported for the solution, without admin access for the owner', async () => {
+    it('records solution.exported for the solution, without admin access for the owner', async () => {
       repository.get.mockResolvedValue(solutionOwnedBy('owner-1'));
       versionRepository.latest.mockResolvedValue(null);
 
@@ -244,7 +244,7 @@ describe('planner router audit', () => {
       expect(recorded(SolutionAdminAccessedAuditAction)).toEqual([]);
     });
 
-    it('records planner.solution.exported for a version', async () => {
+    it('records solution.exported for a version', async () => {
       const solution = solutionOwnedBy('owner-1');
       repository.get.mockResolvedValue(solution);
       versionRepository.get.mockResolvedValue({
@@ -286,7 +286,7 @@ describe('planner router audit', () => {
       ['lists the versions of', 'get', '/versions', 'read'],
       ['changes', 'patch', '', 'update'],
     ])(
-      'records planner.solution.admin-accessed when an admin %s another user’s solution',
+      'records solution.admin-accessed when an admin %s another user’s solution',
       async (_, method, path, op) => {
         repository.get.mockResolvedValue(solutionOwnedBy('owner-1'));
         versionRepository.latest.mockResolvedValue(null);
@@ -347,7 +347,7 @@ describe('planner router audit', () => {
     });
   });
 
-  describe('planner.solution.analyzed', () => {
+  describe('solution.analyzed', () => {
     beforeEach(() => {
       repository.get.mockResolvedValue(solutionOwnedBy('owner-1'));
     });
@@ -551,7 +551,7 @@ describe('planner router audit', () => {
       serviceMappings: [{ service: 'form-service', reason: 'Intake' }],
     };
 
-    it('records planner.pattern.created', async () => {
+    it('records pattern.created', async () => {
       await request(buildApp(admin)).post('/planner/v1/patterns').send(body);
 
       expect(auditService.record).toHaveBeenCalledWith(
@@ -564,7 +564,7 @@ describe('planner router audit', () => {
       );
     });
 
-    it('records planner.pattern.updated with a change set when a built-in is customized', async () => {
+    it('records pattern.updated with a change set when a built-in is customized', async () => {
       const builtIn = BUILT_IN_PATTERNS.find((p) => p.id === 'case-management');
 
       await request(buildApp(admin))
@@ -578,7 +578,7 @@ describe('planner router audit', () => {
       expect(details.changeSet.before.source).toBeUndefined();
     });
 
-    it('records planner.pattern.deleted for a reset customized built-in', async () => {
+    it('records pattern.deleted for a reset customized built-in', async () => {
       patternRepository.find.mockResolvedValue([{ ...BUILT_IN_PATTERNS[0], name: 'Custom name' }]);
       patternRepository.delete.mockResolvedValue(true);
 
@@ -609,7 +609,7 @@ describe('planner router audit', () => {
   });
 
   describe('specialist chats', () => {
-    it('records planner.specialist-chat.exported for one chat without its title or messages', async () => {
+    it('records specialist-chat.exported for one chat without its title or messages', async () => {
       chatRepository.get.mockResolvedValue(storedChat());
 
       await request(buildApp()).get(`/planner/v1/specialists/chats/${CHAT_ID}/export`);
@@ -623,7 +623,7 @@ describe('planner router audit', () => {
       expect(JSON.stringify(auditService.record.mock.calls)).not.toContain('Private question');
     });
 
-    it('records planner.specialist-chat.exported for all chats without a resource', async () => {
+    it('records specialist-chat.exported for all chats without a resource', async () => {
       chatRepository.find.mockResolvedValue([storedChat(), storedChat({ id: 'other' })]);
 
       await request(buildApp()).get(
@@ -646,7 +646,7 @@ describe('planner router audit', () => {
       expect(recorded(SpecialistChatExportedAuditAction)[0].metadata).toEqual({ scope: 'all', chatCount: 0 });
     });
 
-    it('records planner.specialist-chat.deleted', async () => {
+    it('records specialist-chat.deleted', async () => {
       chatRepository.get.mockResolvedValue(storedChat());
 
       await request(buildApp()).delete(`/planner/v1/specialists/chats/${CHAT_ID}`);

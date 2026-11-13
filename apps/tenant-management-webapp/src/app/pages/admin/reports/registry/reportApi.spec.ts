@@ -5,11 +5,13 @@ import { pdfReport } from './services/pdfReport';
 import { createReportSectionLoader, REPORTS_API_BASE } from './reportApi';
 
 const period = { preset: 'last30Days' as const, from: '2026-08-12', to: '2026-09-10' };
+const abortController = new AbortController();
 const context = {
   descriptor: pdfReport,
   period,
   token: 'token-1',
   serviceUrls: {},
+  signal: abortController.signal,
 };
 
 describe('createReportSectionLoader', () => {
@@ -52,6 +54,15 @@ describe('createReportSectionLoader', () => {
     await loader(context);
 
     expect(mock.history.get[0].headers.Authorization).toBe('Bearer token-1');
+  });
+
+  it('passes the abort signal to axios', async () => {
+    mock.onGet(`${REPORTS_API_BASE}/pdf/summary`).reply(HttpStatusCodes.OK, { data: null });
+    const loader = createReportSectionLoader('summary');
+
+    await loader(context);
+
+    expect(mock.history.get[0].signal).toBe(abortController.signal);
   });
 
   it('unwraps the nested data payload from the response', async () => {
