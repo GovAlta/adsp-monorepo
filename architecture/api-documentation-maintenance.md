@@ -59,6 +59,8 @@ npx nx build <service>   # Bundles fragments into swagger.json; YAML errors fail
 ```
 Then run `npx nx serve <service>` and open `/swagger/docs/v1` to confirm the operation and examples render.
 
+The MCP server bundles each service's spec. Run `npx nx run adsp-sdk-mcp-server:generate-api-specs` and commit `libs/adsp-sdk-mcp-server/api-specs/` in the same PR; `nx test adsp-sdk-mcp-server` fails until you do. A new service with a `swagger.config.js` also needs an entry in `libs/adsp-sdk-mcp-server/scripts/api-services.json`.
+
 ## Status codes
 
 Map each piece of the handler chain to the status codes it can produce, then document all of them.

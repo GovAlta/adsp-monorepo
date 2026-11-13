@@ -37,6 +37,8 @@ export default [
         'error',
         {
           ignoredDependencies: ['@abgov/adsp-cli'],
+          // Build-time scripts use workspace dev dependencies; they aren't part of the published package.
+          ignoredFiles: ['{projectRoot}/scripts/**'],
         },
       ],
     },
