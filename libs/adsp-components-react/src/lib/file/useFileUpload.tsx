@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
+  FileServiceError,
+  isFileFormatAllowed,
   toFileServiceError,
   type FileMetadata,
-  type FileServiceError,
   type FileTypeInfo,
   type IFileUploadClient,
 } from '@abgov/adsp-components-core';
@@ -10,35 +11,48 @@ import {
 export interface UseFileUploadOptions {
   /** Associates uploaded files with a record in the application, such as a form submission. */
   recordId?: string;
-  /** Called once File service has accepted a file. */
+  /** Called once for each file File service accepts. */
   onUpload?: (file: FileMetadata) => void;
 }
 
-export type FileUploadStatus = 'idle' | 'uploading' | 'uploaded' | 'failed';
+export type FileUploadStatus = 'uploading' | 'uploaded' | 'failed';
+
+export interface FileUploadItem {
+  /** Identifies the upload for retry() and remove(); unique within the hook. */
+  id: string;
+  file: File;
+  status: FileUploadStatus;
+  /** Fraction of the content sent, from 0 to 1. All of it can be sent before File service answers. */
+  progress: number;
+  /** The file as File service stored it, after a successful upload. */
+  uploaded: FileMetadata | null;
+  /** Why the upload failed. File service's answer is authoritative. */
+  error: FileServiceError | null;
+}
 
 export interface UseFileUploadResult {
   /** The File Type, once loaded. Loading it confirms that it exists and that the user may use it. */
   fileType: FileTypeInfo | null;
   loading: boolean;
-  status: FileUploadStatus;
-  /** The file selected for the current or last upload. */
-  selectedFile: File | null;
-  /** Fraction of the content sent, from 0 to 1. */
-  progress: number;
-  /** The file as File service stored it, after a successful upload. */
-  uploaded: FileMetadata | null;
-  /** Why the File Type couldn't be loaded, or why the upload failed. File service's answer is authoritative. */
-  error: FileServiceError | null;
-  /** True when upload() can start: the File Type loaded and no upload is running. */
+  /** Why the File Type couldn't be loaded. */
+  typeError: FileServiceError | null;
+  /** True when upload() can start: the File Type has loaded. */
   ready: boolean;
-  upload: (file: File) => Promise<void>;
-  /** Repeats whatever failed: loading the File Type, or uploading the same file. */
-  retry: () => void;
-  /** Stops any upload in progress and clears the last one. An uploaded file stays in File service. */
-  reset: () => void;
+  /** Every upload started since the last change of client, File Type or record, in the order selected. */
+  uploads: FileUploadItem[];
+  /** True while any upload is running. */
+  uploading: boolean;
+  /**
+   * Uploads each file. A file in a format the File Type doesn't allow fails at once, without being sent.
+   */
+  upload: (files: File | readonly File[]) => void;
+  /** Uploads a failed file again, when its error is retryable. */
+  retry: (id: string) => void;
+  /** Cancels the upload if it is running and takes it off the list. An uploaded file stays in File service. */
+  remove: (id: string) => void;
+  /** Loads the File Type again after it failed to load. */
+  reloadType: () => void;
 }
-
-type ErrorSource = 'type' | 'upload';
 
 const isAbort = (err: unknown) => err instanceof Error && err.name === 'AbortError';
 
@@ -50,34 +64,38 @@ export function useFileUpload(
 ): UseFileUploadResult {
   const [fileType, setFileType] = useState<FileTypeInfo | null>(null);
   const [loading, setLoading] = useState(!!client && !!fileTypeId);
-  const [status, setStatus] = useState<FileUploadStatus>('idle');
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [progress, setProgress] = useState(0);
-  const [uploaded, setUploaded] = useState<FileMetadata | null>(null);
-  const [error, setError] = useState<{ error: FileServiceError; source: ErrorSource } | null>(null);
+  const [typeError, setTypeError] = useState<FileServiceError | null>(null);
+  const [uploads, setUploads] = useState<FileUploadItem[]>([]);
   const [reloadCount, setReloadCount] = useState(0);
 
-  const active = useRef<AbortController | null>(null);
+  // Running uploads by item id.
+  const active = useRef(new Map<string, AbortController>());
+  const nextId = useRef(0);
   // The File Type uploads may go to: set only once it has loaded for the current client and fileTypeId.
-  const loadedType = useRef<string | null>(null);
+  const loadedType = useRef<FileTypeInfo | null>(null);
   const onUploadRef = useRef(onUpload);
   onUploadRef.current = onUpload;
+  // Set during render, before the effects that cancel stale uploads run, so a request that finishes in between is
+  // recognised as belonging to the previous client, File Type or record.
+  const target = useRef({ client, fileTypeId, recordId });
+  target.current = { client, fileTypeId, recordId };
 
-  const stop = useCallback(() => {
-    active.current?.abort();
-    active.current = null;
+  const stopAll = useCallback(() => {
+    active.current.forEach((controller) => controller.abort());
+    active.current.clear();
+  }, []);
+
+  const update = useCallback((id: string, changes: Partial<FileUploadItem>) => {
+    setUploads((current) => current.map((item) => (item.id === id ? { ...item, ...changes } : item)));
   }, []);
 
   // A new client or File Type starts over; an upload to the old one is cancelled rather than reported against the new.
   useEffect(() => {
-    stop();
+    stopAll();
     loadedType.current = null;
     setFileType(null);
-    setError(null);
-    setStatus('idle');
-    setSelectedFile(null);
-    setUploaded(null);
-    setProgress(0);
+    setTypeError(null);
+    setUploads([]);
 
     if (!client || !fileTypeId) {
       setLoading(false);
@@ -90,13 +108,13 @@ export function useFileUpload(
       .getFileType(fileTypeId)
       .then((type) => {
         if (current) {
-          loadedType.current = fileTypeId;
-          setFileType(type);
+          loadedType.current = { ...type, allowedFileTypes: type.allowedFileTypes ?? [] };
+          setFileType(loadedType.current);
         }
       })
       .catch((err: unknown) => {
         if (current) {
-          setError({ error: toFileServiceError(err), source: 'type' });
+          setTypeError(toFileServiceError(err));
         }
       })
       .finally(() => {
@@ -108,39 +126,31 @@ export function useFileUpload(
     return () => {
       current = false;
     };
-  }, [client, fileTypeId, reloadCount, stop]);
+  }, [client, fileTypeId, reloadCount, stopAll]);
 
-  // Unmounting cancels an upload in progress.
-  useEffect(() => stop, [stop]);
+  // Unmounting cancels any upload in progress.
+  useEffect(() => stopAll, [stopAll]);
 
-  // A file being uploaded for one record must not be reported against the next, so a new recordId cancels it.
+  // Files uploaded for one record must not be shown against the next, so a new recordId starts over.
   const firstRecord = useRef(true);
   useEffect(() => {
     if (firstRecord.current) {
       firstRecord.current = false;
       return;
     }
-    if (active.current) {
-      stop();
-      setStatus('idle');
-      setSelectedFile(null);
-      setProgress(0);
-    }
-  }, [recordId, stop]);
+    stopAll();
+    setUploads([]);
+  }, [recordId, stopAll]);
 
-  const upload = useCallback(
-    async (file: File) => {
-      if (!client || !fileTypeId || loadedType.current !== fileTypeId || active.current) {
+  const send = useCallback(
+    async (id: string, file: File) => {
+      if (!client) {
         return;
       }
 
       const controller = new AbortController();
-      active.current = controller;
-      setSelectedFile(file);
-      setUploaded(null);
-      setError(null);
-      setProgress(0);
-      setStatus('uploading');
+      active.current.set(id, controller);
+      update(id, { status: 'uploading', progress: 0, error: null, uploaded: null });
 
       let result: FileMetadata;
       try {
@@ -149,7 +159,7 @@ export function useFileUpload(
           signal: controller.signal,
           onProgress: (fraction) => {
             if (!controller.signal.aborted) {
-              setProgress(fraction);
+              update(id, { progress: fraction });
             }
           },
         });
@@ -158,58 +168,96 @@ export function useFileUpload(
         if (controller.signal.aborted || isAbort(err)) {
           return;
         }
-        setError({ error: toFileServiceError(err), source: 'upload' });
-        setStatus('failed');
+        update(id, { status: 'failed', error: toFileServiceError(err) });
         return;
       } finally {
-        if (active.current === controller) {
-          active.current = null;
+        if (active.current.get(id) === controller) {
+          active.current.delete(id);
         }
       }
 
-      if (controller.signal.aborted) {
+      const latest = target.current;
+      if (
+        controller.signal.aborted ||
+        latest.client !== client ||
+        latest.fileTypeId !== fileTypeId ||
+        latest.recordId !== recordId
+      ) {
         return;
       }
-      setUploaded(result);
-      setProgress(1);
-      setStatus('uploaded');
+      update(id, { status: 'uploaded', progress: 1, uploaded: result });
       // File service has accepted the file, so a failing callback is the application's error, not a failed upload.
-      onUploadRef.current?.(result);
+      try {
+        onUploadRef.current?.(result);
+      } catch (err) {
+        console.error('ADSPFileUpload onUpload callback failed.', err);
+      }
     },
-    [client, fileTypeId, recordId],
+    [client, fileTypeId, recordId, update],
   );
 
-  const reset = useCallback(() => {
-    stop();
-    setStatus('idle');
-    setSelectedFile(null);
-    setUploaded(null);
-    setProgress(0);
-    setError((current) => (current?.source === 'upload' ? null : current));
-  }, [stop]);
+  const upload = useCallback(
+    (files: File | readonly File[]) => {
+      const type = loadedType.current;
+      if (!client || !fileTypeId || type?.id !== fileTypeId) {
+        return;
+      }
 
-  const retry = useCallback(() => {
-    if (error?.source === 'type') {
-      // Set now rather than in the effect, so the render after the click already shows the reload.
-      setError(null);
-      setLoading(true);
-      setReloadCount((count) => count + 1);
-    } else if (selectedFile) {
-      void upload(selectedFile);
-    }
-  }, [error, selectedFile, upload]);
+      const selected = Array.isArray(files) ? files : [files as File];
+      const items: FileUploadItem[] = selected.map((file) => {
+        nextId.current += 1;
+        const allowed = isFileFormatAllowed(file.name, type.allowedFileTypes);
+        return {
+          id: `upload-${nextId.current}`,
+          file,
+          status: allowed ? 'uploading' : 'failed',
+          progress: 0,
+          uploaded: null,
+          error: allowed
+            ? null
+            : new FileServiceError('unsupported-format', `${file.name} isn't in a format the File Type allows.`),
+        };
+      });
+
+      setUploads((current) => [...current, ...items]);
+      items.filter((item) => item.status === 'uploading').forEach((item) => void send(item.id, item.file));
+    },
+    [client, fileTypeId, send],
+  );
+
+  const retry = useCallback(
+    (id: string) => {
+      const item = uploads.find((candidate) => candidate.id === id);
+      if (item?.status === 'failed' && item.error?.retryable && !active.current.has(id)) {
+        void send(id, item.file);
+      }
+    },
+    [uploads, send],
+  );
+
+  const remove = useCallback((id: string) => {
+    active.current.get(id)?.abort();
+    active.current.delete(id);
+    setUploads((current) => current.filter((item) => item.id !== id));
+  }, []);
+
+  const reloadType = useCallback(() => {
+    // Set now rather than in the effect, so the render after the click already shows the reload.
+    setTypeError(null);
+    setLoading(true);
+    setReloadCount((count) => count + 1);
+  }, []);
 
   return {
     fileType,
     loading,
-    status,
-    selectedFile,
-    progress,
-    uploaded,
-    error: error?.error ?? null,
-    ready: !!client && !!fileType && status !== 'uploading',
+    typeError,
+    ready: !!client && !!fileType,
+    uploads,
+    uploading: uploads.some((item) => item.status === 'uploading'),
     upload,
     retry,
-    reset,
+    remove,
+    reloadType,
   };
 }
