@@ -20,6 +20,11 @@
             "input": "docs",
             "glob": "**/*.md",
             "output": "assets/docs"
+          },
+          {
+            "input": "libs/adsp-sdk-mcp-server/api-specs",
+            "glob": "*.json",
+            "output": "assets/api-specs"
           }
         ],
         "target": "node",
