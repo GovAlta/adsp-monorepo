@@ -7,6 +7,8 @@ export interface McpServerConfig {
   /** Passed to Express `trust proxy`. */
   trustedProxy: boolean | number | string;
   corsOrigins: '*' | string[];
+  shutdownDelayMs: number;
+  shutdownTimeoutMs: number;
 }
 
 function readInteger(env: NodeJS.ProcessEnv, name: string, defaultValue: number, minimum: number): number {
@@ -46,6 +48,14 @@ function readCorsOrigins(env: NodeJS.ProcessEnv): McpServerConfig['corsOrigins']
 }
 
 export function readConfig(env: NodeJS.ProcessEnv = process.env): McpServerConfig {
+  const shutdownDelayMs = readInteger(env, 'MCP_SHUTDOWN_DELAY_MS', 5000, 0);
+  const shutdownTimeoutMs = readInteger(env, 'MCP_SHUTDOWN_TIMEOUT_MS', 30000, 1);
+  if (shutdownDelayMs >= shutdownTimeoutMs) {
+    throw new Error(
+      `MCP_SHUTDOWN_DELAY_MS (${shutdownDelayMs}) must be shorter than MCP_SHUTDOWN_TIMEOUT_MS (${shutdownTimeoutMs}).`
+    );
+  }
+
   return {
     maxInFlight: readInteger(env, 'MCP_MAX_IN_FLIGHT', 64, 1),
     inFlightWaitMs: readInteger(env, 'MCP_IN_FLIGHT_WAIT_MS', 1000, 0),
@@ -53,5 +63,7 @@ export function readConfig(env: NodeJS.ProcessEnv = process.env): McpServerConfi
     liveToolMaxConcurrent: readInteger(env, 'MCP_LIVE_TOOL_MAX_CONCURRENT', 8, 1),
     trustedProxy: readTrustedProxy(env),
     corsOrigins: readCorsOrigins(env),
+    shutdownDelayMs,
+    shutdownTimeoutMs,
   };
 }
