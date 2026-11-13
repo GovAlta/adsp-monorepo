@@ -4,6 +4,7 @@ import { WithClassname, ControlProps } from '@jsonforms/core';
 
 import styled from 'styled-components';
 import { JsonFormContext } from '../../Context';
+import { resolveMaxFileSize } from './maxFileSize';
 
 import { GoAContextMenu, GoAContextMenuIcon } from './ContextMenu';
 import { DeleteFileModal } from './DeleteFileModal';
@@ -214,7 +215,7 @@ export const FileUploader = ({ data, path, handleChange, uischema, ...props }: F
   const readOnly =
     uischema?.options?.componentProps?.readOnly === true || props?.isStepperReview === true || user === null;
   const hostMaxFileSize = enumerators?.data.get('file-max-size')?.() as unknown as string | undefined;
-  const maxFileSize = uischema?.options?.componentProps?.maxFileSize ?? hostMaxFileSize ?? '';
+  const maxFileSize = resolveMaxFileSize(uischema?.options?.componentProps?.maxFileSize, hostMaxFileSize);
   const accept = uischema?.options?.componentProps?.accept ?? '';
   if (!enumerators) {
     //eslint-disable-next-line
