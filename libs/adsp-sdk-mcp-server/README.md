@@ -4,8 +4,8 @@ An MCP (Model Context Protocol) server that gives an AI coding assistant grounde
 [Alberta Digital Service Platform](https://govalta.github.io/adsp-monorepo) (ADSP) and the Node SDK
 (`@abgov/adsp-service-sdk`), instead of guessing.
 
-It bundles the ADSP documentation site content and a curated reference of every `@abgov/adsp-service-sdk` export,
-and exposes them over stdio via eight tools:
+It bundles the ADSP documentation site content, the OpenAPI specs of ADSP services, and a curated reference of every
+`@abgov/adsp-service-sdk` export, and exposes them over stdio via eleven tools:
 
 - `search_adsp_docs` — keyword search across ADSP platform docs (getting started, architecture, service concepts,
   tutorials). Common words people use that the docs don't, such as `websocket` or `auth`, also search for the
@@ -26,6 +26,15 @@ and exposes them over stdio via eight tools:
 - `get_adsp_mcp_server_info` — this server's version and where its bundled content came from: the docs source
   commit, the `@abgov/adsp-service-sdk` version the SDK reference matches, and the release time. Lets an agent warn
   that an answer may be stale.
+- `list_service_apis` — the ADSP services that publish a REST API, with URN and operation count.
+- `search_service_endpoints` — keyword search over those services' endpoints (path, summary, tags, description),
+  optionally within one service.
+- `read_service_endpoint` — one endpoint as its service's OpenAPI spec defines it: description, parameters, request
+  body and responses with schema references inlined. `access` quotes the description's sentences about roles,
+  tenancy and anonymous access; structured role metadata is planned (CS-5731).
+
+The three API tools read the bundled OpenAPI specs (see [Bundled OpenAPI specs](#bundled-openapi-specs)), the same
+content each service serves at `/swagger/docs/v1`, so they work offline.
 
 The two live tools require logging in first (see below). Everything else in this package works fully offline with no
 setup.
@@ -140,7 +149,7 @@ OpenTelemetry SDK isn't loaded. Stdio mode never exports metrics.
 
 Every label takes a value from a fixed set:
 
-- `mcp.tool.name`: one of the eight tool names, or `unknown` for any name the server doesn't have.
+- `mcp.tool.name`: one of the eleven tool names, or `unknown` for any name the server doesn't have.
 - `mcp.method.name`: an MCP method such as `initialize`, `tools/list` or `tools/call`; `other` for any other method;
   `batch` for a JSON-RPC batch; `unparsed` when the body wasn't valid JSON-RPC or was too large.
 - `error.type` on `mcp.request.duration`: `aborted` when the client disconnected before the response was written; the

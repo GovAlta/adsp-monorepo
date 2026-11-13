@@ -1,0 +1,10 @@
+[
+  {
+    "app": "demo-service",
+    "urn": "urn:ads:platform:demo-service",
+    "name": "Demo service",
+    "title": "Demo service",
+    "operations": 3,
+    "file": "demo-service.json"
+  }
+]
