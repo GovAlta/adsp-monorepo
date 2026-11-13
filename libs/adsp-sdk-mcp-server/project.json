@@ -25,6 +25,7 @@
         "default",
         "^production",
         "{workspaceRoot}/jest.preset.js",
+        "{workspaceRoot}/docs/**/*.md",
         "{workspaceRoot}/apps/*/swagger.config.js",
         "{workspaceRoot}/apps/*/src/**/*.swagger.yml",
         "{workspaceRoot}/apps/pii-service/pii_service/resources/swagger.yml"
@@ -61,10 +62,17 @@
         "command": "node libs/adsp-sdk-mcp-server/scripts/api-specs.mjs --write"
       }
     },
+    "update-docs-lock": {
+      "executor": "nx:run-commands",
+      "cache": false,
+      "options": {
+        "command": "node libs/adsp-sdk-mcp-server/scripts/docs-lock.mjs --write"
+      }
+    },
     "release": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "npx semantic-release -e ./libs/adsp-sdk-mcp-server/.releaserc.json"
+        "command": "node libs/adsp-sdk-mcp-server/scripts/provenance.mjs && npx semantic-release -e ./libs/adsp-sdk-mcp-server/.releaserc.json"
       }
     }
   }
