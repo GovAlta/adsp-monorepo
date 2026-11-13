@@ -122,6 +122,8 @@ def test_registration_includes_audit_actions(pii):
         "text.anonymized",
         "text.analyze-failed",
         "text.anonymize-failed",
+        "text.analyze-errored",
+        "text.anonymize-errored",
     ]
 
 
@@ -173,7 +175,7 @@ def test_anonymize_records_success_and_uses_supplied_correlation_id(pii):
     assert record.metadata["entitiesDetected"] == 2
 
 
-def test_analyze_failure_records_error_type_only(pii):
+def test_analyze_error_records_errored_action_with_error_type_only(pii):
     module, state = pii
 
     def fail(**kwargs):
@@ -184,19 +186,19 @@ def test_analyze_failure_records_error_type_only(pii):
         post(module, "/pii/v1/analyze", {"text": SECRET_TEXT, "language": "en"})
 
     record = recorded(module)
-    assert record.action == "text.analyze-failed"
+    assert record.action == "text.analyze-errored"
     assert record.status == "error"
     assert record.metadata["errorType"] == "RuntimeError"
     assert "046" not in str(record.metadata) and "Jane" not in str(record.metadata)
 
 
-def test_anonymize_failure_records_failed_action(pii):
+def test_anonymize_error_records_errored_action(pii):
     module, state = pii
     state.analyze = MagicMock(side_effect=RuntimeError("boom"))
     with pytest.raises(RuntimeError):
         post(module, "/pii/v1/anonymize", {"text": SECRET_TEXT, "language": "en"})
 
-    assert recorded(module).action == "text.anonymize-failed"
+    assert recorded(module).action == "text.anonymize-errored"
 
 
 def test_validation_failure_is_audited_as_failed(pii):

@@ -16,8 +16,9 @@ export interface ReplyUsage {
   modelCalls: number;
 }
 
-/** Memory has started keeping the conversation short; normal behaviour that users should know about. */
-export type ConversationNoticeReason = 'summarised' | 'older-messages-dropped';
+/** Memory has started keeping the conversation short, or the conversation has grown long enough that a new chat
+ * would answer more cheaply; normal behaviour that users should know about. */
+export type ConversationNoticeReason = 'summarised' | 'older-messages-dropped' | 'long-conversation';
 /** The conversation is close to what the assistant can handle well. */
 export type ConversationWarningReason = 'near-context-limit' | 'notes-condensed';
 
@@ -162,11 +163,14 @@ export function getConversationStatus({
   contextWindowTokens,
   memoryStatus,
   history,
+  longConversationTokens = 0,
 }: {
   contextTokens: number;
   contextWindowTokens: number;
   memoryStatus?: MemoryStatus;
   history?: MessageHistory;
+  /** Context tokens at which to suggest a new chat; 0 never suggests one. */
+  longConversationTokens?: number;
 }): ConversationStatus {
   const context = { contextTokens, contextWindowTokens };
 
@@ -179,6 +183,9 @@ export function getConversationStatus({
   }
   if (memoryStatus && memoryStatus.observationTokens > 0) {
     return { ...context, state: 'notice', reason: 'summarised' };
+  }
+  if (longConversationTokens > 0 && contextTokens >= longConversationTokens) {
+    return { ...context, state: 'notice', reason: 'long-conversation' };
   }
   if (history && history.storedMessages > history.lastMessages) {
     return { ...context, state: 'notice', reason: 'older-messages-dropped', messageLimit: history.lastMessages };

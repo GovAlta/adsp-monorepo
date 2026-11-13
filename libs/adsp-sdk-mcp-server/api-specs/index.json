@@ -1,0 +1,186 @@
+[
+  {
+    "app": "agent-service",
+    "urn": "urn:ads:platform:agent-service",
+    "name": "Agent service",
+    "title": "Agent service",
+    "operations": 6,
+    "file": "agent-service.json"
+  },
+  {
+    "app": "audit-service",
+    "urn": "urn:ads:platform:audit-service",
+    "name": "Audit service",
+    "title": "Audit service",
+    "operations": 13,
+    "file": "audit-service.json"
+  },
+  {
+    "app": "cache-service",
+    "urn": "urn:ads:platform:cache-service",
+    "name": "Cache service",
+    "title": "Cache service",
+    "operations": 1,
+    "file": "cache-service.json"
+  },
+  {
+    "app": "calendar-service",
+    "urn": "urn:ads:platform:calendar-service",
+    "name": "Calendar service",
+    "title": "Calendar service",
+    "operations": 19,
+    "file": "calendar-service.json"
+  },
+  {
+    "app": "comment-service",
+    "urn": "urn:ads:platform:comment-service",
+    "name": "Comment service",
+    "title": "Comment service",
+    "operations": 16,
+    "file": "comment-service.json"
+  },
+  {
+    "app": "configuration-service",
+    "urn": "urn:ads:platform:configuration-service",
+    "name": "Configuration service",
+    "title": "Configuration service",
+    "operations": 9,
+    "file": "configuration-service.json"
+  },
+  {
+    "app": "directory-service",
+    "urn": "urn:ads:platform:directory-service",
+    "name": "Directory service",
+    "title": "Directory service",
+    "operations": 20,
+    "file": "directory-service.json"
+  },
+  {
+    "app": "event-service",
+    "urn": "urn:ads:platform:event-service",
+    "name": "Event service",
+    "title": "Event service",
+    "operations": 7,
+    "file": "event-service.json"
+  },
+  {
+    "app": "export-service",
+    "urn": "urn:ads:platform:export-service",
+    "name": "Export service",
+    "title": "Export service",
+    "operations": 2,
+    "file": "export-service.json"
+  },
+  {
+    "app": "feedback-service",
+    "urn": "urn:ads:platform:feedback-service",
+    "name": "Feedback service",
+    "title": "Feedback service",
+    "operations": 6,
+    "file": "feedback-service.json"
+  },
+  {
+    "app": "file-service",
+    "urn": "urn:ads:platform:file-service",
+    "name": "File service",
+    "title": "File service",
+    "operations": 9,
+    "file": "file-service.json"
+  },
+  {
+    "app": "form-service",
+    "urn": "urn:ads:platform:form-service",
+    "name": "Form service",
+    "title": "Form service",
+    "operations": 31,
+    "file": "form-service.json"
+  },
+  {
+    "app": "notification-service",
+    "urn": "urn:ads:platform:notification-service",
+    "name": "Notification service",
+    "title": "Notification service",
+    "operations": 22,
+    "file": "notification-service.json"
+  },
+  {
+    "app": "pdf-service",
+    "urn": "urn:ads:platform:pdf-service",
+    "name": "PDF service",
+    "title": "PDF Service",
+    "operations": 7,
+    "file": "pdf-service.json"
+  },
+  {
+    "app": "pii-service",
+    "urn": "urn:ads:platform:pii-service",
+    "name": "PII service",
+    "title": "PII Service",
+    "operations": 3,
+    "file": "pii-service.json"
+  },
+  {
+    "app": "project-planner-service",
+    "urn": "urn:ads:platform:project-planner-service",
+    "name": "Project planner service",
+    "title": "Project planner service",
+    "operations": 31,
+    "file": "project-planner-service.json"
+  },
+  {
+    "app": "push-service",
+    "urn": "urn:ads:platform:push-service",
+    "name": "Push service",
+    "title": "Push service",
+    "operations": 2,
+    "file": "push-service.json"
+  },
+  {
+    "app": "status-service",
+    "urn": "urn:ads:platform:status-service",
+    "name": "Status service",
+    "title": "Status service",
+    "operations": 17,
+    "file": "status-service.json"
+  },
+  {
+    "app": "task-service",
+    "urn": "urn:ads:platform:task-service",
+    "name": "Task service",
+    "title": "Task service",
+    "operations": 17,
+    "file": "task-service.json"
+  },
+  {
+    "app": "tenant-management-api",
+    "urn": "urn:ads:platform:tenant-service",
+    "name": "Tenant service",
+    "title": "Tenant management service",
+    "operations": 15,
+    "file": "tenant-management-api.json"
+  },
+  {
+    "app": "token-handler",
+    "urn": "urn:ads:platform:token-handler",
+    "name": "Token handler",
+    "title": "Token handler",
+    "operations": 13,
+    "file": "token-handler.json"
+  },
+  {
+    "app": "value-service",
+    "urn": "urn:ads:platform:value-service",
+    "name": "Value service",
+    "title": "Value service",
+    "operations": 13,
+    "file": "value-service.json"
+  },
+  {
+    "app": "verify-service",
+    "urn": "urn:ads:platform:verify-service",
+    "name": "Verify service",
+    "title": "Verify service",
+    "operations": 1,
+    "file": "verify-service.json"
+  }
+]

@@ -21,8 +21,10 @@ export const CodeGeneratedAuditAction: AuditAction = {
   description: 'A new verification code is generated at a key.',
 };
 
-export const CodeVerifySucceededAuditAction: AuditAction = {
-  name: 'code.verified.succeeded',
+// Audit service reserves a terminal .succeeded or .failed for outcomes of one action, so the verification outcomes
+// are separate actions to keep a warning severity for rejected codes.
+export const CodeVerifiedAuditAction: AuditAction = {
+  name: 'code.verified',
   version: 1,
   category: AuditCategories.Security,
   severity: AuditSeverities.Info,
@@ -31,8 +33,8 @@ export const CodeVerifySucceededAuditAction: AuditAction = {
   description: 'A code is submitted and matches the code at the key.',
 };
 
-export const CodeVerifyFailedAuditAction: AuditAction = {
-  name: 'code.verified.failed',
+export const CodeRejectedAuditAction: AuditAction = {
+  name: 'code.rejected',
   version: 1,
   category: AuditCategories.Security,
   severity: AuditSeverities.Warning,
@@ -54,8 +56,8 @@ export const CodeAttemptsExceededClearedAuditAction: AuditAction = {
 
 export const VerifyAuditActions: AuditAction[] = [
   CodeGeneratedAuditAction,
-  CodeVerifySucceededAuditAction,
-  CodeVerifyFailedAuditAction,
+  CodeVerifiedAuditAction,
+  CodeRejectedAuditAction,
   CodeAttemptsExceededClearedAuditAction,
 ];
 

@@ -20,8 +20,8 @@ describe('DocsRepository', () => {
       root,
       'getting-started.md',
       ['---', 'layout: page', 'title: Getting started', '---', '', 'Request a tenant to get started with ADSP.'].join(
-        '\n'
-      )
+        '\n',
+      ),
     );
     writeDoc(
       root,
@@ -33,11 +33,15 @@ describe('DocsRepository', () => {
         '---',
         '',
         'The event service routes domain events over RabbitMQ and logs them for audit trails.',
-      ].join('\n')
+      ].join('\n'),
     );
     writeDoc(root, 'services/no-frontmatter.md', 'Plain content with no frontmatter about the directory service.');
     writeDoc(root, 'platform/platform-node-sdk.md', '---\ntitle: Node SDK\n---\n\nUse the Node SDK to build services.');
-    writeDoc(root, 'platform/platform-dotnet-sdk.md', '---\ntitle: .NET SDK\n---\n\nUse the .NET SDK to build services.');
+    writeDoc(
+      root,
+      'platform/platform-dotnet-sdk.md',
+      '---\ntitle: .NET SDK\n---\n\nUse the .NET SDK to build services.',
+    );
   });
 
   afterEach(() => {
@@ -77,9 +81,7 @@ describe('DocsRepository', () => {
       const repo = new DocsRepository(root);
       const listed = repo.list();
 
-      expect(listed).toEqual(
-        expect.arrayContaining([{ path: 'services/event-service.md', title: 'Event service' }])
-      );
+      expect(listed).toEqual(expect.arrayContaining([{ path: 'services/event-service.md', title: 'Event service' }]));
       expect(listed.some((d) => d.path === 'platform/platform-dotnet-sdk.md')).toBe(false);
     });
   });
@@ -120,6 +122,35 @@ describe('DocsRepository', () => {
       const results = repo.search('SDK build services');
 
       expect(results.map((r) => r.path)).not.toContain('platform/platform-dotnet-sdk.md');
+    });
+
+    describe('aliases', () => {
+      beforeEach(() => {
+        writeDoc(
+          root,
+          'services/push-service.md',
+          '---\ntitle: Push service\n---\n\nSubscribe to a stream of domain events using socket.io.',
+        );
+        writeDoc(
+          root,
+          'services/access-service.md',
+          '---\ntitle: Access service\n---\n\nAccess service is a deployment of Keycloak. Users login to a realm.',
+        );
+        writeDoc(root, 'services/token-handler.md', '---\ntitle: Token handler\n---\n\nSend the auth cookie.');
+        writeDoc(root, 'services/file-service.md', '---\ntitle: File service\n---\n\nStore and download files.');
+      });
+
+      it('finds push service for websocket, which its page never says', () => {
+        expect(new DocsRepository(root).search('websocket')[0].path).toBe('services/push-service.md');
+      });
+
+      it('ranks access service first for auth, above a page that says auth', () => {
+        expect(new DocsRepository(root).search('auth')[0].path).toBe('services/access-service.md');
+      });
+
+      it('finds file service for upload a file', () => {
+        expect(new DocsRepository(root).search('upload a file')[0].path).toBe('services/file-service.md');
+      });
     });
 
     it('returns an empty array when the query is only stop words', () => {
