@@ -1,4 +1,71 @@
 components:
+  parameters:
+    ValueTenantId:
+      name: tenantId
+      description: >
+        ID of the tenant to act on. Only used for core (platform) users; tenant users always act on the tenant of their
+        token and this parameter is ignored. Responds 400 if it is not a valid tenant URN.
+      in: query
+      required: false
+      schema:
+        type: string
+      example: urn:ads:platform:tenant-service:v2:/tenants/61f2e3a8c9b1d2e3f4a5b6c7
+    ValueNamespaceParam:
+      name: namespace
+      description: Namespace of the value, for example the name of the service that writes it.
+      in: path
+      required: true
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 50
+      example: test-service
+    ValueNameParam:
+      name: name
+      description: Name of the value within the namespace.
+      in: path
+      required: true
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 50
+      example: response-time
+    MetricInterval:
+      name: interval
+      description: >
+        Interval to aggregate metrics into. Defaults to daily. Any other value responds 400 with "Interval value is
+        not recognized."
+      in: query
+      required: false
+      schema:
+        type: string
+        default: daily
+        enum:
+          - one_minute
+          - five_minutes
+          - hourly
+          - daily
+          - weekly
+          - monthly
+    MetricTop:
+      name: top
+      description: Number of metric interval rows to read. Defaults to 100.
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 5000
+        default: 100
+    MetricAfter:
+      name: after
+      description: Cursor for the next set of results; set it to page.next of the previous response.
+      in: query
+      required: false
+      schema:
+        type: string
+        description: Base64 encoded number of rows to skip.
+      example: MTAw
   responses:
     ValueBadRequest:
       description: Request is invalid, for example a path or query parameter failed validation or tenant context is missing.
@@ -32,13 +99,18 @@ components:
       properties:
         errorMessage:
           type: string
+      example:
+        errorMessage: Tenant context is required for operation.
     Value:
       type: object
       properties:
         correlationId:
           type: string
+          nullable: true
+          description: Correlation ID that links related records, for example the records of one request.
         context:
           type: object
+          description: Context of the record, used to filter reads.
           additionalProperties:
             oneOf:
               - type: string
@@ -47,15 +119,67 @@ components:
         timestamp:
           type: string
           format: date-time
-        value: {}
+          description: Time of the record. Defaults to the time of the write.
+        value:
+          description: The recorded value; any JSON value. Validated against the value definition schema, if there is one.
+        metrics:
+          type: object
+          writeOnly: true
+          description: >
+            Metric name to number. Numeric entries are recorded as metrics of the value and aggregated into intervals;
+            other entries are ignored. Not returned with the record.
+          additionalProperties:
+            type: number
+      example:
+        correlationId: request-1
+        context:
+          endpoint: /api/v1/items
+        timestamp: '2026-09-24T17:00:00.000Z'
+        value: 120
+    ValuePage:
+      type: object
+      properties:
+        after:
+          type: string
+          nullable: true
+          description: Cursor the page was read after.
+        next:
+          type: string
+          description: Cursor for the next page; absent when there are no more results.
+        size:
+          type: number
+          description: Number of results in the page.
+      example:
+        after: null
+        next: MTA=
+        size: 10
+    MetricPage:
+      allOf:
+        - $ref: '#/components/schemas/ValuePage'
+        - type: object
+          properties:
+            intervalMax:
+              type: string
+              format: date-time
+              readOnly: true
+              description: >
+                End of the window actually read. It is snapped back to the start of the interval in progress, so only
+                whole intervals are returned.
+      example:
+        after: null
+        next: MQ==
+        size: 1
+        intervalMax: '2026-09-24T00:00:00.000Z'
     MetricIntervalValue:
       type: object
       properties:
         interval:
           type: string
           format: date-time
+          description: Start of the interval.
         avg:
           type: number
+          nullable: true
         sum:
           type: number
         min:
@@ -64,6 +188,13 @@ components:
           type: number
         count:
           type: number
+      example:
+        interval: '2026-09-23T00:00:00.000Z'
+        avg: 118.5
+        sum: 1185
+        min: 80
+        max: 240
+        count: 10
     Metric:
       type: object
       properties:
@@ -71,8 +202,18 @@ components:
           type: string
         values:
           type: array
+          description: Interval aggregates, newest first.
           items:
             $ref: '#/components/schemas/MetricIntervalValue'
+      example:
+        name: response-time:avg
+        values:
+          - interval: '2026-09-23T00:00:00.000Z'
+            avg: 118.5
+            sum: 1185
+            min: 80
+            max: 240
+            count: 10
     PlatformMetricIntervalValue:
       allOf:
         - $ref: '#/components/schemas/MetricIntervalValue'
@@ -80,6 +221,14 @@ components:
           properties:
             tenantId:
               type: string
+      example:
+        interval: '2026-09-23T00:00:00.000Z'
+        tenantId: urn:ads:platform:tenant-service:v2:/tenants/61f2e3a8c9b1d2e3f4a5b6c7
+        avg: 118.5
+        sum: 1185
+        min: 80
+        max: 240
+        count: 10
     PlatformMetric:
       type: object
       properties:
@@ -89,15 +238,45 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/PlatformMetricIntervalValue'
+      example:
+        name: response-time:avg
+        values:
+          - interval: '2026-09-23T00:00:00.000Z'
+            tenantId: urn:ads:platform:tenant-service:v2:/tenants/61f2e3a8c9b1d2e3f4a5b6c7
+            avg: 118.5
+            sum: 1185
+            min: 80
+            max: 240
+            count: 10
+    MetricCriteria:
+      type: object
+      description: >
+        Must be valid JSON. Without intervalMin and intervalMax, the last month is read. intervalMin and intervalMax
+        must be ISO 8601 date-times.
+      properties:
+        metricLike:
+          type: string
+          description: Only read metrics whose name contains this text. Not used when reading a single metric.
+        intervalMax:
+          type: string
+          format: date-time
+        intervalMin:
+          type: string
+          format: date-time
+      example:
+        metricLike: response-time
+        intervalMin: '2026-09-01T00:00:00.000Z'
+        intervalMax: '2026-10-01T00:00:00.000Z'
 
 /value/v1/service-metric-rollups/run:
   post:
     tags:
       - Value
     description: >
-      Manually triggers service metric rollup processing for completed days. Requires the value-writer role.
-      Core users can roll up a specific tenant or all tenants; tenant users are always restricted to their own tenant.
-      The current partial day and future days cannot be rolled up.
+      Manually triggers service metric rollup processing for completed days. Requires the value-writer role. Core
+      users with the role can roll up a specific tenant by setting tenantId in the body, or all tenants by leaving it
+      out; tenant users are always restricted to their own tenant and tenantId is ignored. The current partial day and
+      future days cannot be rolled up.
     requestBody:
       required: false
       content:
@@ -112,14 +291,16 @@ components:
               start:
                 type: string
                 format: date
-                description: First completed day to roll up. Defaults to the configured trailing window.
+                description: >
+                  First completed day to roll up (ISO 8601). Defaults to end when only end is supplied, and to the
+                  configured trailing window when neither is supplied.
               end:
                 type: string
                 format: date
-                description: Last completed day to roll up. Defaults to start when only start is supplied.
+                description: Last completed day to roll up (ISO 8601). Defaults to start when only start is supplied.
               tenantId:
                 type: string
-                description: Tenant ID to roll up. Tenant users are always restricted to their own tenant.
+                description: Tenant ID to roll up. Only used for core users.
     responses:
       200:
         description: Service metric rollup completed.
@@ -145,8 +326,17 @@ components:
                   description: Tenant ID that was rolled up, or null when all tenants were rolled up.
                 rollups:
                   type: integer
+                  description: Number of rollup rows written.
       400:
-        $ref: '#/components/responses/ValueBadRequest'
+        description: >
+          start or end is not an ISO 8601 date, start is after end, or the range includes the current partial day or a
+          future day.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ValueError'
+            example:
+              errorMessage: Cannot roll up the current partial day or a future day.
       401:
         $ref: '#/components/responses/ValueUnauthorized'
       403:
@@ -157,18 +347,14 @@ components:
     tags:
       - Value
     description: >
-      Reads the latest value of each value definition in a namespace. Requires the value-reader role.
-      Only values with a configured definition are returned.
+      Reads the latest record of each value definition in a namespace. Requires the value-reader role. Only values
+      with a tenant or core value definition are returned. Acts on the tenant of the caller's token; core users
+      reading a tenant's values should read each value with GET /value/v1/{namespace}/values/{name} and tenantId.
     parameters:
-      - name: namespace
-        description: Namespace to read values from.
-        in: path
-        required: true
-        schema:
-          type: string
+      - $ref: '#/components/parameters/ValueNamespaceParam'
       - name: names
         in: query
-        description: Filter by these comma-separated list of names.
+        description: Comma-separated names of the values to read. Defaults to every value defined in the namespace.
         required: false
         style: form
         explode: false
@@ -176,6 +362,9 @@ components:
           type: array
           items:
             type: string
+        example:
+          - response-time
+          - error-count
     responses:
       '200':
         description: Values successfully read, keyed by namespace and then value name.
@@ -202,7 +391,13 @@ components:
       403:
         $ref: '#/components/responses/ValueForbidden'
       404:
-        $ref: '#/components/responses/ValueNotFound'
+        description: The namespace has no value definitions, or none of the requested names has a value definition.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ValueError'
+            example:
+              errorMessage: namespace with ID 'test-service' could not be found.
 /value/v1/{namespace}/values/{name}:
   parameters:
     - name: namespace
@@ -213,6 +408,9 @@ components:
       required: true
       schema:
         type: string
+        minLength: 1
+        maxLength: 50
+      example: test-service
     - name: name
       description: >
         Name of the stored value. This path value is always event for event log records; it is not the optional
@@ -221,14 +419,21 @@ components:
       required: true
       schema:
         type: string
+        minLength: 1
+        maxLength: 50
+      example: response-time
   get:
     tags:
       - Value
     description: >
       Reads records of a namespace value, newest first unless order is asc. Requires the value-reader role, or the
-      export-service export-job role. Core users can read without a tenant context. Event log consumers should use
+      export-service export-job role. Only records of the tenant are returned; tenant users read their own tenant and
+      core users with the role read the tenant set by tenantId. Core users can also leave out tenantId to read the
+      records of all tenants, which is how the event service reads the event log. Tenant users without a tenant
+      context get 400. A value that has no records responds 200 with an empty array. Event log consumers should use
       the event service API, where event namespace and name are optional query filters.
     parameters:
+      - $ref: '#/components/parameters/ValueTenantId'
       - name: top
         description: Number of results to read. Defaults to 10.
         in: query
@@ -237,12 +442,15 @@ components:
           type: integer
           minimum: 1
           maximum: 5000
+          default: 10
       - name: after
-        description: Cursor for next set of results.
+        description: Cursor for the next set of results; set it to page.next of the previous response.
         in: query
         required: false
         schema:
           type: string
+          description: Base64 encoded number of records to skip.
+        example: MTA=
       - name: order
         description: >
           Timestamp order of the results; asc reads oldest first. Defaults to desc. Reading the oldest end of a
@@ -259,10 +467,11 @@ components:
         required: false
         schema:
           type: string
+        example: request-1
       - name: context
         description: >
-          JSON object of context values the records must contain. Every supplied property must match (AND). For
-          event log records, namespace and name identify the event definition.
+          JSON object of context values the records must contain. Must be valid JSON. Every supplied property must
+          match (AND). For event log records, namespace and name identify the event definition.
         in: query
         required: false
         content:
@@ -278,19 +487,21 @@ components:
                 namespace: support-program
                 name: application-submitted
       - name: timestampMin
-        description: Inclusive min value of timestamp.
+        description: Inclusive min value of timestamp (ISO 8601).
         in: query
         required: false
         schema:
           type: string
           format: date-time
+        example: '2026-09-01T00:00:00.000Z'
       - name: timestampMax
-        description: Inclusive max value of timestamp.
+        description: Inclusive max value of timestamp (ISO 8601).
         in: query
         required: false
         schema:
           type: string
           format: date-time
+        example: '2026-10-01T00:00:00.000Z'
       - name: payloadPath
         description: >
           Dot-separated property path within an event payload. Must be supplied with payloadValue and with both
@@ -309,7 +520,7 @@ components:
         required: false
         schema:
           type: string
-          example: jane@example.gov.ab.ca
+          example: test.user@gov.ab.ca
       - name: payload
         description: >
           JSON object that the event payload must contain. Nested objects and multiple properties are supported,
@@ -326,17 +537,23 @@ components:
                 applicationId: '12345'
                 status: submitted
       - name: value
-        description: Filter to records with a payload targetId equal to this value (used for event log records).
+        description: >
+          Filter to records with a payload targetId equal to this value (used for event log records). Must not contain
+          double quotes.
         in: query
         required: false
         schema:
           type: string
+        example: 61f2e3a8c9b1d2e3f4a5b6c7
       - name: url
-        description: Filter to records with a payload URL equal to this value (used for event log records).
+        description: >
+          Filter to records with a payload URL equal to this value (used for event log records). Must not contain
+          double quotes.
         in: query
         required: false
         schema:
           type: string
+        example: https://my-application.alberta.ca/applications
     responses:
       200:
         description: Value successfully read.
@@ -358,14 +575,7 @@ components:
               type: object
               properties:
                 page:
-                  type: object
-                  properties:
-                    after:
-                      type: string
-                    next:
-                      type: string
-                    size:
-                      type: number
+                  $ref: '#/components/schemas/ValuePage'
               additionalProperties:
                 type: object
                 additionalProperties:
@@ -382,11 +592,15 @@ components:
     tags:
       - Value
     description: >
-      Writes one or more records of a namespace value. Requires the value-writer role. Core users can write to a
-      specific tenant by including tenantId in the body. The body can be a value envelope (with value, context,
-      correlationId and timestamp), a bare JSON object which is written as the value, or an array of either. If
-      the value has a definition with a schema, records that fail validation are skipped. Responds with an array
-      when the request body is an array.
+      Writes one or more records of a namespace value. Requires the value-writer role. Tenant users write to their own
+      tenant; core users with the role write to the tenant set by tenantId in the body or query, and get 400 without
+      one. A tenant user who sets a tenantId other than their own gets 403. The body can be a value envelope (with
+      value, context, correlationId, timestamp and metrics), a bare JSON object which is written as the value, or an
+      array of either. A value does not need a definition. If the value has a definition, records that fail its
+      schema are skipped, and a value-written event is sent for each record when the definition has sendWriteEvent
+      set. Responds with an array when the request body is an array.
+    parameters:
+      - $ref: '#/components/parameters/ValueTenantId'
     requestBody:
       required: true
       content:
@@ -400,6 +614,8 @@ components:
                   endpoint: /api/v1/items
                 timestamp: '2026-09-24T17:00:00.000Z'
                 value: 120
+                metrics:
+                  response-time: 120
             bare:
               summary: Bare value object
               value:
@@ -409,9 +625,20 @@ components:
               value:
                 - value: 120
                 - value: 95
+            core:
+              summary: Core user writing to a tenant
+              value:
+                tenantId: urn:ads:platform:tenant-service:v2:/tenants/61f2e3a8c9b1d2e3f4a5b6c7
+                value: 120
           schema:
             oneOf:
-              - $ref: '#/components/schemas/Value'
+              - allOf:
+                  - $ref: '#/components/schemas/Value'
+                  - type: object
+                    properties:
+                      tenantId:
+                        type: string
+                        description: Tenant to write to. Only core users can write to a tenant other than their own.
               - type: object
               - type: array
                 items:
@@ -443,33 +670,27 @@ components:
         $ref: '#/components/responses/ValueForbidden'
 /value/v1/{namespace}/values/{name}/count:
   parameters:
-    - name: namespace
-      description: Namespace of the value.
-      in: path
-      required: true
-      schema:
-        type: string
-    - name: name
-      description: Name of the value.
-      in: path
-      required: true
-      schema:
-        type: string
+    - $ref: '#/components/parameters/ValueNamespaceParam'
+    - $ref: '#/components/parameters/ValueNameParam'
   get:
     tags:
       - Value
-    description: Count records of a namespace value. Requires the value-reader role and a tenant context.
+    description: >
+      Counts records of a namespace value in a tenant. Requires the value-reader role and a tenant context: tenant
+      users count their own tenant, and core users must set tenantId.
     parameters:
+      - $ref: '#/components/parameters/ValueTenantId'
       - name: correlationId
         description: Correlation ID associated with the values.
         in: query
         required: false
         schema:
           type: string
+        example: request-1
       - name: context
         description: >
-          JSON object of context values the records must contain. Every supplied property must match (AND). For
-          event log records, namespace and name identify the event definition.
+          JSON object of context values the records must contain. Must be valid JSON. Every supplied property must
+          match (AND). For event log records, namespace and name identify the event definition.
         in: query
         required: false
         content:
@@ -485,19 +706,21 @@ components:
                 namespace: support-program
                 name: application-submitted
       - name: timestampMin
-        description: Inclusive min value of timestamp.
+        description: Inclusive min value of timestamp (ISO 8601).
         in: query
         required: false
         schema:
           type: string
           format: date-time
+        example: '2026-09-01T00:00:00.000Z'
       - name: timestampMax
-        description: Inclusive max value of timestamp.
+        description: Inclusive max value of timestamp (ISO 8601).
         in: query
         required: false
         schema:
           type: string
           format: date-time
+        example: '2026-10-01T00:00:00.000Z'
     responses:
       200:
         description: Value successfully read.
@@ -527,65 +750,24 @@ components:
     tags:
       - Value
     description: >
-      Retrieves metric aggregates of a value in a namespace, keyed by metric name. Requires the value-reader role
-      and a tenant context.
+      Retrieves interval aggregates of every metric of a value, keyed by metric name. Requires the value-reader role
+      and a tenant context: tenant users read their own tenant, and core users must set tenantId. Paging is over
+      metric interval rows, newest first.
     parameters:
-      - name: namespace
-        description: Namespace to read value metric from.
-        in: path
-        required: true
-        schema:
-          type: string
-      - name: name
-        description: Name of the value.
-        in: path
-        required: true
-        schema:
-          type: string
-      - name: interval
-        description: Interval to get metric aggregates for. Defaults to daily.
-        in: query
-        required: false
-        schema:
-          type: string
-          enum:
-            - one_minute
-            - five_minutes
-            - hourly
-            - daily
-            - weekly
-            - monthly
-      - name: top
-        description: Number of intervals to read. Defaults to 100.
-        in: query
-        required: false
-        schema:
-          type: integer
-          minimum: 1
-          maximum: 5000
-      - name: after
-        description: Cursor for next set of results.
-        in: query
-        required: false
-        schema:
-          type: string
+      - $ref: '#/components/parameters/ValueNamespaceParam'
+      - $ref: '#/components/parameters/ValueNameParam'
+      - $ref: '#/components/parameters/ValueTenantId'
+      - $ref: '#/components/parameters/MetricInterval'
+      - $ref: '#/components/parameters/MetricTop'
+      - $ref: '#/components/parameters/MetricAfter'
       - name: criteria
-        description: Criteria for the read.
+        description: JSON criteria for the read. Must be valid JSON.
         in: query
         required: false
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                metricLike:
-                  type: string
-                intervalMax:
-                  type: string
-                  format: date-time
-                intervalMin:
-                  type: string
-                  format: date-time
+              $ref: '#/components/schemas/MetricCriteria'
     responses:
       200:
         description: Metrics successfully read.
@@ -595,14 +777,7 @@ components:
               type: object
               properties:
                 page:
-                  type: object
-                  properties:
-                    after:
-                      type: string
-                    next:
-                      type: string
-                    size:
-                      type: number
+                  $ref: '#/components/schemas/MetricPage'
               additionalProperties:
                 $ref: '#/components/schemas/Metric'
             example:
@@ -619,6 +794,7 @@ components:
                 after: null
                 next: MQ==
                 size: 1
+                intervalMax: '2026-09-24T00:00:00.000Z'
       400:
         $ref: '#/components/responses/ValueBadRequest'
       401:
@@ -630,52 +806,21 @@ components:
     tags:
       - Value
     description: >
-      Retrieves value metrics across all tenants, labelled by tenant. Requires the
-      value-platform-metrics-reader role and is only accessible to core users. Always reads the
-      materialised metric rollups and is not paginated.
+      Retrieves interval aggregates of a value's metrics across all tenants, labelled by tenant. Requires the
+      value-platform-metrics-reader role and is only accessible to core users; tenant users get 403 even with the
+      role. Always reads the materialised metric rollups and is not paginated.
     parameters:
-      - name: namespace
-        description: Namespace to read value metric from.
-        in: path
-        required: true
-        schema:
-          type: string
-      - name: name
-        description: Name of the value.
-        in: path
-        required: true
-        schema:
-          type: string
-      - name: interval
-        description: Interval to get metric aggregates for. Defaults to daily.
-        in: query
-        required: false
-        schema:
-          type: string
-          enum:
-            - one_minute
-            - five_minutes
-            - hourly
-            - daily
-            - weekly
-            - monthly
+      - $ref: '#/components/parameters/ValueNamespaceParam'
+      - $ref: '#/components/parameters/ValueNameParam'
+      - $ref: '#/components/parameters/MetricInterval'
       - name: criteria
-        description: Criteria for the read.
+        description: JSON criteria for the read. Must be valid JSON.
         in: query
         required: false
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                metricLike:
-                  type: string
-                intervalMax:
-                  type: string
-                  format: date-time
-                intervalMin:
-                  type: string
-                  format: date-time
+              $ref: '#/components/schemas/MetricCriteria'
     responses:
       200:
         description: Platform metrics successfully read.
@@ -706,75 +851,41 @@ components:
           application/json:
             schema:
               $ref: '#/components/schemas/ValueError'
+            example:
+              errorMessage: 'User Test User (ID: 1234) not permitted to read platform metrics.'
 
 /value/v1/{namespace}/values/{name}/metrics/{metric}:
   get:
     tags:
       - Value
     description: >
-      Retrieves aggregates of a single metric of a value in a namespace. Requires the value-reader role and a
-      tenant context.
+      Retrieves interval aggregates of a single metric of a value. Requires the value-reader role and a tenant
+      context: tenant users read their own tenant, and core users must set tenantId. A metric without records responds
+      200 with no values.
     parameters:
-      - name: namespace
-        description: Namespace to read value metric from.
-        in: path
-        required: true
-        schema:
-          type: string
-      - name: name
-        description: Name of the value.
-        in: path
-        required: true
-        schema:
-          type: string
+      - $ref: '#/components/parameters/ValueNamespaceParam'
+      - $ref: '#/components/parameters/ValueNameParam'
       - name: metric
         description: Name of the metric to read.
         in: path
         required: true
         schema:
           type: string
-      - name: interval
-        description: Interval to get metric aggregates for. Defaults to daily.
-        in: query
-        required: false
-        schema:
-          type: string
-          enum:
-            - one_minute
-            - five_minutes
-            - hourly
-            - daily
-            - weekly
-            - monthly
-      - name: top
-        description: Number of intervals to read. Defaults to 100.
-        in: query
-        required: false
-        schema:
-          type: integer
-          minimum: 1
-          maximum: 5000
-      - name: after
-        description: Cursor for next set of results.
-        in: query
-        required: false
-        schema:
-          type: string
+          minLength: 1
+          maxLength: 100
+        example: response-time:avg
+      - $ref: '#/components/parameters/ValueTenantId'
+      - $ref: '#/components/parameters/MetricInterval'
+      - $ref: '#/components/parameters/MetricTop'
+      - $ref: '#/components/parameters/MetricAfter'
       - name: criteria
-        description: Criteria for the read.
+        description: JSON criteria for the read; metricLike is not used. Must be valid JSON.
         in: query
         required: false
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                intervalMax:
-                  type: string
-                  format: date-time
-                intervalMin:
-                  type: string
-                  format: date-time
+              $ref: '#/components/schemas/MetricCriteria'
     responses:
       200:
         description: Metric successfully read.
@@ -786,14 +897,7 @@ components:
                 - type: 'object'
                   properties:
                     page:
-                      type: object
-                      properties:
-                        after:
-                          type: string
-                        next:
-                          type: string
-                        size:
-                          type: number
+                      $ref: '#/components/schemas/MetricPage'
             example:
               name: response-time:avg
               values:
@@ -807,6 +911,7 @@ components:
                 after: null
                 next: MQ==
                 size: 1
+                intervalMax: '2026-09-24T00:00:00.000Z'
       400:
         $ref: '#/components/responses/ValueBadRequest'
       401:

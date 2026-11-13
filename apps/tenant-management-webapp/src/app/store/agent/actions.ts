@@ -1,11 +1,11 @@
-import { AgentUsage, ConversationStatus, UserContent } from '@core-services/app-common';
+import { AgentMessage, AgentUsage, ConversationStatus, UserContent, UserMessage } from '@core-services/app-common';
 import { Dispatch } from 'redux';
 import { io, Socket } from 'socket.io-client';
 import { v4 as uuid } from 'uuid';
 import { ErrorNotification } from '@store/notifications/actions';
 import { getAccessToken } from '@store/tenant/actions';
 import { AppDispatch, RootState } from '../index';
-import { AccessScope, AgentConfiguration } from './model';
+import { AccessGuideSection, AccessGuideTopic, AccessScope, AgentConfiguration } from './model';
 import { mayStillBeSavingReply } from './chatState';
 import axios from 'axios';
 
@@ -17,6 +17,7 @@ export const DISCONNECT_AGENT_SUCCESS_ACTION = 'agent/DISCONNECT_AGENT_SUCCESS';
 export const START_THREAD_ACTION = 'agent/START_THREAD';
 export const CLEAR_THREAD_ACTION = 'agent/CLEAR_THREAD';
 export const MESSAGE_AGENT_ACTION = 'agent/MESSAGE_AGENT';
+export const LOCAL_ANSWER_ACTION = 'agent/LOCAL_ANSWER';
 export const AGENT_RESPONSE_ACTION = 'agent/AGENT_RESPONSE';
 export const AGENT_CONVERSATION_STATUS_ACTION = 'agent/CONVERSATION_STATUS';
 
@@ -67,6 +68,14 @@ export interface MessageAgentAction {
   messageId: string;
   context: Record<string, unknown>;
   content: UserContent;
+}
+
+/** A question and its answer added to the chat by the app itself; neither is sent to the agent. */
+export interface LocalAnswerAction {
+  type: typeof LOCAL_ANSWER_ACTION;
+  threadId: string;
+  question: UserMessage;
+  answer: AgentMessage;
 }
 
 export const TEXT_DELTA = 'text-delta';
@@ -243,6 +252,7 @@ export type AgentActionTypes =
   | StartThreadAction
   | ClearThreadAction
   | MessageAgentAction
+  | LocalAnswerAction
   | AgentResponseAction
   | AgentConversationStatusAction
   | GetAgentsAction
@@ -491,24 +501,72 @@ export function messageAgent(threadId: string, context: Record<string, unknown>,
   };
 }
 
+/** Reads an agent-service resource that is decided without AI, using the signed-in user's token. */
+async function getAgentServiceResource<T>(dispatch: AppDispatch, getState: () => RootState, path: string): Promise<T> {
+  const { config } = getState();
+  const resourceUrl = new URL(path, config.serviceUrls?.agentServiceApiUrl || 'http://localhost:3380');
+
+  const token = await dispatch(getAccessToken());
+  const { data } = await axios.get<T>(resourceUrl.href, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  return data;
+}
+
 /**
  * Reads the Access Service environment and realm the user may inspect. The result is decided by
  * agent-service from the user's token, without AI, so it can be shown before any chat starts.
  */
 export function getAccessScope() {
-  return async (dispatch: AppDispatch, getState: () => RootState): Promise<AccessScope> => {
-    const { config } = getState();
-    const scopeUrl = new URL(
-      '/agent/v1/access/scope',
-      config.serviceUrls?.agentServiceApiUrl || 'http://localhost:3380',
+  return (dispatch: AppDispatch, getState: () => RootState): Promise<AccessScope> =>
+    getAgentServiceResource<AccessScope>(dispatch, getState, '/agent/v1/access/scope');
+}
+
+/** Reads one topic of the documented Access Service guide. agent-service serves it without AI. */
+export function getAccessGuide(topic: AccessGuideTopic) {
+  return (dispatch: AppDispatch, getState: () => RootState): Promise<AccessGuideSection> =>
+    getAgentServiceResource<AccessGuideSection>(
+      dispatch,
+      getState,
+      `/agent/v1/access/guide/${encodeURIComponent(topic)}`,
     );
+}
 
-    const token = await dispatch(getAccessToken());
-    const { data } = await axios.get<AccessScope>(scopeUrl.href, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+/** Adds a question and an answer the app wrote itself to the chat, without sending either to the agent. */
+export function addLocalAnswer(
+  threadId: string,
+  question: UserContent,
+  answer: string,
+  caption: string,
+): LocalAnswerAction {
+  return {
+    type: LOCAL_ANSWER_ACTION,
+    threadId,
+    question: { id: uuid(), threadId, from: 'user', content: question },
+    answer: { id: uuid(), threadId, from: 'agent', content: answer, caption, streaming: false, toolCalls: [] },
+  };
+}
 
-    return data;
+export const ACCESS_GUIDE_CAPTION = 'From the Access Service guide (no AI used)';
+
+/**
+ * Answers a question with a topic of the Access Service guide, so no model call is needed. If the guide cannot be
+ * read, the question is sent to the agent instead.
+ */
+export function answerFromAccessGuide(
+  threadId: string,
+  topic: AccessGuideTopic,
+  context: Record<string, unknown>,
+  question: UserContent,
+) {
+  return async (dispatch: AppDispatch): Promise<void> => {
+    try {
+      const guide = await dispatch(getAccessGuide(topic));
+      dispatch(addLocalAnswer(threadId, question, guide.markdown, ACCESS_GUIDE_CAPTION));
+    } catch {
+      await dispatch(messageAgent(threadId, context, question));
+    }
   };
 }
 

@@ -278,18 +278,18 @@ socket.on('session-expired', () => {
 
 When the provider reports token usage, the done event also includes `usage`:
 
-| Field                 | Meaning                                                                                              |
-| --------------------- | ---------------------------------------------------------------------------------------------------- |
-| `contextTokens`       | Input tokens of the agent's last model call: how much of the context window the conversation takes up |
-| `contextWindowTokens` | The model's context window, from `AGENT_MODEL_CONTEXT_TOKENS` (default 256,000)                       |
-| `totalTokens`         | Every token the reply used across its model calls, including calls tools make, such as form generation |
-| `outputTokens`        | Tokens the model wrote                                                                               |
-| `modelCalls`          | Number of model calls the reply made                                                                 |
+| Field                 | Meaning                                                                                                                                |
+| --------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| `contextTokens`       | Input tokens of the agent's last model call: how much of the context window the conversation takes up                                  |
+| `contextWindowTokens` | The model's context window, from `AGENT_MODEL_CONTEXT_TOKENS` (default 256,000)                                                        |
+| `totalTokens`         | Every token the reply used across its model calls, including calls tools make, such as form generation, and the prompt injection check |
+| `outputTokens`        | Tokens the model wrote                                                                                                                 |
+| `modelCalls`          | Number of model calls the reply made                                                                                                   |
 
 After each reply, a `conversation-status` event says how the conversation stands. `state` is one of:
 
 - `ok`: nothing to tell the user.
-- `notice`: memory has started keeping the conversation short, which is normal but means early details may be missed. `reason` is `summarised` (observational memory has replaced older messages with notes) or `older-messages-dropped` (an agent without observational memory now reads only its most recent `messageLimit` messages).
+- `notice`: memory has started keeping the conversation short, which is normal but means early details may be missed. `reason` is `summarised` (observational memory has replaced older messages with notes) or `older-messages-dropped` (an agent without observational memory now reads only its most recent `messageLimit` messages). For the Access Service agent, `reason` can also be `long-conversation`: the conversation takes up at least `AGENT_ACCESS_LONG_CONVERSATION_TOKENS` tokens (default 6,000), so a new chat would answer more cheaply.
 - `warning`: the conversation is close to what the assistant can handle well. `reason` is `near-context-limit` (it takes up at least 70% of the context window) or `notes-condensed` (observational memory has condensed its notes, which takes a very long conversation).
 
 ```typescript
@@ -301,6 +301,47 @@ socket.on('conversation-status', ({ threadId, contextTokens, contextWindowTokens
 ```
 
 Observational memory summarises older messages at `AGENT_OM_MESSAGE_TOKENS` unobserved tokens (default 30,000) and condenses its notes at `AGENT_OM_OBSERVATION_TOKENS` (default 40,000).
+
+#### Shared token budget
+
+Every agent uses the same model key, so the service can hold agents to a token budget for that key. Before a message reaches the model, the service estimates the reply from the agent's recent replies; when the estimate does not fit, the model is not called and the client gets a final stream event (`done: true`) with an error chunk with code `RATE_LIMITED` and a message saying how many seconds to wait. A rate-limit failure (HTTP 429) from the model provider during a reply is sent as an error chunk with the same code.
+
+| Variable                            | Default | Meaning                                                                                        |
+| ----------------------------------- | ------- | ---------------------------------------------------------------------------------------------- |
+| `AGENT_TOKEN_LIMIT_PER_MINUTE`      | `0`     | Tokens per minute across all agents; `0` is off                                                |
+| `AGENT_TOKEN_LIMIT_PER_5_MINUTES`   | `0`     | Tokens per 5 minutes across all agents; `0` is off                                             |
+| `AGENT_TOKEN_AGENT_SHARES`          | `''`    | Share of each limit an agent may use, such as `AccessServiceAgent=0.3,formGenerationAgent=0.5` |
+| `AGENT_USER_TOKEN_LIMIT_PER_MINUTE` | `0`     | Tokens per minute for one user; `0` is off                                                     |
+| `AGENT_TOKEN_WARN_RATIO`            | `0.7`   | Share of a limit at which a warning is logged, once each time usage crosses it                 |
+
+Shares are clamped to 0..1, and malformed entries are logged and ignored. Agents without a share, or with a share of 0, are held only to the overall limits. A message holds its estimate against the budget from the moment it is allowed until its reply's usage is known, so messages sent at the same time cannot overshoot a limit; a reply that fails keeps its estimate counted until it leaves the window. Each pod enforces its own budget, so with several pods set the limits to the key's limit divided by the number of pods.
+
+```typescript
+socket.on('stream', ({ chunk }) => {
+  if (chunk?.type === 'error' && chunk.payload?.code === 'RATE_LIMITED') {
+    console.log(chunk.payload.message); // The AI service is busy right now. Please try again in about 40 seconds.
+  }
+});
+```
+
+#### Access Service agent
+
+`AccessServiceAgent` answers Access Service and Keycloak questions with read-only live tools and documented guidance. To keep each model call small:
+
+- Each call gets only the tools and instruction sections its question needs: environment and realm tools, client and app tools, or people and role tools, picked from the predefined question hint, the question's words (an ADSP ID such as `urn:ads:platform:form-service` brings the client and app tools) and the tools used in the last few messages. A question that matches none gets every tool.
+- How-to and concept questions are answered from the `getAccessGuide` tool, which returns one documented topic. The same topics are available without a model call at `GET /agent/v1/access/guide/:topic`, which returns `{ topic, title, markdown }`; the tenant admin app uses it to answer predefined questions about documented topics.
+- Tool results are shown to the user as cards, so the model gets a compact summary of each result, and results from turns before the previous one are replaced with a short note in later requests (the thread keeps them). After a tool whose card fully answers a request to list or show something, the reply ends without a written answer.
+- It keeps its own short history without observational memory.
+
+| Variable                                | Default | Meaning                                                   |
+| --------------------------------------- | ------- | --------------------------------------------------------- |
+| `AGENT_ACCESS_LAST_MESSAGES`            | `8`     | Messages of the thread the agent reads                    |
+| `AGENT_ACCESS_MAX_OUTPUT_TOKENS`        | `1000`  | Longest reply the model may write in one call             |
+| `AGENT_ACCESS_LONG_CONVERSATION_TOKENS` | `6000`  | Context tokens at which to suggest a new chat; `0` is off |
+
+```bash
+curl -H "Authorization: Bearer $TOKEN" "$AGENT_SERVICE_URL/agent/v1/access/guide/token-expiry"
+```
 
 ### Delete a thread
 

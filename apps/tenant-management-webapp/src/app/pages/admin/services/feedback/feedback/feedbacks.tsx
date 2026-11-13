@@ -4,7 +4,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import styled from 'styled-components';
 import { RootState } from '@store/index';
 import { FeedbackListTable } from './feedbacksTable';
-import { FeedbackSummary, FeedbackSummaryLoading } from './feedbackSummary';
+import { FeedbackSummary } from './feedbackSummary';
 import { renderNoItem } from '@components/NoItem';
 import {
   GoabBadge,
@@ -211,7 +211,7 @@ export const FeedbacksList = (): JSX.Element => {
             </GoabButton>
           </GoabButtonGroup>
 
-          {summary ? <FeedbackSummary summary={summary} /> : <FeedbackSummaryLoading />}
+          {summary && <FeedbackSummary summary={summary} />}
           {!indicator.show && feedbacks.length === 0 && renderNoItem('feedbacks')}
           {feedbacks.length > 0 && (
             <>
@@ -264,10 +264,7 @@ export const FeedbacksList = (): JSX.Element => {
         </ProgressWrapper>
       )}
 
-      {!expandView &&
-        selectedSite &&
-        !showDateError &&
-        (summary ? <FeedbackSummary summary={summary} /> : <FeedbackSummaryLoading />)}
+      {!expandView && selectedSite && !showDateError && summary && <FeedbackSummary summary={summary} />}
       {!indicator.show && selectedSite && feedbacks.length === 0 && renderNoItem('feedbacks')}
 
       {selectedSite && feedbacks.length > 0 && (

@@ -19,7 +19,7 @@ client `urn:ads:platform:verify-service`
 
 ## Tenancy
 
-- **Which tenant is used.** Tenant users and service accounts generate and verify codes in the tenant of their token, and need the role in that tenant. Core (platform) users with the role in the core realm use a separate core namespace. Verify service doesn't support the `tenantId` query parameter.
+- **Which tenant is used.** Tenant users and service accounts generate and verify codes in the tenant of their token, and need the role in that tenant. Core (platform) users with the role in the core realm use a separate core namespace. Core users can set the `tenantId` query parameter to the tenant that the [audit records](#audit-actions) of the operation are attributed to, for example the tenant of the subscriber that notification service verifies; it doesn't change the core namespace of the code. Tenant users can't set it; their records are attributed to the tenant of their token.
 - **Isolation.** Keys are unique within a tenant, so two tenants can use the same key without conflict. A code generated in one tenant can't be verified from another tenant; the verification responds 200 with `verified: false`, as it does for a key that has no code.
 
 ## API overview
@@ -44,6 +44,25 @@ A code is a random 6 character string of characters that are easy to tell apart.
 ## Events
 
 Verify service does not send or consume domain events.
+
+## Audit actions
+
+Verify service records audit events in the `verify-service` namespace of the [audit service](audit-service.md). The actor is the user or service account that calls the API, for example the notification service account; never the person the code was sent to. The key is the resource (`{ type: 'verify-code', id: <key> }`) and is included as `codeKey` in the metadata. The code value is never recorded. Keys are recorded as given, so prefer keys without personal data, such as a generated ID; notification service uses a random UUID. All actions are version 1, in the `security` category and retention class.
+
+| action                         | category | severity | retention class | recorded when                                                                                                                                                       |
+| :----------------------------- | :------- | :------- | :-------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| code.generated                 | security | info     | security        | A new code is generated at a key, with its `expiresAt` in the metadata.                                                                                             |
+| code.verified                  | security | info     | security        | A submitted code matches the code at the key (`verified: true`).                                                                                                    |
+| code.rejected                  | security | warning  | security        | A submitted code fails verification (`verified: false`, status `failure`), with `reason` of `mismatch`, or `not-found` when the code expired, was cleared or never existed. |
+| code.attempts-exceeded-cleared | security | warning  | security        | The code at a key is cleared after 10 failed verifications (`maxFailedVerifications` in the metadata), in addition to the `code.rejected` of the last attempt.      |
+
+Multiple `code.rejected` records and a `code.attempts-exceeded-cleared` on the same key in a short window can indicate a brute-force attempt.
+
+Expired codes are removed by Redis without verify service being involved, so expiry isn't recorded on its own. A verification after expiry is recorded as `code.rejected` with `reason: 'not-found'`. Requests rejected for validation or missing roles aren't recorded.
+
+Records are written to the tenant of the caller's token. Core users set the tenant with the `tenantId` query parameter; operations of core users without it have no tenant to be recorded to and aren't recorded. Audit failures are logged by the SDK and do not fail the operation. The verify service account requires the `audit-writer` role of `urn:ads:platform:audit-service`.
+
+Audit recording is on by default. Set the environment variable `VERIFY_AUDIT_ENABLED=false` on verify service to turn it off, or `true` to turn it on regardless of the SDK `AUDIT_ENABLED` variable, which applies when `VERIFY_AUDIT_ENABLED` is not set. The action catalog is still registered while recording is off, so turning it back on needs only a restart.
 
 ## Code examples
 

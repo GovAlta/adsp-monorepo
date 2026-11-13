@@ -9,13 +9,16 @@ CONFIG_REALM = "ADSP_REALM"
 CONFIG_ACCESS_URL = "ADSP_ACCESS_SERVICE_URL"
 CONFIG_DIRECTORY_URL = "ADSP_DIRECTORY_URL"
 CONFIG_ALLOW_CORE = "ADSP_ALLOW_CORE"
+CONFIG_AUDIT_ENABLED = "ADSP_AUDIT_ENABLED"
 
 
 PLATFORM_CONFIGURATION_API = AdspId.parse("urn:ads:platform:configuration-service:v2")
 PLATFORM_TENANT_API = AdspId.parse("urn:ads:platform:tenant-service:v2")
 PLATFORM_EVENT_API = AdspId.parse("urn:ads:platform:event-service:v1")
+PLATFORM_AUDIT_API = AdspId.parse("urn:ads:platform:audit-service:v1")
 PLATFORM_CONFIGURATION_SERVICE = AdspId.parse("urn:ads:platform:configuration-service")
 PLATFORM_TENANT_SERVICE = AdspId.parse("urn:ads:platform:tenant-service")
 PLATFORM_EVENT_SERVICE = AdspId.parse("urn:ads:platform:event-service")
 PLATFORM_FILE_SERVICE = AdspId.parse("urn:ads:platform:file-service")
 PLATFORM_PUSH_SERVICE = AdspId.parse("urn:ads:platform:push-service")
+PLATFORM_AUDIT_SERVICE = AdspId.parse("urn:ads:platform:audit-service")

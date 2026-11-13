@@ -16,7 +16,7 @@ const MAX_ERROR_LENGTH = 1000;
 
 // Retention classes are not set, so Audit Service derives them from the category.
 export const PdfJobCreatedAuditAction: AuditAction = {
-  name: 'pdf.job.created',
+  name: 'job.created',
   version: 1,
   category: AuditCategories.Runtime,
   severity: AuditSeverities.Info,
@@ -25,7 +25,7 @@ export const PdfJobCreatedAuditAction: AuditAction = {
 };
 
 export const PdfJobGeneratedAuditAction: AuditAction = {
-  name: 'pdf.job.generated',
+  name: 'job.generated',
   version: 1,
   category: AuditCategories.Runtime,
   severity: AuditSeverities.Info,
@@ -35,7 +35,7 @@ export const PdfJobGeneratedAuditAction: AuditAction = {
 };
 
 export const PdfTemplateCreatedAuditAction: AuditAction = {
-  name: 'pdf.template.created',
+  name: 'template.created',
   version: 1,
   category: AuditCategories.Administrative,
   severity: AuditSeverities.Info,
@@ -44,7 +44,7 @@ export const PdfTemplateCreatedAuditAction: AuditAction = {
 };
 
 export const PdfTemplateUpdatedAuditAction: AuditAction = {
-  name: 'pdf.template.updated',
+  name: 'template.updated',
   version: 1,
   category: AuditCategories.Administrative,
   severity: AuditSeverities.Warning,
@@ -53,7 +53,7 @@ export const PdfTemplateUpdatedAuditAction: AuditAction = {
 };
 
 export const PdfTemplateDeletedAuditAction: AuditAction = {
-  name: 'pdf.template.deleted',
+  name: 'template.deleted',
   version: 1,
   category: AuditCategories.Administrative,
   severity: AuditSeverities.Warning,
@@ -71,7 +71,7 @@ export const PdfAuditActions: AuditAction[] = [
 
 /**
  * Converts the requester carried in a work item into the actor of the job worker's records, so that they are attributed
- * to the same actor as the pdf.job.created record of the request.
+ * to the same actor as the job.created record of the request.
  */
 export function toRequesterAuditActor({ id, name }: UserInfo): AuditActor {
   return {

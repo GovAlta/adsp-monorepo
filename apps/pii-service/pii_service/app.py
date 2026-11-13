@@ -1,17 +1,36 @@
+import atexit
+import functools
 import json
 import logging
 import os
-from typing import Any, Dict
+from typing import Any, Dict, Optional
+from uuid import uuid4
 from adsp_service_flask_sdk import (
     AdspExtension,
     AdspRegistration,
+    AuditAction,
     ConfigurationDefinition,
     ServiceRole,
+    audit_details_from_request,
+    request_user,
     require_user,
 )
 from dotenv import load_dotenv
-from flask import Flask, Response, jsonify, request
+from flask import Flask, Response, g, jsonify, request
 from flask_cors import CORS
+from pii_service.audit import (
+    AUDIT_ACTIONS,
+    get_audit_enabled,
+    RESOURCE_TYPE,
+    TEXT_ANALYZE_ERRORED,
+    TEXT_ANALYZE_FAILED,
+    TEXT_ANALYZED,
+    TEXT_ANONYMIZE_ERRORED,
+    TEXT_ANONYMIZE_FAILED,
+    TEXT_ANONYMIZED,
+    get_calling_service,
+    to_metadata,
+)
 from pii_service.recognizers.ca_bank_recognizer import CaBankRecognizer
 from pii_service.recognizers.ca_passport_recognizer import CaPassportRecognizer
 from pii_service.recognizers.ca_sin_recognizer import CaSinRecognizer
@@ -74,6 +93,7 @@ adsp = adsp_extension.init_app(
             )
         ],
         events=[],
+        audit_actions=AUDIT_ACTIONS,
         api_endpoint_path="/pii/v1",
         docs_endpoint_path="/swagger/docs/v1",
     ),
@@ -87,6 +107,7 @@ adsp = adsp_extension.init_app(
         ),
         "ADSP_SERVICE_ID": os.environ.get("SERVICE_ID", "urn:ads:platform:pii-service"),
         "ADSP_CLIENT_SECRET": os.environ.get("CLIENT_SECRET"),
+        "ADSP_AUDIT_ENABLED": get_audit_enabled(os.environ),
     },
 )
 
@@ -100,6 +121,75 @@ analyzer_engine.registry.add_recognizer(CaSinRecognizer())
 
 anonymizer_engine = AnonymizerEngine()
 
+atexit.register(adsp.audit_service.flush)
+
+
+def audited(success_action: AuditAction, failure_action: AuditAction, error_action: AuditAction):
+    """Audits the outcome of a request handler, without recording any request content.
+
+    Client errors (4xx) are recorded as failures; any other exception is a service error with a higher severity.
+    The handler records the non-sensitive details it knows in `g.audit`.
+    """
+
+    def decorator(func):
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            g.audit = {"correlation_id": str(uuid4())}
+            try:
+                result = func(*args, **kwargs)
+            except Exception as err:
+                if _is_client_error(err):
+                    _record_audit(failure_action, "failure", type(err).__name__)
+                else:
+                    _record_audit(error_action, "error", type(err).__name__)
+                raise
+            _record_audit(success_action, "success")
+            return result
+
+        return wrapper
+
+    return decorator
+
+
+def _is_client_error(err: Exception) -> bool:
+    code = getattr(err, "code", None)
+    return isinstance(code, int) and 400 <= code < 500
+
+
+def _record_audit(action: AuditAction, status: str, error_type: Optional[str] = None):
+    details = g.audit
+    correlation_id = details["correlation_id"]
+    token = request.headers.get("Authorization", "")[7:] or None
+    try:
+        adsp.audit_service.record(
+            action,
+            audit_details_from_request(
+                status=status,
+                resource={"type": RESOURCE_TYPE, "id": correlation_id},
+                correlation_id=correlation_id,
+                metadata=to_metadata(
+                    details.get("language"),
+                    details.get("score_threshold"),
+                    details.get("entities_detected"),
+                    get_calling_service(request_user, token),
+                    error_type,
+                ),
+            ),
+        )
+    except Exception as err:
+        # Auditing must never fail the request.
+        app.logger.warning("Failed to record audit event %s for %s. %s", action.name, correlation_id, err)
+
+
+def _set_audit_request(analyzer_request: AnalyzerRequest):
+    """Keeps the non-sensitive parameters of the request for auditing; never the text."""
+    g.audit.update(
+        language=analyzer_request.language,
+        score_threshold=analyzer_request.score_threshold,
+    )
+    if analyzer_request.correlation_id:
+        g.audit["correlation_id"] = str(analyzer_request.correlation_id)
+
 
 @app.route("/pii/v1/entities", methods=["GET"])
 @require_user(service_roles.ANALYZER, allow_core=True)
@@ -111,8 +201,10 @@ def supported_entities():
 
 @app.route("/pii/v1/analyze", methods=["POST"])
 @require_user(service_roles.ANALYZER, allow_core=True)
+@audited(TEXT_ANALYZED, TEXT_ANALYZE_FAILED, TEXT_ANALYZE_ERRORED)
 def analyze():
     analyzer_request = AnalyzerRequest(request.get_json())
+    _set_audit_request(analyzer_request)
 
     if analyzer_request.language != "en":
         raise BadRequest("Only en is supported at this time")
@@ -133,6 +225,7 @@ def analyze():
         # ad_hoc_recognizers=analyzer_request.ad_hoc_recognizers,
         context=analyzer_request.context,
     )
+    g.audit["entities_detected"] = len(recognizer_result_list)
 
     return Response(
         json.dumps(
@@ -146,8 +239,10 @@ def analyze():
 
 @app.route("/pii/v1/anonymize", methods=["POST"])
 @require_user(service_roles.ANALYZER, allow_core=True)
+@audited(TEXT_ANONYMIZED, TEXT_ANONYMIZE_FAILED, TEXT_ANONYMIZE_ERRORED)
 def anonymize():
     analyzer_request = AnalyzerRequest(request.get_json())
+    _set_audit_request(analyzer_request)
 
     if analyzer_request.language != "en":
         raise BadRequest("Only en is supported at this time")
@@ -168,6 +263,7 @@ def anonymize():
         # ad_hoc_recognizers=analyzer_request.ad_hoc_recognizers,
         context=analyzer_request.context,
     )
+    g.audit["entities_detected"] = len(recognizer_result_list)
 
     anonymizer_result = anonymizer_engine.anonymize(
         analyzer_request.text, recognizer_result_list

@@ -2,6 +2,7 @@ import pytest
 from unittest.mock import Mock, patch
 
 from adsp_py_common.adsp_id import AdspId
+from adsp_py_common.audit import AuditAction
 from adsp_py_common.directory import ServiceDirectory
 from adsp_py_common.registration import (
     AdspRegistration,
@@ -123,6 +124,39 @@ def test_register_file_types():
             )
         )
         mock_post.assert_called_once()
+
+
+def test_register_audit_actions():
+    with patch("adsp_py_common.registration.patch") as mock_patch:
+        directory = Mock(ServiceDirectory)
+        directory.get_service_url.return_value = "https://configuration/configuration/v2"
+        token_provider = Mock(TokenProvider)
+        token_provider.get_access_token.return_value = "token"
+        registrar = ServiceRegistrar(
+            AdspId.parse("urn:ads:platform:test-service"), directory, token_provider
+        )
+        registrar.register(
+            AdspRegistration(
+                "test service",
+                audit_actions=[AuditAction("thing.done", "security", "info")],
+            )
+        )
+
+        mock_patch.assert_called_once()
+        assert (
+            mock_patch.call_args.args[0]
+            == "https://configuration/configuration/v2/configuration/audit-service/actions-test-service"
+        )
+        assert mock_patch.call_args.kwargs["json"] == {
+            "operation": "REPLACE",
+            "configuration": {
+                "kind": "actionCatalog",
+                "application": "test-service",
+                "actions": {
+                    "thing.done": {"version": 1, "category": "security", "severity": "info"}
+                },
+            },
+        }
 
 
 def test_register_request_error():

@@ -1,5 +1,50 @@
 components:
+  parameters:
+    StatusAppKey:
+      name: appKey
+      description: Key of the application, as returned in `appKey` when the application was added.
+      in: path
+      required: true
+      schema:
+        type: string
+      example: my-application
+  responses:
+    StatusBadRequest:
+      description: Request is invalid, for example it would create a duplicate application or an invalid notice mode.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/StatusError'
+          example:
+            errorMessage: 'Value not valid for status-service: Duplicate Application Name My Application'
+    StatusUnauthorized:
+      description: >
+        Request does not include a valid bearer token, the token has no tenant context, or the user does not have the
+        role required for the operation. Anonymous requests receive a plain `Unauthorized` text body; the other cases
+        receive an `errorMessage`. Role checks in this API respond with 401 rather than 403.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/StatusError'
+          example:
+            errorMessage: missing tenant id
+    StatusNotFound:
+      description: >
+        The resource was not found in the tenant of the request. Resources of other tenants also respond 404.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/StatusError'
+          example:
+            errorMessage: Status application with ID 'my-application' could not be found.
   schemas:
+    StatusError:
+      type: object
+      properties:
+        errorMessage:
+          type: string
+      example:
+        errorMessage: Status application with ID 'my-application' could not be found.
     Application:
       type: object
       properties:
@@ -14,52 +59,146 @@ components:
         description:
           description: An optional, brief, description of the application being monitored.
           type: string
-          example: The application which is mine!
+          example: Online application for a benefit program.
         status:
-          description: The operational status of the Application, set via the API or through the Tenant Admin Webapp
+          description: >
+            The published status of the application, set via the API or through the Tenant Admin Webapp. An empty
+            string means no status has been set.
           type: string
-          enum: [operational, reported-issues, maintenance, outage]
+          enum: [operational, reported-issues, maintenance, outage, '']
+          example: operational
         monitorOnly:
-          description: Indicates whether or not this application will be displayed on the public status page.
+          description: If true, the application is not displayed on the public status page.
           type: boolean
+          example: false
+        autoChangeStatus:
+          description: >
+            If true, health checks change the status from operational to reported-issues after failing for 5 minutes,
+            and back to operational after succeeding for 5 minutes.
+          type: boolean
+          example: false
         tenantId:
           description: URN identifying the tenant to which the application belongs.
           type: string
           example: urn:ads:platform:tenant-service:v2:/tenants/61e9adcc9423490012a9ae46
+        metadata:
+          description: Additional status information, if any.
+          example: ''
         enabled:
-          description: Indicates whether or not monitoring for the application has been turned on.
+          description: Indicates whether or not monitoring (health checks) for the application has been turned on.
           type: boolean
+          example: true
+        statusTimestamp:
+          description: Time the status was last set, in milliseconds since the epoch, or null if never set.
+          type: number
+          nullable: true
+          readOnly: true
+          example: 1794326400000
+        internalStatus:
+          description: Health check state of the application.
+          type: string
+          enum: [stopped, healthy, unhealthy, pending]
+          readOnly: true
+          example: healthy
+        endpoint:
+          type: object
+          properties:
+            url:
+              description: URL of the application endpoint that health checks request.
+              type: string
+              example: https://my-application.alberta.ca/health
+            status:
+              description: Result of the latest health check.
+              type: string
+              enum: [online, offline, n/a, pending]
+              readOnly: true
+              example: online
+      example:
+        appKey: my-application
+        name: My Application
+        description: Online application for a benefit program.
+        monitorOnly: false
+        autoChangeStatus: false
+        tenantId: urn:ads:platform:tenant-service:v2:/tenants/61e9adcc9423490012a9ae46
+        metadata: ''
+        enabled: true
+        statusTimestamp: 1794326400000
+        status: operational
+        internalStatus: healthy
+        endpoint:
+          status: online
+          url: https://my-application.alberta.ca/health
+    ApplicationInput:
+      type: object
+      required: [name, endpoint]
+      properties:
+        name:
+          type: string
+          description: Name of the application. Must be unique for the tenant.
+          example: My Application
+        description:
+          type: string
+          example: Online application for a benefit program.
+        endpoint:
+          type: object
+          required: [url]
+          properties:
+            url:
+              type: string
+              description: URL of the application endpoint that health checks request.
+              example: https://my-application.alberta.ca/health
+        monitorOnly:
+          type: boolean
+          description: If true, the application is not displayed on the public status page.
+          example: false
     PingData:
       type: object
       properties:
         url:
           description: The URL pinged.
           type: string
-          example: 'http://google.com'
+          example: https://my-application.alberta.ca/health
         ok:
           description: The success of the ping; set to false if the ping resulted in a 400 or 500 error.
           type: boolean
+          example: true
         timestamp:
-          description: The time of the ping.
-          type: string
-          format: date-time
+          description: The time of the ping, in milliseconds since the epoch.
+          type: number
+          example: 1794326400000
         responseTime:
           description: The response time of the ping, in ms.
           type: number
           example: 178
         status:
-          description: The http status-code of the response.
-          type: string
+          description: The HTTP status code of the response, or a description of the error if there was no response.
+          oneOf:
+            - type: number
+            - type: string
           example: 200
         applicationId:
           description: The application key, AKA application ID.
           type: string
           example: my-application
+        appKey:
+          description: The application key; same value as applicationId.
+          type: string
+          example: my-application
+      example:
+        url: https://my-application.alberta.ca/health
+        ok: true
+        timestamp: 1794326400000
+        responseTime: 178
+        status: 200
+        applicationId: my-application
+        appKey: my-application
 
 /status/v1/applications:
   get:
     tags: ['Application Monitoring']
-    description: Retrieves tenant applications and their statuses.
+    description: >
+      Retrieves the applications of the tenant, with their statuses. Requires an authenticated tenant user; no
+      specific role is required. The tenant is the tenant of the token; tokens without a tenant context respond 401.
     responses:
       200:
         description: Applications retrieved successfully.
@@ -69,43 +208,41 @@ components:
               type: array
               items:
                 $ref: '#/components/schemas/Application'
+      401:
+        $ref: '#/components/responses/StatusUnauthorized'
   post:
     tags: ['Application Monitoring']
     description: >
-      Adds an application to the tenant for monitoring. The application key is generated from the name if it is not
-      provided. Requires an authenticated tenant user.
+      Adds an application to the tenant for monitoring. The application key is generated from the name (in kebab
+      case) if it is not provided. Monitoring is not enabled until requested.
+
+
+      Requires an authenticated tenant user; no specific role is required. The application is added to the tenant of
+      the token.
     requestBody:
       required: true
       content:
         application/json:
           schema:
-            type: object
-            required: [name, endpoint]
-            properties:
-              appKey:
-                type: string
-                description: Key of the application. Generated from the name if not set.
-                example: my-application
-              name:
-                type: string
-                description: Name of the application. Must be unique for the tenant.
-                example: My Application
-              description:
-                type: string
-              endpoint:
-                type: object
-                required: [url]
+            allOf:
+              - $ref: '#/components/schemas/ApplicationInput'
+              - type: object
                 properties:
-                  url:
+                  appKey:
                     type: string
-                    description: URL of the application endpoint to monitor.
-                    example: https://my-application.alberta.ca/health
-              monitorOnly:
-                type: boolean
-                description: If true, the application is not displayed on the public status page.
-              status:
-                type: string
-                enum: [operational, reported-issues, maintenance, outage]
+                    description: Key of the application. Generated from the name if not set.
+                    example: my-application
+                  status:
+                    type: string
+                    description: Initial published status of the application.
+                    enum: [operational, reported-issues, maintenance, outage]
+          example:
+            name: My Application
+            description: Online application for a benefit program.
+            endpoint:
+              url: https://my-application.alberta.ca/health
+            monitorOnly: false
+            status: operational
     responses:
       201:
         description: Application added.
@@ -113,48 +250,55 @@ components:
           application/json:
             schema:
               $ref: '#/components/schemas/Application'
+            example:
+              appKey: my-application
+              name: My Application
+              description: Online application for a benefit program.
+              monitorOnly: false
+              tenantId: urn:ads:platform:tenant-service:v2:/tenants/61e9adcc9423490012a9ae46
+              metadata: ''
+              enabled: false
+              statusTimestamp: null
+              status: operational
+              internalStatus: stopped
+              endpoint:
+                status: offline
+                url: https://my-application.alberta.ca/health
       400:
-        description: An application with the same key or name already exists.
+        $ref: '#/components/responses/StatusBadRequest'
       401:
-        $ref: '#/components/responses/Unauthorized'
+        $ref: '#/components/responses/StatusUnauthorized'
 
 /status/v1/applications/{appKey}:
   parameters:
-    - name: appKey
-      description: The application key, AKA application ID.
-      in: path
-      required: true
-      schema:
-        type: string
-        example: my-application
+    - $ref: '#/components/parameters/StatusAppKey'
   put:
     tags: ['Application Monitoring']
-    description: Updates the configuration of an application. Requires an authenticated tenant user.
+    description: >
+      Replaces the configuration of an application. Send every field to keep; fields left out are removed. Requires
+      an authenticated tenant user; no specific role is required. The application must belong to the tenant of the
+      token.
     requestBody:
       required: true
       content:
         application/json:
           schema:
-            type: object
-            required: [endpoint]
-            properties:
-              name:
-                type: string
-              description:
-                type: string
-              endpoint:
-                type: object
-                required: [url]
+            allOf:
+              - $ref: '#/components/schemas/ApplicationInput'
+              - type: object
                 properties:
-                  url:
-                    type: string
-              monitorOnly:
-                type: boolean
-              autoChangeStatus:
-                type: boolean
-                description: >
-                  If true, health checks change the status from operational to reported-issues after failing for 5
-                  minutes, and back to operational after succeeding for 5 minutes.
+                  autoChangeStatus:
+                    type: boolean
+                    description: >
+                      If true, health checks change the status from operational to reported-issues after failing for 5
+                      minutes, and back to operational after succeeding for 5 minutes.
+          example:
+            name: My Application
+            description: Online application for a benefit program.
+            endpoint:
+              url: https://my-application.alberta.ca/health
+            monitorOnly: false
+            autoChangeStatus: true
     responses:
       200:
         description: Application updated.
@@ -163,34 +307,32 @@ components:
             schema:
               $ref: '#/components/schemas/Application'
       401:
-        $ref: '#/components/responses/Unauthorized'
+        $ref: '#/components/responses/StatusUnauthorized'
       404:
-        description: Application not found.
+        $ref: '#/components/responses/StatusNotFound'
   delete:
     tags: ['Application Monitoring']
     description: >
-      Deletes an application, and stops monitoring it if monitoring is enabled. Requires an authenticated tenant
-      user.
+      Deletes an application with its status and health check results, and stops monitoring it if monitoring is
+      enabled. Requires an authenticated tenant user; no specific role is required. The application must belong to
+      the tenant of the token.
     responses:
       204:
         description: Application deleted.
       401:
-        $ref: '#/components/responses/Unauthorized'
+        $ref: '#/components/responses/StatusUnauthorized'
       404:
-        description: Application not found.
+        $ref: '#/components/responses/StatusNotFound'
 
 /status/v1/applications/{appKey}/enable:
+  parameters:
+    - $ref: '#/components/parameters/StatusAppKey'
   patch:
     tags: ['Application Monitoring']
-    description: Request to start monitoring the application.
-    parameters:
-      - name: appKey
-        description: The application key, AKA application ID.
-        in: path
-        required: true
-        schema:
-          type: string
-          example: my-application
+    description: >
+      Turns on monitoring of the application. Health checks start when the service next reloads its health checks
+      (every 5 minutes); use the toggle operation to start them immediately. Requires an authenticated tenant user;
+      no specific role is required. The application must belong to the tenant of the token.
     responses:
       200:
         description: Monitoring has been enabled.
@@ -198,19 +340,20 @@ components:
           application/json:
             schema:
               $ref: '#/components/schemas/Application'
+      401:
+        $ref: '#/components/responses/StatusUnauthorized'
+      404:
+        $ref: '#/components/responses/StatusNotFound'
 
 /status/v1/applications/{appKey}/disable:
+  parameters:
+    - $ref: '#/components/parameters/StatusAppKey'
   patch:
     tags: ['Application Monitoring']
-    description: Request to stop monitoring the application.
-    parameters:
-      - name: appKey
-        description: The application key, AKA application ID.
-        in: path
-        required: true
-        schema:
-          type: string
-          example: my-application
+    description: >
+      Turns off monitoring of the application. Health checks stop when the service next reloads its health checks
+      (every 5 minutes); use the toggle operation to stop them immediately. Requires an authenticated tenant user; no
+      specific role is required. The application must belong to the tenant of the token.
     responses:
       200:
         description: Monitoring has been disabled.
@@ -218,19 +361,21 @@ components:
           application/json:
             schema:
               $ref: '#/components/schemas/Application'
+      401:
+        $ref: '#/components/responses/StatusUnauthorized'
+      404:
+        $ref: '#/components/responses/StatusNotFound'
 
 /status/v1/applications/{appKey}/toggle:
+  parameters:
+    - $ref: '#/components/parameters/StatusAppKey'
   patch:
     tags: ['Application Monitoring']
-    description: Request to toggle application monitoring, from enabled to disabled or vice versa.
-    parameters:
-      - name: appKey
-        description: The application key, AKA application ID.
-        in: path
-        required: true
-        schema:
-          type: string
-          example: my-application
+    description: >
+      Toggles monitoring of the application, from enabled to disabled or vice versa, and sends the
+      health-check-started or health-check-stopped event that starts or stops the health checks. Requires an
+      authenticated tenant user; no specific role is required. The application must belong to the tenant of the
+      token.
     responses:
       200:
         description: Monitoring has been toggled.
@@ -238,25 +383,64 @@ components:
           application/json:
             schema:
               $ref: '#/components/schemas/Application'
+      401:
+        $ref: '#/components/responses/StatusUnauthorized'
+      404:
+        $ref: '#/components/responses/StatusNotFound'
+
+/status/v1/applications/{appKey}/status:
+  parameters:
+    - $ref: '#/components/parameters/StatusAppKey'
+  patch:
+    tags: ['Application Status']
+    description: >
+      Sets the published status of the application, and sends the application-status-changed event. Requires an
+      authenticated tenant user; no specific role is required. The application must belong to the tenant of the
+      token.
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [status]
+            properties:
+              status:
+                description: The published status to set.
+                type: string
+                enum: [operational, reported-issues, maintenance, outage]
+          example:
+            status: maintenance
+    responses:
+      200:
+        description: Successfully updated status.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Application'
+      401:
+        $ref: '#/components/responses/StatusUnauthorized'
+      404:
+        $ref: '#/components/responses/StatusNotFound'
 
 /status/v1/applications/{appKey}/endpoint-status-entries:
+  parameters:
+    - $ref: '#/components/parameters/StatusAppKey'
   get:
     tags: ['Application Monitoring']
-    description: Retrieves the raw results of the _pings_, gathered for the specified application.
+    description: >
+      Retrieves the raw results of the health check _pings_ of the application, newest first. Requires an
+      authenticated tenant user; no specific role is required. The application must belong to the tenant of the
+      token.
     parameters:
-      - name: appKey
-        description: The application key, AKA application ID.
-        in: path
-        required: true
-        schema:
-          type: string
-          example: my-application
-      - name: top
-        description: Number of results to read, defaults to 200
+      - name: topValue
+        description: Number of results to read.
         in: query
         required: false
         schema:
-          type: number
+          type: integer
+          minimum: 1
+          default: 200
           example: 20
     responses:
       200:
@@ -267,17 +451,24 @@ components:
               type: array
               items:
                 $ref: '#/components/schemas/PingData'
+      404:
+        $ref: '#/components/responses/StatusNotFound'
+
 /status/v1/applications/endpoint-status-entries:
   get:
     tags: ['Application Monitoring']
-    description: Retrieves the raw results of the _pings_, gathered for every application.
+    description: >
+      Retrieves the raw results of the health check _pings_ recorded in the last `ageInMinutes` minutes. Requires an
+      authenticated tenant user; no specific role is required.
     parameters:
-      - name: timeInMinutes
-        description: Number of minutes to read data for, defaults to 30
+      - name: ageInMinutes
+        description: Number of minutes to read results for.
         in: query
         required: false
         schema:
-          type: number
+          type: integer
+          minimum: 1
+          default: 31
           example: 20
     responses:
       200:
@@ -293,8 +484,10 @@ components:
   get:
     tags: ['Application Monitoring']
     description: >
-      Sends a test event to a webhook of a monitored application. The response is sent after a 2 second delay.
-      Requires an authenticated tenant user.
+      Sends a test monitored-service-down or monitored-service-up event to a webhook of a monitored application. The
+      webhook is read from the push service configuration of the tenant. The response is sent after a 2 second
+      delay. Requires an authenticated tenant user; no specific role is required. The webhook and its application
+      must belong to the tenant of the token.
     parameters:
       - name: id
         description: ID of the webhook.
@@ -302,6 +495,7 @@ components:
         required: true
         schema:
           type: string
+        example: my-application-webhook
       - name: eventName
         description: >
           Event to send. monitored-service-down sends a service down event; any other value sends a service up event.
@@ -309,15 +503,16 @@ components:
         required: true
         schema:
           type: string
-          example: monitored-service-down
+        example: monitored-service-down
     responses:
       200:
-        description: Test event sent. The response is a text summary of the event.
+        description: Test event sent. The response is a text summary of the event, including the application and webhook.
         content:
           application/json:
             schema:
               type: string
+            example: 'event is sent - app: {"appKey":"my-application", ...}, user: {...}, webhook: {...}'
       401:
-        $ref: '#/components/responses/Unauthorized'
+        $ref: '#/components/responses/StatusUnauthorized'
       404:
-        description: Webhook, or the application it targets, not found.
+        $ref: '#/components/responses/StatusNotFound'

@@ -28,7 +28,7 @@ There are several roles that may be required for users to access the form servic
 
 ![](/adsp-monorepo/assets/form-service/form-service-roles.png){: width="600" }
 
-Applicants will need the _form-admin_ and _intake-application_ role to create and fill out forms, respectively. If the form requires files to be uploaded they will also need:
+Applicants create and fill out forms with the applicant roles of the _Form Definition_, and need the _form-applicant_ role to receive updates in the form app. The _form-admin_ role is for form administrators, and the _intake-application_ role is for service accounts that create and submit forms on behalf of anonymous applicants. If the form requires files to be uploaded applicants will also need:
 
 - _form-file-reader_
 - _form-file-uploader_

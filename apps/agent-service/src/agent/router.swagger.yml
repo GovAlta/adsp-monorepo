@@ -248,6 +248,24 @@ components:
       required: [deleted]
       example:
         deleted: true
+    AccessGuideSection:
+      type: object
+      properties:
+        topic:
+          type: string
+        title:
+          type: string
+        markdown:
+          type: string
+          description: The documented guidance for the topic, as markdown.
+      required: [topic, title, markdown]
+      example:
+        topic: token-expiry
+        title: Token expiry and refresh
+        markdown: >-
+          ## Token expiry: Keycloak defaults usually already solve it
+
+          Keycloak v24 ships with these realm-level defaults (Realm Settings → Tokens)...
 
 /agent/v1/access/scope:
   get:
@@ -297,6 +315,61 @@ components:
         $ref: '#/components/responses/AgentBadRequest'
       401:
         $ref: '#/components/responses/AgentUnauthorized'
+
+/agent/v1/access/guide/{topic}:
+  get:
+    tags:
+      - Agent
+    description: >-
+      Gets one topic of the documented Access Service guidance used by the Access Service agent, such as client setup,
+      token expiry, or identity providers. Static: no AI is involved and no tenant data is read, so the tenant admin
+      app uses it to answer predefined questions about documented topics without a model call. Available to any
+      authenticated user.
+    parameters:
+      - name: topic
+        description: ID of the guide topic.
+        in: path
+        required: true
+        schema:
+          type: string
+          enum:
+            - realm-model
+            - environments
+            - responsibility
+            - add-tenant-admin
+            - glossary
+            - public-client
+            - confidential-client
+            - public-vs-confidential
+            - client-troubleshooting
+            - token-expiry
+            - token-claims
+            - token-audience
+            - idp-claim-to-token
+            - goa-ad
+            - uiam-integration
+            - saml-certificates
+            - architecture
+            - operations
+            - disaster-recovery
+        example: token-expiry
+    responses:
+      200:
+        description: Guide topic successfully retrieved.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AccessGuideSection'
+      401:
+        $ref: '#/components/responses/AgentUnauthorized'
+      404:
+        description: No guide topic with the ID.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AgentError'
+            example:
+              errorMessage: access guide topic with ID 'no-such-topic' could not be found.
 
 /agent/v1/agents:
   get:

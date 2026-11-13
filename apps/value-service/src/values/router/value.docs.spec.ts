@@ -413,6 +413,15 @@ describe('value router documented behaviour', () => {
       expect(res.body.errorMessage).toBeTruthy();
     });
 
+    it('responds 400 for a value name longer than 50 characters', async () => {
+      const coreUser = user([ServiceUserRoles.PlatformMetricsReader], { isCore: true, tenantId: undefined });
+      const res = await request(createApp(coreUser, false)).get(
+        `/value/v1/test-service/values/${'a'.repeat(51)}/platform-metrics`,
+      );
+      expect(res.status).toBe(400);
+      expect(repositoryMock.readPlatformMetrics).not.toHaveBeenCalled();
+    });
+
     it('responds 403 for a core user with only the value-reader role', async () => {
       const coreReader = user([ServiceUserRoles.Reader], { isCore: true, tenantId: undefined });
       const res = await request(createApp(coreReader, false)).get(
@@ -485,6 +494,16 @@ describe('value router documented behaviour', () => {
         .send({ value: 1, tenantId: otherTenantId.toString() });
       expect(res.status).toBe(200);
       expect(repositoryMock.writeValues.mock.calls[0][2].toString()).toBe(otherTenantId.toString());
+    });
+
+    it('responds 400 for a core user without a tenantId', async () => {
+      const coreWriter = user([ServiceUserRoles.Writer], { isCore: true, tenantId: undefined });
+      const res = await request(createApp(coreWriter, false))
+        .post('/value/v1/test-service/values/test-value')
+        .send({ value: 1 });
+      expect(res.status).toBe(400);
+      expect(res.body.errorMessage).toBe('Cannot write value without tenant context');
+      expect(repositoryMock.writeValues).not.toHaveBeenCalled();
     });
 
     it('responds 400 for a timestamp that is not ISO 8601', async () => {

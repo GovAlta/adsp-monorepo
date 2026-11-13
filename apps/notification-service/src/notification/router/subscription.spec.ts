@@ -2238,6 +2238,7 @@ describe('subscription router', () => {
       const handler = subscriberOperations(eventServiceMock, verifyServiceMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(verifyServiceMock.sendCode).toHaveBeenCalledWith(
+        tenantId,
         subscriber.channels[0],
         'Enter this code to verify your contact address.'
       );
@@ -2287,7 +2288,7 @@ describe('subscription router', () => {
 
       const handler = subscriberOperations(eventServiceMock, verifyServiceMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
-      expect(verifyServiceMock.verifyCode).toHaveBeenCalledWith(subscriber.channels[0], '123');
+      expect(verifyServiceMock.verifyCode).toHaveBeenCalledWith(tenantId, subscriber.channels[0], '123');
       expect(subscriber.channels[0].verified).toBe(false);
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ verified: true }));
       expect(res.send.mock.calls[0][0]).toMatchSnapshot();
@@ -2335,7 +2336,7 @@ describe('subscription router', () => {
 
       const handler = subscriberOperations(eventServiceMock, verifyServiceMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
-      expect(verifyServiceMock.verifyCode).toHaveBeenCalledWith(subscriber.channels[0], '123');
+      expect(verifyServiceMock.verifyCode).toHaveBeenCalledWith(tenantId, subscriber.channels[0], '123');
       expect(subscriber.channels[0].verified).toBe(true);
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ verified: true }));
       expect(res.send.mock.calls[0][0]).toMatchSnapshot();

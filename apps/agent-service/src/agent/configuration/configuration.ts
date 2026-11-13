@@ -21,11 +21,15 @@ import { createAccessServiceSupervisorOptions } from '../agents/access/superviso
 import { withContextualInstructions } from './contextualInstructions';
 import { createAuthenticatedMcpFetch, loadKnownMcpServerSecrets, normalizeMcpServerUrl } from './mcpCredentials';
 
-function createAgentMemory(storage: LibSQLStore | PostgresStore, observationalMemoryEnabled: boolean) {
+function createAgentMemory(
+  storage: LibSQLStore | PostgresStore,
+  observationalMemoryEnabled: boolean,
+  lastMessages = environment.AGENT_LAST_MESSAGES,
+) {
   return new Memory({
     storage,
     options: {
-      lastMessages: environment.AGENT_LAST_MESSAGES,
+      lastMessages,
       observationalMemory: observationalMemoryEnabled
         ? {
             model: getAgentModelConfiguration(),
@@ -153,6 +157,7 @@ export class AgentServiceConfiguration {
 
       const sharedMemory = createAgentMemory(storage, environment.AGENT_OBSERVATIONAL_MEMORY);
       const formGenerationMemory = createAgentMemory(storage, false);
+      const accessMemory = createAgentMemory(storage, false, environment.AGENT_ACCESS_LAST_MESSAGES);
 
       const mcpToolsByAgent = Object.fromEntries(
         await Promise.all(
@@ -240,7 +245,12 @@ export class AgentServiceConfiguration {
                       {} as Record<string, unknown>,
                     ) || {}),
                   } as unknown as never,
-                  memory: key === 'formGenerationAgent' ? formGenerationMemory : sharedMemory,
+                  memory:
+                    key === 'formGenerationAgent'
+                      ? formGenerationMemory
+                      : key === ACCESS_SERVICE_AGENT_ID
+                        ? accessMemory
+                        : sharedMemory,
                   workspace: configuration.workspace?.enabled ? createWorkspaceResolver(this.logger, key) : undefined,
                   inputProcessors: ({ requestContext }) =>
                     createInputProcessors({
