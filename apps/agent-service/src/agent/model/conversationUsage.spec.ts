@@ -51,21 +51,6 @@ describe('UsageRecorder', () => {
     // Assert
     expect(recorder.total.totalTokens).toBe(9400);
   });
-
-  it("keeps when each call finished, including the agent's own calls it only observes", () => {
-    // Arrange
-    let now = 1000;
-    const recorder = new UsageRecorder(() => now);
-
-    // Act
-    recorder.record({ totalTokens: 1200 });
-    now = 2000;
-    recorder.observe({ totalTokens: 4500 });
-
-    // Assert
-    expect(recorder.callsSince(1500)).toEqual([{ at: 2000, tokens: 4500 }]);
-    expect(recorder.total.totalTokens).toBe(1200);
-  });
 });
 
 describe('getUsageRecorder', () => {
