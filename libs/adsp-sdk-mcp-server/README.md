@@ -64,7 +64,7 @@ Add it to your MCP client's server config, run via `npx`:
 ### HTTP transport
 
 To host the server instead of running it per user, start it with `MCP_TRANSPORT=http`. It serves Streamable HTTP
-at `POST /mcp`, with a liveness check at `GET /health`.
+at `POST /mcp`, with a liveness check at `GET /health` and a readiness check at `GET /ready`.
 
 | Variable | Default | Purpose |
 |---|---|---|
@@ -75,6 +75,8 @@ at `POST /mcp`, with a liveness check at `GET /health`.
 | `MCP_IN_FLIGHT_WAIT_MS` | `1000` | How long a request waits for a free slot before getting `503`. Also how long a live tool waits for a free upstream slot |
 | `MCP_RATE_LIMIT_PER_MINUTE` | `1200` | `POST /mcp` requests allowed per client IP per minute, per process. `0` turns the limit off |
 | `MCP_LIVE_TOOL_MAX_CONCURRENT` | `8` | Live-tool calls to ADSP running at once per process, across both live tools |
+| `MCP_SHUTDOWN_DELAY_MS` | `5000` | After a shutdown signal, how long to keep serving with `/ready` failing, so the router stops sending traffic first |
+| `MCP_SHUTDOWN_TIMEOUT_MS` | `30000` | Hard deadline from the signal to exit, even if a request is still running. Must be longer than the delay |
 | `TRUSTED_PROXY` | `uniquelocal` | Express [`trust proxy`](https://expressjs.com/en/guide/behind-proxies.html) setting, so the client IP comes from the router's `X-Forwarded-For` |
 | `OTEL_EXPORTER_OTLP_ENDPOINT` | unset | OTLP/HTTP collector base URL. When set, metrics are exported to `<endpoint>/v1/metrics` |
 | `OTEL_METRIC_EXPORT_INTERVAL` | `60000` | Metric export interval, in milliseconds |
@@ -88,6 +90,24 @@ and an idle client never loses its session. `GET /mcp` and `DELETE /mcp` return 
 there is no stream to open and no session to delete.
 
 `SESSION_TTL_MINUTES` has been removed and is ignored: there are no sessions to expire.
+
+#### Health and shutdown
+
+- `GET /health` is liveness: it answers `200` while the process is up, including during the shutdown delay, so a pod
+  that is still finishing requests isn't restarted. Once the delay ends the port is closed.
+- `GET /ready` is readiness. The server only listens once the docs index is built, so the check fails while the index
+  loads. It answers `200` after that, and `503` from the moment shutdown starts.
+
+On `SIGTERM` or `SIGINT`:
+
+1. `/ready` starts failing, and responses carry `Connection: close` so clients reconnect elsewhere.
+2. The server keeps serving for `MCP_SHUTDOWN_DELAY_MS`, while the router takes the pod out of rotation.
+3. It stops accepting new connections, lets requests already running finish, flushes metrics, and exits `0`. A
+   request already on an open connection is still answered, with `Connection: close`.
+4. If a request is still running at `MCP_SHUTDOWN_TIMEOUT_MS`, it exits `1` anyway.
+
+Set the pod's `terminationGracePeriodSeconds` above `MCP_SHUTDOWN_TIMEOUT_MS`, and keep `MCP_SHUTDOWN_DELAY_MS` longer
+than it takes the router to stop sending traffic to a pod that fails readiness.
 
 #### Overload guards
 

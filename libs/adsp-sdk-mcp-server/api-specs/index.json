@@ -172,7 +172,7 @@
     "urn": "urn:ads:platform:value-service",
     "name": "Value service",
     "title": "Value service",
-    "operations": 13,
+    "operations": 14,
     "file": "value-service.json"
   },
   {
