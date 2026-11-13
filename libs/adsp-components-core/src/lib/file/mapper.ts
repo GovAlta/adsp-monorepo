@@ -52,6 +52,8 @@ export function getContentDispositionFilename(header: string | null): string | u
 
 // File service answers a 400 for several conditions and only the message tells them apart.
 const SCAN_PENDING_MESSAGE = /scan pending/i;
+// See FileEntity.create in apps/file-service/src/file/model/file.ts.
+const UNSUPPORTED_FORMAT_MESSAGE = /invalid file type extension/i;
 
 export function toErrorReason(status: number, errorMessage?: string): FileServiceErrorReason {
   switch (status) {
@@ -62,7 +64,10 @@ export function toErrorReason(status: number, errorMessage?: string): FileServic
     case 404:
       return 'not-found';
     case 400:
-      return errorMessage && SCAN_PENDING_MESSAGE.test(errorMessage) ? 'scan-pending' : 'unavailable';
+      if (errorMessage && SCAN_PENDING_MESSAGE.test(errorMessage)) {
+        return 'scan-pending';
+      }
+      return errorMessage && UNSUPPORTED_FORMAT_MESSAGE.test(errorMessage) ? 'unsupported-format' : 'unavailable';
     default:
       return 'unexpected';
   }
@@ -102,8 +107,14 @@ export interface FileServiceFileType {
   id: string;
   name: string;
   anonymousRead?: boolean;
+  allowedFileTypes?: string[];
 }
 
 export function mapFileType(type: FileServiceFileType): FileTypeInfo {
-  return { id: type.id, name: type.name, anonymousRead: type.anonymousRead ?? false };
+  return {
+    id: type.id,
+    name: type.name,
+    anonymousRead: type.anonymousRead ?? false,
+    allowedFileTypes: (type.allowedFileTypes ?? []).map((allowed) => allowed.trim()).filter((allowed) => !!allowed),
+  };
 }

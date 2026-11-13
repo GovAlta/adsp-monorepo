@@ -4,13 +4,12 @@ import { useDispatch, useSelector } from 'react-redux';
 import styled from 'styled-components';
 import { RootState } from '@store/index';
 import { FeedbackListTable } from './feedbacksTable';
-import { FeedbackSummary } from './feedbackSummary';
+import { FeedbackSummary, FeedbackSummaryLoading } from './feedbackSummary';
 import { renderNoItem } from '@components/NoItem';
 import {
   GoabBadge,
   GoabButton,
   GoabButtonGroup,
-  GoabCircularProgress,
   GoabDropdown,
   GoabDropdownItem,
   GoabFormItem,
@@ -26,7 +25,7 @@ import {
   getFeedbackSummary,
 } from '@store/feedback/actions';
 import { FeedbackPagination } from './feedbackPagination';
-import { ExportDates, FeedbackFilterError, FeedbackFilterErrorWrapper, ProgressWrapper } from '../styled-components';
+import { ExportDates, FeedbackFilterError, FeedbackFilterErrorWrapper } from '../styled-components';
 import { transformedData } from '../ratings';
 import { FullScreenModalWrapper } from '../styled-components';
 import { GoabInputOnChangeDetail, GoabDropdownOnChangeDetail } from '@abgov/ui-components-common';
@@ -211,7 +210,7 @@ export const FeedbacksList = (): JSX.Element => {
             </GoabButton>
           </GoabButtonGroup>
 
-          {summary && <FeedbackSummary summary={summary} />}
+          {summary ? <FeedbackSummary summary={summary} /> : <FeedbackSummaryLoading />}
           {!indicator.show && feedbacks.length === 0 && renderNoItem('feedbacks')}
           {feedbacks.length > 0 && (
             <>
@@ -258,13 +257,10 @@ export const FeedbacksList = (): JSX.Element => {
         </div>
       )}
 
-      {indicator.show && (
-        <ProgressWrapper>
-          <GoabCircularProgress visible={indicator.show} size="large" />
-        </ProgressWrapper>
-      )}
-
-      {!expandView && selectedSite && !showDateError && summary && <FeedbackSummary summary={summary} />}
+      {!expandView &&
+        selectedSite &&
+        !showDateError &&
+        (summary ? <FeedbackSummary summary={summary} /> : <FeedbackSummaryLoading />)}
       {!indicator.show && selectedSite && feedbacks.length === 0 && renderNoItem('feedbacks')}
 
       {selectedSite && feedbacks.length > 0 && (

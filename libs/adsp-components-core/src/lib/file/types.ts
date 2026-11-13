@@ -28,6 +28,7 @@ export interface DownloadedFile {
  * - `forbidden`: the user isn't permitted to read the file
  * - `scan-pending`: the virus scan hasn't finished; trying again later can succeed
  * - `unavailable`: the file is infected, marked for deletion, or the request was rejected as invalid
+ * - `unsupported-format`: the file's format isn't one the File Type allows; trying again can't succeed
  * - `unexpected`: a server or network failure; trying again can succeed
  */
 export type FileServiceErrorReason =
@@ -36,12 +37,15 @@ export type FileServiceErrorReason =
   | 'forbidden'
   | 'scan-pending'
   | 'unavailable'
+  | 'unsupported-format'
   | 'unexpected';
 
 export interface FileTypeInfo { // clean-code-ignore: RULE-19 (types only; no runtime code to test)
   id: string;
   name: string;
   anonymousRead: boolean;
+  /** Extensions the File Type accepts, such as `.pdf`; empty when it accepts any format. */
+  allowedFileTypes: string[];
 }
 
 export interface UploadFileOptions {
