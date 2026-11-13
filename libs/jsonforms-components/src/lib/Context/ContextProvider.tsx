@@ -33,9 +33,11 @@ interface FileManagement {
   uploadFile?: (file: File, propertyId: string) => void;
   downloadFile?: (file: File) => void;
   deleteFile?: (file: File) => void;
-  // Upload limit the host enforces (e.g. '20MB'). File controls show it when the form definition
-  // doesn't set its own componentProps.maxFileSize.
+  // Upload limit the host enforces (e.g. '1GB'). A form definition's componentProps.maxFileSize is
+  // capped at this.
   maxFileSize?: string;
+  // Limit file controls use when the form definition doesn't set componentProps.maxFileSize.
+  defaultMaxFileSize?: string;
 }
 interface SubmitManagement {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -186,11 +188,13 @@ export class ContextProviderClass {
     const previousData = this.selfProps?.data;
     this.selfProps = props;
     if (props.fileManagement) {
-      const { fileList, uploadFile, downloadFile, deleteFile, maxFileSize } = props.fileManagement;
+      const { fileList, uploadFile, downloadFile, deleteFile, maxFileSize, defaultMaxFileSize } = props.fileManagement;
 
       this.enumValues.set('file-list', () => fileList);
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       this.enumValues.set('file-max-size', () => maxFileSize as any);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      this.enumValues.set('file-default-max-size', () => defaultMaxFileSize as any);
 
       this.enumFunctions.set('upload-file', () => uploadFile);
       this.enumFunctions.set('download-file', () => downloadFile);

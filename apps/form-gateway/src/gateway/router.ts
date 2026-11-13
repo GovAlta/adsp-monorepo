@@ -217,7 +217,7 @@ export function uploadAnonymousFile(logger: Logger, fileApiUrl: URL, tokenProvid
       });
 
       return proxy(new URL('', fileApiUrl).href, {
-        limit: '20mb',
+        limit: '1gb',
         async proxyReqOptDecorator(opts) {
           opts.headers.Authorization = `Bearer ${token}`;
           const trace = getContextTrace();

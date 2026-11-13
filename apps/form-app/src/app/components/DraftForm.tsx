@@ -288,8 +288,10 @@ export const DraftForm: FunctionComponent<DraftFormProps> = ({
           uploadFile: uploadFormFile,
           downloadFile: downloadFormFile,
           deleteFile: deleteFormFile,
-          // Matches the nginx and form-gateway limits on the anonymous upload path (CS-3853).
-          maxFileSize: anonymousApply ? '20MB' : undefined,
+          // The cap matches the nginx limit on the anonymous upload path (CS-3853); forms can raise
+          // the 5MB default up to it with componentProps.maxFileSize.
+          maxFileSize: anonymousApply ? '1GB' : undefined,
+          defaultMaxFileSize: anonymousApply ? '5MB' : undefined,
         }}
         formUrl="https://form.adsp-uat.alberta.ca"
         autoPopulatedData={autoPopulatedData}
