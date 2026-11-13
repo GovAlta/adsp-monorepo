@@ -237,7 +237,8 @@ export function toNotificationAuditDetails(
       channel,
       event: event ? `${event.namespace}:${event.name}` : undefined,
       subscriberId: subscriber?.id ?? null,
-      context: context ?? null,
+      // Context values can hold personal information, so only the keys are recorded.
+      contextKeys: Object.keys(context ?? {}),
       ...metadata,
     },
   };

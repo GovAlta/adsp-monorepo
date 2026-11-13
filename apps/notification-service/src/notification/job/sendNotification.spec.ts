@@ -60,7 +60,7 @@ describe('createSendNotificationJob', () => {
               channel: Channel.email,
               event: 'test:test',
               subscriberId: 'test',
-              context: null,
+              contextKeys: [],
             },
           });
           expect(JSON.stringify(details)).not.toContain('test@test.co');
