@@ -67,7 +67,7 @@ describe('HTTP sign-in', () => {
     const response = await postMcp(endpoint, TOOLS_LIST_REQUEST);
 
     expect(response.status).toBe(200);
-    expect((await response.json()).result.tools).toHaveLength(6);
+    expect((await response.json()).result.tools).toHaveLength(11);
   });
 
   it('rejects a token for another realm', async () => {

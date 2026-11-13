@@ -1,7 +1,7 @@
 import { createOpenAICompatible } from '@ai-sdk/openai-compatible';
 import type { AgentExecutionOptions } from '@mastra/core/agent';
 import { environment } from '../../environments/environment';
-import { FORM_GENERATION_AGENT_ID } from './executionLimits';
+import { ACCESS_SERVICE_AGENT_ID, FORM_GENERATION_AGENT_ID } from './executionLimits';
 
 export interface AgentModelConfiguration {
   id?: string;
@@ -40,11 +40,18 @@ export function getAgentProviderOptions(
   modelConfig?: AgentModelConfiguration,
 ): AgentExecutionOptions['providerOptions'] | undefined {
   const isFormGen = agentId === FORM_GENERATION_AGENT_ID;
-  if (!isFormGen && !modelConfig?.reasoningEffort) {
+  const isAccess = agentId === ACCESS_SERVICE_AGENT_ID;
+  if (!isFormGen && !isAccess && !modelConfig?.reasoningEffort) {
     return undefined;
   }
 
-  const providerOpts: Record<string, string | boolean> = {};
+  const providerOpts: Record<string, string | boolean | number> = {};
+
+  // Reasoning models such as gpt-5.1 reject max_tokens, which the OpenAI-compatible provider sends for
+  // maxOutputTokens, so the reply limit goes on the wire as max_completion_tokens instead.
+  if (isAccess && environment.MODEL_URL) {
+    providerOpts.max_completion_tokens = environment.AGENT_ACCESS_MAX_OUTPUT_TOKENS;
+  }
 
   if (isFormGen) {
     // Use the key convention that matches the active provider path:

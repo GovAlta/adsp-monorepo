@@ -54,6 +54,21 @@ export const environment = envalid.cleanEnv(
     // Planning is one judgement-heavy call; step building is many mechanical ones and sets the wall clock.
     AGENT_FORM_GENERATION_PLANNER_REASONING_EFFORT: envalid.str({ default: '', choices: reasoningEffortChoices }),
     AGENT_FORM_GENERATION_STEP_REASONING_EFFORT: envalid.str({ default: '', choices: reasoningEffortChoices }),
+    // The Access Service agent keeps a short history without observational memory: its tool results are shown as
+    // cards, and observational memory's background summaries cost more tokens than they save for short chats.
+    AGENT_ACCESS_LAST_MESSAGES: envalid.num({ default: 8 }),
+    AGENT_ACCESS_MAX_OUTPUT_TOKENS: envalid.num({ default: 1000 }),
+    // Context tokens at which the Access Service agent suggests starting a new chat; 0 turns the suggestion off.
+    AGENT_ACCESS_LONG_CONVERSATION_TOKENS: envalid.num({ default: 6000 }),
+    // Token budget for the model key shared by every agent; 0 turns a limit off. Each pod enforces its own budget,
+    // so with several pods set these to the key's limit divided by the number of pods.
+    AGENT_TOKEN_LIMIT_PER_MINUTE: envalid.num({ default: 0 }),
+    AGENT_TOKEN_LIMIT_PER_5_MINUTES: envalid.num({ default: 0 }),
+    // Share of the budget each agent may use, for example "AccessServiceAgent=0.3,formGenerationAgent=0.5".
+    AGENT_TOKEN_AGENT_SHARES: envalid.str({ default: '' }),
+    AGENT_USER_TOKEN_LIMIT_PER_MINUTE: envalid.num({ default: 0 }),
+    // Share of a budget at which a warning is logged.
+    AGENT_TOKEN_WARN_RATIO: envalid.num({ default: 0.7 }),
     AGENT_MCP_SERVER_CREDENTIALS_FILE: envalid.str({ default: '/var/run/secrets/adsp/mcp/mcp-servers.json' }),
     AGENT_WORKSPACE_INIT_RETRY_ATTEMPTS: envalid.num({ default: 5 }),
     AGENT_WORKSPACE_INIT_RETRY_DELAY_MS: envalid.num({ default: 50 }),

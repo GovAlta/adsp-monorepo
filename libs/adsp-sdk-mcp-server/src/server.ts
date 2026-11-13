@@ -2,19 +2,25 @@ import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { CallToolRequestSchema, CallToolResult, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
 import { join, resolve } from 'path';
 import { performance } from 'perf_hooks';
+import { ApiSpecsRepository } from './api-specs/apiSpecsRepository';
 import { DocsRepository } from './docs/docsRepository';
 import { getMetrics, ToolErrorType } from './metrics';
+import { createApiTools } from './tools/registerApiTools';
 import { createConfigurationSchemaTools } from './tools/registerConfigurationSchemaTool';
 import { isBusyResult } from './tools/liveToolLimit';
 import { createDocsTools } from './tools/registerDocsTools';
 import { createQuickstartTool } from './tools/registerQuickstartTool';
 import { createServiceRolesTools } from './tools/registerServiceRolesTool';
 import { createSdkTools } from './tools/registerSdkTools';
+import { createServerInfoTool } from './tools/registerServerInfoTool';
 import { CallerSignIn, LiveToolDefinition, ToolDefinition } from './tools/types';
+import { readPackageVersion } from './version';
 
 export interface CreateAdspMcpServerOptions {
   /** Root directory of bundled ADSP docs. Defaults to the assets copied alongside the built package. */
   docsRoot?: string;
+  /** Root directory of bundled OpenAPI specs. Defaults to the assets copied alongside the built package. */
+  apiSpecsRoot?: string;
   /** Hosted mode: live tools use each request's verified token and this directory, never the CLI login. */
   hostedAuth?: { directoryServiceUrl: string };
 }
@@ -26,26 +32,37 @@ export interface AdspMcpTools {
 
 // Compiled output places this file under dist/.../src/, while the docs asset copy lands one level up at dist/.../assets/docs.
 const DEFAULT_DOCS_ROOT = join(__dirname, '..', 'assets', 'docs');
+const DEFAULT_API_SPECS_ROOT = join(__dirname, '..', 'assets', 'api-specs');
 
-const toolsByDocsRoot = new Map<string, AdspMcpTools>();
+const toolsByRoots = new Map<string, AdspMcpTools>();
+
+function lazy<T>(create: () => T): () => T {
+  let value: T | undefined;
+  return () => (value ??= create());
+}
 
 export function loadAdspMcpTools(options: CreateAdspMcpServerOptions = {}): AdspMcpTools {
   const docsRoot = resolve(options.docsRoot ?? DEFAULT_DOCS_ROOT);
-  const cached = toolsByDocsRoot.get(docsRoot);
+  const apiSpecsRoot = resolve(options.apiSpecsRoot ?? DEFAULT_API_SPECS_ROOT);
+  const cacheKey = `${docsRoot}\0${apiSpecsRoot}`;
+  const cached = toolsByRoots.get(cacheKey);
   if (cached) {
     return cached;
   }
 
   const started = performance.now();
+  const docs = new DocsRepository(docsRoot);
   const tools = [
-    ...createDocsTools(new DocsRepository(docsRoot)),
+    ...createDocsTools(docs),
     ...createSdkTools(),
     ...createQuickstartTool(),
     ...createServiceRolesTools(),
     ...createConfigurationSchemaTools(),
+    ...createServerInfoTool(docs),
+    ...createApiTools(lazy(() => new ApiSpecsRepository(apiSpecsRoot))),
   ];
   const loaded = { tools, toolsByName: new Map(tools.map((tool) => [tool.name, tool])) };
-  toolsByDocsRoot.set(docsRoot, loaded);
+  toolsByRoots.set(cacheKey, loaded);
   getMetrics().recordDocsIndexBuild(secondsSince(started));
   return loaded;
 }
@@ -61,7 +78,10 @@ export function createAdspMcpServer(options: CreateAdspMcpServerOptions = {}): S
   // would fix it but risks changing runtime behavior for unrelated consumers (e.g. agent-service's Mastra agent
   // config). Server + setRequestHandler avoids the SDK's zod-compat generics entirely; tools validate their own
   // args with zod as a plain value (see tools/*.ts), never passing a schema through the SDK's type machinery.
-  const server = new Server({ name: 'adsp-sdk-mcp-server', version: '0.0.1' }, { capabilities: { tools: {} } });
+  const server = new Server(
+    { name: 'adsp-sdk-mcp-server', version: readPackageVersion() },
+    { capabilities: { tools: {} } },
+  );
 
   server.setRequestHandler(ListToolsRequestSchema, async () => ({
     tools: tools.map(({ name, description, inputSchema }) => ({ name, description, inputSchema })),

@@ -1,4 +1,4 @@
-import { adspId, Channel, ServiceDirectory, Template, TokenProvider } from '@abgov/adsp-service-sdk';
+import { AdspId, adspId, Channel, ServiceDirectory, Template, TokenProvider } from '@abgov/adsp-service-sdk';
 import { InvalidOperationError } from '@core-services/core-common';
 import { getTemplateBody } from '@core-services/notification-shared';
 import axios from 'axios';
@@ -33,7 +33,7 @@ export class VerifyServiceImpl implements VerifyService {
     });
   }
 
-  async sendCode({ channel, address }: SubscriberChannel, reason: string): Promise<string> {
+  async sendCode(tenantId: AdspId, { channel, address }: SubscriberChannel, reason: string): Promise<string> {
     const provider = this.providers[channel];
     if (!provider) {
       throw new InvalidOperationError(`No provider for channel ${channel}.`);
@@ -48,6 +48,7 @@ export class VerifyServiceImpl implements VerifyService {
 
     const key = uuidv4();
     const verifyRequestUrl = new URL(`/verify/v1/codes/${key}`, verifyServiceUrl);
+    verifyRequestUrl.searchParams.set('tenantId', tenantId.toString());
 
     const token = await this.tokenProvider.getAccessToken();
     const { data } = await axios.post<{ code: string; expiresAt: string }>(
@@ -71,6 +72,7 @@ export class VerifyServiceImpl implements VerifyService {
   }
 
   async sendCodeWithLink(
+    tenantId: AdspId,
     { channel, address }: SubscriberChannel,
     reason: string,
     expireIn?: number,
@@ -93,6 +95,7 @@ export class VerifyServiceImpl implements VerifyService {
 
     const key = uuidv4();
     const verifyRequestUrl = new URL(`/verify/v1/codes/${key}?expireIn=${expireIn}`, verifyServiceUrl);
+    verifyRequestUrl.searchParams.set('tenantId', tenantId.toString());
 
     const token = await this.tokenProvider.getAccessToken();
     const { data } = await axios.post<{ code: string; expiresAt: string }>(
@@ -126,7 +129,7 @@ export class VerifyServiceImpl implements VerifyService {
     return key;
   }
 
-  async verifyCode(channel: SubscriberChannel, code: string): Promise<boolean> {
+  async verifyCode(tenantId: AdspId, channel: SubscriberChannel, code: string): Promise<boolean> {
     const verifyServiceUrl = await this.directory.getServiceUrl(adspId`urn:ads:platform:verify-service`);
 
     const key = channel.verifyKey;
@@ -136,6 +139,7 @@ export class VerifyServiceImpl implements VerifyService {
     }
 
     const verifyRequestUrl = new URL(`/verify/v1/codes/${key}`, verifyServiceUrl);
+    verifyRequestUrl.searchParams.set('tenantId', tenantId.toString());
 
     const token = await this.tokenProvider.getAccessToken();
     const { data } = await axios.post<{ verified: boolean }>(

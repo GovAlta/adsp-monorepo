@@ -72,6 +72,12 @@ export function describeConversationStatus(status: ConversationStatus | undefine
         detail: 'Earlier requests in this chat may be forgotten.',
       };
     }
+    case 'long-conversation':
+      return {
+        heading: 'Long conversation',
+        shortHeading: 'Long chat',
+        detail: 'Long chats use more of the shared AI capacity. Start a new chat for a new question.',
+      };
     case 'near-context-limit':
       return {
         heading: NEAR_LIMIT_HEADING,

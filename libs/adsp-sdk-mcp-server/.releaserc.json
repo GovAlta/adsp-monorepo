@@ -5,7 +5,13 @@
     [
       "@abgov/nx-release",
       {
-        "project": "adsp-sdk-mcp-server"
+        "project": "adsp-sdk-mcp-server",
+        "releaseRules": [
+          {
+            "type": "docs",
+            "release": "patch"
+          }
+        ]
       }
     ],
     [

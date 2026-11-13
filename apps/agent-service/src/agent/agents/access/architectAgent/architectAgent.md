@@ -43,7 +43,7 @@ The ADSP Access Service is Keycloak deployed in high-availability mode on GoA's 
 - **Horizontal autoscaling**: A HorizontalPodAutoscaler (HPA) can scale the number of Keycloak pod replicas up or down based on observed CPU/memory utilization, within a configured minimum and maximum replica count. This lets the deployment absorb traffic spikes without manual intervention and scale back down to conserve resources during quiet periods.
 - **Rolling updates**: OpenShift performs rolling deployments when the Keycloak image or configuration changes, replacing pods incrementally so there is no full-service outage during updates.
 - **Readiness/liveness probes**: Health checks (readiness and liveness probes) determine whether a pod receives traffic and whether OpenShift should restart it. A pod that fails its liveness probe is restarted; a pod that fails its readiness probe is removed from the load balancer's rotation until it recovers.
-- **Unconfirmed specifics** (must confirm with ADSP infrastructure/Dev-Ops): exact minimum/maximum replica counts, the CPU/memory thresholds that trigger scaling, and current node pool sizing. Do not invent these values — direct the user to the infrastructure/Dev-Ops owner for exact figures.
+- **Unconfirmed specifics** (must confirm with ADSP infrastructure/Dev-Ops): exact minimum/maximum replica counts, the CPU/memory thresholds that trigger scaling, and current node pool sizing. These figures are not documented here; ask the infrastructure/Dev-Ops owner for them.
 
 ### Database architecture
 

@@ -35,7 +35,7 @@ The tenant administration app allows you to configure platform services for your
 
 After your tenant is created, you will have access to the tenant administration application. As the original creator of a tenant, you can login from the landing page of ADSP to access tenant administration.
 
-For other team members, note the instructions and tenant specific login LRN shown in the aside on the _Dashboard_ view (either on the right or the bottom). Team members can login via this url to provision their user in the tenant realm; they will start with no access to tenant administration.
+For other team members, note the instructions and tenant specific login URL shown in the aside on the _Dashboard_ view (either on the right or the bottom). Team members can login via this url to provision their user in the tenant realm; they will start with no access to tenant administration.
 
 **To grant administration access to team members**
 
@@ -65,7 +65,7 @@ Once you have an event definition configured, you can use the event service API 
 **To create a service account**
 
 1. In Keycloak realm administration, from _Clients_, click _Create client_ to create a client to use with a service account.
-2. Set the _Client Type_ to "Confidential", enter a _Client ID_ (e.g., `urn:ads:platform:event-service` for event service).
+2. Set the _Client Type_ to "Confidential", enter a _Client ID_ for your application (e.g., `my-event-sender`).
 3. Under _Client authentication_, toggle _Client authentication_ to **On**.
 4. Under _Authentication flow_, toggle _Service accounts_ to **On**.
 5. Set _Valid redirect URIs_ to https://api.adsp.alberta.ca and _Web origins_ to +.
@@ -79,14 +79,14 @@ Once you have an event definition configured, you can use the event service API 
 1. In tenant administration, from the _Services_ -> _Events_ view, click the _Read the API docs_ link in the aside (either on the right or the bottom).
 2. In API documentation, click _Authorize_, and login using `client_credentials` grant with the client created above.
 3. Expand the _POST /event​/v1​/events_ endpoint, click _Try it out_.
-4. In the _Request body_ text field, set the namespace and name of the event to match your definition and the timestamp to an ISO2601 timestamp (e.g. 2021-10-02T12:00:00Z).
+4. In the _Request body_ text field, set the namespace and name of the event to match your definition and the timestamp to an ISO 8601 timestamp (e.g. 2021-10-02T12:00:00Z).
 5. Click _Execute_ to send the request.
 
 **To send an event from your application**
 
 1. Get an access token with the event-sender role.
    ```typescript
-   const { access_token } = await fetch(`${keycloakRealmTokenUrl}`, {
+   const tokenResponse = await fetch(`https://access.alberta.ca/auth/realms/${realm}/protocol/openid-connect/token`, {
      method: 'POST',
      headers: {
        'Content-Type': 'application/x-www-form-urlencoded',
@@ -97,10 +97,11 @@ Once you have an event definition configured, you can use the event service API 
        grant_type: 'client_credentials',
      }),
    });
+   const { access_token } = await tokenResponse.json();
    ```
 2. Send the event via the event service.
    ```typescript
-   await fetch(`${eventServiceUrl}`, {
+   await fetch('https://event-service.adsp.alberta.ca/event/v1/events', {
      method: 'POST',
      headers: {
        'Content-Type': 'application/json',
