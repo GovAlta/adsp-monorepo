@@ -35,6 +35,14 @@ export const PageReviewValueCol = styled.td`
   vertical-align: top;
 `;
 
+/* One row of the flat review. The stepper review puts each field in a table cell with this same
+   padding and divider; outside a table every field gets it from here instead, so an object array
+   and a plain field line up. */
+export const FlatReviewRow = styled.div`
+  padding: var(--goa-space-xs) var(--goa-space-m) var(--goa-space-xs);
+  border-bottom: 1px solid #ccc;
+`;
+
 export const PageReviewContainer = styled.td`
   padding: var(--goa-space-xs) var(--goa-space-m) var(--goa-space-xs);
   border-bottom: 1px solid #ccc;

@@ -5,6 +5,7 @@ import Ajv from 'ajv';
 import { GoACells, GoARenderers, GoABaseReviewRenderers } from '../../../index';
 import { ArrayControlReview, PrimitiveArrayControl } from './ObjectArray';
 import { ContextProviderFactory } from '../../Context';
+import { GoABaseTableReviewRenderers } from '../FormStepper/FormStepperReviewControl';
 
 /**
  * VERY IMPORTANT:  Rendering <JsonForms ... /> does not work unless the following
@@ -544,4 +545,113 @@ it('renders primitive array values in review without fallback error', () => {
   expect(baseElement.textContent).toContain('test-one');
   expect(baseElement.textContent).toContain('test-two');
   expect(baseElement.textContent).not.toContain('No applicable renderer found.');
+});
+
+describe('Object array review markup', () => {
+  const requiredSchema = {
+    ...rootSchema,
+    required: ['messages'],
+    properties: { ...rootSchema.properties, firstName: { type: 'string' } },
+  };
+  const reviewControl = { type: 'Control', scope: '#/properties/messages', label: 'Messages' };
+  const firstNameControl = { type: 'Control', scope: '#/properties/firstName', label: 'First name' };
+  const reviewData = { messages: [{ name: 'Bob', message: 'hi', age: 3 }] };
+  const nestingErrors = (spy: jest.SpyInstance) =>
+    spy.mock.calls.filter((call) =>
+      /validateDOMNesting|cannot be a child|cannot appear as a child/.test(call.map(String).join(' ')),
+    );
+
+  let errorSpy: jest.SpyInstance;
+  beforeEach(() => {
+    errorSpy = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+  });
+  afterEach(() => {
+    errorSpy.mockRestore();
+  });
+
+  it('renders the flat review without a table row', () => {
+    const { baseElement, getByTestId } = render(
+      <JsonForms
+        uischema={reviewControl}
+        data={reviewData}
+        schema={requiredSchema}
+        ajv={new Ajv({ allErrors: true, verbose: true })}
+        renderers={GoABaseReviewRenderers}
+        cells={GoACells}
+      />,
+    );
+
+    expect(getByTestId('object-array-flat-review')).toBeInTheDocument();
+    expect(baseElement.querySelector('tr')).toBeNull();
+    expect(baseElement.querySelector('td')).toBeNull();
+    expect(baseElement.textContent).toContain('Messages (required)');
+    expect(nestingErrors(errorSpy)).toHaveLength(0);
+  });
+
+  it('indents the object array the same as a plain field in the flat review', () => {
+    const { getByTestId, getAllByTestId } = render(
+      <JsonForms
+        uischema={{ type: 'VerticalLayout', elements: [firstNameControl, reviewControl] }}
+        data={{ ...reviewData, firstName: 'Alex' }}
+        schema={requiredSchema}
+        ajv={new Ajv({ allErrors: true, verbose: true })}
+        renderers={GoABaseReviewRenderers}
+        cells={GoACells}
+      />,
+    );
+
+    // Both go through the same styled row, so the object array can't drift from the fields
+    // beside it the way it did when it carried the stepper table cell's padding alone.
+    const plain = getAllByTestId('flat-review-row')[0];
+    const array = getByTestId('object-array-flat-review');
+    expect(plain.className.split(' ')).toEqual(expect.arrayContaining(array.className.split(' ').slice(0, 1)));
+    expect(array.className).toEqual(plain.className);
+  });
+
+  it('renders a list-with-detail flat review without a table row', () => {
+    const listWithDetail = {
+      type: 'ListWithDetail',
+      scope: '#/properties/messages',
+      label: 'Dependents',
+      options: { detail: { type: 'VerticalLayout', elements: [{ type: 'Control', scope: '#/properties/name' }] } },
+    };
+
+    const { baseElement, getByTestId } = render(
+      <JsonForms
+        uischema={listWithDetail}
+        data={reviewData}
+        schema={requiredSchema}
+        ajv={new Ajv({ allErrors: true, verbose: true })}
+        renderers={GoABaseReviewRenderers}
+        cells={GoACells}
+      />,
+    );
+
+    expect(getByTestId('object-array-flat-review')).toBeInTheDocument();
+    expect(baseElement.querySelector('tr')).toBeNull();
+    expect(nestingErrors(errorSpy)).toHaveLength(0);
+  });
+
+  it('renders the stepper review as a row of the surrounding table', () => {
+    const { baseElement, queryByTestId } = render(
+      <table>
+        <tbody>
+          <JsonForms
+            uischema={reviewControl}
+            data={reviewData}
+            schema={requiredSchema}
+            ajv={new Ajv({ allErrors: true, verbose: true })}
+            renderers={GoABaseTableReviewRenderers}
+            cells={GoACells}
+          />
+        </tbody>
+      </table>,
+    );
+
+    const cell = baseElement.querySelector('tbody > tr > td');
+    expect(cell).toHaveAttribute('colspan', '3');
+    expect(cell?.textContent).toContain('Messages (required)');
+    expect(queryByTestId('object-array-flat-review')).toBeNull();
+    expect(nestingErrors(errorSpy)).toHaveLength(0);
+  });
 });

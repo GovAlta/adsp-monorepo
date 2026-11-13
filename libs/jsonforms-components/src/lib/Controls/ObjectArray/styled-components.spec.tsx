@@ -1,5 +1,13 @@
 import { render } from '@testing-library/react';
-import { FlexForm, FlexTabs, FlexTabsWithMargin, RowFlex, UpdateListContainer } from './styled-components';
+import {
+  FlexForm,
+  FlexTabs,
+  FlexTabsWithMargin,
+  ListWithDetailsReviewCellDiv,
+  NonEmptyCellStyle,
+  RowFlex,
+  UpdateListContainer,
+} from './styled-components';
 
 const NARROW_MEDIA = '@media(max-width:639px){';
 
@@ -85,5 +93,23 @@ describe('list-with-details layout', () => {
     expect(edit.desktop).toContain('width:100%');
     expect(edit.desktop).toContain('padding:var(--goa-space-xl)');
     expect(edit.narrow).toContain('padding:var(--goa-space-m)');
+  });
+});
+
+describe('object array cell styles', () => {
+  it('applies unquoted flex values to the review cell wrapper', () => {
+    const { getByTestId } = render(<ListWithDetailsReviewCellDiv data-testid="cell" />);
+
+    const cell = rulesFor(getByTestId('cell'));
+    expect(cell.desktop).toContain('display:flex');
+    expect(cell.desktop).toContain('flex-direction:column');
+    expect(cell.desktop).toContain('text-align:start');
+    expect(cell.desktop).not.toContain("'");
+  });
+
+  it('emits no invalid table header rule for the cell', () => {
+    render(<NonEmptyCellStyle />);
+
+    expect(renderedCss()).not.toContain('#000:');
   });
 });
