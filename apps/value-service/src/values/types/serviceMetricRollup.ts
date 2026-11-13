@@ -29,6 +29,26 @@ export interface ResourceRollupSource {
   contextKey: string;
 }
 
+// Coverage is a single contiguous span of whole days per source, extended from one of its edges like
+// the metric interval coverage.
+export interface EventResourceCoverage {
+  namespace: string;
+  contextKey: string;
+  coveredFrom: Date;
+  coveredTo: Date;
+}
+
+export interface EventResourceCriteria {
+  tenant: string;
+  namespace: string;
+  names: string[];
+  contextKey: string;
+  // Inclusive.
+  from: Date;
+  // Exclusive.
+  to: Date;
+}
+
 export interface ServiceMetricRollupMapping {
   service: string;
   initiated?: MetricRollupSource | EventCountRollupSource;
