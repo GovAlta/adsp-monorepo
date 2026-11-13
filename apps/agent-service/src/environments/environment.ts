@@ -60,6 +60,11 @@ export const environment = envalid.cleanEnv(
     AGENT_ACCESS_MAX_OUTPUT_TOKENS: envalid.num({ default: 1000 }),
     // Context tokens at which the Access Service agent suggests starting a new chat; 0 turns the suggestion off.
     AGENT_ACCESS_LONG_CONVERSATION_TOKENS: envalid.num({ default: 6000 }),
+    // The notification email template agent also keeps a short history without observational memory: the editor
+    // sends the current template with every message, so earlier proposals are not needed to continue.
+    AGENT_NOTIFICATION_LAST_MESSAGES: envalid.num({ default: 8 }),
+    // A reply can carry a whole email body in its tool call, so the limit is higher than the Access agent's.
+    AGENT_NOTIFICATION_MAX_OUTPUT_TOKENS: envalid.num({ default: 6000 }),
     // Token budget for the model key shared by every agent; 0 turns a limit off. Each pod enforces its own budget,
     // so with several pods set these to the key's limit divided by the number of pods.
     AGENT_TOKEN_LIMIT_PER_MINUTE: envalid.num({ default: 0 }),

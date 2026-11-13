@@ -26,7 +26,7 @@ import { AnyAction } from 'redux';
 import MonacoEditor, { useMonaco } from '@monaco-editor/react';
 import { FullPagePane } from '@components/FullPagePane';
 import { languages } from 'monaco-editor';
-import { buildSuggestions, triggerInScope } from '@lib/autoComplete';
+import { buildSuggestions, toVariablePaths, triggerInScope } from '@lib/autoComplete';
 import { Template, baseTemplate } from '@store/notification/models';
 import { SaveFormModal } from '@components/saveModal';
 import { subjectEditorConfig, bodyEditorConfig } from './config';
@@ -236,12 +236,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
 
   const hasEmailChannel = validChannels.includes('email');
 
-  const getHandlebarsVariables = (): string[] => {
-    if (!eventSuggestion) return [];
-    return eventSuggestion
-      .map((s: { label?: string; insertText?: string }) => s.label || s.insertText || '')
-      .filter(Boolean);
-  };
+  const getHandlebarsVariables = (): string[] => toVariablePaths(eventSuggestion || []);
 
   const handleAttachmentUpload = useCallback(
     async (file: File): Promise<Attachment> => {
