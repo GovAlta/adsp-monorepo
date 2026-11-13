@@ -1,4 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+export {};
+
 const migration = require('../../migrations/20260908000000_create_metric_interval_rollups');
 const supersededMigration = require('../../migrations/20260827120000_create_metric_continuous_aggregates');
 

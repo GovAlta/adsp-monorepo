@@ -1,4 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+export {};
+
 const migration = require('../../migrations/20261110120000_create_event_resource_rollups');
 
 const createTableBuilder = (columns: string[], keys: string[][]) => {
