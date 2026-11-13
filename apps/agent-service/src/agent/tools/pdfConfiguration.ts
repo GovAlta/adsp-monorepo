@@ -4,18 +4,19 @@ import axios, { isAxiosError } from 'axios';
 import * as Handlebars from 'handlebars';
 import type { Logger } from 'winston';
 import z from 'zod';
+import { describeTemplate, elideTemplate, restoreElided } from '../agents/pdf/templateView';
+import { PdfDefinition, PdfDefinitionReader, PdfTemplateFields } from '../agents/pdf/types';
 import { AdspRequestContext } from '../types';
 
 // Reject invalid content before it is persisted; the pdf-service compiles these fields with
 // Handlebars at generation time, so a bad save surfaces as a broken template for the user.
 // The thrown message includes the parse error so the agent can correct and retry.
-function validateTemplateInput(inputData: {
-  template?: string;
-  header?: string;
-  footer?: string;
-  variables?: string;
-}): void {
-  const issues: string[] = [];
+function validateTemplateInput(inputData: PdfTemplateFields, unknownPlaceholders: string[] = []): void {
+  const issues: string[] = unknownPlaceholders.length
+    ? [
+        `${unknownPlaceholders.join(', ')} ${unknownPlaceholders.length > 1 ? 'do' : 'does'} not stand for anything in the saved template. Copy placeholders exactly as the current template shows them, or leave them out.`,
+      ]
+    : [];
 
   const handlebarsFields: Array<[string, string | undefined]> = [
     ['template', inputData.template],
@@ -53,37 +54,62 @@ interface PdfConfigurationToolsProps {
   logger: Logger;
 }
 
+/**
+ * The template reads the variables as data, so variables wrapped in a "data" object leave every {{data.x}} empty.
+ * Unwraps them, unless the template really reads a variable named data (data.data).
+ */
+export function unwrapDataVariables(
+  variables: string | undefined,
+  templates: Array<string | undefined>,
+): string | undefined {
+  let parsed: unknown;
+  try {
+    parsed = variables ? JSON.parse(variables) : undefined;
+  } catch {
+    return variables;
+  }
+
+  const isObject = (value: unknown): value is Record<string, unknown> =>
+    !!value && typeof value === 'object' && !Array.isArray(value);
+  const wrapped = isObject(parsed) && Object.keys(parsed).length === 1 && isObject(parsed.data);
+  if (!wrapped || templates.some((template) => /\bdata\.data\b/.test(template ?? ''))) {
+    return variables;
+  }
+  return JSON.stringify((parsed as { data: unknown }).data, null, 2);
+}
+
+type PdfRequestContext = AdspRequestContext<{ pdfDefinitionId: string }>;
+
+/** Reads the saved definition of the PDF template in the request context from the configuration service. */
+export function createPdfDefinitionReader({ directory, tokenProvider }: Omit<PdfConfigurationToolsProps, 'logger'>) {
+  const read: PdfDefinitionReader = async (requestContext) => {
+    const tenantId = requestContext.get('tenantId') as { toString(): string } | undefined;
+    const pdfDefinitionId = requestContext.get('pdfDefinitionId') as string | undefined;
+    if (!pdfDefinitionId) {
+      return undefined;
+    }
+
+    const configurationServiceUrl = await directory.getServiceUrl(adspId`urn:ads:platform:configuration-service:v2`);
+    const pdfDefinitionUrl = new URL(`v2/configuration/platform/pdf-service`, configurationServiceUrl);
+    const { data } = await axios.get(pdfDefinitionUrl.href, {
+      params: { tenantId: tenantId?.toString() },
+      headers: {
+        Authorization: `Bearer ${await tokenProvider.getAccessToken()}`,
+      },
+    });
+
+    return data.latest?.configuration?.[pdfDefinitionId] as PdfDefinition | undefined;
+  };
+  return read;
+}
+
 export async function createPdfConfigurationTools({ directory, tokenProvider, logger }: PdfConfigurationToolsProps) {
   const configurationServiceUrl = await directory.getServiceUrl(adspId`urn:ads:platform:configuration-service:v2`);
+  const readDefinition = createPdfDefinitionReader({ directory, tokenProvider });
 
-  /**
-   * RETRIEVE (unchanged)
-   */
   const pdfConfigurationRetrievalTool = createTool({
     id: 'get-pdf-configuration',
-    description:
-     `
-      Retrieve the current PDF template configuration for the PDF definition in the request context.
-
-      This tool provides the complete existing template, including:
-      - HTML body template
-      - Header template
-      - Footer template
-      - CSS styles
-      - Template variables (sample/test data)
-      - Template metadata and settings
-
-      Use this tool whenever you need to understand, review, analyze, troubleshoot, explain, modify, improve, or update a PDF template.
-
-      IMPORTANT:
-      - Call this tool before making any changes to a PDF template.
-      - Call this tool before answering questions about the template structure or content.
-      - Call this tool before updating headers, footers, styles, variables, or HTML.
-      - The current configuration provides the required context for all template modifications.
-      - Do not assume template contents. Retrieve the existing configuration first.
-
-      No input is required. The PDF definition ID is automatically provided through request context.
-      `,
+    description: `Returns the current saved PDF template: template (HTML body), header, footer, additionalStyles (CSS) and variables (sample data JSON). Call it only when the current template is not shown in your instructions. The template comes from the request context; no input is needed.`,
     inputSchema: z.object({}),
     outputSchema: z.object({
       name: z.string(),
@@ -96,8 +122,10 @@ export async function createPdfConfigurationTools({ directory, tokenProvider, lo
       footer: z.string().optional(),
       variables: z.string().optional(),
     }),
+    // The model reads the template like the one in its instructions: long data URIs and comments elided.
+    toModelOutput: (output: PdfDefinition) => ({ type: 'text' as const, value: describeTemplate(output) }),
     execute: async (_, context) => {
-      const requestContext = context.requestContext as AdspRequestContext<{ pdfDefinitionId: string }> | undefined;
+      const requestContext = context.requestContext as PdfRequestContext | undefined;
 
       if (!requestContext) {
         throw new Error('Missing request context.');
@@ -106,16 +134,7 @@ export async function createPdfConfigurationTools({ directory, tokenProvider, lo
       const pdfDefinitionId = requestContext.get('pdfDefinitionId');
 
       try {
-        const pdfDefinitionUrl = new URL(`v2/configuration/platform/pdf-service`, configurationServiceUrl);
-
-        const { data } = await axios.get(pdfDefinitionUrl.href, {
-          params: { tenantId: tenantId?.toString() },
-          headers: {
-            Authorization: `Bearer ${await tokenProvider.getAccessToken()}`,
-          },
-        });
-
-        const currentPdfDefinition = data.latest.configuration[pdfDefinitionId];
+        const currentPdfDefinition = await readDefinition(requestContext);
 
         logger.info(`PDF configuration retrieved successfully`, {
           context: 'pdfConfigurationRetrievalTool',
@@ -142,46 +161,14 @@ export async function createPdfConfigurationTools({ directory, tokenProvider, lo
     },
   });
 
-  /**
-   * UPDATE (UPDATED INPUT SHAPE)
-   */
   const pdfConfigurationUpdateTool = createTool({
     id: 'update-pdf-configuration',
-    description: `
-      Save changes to the current PDF template configuration.
-
-      Use this tool after reviewing the existing template configuration and making modifications to it.
-
-      This tool writes updates back to the PDF configuration API and persists changes to:
-      - HTML body template
-      - Header template
-      - Footer template
-      - CSS styles
-      - Template variables (sample/test data)
-      - Template metadata and settings
-
-      IMPORTANT:
-      - Use get-pdf-configuration first to retrieve the current template.
-      - Review the existing configuration before making changes.
-      - Only update fields that were intentionally modified.
-      - Use this tool whenever the user asks to save, apply, update, modify, fix, improve, or persist template changes.
-      - Changes made by the assistant are not stored until this tool is called.
-      - This tool is the final step in the template editing workflow and writes the updated configuration back to the API.
-
-      The PDF definition ID is automatically provided through request context.
-      Provide only the fields that should be changed.
-      `,
+    description: `Saves changes to the current PDF template. Pass only the fields to change, each complete; an omitted field keeps its saved value and an empty string clears it. Copy [[elided-...]] placeholders unchanged to keep their content. Invalid Handlebars or JSON is rejected without saving. The template comes from the request context.`,
     inputSchema: z.object({
-      name: z.string().optional(),
-      description: z.string().optional(),
-
       template: z.string().optional().describe('HTML template for PDF generation'),
-      startWithDefault: z.boolean().optional().describe('Whether to start from default template'),
       additionalStyles: z.string().optional().describe('Global CSS styles'),
       header: z.string().optional().describe('Header HTML/CSS'),
       footer: z.string().optional().describe('Footer HTML/CSS'),
-
-      // JSON string as provided in your example
       variables: z.string().optional().describe('JSON string of template variables'),
     }),
 
@@ -196,46 +183,46 @@ export async function createPdfConfigurationTools({ directory, tokenProvider, lo
       footer: z.string().optional(),
       variables: z.string().optional(),
     }),
+    // The editor gets the saved template from the streamed result; the model only needs to know the save worked.
+    toModelOutput: () => ({ type: 'text' as const, value: 'Saved. The editor now shows the updated template.' }),
 
     execute: async (inputData, context) => {
-      const requestContext = context.requestContext as AdspRequestContext<{ pdfDefinitionId: string }> | undefined;
+      const requestContext = context.requestContext as PdfRequestContext | undefined;
 
       if (!requestContext) {
         throw new Error('Missing request context.');
       }
-      const { template, variables, additionalStyles, header, footer } = inputData;
-
-      validateTemplateInput(inputData);
 
       const pdfDefinitionId = requestContext.get('pdfDefinitionId');
       const tenantId = requestContext.get('tenantId');
 
-      const pdfDefinitionUrl = new URL(`v2/configuration/platform/pdf-service`, configurationServiceUrl);
+      const currentPdfDefinition = (await readDefinition(requestContext)) as PdfDefinition & Record<string, unknown>;
 
-      const { data } = await axios.get(pdfDefinitionUrl.href, {
-        params: { tenantId: tenantId?.toString() },
-        headers: {
-          Authorization: `Bearer ${await tokenProvider.getAccessToken()}`,
-        },
-      });
-
-      const currentPdfDefinition = data.latest.configuration[pdfDefinitionId];
+      // The model edits the elided view of the saved template, so placeholders are put back before validation.
+      const { template, variables, additionalStyles, header, footer } = inputData;
+      const { fields: fieldUpdates, unknown } = restoreElided(
+        { template, variables, additionalStyles, header, footer },
+        elideTemplate(currentPdfDefinition).elided,
+      );
+      validateTemplateInput(fieldUpdates, unknown);
 
       // Compare against undefined so empty strings clear a field (e.g. replacing a
       // default header/footer or old CSS on full template replacement).
-      const fieldUpdates = { template, variables, additionalStyles, header, footer };
       for (const [field, value] of Object.entries(fieldUpdates)) {
         if (value !== undefined) {
           currentPdfDefinition[field] = value;
         }
       }
+      if (fieldUpdates.variables !== undefined) {
+        currentPdfDefinition.variables = unwrapDataVariables(currentPdfDefinition.variables, [
+          currentPdfDefinition.template,
+          currentPdfDefinition.header,
+          currentPdfDefinition.footer,
+        ]);
+      }
       currentPdfDefinition.id = pdfDefinitionId;
 
       try {
-        const configurationServiceUrl = await directory.getServiceUrl(
-          adspId`urn:ads:platform:configuration-service:v2`,
-        );
-
         const pdfDefinitionUrl = new URL(`v2/configuration/platform/pdf-service`, configurationServiceUrl);
 
         const updatePayload = { [pdfDefinitionId]: { ...currentPdfDefinition } };

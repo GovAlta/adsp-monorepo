@@ -141,3 +141,4 @@ export async function createTools({ logger, directory, tokenProvider }: ToolsPro
 }
 
 export * from './request';
+export { createPdfDefinitionReader } from './pdfConfiguration';
