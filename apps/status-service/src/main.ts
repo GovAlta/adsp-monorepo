@@ -5,9 +5,8 @@ import * as passport from 'passport';
 import { Strategy as AnonymousStrategy } from 'passport-anonymous';
 import * as compression from 'compression';
 import * as helmet from 'helmet';
-import { createLogger, createErrorHandler } from '@core-services/core-common';
+import { createLogger, createErrorHandler, createShutdownHandler } from '@core-services/core-common';
 import { environment, POD_TYPES } from './environments/environment';
-import { createShutdownHandler } from './shutdown';
 import { createRepositories } from './mongo';
 import { bindEndpoints, ServiceUserRoles, StatusAuditActions } from './app';
 import * as cors from 'cors';
@@ -164,8 +163,8 @@ instrumentAxios(logger);
           async () => {
             await repositories.endpointStatusEntryRepository.deleteOldUrlStatus();
           },
-          { logger }
-        )
+          { logger },
+        ),
       );
 
       const healthCheckController = new HealthCheckController(
@@ -196,8 +195,8 @@ instrumentAxios(logger);
           async () => {
             scheduler.reloadCache(applicationManager);
           },
-          { logger }
-        )
+          { logger },
+        ),
       );
     };
 
@@ -273,7 +272,13 @@ instrumentAxios(logger);
   server.on('error', (err) => logger.error(`Error encountered in server: ${err}`));
 
   // Stop accepting requests, then deliver any buffered audit events before the process exits.
-  const shutdown = createShutdownHandler({ server, auditService, shutdownTelemetry, logger });
+  const shutdown = createShutdownHandler({
+    serviceName: 'Status service',
+    server,
+    auditService,
+    shutdownTelemetry,
+    logger,
+  });
   process.once('SIGTERM', shutdown);
   process.once('SIGINT', shutdown);
 })();

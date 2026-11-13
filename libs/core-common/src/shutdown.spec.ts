@@ -1,3 +1,6 @@
+/**
+ * @jest-environment node
+ */
 import { Logger } from 'winston';
 import { createShutdownHandler } from './shutdown';
 
@@ -22,6 +25,7 @@ describe('createShutdownHandler', () => {
     const exit = jest.fn((code: number) => void steps.push(`exit-${code}`));
 
     const shutdown = createShutdownHandler({
+      serviceName: 'Test service',
       server: server as never,
       auditService,
       shutdownTelemetry,
@@ -89,6 +93,7 @@ describe('createShutdownHandler', () => {
     try {
       const exit = jest.fn();
       const shutdown = createShutdownHandler({
+        serviceName: 'Test service',
         server: { close: jest.fn() } as never,
         auditService: { flush: jest.fn() },
         shutdownTelemetry: jest.fn(),

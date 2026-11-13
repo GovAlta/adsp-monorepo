@@ -10,3 +10,4 @@ export * from './amqp';
 export * from './work';
 export * from './jsonSchema';
 export * from './configuration';
+export * from './shutdown';

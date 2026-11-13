@@ -5,9 +5,8 @@ import * as passport from 'passport';
 import * as compression from 'compression';
 import * as helmet from 'helmet';
 import * as cors from 'cors';
-import { assertAuthenticatedHandler, createErrorHandler } from '@core-services/core-common';
+import { assertAuthenticatedHandler, createErrorHandler, createShutdownHandler } from '@core-services/core-common';
 import { environment } from './environments/environment';
-import { createShutdownHandler } from './shutdown';
 import { logger } from './logger';
 import {
   applyValuesMiddleware,
@@ -45,7 +44,8 @@ const initializeApp = async () => {
 
   const repositories = await createRepositories({ ...environment, logger });
 
-  const { // clean-code-ignore: RULE-19 — app bootstrap; routes are covered in router/definition.spec.ts.
+  const {
+    // clean-code-ignore: RULE-19 — app bootstrap; routes are covered in router/definition.spec.ts.
     coreStrategy,
     tenantStrategy,
     tenantHandler,
@@ -233,7 +233,13 @@ initializeApp().then(({ app, auditService, shutdownTelemetry }) => {
   server.on('error', (err) => logger.error(`Error encountered in server: ${err}`));
 
   // Stop accepting requests, then deliver any buffered audit events before the process exits.
-  const shutdown = createShutdownHandler({ server, auditService, shutdownTelemetry, logger });
+  const shutdown = createShutdownHandler({
+    serviceName: 'Value service',
+    server,
+    auditService,
+    shutdownTelemetry,
+    logger,
+  });
   process.once('SIGTERM', shutdown);
   process.once('SIGINT', shutdown);
 });

@@ -11,6 +11,7 @@ import {
   createAmqpQueueService,
   createErrorHandler,
   createAmqpConfigUpdateService,
+  createShutdownHandler,
 } from '@core-services/core-common';
 import * as express from 'express';
 import { readFile } from 'fs';
@@ -20,7 +21,6 @@ import * as compression from 'compression';
 import * as cors from 'cors';
 import * as helmet from 'helmet';
 import { environment } from './environments/environment';
-import { createShutdownHandler } from './shutdown';
 import {
   applyNotificationMiddleware,
   configurationSchema,
@@ -253,7 +253,13 @@ initializeApp().then(({ app, auditService, shutdownTelemetry }) => {
   server.on('error', (err) => logger.error(`Error encountered in server: ${err}`));
 
   // Stop accepting requests, then deliver any buffered audit events before the process exits.
-  const shutdown = createShutdownHandler({ server, auditService, shutdownTelemetry, logger });
+  const shutdown = createShutdownHandler({
+    serviceName: 'Notification service',
+    server,
+    auditService,
+    shutdownTelemetry,
+    logger,
+  });
   process.once('SIGTERM', shutdown);
   process.once('SIGINT', shutdown);
 });
