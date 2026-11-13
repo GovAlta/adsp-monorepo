@@ -213,7 +213,8 @@ export const FileUploader = ({ data, path, handleChange, uischema, ...props }: F
 
   const readOnly =
     uischema?.options?.componentProps?.readOnly === true || props?.isStepperReview === true || user === null;
-  const maxFileSize = uischema?.options?.componentProps?.maxFileSize ?? '';
+  const hostMaxFileSize = enumerators?.data.get('file-max-size')?.() as unknown as string | undefined;
+  const maxFileSize = uischema?.options?.componentProps?.maxFileSize ?? hostMaxFileSize ?? '';
   const accept = uischema?.options?.componentProps?.accept ?? '';
   if (!enumerators) {
     //eslint-disable-next-line
