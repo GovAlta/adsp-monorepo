@@ -1,6 +1,6 @@
 import { readdirSync, readFileSync } from 'fs';
 import { join, relative, sep } from 'path';
-import { countTerms, scoreByTermFrequency, tokenize } from '../search/textSearch';
+import { countTerms, queryTerms, scoreByTermFrequency, tokenize } from '../search/textSearch';
 
 export interface AdspDoc {
   path: string;
@@ -23,11 +23,6 @@ const EXCLUDED_DOC_PATHS = new Set([
   'platform/platform-django-sdk.md',
   'platform/platform-flask-sdk.md',
   'platform/platform-spring-sdk.md',
-]);
-
-const STOP_WORDS = new Set([
-  'a', 'an', 'the', 'to', 'of', 'in', 'on', 'for', 'and', 'or', 'is', 'are',
-  'how', 'do', 'does', 'i', 'what', 'with', 'from', 'this', 'that', 'it', 'be',
 ]);
 
 interface IndexedDoc extends AdspDoc {
@@ -115,7 +110,7 @@ export class DocsRepository {
   }
 
   search(query: string, limit = 5): AdspDocSearchResult[] {
-    const terms = tokenize(query).filter((term) => !STOP_WORDS.has(term));
+    const terms = queryTerms(query);
     if (terms.length === 0) {
       return [];
     }

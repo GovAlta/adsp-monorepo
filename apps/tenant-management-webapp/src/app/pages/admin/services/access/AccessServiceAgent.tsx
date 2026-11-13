@@ -3,6 +3,7 @@ import { GoabCallout, GoabDetails } from '@abgov/react-components';
 import {
   AgentChat,
   AgentContextSelection,
+  ConversationStatus,
   describeConversationStatus,
   ResetChatButton,
   UserContent,
@@ -13,6 +14,7 @@ import { renderAccessToolCall } from './AccessToolCall';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch, RootState } from '@store/index';
 import {
+  answerFromAccessGuide,
   clearThread,
   connectAgent,
   disconnectAgent,
@@ -27,14 +29,19 @@ import {
   messagesSelector,
 } from '@store/agent/selectors';
 import { isAwaitingReply } from '@store/agent/chatState';
+import { ACCESS_SERVICE_AGENT_ID, AccessGuideTopic } from '@store/agent/model';
 import { AgentChatContainer, AgentHeader, AgentLayout, AgentSidePanel } from './styled-component';
 import { NoPaddingH2 } from '@components/AppHeader';
 import { v4 as uuid } from 'uuid';
 import { useRemainingViewportHeight } from './useRemainingViewportHeight';
 import { ConversationMeter } from './ConversationMeter';
 
-const ACCESS_SERVICE_AGENT_ID = 'AccessServiceAgent';
 const CHAT_BOTTOM_GAP_PX = 24;
+
+/** Whether agent-service has raised a notice or warning about the conversation, such as it getting long. */
+function hasConversationConcern(status: ConversationStatus | undefined): boolean {
+  return status !== undefined && status.state !== 'ok';
+}
 
 export const AccessServiceAgent = (): JSX.Element => {
   const dispatch = useDispatch<AppDispatch>();
@@ -65,15 +72,33 @@ export const AccessServiceAgent = (): JSX.Element => {
   }, [dispatch, threadId]);
 
   // A new thread ID starts a chat with no context, since agent memory is per thread.
-  const startNewChat = () => {
+  const startNewChat = (): string => {
+    const newThreadId = uuid();
     dispatch(resetThread(threadId));
-    setThreadId(uuid());
+    setThreadId(newThreadId);
+    return newThreadId;
   };
 
-  // Predefined questions continue the current conversation so the agent keeps earlier context.
-  const handleAskQuestion = (question: string, context: AgentContextSelection) => {
+  // The question is asked before the effect that starts the new thread runs, so the thread is started here.
+  const startNewChatForQuestion = (): string => {
+    const newThreadId = startNewChat();
+    dispatch(startThread(ACCESS_SERVICE_AGENT_ID, newThreadId));
+    return newThreadId;
+  };
+
+  // Predefined questions continue the current conversation so the agent keeps earlier context. Once agent-service
+  // raises a notice or warning about the conversation, they start a new chat instead: every turn sends the whole
+  // conversation to the shared model, so a long chat uses more of its capacity.
+  const handleAskQuestion = (question: string, context: AgentContextSelection, guideTopic?: AccessGuideTopic) => {
+    const questionThreadId = hasConversationConcern(conversationStatus) ? startNewChatForQuestion() : threadId;
     const content: UserContent = [{ type: 'text', text: question }];
-    dispatch(messageAgent(threadId, { agentContext: context }, content));
+    const messageContext = { agentContext: context };
+
+    if (guideTopic) {
+      dispatch(answerFromAccessGuide(questionThreadId, guideTopic, messageContext, content));
+    } else {
+      dispatch(messageAgent(questionThreadId, messageContext, content));
+    }
   };
 
   return (

@@ -58,6 +58,8 @@ describe('AccessToolCall', () => {
     expect(isAccessDiscoveryTool('getAccessRealmInfo')).toBe(true);
     expect(isAccessDiscoveryTool('listAccessClients')).toBe(true);
     expect(isAccessDiscoveryTool('getAccessClient')).toBe(true);
+    expect(isAccessDiscoveryTool('findAccessUser')).toBe(true);
+    expect(isAccessDiscoveryTool('getAccessUserRoles')).toBe(true);
     expect(isAccessDiscoveryTool('agent-clientAgent')).toBe(false);
     expect(isAccessDiscoveryTool('toString')).toBe(false);
     expect(isAccessDiscoveryTool(undefined)).toBe(false);
@@ -308,6 +310,125 @@ describe('AccessToolCall', () => {
     expect(queryByTestId('access-clients-empty')).toBeNull();
   });
 
+  const accessUser = {
+    id: 'user-id-1',
+    username: 'jdoe',
+    enabled: true,
+    emailVerified: true,
+    requiredActions: [],
+    identityProviders: ['core'],
+  };
+
+  it('shows a pending state while role assignments are read', () => {
+    const { getByText } = render(<AccessToolCall toolCall={toolCall('getAccessUserRoles')} />);
+
+    expect(getByText('Checking role assignments…')).toBeInTheDocument();
+  });
+
+  it('shows the user a lookup found', () => {
+    const { getByTestId, queryByTestId, container } = render(
+      <AccessToolCall
+        toolCall={toolCall('findAccessUser', {
+          result: {
+            status: 'available',
+            message: 'Found user jdoe in realm Tenant One (realm-1) in Development (read-only).',
+            environment: devEnvironment,
+            realm: tenantRealm,
+            search: 'jdoe',
+            user: accessUser,
+          },
+        })}
+      />,
+    );
+
+    expect(getByTestId('access-tool-findAccessUser')).toHaveAttribute('data-status', 'complete');
+    expect(badgeContent(container)).toBe('Read-only');
+    expect(getByTestId('access-user-identity')).toHaveTextContent('jdoe');
+    expect(queryByTestId('access-user-roles')).toBeNull();
+    expect(queryByTestId('access-realm-details')).toBeNull();
+  });
+
+  it("shows a user's role assignments with the user they belong to", () => {
+    const { getByTestId } = render(
+      <AccessToolCall
+        toolCall={toolCall('getAccessUserRoles', {
+          result: {
+            status: 'available',
+            message: 'Role assignments of jdoe.',
+            search: 'jdoe',
+            user: accessUser,
+            roles: {
+              realmRoles: [
+                {
+                  name: 'role-test',
+                  composite: false,
+                  inherited: true,
+                  sources: [
+                    { type: 'composite', via: [{ name: 'tenant-admin', client: 'urn:ads:platform:tenant-service' }] },
+                  ],
+                },
+              ],
+              clientRoles: [],
+              groups: [],
+              counts: { direct: 0, inherited: 1 },
+            },
+          },
+        })}
+      />,
+    );
+
+    expect(getByTestId('access-user-identity')).toHaveTextContent('jdoe');
+    expect(getByTestId('access-user-realm-roles')).toHaveTextContent(
+      'role-testInheritedInherited via tenant-admin (urn:ads:platform:tenant-service)',
+    );
+  });
+
+  it('reports a user that cannot be found and offers close-match usernames', () => {
+    const { getByTestId, getByText, queryByTestId, container } = render(
+      <AccessToolCall
+        toolCall={toolCall('getAccessUserRoles', {
+          result: {
+            status: 'not-found',
+            reason: 'USER_NOT_FOUND',
+            message:
+              'No user with that username or email could be found in your realm, or you do not have access to them.',
+            search: 'jdo',
+            suggestions: ['jdoe'],
+          },
+        })}
+      />,
+    );
+
+    expect(getByTestId('access-tool-getAccessUserRoles')).toHaveAttribute('data-status', 'notice');
+    expect(badgeContent(container)).toBe('Not found');
+    expect(
+      getByText('No user with that username or email could be found in your realm, or you do not have access to them.'),
+    ).toBeInTheDocument();
+    expect(getByTestId('access-user-suggestions')).toHaveTextContent('jdoe');
+    expect(queryByTestId('access-client-suggestions')).toBeNull();
+    expect(queryByTestId('access-user-roles')).toBeNull();
+  });
+
+  it('explains that users cannot be inspected in Production as a notice', () => {
+    const { getByTestId, getByText, queryByTestId } = render(
+      <AccessToolCall
+        toolCall={toolCall('findAccessUser', {
+          result: {
+            status: 'unavailable',
+            reason: 'USER_INSPECTION_NOT_ALLOWED',
+            message: 'Users and their role assignments cannot be inspected in this environment.',
+            environment: { id: 'prod', label: 'Production', host: 'https://access.alberta.ca', readOnly: true },
+            search: 'jdoe',
+          },
+        })}
+      />,
+    );
+
+    expect(getByTestId('access-tool-findAccessUser')).toHaveAttribute('data-status', 'notice');
+    expect(getByText('Users and their role assignments cannot be inspected in this environment.')).toBeInTheDocument();
+    expect(queryByTestId('access-user-identity')).toBeNull();
+  });
+
   it('shows unexpected tool errors as failures', () => {
     const { getByTestId, getByText, container } = render(
       <AccessToolCall toolCall={toolCall('getAccessRealmInfo', { error: 'Request failed with status code 400' })} />,
@@ -316,5 +437,224 @@ describe('AccessToolCall', () => {
     expect(getByTestId('access-tool-getAccessRealmInfo')).toHaveAttribute('data-status', 'error');
     expect(badgeContent(container)).toBe('Failed');
     expect(getByText('Request failed with status code 400')).toBeInTheDocument();
+  });
+
+  it.each([
+    ['checkAccessClientSetup', 'App setup check'],
+    ['checkAccessClientUrl', 'App address check'],
+    ['previewAccessToken', 'Token preview'],
+    ['getAccessServiceAccount', 'Service account'],
+    ['getAccessUserSignInStatus', 'Sign-in status'],
+    ['checkAccessUserForService', 'Access to a service'],
+    ['compareAccessUsers', 'Access compared'],
+    ['listAccessServiceRoles', 'Service roles'],
+    ['getAccessRole', 'Role explained'],
+    ['listAccessRoleMembers', 'Who has the role'],
+  ])('renders %s as an Access card headed "%s" with a one-line summary', (toolName, heading) => {
+    const { getByTestId, getByText } = render(
+      <AccessToolCall
+        toolCall={toolCall(toolName, {
+          result: { status: 'available', message: 'Summary of the check (read-only).', environment: devEnvironment },
+        })}
+      />,
+    );
+
+    expect(isAccessDiscoveryTool(toolName)).toBe(true);
+    expect(getByText(heading)).toBeInTheDocument();
+    expect(getByTestId('access-tool-summary')).toHaveTextContent('Summary of the check (read-only).');
+  });
+
+  it('labels several matches as a choice rather than not found, and lists them', () => {
+    const { container, getByTestId } = render(
+      <AccessToolCall
+        toolCall={toolCall('getAccessUserSignInStatus', {
+          result: {
+            status: 'not-found',
+            reason: 'USER_AMBIGUOUS',
+            message: 'More than one user matches. Choose one of the usernames listed.',
+            search: 'Jane',
+            suggestions: ['jdoe', 'jdoe2'],
+          },
+        })}
+      />,
+    );
+
+    expect(badgeContent(container)).toBe('Several matches');
+    expect(getByTestId('access-user-suggestions')).toHaveTextContent('People who match (choose one):jdoejdoe2');
+  });
+
+  it('lists role choices for a role that several services define', () => {
+    const { getByTestId } = render(
+      <AccessToolCall
+        toolCall={toolCall('getAccessRole', {
+          result: {
+            status: 'not-found',
+            reason: 'ROLE_AMBIGUOUS',
+            message: 'More than one app or service has a role with that name.',
+            suggestions: ['admin on urn:ads:demo:a', 'admin on urn:ads:demo:b'],
+          },
+        })}
+      />,
+    );
+
+    expect(getByTestId('access-role-suggestions')).toHaveTextContent(
+      'Roles with that name (choose one):admin on urn:ads:demo:aadmin on urn:ads:demo:b',
+    );
+  });
+
+  it('asks to confirm a person found by searching names in its summary', () => {
+    const { getByTestId } = render(
+      <AccessToolCall
+        toolCall={toolCall('findAccessUser', {
+          result: {
+            status: 'available',
+            message:
+              'Found user jdoe. Matched "Jane" to username jdoe by searching names; confirm this is the person you meant.',
+            matchedBy: 'search',
+            user: { id: 'u-1', username: 'jdoe', requiredActions: [], identityProviders: [] },
+          },
+        })}
+      />,
+    );
+
+    expect(getByTestId('access-tool-summary')).toHaveTextContent('confirm this is the person you meant');
+  });
+
+  it('shows the service checks of a person', () => {
+    const { getByTestId } = render(
+      <AccessToolCall
+        toolCall={toolCall('checkAccessUserForService', {
+          result: {
+            status: 'available',
+            message: 'Checked jdoe.',
+            services: [
+              {
+                service: 'urn:ads:platform:form-service',
+                rolesFrom: 'platform',
+                roles: [{ role: 'form-admin', has: false, sources: [] }],
+                otherRoles: [],
+              },
+            ],
+            notes: ['The token from urn:ads:demo:app could not be previewed, so it was not checked.'],
+          },
+        })}
+      />,
+    );
+
+    expect(getByTestId('access-service-check-urn:ads:platform:form-service')).toHaveTextContent('has 0 of 1 roles');
+    expect(getByTestId('access-tool-notes')).toHaveTextContent('could not be previewed');
+  });
+
+  it('shows a service account with its roles, service checks and setup values', () => {
+    const { getByTestId } = render(
+      <AccessToolCall
+        toolCall={toolCall('getAccessServiceAccount', {
+          result: {
+            status: 'available',
+            message: 'Service account of urn:ads:demo:api.',
+            serviceAccount: { username: 'service-account-api', enabled: true },
+            roles: { realmRoles: [], clientRoles: [], groups: [], counts: { direct: 0, inherited: 0 } },
+            services: [],
+            setup: { issuer: 'i', tokenUrl: 't', curl: "curl 'client_secret=<client-secret>'" },
+          },
+        })}
+      />,
+    );
+
+    expect(getByTestId('access-service-account')).toHaveTextContent('service-account-api');
+    expect(getByTestId('access-user-roles')).toBeInTheDocument();
+    expect(getByTestId('access-client-setup')).toHaveTextContent('<client-secret>');
+  });
+
+  it('lists the choices for each person in a comparison who was not found exactly', () => {
+    const { getByTestId } = render(
+      <AccessToolCall
+        toolCall={toolCall('compareAccessUsers', {
+          result: {
+            status: 'not-found',
+            reason: 'USER_AMBIGUOUS',
+            message: 'More than one user matches.',
+            first: { search: 'al', suggestions: ['alice', 'alan'] },
+            second: { search: 'sam' },
+          },
+        })}
+      />,
+    );
+
+    expect(getByTestId('access-comparison-suggestions')).toHaveTextContent('For “al”: alice, alan');
+  });
+
+  describe('getAccessGuide', () => {
+    const tokenExpiryGuide = {
+      topic: 'token-expiry',
+      title: 'Token expiry',
+      markdown: '## Token expiry\n\nAccess tokens last 5 minutes by default.',
+    };
+
+    function renderGuideLine(overrides: Partial<ToolCall> = {}) {
+      return render(
+        <>{renderAccessToolCall(toolCall('getAccessGuide', { args: { topic: 'token-expiry' }, ...overrides }))}</>,
+      );
+    }
+
+    it('is not treated as a discovery tool card', () => {
+      // Act
+      const discovery = isAccessDiscoveryTool('getAccessGuide');
+
+      // Assert
+      expect(discovery).toBe(false);
+    });
+
+    it('is rendered instead of being left to the default chat card', () => {
+      // Act
+      const rendered = renderAccessToolCall(toolCall('getAccessGuide'));
+
+      // Assert
+      expect(rendered).not.toBeNull();
+    });
+
+    it('says the guide is being read while the tool runs', () => {
+      // Act
+      const { getByTestId } = renderGuideLine();
+
+      // Assert
+      expect(getByTestId('access-tool-getAccessGuide')).toHaveTextContent(/^Reading the Access Service guide…$/);
+    });
+
+    it('names the guide topic it read once the tool returns', () => {
+      // Act
+      const { getByTestId } = renderGuideLine({ result: tokenExpiryGuide });
+
+      // Assert
+      expect(getByTestId('access-tool-getAccessGuide')).toHaveTextContent(
+        /^Read the Access Service guide: Token expiry$/,
+      );
+    });
+
+    it('says the guide was read when the result has no title', () => {
+      // Act
+      const { getByTestId } = renderGuideLine({ result: { topic: 'token-expiry', markdown: '' } });
+
+      // Assert
+      expect(getByTestId('access-tool-getAccessGuide')).toHaveTextContent(/^Read the Access Service guide$/);
+    });
+
+    it('says the guide could not be read when the tool fails', () => {
+      // Act
+      const { getByTestId } = renderGuideLine({ error: 'Request failed with status code 503' });
+
+      // Assert
+      expect(getByTestId('access-tool-getAccessGuide')).toHaveTextContent(
+        /^Could not read the Access Service guide\.$/,
+      );
+    });
+
+    it('does not repeat the guide text, which the answer already shows', () => {
+      // Act
+      const { container } = renderGuideLine({ result: tokenExpiryGuide });
+
+      // Assert
+      expect(container).not.toHaveTextContent('Access tokens last 5 minutes by default.');
+    });
   });
 });

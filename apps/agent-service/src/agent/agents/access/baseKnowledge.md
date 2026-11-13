@@ -15,15 +15,15 @@ This is baseline guidance compiled from repository documentation, not live infra
 
 ## Documented environment references
 
-These hostnames are documented and real; only their current live availability/uptime is unconfirmed, not their existence or identity. When asked about environments, copy the three bullets below verbatim, character-for-character, with no changes, additions, or elaboration.
+These hostnames are documented and real; only their current live availability is not confirmed here.
 
-- **Dev** — `https://access.adsp-dev.gov.ab.ca`, Keycloak `24.0.5`. For ADSP team internal usage (ADSP platform development and testing).
+- **Dev** — `https://access.adsp-dev.gov.ab.ca`, Keycloak `25.0.6`. For ADSP team internal usage (ADSP platform development and testing).
 - **UAT** — `https://access-uat.alberta.ca`, Keycloak `24.0.5`. For other teams' Dev or UAT environments.
 - **Production** — `https://access.alberta.ca`, Keycloak `24.0.5`. Isolated for Production-to-Production use only.
 
-The `24.0.5` version is a user-provided reference for Dev, UAT, and Production alike. Repository dependencies pin Keycloak JavaScript client packages to `24.0.5` but do not independently verify deployed server versions.
+The Dev version `25.0.6` was read from the Dev server on 2026-11-06. The UAT and Production `24.0.5` versions are user-provided references that have not been verified against those servers. Repository dependencies pin Keycloak JavaScript client packages to `24.0.5` but do not independently verify deployed server versions.
 
-The deployment guide describes separate OpenShift projects for `dev`, `uat`, and `prod`, with environment values supplied through ConfigMaps and Secrets and managed templates applied by the delivery workflow. This describes the real deployment pattern used; it is separate from disaster-recovery configuration (see the architect agent for that topic) — it does not change the three documented environments/hostnames above, which should still be answered directly and in full.
+The deployment guide describes separate OpenShift projects for `dev`, `uat`, and `prod`, with environment values supplied through ConfigMaps and Secrets and managed templates applied by the delivery workflow. This is the real deployment pattern; disaster-recovery configuration is described separately, under Access Service disaster recovery.
 
 ## Responsibility and contact
 
@@ -32,8 +32,8 @@ The deployment guide describes separate OpenShift projects for `dev`, `uat`, and
 - **ADSP team** is responsible for core and basic infrastructure maintenance: the Keycloak deployment itself, ARO infrastructure (instance count, autoscaling, high-availability design), and the core realm/broker configuration shared across tenants.
 - **Tenant** is responsible for tenant-level configuration: their own tenant realm's clients, roles, users, and tenant-specific identity-provider settings.
 - **Tenant admin** is responsible for tenant-level security — managing who has access within their tenant realm (user accounts, role assignments, identity-provider trust). The ADSP team provides consultation on tenant-level security rather than managing it directly.
-- **The underlying database** (backup, retention, RTO/RPO) is owned by the Government of Alberta Dev/Ops team, separate from the ADSP team — see the architect agent for the documented split of responsibilities.
-- No specific named contact, email, or escalation channel for the ADSP team is documented in this repository — do not invent one. Direct the user to their usual ADSP team contact point.
+- **The underlying database** (backup, retention, RTO/RPO) is owned by the Government of Alberta Dev/Ops team, separate from the ADSP team; see Operational responsibilities for the documented split.
+- No specific named contact, email, or escalation channel for the ADSP team is documented here; use your usual ADSP team contact point.
 
 ## How to add a tenant admin
 
@@ -42,3 +42,30 @@ The deployment guide describes separate OpenShift projects for `dev`, `uat`, and
 - Platform API permissions are generally client roles on service clients. Platform services validate token issuer and audience; role assignment alone does not prove that the required audience is present.
 - `tenant-admin` is a managed composite client role on `urn:ads:platform:tenant-service`. Do not recommend modifying its composite definition.
 - `platform-service` on `urn:ads:platform:tenant-service` is for trusted backend services that read tenant information; it is not a human administrator role.
+
+## Plain-language glossary
+
+Use the everyday words first when talking to someone new to Keycloak, with the Keycloak term once in brackets.
+
+| Keycloak term | Everyday words |
+| --- | --- |
+| Realm | Your tenant's own sign-in space: its people, apps, and roles |
+| Client | An app or service that people sign in to, or that calls other services |
+| Public client | A browser or mobile app; it has no secret |
+| Confidential client | A server app or backend service; it has a secret |
+| Bearer-only client | An API that only accepts tokens and never signs anyone in |
+| Service account | An app's own identity for calling other services without a person |
+| Realm role | A tenant-wide role |
+| Client role | An app role: a permission one app or service defines, such as `form-admin` on `urn:ads:platform:form-service` |
+| Composite role | A role bundle: holding it gives every role inside it, as `tenant-admin` does |
+| Group | A set of people who all get the group's roles |
+| Redirect URI | The address Keycloak sends people back to after signing in |
+| Web origin | A website address allowed to call Keycloak from the browser (CORS) |
+| Post logout redirect URI | The address Keycloak sends people back to after signing out |
+| Token | The signed pass an app gets after sign-in and sends to services |
+| Audience (`aud`) | Which services a token is meant for; a service refuses tokens not meant for it |
+| Scope / client scope | A named bundle of token contents an app can ask for |
+| Protocol mapper | A rule that adds something to a token, such as an audience or roles |
+| Required action | A step someone must finish at their next sign-in, such as verifying their email |
+| Identity provider | Where someone actually signs in, such as GoA sign-in (`goa-ad`) |
+| Locked out (brute-force detection) | The account is blocked for a while after too many wrong passwords |

@@ -28,6 +28,12 @@ describe('verify router documented behaviour', () => {
     set: jest.fn(),
     failed: jest.fn(),
   };
+  const auditServiceMock = {
+    record: jest.fn(),
+    query: jest.fn(),
+    flush: jest.fn(),
+    droppedEventCount: 0,
+  };
 
   const tenantUser = (roles: string[]) =>
     ({ id: 'tester', name: 'Test User', tenantId, isCore: false, roles }) as unknown as User;
@@ -47,7 +53,13 @@ describe('verify router documented behaviour', () => {
     });
     app.use(
       '/verify/v1',
-      createVerifyRouter({ service: createVerifyService({ logger: loggerMock, repository: repositoryMock }) }),
+      createVerifyRouter({
+        service: createVerifyService({
+          logger: loggerMock,
+          repository: repositoryMock,
+          auditService: auditServiceMock,
+        }),
+      }),
     );
     app.use(createErrorHandler(loggerMock));
     return app;
@@ -91,6 +103,46 @@ describe('verify router documented behaviour', () => {
 
       expect(res.status).toBe(200);
       expect(res.body).toEqual({ verified: true });
+    });
+
+    it('records audit events to the tenantId given by a core user', async () => {
+      const res = await request(createApp(coreUser([VerifyUserRoles.Generator])))
+        .post(`/verify/v1/codes/${key}`)
+        .query({ tenantId: tenantId.toString() });
+
+      expect(res.status).toBe(200);
+      expect(repositoryMock.set).toHaveBeenCalledWith(
+        expect.objectContaining({ key: `core:${key}` }),
+        expect.any(Date),
+      );
+      expect(auditServiceMock.record).toHaveBeenCalledWith(
+        expect.objectContaining({ name: 'code.generated' }),
+        expect.objectContaining({ resource: { type: 'verify-code', id: key } }),
+      );
+      expect(`${auditServiceMock.record.mock.calls[0][1].tenantId}`).toBe(tenantId.toString());
+    });
+
+    it('records audit events to the tenant of a tenant user and ignores tenantId', async () => {
+      const otherTenantId = 'urn:ads:platform:tenant-service:v2:/tenants/other';
+      const res = await request(createApp(generator))
+        .post(`/verify/v1/codes/${key}`)
+        .query({ tenantId: otherTenantId });
+
+      expect(res.status).toBe(200);
+      expect(auditServiceMock.record).toHaveBeenCalledWith(
+        expect.objectContaining({ name: 'code.generated' }),
+        expect.objectContaining({ tenantId }),
+      );
+    });
+
+    it('returns 400 for a core user with a tenantId that is not a tenant ID', async () => {
+      const res = await request(createApp(coreUser([VerifyUserRoles.Generator])))
+        .post(`/verify/v1/codes/${key}`)
+        .query({ tenantId: 'not-a-tenant' });
+
+      expect(res.status).toBe(400);
+      expect(res.body.errorMessage).toContain('tenantId (query)');
+      expect(repositoryMock.set).not.toHaveBeenCalled();
     });
 
     it('responds verified false when there is no code at the key', async () => {
