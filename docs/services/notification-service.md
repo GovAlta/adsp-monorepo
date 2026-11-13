@@ -90,6 +90,29 @@ The notification service sends the following domain events under the `notificati
 | `subscription-set` | A subscription was created or its criteria changed. |
 | `subscription-deleted` | A subscription was deleted. |
 
+## Audit
+Notification service records audit events in the `notification-service` namespace of the [audit service](/adsp-monorepo/services/audit-service.html). Records are written to the tenant of the subscriber, subscription, notification type or notification. All actions are version 1.
+
+| Action | Category | Severity | Retention class | Recorded when |
+|:-|:-|:-|:-|:-|
+| `subscriber.created` | administrative | info | standard | A subscriber is created, including when a user first subscribes. |
+| `subscriber.updated` | administrative | info | standard | The name or channels of a subscriber are changed, or a subscriber channel is verified. |
+| `subscriber.deleted` | administrative | warning | compliance | A subscriber and its subscriptions are deleted. |
+| `subscription.created` | administrative | info | standard | A subscriber is subscribed to a notification type. |
+| `subscription.updated` | administrative | info | standard | The criteria of a subscription are changed or one criteria is removed. |
+| `subscription.deleted` | administrative | info | standard | A subscriber is unsubscribed from a notification type. |
+| `notification.sent` | runtime | info | standard | A notification is sent to a subscriber through a channel provider. |
+| `notification.send-failed` | runtime | warning | standard | A notification to a subscriber could not be sent after all retries, with the `error` message in the metadata. |
+| `notification.direct-sent` | runtime | info | standard | A notification of a direct type (with an `addressPath`) is sent to the address in the event. |
+| `notification.direct-send-failed` | runtime | warning | standard | A notification of a direct type could not be sent after all retries, with the `error` message in the metadata. |
+| `notification-type.created` | administrative | info | compliance | A tenant notification type is created through the notification API. |
+| `notification-type.updated` | administrative | warning | compliance | A tenant notification type is changed, or a platform type is customized (`customizesCoreType: true`). |
+| `notification-type.deleted` | administrative | warning | compliance | A tenant notification type or a platform type customization is deleted (`revertsToCoreType: true`). |
+
+Subscriber and subscription changes record the user or service account (ID, name and roles, without the email address) as the actor. Subscriber records include only the channel types and whether each is verified; channel addresses are not recorded. Sent and failed notifications are recorded with the system actor `notification-service-job` and the event correlation ID. Notifications to subscribers are recorded against the subscription (`<type ID>:<subscriber ID>`), and notifications of direct types are recorded against the notification type with the `direct-` actions. The recipient address and message content are not recorded.
+
+Contact information changes and notification type changes made directly in the configuration service are not recorded by notification service. Notifications can be high volume, so audit events are sent in batches of up to 100 events. Audit failures are logged and do not fail the operation. The service account of notification service needs the `audit-writer` role of `urn:ads:platform:audit-service`. Set `NOTIFICATION_AUDIT_ENABLED` to `false` to disable recording; when unset it follows the SDK `AUDIT_ENABLED` variable (on by default).
+
 ## Code examples
 ### Create a notification type
 Users with the subscription-admin or configuration-admin role can create notification types for their tenant. The definition is validated, including its channels, events, and templates. The service responds `409` if a type with the ID already exists.

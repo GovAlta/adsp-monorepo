@@ -3,6 +3,7 @@ import { Logger } from 'winston';
 import {
   adspId,
   AdspId,
+  AuditAction,
   DomainEvent,
   ConfigurationService,
   EventService,
@@ -53,12 +54,24 @@ import {
   updateContact,
   updateNotificationType,
 } from './configuration';
+import {
+  NotificationAuditor,
+  SubscriberCreatedAuditAction,
+  SubscriberDeletedAuditAction,
+  SubscriberUpdatedAuditAction,
+  SubscriptionCreatedAuditAction,
+  SubscriptionDeletedAuditAction,
+  SubscriptionUpdatedAuditAction,
+  toSubscriberAuditDetails,
+  toSubscriptionAuditDetails,
+} from '../audit';
 
 interface SubscriptionRouterProps {
   serviceId: AdspId;
   logger: Logger;
   subscriptionRepository: SubscriptionRepository;
   eventService: EventService;
+  auditor: NotificationAuditor;
   verifyService: VerifyService;
   tenantService: TenantService;
   directory: ServiceDirectory;
@@ -151,29 +164,44 @@ async function addOrUpdateSubscription(
   type: NotificationTypeEntity,
   subscriber: SubscriberEntity,
   criteria: SubscriptionCriteria | SubscriptionCriteria[]
-): Promise<SubscriptionEntity> {
-  let subscription = await repository.getSubscription(type, subscriber?.id);
-  if (subscription) {
+): Promise<{ subscription: SubscriptionEntity; created: boolean }> {
+  const existing = await repository.getSubscription(type, subscriber?.id);
+  if (existing) {
     // If there is a pre-existing subscription, update the criteria.
-    subscription = await subscription.updateCriteria(user, criteria);
-  } else {
-    if (Array.isArray(criteria)) {
-      throw new InvalidOperationError('New subscription cannot be created with an array of criteria.');
-    }
-
-    subscription = await type.subscribe(repository, user, subscriber, {
-      description: criteria?.description,
-      correlationId: criteria?.correlationId,
-      context: criteria?.context,
-    });
+    return { subscription: await existing.updateCriteria(user, criteria), created: false };
   }
-  return subscription;
+
+  if (Array.isArray(criteria)) {
+    throw new InvalidOperationError('New subscription cannot be created with an array of criteria.');
+  }
+
+  const subscription = await type.subscribe(repository, user, subscriber, {
+    description: criteria?.description,
+    correlationId: criteria?.correlationId,
+    context: criteria?.context,
+  });
+  return { subscription, created: true };
+}
+
+function auditSubscriptionSet(
+  auditor: NotificationAuditor,
+  tenantId: AdspId,
+  user: User,
+  type: NotificationTypeEntity,
+  subscriber: SubscriberEntity,
+  created: boolean
+): void {
+  auditor(
+    created ? SubscriptionCreatedAuditAction : SubscriptionUpdatedAuditAction,
+    toSubscriptionAuditDetails(tenantId, user, type.id, subscriber.id)
+  );
 }
 
 export function createTypeSubscription(
   apiId: AdspId,
   repository: SubscriptionRepository,
-  eventService: EventService
+  eventService: EventService,
+  auditor: NotificationAuditor
 ): RequestHandler {
   return async (req, res, next) => {
     try {
@@ -219,11 +247,19 @@ export function createTypeSubscription(
         const { id: _id, ...newSubscriber } = subscriber;
         subscriberEntity = await SubscriberEntity.create(user, repository, newSubscriber);
         eventService.send(subscriberCreated(subscriberEntity, user));
+        auditor(SubscriberCreatedAuditAction, toSubscriberAuditDetails(tenantId, user, subscriberEntity));
       }
 
-      const subscription = await addOrUpdateSubscription(repository, user, type, subscriberEntity, criteria);
+      const { subscription, created } = await addOrUpdateSubscription(
+        repository,
+        user,
+        type,
+        subscriberEntity,
+        criteria
+      );
       res.send(mapSubscription(apiId, subscription));
       eventService.send(subscriptionSet(type, subscriberEntity, subscription, user));
+      auditSubscriptionSet(auditor, tenantId, user, type, subscriberEntity, created);
     } catch (err) {
       next(err);
     }
@@ -233,7 +269,8 @@ export function createTypeSubscription(
 export function addOrUpdateTypeSubscription(
   apiId: AdspId,
   repository: SubscriptionRepository,
-  eventService: EventService
+  eventService: EventService,
+  auditor: NotificationAuditor
 ): RequestHandler {
   return async (req, res, next) => {
     try {
@@ -253,9 +290,16 @@ export function addOrUpdateTypeSubscription(
         throw new NotFoundError('Subscriber', subscriber);
       }
 
-      const subscription = await addOrUpdateSubscription(repository, user, type, subscriberEntity, criteria);
+      const { subscription, created } = await addOrUpdateSubscription(
+        repository,
+        user,
+        type,
+        subscriberEntity,
+        criteria
+      );
       res.send(mapSubscription(apiId, subscription));
       eventService.send(subscriptionSet(type, subscriberEntity, subscription, user));
+      auditSubscriptionSet(auditor, tenantId, user, type, subscriberEntity, created);
     } catch (err) {
       next(err);
     }
@@ -290,7 +334,11 @@ export function getTypeSubscription(apiId: AdspId, repository: SubscriptionRepos
   };
 }
 
-export function deleteTypeSubscription(repository: SubscriptionRepository, eventService: EventService): RequestHandler {
+export function deleteTypeSubscription(
+  repository: SubscriptionRepository,
+  eventService: EventService,
+  auditor: NotificationAuditor
+): RequestHandler {
   return async (req, res, next) => {
     try {
       const tenantId = req.tenant.id;
@@ -303,6 +351,9 @@ export function deleteTypeSubscription(repository: SubscriptionRepository, event
       const result = subscriberEntity ? await type.unsubscribe(repository, user, subscriberEntity) : false;
       res.send({ deleted: result });
       eventService.send(subscriptionDeleted(type, subscriberEntity, user));
+      if (result) {
+        auditor(SubscriptionDeletedAuditAction, toSubscriptionAuditDetails(tenantId, user, type.id, subscriberEntity.id));
+      }
     } catch (err) {
       next(err);
     }
@@ -311,7 +362,8 @@ export function deleteTypeSubscription(repository: SubscriptionRepository, event
 
 export function deleteTypeSubscriptionCriteria(
   repository: SubscriptionRepository,
-  eventService: EventService
+  eventService: EventService,
+  auditor: NotificationAuditor
 ): RequestHandler {
   return async (req, res, next) => {
     try {
@@ -336,6 +388,10 @@ export function deleteTypeSubscriptionCriteria(
         } else {
           eventService.send(subscriptionSet(type, subscription.subscriber, subscription, user));
         }
+        auditor(
+          deletedSubscription ? SubscriptionDeletedAuditAction : SubscriptionUpdatedAuditAction,
+          toSubscriptionAuditDetails(subscription.tenantId, user, type.id, subscriber)
+        );
       }
     } catch (err) {
       next(err);
@@ -380,7 +436,8 @@ export function getSubscribers(apiId: AdspId, repository: SubscriptionRepository
 export function createSubscriber(
   apiId: AdspId,
   repository: SubscriptionRepository,
-  eventService: EventService
+  eventService: EventService,
+  auditor: NotificationAuditor
 ): RequestHandler {
   return async (req, res, next) => {
     try {
@@ -412,19 +469,23 @@ export function createSubscriber(
             };
 
       let event: DomainEvent;
+      let auditAction: AuditAction;
       let entity = subscriber.userId ? await repository.getSubscriber(tenantId, subscriber.userId, true) : null;
       if (entity) {
         entity = await entity.update(user, subscriber);
         event = subscriberUpdated(entity, subscriber, user);
+        auditAction = SubscriberUpdatedAuditAction;
       } else {
         entity = await SubscriberEntity.create(user, repository, subscriber);
         event = subscriberCreated(entity, user);
+        auditAction = SubscriberCreatedAuditAction;
       }
 
       res.send(mapSubscriber(apiId, entity));
       if (event) {
         eventService.send(event);
       }
+      auditor(auditAction, toSubscriberAuditDetails(tenantId, user, entity));
     } catch (err) {
       next(err);
     }
@@ -485,7 +546,7 @@ export function getSubscriberByUserId(repository: SubscriptionRepository): Reque
   };
 }
 
-export function updateSubscriber(apiId: AdspId, eventService: EventService): RequestHandler {
+export function updateSubscriber(apiId: AdspId, eventService: EventService, auditor: NotificationAuditor): RequestHandler {
   return async (req, res, next) => {
     try {
       const user = req.user;
@@ -495,13 +556,18 @@ export function updateSubscriber(apiId: AdspId, eventService: EventService): Req
       const updated = await subscriber.update(user, { addressAs, channels });
       res.send(mapSubscriber(apiId, updated));
       eventService.send(subscriberUpdated(subscriber, { addressAs, channels }, user));
+      auditor(SubscriberUpdatedAuditAction, toSubscriberAuditDetails(updated.tenantId, user, updated));
     } catch (err) {
       next(err);
     }
   };
 }
 
-export function subscriberOperations(eventService: EventService, verifyService: VerifyService): RequestHandler {
+export function subscriberOperations(
+  eventService: EventService,
+  verifyService: VerifyService,
+  auditor: NotificationAuditor
+): RequestHandler {
   return async (req, res, next) => {
     try {
       const user = req.user;
@@ -562,13 +628,16 @@ export function subscriberOperations(eventService: EventService, verifyService: 
       if (event) {
         eventService.send(event);
       }
+      if (request.operation === SUBSCRIBER_VERIFY_CHANNEL && result?.verified) {
+        auditor(SubscriberUpdatedAuditAction, toSubscriberAuditDetails(subscriber.tenantId, user, subscriber));
+      }
     } catch (err) {
       next(err);
     }
   };
 }
 
-export function deleteSubscriber(eventService: EventService): RequestHandler {
+export function deleteSubscriber(eventService: EventService, auditor: NotificationAuditor): RequestHandler {
   return async (req, res, next) => {
     try {
       const user = req.user;
@@ -577,6 +646,9 @@ export function deleteSubscriber(eventService: EventService): RequestHandler {
       const deleted = await subscriber.delete(user);
       res.send({ deleted });
       eventService.send(subscriberDeleted(subscriber, user));
+      if (deleted) {
+        auditor(SubscriberDeletedAuditAction, toSubscriberAuditDetails(subscriber.tenantId, user, subscriber));
+      }
     } catch (err) {
       next(err);
     }
@@ -671,6 +743,7 @@ export const createSubscriptionRouter = ({
   serviceId,
   subscriptionRepository,
   eventService,
+  auditor,
   verifyService,
   directory,
   tokenProvider,
@@ -702,7 +775,7 @@ export const createSubscriptionRouter = ({
     '/types',
     assertHasTenant,
     createValidationHandler(body('id').isString()),
-    createNotificationType(configurationWriter)
+    createNotificationType(configurationWriter, auditor)
   );
   subscriptionRouter.get(
     '/types/:type',
@@ -714,13 +787,13 @@ export const createSubscriptionRouter = ({
     '/types/:type',
     assertHasTenant,
     validateTypeHandler,
-    updateNotificationType(configurationWriter)
+    updateNotificationType(configurationWriter, auditor)
   );
   subscriptionRouter.delete(
     '/types/:type',
     assertHasTenant,
     validateTypeHandler,
-    deleteNotificationType(configurationWriter)
+    deleteNotificationType(configurationWriter, auditor)
   );
 
   subscriptionRouter.get('/contact', assertHasTenant, getContact);
@@ -770,7 +843,7 @@ export const createSubscriptionRouter = ({
       )
     ),
     getNotificationType,
-    createTypeSubscription(apiId, subscriptionRepository, eventService)
+    createTypeSubscription(apiId, subscriptionRepository, eventService, auditor)
   );
 
   subscriptionRouter.post(
@@ -793,14 +866,14 @@ export const createSubscriptionRouter = ({
       ])
     ),
     getNotificationType,
-    addOrUpdateTypeSubscription(apiId, subscriptionRepository, eventService)
+    addOrUpdateTypeSubscription(apiId, subscriptionRepository, eventService, auditor)
   );
 
   subscriptionRouter.delete(
     '/types/:type/subscriptions/:subscriber/criteria',
     validateTypeAndSubscriberHandler,
     getNotificationType,
-    deleteTypeSubscriptionCriteria(subscriptionRepository, eventService)
+    deleteTypeSubscriptionCriteria(subscriptionRepository, eventService, auditor)
   );
 
   subscriptionRouter.get(
@@ -814,7 +887,7 @@ export const createSubscriptionRouter = ({
     '/types/:type/subscriptions/:subscriber',
     validateTypeAndSubscriberHandler,
     getNotificationType,
-    deleteTypeSubscription(subscriptionRepository, eventService)
+    deleteTypeSubscription(subscriptionRepository, eventService, auditor)
   );
 
   subscriptionRouter.get(
@@ -833,7 +906,7 @@ export const createSubscriptionRouter = ({
     ),
     getSubscribers(apiId, subscriptionRepository)
   );
-  subscriptionRouter.post('/subscribers', createSubscriber(apiId, subscriptionRepository, eventService));
+  subscriptionRouter.post('/subscribers', createSubscriber(apiId, subscriptionRepository, eventService, auditor));
 
   subscriptionRouter.get(
     '/subscribers/my-subscriber',
@@ -861,7 +934,7 @@ export const createSubscriptionRouter = ({
       )
     ),
     getSubscriber(subscriptionRepository),
-    updateSubscriber(apiId, eventService)
+    updateSubscriber(apiId, eventService, auditor)
   );
   subscriptionRouter.post(
     '/subscribers/:subscriber',
@@ -880,13 +953,13 @@ export const createSubscriptionRouter = ({
       )
     ),
     getSubscriber(subscriptionRepository, [ServiceUserRoles.CodeSender]),
-    subscriberOperations(eventService, verifyService)
+    subscriberOperations(eventService, verifyService, auditor)
   );
   subscriptionRouter.delete(
     '/subscribers/:subscriber',
     validateSubscriberHandler,
     getSubscriber(subscriptionRepository),
-    deleteSubscriber(eventService)
+    deleteSubscriber(eventService, auditor)
   );
 
   subscriptionRouter.get(

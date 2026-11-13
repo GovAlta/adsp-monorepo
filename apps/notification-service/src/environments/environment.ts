@@ -36,6 +36,8 @@ export const environment = envalid.cleanEnv(
     OTEL_EXPORTER_OTLP_ENDPOINT: envalid.str({ default: '' }),
     PORT: envalid.num({ default: 3335 }),
     TRUSTED_PROXY: envalid.str({ default: 'uniquelocal' }),
+    // Unset falls back to the SDK AUDIT_ENABLED variable, which defaults to on.
+    NOTIFICATION_AUDIT_ENABLED: envalid.bool({ default: undefined }),
   },
   {
     reporter: ({ errors }) => {
