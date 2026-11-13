@@ -4,8 +4,8 @@ import type { RequestContext } from '@mastra/core/request-context';
 import { Logger } from 'winston';
 import { getAgentModelConfiguration, getAgentModelId } from '../model/modelConfiguration';
 import { withUsageRecording } from '../model/usageRecordingModel';
-import { ACCESS_SERVICE_AGENT_ID } from '../model/executionLimits';
-import { createAccessHistoryProcessor } from './accessHistory';
+import { ACCESS_SERVICE_AGENT_ID, FORM_GENERATION_AGENT_ID } from '../model/executionLimits';
+import { createAccessHistoryProcessor, createToolResultHistoryProcessor } from './accessHistory';
 import { BrokerInputProcessor } from '../types';
 import { FileServiceDownloadProcessor } from './file';
 
@@ -20,6 +20,8 @@ export function createInputProcessors({ requestContext }: InputProcessorProps): 
 
   if (agentId === ACCESS_SERVICE_AGENT_ID) {
     processors.push(createAccessHistoryProcessor());
+  } else if (agentId === FORM_GENERATION_AGENT_ID) {
+    processors.push(createToolResultHistoryProcessor('form-generation-history', 'Form generation history'));
   }
 
   processors.push(

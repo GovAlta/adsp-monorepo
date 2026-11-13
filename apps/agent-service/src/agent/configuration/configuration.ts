@@ -16,8 +16,9 @@ import { clearThreadWorkspace, createWorkspaceResolver, type AgentWorkspaceConfi
 import { createFileServiceClient } from '../clients';
 import { scheduleAgentJobs } from '../jobs';
 import { AgentModelConfiguration, getAgentModelConfiguration, getAgentModelId } from '../model/modelConfiguration';
-import { ACCESS_SERVICE_AGENT_ID } from '../model/executionLimits';
+import { ACCESS_SERVICE_AGENT_ID, FORM_GENERATION_AGENT_ID } from '../model/executionLimits';
 import { createAccessServiceSupervisorOptions } from '../agents/access/supervisorOptions';
+import { createFormGenerationAgentOptions } from '../agents/forms/generation/chat/stepOptions';
 import { withContextualInstructions } from './contextualInstructions';
 import { createAuthenticatedMcpFetch, loadKnownMcpServerSecrets, normalizeMcpServerUrl } from './mcpCredentials';
 import { withDelegationAudit, withToolAudit, type AgentToolType } from '../audit';
@@ -158,7 +159,7 @@ export class AgentServiceConfiguration {
           });
 
       const sharedMemory = createAgentMemory(storage, environment.AGENT_OBSERVATIONAL_MEMORY);
-      const formGenerationMemory = createAgentMemory(storage, false);
+      const formGenerationMemory = createAgentMemory(storage, false, environment.AGENT_FORM_GENERATION_LAST_MESSAGES);
       const accessMemory = createAgentMemory(storage, false, environment.AGENT_ACCESS_LAST_MESSAGES);
 
       const mcpToolsByAgent = Object.fromEntries(
@@ -182,7 +183,14 @@ export class AgentServiceConfiguration {
               const supervisorOptions: Partial<AgentExecutionOptions<undefined>> =
                 key === ACCESS_SERVICE_AGENT_ID
                   ? createAccessServiceSupervisorOptions(this.logger, tenantId?.toString())
-                  : {};
+                  : key === FORM_GENERATION_AGENT_ID
+                    ? createFormGenerationAgentOptions({
+                        logger: this.logger,
+                        directory: this.directory,
+                        tokenProvider: this.tokenProvider,
+                        tenantId: tenantId?.toString(),
+                      })
+                    : {};
               const delegation = configuration.agents?.length
                 ? withDelegationAudit(this.auditService, tenantId, supervisorOptions.delegation)
                 : supervisorOptions.delegation;
@@ -272,7 +280,7 @@ export class AgentServiceConfiguration {
                     ) || {}),
                   } as unknown as never,
                   memory:
-                    key === 'formGenerationAgent'
+                    key === FORM_GENERATION_AGENT_ID
                       ? formGenerationMemory
                       : key === ACCESS_SERVICE_AGENT_ID
                         ? accessMemory

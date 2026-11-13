@@ -64,12 +64,22 @@ interface RecordedUsage {
   modelCalls: number;
 }
 
+/** When a model call of the reply finished, and the tokens it used. */
+export interface ModelCallRecord {
+  at: number;
+  tokens: number;
+}
+
 /**
  * Adds up model calls that an agent's own usage leaves out, such as the planner and step builders that the form
- * generation tool runs.
+ * generation tool runs. It also keeps when each of the reply's model calls finished, including the agent's own, so a
+ * long-running tool can pace its calls against everything the reply has used in the last minute.
  */
 export class UsageRecorder {
   private recorded: RecordedUsage = { inputTokens: 0, outputTokens: 0, totalTokens: 0, modelCalls: 0 };
+  private readonly calls: ModelCallRecord[] = [];
+
+  constructor(private readonly now: () => number = Date.now) {}
 
   record(usage: TokenUsage | undefined, modelCalls = 1): void {
     this.recorded = {
@@ -78,6 +88,20 @@ export class UsageRecorder {
       totalTokens: this.recorded.totalTokens + totalOf(usage),
       modelCalls: this.recorded.modelCalls + modelCalls,
     };
+    this.observe(usage);
+  }
+
+  /** Notes a model call whose usage is counted elsewhere, such as the agent's own steps, for pacing only. */
+  observe(usage: TokenUsage | undefined): void {
+    const tokens = totalOf(usage);
+    if (tokens > 0) {
+      this.calls.push({ at: this.now(), tokens });
+    }
+  }
+
+  /** Model calls of the reply that finished after the given time, oldest first. */
+  callsSince(since: number): ModelCallRecord[] {
+    return this.calls.filter((call) => call.at > since);
   }
 
   get total(): RecordedUsage {

@@ -52,6 +52,9 @@ export function getAgentProviderOptions(
   if (isAccess && environment.MODEL_URL) {
     providerOpts.max_completion_tokens = environment.AGENT_ACCESS_MAX_OUTPUT_TOKENS;
   }
+  if (isFormGen && environment.MODEL_URL && environment.AGENT_FORM_GENERATION_MAX_OUTPUT_TOKENS > 0) {
+    providerOpts.max_completion_tokens = environment.AGENT_FORM_GENERATION_MAX_OUTPUT_TOKENS;
+  }
 
   if (isFormGen) {
     // Use the key convention that matches the active provider path:

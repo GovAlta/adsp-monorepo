@@ -35,4 +35,17 @@ describe('createInputProcessors', () => {
     expect(processors).toHaveLength(1);
     expect(processors[0]).toBeInstanceOf(PromptInjectionDetector);
   });
+
+  it('trims earlier tool results for the form generation agent before the injection check', () => {
+    // Arrange
+    const requestContext = new RequestContext<Record<string, unknown>>();
+    requestContext.set('agentId', 'formGenerationAgent');
+
+    // Act
+    const processors = createInputProcessors({ logger, requestContext });
+
+    // Assert
+    expect(processors).toHaveLength(2);
+    expect(processors[0]).toMatchObject({ id: 'form-generation-history' });
+  });
 });
