@@ -75,6 +75,10 @@ export function useFileUpload(
   const loadedType = useRef<FileTypeInfo | null>(null);
   const onUploadRef = useRef(onUpload);
   onUploadRef.current = onUpload;
+  // Set during render, before the effects that cancel stale uploads run, so a request that finishes in between is
+  // recognised as belonging to the previous client, File Type or record.
+  const target = useRef({ client, fileTypeId, recordId });
+  target.current = { client, fileTypeId, recordId };
 
   const stopAll = useCallback(() => {
     active.current.forEach((controller) => controller.abort());
@@ -172,12 +176,22 @@ export function useFileUpload(
         }
       }
 
-      if (controller.signal.aborted) {
+      const latest = target.current;
+      if (
+        controller.signal.aborted ||
+        latest.client !== client ||
+        latest.fileTypeId !== fileTypeId ||
+        latest.recordId !== recordId
+      ) {
         return;
       }
       update(id, { status: 'uploaded', progress: 1, uploaded: result });
       // File service has accepted the file, so a failing callback is the application's error, not a failed upload.
-      onUploadRef.current?.(result);
+      try {
+        onUploadRef.current?.(result);
+      } catch (err) {
+        console.error('ADSPFileUpload onUpload callback failed.', err);
+      }
     },
     [client, fileTypeId, recordId, update],
   );

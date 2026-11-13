@@ -21,7 +21,7 @@ export function formatFileSize(bytes: number): string {
 }
 
 // Mirrors File service's check by extension, so a file it would reject isn't sent. File service still decides, and it
-// can detect a different format from the content than the name suggests.
+// detects the format from the content first, so a file without an extension is left for it to judge.
 export function isFileFormatAllowed(filename: string, allowedFileTypes: readonly string[]): boolean {
   if (allowedFileTypes.length === 0) {
     return true;
@@ -29,7 +29,7 @@ export function isFileFormatAllowed(filename: string, allowedFileTypes: readonly
 
   const dot = filename.lastIndexOf('.');
   const extension = dot >= 0 ? filename.slice(dot).toLowerCase() : '';
-  return !!extension && allowedFileTypes.some((allowed) => allowed.trim().toLowerCase() === extension);
+  return !extension || allowedFileTypes.some((allowed) => allowed.trim().toLowerCase() === extension);
 }
 
 // For guidance text, such as ".pdf, .docx or .png".

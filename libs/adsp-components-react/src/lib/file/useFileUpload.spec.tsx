@@ -306,4 +306,44 @@ describe('useFileUpload', () => {
     expect(result.current.uploads).toEqual([]);
     expect(onUpload).not.toHaveBeenCalled();
   });
+
+  test('a throwing onUpload callback leaves the accepted upload as uploaded', async () => {
+    // Arrange
+    const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+    const client = createClient();
+    const { result } = await renderReady(client, {
+      onUpload: () => {
+        throw new Error('app bug');
+      },
+    });
+
+    // Act
+    await act(async () => result.current.upload(file));
+
+    // Assert
+    await waitFor(() => expect(result.current.uploads[0].status).toBe('uploaded'));
+    expect(errorSpy).toHaveBeenCalled();
+    errorSpy.mockRestore();
+  });
+
+  test('tracks concurrent uploads independently', async () => {
+    // Arrange
+    const first = deferredUpload();
+    const second = deferredUpload();
+    const client = createClient({
+      uploadFile: jest.fn().mockImplementationOnce(first.uploadFile).mockImplementationOnce(second.uploadFile),
+    });
+    const { result } = await renderReady(client);
+    act(() => result.current.upload([file, file]));
+
+    // Act
+    act(() => first.progress(0.25));
+    act(() => second.progress(0.75));
+    await act(async () => result.current.remove(result.current.uploads[0].id));
+    await act(async () => second.resolve(stored()));
+
+    // Assert
+    expect(result.current.uploads).toHaveLength(1);
+    expect(result.current.uploads[0]).toMatchObject({ status: 'uploaded', progress: 1 });
+  });
 });

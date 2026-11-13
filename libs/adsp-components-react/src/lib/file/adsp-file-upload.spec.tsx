@@ -315,4 +315,27 @@ describe('ADSPFileUpload', () => {
     await waitFor(() => expect(client.uploadFile).toHaveBeenCalledTimes(2));
     await waitFor(() => expect(document.activeElement).toBe(screen.getByRole('alert')));
   });
+
+  test('moves focus after cancelling one upload while another keeps running', async () => {
+    // Arrange
+    const client = createClient({
+      uploadFile: jest.fn(
+        (_type, _file, options) =>
+          new Promise((_resolve, reject) =>
+            options?.signal?.addEventListener('abort', () => reject(new DOMException('cancelled', 'AbortError'))),
+          ),
+      ),
+    });
+    await renderUpload(client);
+    selectFile([file, file]);
+
+    // Act
+    await act(async () => {
+      fireEvent(byGoaTestId('upload-card-0') as HTMLElement, new CustomEvent('_cancel', { detail: {} }));
+    });
+
+    // Assert
+    await waitFor(() => expect(document.activeElement).toBe(screen.getByTestId('upload')));
+    expect(screen.getByRole('status')).toHaveTextContent('Uploading Annual report.pdf...');
+  });
 });

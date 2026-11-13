@@ -47,18 +47,22 @@ export const ADSPFileUpload = ({
 }: ADSPFileUploadProps) => {
   const themeStyle = useAdspThemeStyle('fileUpload', themeOverrides);
   // Without permission, the hook gets no client, so nothing is requested.
-  const { fileType, loading, typeError, ready, uploads, uploading, upload, retry, remove, reloadType } = useFileUpload(
+  const { fileType, loading, typeError, ready, uploads, upload, retry, remove, reloadType } = useFileUpload(
     canUpload ? client : undefined,
     fileTypeId,
     { recordId, onUpload },
   );
   const rootRef = useRef<HTMLDivElement>(null);
-  const [restoreFocus, setRestoreFocus] = useState(false);
+  // The upload whose control was used (true for the File Type reload); focus moves once that one has settled.
+  const [restoreFocus, setRestoreFocus] = useState<string | boolean>(false);
 
   // Cancel, dismiss and Try again take away the control that had focus. Once the state settles, move focus to the
   // first error, otherwise the drop area, otherwise the component itself.
   useEffect(() => {
-    if (!restoreFocus || loading || uploading) {
+    const pending =
+      typeof restoreFocus === 'string' &&
+      uploads.some((item) => item.id === restoreFocus && item.status === 'uploading');
+    if (!restoreFocus || loading || pending) {
       return;
     }
 
@@ -67,17 +71,19 @@ export const ADSPFileUpload = ({
     tryFocus(root?.querySelector<HTMLElement>('.adsp-file-upload__error')) ||
       tryFocus(root?.querySelector<HTMLElement>('goa-file-upload-input')) ||
       tryFocus(root);
-  }, [restoreFocus, loading, uploading]);
+  }, [restoreFocus, loading, uploads]);
 
   if (!canUpload) {
     return null;
   }
 
   const childTestId = (suffix: string) => (testId ? `${testId}-${suffix}` : undefined);
-  const withFocusRestore = (action: () => void) => () => {
-    setRestoreFocus(true);
-    action();
-  };
+  const withFocusRestore =
+    (action: () => void, id: string | boolean = true) =>
+    () => {
+      setRestoreFocus(id);
+      action();
+    };
   const allowedFileTypes = fileType?.allowedFileTypes ?? [];
 
   // No aria-busy here: it would hold back the role=status announcements inside until the work is done.
@@ -145,7 +151,7 @@ export const ADSPFileUpload = ({
                     error={
                       item.status === 'failed' && item.error ? getFileUploadErrorMessage(item.error.reason) : undefined
                     }
-                    onCancel={withFocusRestore(() => remove(item.id))}
+                    onCancel={withFocusRestore(() => remove(item.id), item.id)}
                     testId={childTestId(`card-${index}`)}
                   />
                   {item.status === 'uploading' && (
@@ -165,7 +171,7 @@ export const ADSPFileUpload = ({
                         <GoabButton
                           type="tertiary"
                           size="compact"
-                          onClick={withFocusRestore(() => retry(item.id))}
+                          onClick={withFocusRestore(() => retry(item.id), item.id)}
                           testId={childTestId(`retry-${index}`)}
                         >
                           Try again

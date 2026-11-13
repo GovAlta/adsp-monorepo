@@ -26,7 +26,7 @@ describe('isFileFormatAllowed', () => {
     ['report.PDF', ['.pdf'], true],
     ['report.pdf', [' .Pdf '], true],
     ['clip.mp4', ['.pdf', '.docx'], false],
-    ['README', ['.pdf'], false],
+    ['README', ['.pdf'], true],
     ['archive.tar.gz', ['.gz'], true],
   ] as [string, string[], boolean][])('%s with %p is %s', (filename, allowed, expected) => {
     expect(isFileFormatAllowed(filename, allowed)).toBe(expected);
