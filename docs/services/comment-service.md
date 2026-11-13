@@ -89,6 +89,25 @@ The comment service sends the following domain events under the `comment-service
 
 The service doesn't consume events from other services. Changes to topic types are configuration updates, recorded by the [configuration service](configuration-service.md).
 
+## Audit
+Comment service records audit events in the `comment-service` namespace of the [audit service](/adsp-monorepo/services/audit-service.html). Records are written to the tenant of the topic or topic type, with the user or service account making the request as the actor. All actions are version 1.
+
+| Action | Category | Severity | Retention class | Recorded when |
+|:-|:-|:-|:-|:-|
+| `topic.created` | administrative | info | compliance | A topic is created. |
+| `topic.updated` | administrative | warning | compliance | The name, description or commenters of a topic are changed. |
+| `topic.deleted` | administrative | warning | compliance | A topic is deleted. One record is written for the topic; its comments are deleted with it and are not recorded individually. |
+| `comment.created` | data-access | info | compliance | A comment is posted to a topic. |
+| `comment.updated` | data-access | info | compliance | A comment is edited. |
+| `comment.deleted` | data-access | warning | compliance | A comment is deleted. |
+| `topic-type.created` | administrative | info | standard | A topic type is created through the comment API. |
+| `topic-type.updated` | administrative | warning | standard | The name, roles or security classification of a topic type are changed through the comment API. |
+| `topic-type.deleted` | administrative | warning | standard | A topic type is deleted through the comment API. |
+
+Topic and comment records include the `topicId`, the topic type `typeId` and the topic `resourceId` in the metadata, and use the `resourceId` as the correlation ID so they can be matched with the audit records of the domain entity. Comment records use the comment ID as the resource and add `commentAction` (`created`, `updated` or `deleted`); updates list the edited field names in `updatedFields`, and updates and deletes include the `authorId` of the comment. Comment title, content and context are user generated and may be sensitive, so they are never recorded. `topic.updated` lists the changed fields in `updatedFields` and records the changed name and commenter user IDs as the change set; the description is not recorded. `topic-type.updated` records the topic type before and after the change as the change set, with `rolesChanged` in the metadata.
+
+Reading topics and comments is not audited. Topic type changes made directly in the configuration service are recorded by the configuration service as `configuration.updated`, not by comment service. Audit failures are logged and do not fail the operation. The service account of comment service needs the `audit-writer` role of `urn:ads:platform:audit-service`. Set `COMMENT_AUDIT_ENABLED` to `false` to disable recording; when unset it follows the SDK `AUDIT_ENABLED` variable (on by default). The action catalog is registered on startup either way.
+
 ## Code examples
 ### Create a topic type
 Users or service accounts with the comment-admin or topic-setter role can create topic types for their tenant. The new type's commenter roles are set with `writeRoles`, and it has no admin roles until you update it. The service responds `409` if a type with the ID or name already exists.

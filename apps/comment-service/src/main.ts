@@ -16,6 +16,7 @@ import type { User } from '@abgov/adsp-service-sdk';
 import { createLogger, createErrorHandler } from '@core-services/core-common';
 import { environment } from './environments/environment';
 import {
+  CommentAuditActions,
   CommentCreatedEventDefinition,
   CommentDeletedEventDefinition,
   CommentUpdatedEventDefinition,
@@ -54,6 +55,7 @@ const initializeApp = async (): Promise<express.Application> => {
   const serviceId = AdspId.parse(environment.CLIENT_ID);
   const accessServiceUrl = new URL(environment.KEYCLOAK_ROOT_URL);
   const {
+    auditService,
     configurationHandler,
     directory,
     coreStrategy,
@@ -105,6 +107,8 @@ const initializeApp = async (): Promise<express.Application> => {
       enableConfigurationInvalidation: true,
       useLongConfigurationCacheTTL: true,
       values: [ServiceMetricsValueDefinition],
+      auditActions: CommentAuditActions,
+      audit: { enabled: environment.COMMENT_AUDIT_ENABLED },
       serviceConfigurations: [
         {
           serviceId: adspId`urn:ads:platform:directory-service`,
@@ -158,6 +162,7 @@ const initializeApp = async (): Promise<express.Application> => {
     repository: repositories.topicRepository,
     directory,
     tokenProvider,
+    auditService,
   });
 
   const swagger = JSON.parse(await promisify(readFile)(`${__dirname}/swagger.json`, 'utf8'));
