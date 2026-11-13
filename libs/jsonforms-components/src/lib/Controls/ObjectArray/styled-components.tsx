@@ -254,6 +254,40 @@ export const FixTableHeaderAlignment = styled.div`
   table tbody td:nth-child(3) {
     text-align: center;
   }
+
+  /* A row of inputs doesn't fit a phone, so each row stacks its cells and labels them from data-label. */
+  @media (max-width: 639px) {
+    table thead {
+      display: none;
+    }
+
+    table tbody tr {
+      display: block;
+      padding: var(--goa-space-s) 0;
+      border-bottom: 1px solid var(--goa-color-greyscale-200);
+    }
+
+    table tbody td,
+    table tbody td:nth-child(3) {
+      display: block;
+      padding: var(--goa-space-2xs) 0;
+      border-bottom: none;
+      text-align: left;
+    }
+
+    table tbody td[data-label]::before {
+      content: attr(data-label);
+      display: block;
+      margin-bottom: var(--goa-space-2xs);
+      color: var(--goa-color-text-secondary);
+      font: var(--goa-typography-body-s);
+    }
+
+    table tbody td:not([data-label]) {
+      padding-top: 0 !important;
+      text-align: right;
+    }
+  }
 `;
 
 export const ListWithDetailsReviewCellDiv = styled.div`
@@ -270,9 +304,14 @@ export const IconsContainer = styled.div`
   padding-bottom: var(--goa-space-xs);
 `;
 
-/* A row of inputs can't wrap, so a wide table scrolls here rather than widening the form. */
+/*
+ * A row of inputs can't wrap, so a wide table scrolls here rather than widening the form.
+ * contain keeps the table's width out of the ancestors' sizing: a group's goa-container
+ * otherwise grows to fit the table and pushes it off a narrow screen.
+ */
 export const TableScrollContainer = styled.div`
   overflow-x: auto;
+  contain: inline-size;
 `;
 
 export const TableContentContainer = styled.div`
