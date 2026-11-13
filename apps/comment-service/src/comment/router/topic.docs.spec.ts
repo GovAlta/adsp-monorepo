@@ -102,6 +102,12 @@ describe('topic router documented behaviour', () => {
         directory: directoryMock,
         tokenProvider: tokenProviderMock,
         client: clientMock as never,
+        auditService: {
+          record: jest.fn(() => Promise.resolve({ status: 'recorded' as const, eventId: 'test' })),
+          query: jest.fn(),
+          flush: jest.fn(),
+          droppedEventCount: 0,
+        },
       }),
     );
     server.use(createErrorHandler(loggerMock));
