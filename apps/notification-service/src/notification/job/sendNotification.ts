@@ -1,12 +1,7 @@
 import { EventService } from '@abgov/adsp-service-sdk';
 import { InvalidOperationError } from '@core-services/core-common';
 import { Logger } from 'winston';
-import {
-  NotificationAuditor,
-  NotificationFailedAuditAction,
-  NotificationSentAuditAction,
-  toNotificationAuditDetails,
-} from '../audit';
+import { getNotificationAuditActions, NotificationAuditor, toNotificationAuditDetails } from '../audit';
 import { notificationSendFailed, notificationSent } from '../events';
 import { NotificationWorkItem, Providers } from '../types';
 
@@ -33,7 +28,7 @@ export const createSendNotificationJob =
       try {
         await provider.send(notification);
         eventService.send(notificationSent(notification));
-        auditor(NotificationSentAuditAction, toNotificationAuditDetails(notification));
+        auditor(getNotificationAuditActions(notification).sent, toNotificationAuditDetails(notification));
         logger.debug(
           `Sent notification of type '${notification.type.id}' to ${notification.to} via ${notification.channel} provider.`,
           { ...LOG_CONTEXT, tenant: notification.tenantId?.toString() }
@@ -47,7 +42,7 @@ export const createSendNotificationJob =
         done(err);
         if (!retryOnError) {
           eventService.send(notificationSendFailed(notification, err.message));
-          auditor(NotificationFailedAuditAction, {
+          auditor(getNotificationAuditActions(notification).failed, {
             ...toNotificationAuditDetails(notification, { error: err.message }),
             status: 'failure',
           });

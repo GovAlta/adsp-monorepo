@@ -101,13 +101,15 @@ Notification service records audit events in the `notification-service` namespac
 | `subscription.created` | administrative | info | standard | A subscriber is subscribed to a notification type. |
 | `subscription.updated` | administrative | info | standard | The criteria of a subscription are changed or one criteria is removed. |
 | `subscription.deleted` | administrative | info | standard | A subscriber is unsubscribed from a notification type. |
-| `notification.sent` | runtime | info | standard | A notification is sent through a channel provider. |
-| `notification.send-failed` | runtime | warning | standard | A notification could not be sent after all retries, with the `error` message in the metadata. |
+| `notification.sent` | runtime | info | standard | A notification is sent to a subscriber through a channel provider. |
+| `notification.send-failed` | runtime | warning | standard | A notification to a subscriber could not be sent after all retries, with the `error` message in the metadata. |
+| `notification.direct-sent` | runtime | info | standard | A notification of a direct type (with an `addressPath`) is sent to the address in the event. |
+| `notification.direct-send-failed` | runtime | warning | standard | A notification of a direct type could not be sent after all retries, with the `error` message in the metadata. |
 | `notification-type.created` | administrative | info | compliance | A tenant notification type is created through the notification API. |
 | `notification-type.updated` | administrative | warning | compliance | A tenant notification type is changed, or a platform type is customized (`customizesCoreType: true`). |
 | `notification-type.deleted` | administrative | warning | compliance | A tenant notification type or a platform type customization is deleted (`revertsToCoreType: true`). |
 
-Subscriber and subscription changes record the user or service account (ID, name and roles, without the email address) as the actor. Subscriber records include only the channel types and whether each is verified; channel addresses are not recorded. Sent and failed notifications are recorded with the system actor `notification-service-job` against the subscription (`<type ID>:<subscriber ID>`), or against the notification type when there is no subscriber, with the event correlation ID; the recipient address and message content are not recorded.
+Subscriber and subscription changes record the user or service account (ID, name and roles, without the email address) as the actor. Subscriber records include only the channel types and whether each is verified; channel addresses are not recorded. Sent and failed notifications are recorded with the system actor `notification-service-job` and the event correlation ID. Notifications to subscribers are recorded against the subscription (`<type ID>:<subscriber ID>`), and notifications of direct types are recorded against the notification type with the `direct-` actions. The recipient address and message content are not recorded.
 
 Contact information changes and notification type changes made directly in the configuration service are not recorded by notification service. Notifications can be high volume, so audit events are sent in batches of up to 100 events. Audit failures are logged and do not fail the operation. The service account of notification service needs the `audit-writer` role of `urn:ads:platform:audit-service`. Set `NOTIFICATION_AUDIT_ENABLED` to `false` to disable recording; when unset it follows the SDK `AUDIT_ENABLED` variable (on by default).
 

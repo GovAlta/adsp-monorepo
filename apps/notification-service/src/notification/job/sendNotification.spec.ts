@@ -70,6 +70,27 @@ describe('createSendNotificationJob', () => {
       );
     });
 
+    it('can send notification of a direct type against the notification type', async () => {
+      const job = createSendNotificationJob({ logger, eventService, auditor, providers: { [Channel.email]: providerMock } });
+      await job(
+        {
+          generationId: 'test',
+          tenantId: 'urn:ads:platform:tenant-service:v2:/tenants/test',
+          to: 'test@test.co',
+          type: { id: 'test', name: 'test' },
+          event: { namespace: 'test', name: 'test', timestamp: new Date() },
+          message: { subject: 'testing', body: '123' },
+          channel: Channel.email,
+        },
+        true,
+        (err) => expect(err).toBeFalsy()
+      );
+      expect(auditor).toHaveBeenCalledWith(
+        expect.objectContaining({ name: 'notification.direct-sent', resourceType: 'notification-type' }),
+        expect.objectContaining({ resource: { type: 'notification-type', id: 'test', name: 'test' } })
+      );
+    });
+
     it('can throw for missing provider', async () => {
       const job = createSendNotificationJob({ logger, eventService, auditor, providers: { [Channel.email]: providerMock } });
       await expect(

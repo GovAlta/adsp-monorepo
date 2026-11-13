@@ -2,6 +2,7 @@ import { adspId, AuditService, resolveRetentionClass, User } from '@abgov/adsp-s
 import { Logger } from 'winston';
 import {
   createNotificationAuditor,
+  getNotificationAuditActions,
   NotificationAuditActions,
   NotificationJobAuditActor,
   SubscriberCreatedAuditAction,
@@ -47,6 +48,8 @@ describe('notification audit', () => {
       'subscription.deleted': 'standard',
       'notification.sent': 'standard',
       'notification.send-failed': 'standard',
+      'notification.direct-sent': 'standard',
+      'notification.direct-send-failed': 'standard',
       'notification-type.created': 'compliance',
       'notification-type.updated': 'compliance',
       'notification-type.deleted': 'compliance',
@@ -63,9 +66,20 @@ describe('notification audit', () => {
     NotificationAuditActions.forEach((a) => expect(a.name).not.toMatch(/\.(succeeded|failed)$/));
   });
 
-  it('registers eleven uniquely named actions', () => {
-    expect(NotificationAuditActions).toHaveLength(11);
-    expect(new Set(NotificationAuditActions.map((a) => a.name)).size).toBe(11);
+  it('registers thirteen uniquely named actions', () => {
+    expect(NotificationAuditActions).toHaveLength(13);
+    expect(new Set(NotificationAuditActions.map((a) => a.name)).size).toBe(13);
+  });
+
+  it.each([
+    ['a subscriber', notification, 'notification.sent', 'notification.send-failed'],
+    ['no subscriber', { ...notification, subscriber: undefined }, 'notification.direct-sent', 'notification.direct-send-failed'],
+  ])('uses sent and failed actions whose resource type matches the record for %s', (_, value, sent, failed) => {
+    const actions = getNotificationAuditActions(value);
+    const { resource } = toNotificationAuditDetails(value);
+    expect([actions.sent.name, actions.failed.name]).toEqual([sent, failed]);
+    expect(actions.sent.resourceType).toBe(resource.type);
+    expect(actions.failed.resourceType).toBe(resource.type);
   });
 
   it('builds subscriber details with channel types but not addresses, and an actor without email', () => {

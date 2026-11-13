@@ -83,7 +83,7 @@ export const NotificationSentAuditAction: AuditAction = {
   category: AuditCategories.Runtime,
   severity: AuditSeverities.Info,
   resourceType: SUBSCRIPTION_RESOURCE_TYPE,
-  description: 'A notification is sent through a channel provider.',
+  description: 'A notification is sent to a subscriber through a channel provider.',
 };
 
 export const NotificationFailedAuditAction: AuditAction = {
@@ -92,7 +92,25 @@ export const NotificationFailedAuditAction: AuditAction = {
   category: AuditCategories.Runtime,
   severity: AuditSeverities.Warning,
   resourceType: SUBSCRIPTION_RESOURCE_TYPE,
-  description: 'A notification could not be sent after all retries.',
+  description: 'A notification to a subscriber could not be sent after all retries.',
+};
+
+export const NotificationDirectSentAuditAction: AuditAction = {
+  name: 'notification.direct-sent',
+  version: 1,
+  category: AuditCategories.Runtime,
+  severity: AuditSeverities.Info,
+  resourceType: NOTIFICATION_TYPE_RESOURCE_TYPE,
+  description: 'A notification of a direct type is sent to the address in the event through a channel provider.',
+};
+
+export const NotificationDirectSendFailedAuditAction: AuditAction = {
+  name: 'notification.direct-send-failed',
+  version: 1,
+  category: AuditCategories.Runtime,
+  severity: AuditSeverities.Warning,
+  resourceType: NOTIFICATION_TYPE_RESOURCE_TYPE,
+  description: 'A notification of a direct type could not be sent after all retries.',
 };
 
 export const NotificationTypeCreatedAuditAction: AuditAction = {
@@ -131,6 +149,8 @@ export const NotificationAuditActions: AuditAction[] = [
   SubscriptionDeletedAuditAction,
   NotificationSentAuditAction,
   NotificationFailedAuditAction,
+  NotificationDirectSentAuditAction,
+  NotificationDirectSendFailedAuditAction,
   NotificationTypeCreatedAuditAction,
   NotificationTypeUpdatedAuditAction,
   NotificationTypeDeletedAuditAction,
@@ -221,6 +241,19 @@ export function toNotificationAuditDetails(
       ...metadata,
     },
   };
+}
+
+/**
+ * Sent and failed actions of a notification. Audit service rejects a record whose resource type differs from the
+ * action resource type, so the action follows the same subscriber check as the resource in toNotificationAuditDetails.
+ */
+export function getNotificationAuditActions(notification: Pick<Notification, 'subscriber'>): {
+  sent: AuditAction;
+  failed: AuditAction;
+} {
+  return notification.subscriber?.id
+    ? { sent: NotificationSentAuditAction, failed: NotificationFailedAuditAction }
+    : { sent: NotificationDirectSentAuditAction, failed: NotificationDirectSendFailedAuditAction };
 }
 
 export type NotificationAuditor = (action: AuditAction, details: AuditRecordDetails) => void;
