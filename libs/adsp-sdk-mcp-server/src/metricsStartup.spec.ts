@@ -15,6 +15,7 @@ jest.mock('@opentelemetry/sdk-metrics', () => {
 
 import { OTLPMetricExporter } from '@opentelemetry/exporter-metrics-otlp-http';
 import { PeriodicExportingMetricReader } from '@opentelemetry/sdk-metrics';
+import { hostname } from 'os';
 import { getMetrics, startMetricsFromEnv, StartedMetrics } from './metrics';
 
 const mockExporter = OTLPMetricExporter as unknown as jest.Mock;
@@ -108,6 +109,18 @@ describe('startMetricsFromEnv', () => {
       .flatMap((scope) => scope.metrics)
       .map((metric) => metric.descriptor.name);
     expect(names).toContain('mcp.tool.duration');
+  });
+
+  it('tags metrics with this instance so replicas stay separate series', async () => {
+    started = await startMetricsFromEnv({ OTEL_EXPORTER_OTLP_ENDPOINT: 'http://collector.test:4318' });
+    getMetrics().recordToolCall('search_adsp_docs', 0.01);
+    await started?.shutdown();
+    started = undefined;
+
+    const [resourceMetrics] = mockExporter.mock.results[0].value.getMetrics();
+    expect(resourceMetrics.resource.attributes).toEqual(
+      expect.objectContaining({ 'service.name': 'adsp-sdk-mcp-server', 'service.instance.id': hostname() })
+    );
   });
 
   it('logs and continues without metrics when the exporter throws', async () => {

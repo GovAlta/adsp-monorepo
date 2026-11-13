@@ -1,4 +1,5 @@
 import type { BatchObservableCallback, MeterProvider } from '@opentelemetry/api';
+import { hostname } from 'os';
 import { monitorEventLoopDelay } from 'perf_hooks';
 import { readPackageVersion } from './version';
 
@@ -154,7 +155,12 @@ export async function startMetricsFromEnv(env: NodeJS.ProcessEnv = process.env):
     const exportIntervalMillis = readExportIntervalMs(env);
     const provider = new MeterProvider({
       resource: defaultResource().merge(
-        resourceFromAttributes({ 'service.name': 'adsp-sdk-mcp-server', 'service.version': readPackageVersion() })
+        resourceFromAttributes({
+          'service.name': 'adsp-sdk-mcp-server',
+          'service.version': readPackageVersion(),
+          // Without it, replicas send identical label sets and their series overwrite each other; in a pod this is the pod name.
+          'service.instance.id': hostname(),
+        })
       ),
       readers: [
         new PeriodicExportingMetricReader({
