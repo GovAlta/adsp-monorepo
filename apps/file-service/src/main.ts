@@ -15,6 +15,7 @@ import {
   ServiceMetricsValueDefinition,
 } from '@abgov/adsp-service-sdk';
 import { environment, POD_TYPES } from './environments/environment';
+import { createShutdownHandler } from './shutdown';
 import {
   applyFileMiddleware,
   configurationSchema,
@@ -36,7 +37,11 @@ import { createFileQueueService } from './amqp';
 
 const logger = createLogger('file-service', environment.LOG_LEVEL || 'info');
 
-async function initializeApp(): Promise<{ app: express.Application; auditService: AuditService }> {
+async function initializeApp(): Promise<{
+  app: express.Application;
+  auditService: AuditService;
+  shutdownTelemetry: () => Promise<void>;
+}> {
   const app = express();
 
   app.use(compression());
@@ -66,6 +71,7 @@ async function initializeApp(): Promise<{ app: express.Application; auditService
     metricsHandler,
     tenantService,
     traceHandler,
+    shutdownTelemetry,
   } = await initializePlatform(
     {
       serviceId,
@@ -263,10 +269,10 @@ async function initializeApp(): Promise<{ app: express.Application; auditService
   const errorHandler = createErrorHandler(logger);
   app.use(errorHandler);
 
-  return { app, auditService };
+  return { app, auditService, shutdownTelemetry };
 }
 
-initializeApp().then(({ app, auditService }) => {
+initializeApp().then(({ app, auditService, shutdownTelemetry }) => {
   const port = environment.PORT || 3337;
 
   const server = app.listen(port, () => {
@@ -281,12 +287,9 @@ initializeApp().then(({ app, auditService }) => {
     process.exit(code);
   };
 
-  process.on('SIGINT', async () => {
-    handleExit('File service exit, Byte', 1, null);
-  });
-  process.on('SIGTERM', async () => {
-    handleExit('File service was termination, Byte', 1, null);
-  });
+  const shutdown = createShutdownHandler({ server, auditService, shutdownTelemetry, logger });
+  process.once('SIGTERM', shutdown);
+  process.once('SIGINT', shutdown);
   process.on('uncaughtException', async (err: Error) => {
     handleExit('File service Uncaught exception', 1, err);
   });

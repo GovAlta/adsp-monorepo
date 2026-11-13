@@ -7,6 +7,7 @@ import * as compression from 'compression';
 import * as helmet from 'helmet';
 import { createLogger, createErrorHandler } from '@core-services/core-common';
 import { environment, POD_TYPES } from './environments/environment';
+import { createShutdownHandler } from './shutdown';
 import { createRepositories } from './mongo';
 import { bindEndpoints, ServiceUserRoles, StatusAuditActions } from './app';
 import * as cors from 'cors';
@@ -60,6 +61,7 @@ instrumentAxios(logger);
     directory,
     healthCheck,
     traceHandler,
+    shutdownTelemetry,
   } = await initializePlatform(
     {
       serviceId,
@@ -271,24 +273,7 @@ instrumentAxios(logger);
   server.on('error', (err) => logger.error(`Error encountered in server: ${err}`));
 
   // Stop accepting requests, then deliver any buffered audit events before the process exits.
-  let stopping = false;
-  const shutdown = async () => {
-    if (stopping) return;
-    stopping = true;
-    // Fallback in case the flush or close hangs.
-    setTimeout(() => process.exit(1), 15000).unref();
-    await new Promise<void>((resolve) => {
-      server.close(() => resolve());
-      server.closeIdleConnections();
-    });
-    try {
-      await auditService.flush();
-      process.exit(0);
-    } catch (err) {
-      logger.error(`Error encountered flushing audit events on shutdown: ${err}`);
-      process.exit(1);
-    }
-  };
+  const shutdown = createShutdownHandler({ server, auditService, shutdownTelemetry, logger });
   process.once('SIGTERM', shutdown);
   process.once('SIGINT', shutdown);
 })();

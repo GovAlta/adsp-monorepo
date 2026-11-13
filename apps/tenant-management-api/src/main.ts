@@ -1,4 +1,4 @@
-import { AdspId, initializePlatform, User } from '@abgov/adsp-service-sdk';
+import { AdspId, AuditService, initializePlatform, User } from '@abgov/adsp-service-sdk';
 import { createErrorHandler } from '@core-services/core-common';
 import * as cors from 'cors';
 import * as compression from 'compression';
@@ -10,6 +10,7 @@ import { promisify } from 'util';
 import * as passport from 'passport';
 import { Strategy as AnonymousStrategy } from 'passport-anonymous';
 import { environment } from './environments/environment';
+import { createShutdownHandler } from './shutdown';
 import { createRepositories, disconnect } from './mongo';
 import { logger } from './middleware/logger';
 import {
@@ -23,7 +24,11 @@ import {
 } from './tenant';
 import { createKeycloakRealmService } from './keycloak';
 
-async function initializeApp(): Promise<express.Application> {
+async function initializeApp(): Promise<{
+  app: express.Application;
+  auditService: AuditService;
+  shutdownTelemetry: () => Promise<void>;
+}> {
   const repositories = await createRepositories({ ...environment, logger });
 
   const app = express();
@@ -37,40 +42,47 @@ async function initializeApp(): Promise<express.Application> {
   }
 
   const serviceId = AdspId.parse(environment.CLIENT_ID);
-  const { coreStrategy, tenantStrategy, eventService, auditService, configurationHandler, traceHandler } =
-    await initializePlatform(
-      {
-        serviceId,
-        displayName: 'Tenant service',
-        description: 'Service for management of ADSP tenants.',
-        clientSecret: environment.CLIENT_SECRET,
-        directoryUrl: new URL(environment.DIRECTORY_URL),
-        accessServiceUrl: new URL(environment.KEYCLOAK_ROOT_URL),
-        configuration: {
-          description:
-            'Service roles with name, description, and whether the role is part of the tenant administrator role.',
-          schema: configurationSchema,
+  const {
+    coreStrategy,
+    tenantStrategy,
+    eventService,
+    auditService,
+    configurationHandler,
+    traceHandler,
+    shutdownTelemetry,
+  } = await initializePlatform(
+    {
+      serviceId,
+      displayName: 'Tenant service',
+      description: 'Service for management of ADSP tenants.',
+      clientSecret: environment.CLIENT_SECRET,
+      directoryUrl: new URL(environment.DIRECTORY_URL),
+      accessServiceUrl: new URL(environment.KEYCLOAK_ROOT_URL),
+      configuration: {
+        description:
+          'Service roles with name, description, and whether the role is part of the tenant administrator role.',
+        schema: configurationSchema,
+      },
+      configurationConverter: (c) => Object.entries(c).map(([k, v]) => ({ serviceId: AdspId.parse(k), ...v })),
+      events: [TenantCreatedDefinition, TenantDeletedDefinition],
+      auditActions: TenantAuditActions,
+      roles: [
+        // Note: Tenant Admin role is a special composite role.
+        {
+          role: TenantServiceRoles.TenantAdmin,
+          description: 'Administrator role for accessing the ADSP tenant admin.',
         },
-        configurationConverter: (c) => Object.entries(c).map(([k, v]) => ({ serviceId: AdspId.parse(k), ...v })),
-        events: [TenantCreatedDefinition, TenantDeletedDefinition],
-        auditActions: TenantAuditActions,
-        roles: [
-          // Note: Tenant Admin role is a special composite role.
-          {
-            role: TenantServiceRoles.TenantAdmin,
-            description: 'Administrator role for accessing the ADSP tenant admin.',
-          },
-          {
-            role: TenantServiceRoles.PlatformService,
-            description: 'Service role for backend services for reading tenants.',
-          },
-        ],
-      },
-      { logger },
-      {
-        tenantService: new TenantServiceImpl(repositories.tenantRepository),
-      },
-    );
+        {
+          role: TenantServiceRoles.PlatformService,
+          description: 'Service role for backend services for reading tenants.',
+        },
+      ],
+    },
+    { logger },
+    {
+      tenantService: new TenantServiceImpl(repositories.tenantRepository),
+    },
+  );
 
   passport.use('jwt', coreStrategy);
   passport.use('jwt-tenant', tenantStrategy);
@@ -119,11 +131,11 @@ async function initializeApp(): Promise<express.Application> {
     res.json(swagger);
   });
 
-  return app;
+  return { app, auditService, shutdownTelemetry };
 }
 
 initializeApp()
-  .then((app) => {
+  .then(({ app, auditService, shutdownTelemetry }) => {
     const port = environment.PORT || 3333;
 
     const server = app.listen(port, () => {
@@ -137,12 +149,15 @@ initializeApp()
       process.exit(code);
     };
 
-    process.on('SIGINT', async () => {
-      handleExit('Tenant management api exit, Byte', 1, null);
+    const shutdown = createShutdownHandler({
+      server,
+      auditService,
+      shutdownTelemetry,
+      closeDatabase: () => disconnect(logger),
+      logger,
     });
-    process.on('SIGTERM', async () => {
-      handleExit('Tenant management api was termination, Byte', 1, null);
-    });
+    process.once('SIGTERM', shutdown);
+    process.once('SIGINT', shutdown);
     process.on('uncaughtException', async (err: Error) => {
       handleExit('Tenant management api Uncaught exception', 1, err);
     });
