@@ -36,6 +36,16 @@ describe('tenant audit', () => {
           retentionClass: 'compliance',
           captureChangeSet: true,
         }),
+        'tenant.archived': expect.objectContaining({
+          category: 'administrative',
+          severity: 'warning',
+          retentionClass: 'compliance',
+        }),
+        'tenant.restored': expect.objectContaining({
+          category: 'administrative',
+          severity: 'warning',
+          retentionClass: 'compliance',
+        }),
       });
     });
   });

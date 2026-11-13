@@ -223,17 +223,20 @@ export class KeycloakRealmServiceImpl implements RealmService {
     for (const mapping of ADSP_CLI_CLIENT_SCOPE_MAPPINGS) {
       const sourceClient = (await client.clients.find({ realm, clientId: mapping.client }))[0];
       if (!sourceClient) {
-        this.logger.debug(`Client '${mapping.client}' not found in realm '${realm}' — skipping scope mapping.`, LOG_CONTEXT);
+        this.logger.debug(
+          `Client '${mapping.client}' not found in realm '${realm}' — skipping scope mapping.`,
+          LOG_CONTEXT,
+        );
         continue;
       }
 
       const roles = await Promise.all(
-        mapping.roles.map((roleName) => client.clients.findRole({ realm, id: sourceClient.id, roleName }))
+        mapping.roles.map((roleName) => client.clients.findRole({ realm, id: sourceClient.id, roleName })),
       );
 
       await client.clients.addClientScopeMappings(
         { realm, id: adspCliClient.id, client: sourceClient.id },
-        roles.map((r) => ({ id: r.id, name: r.name }))
+        roles.map((r) => ({ id: r.id, name: r.name })),
       );
     }
 
@@ -246,7 +249,10 @@ export class KeycloakRealmServiceImpl implements RealmService {
    * fullScopeAllowed: false, its tokens will carry exactly those roles and nothing else.
    */
   private async grantCiClientServiceAccountRoles(client: KeycloakAdminClient, realm: string): Promise<void> {
-    this.logger.debug(`Granting service account roles to '${ADSP_CLI_CI_CLIENT_ID}' in realm '${realm}'...`, LOG_CONTEXT);
+    this.logger.debug(
+      `Granting service account roles to '${ADSP_CLI_CI_CLIENT_ID}' in realm '${realm}'...`,
+      LOG_CONTEXT,
+    );
 
     const ciClient = (await client.clients.find({ realm, clientId: ADSP_CLI_CI_CLIENT_ID }))[0];
     const { id: userId } = await client.clients.getServiceAccountUser({ realm, id: ciClient.id });
@@ -577,6 +583,33 @@ export class KeycloakRealmServiceImpl implements RealmService {
 
       return false;
     }
+  }
+
+  async disableRealm(tenant: Tenant): Promise<void> {
+    await this.setRealmEnabled(tenant, false);
+  }
+
+  async enableRealm(tenant: Tenant): Promise<void> {
+    await this.setRealmEnabled(tenant, true);
+  }
+
+  private async setRealmEnabled({ realm }: Tenant, enabled: boolean): Promise<void> {
+    if (!realm) {
+      return;
+    }
+
+    this.logger.info(`${enabled ? 'Enabling' : 'Disabling'} realm '${realm}'...`, LOG_CONTEXT);
+    const client = await this.createAdminClient();
+    await client.realms.update({ realm }, { enabled });
+
+    // The broker client in the management realm is what allows sign in to the tenant realm through core.
+    const brokerClientId = this.brokerClientName(realm);
+    const clientsOnCore = await client.clients.find({ realm: this.managementRealm, clientId: brokerClientId });
+    const brokerClient = clientsOnCore.find((c) => c.clientId === brokerClientId);
+    if (brokerClient) {
+      await client.clients.update({ realm: this.managementRealm, id: brokerClient.id }, { enabled });
+    }
+    this.logger.info(`${enabled ? 'Enabled' : 'Disabled'} realm '${realm}'.`, LOG_CONTEXT);
   }
 
   async deleteRealm({ realm }: Tenant): Promise<boolean> {

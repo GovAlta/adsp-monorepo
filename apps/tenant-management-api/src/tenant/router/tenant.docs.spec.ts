@@ -34,6 +34,8 @@ describe('tenant routers documented behaviour', () => {
   const repositoryMock = { find: jest.fn(), get: jest.fn(), save: jest.fn(), delete: jest.fn() };
   const realmServiceMock = {
     createRealm: jest.fn(),
+    disableRealm: jest.fn(),
+    enableRealm: jest.fn(),
     deleteRealm: jest.fn(),
     findUserId: jest.fn(),
     deleteUserIdp: jest.fn(),
@@ -62,6 +64,7 @@ describe('tenant routers documented behaviour', () => {
     }) as unknown as User;
   const core = (id: string, roles: string[]) => user(id, roles, { isCore: true, tenantId: undefined });
   const serviceAdmin = core('service-admin', [TenantServiceRoles.TenantServiceAdmin]);
+  const purgeAdmin = core('purge-admin', [TenantServiceRoles.TenantServiceAdmin, TenantServiceRoles.TenantPurge]);
   const betaTester = core('beta-tester', [TenantServiceRoles.BetaTester]);
   const tenantAdmin = user('tenant-admin', [TenantServiceRoles.TenantAdmin]);
   const plain = user('plain', []);
@@ -129,6 +132,7 @@ describe('tenant routers documented behaviour', () => {
     (!criteria.idEquals || tenant.id === criteria.idEquals) &&
     (!criteria.nameEquals || tenant.name === criteria.nameEquals) &&
     (!criteria.realmEquals || tenant.realm === criteria.realmEquals) &&
+    (!criteria.statusEquals || tenant.status === criteria.statusEquals) &&
     (!criteria.adminEmailEquals || tenant.adminEmail === criteria.adminEmailEquals);
 
   afterEach(async () => {
@@ -167,6 +171,8 @@ describe('tenant routers documented behaviour', () => {
     });
     repositoryMock.delete.mockResolvedValue(true);
     realmServiceMock.createRealm.mockResolvedValue(undefined);
+    realmServiceMock.disableRealm.mockResolvedValue(undefined);
+    realmServiceMock.enableRealm.mockResolvedValue(undefined);
     realmServiceMock.deleteRealm.mockResolvedValue(true);
     realmServiceMock.findUserId.mockResolvedValue('user-id');
     realmServiceMock.deleteUserIdp.mockResolvedValue(undefined);
@@ -215,10 +221,12 @@ describe('tenant routers documented behaviour', () => {
     });
 
     describe('DELETE /api/tenant/v1', () => {
-      it('allows a core tenant-service-admin to delete a tenant by realm', async () => {
+      it('allows a core tenant-service-admin to archive a tenant by realm', async () => {
         const res = await request(createApp(serviceAdmin)).delete('/api/tenant/v1?realm=other-realm');
         expect(res.status).toBe(200);
-        expect(res.body).toEqual({ deletedRealm: true, deletedTenant: true, success: true });
+        expect(res.body).toMatchObject({ name: 'Other', status: 'archived' });
+        expect(realmServiceMock.disableRealm).toHaveBeenCalled();
+        expect(realmServiceMock.deleteRealm).not.toHaveBeenCalled();
       });
 
       it('rejects a user without the tenant-service-admin role', async () => {
@@ -444,6 +452,23 @@ describe('tenant routers documented behaviour', () => {
         expect(repositoryMock.find).toHaveBeenCalledWith(expect.objectContaining({ activeOnly: true }));
       });
 
+      it('lets a core tenant-service-admin find archived tenants', async () => {
+        tenants[1].archive();
+        const res = await request(createApp(serviceAdmin)).get('/api/tenant/v2/tenants?status=archived');
+        expect(res.status).toBe(200);
+        expect(res.body.results).toEqual([expect.objectContaining({ name: 'Other', status: 'archived' })]);
+      });
+
+      it('responds 401 for archived tenants without the tenant-service-admin role', async () => {
+        const res = await request(createApp(core('core', []))).get('/api/tenant/v2/tenants?status=archived');
+        expect(res.status).toBe(401);
+      });
+
+      it('responds 400 for an unsupported status', async () => {
+        const res = await request(createApp(serviceAdmin)).get('/api/tenant/v2/tenants?status=provisioning');
+        expect(res.status).toBe(400);
+      });
+
       it.each([`name=${'a'.repeat(51)}`, `realm=${'a'.repeat(51)}`, 'adminEmail=not-an-email'])(
         'responds 400 for %s',
         async (query) => {
@@ -591,10 +616,35 @@ describe('tenant routers documented behaviour', () => {
     });
 
     describe('DELETE /api/tenant/v2/tenants/:id', () => {
-      it('allows a core tenant-service-admin', async () => {
+      it('allows a core tenant-service-admin to archive a tenant', async () => {
         const res = await request(createApp(serviceAdmin)).delete('/api/tenant/v2/tenants/other');
         expect(res.status).toBe(200);
+        expect(res.body).toMatchObject({ name: 'Other', status: 'archived', deletedAt: expect.any(String) });
+        expect(realmServiceMock.deleteRealm).not.toHaveBeenCalled();
+      });
+
+      it('responds 403 for purge without the tenant-purge role', async () => {
+        const res = await request(createApp(serviceAdmin)).delete('/api/tenant/v2/tenants/other?purge=true');
+        expect(res.status).toBe(403);
+        expect(realmServiceMock.deleteRealm).not.toHaveBeenCalled();
+      });
+
+      it('responds 400 for purge of a tenant that is not archived', async () => {
+        const res = await request(createApp(purgeAdmin)).delete('/api/tenant/v2/tenants/other?purge=true');
+        expect(res.status).toBe(400);
+        expect(realmServiceMock.deleteRealm).not.toHaveBeenCalled();
+      });
+
+      it('allows a tenant-purge user to purge an archived tenant', async () => {
+        tenants[1].archive();
+        const res = await request(createApp(purgeAdmin)).delete('/api/tenant/v2/tenants/other?purge=true');
+        expect(res.status).toBe(200);
         expect(res.body).toEqual({ deletedRealm: true, deletedTenant: true, success: true });
+      });
+
+      it('responds 400 for an invalid purge value', async () => {
+        const res = await request(createApp(purgeAdmin)).delete('/api/tenant/v2/tenants/other?purge=maybe');
+        expect(res.status).toBe(400);
       });
 
       it('rejects a user without the tenant-service-admin role', async () => {
@@ -610,6 +660,37 @@ describe('tenant routers documented behaviour', () => {
 
       it('responds 401 without a bearer token', async () => {
         const res = await request(createApp(null)).delete('/api/tenant/v2/tenants/other');
+        expect(res.status).toBe(401);
+      });
+    });
+
+    describe('POST /api/tenant/v2/tenants/:id/restore', () => {
+      it('allows a core tenant-service-admin to restore an archived tenant', async () => {
+        tenants[1].archive();
+        const res = await request(createApp(serviceAdmin)).post('/api/tenant/v2/tenants/other/restore');
+        expect(res.status).toBe(200);
+        expect(res.body).toMatchObject({ name: 'Other', status: 'active' });
+        expect(res.body.deletedAt).toBeUndefined();
+        expect(realmServiceMock.enableRealm).toHaveBeenCalled();
+      });
+
+      it('responds 400 for a tenant that is not archived', async () => {
+        const res = await request(createApp(serviceAdmin)).post('/api/tenant/v2/tenants/other/restore');
+        expect(res.status).toBe(400);
+      });
+
+      it('rejects a user without the tenant-service-admin role', async () => {
+        const res = await request(createApp(tenantAdmin)).post('/api/tenant/v2/tenants/test/restore');
+        expect(res.status).toBe(401);
+      });
+
+      it('responds 404 for an unknown tenant', async () => {
+        const res = await request(createApp(serviceAdmin)).post('/api/tenant/v2/tenants/unknown/restore');
+        expect(res.status).toBe(404);
+      });
+
+      it('responds 401 without a bearer token', async () => {
+        const res = await request(createApp(null)).post('/api/tenant/v2/tenants/other/restore');
         expect(res.status).toBe(401);
       });
     });

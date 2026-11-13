@@ -13,12 +13,14 @@ import { v4 as uuidv4 } from 'uuid';
 import { Logger } from 'winston';
 import { requireBetaTesterOrAdmin, requireTenantServiceAdmin } from '../../middleware/authentication';
 import {
+  TenantArchivedAuditAction,
   TenantCreatedAuditAction,
   TenantDeletedAuditAction,
+  TenantRestoredAuditAction,
   TenantUpdatedAuditAction,
   toTenantAuditDetails,
 } from '../audit';
-import { tenantCreated, tenantDeleted, tenantNameUpdated } from '../events';
+import { tenantArchived, tenantCreated, tenantDeleted, tenantNameUpdated, tenantRestored } from '../events';
 import { Tenant, TenantEntity } from '../models';
 import { TenantRepository } from '../repository';
 import { TenantServiceRoles } from '../roles';
@@ -49,7 +51,7 @@ export function getTenants(logger: Logger, repository: TenantRepository): Reques
   return async (req, res, next) => {
     try {
       const user = req.user;
-      const { name, realm, adminEmail } = req.query;
+      const { name, realm, adminEmail, status } = req.query;
       const criteria: TenantCriteria = {};
       if (name) {
         criteria.nameEquals = `${name}`;
@@ -61,6 +63,13 @@ export function getTenants(logger: Logger, repository: TenantRepository): Reques
 
       if (adminEmail) {
         criteria.adminEmailEquals = `${adminEmail}`;
+      }
+
+      if (status === 'archived') {
+        if (!user?.isCore || !user.roles.includes(TenantServiceRoles.TenantServiceAdmin)) {
+          throw new UnauthorizedError('tenant-service-admin role needed!');
+        }
+        criteria.statusEquals = 'archived';
       }
 
       if (user?.tenantId) {
@@ -100,7 +109,7 @@ export function getTenant(logger: Logger, repository: TenantRepository): Request
       }
 
       const tenant = await repository.get(id);
-      if (!tenant) {
+      if (!tenant || (tenant.status === 'archived' && !user.isCore)) {
         throw new NotFoundError('tenant', id);
       }
 
@@ -207,7 +216,81 @@ export async function removeTenant(
   return { deletedRealm, deletedTenant, success };
 }
 
+/**
+ * Archives the tenant by disabling its realm and marking the record.
+ * Archiving an archived tenant has no effect.
+ */
+export async function archiveTenant(
+  entity: TenantEntity,
+  user: User,
+  realmService: RealmService,
+  eventService: EventService,
+  auditService: AuditService,
+): Promise<TenantEntity> {
+  if (entity.status === 'archived') {
+    return entity;
+  }
+
+  if (entity.status === 'provisioning') {
+    throw new InvalidOperationError('Tenant cannot be archived while it is being provisioned.');
+  }
+
+  await realmService.disableRealm(entity);
+  entity.archive();
+  const archived = await entity.save();
+
+  const tenant = mapTenant(archived);
+  eventService.send(tenantArchived(user, { ...tenant, id: AdspId.parse(tenant.id) }));
+  void auditService.record(TenantArchivedAuditAction, toTenantAuditDetails(user, tenant));
+
+  return archived;
+}
+
 export function deleteTenant(
+  realmService: RealmService,
+  repository: TenantRepository,
+  eventService: EventService,
+  auditService: AuditService,
+): RequestHandler {
+  return async (req, res, next) => {
+    try {
+      const { id } = req.params;
+      const purge = req.query.purge === 'true';
+
+      if (purge && !req.user.roles.includes(TenantServiceRoles.TenantPurge)) {
+        throw new UnauthorizedUserError('purge tenant', req.user);
+      }
+
+      const entity = await repository.get(id);
+      if (!entity) {
+        throw new NotFoundError('tenant', id);
+      }
+
+      if (!purge) {
+        const archived = await archiveTenant(entity, req.user, realmService, eventService, auditService);
+        res.send(mapTenant(archived));
+        return;
+      }
+
+      if (entity.status !== 'archived') {
+        throw new InvalidOperationError('Tenant must be archived before it can be purged.');
+      }
+
+      const tenant = mapTenant(entity);
+      const { deletedRealm, deletedTenant, success } = await removeTenant(entity, req.user, realmService, auditService);
+
+      if (deletedTenant) {
+        eventService.send(tenantDeleted(req.user, { ...tenant, id: AdspId.parse(tenant.id) }));
+      }
+      res.send({ deletedRealm, deletedTenant, success });
+    } catch (err) {
+      next(err);
+    }
+  };
+}
+
+export function restoreTenant(
+  logger: Logger,
   realmService: RealmService,
   repository: TenantRepository,
   eventService: EventService,
@@ -221,15 +304,22 @@ export function deleteTenant(
       if (!entity) {
         throw new NotFoundError('tenant', id);
       }
-      const tenant = mapTenant(entity);
 
-      const { deletedRealm, deletedTenant, success } = await removeTenant(entity, req.user, realmService, auditService);
-
-      if (deletedTenant) {
-        eventService.send(tenantDeleted(req.user, { ...tenant, id: AdspId.parse(tenant.id) }));
+      if (entity.status !== 'archived') {
+        throw new InvalidOperationError('Only an archived tenant can be restored.');
       }
-      res.send({ deletedRealm, deletedTenant, success });
+
+      await realmService.enableRealm(entity);
+      entity.restore();
+      const restored = await entity.save();
+
+      const tenant = mapTenant(restored);
+      eventService.send(tenantRestored(req.user, { ...tenant, id: AdspId.parse(tenant.id) }));
+      void auditService.record(TenantRestoredAuditAction, toTenantAuditDetails(req.user, tenant));
+
+      res.send(tenant);
     } catch (err) {
+      logger.error(`Failed to restore tenant with error: ${err.message}`, LOG_CONTEXT);
       next(err);
     }
   };
@@ -381,6 +471,10 @@ export const createTenantV2Router = ({
             optional: true,
             isEmail: true,
           },
+          status: {
+            optional: true,
+            isIn: { options: [['active', 'archived']] },
+          },
         },
         ['query'],
       ),
@@ -420,7 +514,25 @@ export const createTenantV2Router = ({
     '/tenants/:id',
     assertAuthenticatedHandler,
     requireTenantServiceAdmin,
+    createValidationHandler(
+      ...checkSchema(
+        {
+          purge: {
+            optional: true,
+            isIn: { options: [['true', 'false']] },
+          },
+        },
+        ['query'],
+      ),
+    ),
     deleteTenant(realmService, tenantRepository, eventService, auditService),
+  );
+
+  router.post(
+    '/tenants/:id/restore',
+    assertAuthenticatedHandler,
+    requireTenantServiceAdmin,
+    restoreTenant(logger, realmService, tenantRepository, eventService, auditService),
   );
 
   router.patch(

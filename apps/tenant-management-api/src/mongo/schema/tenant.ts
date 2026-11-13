@@ -21,9 +21,14 @@ export const tenantSchema: Schema = new Schema(
     },
     status: {
       type: String,
-      enum: ['provisioning', 'active'],
+      enum: ['provisioning', 'active', 'archived'],
       default: 'active',
     },
+    deletedAt: {
+      type: Date,
+    },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
+
+tenantSchema.index({ status: 1, deletedAt: 1 });
