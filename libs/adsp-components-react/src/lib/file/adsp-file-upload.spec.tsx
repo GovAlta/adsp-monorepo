@@ -5,7 +5,12 @@ import { ADSPFileUpload, FILE_SERVICE_MAX_FILE_SIZE } from './adsp-file-upload';
 import { AdspThemeProvider } from '../theme/adsp-theme-provider';
 
 const fileTypeId = 'supporting-docs';
-const fileType = { id: fileTypeId, name: 'Supporting documents', anonymousRead: false };
+const fileType = {
+  id: fileTypeId,
+  name: 'Supporting documents',
+  anonymousRead: false,
+  allowedFileTypes: [] as string[],
+};
 const file = new File(['%PDF-1.7'], 'Annual report.pdf', { type: 'application/pdf' });
 
 const stored = (): FileMetadata => ({
@@ -36,12 +41,10 @@ const findGoa = (id: string) =>
   });
 
 // The GoA wrappers listen for the web components' custom events rather than DOM events.
-const selectFile = (selected: File) =>
+const selectFile = (selected: File | File[]) =>
   act(() => {
-    fireEvent(
-      byGoaTestId('upload-input') as HTMLElement,
-      new CustomEvent('_selectFile', { detail: { file: selected } }),
-    );
+    const detail = Array.isArray(selected) ? { file: selected[0], files: selected } : { file: selected };
+    fireEvent(byGoaTestId('upload-input') as HTMLElement, new CustomEvent('_selectFile', { detail }));
   });
 const clickGoabButton = (label: string) => fireEvent(screen.getByText(label), new CustomEvent('_click'));
 
@@ -79,10 +82,51 @@ describe('ADSPFileUpload', () => {
     expect(await screen.findByText('Annual report.pdf uploaded.')).toHaveAttribute('role', 'status');
     expect(client.uploadFile).toHaveBeenCalledWith(fileTypeId, file, expect.objectContaining({ recordId: 'record-1' }));
     expect(onUpload).toHaveBeenCalledWith(stored());
-    expect(byGoaTestId('upload-card') as HTMLElement).toHaveAttribute('progress', '-1');
+    // An uploaded file has no card, so there is no Remove button that would leave it in File service.
+    expect(byGoaTestId('upload-card-0')).toBeNull();
   });
 
-  test('shows progress and hides the drop area while uploading', async () => {
+  test('uploads every file dropped at once', async () => {
+    // Arrange
+    const second = new File(['x'], 'Budget.pdf', { type: 'application/pdf' });
+    const client = createClient({
+      uploadFile: jest.fn((_type: string, selected: File) => Promise.resolve({ ...stored(), filename: selected.name })),
+    });
+    await renderUpload(client);
+
+    // Act
+    selectFile([file, second]);
+
+    // Assert
+    expect(await screen.findByText('Annual report.pdf uploaded.')).toBeInTheDocument();
+    expect(await screen.findByText('Budget.pdf uploaded.')).toBeInTheDocument();
+    expect(client.uploadFile).toHaveBeenCalledTimes(2);
+    expect(byGoaTestId('upload-input')).not.toBeNull();
+  });
+
+  test('lists the allowed formats and rejects another format without sending it or offering to retry', async () => {
+    // Arrange
+    const client = createClient({
+      getFileType: jest.fn().mockResolvedValue({ ...fileType, allowedFileTypes: ['.pdf', '.docx'] }),
+    });
+    await renderUpload(client);
+    const video = new File(['x'], 'clip.mp4', { type: 'video/mp4' });
+
+    // Act
+    selectFile(video);
+
+    // Assert
+    expect(screen.getByTestId('upload-guidance')).toHaveTextContent('Allowed formats: .pdf or .docx');
+    const alert = await screen.findByRole('alert');
+    expect(alert).toHaveTextContent(
+      "clip.mp4: This file format isn't supported. Choose a file in one of the allowed formats. Allowed formats: .pdf or .docx.",
+    );
+    expect(screen.queryByText('Try again')).not.toBeInTheDocument();
+    expect(client.uploadFile).not.toHaveBeenCalled();
+    expect(byGoaTestId('upload-card-0') as HTMLElement).toHaveAttribute('progress', '-1');
+  });
+
+  test('shows progress, holding below 100% until File service answers', async () => {
     // Arrange
     let report: (fraction: number) => void = () => undefined;
     const client = createClient({
@@ -99,9 +143,11 @@ describe('ADSPFileUpload', () => {
 
     // Assert
     expect(screen.getByRole('status')).toHaveTextContent('Uploading Annual report.pdf...');
-    expect(byGoaTestId('upload-card') as HTMLElement).toHaveAttribute('progress', '50');
-    expect(byGoaTestId('upload-card') as HTMLElement).toHaveAttribute('filename', 'Annual report.pdf');
-    expect(byGoaTestId('upload-input')).toBeNull();
+    expect(byGoaTestId('upload-card-0') as HTMLElement).toHaveAttribute('progress', '50');
+    expect(byGoaTestId('upload-card-0') as HTMLElement).toHaveAttribute('filename', 'Annual report.pdf');
+    act(() => report(1));
+    expect(byGoaTestId('upload-card-0') as HTMLElement).toHaveAttribute('progress', '99');
+    expect(screen.queryByText('Annual report.pdf uploaded.')).not.toBeInTheDocument();
   });
 
   test('cancelling an upload returns to the drop area without an error', async () => {
@@ -120,14 +166,14 @@ describe('ADSPFileUpload', () => {
     // Act
     await act(async () => {
       fireEvent(
-        byGoaTestId('upload-card') as HTMLElement,
+        byGoaTestId('upload-card-0') as HTMLElement,
         new CustomEvent('_cancel', { detail: { filename: file.name } }),
       );
     });
 
     // Assert
     expect(byGoaTestId('upload-input')).not.toBeNull();
-    expect(byGoaTestId('upload-card')).toBeNull();
+    expect(byGoaTestId('upload-card-0')).toBeNull();
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
 
@@ -143,9 +189,11 @@ describe('ADSPFileUpload', () => {
 
     // Assert
     const alert = await screen.findByRole('alert');
-    expect(alert).toHaveTextContent("File service didn't accept this file. Check the file and try again.");
+    expect(alert).toHaveTextContent(
+      "Annual report.pdf: File service didn't accept this file. Check the file and try again.",
+    );
     expect(screen.queryByText('Try again')).not.toBeInTheDocument();
-    expect(byGoaTestId('upload-card') as HTMLElement).toHaveAttribute(
+    expect(byGoaTestId('upload-card-0') as HTMLElement).toHaveAttribute(
       'error',
       "File service didn't accept this file. Check the file and try again.",
     );
@@ -159,7 +207,7 @@ describe('ADSPFileUpload', () => {
     });
     await renderUpload(client);
     selectFile(file);
-    await screen.findByText('Something went wrong while uploading this file.');
+    await screen.findByText('Annual report.pdf: Something went wrong while uploading this file.');
 
     // Act
     clickGoabButton('Try again');
@@ -242,7 +290,7 @@ describe('ADSPFileUpload', () => {
     // Act
     await act(async () => {
       fireEvent(
-        byGoaTestId('upload-card') as HTMLElement,
+        byGoaTestId('upload-card-0') as HTMLElement,
         new CustomEvent('_cancel', { detail: { filename: file.name } }),
       );
     });
@@ -258,7 +306,7 @@ describe('ADSPFileUpload', () => {
     const client = createClient({ uploadFile: jest.fn().mockRejectedValue(new TypeError('offline')) });
     await renderUpload(client);
     selectFile(file);
-    await screen.findByText('Something went wrong while uploading this file.');
+    await screen.findByText('Annual report.pdf: Something went wrong while uploading this file.');
 
     // Act
     clickGoabButton('Try again');
