@@ -1,141 +1,76 @@
-import React, { FunctionComponent } from 'react';
+import React, { FunctionComponent, useState } from 'react';
 import DataTable from '@components/DataTable';
-import { TableDiv, MoreDetails } from '../styled-components';
-import { useState } from 'react';
-
 import { GoAContextMenuIcon } from '@components/ContextMenu';
 import { SharepointConnection } from '@store/sharePoint/actions';
+import { MoreDetails, TableDiv } from '../styled-components';
 
-interface CalendarItemProps {
-  connection: SharepointConnection;
-  onEdit?: (connection: SharepointConnection, tenantMode: boolean) => void;
-  onDelete?: (connection: SharepointConnection) => void;
-  tenantMode: boolean;
-  showDetails: boolean;
-  onToggleDetails: () => void;
-}
-
-const ConnectionItemComponent: FunctionComponent<CalendarItemProps> = ({
-  connection,
-  onDelete,
-  onEdit,
-  tenantMode,
-  showDetails,
-  onToggleDetails,
-}: CalendarItemProps) => {
-  return (
-    <>
-      <tr key={connection.id}>
-        <td headers="connection-name">{connection.name}</td>
-        <td headers="connection-siteId">{connection.siteId}</td>
-        <td headers="connection-listId">{connection.listId}</td>
-        <td headers="connection-actions">
-          <div>
-            <GoAContextMenuIcon
-              title="Toggle details"
-              type={showDetails ? 'eye-off' : 'eye'}
-              onClick={onToggleDetails}
-              testId="toggle-details-visibility"
-            />
-            <GoAContextMenuIcon
-              type={tenantMode ? 'create' : 'eye'}
-              title={tenantMode ? 'Edit' : 'View'}
-              testId={`connection-edit-${connection.id}`}
-              onClick={() => {
-                onEdit(connection, tenantMode);
-              }}
-            />
-
-            {tenantMode && (
-              <GoAContextMenuIcon
-                testId="delete-icon"
-                title="Delete"
-                type="trash"
-                onClick={() => {
-                  onDelete(connection);
-                }}
-              />
-            )}
-          </div>
-        </td>
-      </tr>
-      {showDetails && (
-        <tr>
-          <td
-            colSpan={5}
-            style={{
-              padding: '0px',
-            }}
-          >
-            <MoreDetails>
-              <p>ID</p>
-              <span>{connection.id}</span>
-
-              <p>Tenant ID</p>
-              <span>{connection.tenantId}</span>
-              <p>SharePoint site ID</p>
-              <span>{connection.siteId}</span>
-              <p>SharePoint list ID</p>
-              <span>{connection.listId}</span>
-              <p>Client ID</p>
-              <span>{connection.clientId}</span>
-            </MoreDetails>
-          </td>
-        </tr>
-      )}
-    </>
-  );
-};
-
-interface calendarTableProps {
+interface ConnectionTableProps {
   connections: Record<string, SharepointConnection>;
-  onEdit?: (connection: SharepointConnection, tenantMode: boolean) => void;
-  onDelete?: (connection: SharepointConnection) => void;
-  tenantMode?: boolean;
+  onEdit: (connection: SharepointConnection) => void;
+  onDelete: (connection: SharepointConnection) => void;
 }
 
-export const ConnectionTableComponent: FunctionComponent<calendarTableProps> = ({
+export const ConnectionTableComponent: FunctionComponent<ConnectionTableProps> = ({
   connections,
   onEdit,
   onDelete,
-  tenantMode,
 }) => {
-  const [activeRow, setActiveRow] = useState(null);
+  const [activeRow, setActiveRow] = useState<string | null>(null);
+
   return (
     <TableDiv key="connection">
       <DataTable data-testid="connection-table">
-        <thead data-testid="connection-table-header">
+        <thead>
           <tr>
-            <th id="connection-name" data-testid="connection-table-name" style={{ width: '25%' }}>
-              Connection name
-            </th>
-            <th id="connection-site-id" data-testid="connection-table-header-id" style={{ width: '25%' }}>
-              Site ID
-            </th>
-            <th id="connection-list-id" data-testid="connection-table-header-description" style={{ width: '25%' }}>
-              List ID
-            </th>
-            <th id="connection-action" data-testid="connection-table-header-actions" style={{ width: '25%' }}>
-              Actions
-            </th>
+            <th style={{ width: '30%' }}>Connection name</th>
+            <th style={{ width: '50%' }}>Site ID</th>
+            <th style={{ width: '20%' }}>Actions</th>
           </tr>
         </thead>
-
-        <tbody key="connection-detail">
-          {Object.keys(connections).map((connectionName) => (
-            <ConnectionItemComponent
-              key={connectionName}
-              connection={connections[connectionName]}
-              onEdit={onEdit}
-              onDelete={onDelete}
-              tenantMode={tenantMode}
-              showDetails={activeRow === connections[connectionName]['id']}
-              onToggleDetails={() => {
-                setActiveRow(
-                  activeRow === connections[connectionName]['id'] ? null : connections[connectionName]['id'],
-                );
-              }}
-            />
+        <tbody>
+          {Object.values<SharepointConnection>(connections).map((connection) => (
+            <React.Fragment key={connection.id}>
+              <tr>
+                <td>{connection.name}</td>
+                <td>{connection.siteId}</td>
+                <td>
+                  <GoAContextMenuIcon
+                    title="Toggle details"
+                    type={activeRow === connection.id ? 'eye-off' : 'eye'}
+                    testId={`connection-details-${connection.id}`}
+                    onClick={() => setActiveRow(activeRow === connection.id ? null : connection.id)}
+                  />
+                  <GoAContextMenuIcon
+                    type="create"
+                    title="Edit"
+                    testId={`connection-edit-${connection.id}`}
+                    onClick={() => onEdit(connection)}
+                  />
+                  <GoAContextMenuIcon
+                    type="trash"
+                    title="Delete"
+                    testId={`connection-delete-${connection.id}`}
+                    onClick={() => onDelete(connection)}
+                  />
+                </td>
+              </tr>
+              {activeRow === connection.id && (
+                <tr>
+                  <td colSpan={3} style={{ padding: 0 }}>
+                    <MoreDetails>
+                      <p>Connection ID</p>
+                      <span>{connection.id}</span>
+                      <p>Entra tenant ID</p>
+                      <span>{connection.entraTenantId}</span>
+                      <p>Client ID</p>
+                      <span>{connection.clientId}</span>
+                      <p>SharePoint site ID</p>
+                      <span>{connection.siteId}</span>
+                    </MoreDetails>
+                  </td>
+                </tr>
+              )}
+            </React.Fragment>
           ))}
         </tbody>
       </DataTable>
