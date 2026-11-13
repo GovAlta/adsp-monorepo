@@ -128,7 +128,7 @@ describe('notification audit', () => {
         channel: Channel.email,
         event: 'test:happened',
         subscriberId: 'subscriber-1',
-        context: { value: 1 },
+        contextKeys: ['value'],
       },
     });
     expect(JSON.stringify(details)).not.toMatch(/tester@example.com|Secret/);
