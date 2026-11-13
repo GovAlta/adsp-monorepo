@@ -220,7 +220,7 @@ describe('stateless HTTP', () => {
     const response = await postMcp(running.endpoint, TOOLS_LIST_REQUEST);
     const body = await response.json();
 
-    expect({ status: response.status, toolCount: body.result?.tools.length }).toEqual({ status: 200, toolCount: 7 });
+    expect({ status: response.status, toolCount: body.result?.tools.length }).toEqual({ status: 200, toolCount: 8 });
   });
 
   it('ignores an Mcp-Session-Id header from an earlier stateful session', async () => {

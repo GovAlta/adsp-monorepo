@@ -10,6 +10,7 @@ import { createDocsTools } from './tools/registerDocsTools';
 import { createQuickstartTool } from './tools/registerQuickstartTool';
 import { createServiceRolesTools } from './tools/registerServiceRolesTool';
 import { createSdkTools } from './tools/registerSdkTools';
+import { createServerInfoTool } from './tools/registerServerInfoTool';
 import { LiveToolDefinition, ToolDefinition } from './tools/types';
 import { readPackageVersion } from './version';
 
@@ -36,12 +37,14 @@ export function loadAdspMcpTools(options: CreateAdspMcpServerOptions = {}): Adsp
   }
 
   const started = performance.now();
+  const docs = new DocsRepository(docsRoot);
   const tools = [
-    ...createDocsTools(new DocsRepository(docsRoot)),
+    ...createDocsTools(docs),
     ...createSdkTools(),
     ...createQuickstartTool(),
     ...createServiceRolesTools(),
     ...createConfigurationSchemaTools(),
+    ...createServerInfoTool(docs),
   ];
   const loaded = { tools, toolsByName: new Map(tools.map((tool) => [tool.name, tool])) };
   toolsByDocsRoot.set(docsRoot, loaded);
@@ -60,7 +63,10 @@ export function createAdspMcpServer(options: CreateAdspMcpServerOptions = {}): S
   // would fix it but risks changing runtime behavior for unrelated consumers (e.g. agent-service's Mastra agent
   // config). Server + setRequestHandler avoids the SDK's zod-compat generics entirely; tools validate their own
   // args with zod as a plain value (see tools/*.ts), never passing a schema through the SDK's type machinery.
-  const server = new Server({ name: 'adsp-sdk-mcp-server', version: readPackageVersion() }, { capabilities: { tools: {} } });
+  const server = new Server(
+    { name: 'adsp-sdk-mcp-server', version: readPackageVersion() },
+    { capabilities: { tools: {} } },
+  );
 
   server.setRequestHandler(ListToolsRequestSchema, async () => ({
     tools: tools.map(({ name, description, inputSchema }) => ({ name, description, inputSchema })),

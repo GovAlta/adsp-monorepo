@@ -20,6 +20,8 @@ Best practices for keeping an ADSP service's API documentation complete and accu
 | Documented-behaviour spec | `apps/<service>/src/<domain>/router/<resource>.docs.spec.ts` | Fails CI when a response code isn't documented |
 | Service guide | `docs/services/<service>.md` | Concepts, roles, tenancy, events, and code examples (GitHub Pages) |
 
+A change under `docs/` also needs `npx nx run adsp-sdk-mcp-server:update-docs-lock`, with the updated lock committed in the same PR, because the MCP server bundles the docs (see `libs/adsp-sdk-mcp-server/README.md`, Refresh workflow).
+
 Node.js services bundle `*.swagger.yml` fragments (and any `@swagger` JSDoc comments) with `swagger-jsdoc-webpack-plugin`. Prefer YAML fragments over JSDoc, because the docs spec can read them. Services in other languages use their framework's OpenAPI tooling, but the same principles and checklist apply.
 
 ## Checklist: adding or changing an endpoint
