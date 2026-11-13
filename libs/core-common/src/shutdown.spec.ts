@@ -1,3 +1,6 @@
+/**
+ * @jest-environment node
+ */
 import { Logger } from 'winston';
 import { createShutdownHandler } from './shutdown';
 
@@ -18,27 +21,26 @@ describe('createShutdownHandler', () => {
       }),
     };
     const auditService = { flush: jest.fn(async () => void steps.push('audit-flush')) };
-    const closeDatabase = jest.fn(async () => void steps.push('database-close'));
     const shutdownTelemetry = jest.fn(async () => void steps.push('telemetry-shutdown'));
     const exit = jest.fn((code: number) => void steps.push(`exit-${code}`));
 
     const shutdown = createShutdownHandler({
+      serviceName: 'Test service',
       server: server as never,
       auditService,
       shutdownTelemetry,
-      closeDatabase,
       logger,
       exit,
     });
 
-    return { steps, shutdown, server, auditService, closeDatabase, exit, finishRequests: () => finishRequests() };
+    return { steps, shutdown, server, auditService, exit, finishRequests: () => finishRequests() };
   };
 
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
-  it('waits for in-flight requests before flushing audit events, then closes the database and telemetry', async () => {
+  it('waits for in-flight requests before flushing audit events, then flushes telemetry', async () => {
     const { steps, shutdown, auditService, finishRequests } = setup();
 
     const done = shutdown();
@@ -49,14 +51,7 @@ describe('createShutdownHandler', () => {
     finishRequests();
     await done;
 
-    expect(steps).toEqual([
-      'close',
-      'requests-drained',
-      'audit-flush',
-      'database-close',
-      'telemetry-shutdown',
-      'exit-0',
-    ]);
+    expect(steps).toEqual(['close', 'requests-drained', 'audit-flush', 'telemetry-shutdown', 'exit-0']);
   });
 
   it('runs once when signalled more than once', async () => {
@@ -78,20 +73,13 @@ describe('createShutdownHandler', () => {
     finishRequests();
     await done;
 
-    expect(steps).toEqual([
-      'close',
-      'requests-drained',
-      'audit-flush',
-      'database-close',
-      'telemetry-shutdown',
-      'exit-1',
-    ]);
+    expect(steps).toEqual(['close', 'requests-drained', 'audit-flush', 'telemetry-shutdown', 'exit-1']);
     expect(logger.error).toHaveBeenCalledWith(expect.stringContaining('not running'));
   });
 
-  it('exits with an error code when the database fails to close', async () => {
-    const { shutdown, closeDatabase, finishRequests, exit } = setup();
-    closeDatabase.mockRejectedValueOnce(new Error('oh noes!'));
+  it('exits with an error code when audit events fail to flush', async () => {
+    const { shutdown, auditService, finishRequests, exit } = setup();
+    auditService.flush.mockRejectedValueOnce(new Error('oh noes!'));
 
     const done = shutdown();
     finishRequests();
@@ -105,10 +93,10 @@ describe('createShutdownHandler', () => {
     try {
       const exit = jest.fn();
       const shutdown = createShutdownHandler({
+        serviceName: 'Test service',
         server: { close: jest.fn() } as never,
         auditService: { flush: jest.fn() },
         shutdownTelemetry: jest.fn(),
-        closeDatabase: jest.fn(),
         logger,
         exit,
         timeoutMs: 1000,

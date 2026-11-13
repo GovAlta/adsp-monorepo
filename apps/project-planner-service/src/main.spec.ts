@@ -29,6 +29,7 @@ jest.mock('@abgov/adsp-service-sdk', () => ({
 jest.mock('@core-services/core-common', () => ({
   createLogger: () => mockLogger,
   createErrorHandler: jest.fn(),
+  createShutdownHandler: mockCreateShutdownHandler,
 }));
 jest.mock('./environments/environment', () => ({ environment: mockEnvironment }));
 jest.mock('./planner', () => ({
@@ -38,7 +39,6 @@ jest.mock('./planner', () => ({
   PlannerServiceRoles: {},
 }));
 jest.mock('./postgres', () => ({ createRepositories: mockCreateRepositories }));
-jest.mock('./shutdown', () => ({ createShutdownHandler: mockCreateShutdownHandler }));
 
 describe('main', () => {
   const healthCheck = jest.fn();
@@ -170,6 +170,7 @@ describe('main', () => {
     await startMain();
 
     expect(mockCreateShutdownHandler).toHaveBeenCalledWith({
+      serviceName: 'Project planner service',
       server,
       auditService,
       shutdownTelemetry,

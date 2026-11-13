@@ -13,7 +13,12 @@ import {
   ServiceMetricsValueDefinition,
 } from '@abgov/adsp-service-sdk';
 import type { User } from '@abgov/adsp-service-sdk';
-import { createLogger, createErrorHandler, AjvValidationService } from '@core-services/core-common';
+import {
+  createLogger,
+  createErrorHandler,
+  AjvValidationService,
+  createShutdownHandler,
+} from '@core-services/core-common';
 import { environment } from './environments/environment';
 import { createRepositories } from './mongo';
 import {
@@ -54,106 +59,107 @@ const initializeApp = async () => {
     healthCheck,
     metricsHandler,
     traceHandler,
+    shutdownTelemetry,
   } = await initializePlatform(
-      {
-        serviceId,
-        displayName: 'Configuration service',
-        description: 'Service for managing configuration',
-        tracing: environment.OTEL_EXPORTER_OTLP_ENDPOINT,
-        metrics: environment.OTEL_EXPORTER_OTLP_ENDPOINT,
-        roles: [
-          {
-            role: ConfigurationServiceRoles.Reader,
-            description: 'Reader role that grants access to configuration.',
-          },
-          {
-            role: ConfigurationServiceRoles.ConfigurationAdmin,
-            description: 'Administrator role that grants access to and modification of configuration.',
-            inTenantAdmin: true,
-          },
-          {
-            role: ConfigurationServiceRoles.ConfiguredService,
-            description: 'Service role that grants service accounts access to configuration.',
-          },
-        ],
-        events: [
-          ConfigurationUpdatedDefinition,
-          ConfigurationDeletedDefinition,
-          RevisionCreatedDefinition,
-          ActiveRevisionSetDefinition,
-        ],
-        eventStreams: [ConfigurationUpdatesStream],
-        auditActions: ConfigurationAuditActions,
-        audit: { enabled: environment.CONFIGURATION_AUDIT_ENABLED },
-        clientSecret: environment.CLIENT_SECRET,
-        accessServiceUrl: new URL(environment.KEYCLOAK_ROOT_URL),
-        directoryUrl: new URL(environment.DIRECTORY_URL),
-        // Configuration service registers against itself and Keycloak doesn't include aud in that case.
-        ignoreServiceAud: true,
-        values: [ServiceMetricsValueDefinition],
-        serviceConfigurations: [
-          // Register cache service target for configuration.
-          {
-            serviceId: adspId`urn:ads:platform:cache-service`,
-            configuration: {
-              targets: {
-                [`${serviceId}`]: {
-                  ttl: 8 * 60 * 60,
-                  invalidationEvents: [
-                    {
-                      namespace: serviceId.service,
-                      name: ConfigurationDeletedDefinition.name,
-                      resourceIdPath: 'urn',
-                    },
-                    {
-                      namespace: serviceId.service,
-                      name: ConfigurationUpdatedDefinition.name,
-                      resourceIdPath: 'urn',
-                    },
-                  ],
-                },
-                [`${serviceId}:v2`]: {
-                  ttl: 8 * 60 * 60,
-                  invalidationEvents: [
-                    {
-                      namespace: serviceId.service,
-                      name: ConfigurationDeletedDefinition.name,
-                      resourceIdPath: 'urn',
-                    },
-                    {
-                      namespace: serviceId.service,
-                      name: ConfigurationUpdatedDefinition.name,
-                      resourceIdPath: 'urn',
-                    },
-                  ],
-                },
-              },
-            },
-          },
-          // Register directory service resource type for configuration.
-          {
-            serviceId: adspId`urn:ads:platform:directory-service`,
-            configuration: {
-              [`${serviceId}:v2`]: {
-                resourceTypes: [
+    {
+      serviceId,
+      displayName: 'Configuration service',
+      description: 'Service for managing configuration',
+      tracing: environment.OTEL_EXPORTER_OTLP_ENDPOINT,
+      metrics: environment.OTEL_EXPORTER_OTLP_ENDPOINT,
+      roles: [
+        {
+          role: ConfigurationServiceRoles.Reader,
+          description: 'Reader role that grants access to configuration.',
+        },
+        {
+          role: ConfigurationServiceRoles.ConfigurationAdmin,
+          description: 'Administrator role that grants access to and modification of configuration.',
+          inTenantAdmin: true,
+        },
+        {
+          role: ConfigurationServiceRoles.ConfiguredService,
+          description: 'Service role that grants service accounts access to configuration.',
+        },
+      ],
+      events: [
+        ConfigurationUpdatedDefinition,
+        ConfigurationDeletedDefinition,
+        RevisionCreatedDefinition,
+        ActiveRevisionSetDefinition,
+      ],
+      eventStreams: [ConfigurationUpdatesStream],
+      auditActions: ConfigurationAuditActions,
+      audit: { enabled: environment.CONFIGURATION_AUDIT_ENABLED },
+      clientSecret: environment.CLIENT_SECRET,
+      accessServiceUrl: new URL(environment.KEYCLOAK_ROOT_URL),
+      directoryUrl: new URL(environment.DIRECTORY_URL),
+      // Configuration service registers against itself and Keycloak doesn't include aud in that case.
+      ignoreServiceAud: true,
+      values: [ServiceMetricsValueDefinition],
+      serviceConfigurations: [
+        // Register cache service target for configuration.
+        {
+          serviceId: adspId`urn:ads:platform:cache-service`,
+          configuration: {
+            targets: {
+              [`${serviceId}`]: {
+                ttl: 8 * 60 * 60,
+                invalidationEvents: [
                   {
-                    type: 'configuration',
-                    matcher: '^\\/configuration\\/[a-zA-Z0-9-_ ]{1,50}\\/[a-zA-Z0-9-_ ]{1,50}$',
-                    namePath: 'name',
-                    deleteEvent: {
-                      namespace: serviceId.service,
-                      name: ConfigurationDeletedDefinition.name,
-                      resourceIdPath: 'urn',
-                    },
+                    namespace: serviceId.service,
+                    name: ConfigurationDeletedDefinition.name,
+                    resourceIdPath: 'urn',
+                  },
+                  {
+                    namespace: serviceId.service,
+                    name: ConfigurationUpdatedDefinition.name,
+                    resourceIdPath: 'urn',
+                  },
+                ],
+              },
+              [`${serviceId}:v2`]: {
+                ttl: 8 * 60 * 60,
+                invalidationEvents: [
+                  {
+                    namespace: serviceId.service,
+                    name: ConfigurationDeletedDefinition.name,
+                    resourceIdPath: 'urn',
+                  },
+                  {
+                    namespace: serviceId.service,
+                    name: ConfigurationUpdatedDefinition.name,
+                    resourceIdPath: 'urn',
                   },
                 ],
               },
             },
           },
-        ],
-      },
-      { logger },
-    );
+        },
+        // Register directory service resource type for configuration.
+        {
+          serviceId: adspId`urn:ads:platform:directory-service`,
+          configuration: {
+            [`${serviceId}:v2`]: {
+              resourceTypes: [
+                {
+                  type: 'configuration',
+                  matcher: '^\\/configuration\\/[a-zA-Z0-9-_ ]{1,50}\\/[a-zA-Z0-9-_ ]{1,50}$',
+                  namePath: 'name',
+                  deleteEvent: {
+                    namespace: serviceId.service,
+                    name: ConfigurationDeletedDefinition.name,
+                    resourceIdPath: 'urn',
+                  },
+                },
+              ],
+            },
+          },
+        },
+      ],
+    },
+    { logger },
+  );
 
   passport.use('core', coreStrategy);
   passport.use('tenant', tenantStrategy);
@@ -225,10 +231,10 @@ const initializeApp = async () => {
   const errorHandler = createErrorHandler(logger);
   app.use(errorHandler);
 
-  return { app, auditService };
+  return { app, auditService, shutdownTelemetry };
 };
 
-initializeApp().then(({ app, auditService }) => {
+initializeApp().then(({ app, auditService, shutdownTelemetry }) => {
   const port = environment.PORT || 3339;
 
   const server = app.listen(port, () => {
@@ -237,21 +243,13 @@ initializeApp().then(({ app, auditService }) => {
   server.on('error', (err) => logger.error(`Error encountered in server: ${err}`));
 
   // Stop accepting requests, then deliver any buffered audit events before the process exits.
-  let stopping = false;
-  const shutdown = async () => {
-    if (stopping) return;
-    stopping = true;
-    // Fallback in case the flush or close hangs.
-    setTimeout(() => process.exit(1), 15000).unref();
-    server.close();
-    try {
-      await auditService.flush();
-      process.exit(0);
-    } catch (err) {
-      logger.error(`Error encountered flushing audit events on shutdown: ${err}`);
-      process.exit(1);
-    }
-  };
+  const shutdown = createShutdownHandler({
+    serviceName: 'Configuration service',
+    server,
+    auditService,
+    shutdownTelemetry,
+    logger,
+  });
   process.once('SIGTERM', shutdown);
   process.once('SIGINT', shutdown);
 });
