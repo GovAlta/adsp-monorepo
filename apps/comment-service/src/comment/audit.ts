@@ -6,7 +6,6 @@ import {
   AuditRecordDetails,
   AuditService,
   AuditSeverities,
-  BuiltInRetentionClasses,
   toAuditActor,
   User,
 } from '@abgov/adsp-service-sdk';
@@ -26,7 +25,6 @@ export const TopicCreatedAuditAction: AuditAction = {
   version: 1,
   category: AuditCategories.Administrative,
   severity: AuditSeverities.Info,
-  retentionClass: BuiltInRetentionClasses.Compliance,
   resourceType: TOPIC_RESOURCE_TYPE,
   description: 'A topic is created.',
 };
@@ -36,7 +34,6 @@ export const TopicUpdatedAuditAction: AuditAction = {
   version: 1,
   category: AuditCategories.Administrative,
   severity: AuditSeverities.Warning,
-  retentionClass: BuiltInRetentionClasses.Compliance,
   resourceType: TOPIC_RESOURCE_TYPE,
   captureChangeSet: true,
   description: 'The name, description, or commenters of a topic are changed.',
@@ -47,7 +44,6 @@ export const TopicDeletedAuditAction: AuditAction = {
   version: 1,
   category: AuditCategories.Administrative,
   severity: AuditSeverities.Warning,
-  retentionClass: BuiltInRetentionClasses.Compliance,
   resourceType: TOPIC_RESOURCE_TYPE,
   description: 'A topic and its comments are deleted.',
 };
@@ -57,7 +53,6 @@ export const CommentCreatedAuditAction: AuditAction = {
   version: 1,
   category: AuditCategories.DataAccess,
   severity: AuditSeverities.Info,
-  retentionClass: BuiltInRetentionClasses.Compliance,
   resourceType: COMMENT_RESOURCE_TYPE,
   description: 'A comment is posted to a topic.',
 };
@@ -67,7 +62,6 @@ export const CommentUpdatedAuditAction: AuditAction = {
   version: 1,
   category: AuditCategories.DataAccess,
   severity: AuditSeverities.Info,
-  retentionClass: BuiltInRetentionClasses.Compliance,
   resourceType: COMMENT_RESOURCE_TYPE,
   description: 'A comment is edited.',
 };
@@ -77,7 +71,6 @@ export const CommentDeletedAuditAction: AuditAction = {
   version: 1,
   category: AuditCategories.DataAccess,
   severity: AuditSeverities.Warning,
-  retentionClass: BuiltInRetentionClasses.Compliance,
   resourceType: COMMENT_RESOURCE_TYPE,
   description: 'A comment is deleted.',
 };
@@ -87,7 +80,6 @@ export const TopicTypeCreatedAuditAction: AuditAction = {
   version: 1,
   category: AuditCategories.Administrative,
   severity: AuditSeverities.Info,
-  retentionClass: BuiltInRetentionClasses.Standard,
   resourceType: TOPIC_TYPE_RESOURCE_TYPE,
   description: 'A topic type is created through the comment service API.',
 };
@@ -97,7 +89,6 @@ export const TopicTypeUpdatedAuditAction: AuditAction = {
   version: 1,
   category: AuditCategories.Administrative,
   severity: AuditSeverities.Warning,
-  retentionClass: BuiltInRetentionClasses.Standard,
   resourceType: TOPIC_TYPE_RESOURCE_TYPE,
   captureChangeSet: true,
   description:
@@ -109,7 +100,6 @@ export const TopicTypeDeletedAuditAction: AuditAction = {
   version: 1,
   category: AuditCategories.Administrative,
   severity: AuditSeverities.Warning,
-  retentionClass: BuiltInRetentionClasses.Standard,
   resourceType: TOPIC_TYPE_RESOURCE_TYPE,
   description: 'A topic type is deleted through the comment service API.',
 };

@@ -90,7 +90,7 @@ The comment service sends the following domain events under the `comment-service
 The service doesn't consume events from other services. Changes to topic types are configuration updates, recorded by the [configuration service](configuration-service.md).
 
 ## Audit
-Comment service records audit events in the `comment-service` namespace of the [audit service](/adsp-monorepo/services/audit-service.html). Records are written to the tenant of the topic or topic type, with the user or service account making the request as the actor. All actions are version 1.
+Comment service records audit events in the `comment-service` namespace of the [audit service](/adsp-monorepo/services/audit-service.html). Records are written to the tenant of the topic or topic type, with the user or service account making the request as the actor. All actions are version 1, and their retention class is derived from the category.
 
 | Action | Category | Severity | Retention class | Recorded when |
 |:-|:-|:-|:-|:-|
@@ -100,9 +100,9 @@ Comment service records audit events in the `comment-service` namespace of the [
 | `comment.created` | data-access | info | compliance | A comment is posted to a topic. |
 | `comment.updated` | data-access | info | compliance | A comment is edited. |
 | `comment.deleted` | data-access | warning | compliance | A comment is deleted. |
-| `topic-type.created` | administrative | info | standard | A topic type is created through the comment API. |
-| `topic-type.updated` | administrative | warning | standard | The name, roles or security classification of a topic type are changed through the comment API. |
-| `topic-type.deleted` | administrative | warning | standard | A topic type is deleted through the comment API. |
+| `topic-type.created` | administrative | info | compliance | A topic type is created through the comment API. |
+| `topic-type.updated` | administrative | warning | compliance | The name, roles or security classification of a topic type are changed through the comment API. |
+| `topic-type.deleted` | administrative | warning | compliance | A topic type is deleted through the comment API. |
 
 Topic and comment records include the `topicId`, the topic type `typeId` and the topic `resourceId` in the metadata, and use the `resourceId` as the correlation ID so they can be matched with the audit records of the domain entity. Comment records use the comment ID as the resource and add `commentAction` (`created`, `updated` or `deleted`); updates list the edited field names in `updatedFields`, and updates and deletes include the `authorId` of the comment. Comment title, content and context are user generated and may be sensitive, so they are never recorded. `topic.updated` lists the changed fields in `updatedFields` and records the changed name and commenter user IDs as the change set; the description is not recorded. `topic-type.updated` records the topic type before and after the change as the change set, with `rolesChanged` in the metadata.
 

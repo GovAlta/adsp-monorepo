@@ -1,4 +1,4 @@
-import { adspId, auditDefinitions } from '@abgov/adsp-service-sdk';
+import { adspId, auditDefinitions, resolveRetentionClass } from '@abgov/adsp-service-sdk';
 import type { AuditService } from '@abgov/adsp-service-sdk';
 import { Logger } from 'winston';
 import {
@@ -29,60 +29,58 @@ describe('audit', () => {
       'topic.created': expect.objectContaining({
         category: 'administrative',
         severity: 'info',
-        retentionClass: 'compliance',
         resourceType: 'topic',
       }),
       'topic.updated': expect.objectContaining({
         category: 'administrative',
         severity: 'warning',
-        retentionClass: 'compliance',
         resourceType: 'topic',
         captureChangeSet: true,
       }),
       'topic.deleted': expect.objectContaining({
         category: 'administrative',
         severity: 'warning',
-        retentionClass: 'compliance',
         resourceType: 'topic',
       }),
       'comment.created': expect.objectContaining({
         category: 'data-access',
         severity: 'info',
-        retentionClass: 'compliance',
         resourceType: 'comment',
       }),
       'comment.updated': expect.objectContaining({
         category: 'data-access',
         severity: 'info',
-        retentionClass: 'compliance',
         resourceType: 'comment',
       }),
       'comment.deleted': expect.objectContaining({
         category: 'data-access',
         severity: 'warning',
-        retentionClass: 'compliance',
         resourceType: 'comment',
       }),
       'topic-type.created': expect.objectContaining({
         category: 'administrative',
         severity: 'info',
-        retentionClass: 'standard',
         resourceType: 'topic-type',
       }),
       'topic-type.updated': expect.objectContaining({
         category: 'administrative',
         severity: 'warning',
-        retentionClass: 'standard',
         resourceType: 'topic-type',
         captureChangeSet: true,
       }),
       'topic-type.deleted': expect.objectContaining({
         category: 'administrative',
         severity: 'warning',
-        retentionClass: 'standard',
         resourceType: 'topic-type',
       }),
     });
+  });
+
+  it('derives the retention class of every action from its category', () => {
+    for (const action of CommentAuditActions) {
+      expect(action.retentionClass).toBeUndefined();
+      expect(resolveRetentionClass(action)).toBe('compliance');
+    }
   });
 
   it('builds topic details without a resource ID', () => {
