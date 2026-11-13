@@ -55,18 +55,15 @@
         ]
       }
     },
-    "generate-api-specs": {
+    "sync-content": {
       "executor": "nx:run-commands",
       "cache": false,
       "options": {
-        "command": "node libs/adsp-sdk-mcp-server/scripts/api-specs.mjs --write"
-      }
-    },
-    "update-docs-lock": {
-      "executor": "nx:run-commands",
-      "cache": false,
-      "options": {
-        "command": "node libs/adsp-sdk-mcp-server/scripts/docs-lock.mjs --write"
+        "commands": [
+          "node libs/adsp-sdk-mcp-server/scripts/docs-lock.mjs --write",
+          "node libs/adsp-sdk-mcp-server/scripts/api-specs.mjs --write"
+        ],
+        "parallel": false
       }
     },
     "release": {

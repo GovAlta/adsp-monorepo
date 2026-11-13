@@ -6,6 +6,7 @@ import { Logger } from 'winston';
 import { createAgentRouter } from './router';
 
 export * from './agents';
+export * from './audit';
 export * from './configuration';
 export * from './events';
 export * from './fileTypes';
