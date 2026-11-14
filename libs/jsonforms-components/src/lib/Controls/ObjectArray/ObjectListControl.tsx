@@ -381,8 +381,13 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
                             humanMessage = `${capitalizeFirstLetter(schemaName)} is required`;
                           }
 
+                          // The header row is hidden on narrow screens, so each cell carries its own label.
+                          const cellLabel = `${dataObject.title || tableKeys[element] || element}${
+                            required?.includes(element) ? ' (required)' : ''
+                          }`;
+
                           return (
-                            <td key={ix}>
+                            <td key={ix} data-label={cellLabel}>
                               <GoabFormItem error={humanMessage ?? ''} mb={(errorRow && !error && '2xl') || 'xs'}>
                                 {dataObject.enum ? (
                                   <GoabDropdown
@@ -401,7 +406,7 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
                                       handleChange(rowPath, { [num]: { [schemaName]: coerced } });
                                     }}
                                     width="100%"
-                                    ariaLabel={schemaName}
+                                    ariaLabel={cellLabel}
                                     error={!!humanMessage}
                                   >
                                     {!required?.includes(schemaName) && (
@@ -428,7 +433,7 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
                                         },
                                       });
                                     }}
-                                    ariaLabel={schemaName}
+                                    ariaLabel={cellLabel}
                                     width="100%"
                                   />
                                 ) : (

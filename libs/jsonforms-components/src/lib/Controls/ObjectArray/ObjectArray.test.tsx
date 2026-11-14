@@ -231,6 +231,19 @@ describe('Object Array Renderer', () => {
     expect(nameInput?.getAttribute('value')).toBe('Bob');
   });
 
+  it('labels each cell with its column header so stacked rows stay readable on narrow screens', () => {
+    const data = { messages: [{ name: 'Bob', message: 'hi' }] };
+    const { baseElement } = render(getForm(data));
+
+    const nameCell = baseElement.querySelector("goa-input[testId='#/properties/name-input-0']")?.closest('td');
+    const headers = Array.from(baseElement.querySelectorAll('thead th')).map((th) => th.textContent?.trim());
+    expect(nameCell).toHaveAttribute('data-label', headers[0]);
+    expect(nameCell?.querySelector('goa-input')).toHaveAttribute('arialabel', headers[0]);
+    expect(baseElement.querySelector("goa-icon-button[testId='trash-icon-button']")?.closest('td')).not.toHaveAttribute(
+      'data-label',
+    );
+  });
+
   it('read from existing data and display in review', () => {
     const data = { messages: [{ name: 'Bob' }] };
     const renderer = render(getReviewForm(data));
