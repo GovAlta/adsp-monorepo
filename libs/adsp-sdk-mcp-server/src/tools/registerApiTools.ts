@@ -2,7 +2,7 @@ import { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { z } from 'zod';
 import { ApiServiceSummary, ApiSpecsRepository } from '../api-specs/apiSpecsRepository';
 import { queryTerms } from '../search/textSearch';
-import { ToolDefinition } from './types';
+import { OFFLINE_TOOL_ANNOTATIONS, ToolDefinition } from './types';
 
 const SearchArgs = z.object({
   query: z.string(),
@@ -47,6 +47,7 @@ export function createApiTools(loadApis: () => ApiSpecsRepository): ToolDefiniti
   return [
     {
       name: 'list_service_apis',
+      annotations: OFFLINE_TOOL_ANNOTATIONS,
       description:
         'List the ADSP services that publish a REST API, with each service URN and number of operations. Content ' +
         'comes from the OpenAPI specs each service serves at /swagger/docs/v1, bundled offline.',
@@ -60,6 +61,7 @@ export function createApiTools(loadApis: () => ApiSpecsRepository): ToolDefiniti
     },
     {
       name: 'search_service_endpoints',
+      annotations: OFFLINE_TOOL_ANNOTATIONS,
       description:
         'Search ADSP service REST endpoints by keyword (path, summary, tags and description), optionally within one ' +
         'service. Returns method, path, summary and who may call it; use read_service_endpoint for parameters, ' +
@@ -97,6 +99,7 @@ export function createApiTools(loadApis: () => ApiSpecsRepository): ToolDefiniti
     },
     {
       name: 'read_service_endpoint',
+      annotations: OFFLINE_TOOL_ANNOTATIONS,
       description:
         "Read one ADSP REST endpoint as its service's OpenAPI spec defines it: description, who may call it, " +
         'parameters, request body and responses, with schema references inlined.',

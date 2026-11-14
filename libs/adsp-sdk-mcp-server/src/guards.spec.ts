@@ -19,6 +19,7 @@ import { createMetricsTestKit, MetricsTestKit } from './fixtures/metricsTestKit'
 import { createMcpHttpApp, createMcpHttpServer } from './http';
 import { installMetrics } from './metrics';
 import * as quickstartModule from './tools/registerQuickstartTool';
+import { OFFLINE_TOOL_ANNOTATIONS } from './tools/types';
 
 const ALLOWED = 'http://allowed.test';
 
@@ -294,6 +295,7 @@ describe('in-flight gate', () => {
         name: 'get_platform_quickstart',
         description: 'Quickstart that waits for the test.',
         inputSchema: { type: 'object' },
+        annotations: OFFLINE_TOOL_ANNOTATIONS,
         handler: async () => {
           handlerCalls += 1;
           await held;

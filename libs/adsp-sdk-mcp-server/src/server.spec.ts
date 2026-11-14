@@ -19,8 +19,10 @@ import {
 } from './fixtures/toolContract';
 import { createMetricsTestKit, histogramCount, MetricsTestKit } from './fixtures/metricsTestKit';
 import { installMetrics } from './metrics';
+import { SERVER_INSTRUCTIONS } from './instructions';
 import { createAdspMcpServer } from './server';
 import * as quickstartModule from './tools/registerQuickstartTool';
+import { OFFLINE_TOOL_ANNOTATIONS } from './tools/types';
 
 class StreamClientTransport implements Transport {
   onmessage?: (message: JSONRPCMessage) => void;
@@ -164,11 +166,68 @@ describe('tool contract', () => {
 
   afterAll(() => client.close());
 
+  it('tools/list names and annotations match the golden', async () => {
+    const { tools } = await client.listTools();
+
+    expect(tools.map(({ name, annotations }) => ({ name, annotations }))).toEqual(TOOL_CONTRACT.tools);
+  });
+
+  it('every tool is read-only, and only the live tools leave the world open', () => {
+    const live = ['list_service_roles', 'get_service_configuration_schema'];
+
+    for (const { name, annotations } of TOOL_CONTRACT.tools) {
+      expect(annotations).toEqual(
+        live.includes(name) ? { readOnlyHint: true } : { readOnlyHint: true, openWorldHint: false }
+      );
+    }
+  });
+
   it.each(TOOL_CONTRACT.calls)('tools/call $call.name $call.arguments matches the golden', async ({ call, outcome }) => {
     const actual = await callForContract(client, call);
 
     expect(actual).toEqual(outcome);
     expect(JSON.stringify(actual)).toBe(JSON.stringify(outcome));
+  });
+});
+
+describe('server instructions', () => {
+  let client: Client;
+
+  beforeAll(async () => {
+    client = await connectInMemoryClient(createAdspMcpServer({ docsRoot: FIXTURE_DOCS_ROOT }));
+  });
+
+  afterAll(() => client.close());
+
+  // Six or more consecutive words shared with a tool description count as restating it.
+  function wordRuns(text: string, length = 6): Set<string> {
+    const words = text.toLowerCase().match(/[a-z0-9_@/-]+/g) ?? [];
+    return new Set(words.slice(0, Math.max(words.length - length + 1, 0)).map((_, i) => words.slice(i, i + length).join(' ')));
+  }
+
+  it('are returned in the initialize result', () => {
+    expect(client.getInstructions()).toBe(SERVER_INSTRUCTIONS);
+  });
+
+  it('stay about 10 lines', () => {
+    expect(SERVER_INSTRUCTIONS.split('\n').length).toBeLessThanOrEqual(12);
+  });
+
+  it('name the login the live tools need, and where to check content freshness', () => {
+    expect(SERVER_INSTRUCTIONS).toContain('npx @abgov/adsp-cli login');
+    expect(SERVER_INSTRUCTIONS).toContain('list_service_roles');
+    expect(SERVER_INSTRUCTIONS).toContain('get_service_configuration_schema');
+    expect(SERVER_INSTRUCTIONS).toContain('get_adsp_mcp_server_info');
+  });
+
+  it('do not restate any tool description', async () => {
+    const { tools } = await client.listTools();
+    const instructionRuns = wordRuns(SERVER_INSTRUCTIONS);
+
+    for (const { name, description } of tools) {
+      const shared = [...wordRuns(description ?? '')].filter((run) => instructionRuns.has(run));
+      expect({ name, shared }).toEqual({ name, shared: [] });
+    }
   });
 });
 
@@ -355,6 +414,7 @@ describe('tool and docs index metrics', () => {
         name: 'get_platform_quickstart',
         description: 'Quickstart that fails.',
         inputSchema: { type: 'object' },
+        annotations: OFFLINE_TOOL_ANNOTATIONS,
         handler: () => {
           throw new Error('handler failed');
         },

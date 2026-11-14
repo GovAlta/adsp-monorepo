@@ -1,0 +1,140 @@
+{
+  "description": "Needs described in product terms, each with the ADSP services that should answer it. A query passes only when every expected service is found. source is a probe against the hosted server on 2026-11-14 (1.26.0+main.6c49429fe), or the project-planner-service business pattern (apps/project-planner-service/src/planner/patterns.ts) whose serviceMappings it comes from, or the service index (docs/services/services.md) for services no pattern maps.",
+  "queries": [
+    {
+      "query": "applicants attach supporting documents to an application",
+      "expected": ["file-service"],
+      "source": "probe"
+    },
+    { "query": "holiday business days deadline calculation", "expected": ["calendar-service"], "source": "probe" },
+    { "query": "upload file", "expected": ["file-service"], "source": "probe" },
+    {
+      "query": "collect information from the public through an online intake form",
+      "expected": ["form-service"],
+      "source": "case-management"
+    },
+    {
+      "query": "staff leave internal notes and discuss a case",
+      "expected": ["comment-service"],
+      "source": "case-management"
+    },
+    { "query": "assign review work to a queue of staff", "expected": ["task-service"], "source": "case-management" },
+    {
+      "query": "email the applicant when their application status changes",
+      "expected": ["notification-service"],
+      "source": "case-management"
+    },
+    {
+      "query": "change workflow status values and business rules without a code change",
+      "expected": ["configuration-service"],
+      "source": "case-management"
+    },
+    {
+      "query": "generate a funding agreement or decision letter",
+      "expected": ["pdf-service"],
+      "source": "grant-applications"
+    },
+    {
+      "query": "track award amounts and funding metrics for reporting",
+      "expected": ["value-service"],
+      "source": "grant-applications"
+    },
+    {
+      "query": "send renewal reminders before a licence expires",
+      "expected": ["notification-service", "calendar-service"],
+      "source": "permit-licence"
+    },
+    { "query": "issue a permit certificate to the holder", "expected": ["pdf-service"], "source": "permit-licence" },
+    {
+      "query": "schedule inspections and follow-up visits",
+      "expected": ["calendar-service"],
+      "source": "inspection-compliance"
+    },
+    {
+      "query": "inspectors attach photos as evidence to their findings",
+      "expected": ["file-service"],
+      "source": "inspection-compliance"
+    },
+    {
+      "query": "triage complaints and hand them to investigators",
+      "expected": ["task-service"],
+      "source": "complaint-intake"
+    },
+    {
+      "query": "ask users what they thought of an online service",
+      "expected": ["feedback-service"],
+      "source": "consultation-feedback"
+    },
+    {
+      "query": "eligibility thresholds that change when policy changes",
+      "expected": ["configuration-service"],
+      "source": "eligibility-assessment"
+    },
+    {
+      "query": "let people book an appointment in an open time slot",
+      "expected": ["calendar-service"],
+      "source": "appointment-booking"
+    },
+    {
+      "query": "reviewers request changes on a submitted package of documents",
+      "expected": ["comment-service"],
+      "source": "document-package-review"
+    },
+    {
+      "query": "live updates on screen for responders watching an incident",
+      "expected": ["push-service"],
+      "source": "incident-reporting"
+    },
+    {
+      "query": "record incident events and route them to other systems",
+      "expected": ["event-service"],
+      "source": "incident-reporting"
+    },
+    {
+      "query": "keep a trail of who did what to a record and when",
+      "expected": ["audit-service"],
+      "source": "audit-evidence-trail"
+    },
+    {
+      "query": "fill a letter template with case data and produce a document",
+      "expected": ["pdf-service"],
+      "source": "document-generation"
+    },
+    {
+      "query": "let people subscribe to updates by email or text message",
+      "expected": ["notification-service"],
+      "source": "notification-subscription"
+    },
+    {
+      "query": "send a message to subscribers when something happens in the business process",
+      "expected": ["notification-service", "event-service"],
+      "source": "notification-subscription"
+    },
+    {
+      "query": "post a notice that the service is down for maintenance",
+      "expected": ["status-service"],
+      "source": "status-tracking-portal"
+    },
+    {
+      "query": "confirm a person's phone number with a one-time code",
+      "expected": ["verify-service"],
+      "source": "service index"
+    },
+    {
+      "query": "remove names and addresses from free text before storing it",
+      "expected": ["pii-service"],
+      "source": "service index"
+    },
+    {
+      "query": "download submitted records as a spreadsheet",
+      "expected": ["export-service"],
+      "source": "service index"
+    },
+    { "query": "speed up reads from a slow upstream system", "expected": ["cache-service"], "source": "service index" },
+    {
+      "query": "staff sign in and only see what their role allows",
+      "expected": ["access-service"],
+      "source": "service index"
+    }
+  ]
+}
