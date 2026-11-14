@@ -3,7 +3,7 @@ import { join } from 'path';
 import { DocsRepository } from '../docs/docsRepository';
 import { SDK_REFERENCE } from '../sdk-reference/reference';
 import { readPackageVersion } from '../version';
-import { ToolDefinition } from './types';
+import { OFFLINE_TOOL_ANNOTATIONS, ToolDefinition } from './types';
 
 /**
  * Written by scripts/provenance.mjs into the package root, next to package.json: by the release target (`release`),
@@ -56,6 +56,7 @@ export function createServerInfoTool(docs: DocsRepository, provenance = readProv
   return [
     {
       name: 'get_adsp_mcp_server_info',
+      annotations: OFFLINE_TOOL_ANNOTATIONS,
       description:
         "Report this server's version and where its bundled content came from: the docs source commit, the " +
         '@abgov/adsp-service-sdk version the SDK reference matches, and when it was built. Use it to tell a user ' +
