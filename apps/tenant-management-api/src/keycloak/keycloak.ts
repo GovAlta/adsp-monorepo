@@ -14,9 +14,12 @@ import {
   ADSP_CLI_CI_CLIENT_ID,
   ADSP_CLI_CI_CLIENT_SCOPE_MAPPINGS,
   ADSP_CLI_CLIENT_SCOPE_MAPPINGS,
+  ADSP_MCP_CLIENT_ID,
+  ADSP_MCP_CLIENT_SCOPE_MAPPINGS,
   createAdspCliAdminClientScopeConfig,
   createAdspCliCiClientConfig,
   createAdspCliPublicClientConfig,
+  createAdspMcpPublicClientConfig,
   createApiAppPublicClientConfig,
   createPlatformServiceConfig,
   createSubscriberAppPublicClientConfig,
@@ -210,17 +213,21 @@ export class KeycloakRealmServiceImpl implements RealmService {
   }
 
   /**
-   * Explicitly adds the ADSP_CLI_CLIENT_SCOPE_MAPPINGS role restrictions to the adsp-cli client via
-   * the scope-mappings API. The clientScopeMappings key in the realm creation JSON sets the same
-   * restriction declaratively but KC 24 does not apply it. Source clients absent from the realm are
-   * skipped so a not-yet-registered optional service does not break realm creation.
+   * Explicitly adds a client's role restrictions via the scope-mappings API. The clientScopeMappings key in the
+   * realm creation JSON sets the same restriction declaratively but KC 24 does not apply it. Source clients absent
+   * from the realm are skipped so a not-yet-registered optional service does not break realm creation.
    */
-  private async grantAdspCliClientScopeMappings(client: KeycloakAdminClient, realm: string): Promise<void> {
-    this.logger.debug(`Granting client scope mappings to 'adsp-cli' in realm '${realm}'...`, LOG_CONTEXT);
+  private async grantClientScopeMappings(
+    client: KeycloakAdminClient,
+    realm: string,
+    clientId: string,
+    mappings: { client: string; roles: string[] }[],
+  ): Promise<void> {
+    this.logger.debug(`Granting client scope mappings to '${clientId}' in realm '${realm}'...`, LOG_CONTEXT);
 
-    const adspCliClient = (await client.clients.find({ realm, clientId: 'adsp-cli' }))[0];
+    const targetClient = (await client.clients.find({ realm, clientId }))[0];
 
-    for (const mapping of ADSP_CLI_CLIENT_SCOPE_MAPPINGS) {
+    for (const mapping of mappings) {
       const sourceClient = (await client.clients.find({ realm, clientId: mapping.client }))[0];
       if (!sourceClient) {
         this.logger.debug(`Client '${mapping.client}' not found in realm '${realm}' — skipping scope mapping.`, LOG_CONTEXT);
@@ -232,12 +239,12 @@ export class KeycloakRealmServiceImpl implements RealmService {
       );
 
       await client.clients.addClientScopeMappings(
-        { realm, id: adspCliClient.id, client: sourceClient.id },
+        { realm, id: targetClient.id, client: sourceClient.id },
         roles.map((r) => ({ id: r.id, name: r.name }))
       );
     }
 
-    this.logger.info(`Granted client scope mappings to 'adsp-cli' in realm '${realm}'.`, LOG_CONTEXT);
+    this.logger.info(`Granted client scope mappings to '${clientId}' in realm '${realm}'.`, LOG_CONTEXT);
   }
 
   /**
@@ -455,6 +462,7 @@ export class KeycloakRealmServiceImpl implements RealmService {
     const apiAppPublicClientId = uuidv4();
     const adspCliPublicClientId = uuidv4();
     const adspCliCiClientId = uuidv4();
+    const adspMcpPublicClientId = uuidv4();
     const brokerClient = this.brokerClientName(realm);
 
     let client = await this.createAdminClient();
@@ -466,6 +474,7 @@ export class KeycloakRealmServiceImpl implements RealmService {
     const apiAppPublicClientConfig = createApiAppPublicClientConfig(apiAppPublicClientId);
     const adspCliPublicClientConfig = createAdspCliPublicClientConfig(adspCliPublicClientId);
     const adspCliCiClientConfig = createAdspCliCiClientConfig(adspCliCiClientId);
+    const adspMcpPublicClientConfig = createAdspMcpPublicClientConfig(adspMcpPublicClientId);
 
     const clients = serviceClients.map((registeredClient) =>
       createPlatformServiceConfig(registeredClient.serviceId, ...registeredClient.roles),
@@ -484,6 +493,7 @@ export class KeycloakRealmServiceImpl implements RealmService {
         apiAppPublicClientConfig,
         adspCliPublicClientConfig,
         adspCliCiClientConfig,
+        adspMcpPublicClientConfig,
         ...clients.map((c) => c.client),
       ],
       roles: {
@@ -524,7 +534,8 @@ export class KeycloakRealmServiceImpl implements RealmService {
     await this.createAdspCliAdminScope(client, realm);
     await this.createTenantAdminComposite(client, serviceClients, realm, tenantAdminRole);
     await this.grantAdspCliAdminScopeMapping(client, realm);
-    await this.grantAdspCliClientScopeMappings(client, realm);
+    await this.grantClientScopeMappings(client, realm, 'adsp-cli', ADSP_CLI_CLIENT_SCOPE_MAPPINGS);
+    await this.grantClientScopeMappings(client, realm, ADSP_MCP_CLIENT_ID, ADSP_MCP_CLIENT_SCOPE_MAPPINGS);
 
     const flowAlias = await this.createAuthenticationFlow(client, realm);
     await this.createCoreIdentityProvider(client, brokerClientSecret, brokerClient, flowAlias, realm);
