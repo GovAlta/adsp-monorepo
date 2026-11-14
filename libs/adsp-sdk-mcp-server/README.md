@@ -64,16 +64,21 @@ Add it to your MCP client's server config, run via `npx`:
 ### HTTP transport
 
 To host the server instead of running it per user, start it with `MCP_TRANSPORT=http`. It serves Streamable HTTP
-at `POST /mcp`, with a liveness check at `GET /health` and a readiness check at `GET /ready`.
+at `POST /mcp/<tenant realm>`, with a liveness check at `GET /health` and a readiness check at `GET /ready`. Every
+request needs a sign-in for that tenant realm (see [Signing in](#signing-in)). There is no plain `/mcp` endpoint and
+no way to turn sign-in off: anyone who can't sign in runs the server locally over stdio, as in [Usage](#usage).
 
 | Variable | Default | Purpose |
 |---|---|---|
 | `MCP_TRANSPORT` | `stdio` | `http` to serve HTTP |
 | `PORT` | `3000` | Port to listen on |
-| `CORS_ORIGIN` | unset | Comma-separated browser origins allowed to call `/mcp`, for example `https://a.example,https://b.example`. Unset allows none; `*` allows any (not for hosted use) |
-| `MCP_MAX_IN_FLIGHT` | `64` | `POST /mcp` requests handled at once per process |
+| `MCP_PUBLIC_URL` | required | The server's external base URL, for example `https://adsp-sdk-mcp.example`. Used in the sign-in metadata and the `WWW-Authenticate` header, never taken from request headers |
+| `ADSP_ACCESS_SERVICE_URL` | required | Keycloak base URL. A realm's issuer is `<url>/auth/realms/<realm>` and its signing keys are read from there |
+| `ADSP_DIRECTORY_SERVICE_URL` | required | Directory service the live tools use to find ADSP services |
+| `CORS_ORIGIN` | unset | Comma-separated browser origins allowed to call `/mcp/<tenant realm>`, for example `https://a.example,https://b.example`. Unset allows none; `*` allows any (not for hosted use) |
+| `MCP_MAX_IN_FLIGHT` | `64` | Signed-in `POST /mcp/<tenant realm>` requests handled at once per process |
 | `MCP_IN_FLIGHT_WAIT_MS` | `1000` | How long a request waits for a free slot before getting `503`. Also how long a live tool waits for a free upstream slot |
-| `MCP_RATE_LIMIT_PER_MINUTE` | `1200` | `POST /mcp` requests allowed per client IP per minute, per process. `0` turns the limit off |
+| `MCP_RATE_LIMIT_PER_MINUTE` | `1200` | `POST /mcp/<tenant realm>` requests allowed per client IP per minute, per process. `0` turns the limit off |
 | `MCP_LIVE_TOOL_MAX_CONCURRENT` | `8` | Live-tool calls to ADSP running at once per process, across both live tools |
 | `MCP_SHUTDOWN_DELAY_MS` | `5000` | After a shutdown signal, how long to keep serving with `/ready` failing, so the router stops sending traffic first |
 | `MCP_SHUTDOWN_TIMEOUT_MS` | `30000` | Hard deadline from the signal to exit, even if a request is still running. Must be longer than the delay |
@@ -81,15 +86,63 @@ at `POST /mcp`, with a liveness check at `GET /health` and a readiness check at 
 | `OTEL_EXPORTER_OTLP_ENDPOINT` | unset | OTLP/HTTP collector base URL. When set, metrics are exported to `<endpoint>/v1/metrics` |
 | `OTEL_METRIC_EXPORT_INTERVAL` | `60000` | Metric export interval, in milliseconds |
 
-An invalid value for one of the `MCP_*` numbers, or `*` mixed with origins in `CORS_ORIGIN`, stops the server at
+An invalid value for one of the `MCP_*` numbers, `*` mixed with origins in `CORS_ORIGIN`, a missing sign-in setting,
+or a sign-in URL that isn't `https` (plain `http` is allowed only for `localhost` and `127.0.0.1`) stops the server at
 startup with an error naming the variable.
 
-HTTP mode is stateless: each `POST /mcp` gets its own MCP server, the response is JSON (the server never streams),
-and nothing is kept between requests. The response carries no `Mcp-Session-Id`, so any replica can serve any request
-and an idle client never loses its session. `GET /mcp` and `DELETE /mcp` return `405` with `Allow: POST`, because
-there is no stream to open and no session to delete.
+HTTP mode is stateless: each `POST /mcp/<tenant realm>` gets its own MCP server, the response is JSON (the server
+never streams), and nothing is kept between requests. The response carries no `Mcp-Session-Id`, so any replica can
+serve any request and an idle client never loses its session. `GET` and `DELETE` on `/mcp/<tenant realm>` return
+`405` with `Allow: POST`, because there is no stream to open and no session to delete.
 
 `SESSION_TTL_MINUTES` has been removed and is ignored: there are no sessions to expire.
+
+#### Signing in
+
+The server is an OAuth protected resource. Each tenant realm is its own authorization server, so the realm is part
+of the URL: a client connects to `<MCP_PUBLIC_URL>/mcp/<tenant realm>` and signs in to that realm with the public
+client `adsp-mcp` (PKCE, no secret).
+
+- A request without a token gets `401` with
+  `WWW-Authenticate: Bearer resource_metadata="<MCP_PUBLIC_URL>/.well-known/oauth-protected-resource/mcp/<realm>"`.
+  That document ([RFC 9728](https://www.rfc-editor.org/rfc/rfc9728)) names the realm as the only authorization
+  server, and the client finds Keycloak through `<issuer>/.well-known/openid-configuration`.
+- A token is accepted only if it is signed by that realm (RS256), its issuer is exactly
+  `<ADSP_ACCESS_SERVICE_URL>/auth/realms/<realm>`, its audience includes `urn:ads:platform:adsp-sdk-mcp-server`, and
+  it hasn't expired (30 s clock tolerance). Anything else gets `401` with `error="invalid_token"`. A realm's token is
+  never accepted on another realm's URL.
+- The server keeps no secret. It verifies tokens with each realm's public signing keys, refreshed after 10 minutes.
+  A token with a key id the server hasn't seen triggers a refresh at most once every 30 s, so rotated keys are
+  picked up and junk key ids can't drive traffic. If a refresh fails, the realm keeps working with its last keys.
+- If a realm's keys have never been fetched and can't be within 5 s, requests for that realm get `503` with
+  `Retry-After` for the next 60 s. A realm that doesn't exist looks the same to the server, so a mistyped realm in the
+  URL also gets `503`. Key fetches are capped at 20 a minute across all realms per process, so made-up realm names
+  can't make the server send unbounded traffic to Keycloak, and they never push out a realm whose keys are known.
+  After a restart, each replica can therefore start verifying at most 20 new realms a minute.
+- Every request is checked on its own token, and nothing from one request is kept for the next. Tokens are never
+  logged or written to disk.
+
+The live tools (`list_service_roles` and `get_service_configuration_schema`) call ADSP **as the signed-in caller**,
+with the caller's token and `ADSP_DIRECTORY_SERVICE_URL`. The host needs no `adsp-cli` login, `ADSP_CLIENT_ID` or
+`ADSP_CLIENT_SECRET`. If ADSP rejects the token, the tool answers "Your sign-in was rejected or has expired. Sign in
+again from your MCP client." The tool descriptions still mention `adsp-cli login`, which applies only to stdio.
+
+A realm can sign in only if it has the `adsp-mcp` client. New tenant realms get it when they're created; existing
+realms need it added.
+
+Connecting each supported client, with `<url>` standing for `<MCP_PUBLIC_URL>/mcp/<tenant realm>`:
+
+- **Claude Code:** `claude mcp add --transport http --client-id adsp-mcp --callback-port 33419 adsp-sdk <url>`, then
+  `/mcp` in Claude Code to sign in. Without `--callback-port` it picks a random port that isn't registered.
+- **VS Code (GitHub Copilot):** add the server as type `http` with `<url>`. When VS Code says the server doesn't
+  support dynamic client registration, enter `adsp-mcp` as the client id and leave the secret empty. VS Code
+  receives the sign-in on port 33418, which must be free.
+- **Cursor:** in `mcp.json`, `"adsp-sdk": { "url": "<url>", "auth": { "CLIENT_ID": "adsp-mcp" } }`.
+- **MCP Inspector:** transport Streamable HTTP, URL `<url>`, and client id `adsp-mcp` in the authentication settings.
+
+Known client issues reported upstream: some Claude Code versions store `--client-id` under the wrong key, VS Code
+fails to sign in when port 33418 is busy, and Cursor's redirect has changed between versions. If sign-in fails with
+a redirect error, the client's redirect is probably not one the `adsp-mcp` client allows.
 
 #### Health and shutdown
 
@@ -111,16 +164,19 @@ than it takes the router to stop sending traffic to a pod that fails readiness.
 
 #### Overload guards
 
-`POST /mcp` passes these checks in order. `GET /health` skips all of them. Every rejection is a JSON-RPC error body
-(`code: -32000`) and is counted in `mcp.requests.rejected`.
+`POST /mcp/<tenant realm>` passes these checks in order. `GET /health` skips all of them. Every rejection is a
+JSON-RPC error body (`code: -32000`) and is counted in `mcp.requests.rejected`.
 
 1. **Origin.** A request with an `Origin` header not in `CORS_ORIGIN` gets `403` (`Origin not allowed`), as the MCP
    specification requires. `Origin: null` is never allowed. A request without an `Origin` header, which is what
    non-browser clients such as agent-service and the MCP SDK send, passes. `Access-Control-Allow-Origin` is sent only
    for an allowed origin.
 2. **Rate limit.** Over `MCP_RATE_LIMIT_PER_MINUTE` from one client IP, a request gets `429` with `Retry-After`
-   (`Rate limit exceeded`).
-3. **In-flight cap.** With `MCP_MAX_IN_FLIGHT` requests already running, a request waits up to
+   (`Rate limit exceeded`). This runs before sign-in, so requests with bad tokens count too.
+3. **Sign-in.** A realm name that isn't letters, digits, `-` and `_` (up to 64) gets `404`, a missing or invalid
+   token `401`, and unavailable signing keys `503` (see [Signing in](#signing-in)). Requests that fail here never take
+   an in-flight slot.
+4. **In-flight cap.** With `MCP_MAX_IN_FLIGHT` requests already running, a request waits up to
    `MCP_IN_FLIGHT_WAIT_MS` for a slot, so a short burst completes. A request still waiting after that, or arriving
    when as many requests are already waiting as `MCP_MAX_IN_FLIGHT`, gets `503` with `Retry-After: 1`
    (`Server busy`). Requests already running are never affected. A request is admitted before its body arrives, so
@@ -135,10 +191,10 @@ place and never calls ADSP. This applies in stdio mode too.
 Things to know when sizing and tuning these:
 
 - **The limits are per process.** With N replicas, the cluster takes about N times each limit.
-- **The rate limit is per client IP until authentication is added.** Every agent-service pod is then one client, and
-  so is any group of users behind one NAT or proxy. Connecting and calling one tool is 3 `POST`s, so the default
-  allows about 400 such client sessions a minute from one IP. Retune it once the deployment shows which client IPs
-  reach the pod.
+- **The rate limit is per client IP, not per signed-in user,** because it runs before the token is checked. Every
+  agent-service pod is one client, and so is any group of users behind one NAT or proxy. Connecting and calling one
+  tool is 3 `POST`s, so the default allows about 400 such client sessions a minute from one IP. Retune it once the
+  deployment shows which client IPs reach the pod.
 - **Clients don't retry.** Measured locally with `MCP_MAX_IN_FLIGHT=2` and both slots held:
 
   | Client | Over the cap for longer than `MCP_IN_FLIGHT_WAIT_MS` | Over the cap briefly (`MCP_IN_FLIGHT_WAIT_MS=3000`, slots freed after 0.5 s) |
@@ -157,9 +213,9 @@ OpenTelemetry SDK isn't loaded. Stdio mode never exports metrics.
 
 | Name | Kind | Unit | Labels | Meaning |
 |---|---|---|---|---|
-| `mcp.requests.in_flight` | UpDownCounter | `{request}` | none | `POST /mcp` requests admitted by the in-flight cap and not yet answered (waiting requests aren't counted) |
-| `mcp.requests.rejected` | Counter | `{request}` | `reason` | Requests or tool calls refused by an overload guard |
-| `mcp.request.duration` | Histogram | `s` | `mcp.method.name`, and `http.response.status_code` or `error.type=aborted` | Time to answer a `POST /mcp` request, or until the client disconnected |
+| `mcp.requests.in_flight` | UpDownCounter | `{request}` | none | `POST /mcp/<tenant realm>` requests admitted by the in-flight cap and not yet answered (waiting requests aren't counted) |
+| `mcp.requests.rejected` | Counter | `{request}` | `reason` | Requests or tool calls refused by an overload guard or by sign-in |
+| `mcp.request.duration` | Histogram | `s` | `mcp.method.name`, and `http.response.status_code` or `error.type=aborted` | Time to answer a `POST /mcp/<tenant realm>` request that passed sign-in, or until the client disconnected |
 | `mcp.tool.duration` | Histogram | `s` | `mcp.tool.name`, `error.type` (absent on success) | Time to run a tool call |
 | `mcp.live_tool.upstream.errors` | Counter | `{error}` | `mcp.tool.name`, `error.type` | Failed ADSP calls from `list_service_roles` and `get_service_configuration_schema` |
 | `nodejs.eventloop.delay.p50`, `.p99`, `.max` | Gauge | `s` | none | Event-loop delay since the previous export |
@@ -179,7 +235,9 @@ Every label takes a value from a fixed set:
 - `error.type` on `mcp.live_tool.upstream.errors`: `http_4xx`, `http_5xx`, `network`, `not_in_directory`,
   `not_authenticated` or `other`. `not_authenticated` covers both a missing `adsp-cli` login and a failed token
   request, which `adsp-cli` reports the same way.
-- `reason` on `mcp.requests.rejected`: `in_flight_cap`, `rate_limit`, `origin` or `live_tool_cap`.
+- `reason` on `mcp.requests.rejected`: `in_flight_cap`, `rate_limit`, `origin`, `live_tool_cap`, `auth` (a `401`
+  for an invalid token; a request with no token isn't counted, because every client's first request has none) or
+  `auth_unavailable` (a `503` because a realm's signing keys couldn't be fetched).
 
 ### Using the live tools
 

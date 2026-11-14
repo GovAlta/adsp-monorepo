@@ -3,7 +3,7 @@ import { hostname } from 'os';
 import { monitorEventLoopDelay } from 'perf_hooks';
 import { readPackageVersion } from './version';
 
-export type RejectionReason = 'in_flight_cap' | 'rate_limit' | 'origin' | 'live_tool_cap';
+export type RejectionReason = 'in_flight_cap' | 'rate_limit' | 'origin' | 'live_tool_cap' | 'auth' | 'auth_unavailable';
 export type ToolErrorType = 'tool_error' | 'exception' | 'unknown_tool' | 'busy';
 export type UpstreamErrorType =
   | 'http_4xx'

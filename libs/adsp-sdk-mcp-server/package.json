@@ -1,6 +1,6 @@
 {
   "name": "@abgov/adsp-sdk-mcp-server",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "license": "Apache-2.0",
   "description": "Government of Alberta - MCP server for ADSP documentation and Node SDK reference lookup.",
   "repository": "https://github.com/GovAlta/adsp-monorepo",
@@ -16,6 +16,8 @@
     "@opentelemetry/sdk-metrics": "2.10.0",
     "express": "^4.21.0",
     "express-rate-limit": "^7.1.4",
+    "jsonwebtoken": "^9.0.3",
+    "jwks-rsa": "^2.1.4",
     "tslib": "^2.3.0",
     "zod": "^4.6.7"
   }

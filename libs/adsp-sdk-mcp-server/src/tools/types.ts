@@ -6,9 +6,16 @@ export interface JsonSchemaObject {
   required?: string[];
 }
 
+export interface CallerSignIn {
+  accessToken: string;
+  directoryServiceUrl: string;
+}
+
 export interface ToolCallContext {
   /** Aborted when the client cancels the call or disconnects. */
   signal?: AbortSignal;
+  /** Set in hosted mode: live tools act as the signed-in caller instead of the local CLI login. */
+  caller?: CallerSignIn;
 }
 
 export interface ToolDefinition {

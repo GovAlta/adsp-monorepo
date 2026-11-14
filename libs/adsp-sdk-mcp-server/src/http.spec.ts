@@ -18,11 +18,14 @@ import {
   TRANSPORT_EQUIVALENCE_CALLS,
 } from './fixtures/toolContract';
 import { createMetricsTestKit, histogramCount, MetricsTestKit } from './fixtures/metricsTestKit';
-import { testConfig } from './fixtures/httpTestKit';
+import { authHeaders, endpointFor, startTestAuth, stopTestAuth, testConfig } from './fixtures/httpTestKit';
 import { createMcpHttpApp } from './http';
 import { installMetrics } from './metrics';
 import * as quickstartModule from './tools/registerQuickstartTool';
 import { createAdspMcpServer } from './server';
+
+beforeAll(startTestAuth);
+afterAll(stopTestAuth);
 
 interface RunningApp {
   httpServer: HttpServer;
@@ -34,7 +37,7 @@ async function listen(app: Express): Promise<RunningApp> {
     const server = app.listen(0, '127.0.0.1', () => resolveListening(server));
   });
   const { port } = httpServer.address() as AddressInfo;
-  return { httpServer, endpoint: new URL(`http://127.0.0.1:${port}/mcp`) };
+  return { httpServer, endpoint: endpointFor(`http://127.0.0.1:${port}`) };
 }
 
 async function stop({ httpServer }: RunningApp): Promise<void> {
@@ -55,7 +58,12 @@ function postMcp(endpoint: URL, body: unknown, init: RequestInit = {}): Promise<
   return fetch(endpoint, {
     ...init,
     method: 'POST',
-    headers: { 'content-type': 'application/json', accept: 'application/json, text/event-stream', ...init.headers },
+    headers: {
+      'content-type': 'application/json',
+      accept: 'application/json, text/event-stream',
+      ...authHeaders(),
+      ...init.headers,
+    },
     body: JSON.stringify(body),
   });
 }
@@ -63,7 +71,7 @@ function postMcp(endpoint: URL, body: unknown, init: RequestInit = {}): Promise<
 function postRawMcp(endpoint: URL, body: string): Promise<Response> {
   return fetch(endpoint, {
     method: 'POST',
-    headers: { 'content-type': 'application/json', accept: 'application/json, text/event-stream' },
+    headers: { 'content-type': 'application/json', accept: 'application/json, text/event-stream', ...authHeaders() },
     body,
   });
 }
@@ -78,7 +86,7 @@ async function waitFor(condition: () => boolean, timeoutMs = 2000): Promise<void
 
 async function connectHttpClient(endpoint: URL): Promise<{ client: Client; transport: StreamableHTTPClientTransport }> {
   const client = new Client({ name: 'test-client', version: '0.0.1' });
-  const transport = new StreamableHTTPClientTransport(endpoint);
+  const transport = new StreamableHTTPClientTransport(endpoint, { requestInit: { headers: authHeaders() } });
   await client.connect(transport);
   return { client, transport };
 }
@@ -89,7 +97,7 @@ describe('HTTP transport', () => {
   let inMemoryClient: Client;
 
   beforeAll(async () => {
-    running = await listen(createMcpHttpApp({ docsRoot: FIXTURE_DOCS_ROOT }));
+    running = await listen(createMcpHttpApp({ docsRoot: FIXTURE_DOCS_ROOT, config: testConfig() }));
     ({ client } = await connectHttpClient(running.endpoint));
     inMemoryClient = await connectInMemoryClient(createAdspMcpServer({ docsRoot: FIXTURE_DOCS_ROOT }));
   });
@@ -156,7 +164,7 @@ describe('HTTP startup', () => {
   });
 
   it('builds the docs index before the first request', async () => {
-    const app = createMcpHttpApp({ docsRoot });
+    const app = createMcpHttpApp({ docsRoot, config: testConfig() });
     const readsBeforeListening = countDocsReads();
     running = await listen(app);
     const { client } = await connectHttpClient(running.endpoint);
@@ -196,7 +204,7 @@ describe('stateless HTTP', () => {
   let running: RunningApp;
 
   beforeEach(async () => {
-    running = await listen(createMcpHttpApp({ docsRoot: FIXTURE_DOCS_ROOT }));
+    running = await listen(createMcpHttpApp({ docsRoot: FIXTURE_DOCS_ROOT, config: testConfig() }));
   });
 
   afterEach(async () => {
@@ -260,7 +268,7 @@ describe('HTTP methods other than POST', () => {
   let running: RunningApp;
 
   beforeAll(async () => {
-    running = await listen(createMcpHttpApp({ docsRoot: FIXTURE_DOCS_ROOT }));
+    running = await listen(createMcpHttpApp({ docsRoot: FIXTURE_DOCS_ROOT, config: testConfig() }));
   });
 
   afterAll(() => stop(running));
@@ -285,7 +293,7 @@ describe('HTTP request failures', () => {
     unhandledRejection = jest.fn();
     process.on('unhandledRejection', unhandledRejection);
     jest.spyOn(console, 'error').mockImplementation(() => undefined);
-    running = await listen(createMcpHttpApp({ docsRoot: FIXTURE_DOCS_ROOT }));
+    running = await listen(createMcpHttpApp({ docsRoot: FIXTURE_DOCS_ROOT, config: testConfig() }));
   });
 
   afterEach(async () => {
@@ -355,7 +363,12 @@ describe('HTTP request failures', () => {
     try {
       const response = await fetch(allowingApp.endpoint, {
         method: 'POST',
-        headers: { 'content-type': 'application/json', accept: 'application/json, text/event-stream', origin: allowedOrigin },
+        headers: {
+          'content-type': 'application/json',
+          accept: 'application/json, text/event-stream',
+          origin: allowedOrigin,
+          ...authHeaders(),
+        },
         body: '{not json',
       });
 
@@ -369,7 +382,7 @@ describe('HTTP request failures', () => {
   it('answers a malformed JSON body without crashing', async () => {
     const malformed = await fetch(running.endpoint, {
       method: 'POST',
-      headers: { 'content-type': 'application/json', accept: 'application/json, text/event-stream' },
+      headers: { 'content-type': 'application/json', accept: 'application/json, text/event-stream', ...authHeaders() },
       body: '{not json',
     });
     const followUp = await postMcp(running.endpoint, TOOLS_LIST_REQUEST);
@@ -399,7 +412,7 @@ describe('HTTP tool handler failures', () => {
         },
       },
     ]);
-    running = await listen(createMcpHttpApp({ docsRoot }));
+    running = await listen(createMcpHttpApp({ docsRoot, config: testConfig() }));
   });
 
   afterEach(async () => {
@@ -477,7 +490,7 @@ describe('HTTP request metrics', () => {
   beforeEach(async () => {
     kit = createMetricsTestKit();
     ({ uninstall } = installMetrics(kit.provider));
-    running = await listen(createMcpHttpApp({ docsRoot: FIXTURE_DOCS_ROOT }));
+    running = await listen(createMcpHttpApp({ docsRoot: FIXTURE_DOCS_ROOT, config: testConfig() }));
   });
 
   afterEach(async () => {

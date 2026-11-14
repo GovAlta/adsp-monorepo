@@ -14,6 +14,10 @@ import {
   testConfig,
   TOOLS_LIST_REQUEST,
   waitFor,
+  authHeaders,
+  endpointFor,
+  startTestAuth,
+  stopTestAuth,
 } from './fixtures/httpTestKit';
 import { createMetricsTestKit, MetricsTestKit } from './fixtures/metricsTestKit';
 import { createMcpHttpApp, createMcpHttpServer } from './http';
@@ -21,6 +25,9 @@ import { installMetrics } from './metrics';
 import * as quickstartModule from './tools/registerQuickstartTool';
 
 const ALLOWED = 'http://allowed.test';
+
+beforeAll(startTestAuth);
+afterAll(stopTestAuth);
 
 describe('Origin check', () => {
   let running: RunningApp;
@@ -384,7 +391,7 @@ describe('in-flight gate', () => {
     const raw = (body: string) =>
       fetch(running.endpoint, {
         method: 'POST',
-        headers: { 'content-type': 'application/json', accept: 'application/json, text/event-stream' },
+        headers: { 'content-type': 'application/json', accept: 'application/json, text/event-stream', ...authHeaders() },
         body,
       }).then(async (response) => {
         await response.text();
@@ -453,13 +460,14 @@ describe('slow request bodies', () => {
     });
     await new Promise<void>((resolveListening) => httpServer.listen(0, '127.0.0.1', resolveListening));
     const { port } = httpServer.address() as AddressInfo;
-    const endpoint = new URL(`http://127.0.0.1:${port}/mcp`);
+    const endpoint = endpointFor(`http://127.0.0.1:${port}`);
     const stalled = connect(port, '127.0.0.1');
     stalled.on('error', () => undefined);
 
     try {
       stalled.write(
-        'POST /mcp HTTP/1.1\r\nHost: 127.0.0.1\r\nContent-Type: application/json\r\n' +
+        `POST ${endpoint.pathname} HTTP/1.1\r\nHost: 127.0.0.1\r\nAuthorization: ${authHeaders().authorization}\r\n` +
+          'Content-Type: application/json\r\n' +
           'Accept: application/json, text/event-stream\r\nContent-Length: 100\r\n\r\n{"jsonrpc":'
       );
       await new Promise((resolveTick) => setTimeout(resolveTick, 50));

@@ -13,7 +13,7 @@ import { createQuickstartTool } from './tools/registerQuickstartTool';
 import { createServiceRolesTools } from './tools/registerServiceRolesTool';
 import { createSdkTools } from './tools/registerSdkTools';
 import { createServerInfoTool } from './tools/registerServerInfoTool';
-import { LiveToolDefinition, ToolDefinition } from './tools/types';
+import { CallerSignIn, LiveToolDefinition, ToolDefinition } from './tools/types';
 import { readPackageVersion } from './version';
 
 export interface CreateAdspMcpServerOptions {
@@ -21,6 +21,8 @@ export interface CreateAdspMcpServerOptions {
   docsRoot?: string;
   /** Root directory of bundled OpenAPI specs. Defaults to the assets copied alongside the built package. */
   apiSpecsRoot?: string;
+  /** Hosted mode: live tools use each request's verified token and this directory, never the CLI login. */
+  hostedAuth?: { directoryServiceUrl: string };
 }
 
 export interface AdspMcpTools {
@@ -94,9 +96,20 @@ export function createAdspMcpServer(options: CreateAdspMcpServerOptions = {}): S
       return { isError: true, content: [{ type: 'text', text: `Unknown tool: ${request.params.name}` }] };
     }
 
+    let caller: CallerSignIn | undefined;
+    if (options.hostedAuth) {
+      const accessToken = extra.authInfo?.token;
+      // Refused rather than falling through, so a hosted server never acts with its own CLI login.
+      if (!accessToken) {
+        getMetrics().recordToolCall(tool.name, secondsSince(started), 'tool_error');
+        return { isError: true, content: [{ type: 'text', text: 'Sign-in required. Sign in from your MCP client.' }] };
+      }
+      caller = { accessToken, directoryServiceUrl: options.hostedAuth.directoryServiceUrl };
+    }
+
     try {
       // clean-code-ignore: 2.18 — ToolDefinition.handler is documented (tools/types.ts) as a pure, side-effect-free lookup.
-      const result = await tool.handler(request.params.arguments ?? {}, { signal: extra.signal });
+      const result = await tool.handler(request.params.arguments ?? {}, { signal: extra.signal, caller });
       getMetrics().recordToolCall(tool.name, secondsSince(started), toolErrorType(result));
       return result;
     } catch (err) {
