@@ -62,6 +62,65 @@ describe('FormDefinitionEntity', () => {
     expect(entity.reviewConfiguration).toEqual(reviewConfiguration);
   });
 
+  describe('registration', () => {
+    const createEntity = (registration?: Record<string, unknown>) =>
+      new FormDefinitionEntity(validationService, calendarService, tenantId, {
+        id: 'test',
+        name: 'test-form-definition',
+        description: null,
+        anonymousApply: false,
+        applicantRoles: [],
+        assessorRoles: [],
+        clerkRoles: [],
+        dataSchema: null,
+        registration: registration as never,
+      });
+
+    it('defaults to registration disabled', () => {
+      const entity = createEntity();
+
+      expect(entity.registration).toEqual({ enabled: false });
+      expect(entity.isRegistrationEnabled()).toBe(false);
+    });
+
+    it('is enabled when configured', () => {
+      expect(createEntity({ enabled: true }).isRegistrationEnabled()).toBe(true);
+    });
+
+    it('registers the registration schema without additional properties', () => {
+      createEntity({
+        enabled: true,
+        dataSchema: { type: 'object', properties: { profession: { type: 'string' } }, additionalProperties: true },
+      });
+
+      expect(validationService.setSchema).toHaveBeenCalledWith(`${tenantId.resource}:test:registration`, {
+        type: 'object',
+        properties: { profession: { type: 'string' } },
+        additionalProperties: false,
+      });
+    });
+
+    it('registers an empty registration schema when no questions are configured', () => {
+      createEntity({ enabled: true });
+
+      expect(validationService.setSchema).toHaveBeenCalledWith(`${tenantId.resource}:test:registration`, {
+        type: 'object',
+        additionalProperties: false,
+      });
+    });
+
+    it('validates registration data against the registration schema', () => {
+      const entity = createEntity({ enabled: true });
+      entity.validateRegistrationData({ profession: 'nurse' });
+
+      expect(validationService.validate).toHaveBeenCalledWith(
+        'access request',
+        `${tenantId.resource}:test:registration`,
+        { profession: 'nurse' },
+      );
+    });
+  });
+
   it('can be created with null roles', () => {
     const entity = new FormDefinitionEntity(validationService, calendarService, tenantId, {
       id: 'test',

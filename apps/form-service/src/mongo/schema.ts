@@ -68,7 +68,7 @@ export const formSchema = new Schema(
       type: Boolean,
     },
   },
-  { _id: false }
+  { _id: false },
 );
 
 formSchema.index({ tenantId: 1, id: 1 }, { unique: true });
@@ -131,7 +131,7 @@ export const formSubmissionNoteSchema = new Schema(
       required: true,
     },
   },
-  { _id: false }
+  { _id: false },
 );
 
 export const formSubmissionSchema = new Schema(
@@ -200,7 +200,7 @@ export const formSubmissionSchema = new Schema(
     notes: { type: [formSubmissionNoteSchema], required: false },
     hash: String,
   },
-  { _id: false }
+  { _id: false },
 );
 
 formSubmissionSchema.index({ tenantId: 1, formDefinitionId: 1 });
@@ -208,3 +208,25 @@ formSubmissionSchema.index({ submissionStatus: 1, created: 1 });
 // Nested columns are indexed on their own; a composite index is not supported on a nested path.
 formSubmissionSchema.index({ 'disposition.status': 1 });
 formSubmissionSchema.index({ 'formData.$**': 1 });
+
+export const formRegistrationSchema = new Schema(
+  {
+    id: { type: String, required: true },
+    tenantId: { type: String, required: true },
+    formDefinitionId: { type: String, required: true },
+    status: { type: String, required: true, enum: ['pending', 'approved', 'denied'] },
+    firstName: { type: String, required: true },
+    lastName: { type: String, required: true },
+    // Stored lower-cased so duplicate and lookup checks are case-insensitive.
+    email: { type: String, required: true },
+    data: { type: Schema.Types.Mixed, required: true, default: {} },
+    submittedAt: { type: Date, required: true, index: true },
+    reviewedAt: { type: Date, required: false },
+    reviewedBy: { type: createdBy, required: false },
+  },
+  { _id: false, minimize: false },
+);
+
+formRegistrationSchema.index({ tenantId: 1, id: 1 }, { unique: true });
+formRegistrationSchema.index({ tenantId: 1, formDefinitionId: 1, status: 1 });
+formRegistrationSchema.index({ tenantId: 1, formDefinitionId: 1, email: 1 });

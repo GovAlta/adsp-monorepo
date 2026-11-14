@@ -1,5 +1,5 @@
 import { AdspId } from '@abgov/adsp-service-sdk';
-import { FormSubmissionEntity } from './model';
+import { FormRegistrationEntity, FormSubmissionEntity } from './model';
 import { FormDefinition, Intake } from './types';
 import { FormEntityWithJobId } from './router';
 
@@ -27,8 +27,31 @@ export function mapFormDefinition(entity: FormDefinition, revision: number, inta
     // Only the columns are of interest to clients; the questions email is internal routing
     // configuration and is deliberately not exposed to form applicants.
     reviewConfiguration: { columns: entity.reviewConfiguration?.columns || [] },
+    // Access group is internal provisioning configuration and is not exposed.
+    registration: entity.registration
+      ? {
+          enabled: entity.registration.enabled,
+          dataSchema: entity.registration.dataSchema,
+          uiSchema: entity.registration.uiSchema,
+        }
+      : { enabled: false },
     created,
     intake: intake ? intake : null,
+  };
+}
+
+export function mapRegistration(entity: FormRegistrationEntity) {
+  return {
+    id: entity.id,
+    formDefinitionId: entity.formDefinitionId,
+    status: entity.status,
+    firstName: entity.firstName,
+    lastName: entity.lastName,
+    email: entity.email,
+    data: entity.data,
+    submittedAt: entity.submittedAt,
+    reviewedAt: entity.reviewedAt ?? null,
+    reviewedBy: entity.reviewedBy ?? null,
   };
 }
 

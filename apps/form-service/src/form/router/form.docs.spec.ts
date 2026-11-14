@@ -1,5 +1,5 @@
 import { adspId, User } from '@abgov/adsp-service-sdk';
-import { createErrorHandler } from '@core-services/core-common';
+import { createErrorHandler, InvalidOperationError } from '@core-services/core-common';
 import { createDocumentedResponseRecorder } from '@core-services/core-common/testing';
 import axios from 'axios';
 import * as express from 'express';
@@ -7,9 +7,9 @@ import { Express } from 'express';
 import { join } from 'path';
 import * as request from 'supertest';
 import { Logger } from 'winston';
-import { FormDefinitionEntity, FormEntity, FormSubmissionEntity } from '../model';
+import { FormDefinitionEntity, FormEntity, FormRegistrationEntity, FormSubmissionEntity } from '../model';
 import { ExportServiceRoles, FormServiceRoles } from '../roles';
-import { FormStatus } from '../types';
+import { FormStatus, RegistrationStatus } from '../types';
 import { createFormDefinitionRouter } from './definition';
 import { createFormRouter } from './form';
 
@@ -42,6 +42,13 @@ describe('form routers documented behaviour', () => {
   const tokenProviderMock = { getAccessToken: jest.fn() };
   const formRepositoryMock = { find: jest.fn(), get: jest.fn(), save: jest.fn(), delete: jest.fn() };
   const submissionRepositoryMock = { find: jest.fn(), get: jest.fn(), save: jest.fn(), delete: jest.fn() };
+  const registrationRepositoryMock = {
+    get: jest.fn(),
+    getLatestByEmail: jest.fn(),
+    find: jest.fn(),
+    create: jest.fn(),
+    updateIfPending: jest.fn(),
+  };
   const eventServiceMock = { send: jest.fn() };
   const notificationServiceMock = {
     subscribe: jest.fn(),
@@ -71,12 +78,32 @@ describe('form routers documented behaviour', () => {
   const definition = createDefinition();
   const anonymousDefinition = createDefinition({ id: 'anonymous', anonymousApply: true });
   const scheduledDefinition = createDefinition({ id: 'scheduled', scheduledIntakes: true });
-  const definitions = { test: definition, anonymous: anonymousDefinition, scheduled: scheduledDefinition };
+  const restrictedDefinition = createDefinition({ id: 'restricted', registration: { enabled: true } });
+  const definitions = {
+    test: definition,
+    anonymous: anonymousDefinition,
+    scheduled: scheduledDefinition,
+    restricted: restrictedDefinition,
+  };
 
   const formId = '5f1e2d3c-4b5a-4f6e-8d7c-9b0a1c2d3e4f';
   const submissionId = '6a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d';
   const noteId = '7b3c4d5e-6f7a-4b8c-9d0e-1f2a3b4c5d6e';
   const unknownId = '8c4d5e6f-7a8b-4c9d-8e1f-2a3b4c5d6e7f';
+  const registrationId = '6f1c2a9e-3b4d-4c8e-9a2f-1d5e7b8c9a01';
+
+  const createRegistration = (status = RegistrationStatus.Pending) =>
+    new FormRegistrationEntity({
+      id: registrationId,
+      tenantId,
+      formDefinitionId: 'restricted',
+      status,
+      firstName: 'Test',
+      lastName: 'User',
+      email: 'test.user@gov.ab.ca',
+      data: {},
+      submittedAt: new Date(),
+    });
 
   const createSubmission = () =>
     new FormSubmissionEntity(
@@ -145,6 +172,14 @@ describe('form routers documented behaviour', () => {
         tenantService: tenantService as never,
         calendarService: calendarService as never,
         logger: loggerMock,
+        registrationRepository: registrationRepositoryMock,
+        eventService: eventServiceMock,
+        auditService: {
+          record: jest.fn().mockResolvedValue({ status: 'recorded', eventId: 'event' }),
+          query: jest.fn(),
+          flush: jest.fn(),
+          droppedEventCount: 0,
+        },
       } as never),
     );
     app.use(
@@ -206,6 +241,150 @@ describe('form routers documented behaviour', () => {
       Promise.resolve({ data: { latest: { revision: 2, configuration: body.configuration } } }),
     );
     axiosMock.delete.mockResolvedValue({ data: { deleted: true } });
+    registrationRepositoryMock.create.mockImplementation((entity) => Promise.resolve(entity));
+    registrationRepositoryMock.find.mockResolvedValue({ results: [createRegistration()], page: { size: 1 } });
+    registrationRepositoryMock.getLatestByEmail.mockResolvedValue(createRegistration());
+    registrationRepositoryMock.get.mockImplementation((_tenantId, _definitionId, id: string) =>
+      Promise.resolve(id === registrationId ? createRegistration() : null),
+    );
+    registrationRepositoryMock.updateIfPending.mockImplementation((entity) => Promise.resolve(entity));
+  });
+
+  describe('access requests', () => {
+    const requester = user('requester', [FormServiceRoles.RegistrationRequester], { email: 'test.user@gov.ab.ca' });
+    const reader = user('reader', [FormServiceRoles.RegistrationReader]);
+    const writer = user('writer', [FormServiceRoles.RegistrationWriter]);
+    const body = { firstName: 'Test', lastName: 'User', email: 'test.user@gov.ab.ca', data: {} };
+    const basePath = '/form/v1/definitions/restricted/access-requests';
+
+    describe('POST /definitions/{definitionId}/access-requests', () => {
+      it('responds 201 with the pending request', async () => {
+        const res = await request(createApp(requester)).post(basePath).send(body);
+        expect(res.status).toBe(201);
+        expect(res.body).toMatchObject({ status: 'pending', formDefinitionId: 'restricted' });
+      });
+
+      it('responds 400 when the form does not accept access requests', async () => {
+        const res = await request(createApp(requester)).post('/form/v1/definitions/test/access-requests').send(body);
+        expect(res.status).toBe(400);
+      });
+
+      it('responds 400 for unexpected properties', async () => {
+        const res = await request(createApp(requester))
+          .post(basePath)
+          .send({ ...body, role: 'admin' });
+        expect(res.status).toBe(400);
+      });
+
+      it('responds 400 for an invalid email', async () => {
+        const res = await request(createApp(requester))
+          .post(basePath)
+          .send({ ...body, email: 'not an address' });
+        expect(res.status).toBe(400);
+      });
+
+      it('responds 403 without the requester role', async () => {
+        const res = await request(createApp(reader)).post(basePath).send(body);
+        expect(res.status).toBe(403);
+      });
+
+      it('responds 404 for an unknown definition', async () => {
+        const res = await request(createApp(requester)).post('/form/v1/definitions/unknown/access-requests').send(body);
+        expect(res.status).toBe(404);
+      });
+
+      it('responds 409 for a duplicate pending request', async () => {
+        registrationRepositoryMock.create.mockRejectedValueOnce(
+          new InvalidOperationError('A pending registration already exists for this email address and form.', {
+            statusCode: 409,
+          }),
+        );
+        const res = await request(createApp(requester)).post(basePath).send(body);
+        expect(res.status).toBe(409);
+      });
+    });
+
+    describe('GET /definitions/{definitionId}/access-requests', () => {
+      it('responds 200 with the page of requests', async () => {
+        const res = await request(createApp(reader)).get(`${basePath}?status=pending&top=5`);
+        expect(res.status).toBe(200);
+        expect(res.body.results).toHaveLength(1);
+      });
+
+      it('responds 400 for an unknown status', async () => {
+        const res = await request(createApp(reader)).get(`${basePath}?status=unknown`);
+        expect(res.status).toBe(400);
+      });
+
+      it('responds 403 without a reviewer role', async () => {
+        const res = await request(createApp(requester)).get(basePath);
+        expect(res.status).toBe(403);
+      });
+
+      it('responds 404 for an unknown definition', async () => {
+        const res = await request(createApp(reader)).get('/form/v1/definitions/unknown/access-requests');
+        expect(res.status).toBe(404);
+      });
+    });
+
+    describe('GET /definitions/{definitionId}/access-requests/{id}', () => {
+      it('responds 200 with the caller own request', async () => {
+        const res = await request(createApp(requester)).get(`${basePath}/test.user@gov.ab.ca`);
+        expect(res.status).toBe(200);
+        expect(res.body.email).toBe('test.user@gov.ab.ca');
+      });
+
+      it('responds 400 for a value that is not an email', async () => {
+        const res = await request(createApp(reader)).get(`${basePath}/not-an-email`);
+        expect(res.status).toBe(400);
+      });
+
+      it('responds 403 for the request of another email without a reviewer role', async () => {
+        const res = await request(createApp(requester)).get(`${basePath}/someone.else@gov.ab.ca`);
+        expect(res.status).toBe(403);
+      });
+
+      it('responds 404 when there is no request for the email', async () => {
+        registrationRepositoryMock.getLatestByEmail.mockResolvedValueOnce(null);
+        const res = await request(createApp(reader)).get(`${basePath}/nobody@gov.ab.ca`);
+        expect(res.status).toBe(404);
+      });
+    });
+
+    describe('PATCH /definitions/{definitionId}/access-requests/{id}', () => {
+      it('responds 200 with the reviewed request', async () => {
+        const res = await request(createApp(writer))
+          .patch(`${basePath}/${registrationId}`)
+          .send({ status: 'approved' });
+        expect(res.status).toBe(200);
+        expect(res.body).toMatchObject({ status: 'approved', reviewedBy: { id: 'writer', name: 'writer' } });
+      });
+
+      it('responds 400 for an unknown status', async () => {
+        const res = await request(createApp(writer)).patch(`${basePath}/${registrationId}`).send({ status: 'maybe' });
+        expect(res.status).toBe(400);
+      });
+
+      it('responds 403 without the writer role', async () => {
+        const res = await request(createApp(reader))
+          .patch(`${basePath}/${registrationId}`)
+          .send({ status: 'approved' });
+        expect(res.status).toBe(403);
+      });
+
+      it('responds 404 for an unknown request', async () => {
+        const res = await request(createApp(writer)).patch(`${basePath}/${unknownId}`).send({ status: 'approved' });
+        expect(res.status).toBe(404);
+      });
+
+      it('responds 409 when the request is already approved', async () => {
+        registrationRepositoryMock.get.mockResolvedValueOnce(createRegistration(RegistrationStatus.Approved));
+        const res = await request(createApp(writer))
+          .patch(`${basePath}/${registrationId}`)
+          .send({ status: 'approved' });
+        expect(res.status).toBe(409);
+      });
+    });
   });
 
   // Every operation other than reading definitions requires a signed-in user.
@@ -218,6 +397,10 @@ describe('form routers documented behaviour', () => {
     ['put', '/form/v1/definitions/test/roles'],
     ['patch', '/form/v1/definitions/test/lifecycle'],
     ['patch', '/form/v1/definitions/test/submission-actions'],
+    ['post', '/form/v1/definitions/restricted/access-requests'],
+    ['get', '/form/v1/definitions/restricted/access-requests'],
+    ['get', '/form/v1/definitions/restricted/access-requests/test.user@gov.ab.ca'],
+    ['patch', `/form/v1/definitions/restricted/access-requests/${registrationId}`],
     ['post', '/form/v1/forms'],
     ['get', `/form/v1/forms/${formId}`],
     ['post', `/form/v1/forms/${formId}`],

@@ -74,4 +74,44 @@ describe('configuration', () => {
       }),
     ).toThrow();
   });
+
+  describe('registration', () => {
+    const validate = (registration: unknown) => {
+      const service = new AjvValidationService(logger as unknown as Logger);
+      service.setSchema('formDefinition', configurationSchema);
+      service.validate('test', 'formDefinition', {
+        id: 'intake',
+        name: 'Intake',
+        anonymousApply: false,
+        applicantRoles: [],
+        assessorRoles: [],
+        registration,
+      });
+    };
+
+    it('accepts a registration configuration', () => {
+      expect(() =>
+        validate({
+          enabled: true,
+          accessGroup: '/tec-medical-intake-access',
+          dataSchema: { type: 'object', properties: { profession: { type: 'string' } } },
+          uiSchema: { type: 'VerticalLayout', elements: [] },
+        }),
+      ).not.toThrow();
+    });
+
+    it('requires enabled', () => {
+      expect(() => validate({ accessGroup: '/group' })).toThrow();
+    });
+
+    it('rejects unexpected properties', () => {
+      expect(() => validate({ enabled: true, unexpected: true })).toThrow();
+    });
+
+    it.each(['firstName', 'lastName', 'email'])('rejects questions that redefine the standard field %s', (field) => {
+      expect(() =>
+        validate({ enabled: true, dataSchema: { type: 'object', properties: { [field]: { type: 'string' } } } }),
+      ).toThrow();
+    });
+  });
 });

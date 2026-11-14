@@ -238,6 +238,33 @@ components:
               description: >-
                 Address that applicant questions are forwarded to while no reviewer is part of the
                 conversation. Not returned by the form APIs.
+        registration:
+          type: object
+          description: >
+            Restricts the form to approved users. When enabled, users submit an access request answering the
+            registration questions, and an administrator approves or denies it.
+          additionalProperties: false
+          required:
+            - enabled
+          properties:
+            enabled:
+              type: boolean
+              description: Whether the form is restricted and accepts access requests. Defaults to false.
+            accessGroup:
+              type: string
+              writeOnly: true
+              minLength: 1
+              maxLength: 255
+              description: >
+                Keycloak group containing the roles needed to access the form. Not returned by the form APIs.
+            dataSchema:
+              type: object
+              description: >
+                JSON schema (draft-07) of the registration questions. Must not define firstName, lastName or email,
+                which are standard fields of every access request.
+            uiSchema:
+              type: object
+              description: Layout of the registration questions.
         dryRun:
           type: boolean
         intake:
@@ -301,6 +328,8 @@ components:
         reviewConfiguration:
           columns:
             - path: businessName
+        registration:
+          enabled: false
         intake: null
     FormDefinitionCreate:
       type: object
@@ -727,6 +756,138 @@ components:
         calendarEventId: 42
         start: '2026-10-01T15:00:00.000Z'
         end: '2026-10-31T23:00:00.000Z'
+    FormRegistration:
+      type: object
+      description: A request for access to a restricted form.
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        formDefinitionId:
+          type: string
+          readOnly: true
+        status:
+          type: string
+          enum: [pending, approved, denied]
+          readOnly: true
+        firstName:
+          type: string
+        lastName:
+          type: string
+        email:
+          type: string
+          format: email
+          description: Email address of the applicant, stored in lower case.
+        data:
+          type: object
+          description: Answers to the registration questions of the form definition.
+        submittedAt:
+          type: string
+          format: date-time
+          readOnly: true
+        reviewedAt:
+          type: string
+          format: date-time
+          nullable: true
+          readOnly: true
+          description: Date the request was approved or denied.
+        reviewedBy:
+          type: object
+          nullable: true
+          readOnly: true
+          description: Administrator who approved or denied the request.
+          properties:
+            id:
+              type: string
+            name:
+              type: string
+      example:
+        id: 6f1c2a9e-3b4d-4c8e-9a2f-1d5e7b8c9a01
+        formDefinitionId: medical-intake
+        status: approved
+        firstName: Test
+        lastName: User
+        email: test.user@gov.ab.ca
+        data:
+          profession: physician
+          registrationNumber: '12345'
+        submittedAt: '2026-11-12T16:00:00.000Z'
+        reviewedAt: '2026-11-13T09:30:00.000Z'
+        reviewedBy:
+          id: 1c0fa56b-f818-4cc7-9254-7513aecb5d9f
+          name: Admin User
+    FormRegistrationCreate:
+      type: object
+      additionalProperties: false
+      required:
+        - firstName
+        - lastName
+        - email
+      properties:
+        firstName:
+          type: string
+          minLength: 1
+          maxLength: 100
+        lastName:
+          type: string
+          minLength: 1
+          maxLength: 100
+        email:
+          type: string
+          format: email
+          maxLength: 254
+        data:
+          type: object
+          description: >
+            Answers to the registration questions. Validated against the registration data schema of the form
+            definition; properties the schema does not define respond 400.
+      example:
+        firstName: Test
+        lastName: User
+        email: test.user@gov.ab.ca
+        data:
+          profession: physician
+          registrationNumber: '12345'
+    FormRegistrationSubmitted:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        formDefinitionId:
+          type: string
+        status:
+          type: string
+          enum: [pending]
+        submittedAt:
+          type: string
+          format: date-time
+      example:
+        id: 6f1c2a9e-3b4d-4c8e-9a2f-1d5e7b8c9a01
+        formDefinitionId: medical-intake
+        status: pending
+        submittedAt: '2026-11-12T16:00:00.000Z'
+    FormRegistrationPage:
+      type: object
+      properties:
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/FormRegistration'
+        page:
+          $ref: '#/components/schemas/FormResultsPageInfo'
+    FormRegistrationReview:
+      type: object
+      additionalProperties: false
+      required:
+        - status
+      properties:
+        status:
+          type: string
+          enum: [pending, approved, denied]
+      example:
+        status: approved
 
 /form/v1/definitions:
   get:
@@ -1253,6 +1414,197 @@ components:
         $ref: '#/components/responses/FormUnauthorized'
       403:
         $ref: '#/components/responses/FormForbidden'
+
+/form/v1/definitions/{definitionId}/access-requests:
+  post:
+    tags:
+      - Form registration
+    description: >
+      Submits a request for access to a restricted form. Requires the `form-access-requester` role
+      (`urn:ads:platform:form-service:form-access-requester`) or the `form-admin` role; core users with either role must
+      set `tenantId`. The form
+      definition must have registration enabled, otherwise the request responds 400. The registration is created with
+      status `pending`. Only one pending registration is allowed per email address and form.
+    parameters:
+      - $ref: '#/components/parameters/FormDefinitionIdPath'
+      - $ref: '#/components/parameters/FormTenantId'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/FormRegistrationCreate'
+    responses:
+      201:
+        description: Successfully submitted the access request.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FormRegistrationSubmitted'
+      400:
+        description: >
+          Request is invalid, the answers don't match the registration questions, the form definition doesn't accept
+          access requests, or the request has no tenant context.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FormError'
+            example:
+              errorMessage: Form definition 'medical-intake' does not accept registrations.
+      401:
+        $ref: '#/components/responses/FormUnauthorized'
+      403:
+        $ref: '#/components/responses/FormForbidden'
+      404:
+        $ref: '#/components/responses/FormDefinitionNotFound'
+      409:
+        description: A pending access request already exists for this email address and form.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FormError'
+            example:
+              errorMessage: A pending registration already exists for this email address and form.
+  get:
+    tags:
+      - Form registration
+    description: >
+      Retrieves the access requests of a form definition, newest first. Requires the `form-access-reader`,
+      `form-access-writer` or `form-admin` role; core users with any of these roles must set `tenantId`. Only requests
+      of the caller's tenant are returned.
+    parameters:
+      - $ref: '#/components/parameters/FormDefinitionIdPath'
+      - $ref: '#/components/parameters/FormTenantId'
+      - name: status
+        description: Only return requests with this status.
+        in: query
+        required: false
+        schema:
+          type: string
+          enum: [pending, approved, denied]
+      - name: top
+        description: Maximum number of results to return. Defaults to 10.
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 5000
+      - name: after
+        description: Cursor of the page to return, from the next value of the previous page.
+        in: query
+        required: false
+        schema:
+          type: string
+    responses:
+      200:
+        description: Successfully retrieved the access requests.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FormRegistrationPage'
+      400:
+        $ref: '#/components/responses/FormBadRequest'
+      401:
+        $ref: '#/components/responses/FormUnauthorized'
+      403:
+        $ref: '#/components/responses/FormForbidden'
+      404:
+        $ref: '#/components/responses/FormDefinitionNotFound'
+
+/form/v1/definitions/{definitionId}/access-requests/{id}:
+  get:
+    tags:
+      - Form registration
+    description: >
+      Retrieves the latest access request for an email address. Users can retrieve their own request (matching the
+      email of their token); retrieving the request of another email address requires the `form-access-reader`,
+      `form-access-writer` or `form-admin` role. Core users must set `tenantId`.
+    parameters:
+      - $ref: '#/components/parameters/FormDefinitionIdPath'
+      - name: id
+        description: Email address of the applicant. Matched without regard to case.
+        in: path
+        required: true
+        schema:
+          type: string
+          format: email
+        example: test.user@gov.ab.ca
+      - $ref: '#/components/parameters/FormTenantId'
+    responses:
+      200:
+        description: Successfully retrieved the access request.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FormRegistration'
+      400:
+        $ref: '#/components/responses/FormBadRequest'
+      401:
+        $ref: '#/components/responses/FormUnauthorized'
+      403:
+        $ref: '#/components/responses/FormForbidden'
+      404:
+        description: Form definition not found, or there is no access request for the email address.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FormError'
+            example:
+              errorMessage: registration with ID 'test.user@gov.ab.ca' could not be found.
+  patch:
+    tags:
+      - Form registration
+    description: >
+      Approves or denies a pending access request, and records the reviewing administrator and the review time.
+      Requires the `form-access-writer` or `form-admin` role; core users with either role must set `tenantId`. Requests
+      that are no longer pending respond 409. Requests of another tenant or form definition respond 404.
+    parameters:
+      - $ref: '#/components/parameters/FormDefinitionIdPath'
+      - name: id
+        description: ID of the access request.
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        example: 6f1c2a9e-3b4d-4c8e-9a2f-1d5e7b8c9a01
+      - $ref: '#/components/parameters/FormTenantId'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/FormRegistrationReview'
+    responses:
+      200:
+        description: Successfully updated the access request.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FormRegistration'
+      400:
+        $ref: '#/components/responses/FormBadRequest'
+      401:
+        $ref: '#/components/responses/FormUnauthorized'
+      403:
+        $ref: '#/components/responses/FormForbidden'
+      404:
+        description: Form definition or access request not found.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FormError'
+            example:
+              errorMessage: registration with ID '6f1c2a9e-3b4d-4c8e-9a2f-1d5e7b8c9a01' could not be found.
+      409:
+        description: The access request has already been approved or denied.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FormError'
+            example:
+              errorMessage: Registration has already been approved.
 
 /form/v1/forms:
   get:
