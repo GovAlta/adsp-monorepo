@@ -1,5 +1,13 @@
 import { render } from '@testing-library/react';
-import { FlexForm, FlexTabs, FlexTabsWithMargin, RowFlex, UpdateListContainer } from './styled-components';
+import {
+  FixTableHeaderAlignment,
+  FlexForm,
+  FlexTabs,
+  FlexTabsWithMargin,
+  RowFlex,
+  TableScrollContainer,
+  UpdateListContainer,
+} from './styled-components';
 
 const NARROW_MEDIA = '@media(max-width:639px){';
 
@@ -85,5 +93,25 @@ describe('list-with-details layout', () => {
     expect(edit.desktop).toContain('width:100%');
     expect(edit.desktop).toContain('padding:var(--goa-space-xl)');
     expect(edit.narrow).toContain('padding:var(--goa-space-m)');
+  });
+
+  it('scrolls a wide table without letting its width size the ancestors', () => {
+    const { getByTestId } = render(<TableScrollContainer data-testid="scroll" />);
+
+    const scroll = rulesFor(getByTestId('scroll'));
+    expect(scroll.desktop).toContain('overflow-x:auto');
+    // Without containment a group's goa-container grows to the table's width on narrow screens.
+    expect(scroll.desktop).toContain('contain:inline-size');
+  });
+
+  it('stacks table rows under their labels on narrow screens only', () => {
+    render(<FixTableHeaderAlignment />);
+
+    const [desktop, narrow] = renderedCss().split(NARROW_MEDIA).slice(-2);
+    expect(desktop).not.toContain('tabletheadtr{display:none');
+    expect(desktop).not.toContain('display:block');
+    expect(narrow).toContain('tablethead{display:none;}');
+    expect(narrow).toContain('tabletbodytr{display:block;');
+    expect(narrow).toContain('content:attr(data-label)');
   });
 });
