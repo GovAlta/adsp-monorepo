@@ -255,27 +255,39 @@ export const FixTableHeaderAlignment = styled.div`
     text-align: center;
   }
 
-  /* A row of inputs doesn't fit a phone, so each row stacks its cells and labels them from data-label. */
+  /*
+   * A row of inputs doesn't fit a phone, so each row stacks its cells and labels them from data-label.
+   * && and the goa-table prefix outrank GoA's goa-table[version="2"] tbody td:first-child/:last-child padding.
+   */
   @media (max-width: 639px) {
-    table thead {
+    /* The surrounding card already frames the list, so drop the table's own rounded border. */
+    goa-table {
+      --goa-table-container-border: none;
+      --goa-table-border-radius-container: 0;
+    }
+
+    && goa-table table thead {
       display: none;
     }
 
-    table tbody tr {
+    && goa-table table tbody tr {
       display: block;
       padding: var(--goa-space-s) 0;
       border-bottom: 1px solid var(--goa-color-greyscale-200);
     }
 
-    table tbody td,
-    table tbody td:nth-child(3) {
+    && goa-table table tbody tr:last-child {
+      border-bottom: none;
+    }
+
+    && goa-table table tbody td {
       display: block;
       padding: var(--goa-space-2xs) 0;
       border-bottom: none;
       text-align: left;
     }
 
-    table tbody td[data-label]::before {
+    && goa-table table tbody td[data-label]::before {
       content: attr(data-label);
       display: block;
       margin-bottom: var(--goa-space-2xs);
@@ -283,7 +295,7 @@ export const FixTableHeaderAlignment = styled.div`
       font: var(--goa-typography-body-s);
     }
 
-    table tbody td:not([data-label]) {
+    && goa-table table tbody td:not([data-label]) {
       padding-top: 0 !important;
       text-align: right;
     }

@@ -113,5 +113,8 @@ describe('list-with-details layout', () => {
     expect(narrow).toContain('tablethead{display:none;}');
     expect(narrow).toContain('tabletbodytr{display:block;');
     expect(narrow).toContain('content:attr(data-label)');
+    // GoA's goa-table[version="2"] first/last cell padding would otherwise indent the stacked cells unevenly.
+    expect(narrow).toMatch(/\.(\S+?)\.\1goa-tabletabletbodytd\{display:block;padding:var\(--goa-space-2xs\)0;/);
+    expect(narrow).toContain('--goa-table-container-border:none');
   });
 });
