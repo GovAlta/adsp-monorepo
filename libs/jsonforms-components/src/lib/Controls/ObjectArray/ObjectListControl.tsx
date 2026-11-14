@@ -66,7 +66,7 @@ import {
   ToolBarHeader,
   ListWithDetailsReviewCellDiv,
 } from './styled-components';
-import { PageReviewContainer, ReviewHeader, ReviewLabel } from '../Inputs/style-component';
+import { FlatReviewRow, PageReviewContainer, ReviewHeader, ReviewLabel } from '../Inputs/style-component';
 import { DataProperty } from './ObjectListControlTypes';
 import { DEFAULT_MAX_ITEMS, NO_ANSWER_MESSAGE } from '../../common/Constants';
 import { GoabInputOnChangeDetail, GoabDropdownOnChangeDetail } from '@abgov/ui-components-common';
@@ -633,6 +633,7 @@ export const ObjectArrayControl = (props: ObjectArrayControlProps): JSX.Element 
     data,
     config,
     isStepperReview,
+    isTableReview,
     handleChange,
     removeItems,
     ...additionalProps
@@ -787,55 +788,62 @@ export const ObjectArrayControl = (props: ObjectArrayControlProps): JSX.Element 
   const isListWithDetail = (controlElement.type as string) === 'ListWithDetail';
 
   if (isInReview) {
-    return (
+    const reviewContent = (
+      <>
+        {listTitle ? (
+          isListWithDetail && additionalProps.required && (data === null || data === undefined) ? (
+            <b>
+              <ListWithDetailWarningIconDiv>
+                <GoabIcon type="warning" title="warning" size="small" theme="filled" ml="2xs" mt="2xs" />
+                {listTitle} is required.
+              </ListWithDetailWarningIconDiv>
+            </b>
+          ) : (
+            <ReviewHeader
+              style={{ width: '100%', display: 'grid', gridTemplateColumns: '1fr auto', alignItems: 'center' }}
+            >
+              <ReviewLabel>
+                {listTitle}
+                {additionalProps.required && <span> (required)</span>}
+                {maxItemsError && <span style={{ color: 'red', marginLeft: '1rem' }}>{maxItemsError}</span>}
+              </ReviewLabel>
+              {showChangeButtons &&
+                uischema.options?.stepId !== undefined &&
+                !uischema.options?.componentProps?.readOnly && (
+                  <BackButton
+                    text="Change"
+                    link={() => reportChange(uischema.options?.stepId as number, uischema.scope)}
+                    showBackIcon={false}
+                  />
+                )}
+            </ReviewHeader>
+          )
+        ) : null}
+        <ObjectArrayList
+          path={path}
+          schema={schema}
+          uischema={uischema}
+          enabled={enabled}
+          openDeleteDialog={openDeleteDialog}
+          translations={{}}
+          count={latestCount}
+          data={latestData}
+          cells={cells}
+          config={config}
+          isInReview={isInReview}
+          handleChange={handleChangeWithData}
+          {...additionalProps}
+        />
+      </>
+    );
+
+    // A table row is only valid inside the stepper summary's table; a flat review has no table around it.
+    return isTableReview ? (
       <tr>
-        <PageReviewContainer colSpan={3}>
-          {listTitle ? (
-            isListWithDetail && additionalProps.required && (data === null || data === undefined) ? (
-              <b>
-                <ListWithDetailWarningIconDiv>
-                  <GoabIcon type="warning" title="warning" size="small" theme="filled" ml="2xs" mt="2xs" />
-                  {listTitle} is required.
-                </ListWithDetailWarningIconDiv>
-              </b>
-            ) : (
-              <ReviewHeader
-                style={{ width: '100%', display: 'grid', gridTemplateColumns: '1fr auto', alignItems: 'center' }}
-              >
-                <ReviewLabel>
-                  {listTitle}
-                  <span>{additionalProps.required && '(required)'}</span>
-                  {maxItemsError && <span style={{ color: 'red', marginLeft: '1rem' }}>{maxItemsError}</span>}
-                </ReviewLabel>
-                {showChangeButtons &&
-                  uischema.options?.stepId !== undefined &&
-                  !uischema.options?.componentProps?.readOnly && (
-                    <BackButton
-                      text="Change"
-                      link={() => reportChange(uischema.options?.stepId as number, uischema.scope)}
-                      showBackIcon={false}
-                    />
-                  )}
-              </ReviewHeader>
-            )
-          ) : null}
-          <ObjectArrayList
-            path={path}
-            schema={schema}
-            uischema={uischema}
-            enabled={enabled}
-            openDeleteDialog={openDeleteDialog}
-            translations={{}}
-            count={latestCount}
-            data={latestData}
-            cells={cells}
-            config={config}
-            isInReview={isInReview}
-            handleChange={handleChangeWithData}
-            {...additionalProps}
-          />
-        </PageReviewContainer>
+        <PageReviewContainer colSpan={3}>{reviewContent}</PageReviewContainer>
       </tr>
+    ) : (
+      <FlatReviewRow data-testid="object-array-flat-review">{reviewContent}</FlatReviewRow>
     );
   }
 

@@ -15,6 +15,8 @@ export type ObjectArrayControlProps = ArrayLayoutProps & ArrayLayoutExtProps & C
 
 export interface ArrayLayoutExtProps {
   isStepperReview?: boolean;
+  /** True when the review renders as a row inside the stepper summary's table. */
+  isTableReview?: boolean; // clean-code-ignore: RULE-19
 }
 
 export interface DataProperty {

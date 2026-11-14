@@ -3,7 +3,7 @@ import { WithInputProps } from './type';
 import { GoAInputBaseControl } from './InputBaseControl';
 import { withJsonFormsControlProps } from '@jsonforms/react';
 import { GoabIcon } from '@abgov/react-components-ds1';
-import { RequiredTextLabel, WarningIconDiv } from './style-component';
+import { FlatReviewRow, RequiredTextLabel, WarningIconDiv } from './style-component';
 import { getControlLabelText, to12HourFormat, UTCToFullLocalTime } from '../../util';
 
 export type WithBaseInputReviewProps = CellProps & WithClassname & WithInputProps & StatePropsOfControl;
@@ -106,12 +106,14 @@ export const GoABaseInputReviewComponent = (props: WithBaseInputReviewProps): JS
   );
 };
 export const GoInputBaseReview = (props: ControlProps) => (
-  <GoAInputBaseControl
-    {...props}
-    input={GoABaseInputReviewComponent}
-    isStepperReview={true}
-    skipInitialValidation={true}
-  />
+  <FlatReviewRow data-testid="flat-review-row">
+    <GoAInputBaseControl
+      {...props}
+      input={GoABaseInputReviewComponent}
+      isStepperReview={true}
+      skipInitialValidation={true}
+    />
+  </FlatReviewRow>
 );
 
 export const GoAInputBaseReviewControl = withJsonFormsControlProps(GoInputBaseReview);

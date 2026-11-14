@@ -119,7 +119,7 @@ describe('Object List component', () => {
     render(
       <table>
         <tbody>
-          <ObjectArrayControl {...reviewProps} />
+          <ObjectArrayControl {...reviewProps} isTableReview={true} />
         </tbody>
       </table>,
     );
@@ -138,7 +138,7 @@ describe('Object List component', () => {
       <JsonFormContext.Provider value={{ showChangeButtons: false }}>
         <table>
           <tbody>
-            <ObjectArrayControl {...reviewProps} />
+            <ObjectArrayControl {...reviewProps} isTableReview={true} />
           </tbody>
         </table>
       </JsonFormContext.Provider>,
@@ -299,6 +299,7 @@ describe('Object List change reporting', () => {
               {...baseMockProps}
               data={[{ date: '2026-01-01', message: 'Hi' }]}
               isStepperReview={true}
+              isTableReview={true}
               uischema={{ ...mockUISchema, options: { stepId: 5 } }}
             />
           </tbody>

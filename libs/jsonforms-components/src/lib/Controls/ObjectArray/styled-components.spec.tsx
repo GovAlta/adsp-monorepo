@@ -1,5 +1,7 @@
 import { render } from '@testing-library/react';
 import {
+  ListWithDetailsReviewCellDiv,
+  NonEmptyCellStyle,
   FixTableHeaderAlignment,
   FlexForm,
   FlexTabs,
@@ -113,5 +115,23 @@ describe('list-with-details layout', () => {
     expect(narrow).toContain('tablethead{display:none;}');
     expect(narrow).toContain('tabletbodytr{display:block;');
     expect(narrow).toContain('content:attr(data-label)');
+  });
+});
+
+describe('object array cell styles', () => {
+  it('applies unquoted flex values to the review cell wrapper', () => {
+    const { getByTestId } = render(<ListWithDetailsReviewCellDiv data-testid="cell" />);
+
+    const cell = rulesFor(getByTestId('cell'));
+    expect(cell.desktop).toContain('display:flex');
+    expect(cell.desktop).toContain('flex-direction:column');
+    expect(cell.desktop).toContain('text-align:start');
+    expect(cell.desktop).not.toContain("'");
+  });
+
+  it('emits no invalid table header rule for the cell', () => {
+    render(<NonEmptyCellStyle />);
+
+    expect(renderedCss()).not.toContain('#000:');
   });
 });
