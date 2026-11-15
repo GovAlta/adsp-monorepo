@@ -8,11 +8,7 @@ export const MarginTop = styled.div`
   margin-top: var(--goa-space-l);
 `;
 
-export const NonEmptyCellStyle = styled.div`
-  goa-table thead th {
-    background-color: #000:
-  }
-`;
+export const NonEmptyCellStyle = styled.div``;
 
 export const ToolBarHeader = styled.div`
   margin-bottom: var(--goa-space-s);
@@ -291,9 +287,9 @@ export const FixTableHeaderAlignment = styled.div`
 `;
 
 export const ListWithDetailsReviewCellDiv = styled.div`
-  display: 'flex';
-  flex-direction: 'column';
-  text-align: 'start';
+  display: flex;
+  flex-direction: column;
+  text-align: start;
 `;
 
 export const IconsContainer = styled.div`
