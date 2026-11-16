@@ -1,5 +1,5 @@
 import { AdspId, DomainEvent, DomainEventDefinition, Stream, User } from '@abgov/adsp-service-sdk';
-import { FormEntity, FormSubmissionEntity } from './model';
+import { FormEntity, FormRegistrationEntity, FormSubmissionEntity } from './model';
 import { mapForm } from './mapper';
 import { SUBMITTED_FORM } from './pdf';
 import { FormServiceRoles } from './roles';
@@ -20,6 +20,9 @@ export const FORM_MESSAGE_FORWARDED = 'form-message-forwarded';
 
 export const SUBMISSION_DISPOSITIONED = 'submission-dispositioned';
 export const SUBMISSION_DELETED = 'submission-deleted';
+
+export const REGISTRATION_SUBMITTED = 'registration-submitted';
+export const REGISTRATION_REVIEWED = 'registration-reviewed';
 
 const userInfoSchema = {
   type: 'object',
@@ -205,6 +208,65 @@ export const SubmissionDeletedDefinition: DomainEventDefinition = {
     },
   },
 };
+
+// Applicant name, email and registration answers are personal information and are not included in event payloads.
+const registrationSchema = {
+  type: 'object',
+  properties: {
+    id: { type: 'string' },
+    formDefinitionId: { type: 'string' },
+    status: { type: 'string', enum: ['pending', 'approved', 'denied'] },
+    submittedAt: { type: 'string', format: 'date-time' },
+    reviewedAt: { type: ['string', 'null'], format: 'date-time' },
+    reviewedBy: userInfoSchema,
+  },
+};
+
+export const RegistrationSubmittedDefinition: DomainEventDefinition = {
+  name: REGISTRATION_SUBMITTED,
+  description: 'Signalled when a registration requesting access to a restricted form is submitted.',
+  payloadSchema: {
+    type: 'object',
+    properties: { registration: registrationSchema },
+  },
+};
+
+export const RegistrationReviewedDefinition: DomainEventDefinition = {
+  name: REGISTRATION_REVIEWED,
+  description: 'Signalled when a registration requesting access to a restricted form is approved or denied.',
+  payloadSchema: {
+    type: 'object',
+    properties: { registration: registrationSchema },
+  },
+};
+
+function toRegistrationEvent(name: string, registration: FormRegistrationEntity): DomainEvent {
+  return {
+    name,
+    timestamp: new Date(),
+    tenantId: registration.tenantId,
+    correlationId: registration.id,
+    context: { definitionId: registration.formDefinitionId },
+    payload: {
+      registration: {
+        id: registration.id,
+        formDefinitionId: registration.formDefinitionId,
+        status: registration.status,
+        submittedAt: registration.submittedAt,
+        reviewedAt: registration.reviewedAt ?? null,
+        reviewedBy: registration.reviewedBy,
+      },
+    },
+  };
+}
+
+export function registrationSubmitted(registration: FormRegistrationEntity): DomainEvent {
+  return toRegistrationEvent(REGISTRATION_SUBMITTED, registration);
+}
+
+export function registrationReviewed(registration: FormRegistrationEntity): DomainEvent {
+  return toRegistrationEvent(REGISTRATION_REVIEWED, registration);
+}
 
 function getCorrelationId(form: ReturnType<typeof mapForm>) {
   return form?.urn;
