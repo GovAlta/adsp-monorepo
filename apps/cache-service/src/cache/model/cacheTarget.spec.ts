@@ -1,6 +1,6 @@
 import { InvalidOperationError, NotFoundError } from '@core-services/core-common';
 import { adspId, getContextTrace, UnauthorizedUserError } from '@abgov/adsp-service-sdk';
-import type { ServiceDirectory } from '@abgov/adsp-service-sdk';
+import type { AuditService, ServiceDirectory } from '@abgov/adsp-service-sdk';
 import { Request, Response } from 'express';
 import * as hasha from 'hasha';
 import { ClientRequest, IncomingMessage } from 'http';
@@ -667,6 +667,72 @@ describe('CacheTarget', () => {
         })
       );
       expect(providerMock.del).toHaveBeenCalledWith(invalidateKey);
+    });
+
+    describe('audit', () => {
+      const auditService = { record: jest.fn() };
+      const auditTarget = new CacheTarget(
+        logger,
+        directoryMock as unknown as ServiceDirectory,
+        providerMock,
+        tenantId,
+        {
+          serviceId: adspId`urn:ads:platform:test-service:v1`,
+          ttl: 300,
+          invalidationEvents: [{ namespace: 'configuration-service', name: 'configuration-updated', resourceIdPath: 'urn' }],
+        },
+        auditService as unknown as AuditService
+      );
+      const event = {
+        tenantId,
+        namespace: 'configuration-service',
+        name: 'configuration-updated',
+        payload: { urn: 'urn:ads:platform:test-service:v1:/configuration/form-service/test' },
+        timestamp: new Date(),
+      };
+
+      beforeEach(() => {
+        auditService.record.mockReset();
+        auditService.record.mockResolvedValue({ status: 'recorded', eventId: 'e1' });
+        directoryMock.getServiceUrl.mockResolvedValue(new URL('https://test-service/test/v1'));
+        directoryMock.getResourceUrl.mockResolvedValue(
+          new URL('https://test-service/test/v1/configuration/form-service/test')
+        );
+      });
+
+      it('records audit when an entry is removed', async () => {
+        providerMock.del.mockResolvedValueOnce(true);
+        await auditTarget.processEvent(event);
+
+        expect(auditService.record).toHaveBeenCalledTimes(1);
+        expect(auditService.record).toHaveBeenCalledWith(
+          expect.objectContaining({ name: 'cache.invalidated' }),
+          expect.objectContaining({
+            tenantId,
+            actor: expect.objectContaining({ type: 'system' }),
+            resource: { type: 'cache-target', id: 'urn:ads:platform:test-service:v1' },
+            metadata: expect.objectContaining({
+              targetUrn: 'urn:ads:platform:test-service:v1',
+              ttl: 300,
+              event: 'configuration-service:configuration-updated',
+            }),
+          })
+        );
+      });
+
+      it('does not record audit when no entry is removed', async () => {
+        providerMock.del.mockResolvedValueOnce(false);
+        await auditTarget.processEvent(event);
+
+        expect(auditService.record).not.toHaveBeenCalled();
+      });
+
+      it('does not fail invalidation when audit fails', async () => {
+        providerMock.del.mockResolvedValueOnce(true);
+        auditService.record.mockRejectedValueOnce(new Error('oh noes!'));
+
+        await expect(auditTarget.processEvent(event)).resolves.toBeUndefined();
+      });
     });
 
     it('can skip unrecognized event', async () => {
