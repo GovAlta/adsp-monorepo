@@ -43,7 +43,8 @@ export const createVerifyRouter = ({ service }: RouterProps): Router => {
       const { code } = req.body;
       try {
         const tenantId = user.isCore && tenantIdValue ? AdspId.parse(tenantIdValue as string) : user.tenantId;
-        if (code) {
+        // Any code in the body (including empty) is a verification; only an omitted code generates a new one.
+        if (code !== undefined) {
           const verified = await service.verify(user, key, code, tenantId);
           res.send({ verified });
         } else {

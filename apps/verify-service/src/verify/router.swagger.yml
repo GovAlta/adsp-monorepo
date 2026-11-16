@@ -124,7 +124,7 @@ components:
           example: urn:ads:platform:tenant-service:v2:/tenants/61f2e3a8c9b1d2e3f4a5b6c7
     requestBody:
       required: false
-      description: Omit the body, or the code, to generate a code. Include a non-empty code to verify it.
+      description: Omit the body, or the code, to generate a code. Include a code to verify it; an empty code fails verification.
       content:
         application/json:
           schema:
