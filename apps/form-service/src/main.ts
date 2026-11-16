@@ -23,6 +23,7 @@ import {
   createErrorHandler,
   AjvValidationService,
   createAmqpEventService,
+  createShutdownHandler,
 } from '@core-services/core-common';
 import { environment } from './environments/environment';
 import {
@@ -67,7 +68,6 @@ import { createCommentService } from './comment';
 import { isFormDefinition } from './utils';
 import { createPdfService } from './pdf';
 import { createCalendarService } from './calendar';
-import { createShutdownHandler } from './shutdown';
 
 const logger = createLogger('form-service', environment.LOG_LEVEL);
 
@@ -405,6 +405,7 @@ initializeApp().then(({ app, auditService, shutdownTelemetry }) => {
   server.on('error', (err) => logger.error(`Error encountered in server: ${err}`));
 
   const shutdown = createShutdownHandler({
+    serviceName: 'Form service',
     server,
     auditService,
     shutdownTelemetry,
