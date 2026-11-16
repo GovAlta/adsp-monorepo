@@ -38,6 +38,7 @@ describe('topic', () => {
   const loggerMock = {
     info: jest.fn(),
     debug: jest.fn(),
+    warn: jest.fn(),
   };
 
   const eventServiceMock = {
@@ -51,6 +52,13 @@ describe('topic', () => {
 
   const tokenProviderMock = {
     getAccessToken: jest.fn(),
+  };
+
+  const auditServiceMock = {
+    record: jest.fn(() => Promise.resolve({ status: 'recorded' as const, eventId: 'test' })),
+    query: jest.fn(),
+    flush: jest.fn(),
+    droppedEventCount: 0,
   };
 
   const clientMock = {
@@ -125,6 +133,7 @@ describe('topic', () => {
         directory: directoryMock,
         tokenProvider: tokenProviderMock,
         client: configurationClientMock,
+        auditService: auditServiceMock,
       });
       expect(router).toBeTruthy();
     });
@@ -148,6 +157,7 @@ describe('topic', () => {
         directoryMock,
         configurationClientMock,
         tokenProviderMock,
+        auditServiceMock,
       );
       expect(handler).toBeTruthy();
     });
@@ -194,6 +204,7 @@ describe('topic', () => {
         directoryMock,
         configurationClientMock,
         tokenProviderMock,
+        auditServiceMock,
       );
       await handler(req as unknown as Request, res as unknown as Response, next);
 
@@ -267,6 +278,7 @@ describe('topic', () => {
         directoryMock,
         configurationClientMock,
         tokenProviderMock,
+        auditServiceMock,
       );
       await handler(req as unknown as Request, res as unknown as Response, next);
 
@@ -321,6 +333,7 @@ describe('topic', () => {
         directoryMock,
         configurationClientMock,
         tokenProviderMock,
+        auditServiceMock,
       );
       await handler(req as unknown as Request, res as unknown as Response, next);
 
@@ -353,6 +366,7 @@ describe('topic', () => {
         directoryMock,
         configurationClientMock,
         tokenProviderMock,
+        auditServiceMock,
       );
       await handler(req as unknown as Request, res as unknown as Response, next);
 
@@ -383,6 +397,7 @@ describe('topic', () => {
         directoryMock,
         configurationClientMock,
         tokenProviderMock,
+        auditServiceMock,
       );
       await handler(req as unknown as Request, res as unknown as Response, next);
 
@@ -619,6 +634,7 @@ describe('topic', () => {
         directoryMock,
         configurationClientMock,
         tokenProviderMock,
+        auditServiceMock,
       );
       expect(handler).toBeTruthy();
     });
@@ -656,6 +672,7 @@ describe('topic', () => {
         directoryMock,
         configurationClientMock,
         tokenProviderMock,
+        auditServiceMock,
       );
       await handler(req as unknown as Request, res as unknown as Response, next);
 
@@ -721,6 +738,7 @@ describe('topic', () => {
         directoryMock,
         configurationClientMock,
         tokenProviderMock,
+        auditServiceMock,
       );
       await handler(req as unknown as Request, res as unknown as Response, next);
 
@@ -773,6 +791,7 @@ describe('topic', () => {
         directoryMock,
         configurationClientMock,
         tokenProviderMock,
+        auditServiceMock,
       );
       await handler(req as unknown as Request, res as unknown as Response, next);
 
@@ -806,6 +825,7 @@ describe('topic', () => {
         directoryMock,
         configurationClientMock,
         tokenProviderMock,
+        auditServiceMock,
       );
       await handler(req as unknown as Request, res as unknown as Response, next);
 
@@ -839,6 +859,7 @@ describe('topic', () => {
         directoryMock,
         configurationClientMock,
         tokenProviderMock,
+        auditServiceMock,
       );
       await handler(req as unknown as Request, res as unknown as Response, next);
 
@@ -869,6 +890,7 @@ describe('topic', () => {
         directoryMock,
         configurationClientMock,
         tokenProviderMock,
+        auditServiceMock,
       );
       expect(handler).toBeTruthy();
     });
@@ -903,6 +925,7 @@ describe('topic', () => {
         directoryMock,
         configurationClientMock,
         tokenProviderMock,
+        auditServiceMock,
       );
       await handler(req as unknown as Request, res as unknown as Response, next);
 
@@ -952,6 +975,7 @@ describe('topic', () => {
         directoryMock,
         configurationClientMock,
         tokenProviderMock,
+        auditServiceMock,
       );
       await handler(req as unknown as Request, res as unknown as Response, next);
 
@@ -989,6 +1013,7 @@ describe('topic', () => {
         directoryMock,
         configurationClientMock,
         tokenProviderMock,
+        auditServiceMock,
       );
       await handler(req as unknown as Request, res as unknown as Response, next);
 
@@ -1021,6 +1046,7 @@ describe('topic', () => {
         directoryMock,
         configurationClientMock,
         tokenProviderMock,
+        auditServiceMock,
       );
       await handler(req as unknown as Request, res as unknown as Response, next);
 
@@ -1053,6 +1079,7 @@ describe('topic', () => {
         directoryMock,
         configurationClientMock,
         tokenProviderMock,
+        auditServiceMock,
       );
       await handler(req as unknown as Request, res as unknown as Response, next);
 
@@ -1189,7 +1216,13 @@ describe('topic', () => {
 
   describe('createTopic', () => {
     it('can create handler', () => {
-      const handler = createTopic(apiId, loggerMock as unknown as Logger, repositoryMock, eventServiceMock);
+      const handler = createTopic(
+        apiId,
+        loggerMock as unknown as Logger,
+        repositoryMock,
+        eventServiceMock,
+        auditServiceMock,
+      );
       expect(handler).toBeTruthy();
     });
 
@@ -1217,7 +1250,13 @@ describe('topic', () => {
       req.getConfiguration.mockResolvedValueOnce(types);
       repositoryMock.save.mockResolvedValueOnce(topic);
 
-      const handler = createTopic(apiId, loggerMock as unknown as Logger, repositoryMock, eventServiceMock);
+      const handler = createTopic(
+        apiId,
+        loggerMock as unknown as Logger,
+        repositoryMock,
+        eventServiceMock,
+        auditServiceMock,
+      );
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(eventServiceMock.send).toHaveBeenCalled();
@@ -1253,7 +1292,13 @@ describe('topic', () => {
       };
       req.getConfiguration.mockResolvedValueOnce(types);
 
-      const handler = createTopic(apiId, loggerMock as unknown as Logger, repositoryMock, eventServiceMock);
+      const handler = createTopic(
+        apiId,
+        loggerMock as unknown as Logger,
+        repositoryMock,
+        eventServiceMock,
+        auditServiceMock,
+      );
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(res.send).not.toHaveBeenCalled();
@@ -1281,7 +1326,13 @@ describe('topic', () => {
       const types = {};
       req.getConfiguration.mockResolvedValueOnce(types);
 
-      const handler = createTopic(apiId, loggerMock as unknown as Logger, repositoryMock, eventServiceMock);
+      const handler = createTopic(
+        apiId,
+        loggerMock as unknown as Logger,
+        repositoryMock,
+        eventServiceMock,
+        auditServiceMock,
+      );
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(res.send).not.toHaveBeenCalled();
@@ -1443,7 +1494,7 @@ describe('topic', () => {
 
   describe('updateTopic', () => {
     it('can create handler', () => {
-      const handler = updateTopic(apiId, loggerMock as unknown as Logger, eventServiceMock);
+      const handler = updateTopic(apiId, loggerMock as unknown as Logger, eventServiceMock, auditServiceMock);
       expect(handler).toBeTruthy();
     });
 
@@ -1464,7 +1515,7 @@ describe('topic', () => {
 
       repositoryMock.save.mockResolvedValueOnce(topic);
 
-      const handler = updateTopic(apiId, loggerMock as unknown as Logger, eventServiceMock);
+      const handler = updateTopic(apiId, loggerMock as unknown as Logger, eventServiceMock, auditServiceMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ id: topic.id }));
@@ -1498,7 +1549,7 @@ describe('topic', () => {
 
       repositoryMock.save.mockResolvedValueOnce(editableTopic);
 
-      const handler = updateTopic(apiId, loggerMock as unknown as Logger, eventServiceMock);
+      const handler = updateTopic(apiId, loggerMock as unknown as Logger, eventServiceMock, auditServiceMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(repositoryMock.save).toHaveBeenCalledWith(
@@ -1533,7 +1584,7 @@ describe('topic', () => {
       };
       const next = jest.fn();
 
-      const handler = updateTopic(apiId, loggerMock as unknown as Logger, eventServiceMock);
+      const handler = updateTopic(apiId, loggerMock as unknown as Logger, eventServiceMock, auditServiceMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(res.send).not.toHaveBeenCalled();
@@ -1547,7 +1598,7 @@ describe('topic', () => {
     });
 
     it('can create handler', () => {
-      const handler = deleteTopic(apiId, loggerMock as unknown as Logger, eventServiceMock);
+      const handler = deleteTopic(apiId, loggerMock as unknown as Logger, eventServiceMock, auditServiceMock);
       expect(handler).toBeTruthy();
     });
 
@@ -1568,7 +1619,7 @@ describe('topic', () => {
 
       repositoryMock.delete.mockResolvedValueOnce(true);
 
-      const handler = deleteTopic(apiId, loggerMock as unknown as Logger, eventServiceMock);
+      const handler = deleteTopic(apiId, loggerMock as unknown as Logger, eventServiceMock, auditServiceMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ deleted: true }));
@@ -1592,7 +1643,7 @@ describe('topic', () => {
 
       repositoryMock.delete.mockResolvedValueOnce(false);
 
-      const handler = deleteTopic(apiId, loggerMock as unknown as Logger, eventServiceMock);
+      const handler = deleteTopic(apiId, loggerMock as unknown as Logger, eventServiceMock, auditServiceMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ deleted: false }));
@@ -1616,7 +1667,7 @@ describe('topic', () => {
 
       repositoryMock.delete.mockResolvedValueOnce(true);
 
-      const handler = deleteTopic(apiId, loggerMock as unknown as Logger, eventServiceMock);
+      const handler = deleteTopic(apiId, loggerMock as unknown as Logger, eventServiceMock, auditServiceMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(res.send).not.toHaveBeenCalled();
@@ -1751,7 +1802,7 @@ describe('topic', () => {
     });
 
     it('can create handler', () => {
-      const handler = createTopicComment(apiId, loggerMock as unknown as Logger, eventServiceMock);
+      const handler = createTopicComment(apiId, loggerMock as unknown as Logger, eventServiceMock, auditServiceMock);
       expect(handler).toBeTruthy();
     });
 
@@ -1781,7 +1832,7 @@ describe('topic', () => {
 
       repositoryMock.saveComment.mockResolvedValueOnce(comment);
 
-      const handler = createTopicComment(apiId, loggerMock as unknown as Logger, eventServiceMock);
+      const handler = createTopicComment(apiId, loggerMock as unknown as Logger, eventServiceMock, auditServiceMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(res.send).toHaveBeenCalledWith(comment);
@@ -1827,7 +1878,7 @@ describe('topic', () => {
       repositoryMock.saveComment.mockResolvedValueOnce(comment);
       repositoryMock.save.mockImplementationOnce((entity) => Promise.resolve(entity));
 
-      const handler = createTopicComment(apiId, loggerMock as unknown as Logger, eventServiceMock);
+      const handler = createTopicComment(apiId, loggerMock as unknown as Logger, eventServiceMock, auditServiceMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(repositoryMock.save).toHaveBeenCalledWith(expect.objectContaining({ requiresAttention: true }));
@@ -1853,7 +1904,7 @@ describe('topic', () => {
       };
       const next = jest.fn();
 
-      const handler = createTopicComment(apiId, loggerMock as unknown as Logger, eventServiceMock);
+      const handler = createTopicComment(apiId, loggerMock as unknown as Logger, eventServiceMock, auditServiceMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(res.send).not.toHaveBeenCalled();
@@ -1956,7 +2007,7 @@ describe('topic', () => {
     });
 
     it('can create handler', () => {
-      const handler = updateTopicComment(apiId, loggerMock as unknown as Logger, eventServiceMock);
+      const handler = updateTopicComment(apiId, loggerMock as unknown as Logger, eventServiceMock, auditServiceMock);
       expect(handler).toBeTruthy();
     });
 
@@ -1988,7 +2039,7 @@ describe('topic', () => {
       repositoryMock.getComment.mockResolvedValueOnce(comment);
       repositoryMock.saveComment.mockResolvedValueOnce(comment);
 
-      const handler = updateTopicComment(apiId, loggerMock as unknown as Logger, eventServiceMock);
+      const handler = updateTopicComment(apiId, loggerMock as unknown as Logger, eventServiceMock, auditServiceMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(res.send).toHaveBeenCalledWith(comment);
@@ -2030,7 +2081,7 @@ describe('topic', () => {
       repositoryMock.getComment.mockResolvedValueOnce({ ...comment });
       repositoryMock.saveComment.mockImplementationOnce((_topic, updated) => Promise.resolve(updated));
 
-      const handler = updateTopicComment(apiId, loggerMock as unknown as Logger, eventServiceMock);
+      const handler = updateTopicComment(apiId, loggerMock as unknown as Logger, eventServiceMock, auditServiceMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(repositoryMock.saveComment).toHaveBeenCalledWith(
@@ -2063,7 +2114,7 @@ describe('topic', () => {
 
       repositoryMock.getComment.mockResolvedValueOnce(comment);
 
-      const handler = updateTopicComment(apiId, loggerMock as unknown as Logger, eventServiceMock);
+      const handler = updateTopicComment(apiId, loggerMock as unknown as Logger, eventServiceMock, auditServiceMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(res.send).not.toHaveBeenCalled();
@@ -2090,7 +2141,7 @@ describe('topic', () => {
 
       repositoryMock.getComment.mockResolvedValueOnce(null);
 
-      const handler = updateTopicComment(apiId, loggerMock as unknown as Logger, eventServiceMock);
+      const handler = updateTopicComment(apiId, loggerMock as unknown as Logger, eventServiceMock, auditServiceMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(res.send).not.toHaveBeenCalled();
@@ -2105,7 +2156,7 @@ describe('topic', () => {
     });
 
     it('can create handler', () => {
-      const handler = deleteTopicComment(apiId, loggerMock as unknown as Logger, eventServiceMock);
+      const handler = deleteTopicComment(apiId, loggerMock as unknown as Logger, eventServiceMock, auditServiceMock);
       expect(handler).toBeTruthy();
     });
 
@@ -2130,7 +2181,7 @@ describe('topic', () => {
       repositoryMock.getComment.mockResolvedValueOnce(comment);
       repositoryMock.deleteComment.mockResolvedValueOnce(true);
 
-      const handler = deleteTopicComment(apiId, loggerMock as unknown as Logger, eventServiceMock);
+      const handler = deleteTopicComment(apiId, loggerMock as unknown as Logger, eventServiceMock, auditServiceMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ deleted: true }));
@@ -2158,7 +2209,7 @@ describe('topic', () => {
       repositoryMock.getComment.mockResolvedValueOnce(comment);
       repositoryMock.deleteComment.mockResolvedValueOnce(true);
 
-      const handler = deleteTopicComment(apiId, loggerMock as unknown as Logger, eventServiceMock);
+      const handler = deleteTopicComment(apiId, loggerMock as unknown as Logger, eventServiceMock, auditServiceMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(res.send).not.toHaveBeenCalled();
@@ -2185,7 +2236,7 @@ describe('topic', () => {
 
       repositoryMock.getComment.mockResolvedValueOnce(null);
 
-      const handler = deleteTopicComment(apiId, loggerMock as unknown as Logger, eventServiceMock);
+      const handler = deleteTopicComment(apiId, loggerMock as unknown as Logger, eventServiceMock, auditServiceMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(res.send).not.toHaveBeenCalled();
