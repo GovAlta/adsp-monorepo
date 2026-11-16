@@ -1,4 +1,5 @@
 import { adspId } from '@abgov/adsp-service-sdk';
+import type { EventService } from '@abgov/adsp-service-sdk';
 import { Readable } from 'stream';
 import { CredentialNotSetError, DestinationDisabledError, SharePointError } from '../errors';
 import { GraphFileClient, GraphTokenProvider } from '../graph';
@@ -59,6 +60,7 @@ describe('SharePointFileService', () => {
   let graph: { uploadFile: jest.Mock };
   let source: { open: jest.Mock };
   let pusher: { push: jest.Mock };
+  let eventService: { send: jest.Mock };
   let service: SharePointFileService;
 
   const build = (concurrency?: number) =>
@@ -67,6 +69,7 @@ describe('SharePointFileService', () => {
       graph as unknown as GraphFileClient,
       source as unknown as FileSource,
       pusher as unknown as SharePointPusher,
+      eventService as unknown as EventService,
       concurrency,
     );
 
@@ -84,6 +87,7 @@ describe('SharePointFileService', () => {
     };
     source = { open: jest.fn().mockImplementation(async (_tenant, fileId) => openAs(`${fileId}.pdf`)) };
     pusher = { push: jest.fn().mockResolvedValue({ itemId: 'row-1', outcome: 'created' }) };
+    eventService = { send: jest.fn() };
     service = build();
   });
 
@@ -363,6 +367,83 @@ describe('SharePointFileService', () => {
 
       expect(graph.uploadFile).toHaveBeenCalledTimes(1);
       expect(tokens.evict).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('events', () => {
+    const context = { destinationId: 'hr-intake', submissionId: 'submission-1' };
+
+    it('signals file-uploaded for each uploaded file without file names, links or form data', async () => {
+      const files = [
+        { field: 'proofOfIdentity', fileId: 'proof' },
+        { field: 'statement', fileId: 'statement' },
+      ];
+
+      await service.upload(tenantId, configuration, 'hr-intake', request({ files }));
+
+      expect(eventService.send).toHaveBeenCalledTimes(2);
+      expect(eventService.send).toHaveBeenCalledWith(
+        expect.objectContaining({
+          name: 'file-uploaded',
+          tenantId,
+          correlationId: 'submission-1',
+          context,
+          payload: {
+            ...context,
+            field: 'proofOfIdentity',
+            fileId: 'proof',
+            sharepointFileId: 'id-proof.pdf',
+            size: 10,
+          },
+        }),
+      );
+      expect(JSON.stringify(eventService.send.mock.calls)).not.toContain('sp.example');
+    });
+
+    it('signals file-upload-failed with the error code and retryability only', async () => {
+      graph.uploadFile.mockRejectedValueOnce(new Error('secret detail Ada Lovelace'));
+
+      await service.upload(tenantId, configuration, 'hr-intake', request());
+
+      expect(eventService.send).toHaveBeenCalledTimes(1);
+      expect(eventService.send).toHaveBeenCalledWith(
+        expect.objectContaining({
+          name: 'file-upload-failed',
+          payload: { ...context, field: 'proofOfIdentity', fileId: 'proof', errorCode: 'unknown', retryable: false },
+        }),
+      );
+      expect(JSON.stringify(eventService.send.mock.calls)).not.toContain('Ada Lovelace');
+    });
+
+    it('signals file-upload-failed when the file cannot be read from the source', async () => {
+      source.open.mockRejectedValueOnce(new SharePointError('file:not-found', false));
+
+      await service.upload(tenantId, configuration, 'hr-intake', request());
+
+      expect(eventService.send).toHaveBeenCalledWith(
+        expect.objectContaining({
+          name: 'file-upload-failed',
+          payload: expect.objectContaining({ errorCode: 'file:not-found' }),
+        }),
+      );
+    });
+
+    it('does not fail the upload when an event cannot be sent', async () => {
+      eventService.send.mockImplementation(() => {
+        throw new Error('event service down');
+      });
+
+      const result = await service.upload(tenantId, configuration, 'hr-intake', request());
+
+      expect(result.files[0]).toMatchObject({ status: 'uploaded' });
+    });
+
+    it('does not signal anything when the request is rejected before any upload', async () => {
+      await expect(service.upload(tenantId, configuration, 'disabled', request())).rejects.toThrow(
+        DestinationDisabledError,
+      );
+
+      expect(eventService.send).not.toHaveBeenCalled();
     });
   });
 

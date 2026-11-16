@@ -216,6 +216,8 @@ objects:
         apply-prod: "true"
       name: ${APP_NAME}
       namespace: ${NAMESPACE}
+      annotations:
+        haproxy.router.openshift.io/timeout: 60s
     spec:
       host: ${ROUTE_HOST}
       port:

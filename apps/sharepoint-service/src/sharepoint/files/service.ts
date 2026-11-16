@@ -1,4 +1,5 @@
 import { AdspId } from '@abgov/adsp-service-sdk';
+import type { DomainEvent, EventService } from '@abgov/adsp-service-sdk';
 import { InvalidOperationError, NotFoundError } from '@core-services/core-common';
 import { DestinationDisabledError, SharePointError, toSharePointError } from '../errors';
 import { GraphFileClient, GraphTokenProvider } from '../graph';
@@ -7,6 +8,7 @@ import { sanitizePathSegment } from '../filename';
 import { SharePointPusher } from '../push';
 import { PushOutcome, SharePointConfiguration, SharePointConnection, SharePointDestination } from '../types';
 import { assertDataPath, setValueAtPath } from './dataPath';
+import { fileUploaded, fileUploadFailed } from './events';
 import { FileContent, FileSource } from './source';
 
 export interface FileRequest {
@@ -128,8 +130,17 @@ export class SharePointFileService {
     private graph: GraphFileClient,
     private source: FileSource,
     private pusher: SharePointPusher,
+    private eventService: EventService,
     private concurrency: number = DEFAULT_CONCURRENCY,
   ) {}
+
+  private signal(event: DomainEvent): void {
+    try {
+      this.eventService.send(event);
+    } catch {
+      return;
+    }
+  }
 
   async upload(
     tenantId: AdspId,
@@ -154,7 +165,8 @@ export class SharePointFileService {
     const files = await runLimited(
       request.files.map((file, index) => ({ file, index })),
       this.concurrency,
-      ({ file, index }) => this.uploadOne(tenantId, connection, folder, file, index, names),
+      ({ file, index }) =>
+        this.uploadOne(tenantId, connection, folder, file, index, names, destinationId, request.submissionId),
     );
 
     if (!request.data || files.some(({ status }) => status === 'failed')) {
@@ -179,7 +191,10 @@ export class SharePointFileService {
     file: FileRequest,
     index: number,
     names: NameAssigner,
+    destinationId: string,
+    submissionId: string,
   ): Promise<FileResult> {
+    const eventRequest = { tenantId, destinationId, submissionId, field: file.field, fileId: file.fileId };
     let content: FileContent | undefined;
     let openError: unknown;
     try {
@@ -195,6 +210,7 @@ export class SharePointFileService {
         throw openError;
       }
       const uploaded = await this.uploadWithRetry(tenantId, connection, folder, file, name, content);
+      this.signal(fileUploaded(eventRequest, uploaded.id, uploaded.size));
       return {
         field: file.field,
         fileId: file.fileId,
@@ -206,6 +222,7 @@ export class SharePointFileService {
       };
     } catch (err) {
       const error = err instanceof SharePointError ? err : toSharePointError(err);
+      this.signal(fileUploadFailed(eventRequest, error.errorCode, error.retryable));
       return {
         field: file.field,
         fileId: file.fileId,

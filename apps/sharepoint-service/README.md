@@ -21,6 +21,17 @@ Pushes data, such as form submissions, to SharePoint lists owned by tenant teams
 | `POST /destinations/{id}/files` `{ submissionId, files: [{ field, fileId }], data? }` | `sharepoint-writer` (core service accounts with `?tenantId=`). Tenant admins check destinations with Test instead | Reads each file from File Service by file ID or `urn:ads:platform:file-service` URN (any other URN is rejected), uploads it to the site's default Documents library under `{submissionId}/{filename}`, then writes `data` as a list row with each file's link set at its `field`. Up to 20 files per request, uploaded 3 at a time. The link is a Hyperlink value unless the destination's field mapping for that field sets `linkFormat: "text"`, which writes the plain URL. The row is written only when every file uploaded, so a retry of the whole request is safe: files are overwritten by path, and the row is updated when its key matches. Without `data`, only the files are uploaded. Returns `{ files: [{ field, fileId, status, id, name, url, size } or { field, fileId, status: "failed", errorCode, retryable }], row?: { written, dataId, outcome } or { written: false, errorCode, retryable } }`; `row` is missing when `data` was not sent or a file failed. 200 when everything succeeds, 502 when any file fails or the row can't be written, 409 `destination-disabled` or `credential-not-set`, 404 unknown destination or connection, 400 invalid request, more than 20 files, or data missing a row identity field |
 Error codes are `entra:AADSTS<code>`, `graph:<code>`, `file:<code>`, `network` or `unknown`. The `file:` codes are `invalid-reference`, `not-found`, `access-denied`, `not-ready` (File Service has not finished scanning the file, so retry), `unavailable` and `size-mismatch`. Payload values never appear in responses or logs.
 
+## Domain events
+
+The service registers two events (namespace `sharepoint-service`) and sends one per file in a `/files` request. They carry no file names, links or form data. `correlationId` is the submission ID, and the context holds `destinationId` and `submissionId`.
+
+| Event | When | Payload |
+|---|---|---|
+| `file-uploaded` | A file was uploaded to the Documents library | `destinationId`, `submissionId`, `field`, `fileId`, `sharepointFileId`, `size` |
+| `file-upload-failed` | A file could not be read or uploaded | `destinationId`, `submissionId`, `field`, `fileId`, `errorCode`, `retryable` |
+
+A request rejected before any upload (invalid, disabled destination, no secret) sends no events. Failing to send an event never fails the upload.
+
 ## Environment
 
 | Variable | Default |

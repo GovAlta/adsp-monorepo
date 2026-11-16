@@ -37,6 +37,7 @@ jest.mock('./mongo', () => ({ connectMongo: mockConnectMongo }));
 jest.mock('./sharepoint', () => ({
   ...jest.requireActual('./sharepoint/configuration'),
   ...jest.requireActual('./sharepoint/roles'),
+  ...jest.requireActual('./sharepoint/files/events'),
   createSharePointRouter: mockCreateSharePointRouter,
   CredentialStore: jest.fn(),
   FileServiceSource: mockFileServiceSource,
@@ -57,6 +58,7 @@ describe('main', () => {
     tenantHandler: 'tenant-handler',
     configurationHandler: 'configuration-handler',
     directory: 'directory',
+    eventService: 'event-service',
     tokenProvider: 'token-provider',
     healthCheck,
     metricsHandler: 'metrics-handler',
@@ -129,7 +131,15 @@ describe('main', () => {
 
     expect(mockFileServiceSource).toHaveBeenCalledWith('directory', 'token-provider');
     expect(mockLocalFileSource).not.toHaveBeenCalled();
-    expect(mockSharePointFileService.mock.calls[0][4]).toBe(3);
+    expect(mockSharePointFileService.mock.calls[0][4]).toBe('event-service');
+    expect(mockSharePointFileService.mock.calls[0][5]).toBe(3);
+  });
+
+  it('registers the file upload events with the platform', async () => {
+    await startMain();
+    const [options] = mockInitializePlatform.mock.calls[0];
+
+    expect(options.events.map(({ name }) => name)).toEqual(['file-uploaded', 'file-upload-failed']);
   });
 
   it('reads files from a local directory when one is configured', async () => {

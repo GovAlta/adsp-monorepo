@@ -13,6 +13,8 @@ import {
   createSharePointRouter,
   CredentialStore,
   FileServiceSource,
+  FileUploadedDefinition,
+  FileUploadFailedDefinition,
   GraphClient,
   GraphFileClient,
   GraphTokenProvider,
@@ -45,6 +47,7 @@ const initializeApp = async (): Promise<express.Application> => {
     coreStrategy,
     configurationHandler,
     directory,
+    eventService,
     healthCheck,
     metricsHandler,
     tenantHandler,
@@ -77,6 +80,7 @@ const initializeApp = async (): Promise<express.Application> => {
       tracing: environment.OTEL_EXPORTER_OTLP_ENDPOINT,
       metrics: environment.OTEL_EXPORTER_OTLP_ENDPOINT,
       values: [ServiceMetricsValueDefinition],
+      events: [FileUploadedDefinition, FileUploadFailedDefinition],
       enableConfigurationInvalidation: true,
     },
     { logger },
@@ -110,6 +114,7 @@ const initializeApp = async (): Promise<express.Application> => {
     new GraphFileClient(environment.GRAPH_URL),
     fileSource,
     pusher,
+    eventService,
     environment.FILE_UPLOAD_CONCURRENCY,
   );
 
