@@ -1,4 +1,4 @@
-import { ToolDefinition } from './types';
+import { OFFLINE_TOOL_ANNOTATIONS, ToolDefinition } from './types';
 
 const QUICKSTART = `# Getting started with @abgov/adsp-service-sdk (Node)
 
@@ -146,6 +146,7 @@ export function createQuickstartTool(): ToolDefinition[] {
   return [
     {
       name: 'get_platform_quickstart',
+      annotations: OFFLINE_TOOL_ANNOTATIONS,
       description:
         'Returns the canonical initializeService usage pattern for a new Node service built on top of ADSP (the ' +
         'common case for product teams), notes the initializePlatform variant for cross-tenant platform services, ' +

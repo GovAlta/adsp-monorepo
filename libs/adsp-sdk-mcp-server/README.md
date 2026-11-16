@@ -39,6 +39,20 @@ content each service serves at `/swagger/docs/v1`, so they work offline.
 The two live tools require logging in first (see below). Everything else in this package works fully offline with no
 setup.
 
+### Server instructions and tool annotations
+
+The `initialize` result carries an `instructions` string (`src/instructions.ts`, about 10 lines). It covers only what
+no single tool description says: which tool answers which kind of question, that only the two live tools need
+`npx @abgov/adsp-cli login`, and that `get_adsp_mcp_server_info` tells how fresh the bundled content is. Clients such
+as Claude Code use it to decide when to search this server's deferred tools. It must not restate a tool description;
+`server.spec.ts` fails if it shares six or more consecutive words with one.
+
+Every tool in `tools/list` declares `readOnlyHint: true`. The offline tools also declare `openWorldHint: false`,
+because they answer only from bundled content; the live tools keep the default (open world), because they call ADSP.
+These are hints for the client, such as skipping a confirmation prompt, not enforcement: the read-only guarantee is
+the `ToolDefinition` handler contract in `src/tools/types.ts`. The tool-contract golden
+(`src/fixtures/tool-contract.golden.json`) pins each tool's annotations.
+
 This package covers the Node SDK only. Other language SDKs (`.NET`, Django, Flask, Spring) are out of scope for now.
 
 The SDK has two entry points for two different kinds of service: `initializeService` for tenant services (the
@@ -208,6 +222,21 @@ nx build adsp-sdk-mcp-server
 nx test adsp-sdk-mcp-server
 nx lint adsp-sdk-mcp-server
 ```
+
+### Service matching evaluation
+
+`src/eval/service-matching.json` holds needs described in product terms, such as "applicants attach supporting
+documents to an application", each with the ADSP services that should answer it. The queries come from probes of the
+hosted server and from the project-planner-service business patterns' `serviceMappings`. To see where
+`search_adsp_docs` ranks the expected services over the repo's `docs/`, run:
+
+```bash
+npx nx run adsp-sdk-mcp-server:eval-service-matching
+```
+
+It prints a table and the number of queries with every expected service in the top 1, 3 and 5. It reports and does
+not fail. Use it to compare a ranking change, or a new matching tool, against the baseline. `src/eval/` is not part
+of the published package.
 
 ### Refresh workflow
 

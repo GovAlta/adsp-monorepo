@@ -6,7 +6,7 @@ import {
   ServiceNotInDirectoryError,
 } from '@abgov/adsp-cli';
 import { getMetrics } from '../metrics';
-import { LiveToolDefinition } from './types';
+import { LIVE_TOOL_ANNOTATIONS, LiveToolDefinition } from './types';
 import { withLiveToolPermit } from './liveToolLimit';
 import { classifyUpstreamError } from './upstreamErrors';
 
@@ -64,6 +64,7 @@ export function createServiceRolesTools(): LiveToolDefinition[] {
   return [
     {
       name: 'list_service_roles',
+      annotations: LIVE_TOOL_ANNOTATIONS,
       description:
         'List every ADSP platform service\'s registered RBAC role (role name, description, whether it is ' +
         'part of the tenant-admin composite role), read live from tenant-service configuration. Use this to ' +

@@ -66,6 +66,13 @@
         "parallel": false
       }
     },
+    "eval-service-matching": {
+      "executor": "nx:run-commands",
+      "cache": false,
+      "options": {
+        "command": "npx tsx libs/adsp-sdk-mcp-server/src/eval/runSearchAdspDocsEval.ts"
+      }
+    },
     "release": {
       "executor": "nx:run-commands",
       "options": {

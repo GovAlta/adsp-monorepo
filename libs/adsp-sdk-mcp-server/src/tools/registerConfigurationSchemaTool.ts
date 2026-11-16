@@ -6,7 +6,7 @@ import {
   ServiceNotInDirectoryError,
 } from '@abgov/adsp-cli';
 import { getMetrics } from '../metrics';
-import { LiveToolDefinition } from './types';
+import { LIVE_TOOL_ANNOTATIONS, LiveToolDefinition } from './types';
 import { withLiveToolPermit } from './liveToolLimit';
 import { classifyUpstreamError } from './upstreamErrors';
 
@@ -42,6 +42,7 @@ export function createConfigurationSchemaTools(): LiveToolDefinition[] {
   return [
     {
       name: 'get_service_configuration_schema',
+      annotations: LIVE_TOOL_ANNOTATIONS,
       description:
         'Returns the configuration schema(s) for ADSP platform services, read live from configuration-service. ' +
         'Use this to determine the correct shape for `serviceConfigurations` entries in `initializeService` when ' +

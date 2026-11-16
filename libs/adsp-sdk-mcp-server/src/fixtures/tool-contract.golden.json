@@ -1,4 +1,81 @@
 {
+  "tools": [
+    {
+      "name": "search_adsp_docs",
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false
+      }
+    },
+    {
+      "name": "list_adsp_docs",
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false
+      }
+    },
+    {
+      "name": "read_adsp_doc",
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false
+      }
+    },
+    {
+      "name": "search_sdk_reference",
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false
+      }
+    },
+    {
+      "name": "get_platform_quickstart",
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false
+      }
+    },
+    {
+      "name": "list_service_roles",
+      "annotations": {
+        "readOnlyHint": true
+      }
+    },
+    {
+      "name": "get_service_configuration_schema",
+      "annotations": {
+        "readOnlyHint": true
+      }
+    },
+    {
+      "name": "get_adsp_mcp_server_info",
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false
+      }
+    },
+    {
+      "name": "list_service_apis",
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false
+      }
+    },
+    {
+      "name": "search_service_endpoints",
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false
+      }
+    },
+    {
+      "name": "read_service_endpoint",
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false
+      }
+    }
+  ],
   "calls": [
     {
       "call": {
