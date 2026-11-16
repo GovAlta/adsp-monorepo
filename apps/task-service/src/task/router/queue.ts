@@ -1,5 +1,6 @@
 import {
   AdspId,
+  AuditService,
   EventService,
   ServiceDirectory,
   TokenProvider,
@@ -13,6 +14,7 @@ import { body, checkSchema, param, query } from 'express-validator';
 import * as HttpStatusCodes from 'http-status-codes';
 import { DateTime } from 'luxon';
 import { Logger } from 'winston';
+import { recordTaskAudit, TaskCreatedAuditAction, toTaskAuditDetails } from '../audit';
 import { CommentService } from '../comment';
 import { TaskCancelledDefinition, TaskCompletedDefinition, TaskCreatedDefinition, taskCreated } from '../events';
 import { mapTask } from '../mapper';
@@ -29,6 +31,7 @@ interface QueueRouterProps {
   tokenProvider: TokenProvider;
   taskRepository: TaskRepository;
   eventService: EventService;
+  auditService: AuditService;
   commentService: CommentService;
   KEYCLOAK_ROOT_URL: string;
 }
@@ -298,7 +301,8 @@ export function createTask(
   logger: Logger,
   repository: TaskRepository,
   eventService: EventService,
-  commentService: CommentService
+  commentService: CommentService,
+  auditService: AuditService
 ): RequestHandler {
   return async (req, res, next) => {
     try {
@@ -324,6 +328,7 @@ export function createTask(
       res.send(result);
 
       eventService.send(taskCreated(apiId, user, entity));
+      recordTaskAudit(auditService, logger, TaskCreatedAuditAction, () => toTaskAuditDetails(user, entity));
       commentService.createTopic(entity, result.urn);
 
       logger.info(`Created task (ID: ${entity.id}) in queue ${queue.namespace}:${queue.name}.`, {
@@ -441,6 +446,7 @@ export function createQueueRouter({
   tokenProvider,
   taskRepository: repository,
   eventService,
+  auditService,
   commentService,
 }: QueueRouterProps): Router {
   const router = Router();
@@ -501,7 +507,7 @@ export function createQueueRouter({
       )
     ),
     getQueue,
-    createTask(apiId, logger, repository, eventService, commentService)
+    createTask(apiId, logger, repository, eventService, commentService, auditService)
   );
   router.get(
     '/queues/:namespace/:name/tasks/:id',
@@ -526,7 +532,7 @@ export function createQueueRouter({
     ),
     getTask(repository),
     verifyQueuedTask,
-    updateTask(apiId, logger, eventService)
+    updateTask(apiId, logger, eventService, auditService)
   );
   router.patch(
     '/queues/:namespace/:name/tasks/:id/data',
@@ -563,7 +569,7 @@ export function createQueueRouter({
     ),
     getTask(repository),
     verifyQueuedTask,
-    taskOperation(apiId, logger, eventService)
+    taskOperation(apiId, logger, eventService, auditService)
   );
 
   router.get(

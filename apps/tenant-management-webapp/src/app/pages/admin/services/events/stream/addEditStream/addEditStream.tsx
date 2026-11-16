@@ -172,6 +172,7 @@ export const AddEditStream = ({ onSave, eventDefinitions, streams }: AddEditStre
         <GoabFormItem label="Select events">
           <GoADropdown
             name="streamEvents"
+            placeholder="Select events"
             selectedValues={streamEvents}
             multiSelect={true}
             onChange={(name, values) => {

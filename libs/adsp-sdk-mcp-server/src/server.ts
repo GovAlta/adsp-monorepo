@@ -3,12 +3,15 @@ import { CallToolRequestSchema, CallToolResult, ListToolsRequestSchema } from '@
 import { join, resolve } from 'path';
 import { performance } from 'perf_hooks';
 import { ApiSpecsRepository } from './api-specs/apiSpecsRepository';
+import { loadCapabilityCatalog } from './capabilities/catalog';
 import { DocsRepository } from './docs/docsRepository';
+import { SERVER_INSTRUCTIONS } from './instructions';
 import { getMetrics, ToolErrorType } from './metrics';
 import { createApiTools } from './tools/registerApiTools';
 import { createConfigurationSchemaTools } from './tools/registerConfigurationSchemaTool';
 import { isBusyResult } from './tools/liveToolLimit';
 import { createDocsTools } from './tools/registerDocsTools';
+import { createFindServicesTool } from './tools/registerFindServicesTool';
 import { createQuickstartTool } from './tools/registerQuickstartTool';
 import { createServiceRolesTools } from './tools/registerServiceRolesTool';
 import { createSdkTools } from './tools/registerSdkTools';
@@ -21,6 +24,8 @@ export interface CreateAdspMcpServerOptions {
   docsRoot?: string;
   /** Root directory of bundled OpenAPI specs. Defaults to the assets copied alongside the built package. */
   apiSpecsRoot?: string;
+  /** The capability catalog find_adsp_services ranks. Defaults to the one bundled with the package. */
+  capabilitiesPath?: string;
 }
 
 export interface AdspMcpTools {
@@ -31,6 +36,8 @@ export interface AdspMcpTools {
 // Compiled output places this file under dist/.../src/, while the docs asset copy lands one level up at dist/.../assets/docs.
 const DEFAULT_DOCS_ROOT = join(__dirname, '..', 'assets', 'docs');
 const DEFAULT_API_SPECS_ROOT = join(__dirname, '..', 'assets', 'api-specs');
+// Generated into the library's own assets/ folder, so this resolves from source as well as from the build.
+const DEFAULT_CAPABILITIES_PATH = join(__dirname, '..', 'assets', 'capabilities.json');
 
 const toolsByRoots = new Map<string, AdspMcpTools>();
 
@@ -42,7 +49,8 @@ function lazy<T>(create: () => T): () => T {
 export function loadAdspMcpTools(options: CreateAdspMcpServerOptions = {}): AdspMcpTools {
   const docsRoot = resolve(options.docsRoot ?? DEFAULT_DOCS_ROOT);
   const apiSpecsRoot = resolve(options.apiSpecsRoot ?? DEFAULT_API_SPECS_ROOT);
-  const cacheKey = `${docsRoot}\0${apiSpecsRoot}`;
+  const capabilitiesPath = resolve(options.capabilitiesPath ?? DEFAULT_CAPABILITIES_PATH);
+  const cacheKey = `${docsRoot}\0${apiSpecsRoot}\0${capabilitiesPath}`;
   const cached = toolsByRoots.get(cacheKey);
   if (cached) {
     return cached;
@@ -51,6 +59,7 @@ export function loadAdspMcpTools(options: CreateAdspMcpServerOptions = {}): Adsp
   const started = performance.now();
   const docs = new DocsRepository(docsRoot);
   const tools = [
+    ...createFindServicesTool(lazy(() => loadCapabilityCatalog(capabilitiesPath))),
     ...createDocsTools(docs),
     ...createSdkTools(),
     ...createQuickstartTool(),
@@ -78,11 +87,17 @@ export function createAdspMcpServer(options: CreateAdspMcpServerOptions = {}): S
   // args with zod as a plain value (see tools/*.ts), never passing a schema through the SDK's type machinery.
   const server = new Server(
     { name: 'adsp-sdk-mcp-server', version: readPackageVersion() },
-    { capabilities: { tools: {} } },
+    { capabilities: { tools: {} }, instructions: SERVER_INSTRUCTIONS },
   );
 
   server.setRequestHandler(ListToolsRequestSchema, async () => ({
-    tools: tools.map(({ name, description, inputSchema }) => ({ name, description, inputSchema })),
+    tools: tools.map((tool) => ({
+      name: tool.name,
+      description: tool.description,
+      inputSchema: tool.inputSchema,
+      ...('outputSchema' in tool && tool.outputSchema && { outputSchema: tool.outputSchema }),
+      annotations: tool.annotations,
+    })),
   }));
 
   server.setRequestHandler(CallToolRequestSchema, async (request, extra) => {

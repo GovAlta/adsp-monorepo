@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { searchSdkReference } from '../sdk-reference/search';
-import { ToolDefinition } from './types';
+import { OFFLINE_TOOL_ANNOTATIONS, ToolDefinition } from './types';
 
 const SearchArgs = z.object({
   query: z.string(),
@@ -11,6 +11,7 @@ export function createSdkTools(): ToolDefinition[] {
   return [
     {
       name: 'search_sdk_reference',
+      annotations: OFFLINE_TOOL_ANNOTATIONS,
       description:
         'Search the @abgov/adsp-service-sdk (Node SDK) reference by symbol name, module, or keyword. Returns full ' +
         'symbol details: kind, module, description, option/return shape, example, and deprecated flag.',

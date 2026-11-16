@@ -41,6 +41,22 @@ parameters:
     generate: expression
     name: REDIS_PASSWORD
     required: true
+  - name: REDIS_CPU_REQUEST
+    description: CPU request for the Redis container.
+    displayName: Redis CPU Request
+    value: '20m'
+  - name: REDIS_MEMORY_REQUEST
+    description: Memory request for the Redis container.
+    displayName: Redis Memory Request
+    value: '100Mi'
+  - name: REDIS_CPU_LIMIT
+    description: CPU limit for the Redis container.
+    displayName: Redis CPU Limit
+    value: '200m'
+  - name: REDIS_MEMORY_LIMIT
+    description: Memory limit for the Redis container.
+    displayName: Redis Memory Limit
+    value: '512Mi'
 objects:
   # Redis Objects
   # NOTE: Secret will generate new values if updated, so this is only for branch deployments.
@@ -149,11 +165,11 @@ objects:
                 timeoutSeconds: 1
               resources:
                 requests:
-                  cpu: 20m
-                  memory: 100Mi
+                  cpu: ${REDIS_CPU_REQUEST}
+                  memory: ${REDIS_MEMORY_REQUEST}
                 limits:
-                  cpu: 200m
-                  memory: 512Mi
+                  cpu: ${REDIS_CPU_LIMIT}
+                  memory: ${REDIS_MEMORY_LIMIT}
               securityContext:
                 capabilities: {}
                 privileged: false

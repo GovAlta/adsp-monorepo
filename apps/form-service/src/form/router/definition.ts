@@ -349,6 +349,11 @@ export function patchFormDefinition(directory: ServiceDirectory, tokenProvider: 
         ...(req.body.description !== undefined ? { description: req.body.description } : {}),
         ...(req.body.dataSchema !== undefined ? { dataSchema: req.body.dataSchema } : {}),
         ...(req.body.uiSchema !== undefined ? { uiSchema: req.body.uiSchema } : {}),
+        // Merged so a patch that omits the write-only accessGroup does not clear it; enabled is required by the
+        // configuration schema but absent on definitions created before registration existed.
+        ...(req.body.registration !== undefined
+          ? { registration: { enabled: false, ...existingDefinition.registration, ...req.body.registration } }
+          : {}),
         id: definitionId,
       };
 
@@ -878,6 +883,7 @@ export function createFormDefinitionRouter({
       body('description').optional().isString(),
       body('dataSchema').optional().isObject(),
       body('uiSchema').optional().isObject(),
+      body('registration').optional().isObject(),
       body('formDraftUrlTemplate')
         .optional()
         .isString()
