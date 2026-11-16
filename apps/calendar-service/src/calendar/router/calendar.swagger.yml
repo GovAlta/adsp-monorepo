@@ -498,6 +498,14 @@ components:
         endsBefore:
           type: string
           format: date-time
+        startsBefore:
+          type: string
+          format: date-time
+          description: Matches events that start at or before this time. Combine with endsAfter to find events that overlap a period.
+        endsAfter:
+          type: string
+          format: date-time
+          description: Matches events that end at or after this time, or have no end.
         activeOn:
           type: string
           format: date-time

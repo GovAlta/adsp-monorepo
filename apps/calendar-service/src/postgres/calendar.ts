@@ -42,7 +42,13 @@ export class PostgresCalendarRepository implements CalendarRepository {
       query.whereRaw(`context @> ?::jsonb`, [JSON.stringify(criteria.context)]);
     }
 
-    if (criteria.startsAfter || criteria.endsBefore || criteria.activeOn) {
+    if (
+      criteria.startsAfter ||
+      criteria.endsBefore ||
+      criteria.startsBefore ||
+      criteria.endsAfter ||
+      criteria.activeOn
+    ) {
       if (skipTimeCriteriaForRecurring) {
         // Time criteria are applied to the expanded occurrences of recurring events instead.
         query = query.andWhere((query) => {
@@ -97,6 +103,37 @@ export class PostgresCalendarRepository implements CalendarRepository {
         query.where('e.end_date', '<', endsBeforeDate).orWhere((q) => {
           q.where('e.end_date', '=', endsBeforeDate).andWhere('e.end_time', '<=', endsBeforeTime);
         });
+      });
+    }
+
+    if (criteria.startsBefore) {
+      const startsBeforeDate = toDateId(criteria.startsBefore);
+      const startsBeforeTime = toTimeId(criteria.startsBefore);
+
+      query.andWhere((query) => {
+        query.where('e.start_date', '<', startsBeforeDate).orWhere((q) => {
+          q.where('e.start_date', '=', startsBeforeDate).andWhere('e.start_time', '<=', startsBeforeTime);
+        });
+      });
+    }
+
+    if (criteria.endsAfter) {
+      const endsAfterDate = toDateId(criteria.endsAfter);
+      const endsAfterTime = toTimeId(criteria.endsAfter);
+
+      query.andWhere((query) => {
+        query
+          .where('e.end_date', '>', endsAfterDate)
+          .orWhere((q) => {
+            q.where('e.end_date', '=', endsAfterDate).andWhere('e.end_time', '>=', endsAfterTime);
+          })
+          .orWhereNull('e.end_date')
+          .orWhere((q) => {
+            // A series overlaps while any later occurrence can still end after the time.
+            q.whereNotNull('e.recurrence').andWhere((q) => {
+              q.whereNull('e.recurrence_end_date').orWhere('e.recurrence_end_date', '>=', endsAfterDate);
+            });
+          });
       });
     }
 
