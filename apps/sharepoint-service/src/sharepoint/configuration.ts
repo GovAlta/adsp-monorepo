@@ -39,7 +39,11 @@ export const configurationSchema = {
               type: 'object',
               additionalProperties: false,
               required: ['source', 'target'],
-              properties: { source: requiredString, target: requiredString },
+              properties: {
+                source: requiredString,
+                target: requiredString,
+                linkFormat: { type: 'string', enum: ['hyperlink', 'text'] },
+              },
             },
           },
           idempotencyFields: { type: 'array', uniqueItems: true, items: requiredString },

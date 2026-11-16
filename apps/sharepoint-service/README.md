@@ -18,7 +18,19 @@ Pushes data, such as form submissions, to SharePoint lists owned by tenant teams
 | `DELETE /connections/{id}/credentials` | `sharepoint-admin` | Deletes the secret. Returns 204 |
 | `POST /destinations/{id}/test` with the data as the body | `sharepoint-admin` | Pushes the data through the same logic as a real push, even if the destination is disabled. Returns `{ ok: true, outcome }` or `{ ok: false, errorCode, column? }`; `row-identity-missing` means the data has no value for a row identity field |
 | `POST /destinations/{id}/data` with the data as the body | `sharepoint-writer` (core service accounts with `?tenantId=`). Tenant admins check destinations with Test instead | Returns 200 `{ dataId, outcome, date }`, where `dataId` is the SharePoint item ID and `outcome` is `created` or `updated`. Nothing is stored. Failures: 400 data missing a row identity field, 404 unknown destination or connection, 409 `destination-disabled` or `credential-not-set`, 502 `{ errorCode, retryable, column? }` |
-Error codes are `entra:AADSTS<code>`, `graph:<code>`, `network` or `unknown`. Payload values never appear in responses or logs.
+| `POST /destinations/{id}/files` `{ submissionId, files: [{ field, fileId }], data? }` | `sharepoint-writer` (core service accounts with `?tenantId=`). Tenant admins check destinations with Test instead | Reads each file from File Service by file ID or `urn:ads:platform:file-service` URN (any other URN is rejected), uploads it to the site's default Documents library under `{submissionId}/{filename}`, then writes `data` as a list row with each file's link set at its `field`. Up to 20 files per request, uploaded 3 at a time. The link is a Hyperlink value unless the destination's field mapping for that field sets `linkFormat: "text"`, which writes the plain URL. The row is written only when every file uploaded, so a retry of the whole request is safe: files are overwritten by path, and the row is updated when its key matches. Without `data`, only the files are uploaded. Returns `{ files: [{ field, fileId, status, id, name, url, size } or { field, fileId, status: "failed", errorCode, retryable }], row?: { written, dataId, outcome } or { written: false, errorCode, retryable } }`; `row` is missing when `data` was not sent or a file failed. 200 when everything succeeds, 502 when any file fails or the row can't be written, 409 `destination-disabled` or `credential-not-set`, 404 unknown destination or connection, 400 invalid request, more than 20 files, or data missing a row identity field |
+Error codes are `entra:AADSTS<code>`, `graph:<code>`, `file:<code>`, `network` or `unknown`. The `file:` codes are `invalid-reference`, `not-found`, `access-denied`, `not-ready` (File Service has not finished scanning the file, so retry), `unavailable` and `size-mismatch`. Payload values never appear in responses or logs.
+
+## Domain events
+
+The service registers two events (namespace `sharepoint-service`) and sends one per file in a `/files` request. They carry no file names, links or form data. `correlationId` is the submission ID, and the context holds `destinationId` and `submissionId`.
+
+| Event | When | Payload |
+|---|---|---|
+| `file-uploaded` | A file was uploaded to the Documents library | `destinationId`, `submissionId`, `field`, `fileId`, `sharepointFileId`, `size` |
+| `file-upload-failed` | A file could not be read or uploaded | `destinationId`, `submissionId`, `field`, `fileId`, `errorCode`, `retryable` |
+
+A request rejected before any upload (invalid, disabled destination, no secret) sends no events. Failing to send an event never fails the upload.
 
 ## Environment
 
@@ -33,6 +45,8 @@ Error codes are `entra:AADSTS<code>`, `graph:<code>`, `network` or `unknown`. Pa
 | `MONGO_URI`, `MONGO_DB`, `MONGO_USER`, `MONGO_PASSWORD`, `MONGO_TLS` | `mongodb://localhost:27017`, `sharepointDb`, empty, empty, `false` |
 | `ENTRA_AUTHORITY_URL` | `https://login.microsoftonline.com` |
 | `GRAPH_URL` | `https://graph.microsoft.com/v1.0` |
+| `FILE_UPLOAD_CONCURRENCY` | `3`; files uploaded at the same time per request |
+| `DEV_FILES_DIRECTORY` | empty; local development only. When set, `fileId` values such as `local:report.pdf` are read from this folder instead of File Service |
 | `PORT` | `3350` |
 
 Generate a key with `node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"`.

@@ -35,6 +35,16 @@ describe('configurationSchema', () => {
     expect(validate({ destinations: { 'hr-intake': { ...destination, idempotencyFields: [''] } } })).toBe(false);
   });
 
+  it('accepts a link format on a field mapping', () => {
+    const mapping = (linkFormat: string) => ({
+      destinations: { 'hr-intake': { ...destination, fieldMappings: [{ source: 'a', target: 'A', linkFormat }] } },
+    });
+
+    expect(validate(mapping('text'))).toBe(true);
+    expect(validate(mapping('hyperlink'))).toBe(true);
+    expect(validate(mapping('image'))).toBe(false);
+  });
+
   it('tolerates legacy top-level keys from the alpha page', () => {
     expect(validate({ 'old-connection': { id: 'old-connection' } })).toBe(true);
   });

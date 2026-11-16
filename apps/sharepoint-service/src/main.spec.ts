@@ -5,6 +5,9 @@ const mockConnectMongo = jest.fn();
 const mockCreateSharePointRouter = jest.fn();
 const mockGraphTokenProvider = jest.fn();
 const mockGetToken = jest.fn();
+const mockLocalFileSource = jest.fn();
+const mockFileServiceSource = jest.fn();
+const mockSharePointFileService = jest.fn();
 const mockLogger = { info: jest.fn(), error: jest.fn(), debug: jest.fn(), warn: jest.fn() };
 const mockEnvironment: Record<string, unknown> = {};
 
@@ -34,10 +37,15 @@ jest.mock('./mongo', () => ({ connectMongo: mockConnectMongo }));
 jest.mock('./sharepoint', () => ({
   ...jest.requireActual('./sharepoint/configuration'),
   ...jest.requireActual('./sharepoint/roles'),
+  ...jest.requireActual('./sharepoint/files/events'),
   createSharePointRouter: mockCreateSharePointRouter,
   CredentialStore: jest.fn(),
+  FileServiceSource: mockFileServiceSource,
   GraphClient: jest.fn(),
+  GraphFileClient: jest.fn(),
   GraphTokenProvider: mockGraphTokenProvider,
+  LocalFileSource: mockLocalFileSource,
+  SharePointFileService: mockSharePointFileService,
   SharePointPusher: jest.fn(),
   parseEncryptionKey: jest.fn(() => ({ version: 1, key: Buffer.alloc(32) })),
 }));
@@ -49,6 +57,9 @@ describe('main', () => {
     tenantStrategy: 'tenant-strategy',
     tenantHandler: 'tenant-handler',
     configurationHandler: 'configuration-handler',
+    directory: 'directory',
+    eventService: 'event-service',
+    tokenProvider: 'token-provider',
     healthCheck,
     metricsHandler: 'metrics-handler',
     traceHandler: 'trace-handler',
@@ -76,6 +87,8 @@ describe('main', () => {
       CREDENTIALS_KEY_VERSION: 1,
       ENTRA_AUTHORITY_URL: 'http://entra.example',
       GRAPH_URL: 'http://graph.example/v1.0',
+      DEV_FILES_DIRECTORY: '',
+      FILE_UPLOAD_CONCURRENCY: 3,
       LOG_LEVEL: 'info',
       PORT: 3350,
     });
@@ -111,5 +124,30 @@ describe('main', () => {
     await healthHandler()({}, res);
     expect(res.json).toHaveBeenCalledWith({ access: true, db: true });
     expect(mockGetToken).not.toHaveBeenCalled();
+  });
+
+  it('reads files from File Service by default', async () => {
+    await startMain();
+
+    expect(mockFileServiceSource).toHaveBeenCalledWith('directory', 'token-provider');
+    expect(mockLocalFileSource).not.toHaveBeenCalled();
+    expect(mockSharePointFileService.mock.calls[0][4]).toBe('event-service');
+    expect(mockSharePointFileService.mock.calls[0][5]).toBe(3);
+  });
+
+  it('registers the file upload events with the platform', async () => {
+    await startMain();
+    const [options] = mockInitializePlatform.mock.calls[0];
+
+    expect(options.events.map(({ name }) => name)).toEqual(['file-uploaded', 'file-upload-failed']);
+  });
+
+  it('reads files from a local directory when one is configured', async () => {
+    mockEnvironment.DEV_FILES_DIRECTORY = 'C:\\test-files';
+    await startMain();
+
+    expect(mockLocalFileSource).toHaveBeenCalledWith('C:\\test-files');
+    expect(mockFileServiceSource).not.toHaveBeenCalled();
+    expect(mockLogger.warn).toHaveBeenCalledWith(expect.stringContaining('C:\\test-files'));
   });
 });
