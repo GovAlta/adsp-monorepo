@@ -67,6 +67,7 @@ export const applyFormMiddleware = (
     commentService,
     queueTaskService,
     formSubmissionRepository: submissionRepository,
+    formRegistrationRepository,
     pdfService,
     calendarService,
   }: FormMiddlewareProps,
@@ -80,6 +81,9 @@ export const applyFormMiddleware = (
     tenantService,
     calendarService,
     logger,
+    registrationRepository: formRegistrationRepository,
+    eventService,
+    auditService,
   });
   app.use('/form/v1', definitionRouter);
 

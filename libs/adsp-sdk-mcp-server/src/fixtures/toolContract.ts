@@ -15,7 +15,14 @@ export interface ContractCall {
   outcome: unknown;
 }
 
+export interface ContractTool {
+  name: string;
+  annotations: unknown;
+}
+
 export interface ToolContract {
+  /** tools/list, in order, pinned to the fields clients act on without reading the description. */
+  tools: ContractTool[];
   calls: ContractCall[];
 }
 
@@ -25,13 +32,19 @@ export const TOOL_CONTRACT: ToolContract = JSON.parse(
   readFileSync(join(__dirname, 'tool-contract.golden.json'), 'utf8')
 );
 
-// Not pinned in the golden: their output follows the SDK reference, quickstart text and zod, which change often.
+// Not pinned in the golden: their output follows the SDK reference, quickstart text, zod and the capability catalog,
+// which change often.
 export const TRANSPORT_EQUIVALENCE_CALLS: ToolCall[] = [
   { name: 'search_sdk_reference', arguments: { query: 'initializePlatform' } },
   { name: 'search_sdk_reference', arguments: { query: 'send event', limit: 3 } },
   { name: 'get_platform_quickstart', arguments: {} },
   { name: 'search_adsp_docs', arguments: { limit: 3 } },
   { name: 'get_adsp_mcp_server_info', arguments: {} },
+  { name: 'find_adsp_services', arguments: { need: 'applicants attach supporting documents to an application' } },
+  {
+    name: 'find_adsp_services',
+    arguments: { needs: ['email the applicant when their status changes', 'blockchain ledger'], response_format: 'detailed' },
+  },
 ];
 
 export async function callForContract(client: Client, call: ToolCall): Promise<unknown> {

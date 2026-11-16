@@ -80,6 +80,16 @@ Cache service does not send domain events.
 
 It consumes domain events from the [event service](event-service.md) to invalidate cache entries: events matching a target's `invalidationEvents`, and access service admin events for the access target. Events that don't match a target are ignored.
 
+## Audit
+
+Cache service records the following audit action under the `cache-service` namespace. Changes to cache target configuration are audited by the [configuration service](configuration-service.md).
+
+| Action | Category | Severity | Retention class | Recorded when |
+| --- | --- | --- | --- | --- |
+| `cache.invalidated` | `administrative` | `info` | `standard` | An invalidation event removes one or more cache entries. |
+
+The record's actor is the `system` (invalidation is driven by domain events), the resource is `{ type: 'cache-target', id: <target URN> }`, and the metadata includes the target URN, TTL, triggering event, and invalidated paths. Cache hits and misses, TTL expiry, and invalidation events that remove no entries are not audited. Set `CACHE_AUDIT_ENABLED=false` to disable audit recording.
+
 ## Code examples
 
 ### Configure a target

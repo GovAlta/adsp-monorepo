@@ -11,6 +11,7 @@ import {
   createAmqpQueueService,
   createErrorHandler,
   createAmqpConfigUpdateService,
+  createShutdownHandler,
 } from '@core-services/core-common';
 import * as express from 'express';
 import { readFile } from 'fs';
@@ -77,6 +78,7 @@ async function initializeApp() {
     healthCheck,
     metricsHandler,
     traceHandler,
+    shutdownTelemetry,
   } = await initializePlatform(
     {
       displayName: 'Notification service',
@@ -238,10 +240,10 @@ async function initializeApp() {
   const errorHandler = createErrorHandler(logger);
   app.use(errorHandler);
 
-  return { app, auditService };
+  return { app, auditService, shutdownTelemetry };
 }
 
-initializeApp().then(({ app, auditService }) => {
+initializeApp().then(({ app, auditService, shutdownTelemetry }) => {
   const port = environment.PORT || 3335;
 
   const server = app.listen(port, () => {
@@ -251,24 +253,13 @@ initializeApp().then(({ app, auditService }) => {
   server.on('error', (err) => logger.error(`Error encountered in server: ${err}`));
 
   // Stop accepting requests, then deliver any buffered audit events before the process exits.
-  let stopping = false;
-  const shutdown = async () => {
-    if (stopping) return;
-    stopping = true;
-    // Fallback in case the flush or close hangs.
-    setTimeout(() => process.exit(1), 15000).unref();
-    await new Promise<void>((resolve) => {
-      server.close(() => resolve());
-      server.closeIdleConnections();
-    });
-    try {
-      await auditService.flush();
-      process.exit(0);
-    } catch (err) {
-      logger.error(`Error encountered flushing audit events on shutdown: ${err}`);
-      process.exit(1);
-    }
-  };
+  const shutdown = createShutdownHandler({
+    serviceName: 'Notification service',
+    server,
+    auditService,
+    shutdownTelemetry,
+    logger,
+  });
   process.once('SIGTERM', shutdown);
   process.once('SIGINT', shutdown);
 });

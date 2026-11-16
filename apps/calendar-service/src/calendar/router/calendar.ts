@@ -145,6 +145,12 @@ export const exportCalendar =
       if (criteria?.endsBefore) {
         criteria.endsBefore = parseServiceDateTime(criteria.endsBefore, 'criteria.endsBefore');
       }
+      if (criteria?.startsBefore) {
+        criteria.startsBefore = parseServiceDateTime(criteria.startsBefore, 'criteria.startsBefore');
+      }
+      if (criteria?.endsAfter) {
+        criteria.endsAfter = parseServiceDateTime(criteria.endsAfter, 'criteria.endsAfter');
+      }
 
       const { results } = await calendar.getEvents(user, top, after as string, criteria);
       if (includeAttendees === 'true') {
@@ -206,6 +212,12 @@ export function getCalendarEvents(apiId: AdspId): RequestHandler {
       }
       if (criteria?.endsBefore) {
         criteria.endsBefore = parseServiceDateTime(criteria.endsBefore, 'criteria.endsBefore');
+      }
+      if (criteria?.startsBefore) {
+        criteria.startsBefore = parseServiceDateTime(criteria.startsBefore, 'criteria.startsBefore');
+      }
+      if (criteria?.endsAfter) {
+        criteria.endsAfter = parseServiceDateTime(criteria.endsAfter, 'criteria.endsAfter');
       }
       if (criteria?.activeOn) {
         criteria.activeOn = parseServiceDateTime(criteria.activeOn, 'criteria.activeOn');

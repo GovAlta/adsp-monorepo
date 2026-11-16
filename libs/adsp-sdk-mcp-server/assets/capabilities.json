@@ -1,0 +1,1709 @@
+{
+  "sources": [
+    "docs/services/services.md",
+    "apps/project-planner-service/src/planner/specialists.ts",
+    "apps/project-planner-service/src/planner/patterns.ts",
+    "libs/adsp-service-sdk/src/registration/registration.ts"
+  ],
+  "services": [
+    {
+      "id": "access-service",
+      "name": "Access service",
+      "use": "Sign users in and manage roles, using a Keycloak realm per tenant.",
+      "doc": "services/access-service.md",
+      "specialist": false,
+      "purpose": null,
+      "fitQuestions": [],
+      "dependsOn": [],
+      "risks": [],
+      "registrationFields": [],
+      "patterns": []
+    },
+    {
+      "id": "tenant-service",
+      "name": "Tenant service",
+      "use": "Create and look up tenants.",
+      "doc": "services/tenant-service.md",
+      "specialist": false,
+      "purpose": null,
+      "fitQuestions": [],
+      "dependsOn": [],
+      "risks": [],
+      "registrationFields": [
+        "roles"
+      ],
+      "patterns": []
+    },
+    {
+      "id": "directory-service",
+      "name": "Directory service",
+      "use": "Find service and API URLs from logical URNs.",
+      "doc": "services/directory-service.md",
+      "specialist": false,
+      "purpose": null,
+      "fitQuestions": [],
+      "dependsOn": [],
+      "risks": [],
+      "registrationFields": [],
+      "patterns": []
+    },
+    {
+      "id": "configuration-service",
+      "name": "Configuration service",
+      "use": "Store tenant and platform configuration, with revisions.",
+      "doc": "services/configuration-service.md",
+      "specialist": true,
+      "purpose": "Tenant-scoped configuration such as workflow definitions and status values.",
+      "fitQuestions": [
+        "Which values (statuses, rules, lookups) should administrators change without a release?"
+      ],
+      "dependsOn": [],
+      "risks": [],
+      "registrationFields": [
+        "configurationSchema",
+        "configuration"
+      ],
+      "patterns": [
+        {
+          "pattern": "case-management",
+          "reason": "Workflow definitions, status values, and configurable business rules."
+        },
+        {
+          "pattern": "grant-applications",
+          "reason": "Intake windows, eligibility criteria, scoring rubrics, and status values."
+        },
+        {
+          "pattern": "eligibility-assessment",
+          "reason": "Eligibility rules, thresholds, and criteria that change with policy."
+        },
+        {
+          "pattern": "referral-routing",
+          "reason": "Routing rules and the directory of destinations, maintained without code changes."
+        },
+        {
+          "pattern": "notification-subscription",
+          "reason": "Subscription topics, templates, and channel settings."
+        }
+      ]
+    },
+    {
+      "id": "event-service",
+      "name": "Event service",
+      "use": "Send domain events, which are logged and routed to other services.",
+      "doc": "services/event-service.md",
+      "specialist": true,
+      "purpose": "Domain events, event log, and audit trail.",
+      "fitQuestions": [
+        "Which actions must be recorded for audit?"
+      ],
+      "dependsOn": [],
+      "risks": [],
+      "registrationFields": [
+        "events"
+      ],
+      "patterns": [
+        {
+          "pattern": "incident-reporting",
+          "reason": "Recording and routing incident events."
+        },
+        {
+          "pattern": "audit-evidence-trail",
+          "reason": "Event log of actions with actor, time, and context."
+        },
+        {
+          "pattern": "notification-subscription",
+          "reason": "Triggering notifications from business events."
+        }
+      ]
+    },
+    {
+      "id": "value-service",
+      "name": "Value service",
+      "use": "Store time series values and metrics, including the event log.",
+      "doc": "services/value-service.md",
+      "specialist": true,
+      "purpose": "Store and query business values and metrics over time.",
+      "fitQuestions": [
+        "What values must be recorded and queried?"
+      ],
+      "dependsOn": [],
+      "risks": [],
+      "registrationFields": [
+        "values"
+      ],
+      "patterns": [
+        {
+          "pattern": "case-management",
+          "reason": "Storage of case-specific business data."
+        },
+        {
+          "pattern": "grant-applications",
+          "reason": "Storage of award amounts, scores, and funding metrics for reporting."
+        },
+        {
+          "pattern": "permit-licence",
+          "reason": "Permit status, validity dates, and holder data."
+        },
+        {
+          "pattern": "registration-enrollment",
+          "reason": "Registry data and registration identifiers."
+        },
+        {
+          "pattern": "consultation-feedback",
+          "reason": "Storage of aggregate response metrics."
+        },
+        {
+          "pattern": "eligibility-assessment",
+          "reason": "Storage of assessment inputs and outcomes."
+        },
+        {
+          "pattern": "status-tracking-portal",
+          "reason": "Source of the current status and progress information."
+        },
+        {
+          "pattern": "audit-evidence-trail",
+          "reason": "Storage of supporting decision and evidence data."
+        },
+        {
+          "pattern": "public-reporting",
+          "reason": "Storage and aggregation of submitted measures."
+        },
+        {
+          "pattern": "document-generation",
+          "reason": "Data used to populate the templates."
+        }
+      ]
+    },
+    {
+      "id": "push-service",
+      "name": "Push service",
+      "use": "Stream domain events to applications over WebSockets or webhooks.",
+      "doc": "services/push-service.md",
+      "specialist": true,
+      "purpose": "WebSocket gateway for real-time event streams.",
+      "fitQuestions": [
+        "Do clients need real-time updates?"
+      ],
+      "dependsOn": [
+        "event-service"
+      ],
+      "risks": [],
+      "registrationFields": [
+        "eventStreams"
+      ],
+      "patterns": [
+        {
+          "pattern": "incident-reporting",
+          "reason": "Real-time updates for responders watching an incident."
+        },
+        {
+          "pattern": "notification-subscription",
+          "reason": "Real-time updates delivered to connected applications."
+        }
+      ]
+    },
+    {
+      "id": "form-service",
+      "name": "Form service",
+      "use": "Define forms, and let applicants draft and submit them.",
+      "doc": "services/form-service.md",
+      "specialist": true,
+      "purpose": "Form definitions, drafts, submissions, and review dispositions.",
+      "fitQuestions": [
+        "Who completes the form, and is authentication required?",
+        "Does the form need staff review or disposition?"
+      ],
+      "dependsOn": [
+        "file-service"
+      ],
+      "risks": [
+        "Forms that collect attachments need file types configured first."
+      ],
+      "registrationFields": [],
+      "patterns": [
+        {
+          "pattern": "case-management",
+          "reason": "Intake forms and data collection."
+        },
+        {
+          "pattern": "grant-applications",
+          "reason": "Application intake with organization, project, and budget details."
+        },
+        {
+          "pattern": "permit-licence",
+          "reason": "Application and renewal forms."
+        },
+        {
+          "pattern": "registration-enrollment",
+          "reason": "Registration and update forms."
+        },
+        {
+          "pattern": "inspection-compliance",
+          "reason": "Inspection checklists and findings capture."
+        },
+        {
+          "pattern": "complaint-intake",
+          "reason": "Complaint submission, including optional anonymity."
+        },
+        {
+          "pattern": "consultation-feedback",
+          "reason": "Survey and consultation response forms."
+        },
+        {
+          "pattern": "eligibility-assessment",
+          "reason": "Questionnaires that collect the facts needed to assess eligibility."
+        },
+        {
+          "pattern": "appointment-booking",
+          "reason": "Capturing the reason for and details of the appointment."
+        },
+        {
+          "pattern": "document-package-review",
+          "reason": "Submission details and completeness checklist."
+        },
+        {
+          "pattern": "incident-reporting",
+          "reason": "Rapid capture of incident details."
+        },
+        {
+          "pattern": "information-request",
+          "reason": "Intake of the request and requester details."
+        },
+        {
+          "pattern": "referral-routing",
+          "reason": "Capturing the details that drive routing."
+        },
+        {
+          "pattern": "status-tracking-portal",
+          "reason": "Optional ways for users to respond or provide updates from the portal."
+        },
+        {
+          "pattern": "public-reporting",
+          "reason": "Report templates for each reporting period."
+        },
+        {
+          "pattern": "internal-service-request",
+          "reason": "Request forms for each type of service offered."
+        }
+      ]
+    },
+    {
+      "id": "file-service",
+      "name": "File service",
+      "use": "Upload, scan and download files, with access controlled by file type.",
+      "doc": "services/file-service.md",
+      "specialist": true,
+      "purpose": "Secure file upload, storage, and retrieval with file types and role-based access.",
+      "fitQuestions": [
+        "What file types are needed and who can read or upload each?",
+        "What are the retention requirements?"
+      ],
+      "dependsOn": [],
+      "risks": [
+        "Security classification and retention are domain-specific."
+      ],
+      "registrationFields": [
+        "fileTypes"
+      ],
+      "patterns": [
+        {
+          "pattern": "case-management",
+          "reason": "Supporting documents and attachments."
+        },
+        {
+          "pattern": "grant-applications",
+          "reason": "Supporting documents such as budgets, financial statements, and letters of support."
+        },
+        {
+          "pattern": "permit-licence",
+          "reason": "Supporting documents and issued permit documents."
+        },
+        {
+          "pattern": "registration-enrollment",
+          "reason": "Supporting documents provided during registration."
+        },
+        {
+          "pattern": "inspection-compliance",
+          "reason": "Photos and evidence attached to findings."
+        },
+        {
+          "pattern": "complaint-intake",
+          "reason": "Evidence supplied by the complainant or collected by investigators."
+        },
+        {
+          "pattern": "consultation-feedback",
+          "reason": "Written submissions from stakeholders."
+        },
+        {
+          "pattern": "document-package-review",
+          "reason": "Storage of submitted documents and versions."
+        },
+        {
+          "pattern": "information-request",
+          "reason": "Gathered records and the release package."
+        },
+        {
+          "pattern": "public-reporting",
+          "reason": "Supporting spreadsheets and attachments."
+        },
+        {
+          "pattern": "document-generation",
+          "reason": "Storage and retrieval of generated documents."
+        },
+        {
+          "pattern": "internal-service-request",
+          "reason": "Attachments that support the request."
+        }
+      ]
+    },
+    {
+      "id": "notification-service",
+      "name": "Notification service",
+      "use": "Send email, SMS and bot notifications to subscribers when domain events happen.",
+      "doc": "services/notification-service.md",
+      "specialist": true,
+      "purpose": "Templated notifications to subscribers across email, SMS and bot channels.",
+      "fitQuestions": [
+        "Who is notified, on which events, and over which channels?"
+      ],
+      "dependsOn": [
+        "event-service"
+      ],
+      "risks": [
+        "Notification content may expose personal information."
+      ],
+      "registrationFields": [
+        "notifications"
+      ],
+      "patterns": [
+        {
+          "pattern": "case-management",
+          "reason": "Status updates, requests for additional information, and workflow notifications."
+        },
+        {
+          "pattern": "grant-applications",
+          "reason": "Acknowledgements, requests for more information, and decision notices."
+        },
+        {
+          "pattern": "permit-licence",
+          "reason": "Decisions, renewal reminders, and expiry notices."
+        },
+        {
+          "pattern": "registration-enrollment",
+          "reason": "Confirmation, renewal reminders, and change notices."
+        },
+        {
+          "pattern": "inspection-compliance",
+          "reason": "Notices of inspection, orders, and due-date reminders."
+        },
+        {
+          "pattern": "complaint-intake",
+          "reason": "Acknowledgement to the complainant and assignment alerts."
+        },
+        {
+          "pattern": "consultation-feedback",
+          "reason": "Invitations, reminders, and outcome announcements."
+        },
+        {
+          "pattern": "eligibility-assessment",
+          "reason": "Communicating results and next steps."
+        },
+        {
+          "pattern": "appointment-booking",
+          "reason": "Confirmation, reschedule, and reminder messages."
+        },
+        {
+          "pattern": "document-package-review",
+          "reason": "Notices when changes are requested or the package is accepted."
+        },
+        {
+          "pattern": "incident-reporting",
+          "reason": "Alerts to responders and stakeholders."
+        },
+        {
+          "pattern": "information-request",
+          "reason": "Acknowledgements, deadline reminders, and the final response."
+        },
+        {
+          "pattern": "referral-routing",
+          "reason": "Alerting the destination and informing the requester."
+        },
+        {
+          "pattern": "status-tracking-portal",
+          "reason": "Proactive messages when status changes."
+        },
+        {
+          "pattern": "public-reporting",
+          "reason": "Reminders before due dates and notices for late reports."
+        },
+        {
+          "pattern": "document-generation",
+          "reason": "Delivering generated documents to recipients."
+        },
+        {
+          "pattern": "notification-subscription",
+          "reason": "Subscriptions, channels, templates, and message delivery."
+        },
+        {
+          "pattern": "internal-service-request",
+          "reason": "Updates to requesters and alerts to fulfillers."
+        }
+      ]
+    },
+    {
+      "id": "task-service",
+      "name": "Task service",
+      "use": "Queue work and assign it to workers.",
+      "doc": "services/task-service.md",
+      "specialist": true,
+      "purpose": "Task queues and assignment of work to staff.",
+      "fitQuestions": [
+        "Which queues are required and who works them?",
+        "Is formal assignment needed?"
+      ],
+      "dependsOn": [
+        "event-service"
+      ],
+      "risks": [],
+      "registrationFields": [],
+      "patterns": [
+        {
+          "pattern": "case-management",
+          "reason": "Assignment of work to staff queues when formal task management is needed."
+        },
+        {
+          "pattern": "grant-applications",
+          "reason": "Assignment of applications to reviewers and tracking of review work."
+        },
+        {
+          "pattern": "permit-licence",
+          "reason": "Review work assigned to staff queues."
+        },
+        {
+          "pattern": "registration-enrollment",
+          "reason": "Approval of registrations that need staff review."
+        },
+        {
+          "pattern": "inspection-compliance",
+          "reason": "Assigning inspections and remediation actions to inspectors."
+        },
+        {
+          "pattern": "complaint-intake",
+          "reason": "Triage and assignment to investigators."
+        },
+        {
+          "pattern": "eligibility-assessment",
+          "reason": "Manual review of borderline or flagged assessments."
+        },
+        {
+          "pattern": "document-package-review",
+          "reason": "Assignment of packages to reviewers."
+        },
+        {
+          "pattern": "incident-reporting",
+          "reason": "Assigning response actions to responders."
+        },
+        {
+          "pattern": "information-request",
+          "reason": "Assignment to analysts and records search tasks for program areas."
+        },
+        {
+          "pattern": "referral-routing",
+          "reason": "Delivering the referral to the destination team queue."
+        },
+        {
+          "pattern": "internal-service-request",
+          "reason": "Assignment and tracking of fulfilment work."
+        }
+      ]
+    },
+    {
+      "id": "comment-service",
+      "name": "Comment service",
+      "use": "Add topics and comments to application records.",
+      "doc": "services/comment-service.md",
+      "specialist": true,
+      "purpose": "Topics and comments for notes and discussion.",
+      "fitQuestions": [
+        "Who can read and who can write notes?"
+      ],
+      "dependsOn": [],
+      "risks": [],
+      "registrationFields": [],
+      "patterns": [
+        {
+          "pattern": "case-management",
+          "reason": "Staff notes, discussions, and case history."
+        },
+        {
+          "pattern": "complaint-intake",
+          "reason": "Investigation notes and internal discussion."
+        },
+        {
+          "pattern": "document-package-review",
+          "reason": "Review comments and requests for changes."
+        },
+        {
+          "pattern": "incident-reporting",
+          "reason": "Running log of response actions and updates."
+        },
+        {
+          "pattern": "information-request",
+          "reason": "Analyst notes and consultation with program areas."
+        },
+        {
+          "pattern": "audit-evidence-trail",
+          "reason": "Capturing reasons and discussion alongside actions."
+        },
+        {
+          "pattern": "internal-service-request",
+          "reason": "Communication between requester and fulfiller."
+        }
+      ]
+    },
+    {
+      "id": "calendar-service",
+      "name": "Calendar service",
+      "use": "Look up dates and holidays, and schedule calendar events.",
+      "doc": "services/calendar-service.md",
+      "specialist": true,
+      "purpose": "Calendars and scheduled events.",
+      "fitQuestions": [
+        "Who owns calendars and who may book?"
+      ],
+      "dependsOn": [],
+      "risks": [],
+      "registrationFields": [],
+      "patterns": [
+        {
+          "pattern": "permit-licence",
+          "reason": "Expiry and renewal dates, and scheduled inspections."
+        },
+        {
+          "pattern": "inspection-compliance",
+          "reason": "Scheduling inspections and follow-ups."
+        },
+        {
+          "pattern": "appointment-booking",
+          "reason": "Availability, slots, and scheduled appointments."
+        },
+        {
+          "pattern": "public-reporting",
+          "reason": "Reporting periods and due dates."
+        }
+      ]
+    },
+    {
+      "id": "pdf-service",
+      "name": "PDF service",
+      "use": "Generate PDFs from templates.",
+      "doc": "services/pdf-service.md",
+      "specialist": true,
+      "purpose": "Template-driven PDF generation.",
+      "fitQuestions": [
+        "Which documents are generated, and from which data?"
+      ],
+      "dependsOn": [
+        "file-service"
+      ],
+      "risks": [],
+      "registrationFields": [],
+      "patterns": [
+        {
+          "pattern": "grant-applications",
+          "reason": "Funding agreements, decision letters, and summaries."
+        },
+        {
+          "pattern": "permit-licence",
+          "reason": "Generation of the issued permit or licence certificate."
+        },
+        {
+          "pattern": "inspection-compliance",
+          "reason": "Inspection reports and compliance orders."
+        },
+        {
+          "pattern": "information-request",
+          "reason": "Response letters and decision documents."
+        },
+        {
+          "pattern": "document-generation",
+          "reason": "Rendering of templates with data into PDF documents."
+        }
+      ]
+    },
+    {
+      "id": "export-service",
+      "name": "Export service",
+      "use": "Export another service's API resources to a file.",
+      "doc": "services/export-service.md",
+      "specialist": false,
+      "purpose": null,
+      "fitQuestions": [],
+      "dependsOn": [],
+      "risks": [],
+      "registrationFields": [],
+      "patterns": []
+    },
+    {
+      "id": "verify-service",
+      "name": "Verify service",
+      "use": "Generate and check time-limited verification codes.",
+      "doc": "services/verify-service.md",
+      "specialist": false,
+      "purpose": null,
+      "fitQuestions": [],
+      "dependsOn": [],
+      "risks": [],
+      "registrationFields": [],
+      "patterns": []
+    },
+    {
+      "id": "feedback-service",
+      "name": "Feedback service",
+      "use": "Collect user feedback with an embeddable widget.",
+      "doc": "services/feedback-service.md",
+      "specialist": true,
+      "purpose": "Collect user feedback on applications.",
+      "fitQuestions": [
+        "Where will feedback be collected?"
+      ],
+      "dependsOn": [],
+      "risks": [],
+      "registrationFields": [],
+      "patterns": [
+        {
+          "pattern": "consultation-feedback",
+          "reason": "Capturing and reviewing user feedback on services."
+        }
+      ]
+    },
+    {
+      "id": "status-service",
+      "name": "Status service",
+      "use": "Monitor application health, publish status and post service notices.",
+      "doc": "services/status-service.md",
+      "specialist": true,
+      "purpose": "Application status and public notices.",
+      "fitQuestions": [
+        "Is public status communication required?"
+      ],
+      "dependsOn": [],
+      "risks": [],
+      "registrationFields": [],
+      "patterns": [
+        {
+          "pattern": "status-tracking-portal",
+          "reason": "Presenting the state of requests and services to users."
+        }
+      ]
+    },
+    {
+      "id": "audit-service",
+      "name": "Audit service",
+      "use": "Record and search audit records of who did what to which resource.",
+      "doc": "services/audit-service.md",
+      "specialist": false,
+      "purpose": null,
+      "fitQuestions": [],
+      "dependsOn": [],
+      "risks": [],
+      "registrationFields": [
+        "auditActions"
+      ],
+      "patterns": []
+    },
+    {
+      "id": "pii-service",
+      "name": "PII service",
+      "use": "Find and anonymize personally identifiable information in text.",
+      "doc": "services/pii-service.md",
+      "specialist": false,
+      "purpose": null,
+      "fitQuestions": [],
+      "dependsOn": [],
+      "risks": [],
+      "registrationFields": [],
+      "patterns": []
+    },
+    {
+      "id": "cache-service",
+      "name": "Cache service",
+      "use": "Cache reads from upstream APIs within the tenant security model.",
+      "doc": "services/cache-service.md",
+      "specialist": false,
+      "purpose": null,
+      "fitQuestions": [],
+      "dependsOn": [],
+      "risks": [],
+      "registrationFields": [],
+      "patterns": []
+    },
+    {
+      "id": "token-handler",
+      "name": "Token handler",
+      "use": "Sign users in to a browser application with a session cookie instead of tokens.",
+      "doc": "services/token-handler.md",
+      "specialist": false,
+      "purpose": null,
+      "fitQuestions": [],
+      "dependsOn": [],
+      "risks": [],
+      "registrationFields": [],
+      "patterns": []
+    },
+    {
+      "id": "agent-service",
+      "name": "Agent service",
+      "use": "Run configurable AI agents with tools and role-based access.",
+      "doc": "services/agent-service.md",
+      "specialist": false,
+      "purpose": null,
+      "fitQuestions": [],
+      "dependsOn": [],
+      "risks": [],
+      "registrationFields": [],
+      "patterns": []
+    },
+    {
+      "id": "project-planner-service",
+      "name": "Project planner service",
+      "use": "Turn a business problem into a plan for using ADSP services.",
+      "doc": "services/project-planner-service.md",
+      "specialist": false,
+      "purpose": null,
+      "fitQuestions": [],
+      "dependsOn": [],
+      "risks": [],
+      "registrationFields": [],
+      "patterns": []
+    }
+  ],
+  "patterns": [
+    {
+      "id": "case-management",
+      "name": "Case Management",
+      "domainLanguage": [
+        "case",
+        "request",
+        "application",
+        "dispute",
+        "incident",
+        "investigation",
+        "claim",
+        "review",
+        "approval",
+        "intake",
+        "workflow",
+        "escalation",
+        "assignment"
+      ],
+      "signals": [
+        "case",
+        "long-lived",
+        "lifecycle",
+        "ongoing",
+        "review",
+        "approve",
+        "approval",
+        "adjudicate",
+        "status",
+        "under review",
+        "moves through",
+        "stages",
+        "multiple roles",
+        "collaborate",
+        "collaboration",
+        "notes",
+        "comments",
+        "attachments",
+        "assign",
+        "assigned",
+        "escalate",
+        "escalation",
+        "audit",
+        "history",
+        "updates over time",
+        "updated repeatedly",
+        "active cases",
+        "caseload",
+        "case list"
+      ],
+      "commonFeatures": [
+        "Applicants submit an intake form.",
+        "Staff review the application for eligibility.",
+        "Staff may request more information.",
+        "The application moves through statuses such as submitted, under review, approved, rejected, or withdrawn.",
+        "Applicants may receive notifications when the status changes."
+      ],
+      "services": [
+        "form-service",
+        "comment-service",
+        "file-service",
+        "notification-service",
+        "value-service",
+        "configuration-service",
+        "task-service"
+      ],
+      "unsupported": [
+        {
+          "requirement": "Fee or payment processing",
+          "reason": "No ADSP service accepts or reconciles payments.",
+          "suggestedApproach": "Integrate a third-party payment gateway and record the outcome as a case note or value-service record.",
+          "keywords": [
+            "fee",
+            "filing fee",
+            "application fee"
+          ]
+        },
+        {
+          "requirement": "External identity or background-check verification",
+          "reason": "No ADSP service verifies identity against an external registry or conducts background checks.",
+          "suggestedApproach": "Integrate the relevant external verification service and store the result as supporting evidence.",
+          "keywords": [
+            "background check",
+            "background-check",
+            "criminal record",
+            "verify identity",
+            "identity verification"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "grant-applications",
+      "name": "Grant Applications",
+      "domainLanguage": [
+        "grant",
+        "funding",
+        "applicant",
+        "reviewer",
+        "adjudication",
+        "budget",
+        "program",
+        "payment",
+        "intake window",
+        "scoring",
+        "award",
+        "recipient"
+      ],
+      "signals": [
+        "grant",
+        "funding application",
+        "funding request",
+        "reviewer scoring",
+        "adjudication",
+        "scoring rubric",
+        "approval of funding",
+        "award",
+        "funding decision",
+        "intake window",
+        "application deadline",
+        "funding round",
+        "monitoring of funded projects",
+        "progress report",
+        "final report"
+      ],
+      "commonFeatures": [
+        "Applicants complete an application form with organization, project, and budget details.",
+        "Applicants attach supporting documents such as financial statements or letters of support.",
+        "Reviewers check eligibility and score applications against criteria.",
+        "Decision makers approve, reject, or conditionally approve funding.",
+        "Applicants are notified of decisions and may be asked for more information.",
+        "Funded recipients submit progress or final reports, and funds are monitored after approval."
+      ],
+      "services": [
+        "form-service",
+        "file-service",
+        "task-service",
+        "notification-service",
+        "value-service",
+        "pdf-service",
+        "configuration-service"
+      ],
+      "unsupported": [
+        {
+          "requirement": "Payment disbursement to recipients",
+          "reason": "No ADSP service issues or tracks fund transfers to recipients.",
+          "suggestedApproach": "Integrate with the government financial/payment system and record the disbursement reference in value-service.",
+          "keywords": [
+            "payment",
+            "pay",
+            "disburse",
+            "disbursement",
+            "fund transfer"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "permit-licence",
+      "name": "Permit / licence application",
+      "domainLanguage": [
+        "permit",
+        "licence",
+        "license",
+        "renewal",
+        "expiry",
+        "suspend",
+        "issue",
+        "certificate",
+        "authorization",
+        "registrant",
+        "conditions"
+      ],
+      "signals": [
+        "permit",
+        "licence",
+        "license",
+        "renew",
+        "renewal",
+        "expire",
+        "expiry",
+        "suspend",
+        "suspension",
+        "revoke",
+        "issue a certificate",
+        "issued licence",
+        "issued permit",
+        "conditions of approval",
+        "permit conditions"
+      ],
+      "commonFeatures": [
+        "Applicants submit an application with supporting documents and fees.",
+        "Staff review and approve, refuse, or request changes.",
+        "An approved permit or licence is issued, often as a certificate or document.",
+        "Holders renew before expiry and may be reminded automatically.",
+        "Staff can suspend, revoke, or amend a permit or licence.",
+        "Applicants and the public can check the current status or validity."
+      ],
+      "services": [
+        "form-service",
+        "file-service",
+        "task-service",
+        "notification-service",
+        "pdf-service",
+        "calendar-service",
+        "value-service"
+      ],
+      "unsupported": []
+    },
+    {
+      "id": "registration-enrollment",
+      "name": "Registration / enrollment",
+      "domainLanguage": [
+        "register",
+        "registration",
+        "enroll",
+        "enrollment",
+        "registry",
+        "facility",
+        "organization",
+        "registrant",
+        "profile",
+        "update details"
+      ],
+      "signals": [
+        "register",
+        "registration",
+        "registry",
+        "enroll",
+        "enrollment",
+        "enrolment",
+        "registration number",
+        "registrant id",
+        "update their details",
+        "registrant profile"
+      ],
+      "commonFeatures": [
+        "A registrant submits a form with identifying and descriptive details.",
+        "Submissions are validated, and duplicates are detected.",
+        "The registrant receives a confirmation or registration number.",
+        "Registrants can update their details or deregister.",
+        "Staff can search and view the registry.",
+        "Some registrations require approval or periodic renewal."
+      ],
+      "services": [
+        "form-service",
+        "value-service",
+        "notification-service",
+        "file-service",
+        "task-service"
+      ],
+      "unsupported": [
+        {
+          "requirement": "Registration or renewal fee payment",
+          "reason": "No ADSP service accepts or reconciles payments.",
+          "suggestedApproach": "Integrate a third-party payment gateway and record the paid status as a registry field in value-service.",
+          "keywords": [
+            "fee",
+            "filing fee",
+            "application fee"
+          ]
+        },
+        {
+          "requirement": "Verification against an external authoritative registry",
+          "reason": "No ADSP service verifies status against an external registry, such as a corporate or professional licensing body.",
+          "suggestedApproach": "Integrate the external registry's API and surface the verification result to staff during review.",
+          "keywords": [
+            "duplicate",
+            "external registry",
+            "licensing body",
+            "corporate registry"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "inspection-compliance",
+      "name": "Inspection / compliance",
+      "domainLanguage": [
+        "inspection",
+        "inspector",
+        "compliance",
+        "finding",
+        "remediation",
+        "violation",
+        "audit",
+        "corrective action",
+        "follow-up",
+        "non-compliance"
+      ],
+      "signals": [
+        "inspection",
+        "inspector",
+        "finding",
+        "violation",
+        "non-compliance",
+        "remediation",
+        "corrective action",
+        "follow-up inspection",
+        "compliance"
+      ],
+      "commonFeatures": [
+        "Inspections are scheduled or triggered by risk, complaint, or permit.",
+        "Inspectors record findings, often on a mobile device in the field, with photos.",
+        "Orders or corrective actions are issued with due dates.",
+        "Remediation is tracked and verified through follow-up inspections.",
+        "Inspection reports are generated and shared with the regulated party.",
+        "Compliance history is available for each site or entity."
+      ],
+      "services": [
+        "form-service",
+        "calendar-service",
+        "task-service",
+        "file-service",
+        "notification-service",
+        "pdf-service"
+      ],
+      "unsupported": []
+    },
+    {
+      "id": "complaint-intake",
+      "name": "Complaint / concern intake",
+      "domainLanguage": [
+        "complaint",
+        "concern",
+        "triage",
+        "investigate",
+        "respond",
+        "grievance",
+        "complainant",
+        "allegation",
+        "resolution"
+      ],
+      "signals": [
+        "complaint",
+        "concern",
+        "grievance",
+        "triage",
+        "investigate",
+        "investigation",
+        "respond to the complainant",
+        "allegation",
+        "complainant"
+      ],
+      "commonFeatures": [
+        "Public or internal users submit a complaint, optionally anonymously.",
+        "Complaints are triaged and categorized or prioritized.",
+        "Complaints are assigned to an investigator or team.",
+        "Investigators record notes, evidence, and outcomes.",
+        "The complainant is acknowledged and receives a response.",
+        "Complaints can be closed, escalated, or referred elsewhere."
+      ],
+      "services": [
+        "form-service",
+        "task-service",
+        "comment-service",
+        "notification-service",
+        "file-service"
+      ],
+      "unsupported": []
+    },
+    {
+      "id": "consultation-feedback",
+      "name": "Consultation / feedback collection",
+      "domainLanguage": [
+        "consultation",
+        "feedback",
+        "survey",
+        "stakeholder",
+        "engagement",
+        "themes",
+        "submission",
+        "public comment",
+        "what we heard"
+      ],
+      "signals": [
+        "consultation",
+        "public engagement",
+        "stakeholder engagement",
+        "feedback",
+        "survey",
+        "themes",
+        "what we heard",
+        "consultation period",
+        "closing date"
+      ],
+      "commonFeatures": [
+        "A consultation or survey is opened for a period of time.",
+        "Participants submit responses through a form, sometimes with attachments.",
+        "Responses are collected, categorized, and analyzed for themes.",
+        "Targeted stakeholders may be invited and reminded.",
+        "Outcomes are summarized and published as a what-we-heard report."
+      ],
+      "services": [
+        "form-service",
+        "feedback-service",
+        "value-service",
+        "notification-service",
+        "file-service"
+      ],
+      "unsupported": []
+    },
+    {
+      "id": "eligibility-assessment",
+      "name": "Benefit / eligibility assessment",
+      "domainLanguage": [
+        "eligibility",
+        "eligible",
+        "qualify",
+        "benefit",
+        "entitlement",
+        "assessment",
+        "criteria",
+        "income test",
+        "determination"
+      ],
+      "signals": [
+        "eligibility",
+        "eligible",
+        "qualify",
+        "benefit",
+        "entitlement",
+        "eligibility criteria",
+        "income test",
+        "rules engine",
+        "determination"
+      ],
+      "commonFeatures": [
+        "Applicants answer questions that capture facts about their situation.",
+        "Rules are applied to determine eligibility, automatically or through staff review.",
+        "The applicant is told whether they qualify and why.",
+        "Decisions can be appealed or reassessed when circumstances change.",
+        "Eligibility rules are updated as policy changes."
+      ],
+      "services": [
+        "form-service",
+        "configuration-service",
+        "value-service",
+        "notification-service",
+        "task-service"
+      ],
+      "unsupported": []
+    },
+    {
+      "id": "appointment-booking",
+      "name": "Appointment / booking request",
+      "domainLanguage": [
+        "appointment",
+        "booking",
+        "book",
+        "schedule",
+        "reschedule",
+        "slot",
+        "reservation",
+        "availability",
+        "cancel",
+        "reminder"
+      ],
+      "signals": [
+        "appointment",
+        "booking",
+        "reservation",
+        "reschedule",
+        "cancel appointment",
+        "slot",
+        "availability",
+        "appointment reminder",
+        "reminder"
+      ],
+      "commonFeatures": [
+        "Users see available times and request or book a slot.",
+        "Bookings are confirmed and calendar entries created.",
+        "Users can reschedule or cancel.",
+        "Reminders are sent before the appointment.",
+        "Staff manage availability and see their schedule."
+      ],
+      "services": [
+        "calendar-service",
+        "form-service",
+        "notification-service"
+      ],
+      "unsupported": [
+        {
+          "requirement": "Advance payment at time of booking",
+          "reason": "No ADSP service accepts or reconciles payments.",
+          "suggestedApproach": "Integrate a third-party payment gateway and record the paid status against the calendar-service event.",
+          "keywords": [
+            "advance payment",
+            "pay at booking",
+            "booking fee",
+            "booking deposit",
+            "deposit at booking"
+          ]
+        },
+        {
+          "requirement": "Virtual meeting link generation",
+          "reason": "No ADSP service creates or manages video-conferencing links.",
+          "suggestedApproach": "Integrate a meeting provider API and attach the generated link to the calendar event.",
+          "keywords": [
+            "virtual meeting",
+            "video call",
+            "video conference",
+            "zoom",
+            "teams link"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "document-package-review",
+      "name": "Document submission / package review",
+      "domainLanguage": [
+        "package",
+        "submission",
+        "document",
+        "completeness",
+        "upload",
+        "changes requested",
+        "resubmit",
+        "required documents",
+        "checklist"
+      ],
+      "signals": [
+        "document package",
+        "required documents",
+        "submission package",
+        "completeness",
+        "complete package",
+        "request changes",
+        "resubmit",
+        "changes requested",
+        "review comments",
+        "document review"
+      ],
+      "commonFeatures": [
+        "Submitters upload a defined set of required documents.",
+        "Completeness is checked against a checklist.",
+        "Reviewers read the documents and add comments.",
+        "Changes or additional documents can be requested and resubmitted.",
+        "Versions of documents are retained.",
+        "The package is accepted or rejected, and the submitter is notified."
+      ],
+      "services": [
+        "file-service",
+        "form-service",
+        "task-service",
+        "comment-service",
+        "notification-service"
+      ],
+      "unsupported": []
+    },
+    {
+      "id": "incident-reporting",
+      "name": "Incident / emergency response reporting",
+      "domainLanguage": [
+        "incident",
+        "emergency",
+        "response",
+        "coordinate",
+        "report incident",
+        "log actions",
+        "severity",
+        "responder",
+        "situation report"
+      ],
+      "signals": [
+        "incident",
+        "emergency",
+        "response coordination",
+        "coordinate response",
+        "responders",
+        "severity",
+        "urgent",
+        "log actions",
+        "situation report"
+      ],
+      "commonFeatures": [
+        "A reporter submits incident details quickly, often with location and photos.",
+        "Incidents are classified by severity and routed to responders.",
+        "Responders and coordinators log actions and updates as events unfold.",
+        "Interested parties are alerted to new incidents and changes.",
+        "Incidents are closed with a summary and lessons learned."
+      ],
+      "services": [
+        "form-service",
+        "task-service",
+        "notification-service",
+        "comment-service",
+        "event-service",
+        "push-service"
+      ],
+      "unsupported": []
+    },
+    {
+      "id": "information-request",
+      "name": "Information request / FOIP-style request",
+      "domainLanguage": [
+        "foip",
+        "information request",
+        "access request",
+        "records",
+        "analyst",
+        "disclosure",
+        "redaction",
+        "statutory deadline",
+        "applicant"
+      ],
+      "signals": [
+        "foip",
+        "access to information",
+        "information request",
+        "records search",
+        "gather records",
+        "redaction",
+        "redact",
+        "statutory deadline",
+        "response deadline"
+      ],
+      "commonFeatures": [
+        "Requesters submit a request describing the records they want.",
+        "A coordinator logs the request and assigns an analyst.",
+        "Program areas are asked to search for and provide records.",
+        "Analysts review and redact records before release.",
+        "A response package is prepared and sent within the statutory deadline.",
+        "Fees and extensions are tracked."
+      ],
+      "services": [
+        "form-service",
+        "task-service",
+        "file-service",
+        "comment-service",
+        "pdf-service",
+        "notification-service"
+      ],
+      "unsupported": []
+    },
+    {
+      "id": "referral-routing",
+      "name": "Referral / routing workflow",
+      "domainLanguage": [
+        "referral",
+        "routing",
+        "route",
+        "redirect",
+        "ministry",
+        "program",
+        "rules",
+        "forward",
+        "destination",
+        "directory of services"
+      ],
+      "signals": [
+        "route to the right",
+        "routing",
+        "referral",
+        "routing rules",
+        "based on rules",
+        "redirect",
+        "forward to"
+      ],
+      "commonFeatures": [
+        "A request is submitted with details that determine where it belongs.",
+        "Routing rules choose the destination team, ministry, or program.",
+        "The destination is notified and accepts or redirects the referral.",
+        "The requester is told where their request went.",
+        "Routing outcomes are monitored for misroutes."
+      ],
+      "services": [
+        "form-service",
+        "configuration-service",
+        "task-service",
+        "notification-service"
+      ],
+      "unsupported": []
+    },
+    {
+      "id": "status-tracking-portal",
+      "name": "Status tracking portal",
+      "domainLanguage": [
+        "status",
+        "track",
+        "portal",
+        "progress",
+        "where is my",
+        "applicant view",
+        "my applications",
+        "reference number",
+        "timeline"
+      ],
+      "signals": [
+        "status tracking",
+        "track my",
+        "check status",
+        "where is my",
+        "progress of",
+        "applicant portal",
+        "client portal",
+        "my applications",
+        "reference number",
+        "tracking number"
+      ],
+      "commonFeatures": [
+        "Users sign in or enter a reference number to find their request.",
+        "The current status and a history of steps are shown in plain language.",
+        "Users see what is outstanding and what they must do next.",
+        "Users are notified when the status changes.",
+        "Staff updates drive the status shown."
+      ],
+      "services": [
+        "status-service",
+        "value-service",
+        "notification-service",
+        "form-service"
+      ],
+      "unsupported": []
+    },
+    {
+      "id": "audit-evidence-trail",
+      "name": "Audit / evidence trail",
+      "domainLanguage": [
+        "audit",
+        "trail",
+        "evidence",
+        "who did what",
+        "traceability",
+        "accountability",
+        "history",
+        "tamper-proof",
+        "log"
+      ],
+      "signals": [
+        "who did what",
+        "audit trail",
+        "audit log",
+        "evidence trail",
+        "traceability",
+        "accountability",
+        "tamper",
+        "immutable",
+        "reason for decision",
+        "decision history"
+      ],
+      "commonFeatures": [
+        "Significant actions are recorded with the actor, time, and context.",
+        "Decisions record the reason for the decision.",
+        "The trail cannot be altered by ordinary users.",
+        "Authorized users can search and filter the trail.",
+        "The trail can be exported for auditors or investigations.",
+        "Records are kept for a defined retention period."
+      ],
+      "services": [
+        "event-service",
+        "value-service",
+        "comment-service"
+      ],
+      "unsupported": []
+    },
+    {
+      "id": "public-reporting",
+      "name": "Public reporting / data collection",
+      "domainLanguage": [
+        "recurring report",
+        "quarterly",
+        "annual report",
+        "municipality",
+        "operator",
+        "submission period",
+        "reporting entity",
+        "data collection",
+        "return",
+        "due date"
+      ],
+      "signals": [
+        "recurring report",
+        "quarterly report",
+        "annual report",
+        "data collection",
+        "reporting entity",
+        "municipalities",
+        "reporting period",
+        "submission period",
+        "due date",
+        "aggregate",
+        "roll up"
+      ],
+      "commonFeatures": [
+        "Reporting entities are told when a report is due.",
+        "Entities submit data through a form or upload, sometimes with validation.",
+        "Late or missing reports are followed up.",
+        "Submitted data is aggregated and analyzed.",
+        "Results may be published publicly.",
+        "Entities can correct and resubmit a report."
+      ],
+      "services": [
+        "form-service",
+        "value-service",
+        "notification-service",
+        "calendar-service",
+        "file-service"
+      ],
+      "unsupported": []
+    },
+    {
+      "id": "document-generation",
+      "name": "Template-driven document generation",
+      "domainLanguage": [
+        "letter",
+        "certificate",
+        "notice",
+        "template",
+        "generate document",
+        "decision letter",
+        "merge",
+        "pdf",
+        "summary"
+      ],
+      "signals": [
+        "generate letter",
+        "certificate",
+        "notice",
+        "template",
+        "merge data",
+        "decision document",
+        "decision letter",
+        "generate pdf",
+        "generate a pdf"
+      ],
+      "commonFeatures": [
+        "Templates define the layout and wording of documents.",
+        "Data from a form or record fills the template.",
+        "Documents are generated as PDFs and stored.",
+        "Generated documents may need review or approval before release.",
+        "Documents are delivered to the recipient or made available for download.",
+        "Templates are updated as policy or wording changes."
+      ],
+      "services": [
+        "pdf-service",
+        "file-service",
+        "value-service",
+        "notification-service"
+      ],
+      "unsupported": []
+    },
+    {
+      "id": "notification-subscription",
+      "name": "Notification campaign / subscription",
+      "domainLanguage": [
+        "subscribe",
+        "subscription",
+        "alert",
+        "reminder",
+        "announcement",
+        "campaign",
+        "newsletter",
+        "unsubscribe",
+        "broadcast",
+        "channel"
+      ],
+      "signals": [
+        "subscribe",
+        "subscription",
+        "unsubscribe",
+        "announcement",
+        "alerts",
+        "broadcast",
+        "campaign",
+        "newsletter",
+        "notification preferences",
+        "subscription preferences"
+      ],
+      "commonFeatures": [
+        "Users choose topics or categories to subscribe to and the channels to receive them on.",
+        "Staff publish announcements or alerts to subscribers.",
+        "Reminders are sent on a schedule or triggered by events.",
+        "Users can manage preferences and unsubscribe.",
+        "Delivery results are tracked."
+      ],
+      "services": [
+        "notification-service",
+        "push-service",
+        "configuration-service",
+        "event-service"
+      ],
+      "unsupported": []
+    },
+    {
+      "id": "internal-service-request",
+      "name": "Internal service request",
+      "domainLanguage": [
+        "internal request",
+        "shared service",
+        "support request",
+        "it request",
+        "procurement",
+        "service desk",
+        "ticket",
+        "fulfilment",
+        "requester"
+      ],
+      "signals": [
+        "shared service",
+        "service desk",
+        "internal request",
+        "support request",
+        "ticket",
+        "it request",
+        "fulfilment",
+        "fulfillment",
+        "service level",
+        "sla"
+      ],
+      "commonFeatures": [
+        "Staff submit a request using a form specific to the service.",
+        "Requests are routed to the right team and assigned to a person.",
+        "The requester can see progress and communicate with the fulfiller.",
+        "Requests are completed and closed, sometimes with approval steps.",
+        "Teams monitor volume and service-level performance."
+      ],
+      "services": [
+        "form-service",
+        "task-service",
+        "notification-service",
+        "comment-service",
+        "file-service"
+      ],
+      "unsupported": []
+    }
+  ]
+}

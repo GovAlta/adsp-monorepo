@@ -17,14 +17,16 @@ export const SharePointOverview: FunctionComponent = () => {
           <div>
             <section>
               <p>
-                The SharePoint service allows developers to connect to a SharePoint List, so that they can read, create,
-                and update its data.
+                The SharePoint service pushes data, such as form submissions, to a SharePoint list that your team owns.
+                Add a connection with the details of your app registration, then a destination that maps data to list
+                columns. ADSP never reads data back from SharePoint.
               </p>
             </section>
           </div>
         }
         addButton={
-          <GoabButton size="compact"
+          <GoabButton
+            size="compact"
             testId="add-connection-btn"
             onClick={() => {
               setOpenAddConnection(true);
@@ -39,7 +41,7 @@ export const SharePointOverview: FunctionComponent = () => {
           open={openAddConnection}
           connectionId={undefined}
           onCancel={() => setOpenAddConnection(false)}
-          onSave={(connection) => dispatch(updateSharepointConnection(connection))}
+          onSave={(connection, clientSecret) => dispatch(updateSharepointConnection(connection, clientSecret))}
         />
       )}
     </>
