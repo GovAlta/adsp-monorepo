@@ -21,13 +21,21 @@ components:
       description: >
         Request does not include a valid bearer token, the token has no tenant context, or the user does not have the
         role required for the operation. Anonymous requests receive a plain `Unauthorized` text body; the other cases
-        receive an `errorMessage`. Role checks in this API respond with 401 rather than 403.
+        receive an `errorMessage`. Notice role checks respond with 401; application role checks respond with 403.
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/StatusError'
           example:
             errorMessage: missing tenant id
+    StatusForbidden:
+      description: User does not have the status-admin role in the tenant.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/StatusError'
+          example:
+            errorMessage: 'User Test User (ID: tester) not permitted to modify status applications.'
     StatusNotFound:
       description: >
         The resource was not found in the tenant of the request. Resources of other tenants also respond 404.
@@ -217,7 +225,7 @@ components:
       case) if it is not provided. Monitoring is not enabled until requested.
 
 
-      Requires an authenticated tenant user; no specific role is required. The application is added to the tenant of
+      Requires the urn:ads:platform:status-service:status-admin role; users without it receive 403. The application is added to the tenant of
       the token.
     requestBody:
       required: true
@@ -268,6 +276,8 @@ components:
         $ref: '#/components/responses/StatusBadRequest'
       401:
         $ref: '#/components/responses/StatusUnauthorized'
+      403:
+        $ref: '#/components/responses/StatusForbidden'
 
 /status/v1/applications/{appKey}:
   parameters:
@@ -275,8 +285,7 @@ components:
   put:
     tags: ['Application Monitoring']
     description: >
-      Replaces the configuration of an application. Send every field to keep; fields left out are removed. Requires
-      an authenticated tenant user; no specific role is required. The application must belong to the tenant of the
+      Replaces the configuration of an application. Send every field to keep; fields left out are removed. Requires the urn:ads:platform:status-service:status-admin role; users without it receive 403. The application must belong to the tenant of the
       token.
     requestBody:
       required: true
@@ -308,19 +317,23 @@ components:
               $ref: '#/components/schemas/Application'
       401:
         $ref: '#/components/responses/StatusUnauthorized'
+      403:
+        $ref: '#/components/responses/StatusForbidden'
       404:
         $ref: '#/components/responses/StatusNotFound'
   delete:
     tags: ['Application Monitoring']
     description: >
       Deletes an application with its status and health check results, and stops monitoring it if monitoring is
-      enabled. Requires an authenticated tenant user; no specific role is required. The application must belong to
+      enabled. Requires the urn:ads:platform:status-service:status-admin role; users without it receive 403. The application must belong to
       the tenant of the token.
     responses:
       204:
         description: Application deleted.
       401:
         $ref: '#/components/responses/StatusUnauthorized'
+      403:
+        $ref: '#/components/responses/StatusForbidden'
       404:
         $ref: '#/components/responses/StatusNotFound'
 
@@ -331,8 +344,7 @@ components:
     tags: ['Application Monitoring']
     description: >
       Turns on monitoring of the application. Health checks start when the service next reloads its health checks
-      (every 5 minutes); use the toggle operation to start them immediately. Requires an authenticated tenant user;
-      no specific role is required. The application must belong to the tenant of the token.
+      (every 5 minutes); use the toggle operation to start them immediately. Requires the urn:ads:platform:status-service:status-admin role; users without it receive 403. The application must belong to the tenant of the token.
     responses:
       200:
         description: Monitoring has been enabled.
@@ -342,6 +354,8 @@ components:
               $ref: '#/components/schemas/Application'
       401:
         $ref: '#/components/responses/StatusUnauthorized'
+      403:
+        $ref: '#/components/responses/StatusForbidden'
       404:
         $ref: '#/components/responses/StatusNotFound'
 
@@ -352,8 +366,7 @@ components:
     tags: ['Application Monitoring']
     description: >
       Turns off monitoring of the application. Health checks stop when the service next reloads its health checks
-      (every 5 minutes); use the toggle operation to stop them immediately. Requires an authenticated tenant user; no
-      specific role is required. The application must belong to the tenant of the token.
+      (every 5 minutes); use the toggle operation to stop them immediately. Requires the urn:ads:platform:status-service:status-admin role; users without it receive 403. The application must belong to the tenant of the token.
     responses:
       200:
         description: Monitoring has been disabled.
@@ -363,6 +376,8 @@ components:
               $ref: '#/components/schemas/Application'
       401:
         $ref: '#/components/responses/StatusUnauthorized'
+      403:
+        $ref: '#/components/responses/StatusForbidden'
       404:
         $ref: '#/components/responses/StatusNotFound'
 
@@ -373,8 +388,7 @@ components:
     tags: ['Application Monitoring']
     description: >
       Toggles monitoring of the application, from enabled to disabled or vice versa, and sends the
-      health-check-started or health-check-stopped event that starts or stops the health checks. Requires an
-      authenticated tenant user; no specific role is required. The application must belong to the tenant of the
+      health-check-started or health-check-stopped event that starts or stops the health checks. Requires the urn:ads:platform:status-service:status-admin role; users without it receive 403. The application must belong to the tenant of the
       token.
     responses:
       200:
@@ -385,6 +399,8 @@ components:
               $ref: '#/components/schemas/Application'
       401:
         $ref: '#/components/responses/StatusUnauthorized'
+      403:
+        $ref: '#/components/responses/StatusForbidden'
       404:
         $ref: '#/components/responses/StatusNotFound'
 
@@ -394,8 +410,7 @@ components:
   patch:
     tags: ['Application Status']
     description: >
-      Sets the published status of the application, and sends the application-status-changed event. Requires an
-      authenticated tenant user; no specific role is required. The application must belong to the tenant of the
+      Sets the published status of the application, and sends the application-status-changed event. Requires the urn:ads:platform:status-service:status-admin role; users without it receive 403. The application must belong to the tenant of the
       token.
     requestBody:
       required: true
@@ -420,6 +435,8 @@ components:
               $ref: '#/components/schemas/Application'
       401:
         $ref: '#/components/responses/StatusUnauthorized'
+      403:
+        $ref: '#/components/responses/StatusForbidden'
       404:
         $ref: '#/components/responses/StatusNotFound'
 
@@ -486,7 +503,7 @@ components:
     description: >
       Sends a test monitored-service-down or monitored-service-up event to a webhook of a monitored application. The
       webhook is read from the push service configuration of the tenant. The response is sent after a 2 second
-      delay. Requires an authenticated tenant user; no specific role is required. The webhook and its application
+      delay. Requires the urn:ads:platform:status-service:status-admin role; users without it receive 403. The webhook and its application
       must belong to the tenant of the token.
     parameters:
       - name: id
@@ -514,5 +531,7 @@ components:
             example: 'event is sent - app: {"appKey":"my-application", ...}, user: {...}, webhook: {...}'
       401:
         $ref: '#/components/responses/StatusUnauthorized'
+      403:
+        $ref: '#/components/responses/StatusForbidden'
       404:
         $ref: '#/components/responses/StatusNotFound'
