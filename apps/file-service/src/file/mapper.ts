@@ -9,6 +9,7 @@ export function mapFileType(entity: FileTypeEntity): FileType {
     anonymousRead: entity.anonymousRead,
     updateRoles: entity.updateRoles,
     readRoles: entity.readRoles,
+    allowedFileTypes: entity.allowedFileTypes,
     rules: entity?.rules,
   };
 }

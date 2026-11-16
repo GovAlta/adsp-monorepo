@@ -4,6 +4,7 @@ from typing import Any, Callable, Dict, List, NamedTuple, Optional
 from httpx import RequestError, patch
 
 from .constants import (
+    PLATFORM_AUDIT_SERVICE,
     PLATFORM_CONFIGURATION_API,
     PLATFORM_CONFIGURATION_SERVICE,
     PLATFORM_EVENT_SERVICE,
@@ -12,6 +13,7 @@ from .constants import (
     PLATFORM_TENANT_SERVICE,
 )
 from .adsp_id import AdspId
+from .audit import AuditAction, audit_definitions
 from .configuration import TC
 from .directory import ServiceDirectory
 from .token_provider import TokenProvider
@@ -74,6 +76,7 @@ class AdspRegistration(NamedTuple):
     events: Optional[List[DomainEventDefinition]] = []
     event_streams: Optional[List[StreamDefinition]] = []
     file_types: Optional[List[FileType]] = []
+    audit_actions: Optional[List[AuditAction]] = []
 
 
 class ServiceRegistrar:
@@ -167,8 +170,40 @@ class ServiceRegistrar:
                 },
             )
 
+        if registration.audit_actions:
+            application = self.__service_id.service
+            self._replace_service_configuration(
+                PLATFORM_AUDIT_SERVICE,
+                f"actions-{application}",
+                {
+                    "kind": "actionCatalog",
+                    "application": application,
+                    "actions": audit_definitions(registration.audit_actions),
+                },
+            )
+
     def _updated_service_configuration(
         self, service_id: AdspId, update: Dict[str, Any]
+    ):
+        self._patch_configuration(
+            service_id,
+            f"{service_id.namespace}/{service_id.service}",
+            {"operation": "UPDATE", "update": update},
+        )
+
+    def _replace_service_configuration(
+        self, service_id: AdspId, name: str, configuration: Dict[str, Any]
+    ):
+        # Named configuration is stored in the namespace of the owning service,
+        # e.g. audit-service/actions-{application}.
+        self._patch_configuration(
+            service_id,
+            f"{service_id.service}/{name}",
+            {"operation": "REPLACE", "configuration": configuration},
+        )
+
+    def _patch_configuration(
+        self, service_id: AdspId, path: str, body: Dict[str, Any]
     ):
         configuration_service_url = self.__directory.get_service_url(
             PLATFORM_CONFIGURATION_API
@@ -177,8 +212,8 @@ class ServiceRegistrar:
 
         try:
             response = patch(
-                f"{configuration_service_url}/configuration/{service_id.namespace}/{service_id.service}",
-                json={"operation": "UPDATE", "update": update},
+                f"{configuration_service_url}/configuration/{path}",
+                json=body,
                 headers={"Authorization": f"Bearer {token}"},
             )
 

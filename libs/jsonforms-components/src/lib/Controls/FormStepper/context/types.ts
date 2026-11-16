@@ -56,3 +56,13 @@ export interface StepperContextDataType {
 }
 
 export type CategorizationElement = Category | Categorization;
+
+// The step the user is on, as a host sees it. currentStep is 1-based over visible steps, and 0 on
+// the review page and the pages variant's task list, where no input step is active.
+export interface StepInfo {
+  isFirstStep: boolean;
+  isLastStep: boolean;
+  currentStep: number;
+  isOnReview: boolean;
+  isOnTaskList: boolean;
+}

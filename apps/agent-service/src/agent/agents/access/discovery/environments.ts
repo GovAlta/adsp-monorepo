@@ -17,6 +17,13 @@ export const ACCESS_ENVIRONMENTS: readonly AccessEnvironment[] = Object.freeze([
   { id: 'prod', label: 'Production', host: 'https://access.alberta.ca', readOnly: true },
 ]);
 
+// Environments where users and their role assignments are never read, so user details stay out of Production.
+const USER_INSPECTION_BLOCKED_ENVIRONMENT_IDS: ReadonlySet<AccessEnvironmentId> = new Set(['prod']);
+
+export function isUserInspectionAllowed({ id }: Pick<AccessEnvironment, 'id'>): boolean {
+  return !USER_INSPECTION_BLOCKED_ENVIRONMENT_IDS.has(id);
+}
+
 const LOOPBACK_HOSTNAMES = new Set(['localhost', '127.0.0.1', '[::1]']);
 
 /**

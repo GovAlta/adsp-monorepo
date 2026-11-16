@@ -3,6 +3,13 @@ import { createValidationHandler, NotFoundError } from '@core-services/core-comm
 import { Router } from 'express';
 import { body, param } from 'express-validator';
 import { getSolution, getTenantId, loaded, requirePlannerUser } from './access';
+import {
+  AdminAccessOperation,
+  auditAdminAccess,
+  PlannerAuditRecorder,
+  SolutionExportedAuditAction,
+  toSolutionAuditDetails,
+} from './audit';
 import { isBlueprintOutOfDate } from './blueprint';
 import { solutionUpdated } from './events';
 import { SolutionRepository, SolutionVersion, SolutionVersionRepository, SpecialistChatRepository } from './repository';
@@ -14,6 +21,7 @@ interface VersionRouterProps {
   specialistChatRepository: SpecialistChatRepository;
   solutionVersionRepository: SolutionVersionRepository;
   eventService: EventService;
+  recordAudit: PlannerAuditRecorder;
 }
 
 interface ExportDetails {
@@ -62,10 +70,15 @@ export function createVersionRouter({
   specialistChatRepository,
   solutionVersionRepository,
   eventService,
+  recordAudit,
 }: VersionRouterProps): Router {
   const router = Router();
   const validateId = createValidationHandler(param('id').isUUID());
   const validateVersionNumber = createValidationHandler(param('number').isInt({ min: 1 }));
+  const solutionFor = (operation: AdminAccessOperation) => [
+    getSolution(solutionRepository),
+    auditAdminAccess(recordAudit, operation),
+  ];
 
   async function savedStatus(tenantId: AdspId, solution: Solution) {
     const content = versionContent(solution, await specialistChatRepository.findBySolution(tenantId, solution.id));
@@ -81,67 +94,63 @@ export function createVersionRouter({
     return { initial: false, changedSections: previous ? changedSections(previous.content, version.content) : [] };
   }
 
-  router.get(
-    '/solutions/:id/export',
-    requirePlannerUser,
-    validateId,
-    getSolution(solutionRepository),
-    async (req, res, next) => {
-      try {
-        const tenantId = getTenantId(req);
-        const solution = loaded(req);
-        const { content, latest, unsavedChanges } = await savedStatus(tenantId, solution);
-        const details = unsavedChanges
-          ? {
-              version: latest?.number ?? solution.version,
-              versionName: latest?.name,
-              unsavedChanges,
-              lastUpdated: solution.updatedOn,
-              initial: !latest,
-              changedSections: latest ? changedSections(latest.content, content) : [],
-            }
-          : {
-              version: latest.number,
-              versionName: latest.name,
-              unsavedChanges,
-              lastUpdated: latest.createdOn,
-              ...(await versionChanges(tenantId, solution.id, latest)),
-            };
+  router.get('/solutions/:id/export', requirePlannerUser, validateId, solutionFor('export'), async (req, res, next) => {
+    try {
+      const tenantId = getTenantId(req);
+      const solution = loaded(req);
+      const { content, latest, unsavedChanges } = await savedStatus(tenantId, solution);
+      const details = unsavedChanges
+        ? {
+            version: latest?.number ?? solution.version,
+            versionName: latest?.name,
+            unsavedChanges,
+            lastUpdated: solution.updatedOn,
+            initial: !latest,
+            changedSections: latest ? changedSections(latest.content, content) : [],
+          }
+        : {
+            version: latest.number,
+            versionName: latest.name,
+            unsavedChanges,
+            lastUpdated: latest.createdOn,
+            ...(await versionChanges(tenantId, solution.id, latest)),
+          };
 
-        res.setHeader('Content-Disposition', `attachment; filename="planner-${solution.id}.json"`);
-        res.send(exportBody(solution, content, { ...details, updatedOn: solution.updatedOn }));
-      } catch (err) {
-        next(err);
-      }
-    },
-  );
-
-  router.get(
-    '/solutions/:id/versions',
-    requirePlannerUser,
-    validateId,
-    getSolution(solutionRepository),
-    async (req, res, next) => {
-      try {
-        const tenantId = getTenantId(req);
-        const solution = loaded(req);
-        const { latest, unsavedChanges } = await savedStatus(tenantId, solution);
-        res.send({
-          latest: latest?.number ?? solution.version,
+      res.setHeader('Content-Disposition', `attachment; filename="planner-${solution.id}.json"`);
+      res.send(exportBody(solution, content, { ...details, updatedOn: solution.updatedOn }));
+      recordAudit(
+        SolutionExportedAuditAction,
+        toSolutionAuditDetails(req.user, solution, {
+          scope: 'solution',
+          version: details.version,
           unsavedChanges,
-          results: await solutionVersionRepository.list(tenantId, solution.id),
-        });
-      } catch (err) {
-        next(err);
-      }
-    },
-  );
+        }),
+      );
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  router.get('/solutions/:id/versions', requirePlannerUser, validateId, solutionFor('read'), async (req, res, next) => {
+    try {
+      const tenantId = getTenantId(req);
+      const solution = loaded(req);
+      const { latest, unsavedChanges } = await savedStatus(tenantId, solution);
+      res.send({
+        latest: latest?.number ?? solution.version,
+        unsavedChanges,
+        results: await solutionVersionRepository.list(tenantId, solution.id),
+      });
+    } catch (err) {
+      next(err);
+    }
+  });
 
   router.post(
     '/solutions/:id/versions/checkpoint',
     requirePlannerUser,
     validateId,
-    getSolution(solutionRepository),
+    solutionFor('update'),
     async (req, res, next) => {
       try {
         const tenantId = getTenantId(req);
@@ -166,7 +175,7 @@ export function createVersionRouter({
     validateId,
     validateVersionNumber,
     createValidationHandler(body('name').isString().trim().isLength({ max: 100 })),
-    getSolution(solutionRepository),
+    solutionFor('update'),
     async (req, res, next) => {
       try {
         const solution = loaded(req);
@@ -189,7 +198,7 @@ export function createVersionRouter({
     requirePlannerUser,
     validateId,
     validateVersionNumber,
-    getSolution(solutionRepository),
+    solutionFor('export'),
     async (req, res, next) => {
       try {
         const tenantId = getTenantId(req);
@@ -209,6 +218,10 @@ export function createVersionRouter({
             updatedOn: version.createdOn,
             ...(await versionChanges(tenantId, solution.id, version)),
           }),
+        );
+        recordAudit(
+          SolutionExportedAuditAction,
+          toSolutionAuditDetails(req.user, solution, { scope: 'version', version: version.number }),
         );
       } catch (err) {
         next(err);

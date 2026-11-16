@@ -9,7 +9,7 @@ import { AdspId, ServiceMetricsValueDefinition, initializePlatform } from '@abgo
 import type { User } from '@abgov/adsp-service-sdk';
 import { createLogger, createErrorHandler } from '@core-services/core-common';
 import { environment } from './environments/environment';
-import { applyVerifyMiddleware } from './verify';
+import { applyVerifyMiddleware, VerifyAuditActions } from './verify';
 import { createRedisRepository } from './redis';
 import { VerifyUserRoles } from './verify/roles';
 
@@ -29,30 +29,33 @@ const initializeApp = async (): Promise<express.Application> => {
 
   const serviceId = AdspId.parse(environment.CLIENT_ID);
   const accessServiceUrl = new URL(environment.KEYCLOAK_ROOT_URL);
-  const { coreStrategy, tenantStrategy, healthCheck, metricsHandler, traceHandler } = await initializePlatform(
-    {
-      serviceId,
-      displayName: 'Verify service',
-      description: 'Service for generating and verifying codes.',
-      roles: [
-        {
-          role: VerifyUserRoles.Generator,
-          description: 'Generator role for generating new verification codes.',
-        },
-        {
-          role: VerifyUserRoles.Verifier,
-          description: 'Verifier role for verifying codes.',
-        },
-      ],
-      clientSecret: environment.CLIENT_SECRET,
-      accessServiceUrl,
-      directoryUrl: new URL(environment.DIRECTORY_URL),
-      tracing: environment.OTEL_EXPORTER_OTLP_ENDPOINT,
-      metrics: environment.OTEL_EXPORTER_OTLP_ENDPOINT,
-      values: [ServiceMetricsValueDefinition],
-    },
-    { logger },
-  );
+  const { coreStrategy, tenantStrategy, healthCheck, metricsHandler, traceHandler, auditService } =
+    await initializePlatform(
+      {
+        serviceId,
+        displayName: 'Verify service',
+        description: 'Service for generating and verifying codes.',
+        roles: [
+          {
+            role: VerifyUserRoles.Generator,
+            description: 'Generator role for generating new verification codes.',
+          },
+          {
+            role: VerifyUserRoles.Verifier,
+            description: 'Verifier role for verifying codes.',
+          },
+        ],
+        clientSecret: environment.CLIENT_SECRET,
+        accessServiceUrl,
+        directoryUrl: new URL(environment.DIRECTORY_URL),
+        tracing: environment.OTEL_EXPORTER_OTLP_ENDPOINT,
+        metrics: environment.OTEL_EXPORTER_OTLP_ENDPOINT,
+        values: [ServiceMetricsValueDefinition],
+        auditActions: VerifyAuditActions,
+        audit: { enabled: environment.VERIFY_AUDIT_ENABLED },
+      },
+      { logger },
+    );
 
   passport.use('core', coreStrategy);
   passport.use('tenant', tenantStrategy);
@@ -71,7 +74,7 @@ const initializeApp = async (): Promise<express.Application> => {
   app.use('/verify', metricsHandler, passport.authenticate(['core', 'tenant'], { session: false }));
 
   const repository = createRedisRepository(environment);
-  applyVerifyMiddleware(app, { logger, repository });
+  applyVerifyMiddleware(app, { logger, repository, auditService });
 
   const swagger = JSON.parse(await promisify(readFile)(`${__dirname}/swagger.json`, 'utf8'));
   app.use('/swagger/docs/v1', (_req, res) => {

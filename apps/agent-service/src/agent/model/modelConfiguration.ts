@@ -1,6 +1,7 @@
+import { createOpenAICompatible } from '@ai-sdk/openai-compatible';
 import type { AgentExecutionOptions } from '@mastra/core/agent';
 import { environment } from '../../environments/environment';
-import { FORM_GENERATION_AGENT_ID } from './executionLimits';
+import { ACCESS_SERVICE_AGENT_ID, FORM_GENERATION_AGENT_ID } from './executionLimits';
 
 export interface AgentModelConfiguration {
   id?: string;
@@ -17,15 +18,20 @@ export function getAgentModelId(agentId?: string, modelConfig?: AgentModelConfig
     : environment.MODEL;
 }
 
+/**
+ * The model for an agent. An OpenAI-compatible endpoint is built here rather than by Mastra's model router, because
+ * the router leaves out stream_options.include_usage, so the endpoint reports no token usage on streamed replies.
+ */
 export function getAgentModelConfiguration(modelId = environment.MODEL, modelConfig?: AgentModelConfiguration) {
   return environment.MODEL_URL
-    ? {
-        providerId: 'openai',
-        modelId,
-        url: environment.MODEL_URL,
+    ? createOpenAICompatible({
+        name: 'openai',
+        baseURL: environment.MODEL_URL,
         apiKey: environment.MODEL_API_KEY,
-        ...(modelConfig?.headers ? { defaultHeaders: modelConfig.headers } : {}),
-      }
+        headers: modelConfig?.headers,
+        includeUsage: true,
+        supportsStructuredOutputs: true,
+      }).chatModel(modelId)
     : modelId;
 }
 
@@ -34,11 +40,18 @@ export function getAgentProviderOptions(
   modelConfig?: AgentModelConfiguration,
 ): AgentExecutionOptions['providerOptions'] | undefined {
   const isFormGen = agentId === FORM_GENERATION_AGENT_ID;
-  if (!isFormGen && !modelConfig?.reasoningEffort) {
+  const isAccess = agentId === ACCESS_SERVICE_AGENT_ID;
+  if (!isFormGen && !isAccess && !modelConfig?.reasoningEffort) {
     return undefined;
   }
 
-  const providerOpts: Record<string, string | boolean> = {};
+  const providerOpts: Record<string, string | boolean | number> = {};
+
+  // Reasoning models such as gpt-5.1 reject max_tokens, which the OpenAI-compatible provider sends for
+  // maxOutputTokens, so the reply limit goes on the wire as max_completion_tokens instead.
+  if (isAccess && environment.MODEL_URL) {
+    providerOpts.max_completion_tokens = environment.AGENT_ACCESS_MAX_OUTPUT_TOKENS;
+  }
 
   if (isFormGen) {
     // Use the key convention that matches the active provider path:

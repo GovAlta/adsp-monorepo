@@ -385,7 +385,7 @@ export const SDK_REFERENCE: SdkSymbolDoc[] = [
       '  version: number;\n' +
       '  category: AuditCategory;\n' +
       '  severity: AuditSeverity;\n' +
-      '  retentionClass: string; description?: string; resourceType?: string;\n' +
+      '  retentionClass?: string; description?: string; resourceType?: string;\n' +
       '  captureChangeSet?: boolean; forwardToSiem?: boolean;\n' +
       '  metadataSchema?: Record<string, unknown>;\n' +
       '}',
@@ -441,7 +441,28 @@ export const SDK_REFERENCE: SdkSymbolDoc[] = [
       'These constants define names, not retention periods. AuditActionDefinition.retentionClass remains a string ' +
       'so an application can use a custom class such as case-history with a configured retention period.',
     example: 'retentionClass: BuiltInRetentionClasses.Compliance',
-    seeAlso: ['AuditActionDefinition', 'auditDefinitions'],
+    seeAlso: ['AuditActionDefinition', 'auditDefinitions', 'DefaultCategoryRetentionClasses', 'resolveRetentionClass'],
+  },
+  {
+    name: 'DefaultCategoryRetentionClasses',
+    kind: 'const',
+    module: 'audit',
+    summary: 'Retention class applied to an audit action that does not set retentionClass, by category.',
+    details:
+      'const DefaultCategoryRetentionClasses: Record<AuditCategory, string>;\n\n' +
+      "administrative and data-access map to 'compliance', security to 'security', runtime and diagnostic to " +
+      "'standard'. A retentionClass set on the action overrides the category default.",
+    seeAlso: ['resolveRetentionClass', 'BuiltInRetentionClasses', 'AuditActionDefinition'],
+  },
+  {
+    name: 'resolveRetentionClass',
+    kind: 'function',
+    module: 'audit',
+    summary: "Resolves an audit action's retention class: its own class if set, otherwise the category default.",
+    details:
+      'resolveRetentionClass(definition: Pick<AuditActionDefinition, "retentionClass" | "category">): string\n\n' +
+      "Falls back to 'standard' for an unknown category.",
+    seeAlso: ['DefaultCategoryRetentionClasses', 'AuditActionDefinition'],
   },
   {
     name: 'AuditService',

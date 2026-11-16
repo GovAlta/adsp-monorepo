@@ -8,7 +8,7 @@ Guidance for AI agents changing `libs/adsp-components-react` (`@abgov/adsp-compo
 The React adapter for the ADSP application components. It owns:
 
 - `AdspThemeProvider`, `useAdspTheme` and `useAdspThemeStyle`, which select a theme and apply it to each component as `--adsp-*` properties
-- the React components, for example `AdspGoACalendar`
+- the React components, for example `ADSPCalendar`
 - data hooks built on core's service clients, for example `useCalendarEvents`
 - integration with third-party React UI libraries, for example FullCalendar
 
@@ -34,7 +34,7 @@ src/
     theme/
       adsp-theme-provider.tsx  provider and theme hooks
     calendar/
-      adsp-goa-calendar.tsx    the component (AdspGoACalendar)
+      adsp-goa-calendar.tsx    the component (ADSPCalendar)
       types.ts                 props interface and constants
       useCalendarEvents.tsx    data hook built on core's ICalendarClient
       calendarUtils.ts         React-side helpers

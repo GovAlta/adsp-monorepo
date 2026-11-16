@@ -30,7 +30,7 @@ The email contains a link so that the users can unsubscribe if they wish, which 
 
 ### Custom Email Templates
 
-The above notifications are managed by the ADSP _Notification Service_, which provides email templates that you can customize to suit your application's needs. Simply log in to the [Tenant Management Webapp](https://adsp.alberata.ca) and navigate to the _Notification Service_ / _Notifications Type_ tab, where you will see a list of notifications. In particular, you will see the _Application Health Check Change_, and the _Application Status Update_ notification types.
+The above notifications are managed by the ADSP _Notification Service_, which provides email templates that you can customize to suit your application's needs. Simply log in to the [Tenant Management Webapp](https://adsp.alberta.ca) and navigate to the _Notification Service_ / _Notifications Type_ tab, where you will see a list of notifications. In particular, you will see the _Application Health Check Change_, and the _Application Status Update_ notification types.
 
 ![](/adsp-monorepo/assets/status-service/email-template.png)
 

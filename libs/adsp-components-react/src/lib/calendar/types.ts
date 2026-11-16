@@ -15,7 +15,7 @@ export const VIEW_BUTTON_LABEL: Record<string, string> = {
   listWeek: 'List',
 };
 
-export interface AdspGoACalendarProps {
+export interface ADSPCalendarProps {
   /** Loads events and holidays for the calendar; create it once or memoize it so it's stable across renders. */
   client: ICalendarClient;
 

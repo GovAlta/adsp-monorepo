@@ -5,7 +5,6 @@ import {
   AuditRecordDetails,
   AuditService,
   AuditSeverities,
-  BuiltInRetentionClasses,
   toAuditActor,
   User,
 } from '@abgov/adsp-service-sdk';
@@ -28,7 +27,6 @@ export const ConfigurationUpdatedAuditAction: AuditAction = {
   version: 1,
   category: AuditCategories.Administrative,
   severity: AuditSeverities.Info,
-  retentionClass: BuiltInRetentionClasses.Compliance,
   resourceType: CONFIGURATION_RESOURCE_TYPE,
   captureChangeSet: true,
   description: 'A configuration document is updated or replaced.',
@@ -39,7 +37,6 @@ export const ConfigurationDeletedAuditAction: AuditAction = {
   version: 1,
   category: AuditCategories.Administrative,
   severity: AuditSeverities.Warning,
-  retentionClass: BuiltInRetentionClasses.Compliance,
   resourceType: CONFIGURATION_RESOURCE_TYPE,
   description: 'A configuration document is deleted.',
 };
@@ -49,7 +46,6 @@ export const ConfigurationRevisionCreatedAuditAction: AuditAction = {
   version: 1,
   category: AuditCategories.Administrative,
   severity: AuditSeverities.Info,
-  retentionClass: BuiltInRetentionClasses.Compliance,
   resourceType: CONFIGURATION_RESOURCE_TYPE,
   description: 'A new revision of a configuration document is created.',
 };
@@ -59,7 +55,6 @@ export const ConfigurationActiveRevisionSetAuditAction: AuditAction = {
   version: 1,
   category: AuditCategories.Administrative,
   severity: AuditSeverities.Warning,
-  retentionClass: BuiltInRetentionClasses.Compliance,
   resourceType: CONFIGURATION_RESOURCE_TYPE,
   description: 'The active revision of a configuration document is changed.',
 };
@@ -69,7 +64,6 @@ export const ConfigurationDefinitionCreatedAuditAction: AuditAction = {
   version: 1,
   category: AuditCategories.Administrative,
   severity: AuditSeverities.Info,
-  retentionClass: BuiltInRetentionClasses.Compliance,
   resourceType: CONFIGURATION_DEFINITION_RESOURCE_TYPE,
   captureChangeSet: true,
   description: 'A configuration definition is created.',
@@ -80,7 +74,6 @@ export const ConfigurationDefinitionUpdatedAuditAction: AuditAction = {
   version: 1,
   category: AuditCategories.Administrative,
   severity: AuditSeverities.Info,
-  retentionClass: BuiltInRetentionClasses.Compliance,
   resourceType: CONFIGURATION_DEFINITION_RESOURCE_TYPE,
   captureChangeSet: true,
   description: 'A configuration definition is updated.',
@@ -91,7 +84,6 @@ export const ConfigurationDefinitionDeletedAuditAction: AuditAction = {
   version: 1,
   category: AuditCategories.Administrative,
   severity: AuditSeverities.Warning,
-  retentionClass: BuiltInRetentionClasses.Compliance,
   resourceType: CONFIGURATION_DEFINITION_RESOURCE_TYPE,
   captureChangeSet: true,
   description: 'A configuration definition is deleted.',

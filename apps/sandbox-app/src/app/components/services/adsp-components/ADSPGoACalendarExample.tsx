@@ -10,7 +10,7 @@ import {
   GoabInput,
   GoabText,
 } from '@abgov/react-components';
-import { AdspGoACalendar, AdspThemeProvider } from '@abgov/adsp-components-react';
+import { ADSPCalendar, AdspThemeProvider } from '@abgov/adsp-components-react';
 import { AdspThemes, CalendarClient, DateRange } from '@abgov/adsp-components-core';
 import { useDispatch, useSelector } from 'react-redux';
 import {
@@ -63,7 +63,7 @@ export const ADSPGoACalendarExample = ({ tenantName }: ADSPGoACalendarExamplePro
     return { start, end };
   });
 
-  // Stable across renders so AdspGoACalendar doesn't reload events on every render.
+  // Stable across renders so ADSPCalendar doesn't reload events on every render.
   const client = useMemo(
     () =>
       calendarServiceUrl
@@ -89,7 +89,7 @@ export const ADSPGoACalendarExample = ({ tenantName }: ADSPGoACalendarExamplePro
       >
         <Card>
           <GoabText size="body-m" mb="xs">
-            Select a calendar to see its events and Alberta statutory holidays, rendered with AdspGoACalendar.
+            Select a calendar to see its events and Alberta statutory holidays, rendered with ADSPCalendar.
           </GoabText>
 
           <GoabFormItem label="Calendar name" labelSize="compact" mb="xs">
@@ -155,7 +155,7 @@ export const ADSPGoACalendarExample = ({ tenantName }: ADSPGoACalendarExamplePro
         <GoabSpacer vSpacing="m"></GoabSpacer>
         {client && loadRequest && (
           <AdspThemeProvider theme={AdspThemes.standard}>
-            <AdspGoACalendar
+            <ADSPCalendar
               key={loadRequest.id}
               client={client}
               calendar={loadRequest.calendar}

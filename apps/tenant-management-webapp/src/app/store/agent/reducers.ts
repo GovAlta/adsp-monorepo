@@ -1,5 +1,6 @@
 import { AgentMessage, ToolCall } from '@core-services/app-common';
 import {
+  AGENT_CONVERSATION_STATUS_ACTION,
   AGENT_RESPONSE_ACTION,
   AgentActionTypes,
   AgentResponseAction,
@@ -13,6 +14,7 @@ import {
   ERROR,
   GET_AGENTS_ACTION,
   GET_AGENTS_SUCCESS_ACTION,
+  LOCAL_ANSWER_ACTION,
   MESSAGE_AGENT_ACTION,
   NEW_PREVIEW_THREAD_ACTION,
   REASONING_DELTA,
@@ -29,13 +31,14 @@ import {
   UPDATE_AGENT_ACTION,
   UPDATE_AGENT_SUCCESS_ACTION,
 } from './actions';
-import { AgentState } from './model';
+import { ACCESS_SERVICE_AGENT_ID, AgentState } from './model';
 
 const defaultState: AgentState = {
   connected: false,
   threads: {},
   threadMessages: {},
   messages: {},
+  conversationStatus: {},
   availableTools: [
     {
       id: 'fileDownloadTool',
@@ -106,7 +109,6 @@ function streamErrorDetails(payload: { code?: string; message: string; details?:
 }
 
 const DEFAULT_STREAM_ERROR_MESSAGE = 'The agent stopped unexpectedly. Anything already saved is in the editor.';
-const ACCESS_SERVICE_AGENT_ID = 'AccessServiceAgent';
 
 function outputToText(output: unknown): string {
   if (typeof output === 'string') {
@@ -140,6 +142,9 @@ function outputToText(output: unknown): string {
 
     if (typeof candidate.content === 'string') {
       return candidate.content;
+    }
+    if (typeof candidate.markdown === 'string') {
+      return candidate.markdown;
     }
 
     try {
@@ -183,6 +188,7 @@ function processResponseChunk(
       streaming: false,
       content: message.content?.trim().length ? message.content : fallbackText,
       output: action.output ?? message.output,
+      ...(action.usage ? { usage: action.usage } : {}),
     };
   }
 
@@ -394,13 +400,25 @@ export default function (state: AgentState = defaultState, action: AgentActionTy
       delete newThreadMessages[action.threadId];
       const newThreads = { ...state.threads };
       delete newThreads[action.threadId];
+      const newConversationStatus = { ...state.conversationStatus };
+      delete newConversationStatus[action.threadId];
       return {
         ...state,
         threads: newThreads,
         threadMessages: newThreadMessages,
         messages: newMessages,
+        conversationStatus: newConversationStatus,
       };
     }
+    case AGENT_CONVERSATION_STATUS_ACTION:
+      // A status can arrive after the user reset the chat; ignore it for threads no longer tracked.
+      if (!state.threads[action.threadId]) {
+        return state;
+      }
+      return {
+        ...state,
+        conversationStatus: { ...state.conversationStatus, [action.threadId]: action.status },
+      };
     case MESSAGE_AGENT_ACTION:
       return {
         ...state,
@@ -416,6 +434,23 @@ export default function (state: AgentState = defaultState, action: AgentActionTy
             content: action.content,
             from: 'user',
           },
+        },
+      };
+    case LOCAL_ANSWER_ACTION:
+      // The user may have reset the chat while the answer was being read.
+      if (!state.threads[action.threadId]) {
+        return state;
+      }
+      return {
+        ...state,
+        threadMessages: {
+          ...state.threadMessages,
+          [action.threadId]: [...(state.threadMessages[action.threadId] || []), action.question.id, action.answer.id],
+        },
+        messages: {
+          ...state.messages,
+          [action.question.id]: action.question,
+          [action.answer.id]: action.answer,
         },
       };
     case AGENT_RESPONSE_ACTION: {

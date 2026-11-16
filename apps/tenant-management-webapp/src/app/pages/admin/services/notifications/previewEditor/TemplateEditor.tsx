@@ -211,17 +211,21 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
   // session so we only connect once, on the first visit to the AI tab.
   const agentConnectionRequested = useRef(false);
 
-  // Start a fresh thread each time the modal opens (form agent pattern)
+  // A fresh thread starts the AI chat without earlier context: when the modal opens, and when the user resets the chat.
+  const startFreshAiThread = useCallback(() => {
+    const newThreadId = uuid();
+    setAiThreadId(newThreadId);
+    dispatch(startThread(agentName, newThreadId));
+    setAppliedProposalId(null);
+    setAiDraft('');
+  }, [dispatch, agentName]);
+
   useEffect(() => {
     if (notificationEmailAIEnabled && modelOpen) {
-      const newThreadId = uuid();
-      setAiThreadId(newThreadId);
-      dispatch(startThread(agentName, newThreadId));
-      setAppliedProposalId(null);
-      setAiDraft('');
+      startFreshAiThread();
       agentConnectionRequested.current = false;
     }
-  }, [modelOpen, dispatch, agentName, notificationEmailAIEnabled]);
+  }, [modelOpen, notificationEmailAIEnabled, startFreshAiThread]);
 
   const switchTabPreview = (value) => {
     setPreview(value);
@@ -510,6 +514,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
                   onAISaved?.(proposal);
                 }}
                 onAttachmentUpload={handleAttachmentUpload}
+                onReset={startFreshAiThread}
               />
             </Tab>
           )}

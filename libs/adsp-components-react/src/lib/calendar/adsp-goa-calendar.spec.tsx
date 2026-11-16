@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import type { CalendarEvents, ICalendarClient } from '@abgov/adsp-components-core';
-import { AdspGoACalendar } from './adsp-goa-calendar';
+import { ADSPCalendar } from './adsp-goa-calendar';
 
 // Within the current month, so it's visible in the default dayGridMonth view without a fixed initialDate.
 const today = new Date();
@@ -35,13 +35,13 @@ const createClient = (getCalendarRange: ICalendarClient['getCalendarRange'] = je
 // The GoA button wrapper listens for the web component's custom `_click` event rather than a DOM click.
 const clickGoabButton = (label: string) => fireEvent(screen.getByText(label), new CustomEvent('_click'));
 
-describe('AdspGoACalendar', () => {
+describe('ADSPCalendar', () => {
   test('renders a calendar for the given calendar name', async () => {
     // Arrange
     const client = createClient(jest.fn().mockResolvedValue(calendarEvents));
 
     // Act
-    render(<AdspGoACalendar client={client} calendar="my-cal" testId="goa-calendar" />);
+    render(<ADSPCalendar client={client} calendar="my-cal" testId="goa-calendar" />);
 
     // Assert
     await waitFor(() => expect(screen.getByTestId('goa-calendar')).toBeInTheDocument());
@@ -52,7 +52,7 @@ describe('AdspGoACalendar', () => {
     const client = createClient(jest.fn().mockResolvedValue(calendarEvents));
 
     // Act
-    render(<AdspGoACalendar client={client} calendar="my-cal" />);
+    render(<ADSPCalendar client={client} calendar="my-cal" />);
 
     // Assert
     await waitFor(() => expect(screen.getByText('Annual review')).toBeInTheDocument());
@@ -63,7 +63,7 @@ describe('AdspGoACalendar', () => {
     const client = createClient(jest.fn().mockResolvedValue(calendarEvents));
 
     // Act
-    render(<AdspGoACalendar client={client} calendar="my-cal" />);
+    render(<ADSPCalendar client={client} calendar="my-cal" />);
 
     // Assert
     await waitFor(() => expect(screen.getByText('Victoria Day')).toBeInTheDocument());
@@ -75,7 +75,7 @@ describe('AdspGoACalendar', () => {
     const client = createClient(getCalendarRange);
 
     // Act
-    render(<AdspGoACalendar client={client} calendar="my-cal" defaultView="day" />);
+    render(<ADSPCalendar client={client} calendar="my-cal" defaultView="day" />);
 
     // Assert
     await waitFor(() => expect(getCalendarRange).toHaveBeenCalled());
@@ -87,7 +87,7 @@ describe('AdspGoACalendar', () => {
     const client = createClient(jest.fn().mockResolvedValue(calendarEvents));
 
     // Act
-    render(<AdspGoACalendar client={client} calendar="my-cal" testId="goa-calendar" />);
+    render(<ADSPCalendar client={client} calendar="my-cal" testId="goa-calendar" />);
 
     // Assert
     await waitFor(() =>
@@ -103,7 +103,7 @@ describe('AdspGoACalendar', () => {
 
     // Act
     render(
-      <AdspGoACalendar
+      <ADSPCalendar
         client={client}
         calendar="my-cal"
         testId="goa-calendar"
@@ -125,7 +125,7 @@ describe('AdspGoACalendar', () => {
     const client = createClient(getCalendarRange);
 
     // Act
-    render(<AdspGoACalendar client={client} calendar="my-cal" testId="goa-calendar" />);
+    render(<ADSPCalendar client={client} calendar="my-cal" testId="goa-calendar" />);
 
     // Assert
     await waitFor(() => expect(getCalendarRange).toHaveBeenCalled());
@@ -139,7 +139,7 @@ describe('AdspGoACalendar', () => {
     const initialDateRange = { start: new Date('2024-03-01T00:00:00Z'), end: new Date('2024-04-01T00:00:00Z') };
 
     // Act
-    render(<AdspGoACalendar client={client} calendar="my-cal" initialDateRange={initialDateRange} />);
+    render(<ADSPCalendar client={client} calendar="my-cal" initialDateRange={initialDateRange} />);
 
     // Assert
     await waitFor(() => expect(getCalendarRange).toHaveBeenCalledWith('my-cal', initialDateRange));
@@ -164,7 +164,7 @@ describe('AdspGoACalendar', () => {
     const initialDateRange = { start: new Date('2024-03-01T00:00:00Z'), end: new Date('2024-04-01T00:00:00Z') };
 
     // Act
-    render(<AdspGoACalendar client={client} calendar="my-cal" initialDateRange={initialDateRange} />);
+    render(<ADSPCalendar client={client} calendar="my-cal" initialDateRange={initialDateRange} />);
 
     // Assert
     await waitFor(() => expect(screen.getByText('Budget planning')).toBeInTheDocument());
@@ -177,7 +177,7 @@ describe('AdspGoACalendar', () => {
       const client = createClient(jest.fn().mockResolvedValue(calendarEvents));
 
       // Act
-      render(<AdspGoACalendar client={client} calendar="my-cal" />);
+      render(<ADSPCalendar client={client} calendar="my-cal" />);
 
       // Assert
       await waitFor(() => expect(screen.getByText(label)).toBeInTheDocument());
@@ -189,7 +189,7 @@ describe('AdspGoACalendar', () => {
     const client = createClient(jest.fn().mockResolvedValue(calendarEvents));
 
     // Act
-    render(<AdspGoACalendar client={client} calendar="my-cal" defaultView="week" />);
+    render(<ADSPCalendar client={client} calendar="my-cal" defaultView="week" />);
 
     // Assert
     await waitFor(() => expect(screen.getByText('Week')).toHaveAttribute('type', 'primary'));
@@ -198,7 +198,7 @@ describe('AdspGoACalendar', () => {
   test('marks the button of the selected view as primary after switching views', async () => {
     // Arrange
     const client = createClient(jest.fn().mockResolvedValue(calendarEvents));
-    render(<AdspGoACalendar client={client} calendar="my-cal" />);
+    render(<ADSPCalendar client={client} calendar="my-cal" />);
     await waitFor(() => expect(screen.getByText('List')).toBeInTheDocument());
 
     // Act
@@ -211,7 +211,7 @@ describe('AdspGoACalendar', () => {
   test('marks the button of the previous view as secondary after switching views', async () => {
     // Arrange
     const client = createClient(jest.fn().mockResolvedValue(calendarEvents));
-    render(<AdspGoACalendar client={client} calendar="my-cal" />);
+    render(<ADSPCalendar client={client} calendar="my-cal" />);
     await waitFor(() => expect(screen.getByText('List')).toBeInTheDocument());
 
     // Act
@@ -227,7 +227,7 @@ describe('AdspGoACalendar', () => {
     const client = createClient(getCalendarRange);
 
     // Act
-    render(<AdspGoACalendar client={client} calendar="my-cal" />);
+    render(<ADSPCalendar client={client} calendar="my-cal" />);
 
     // Assert
     await waitFor(() => expect(screen.getByText('Annual review')).toBeInTheDocument());
@@ -238,7 +238,7 @@ describe('AdspGoACalendar', () => {
     // Arrange
     const getCalendarRange = jest.fn().mockResolvedValue(calendarEvents);
     const client = createClient(getCalendarRange);
-    render(<AdspGoACalendar client={client} calendar="my-cal" />);
+    render(<ADSPCalendar client={client} calendar="my-cal" />);
     await waitFor(() => expect(screen.getByText(label)).toBeInTheDocument());
     await waitFor(() => expect(getCalendarRange).toHaveBeenCalledTimes(1));
 

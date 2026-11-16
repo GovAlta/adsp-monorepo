@@ -1,7 +1,14 @@
 export const STREAM_ERROR_CODES = {
   GENERATION_DEADLINE: 'GENERATION_DEADLINE',
   MAX_STEPS: 'MAX_STEPS',
+  RATE_LIMITED: 'RATE_LIMITED',
 } as const;
+
+const RATE_LIMITED_PREFIX = 'The AI service is busy right now.';
+const RATE_LIMITED_STATUS = 429;
+const RATE_LIMITED_PATTERN = /\brate[\s_-]?limit|too many requests|\b(?:status(?:[\s_]?code)?|http)[\s:=]*429\b/i;
+// Wrapped errors (retry, Mastra and cause chains) are only a few levels deep; the cap also guards against cycles.
+const MAX_ERROR_NESTING = 5;
 
 export type StreamErrorCode = (typeof STREAM_ERROR_CODES)[keyof typeof STREAM_ERROR_CODES];
 
@@ -22,8 +29,8 @@ export function abortExecution(controller: AbortController, code: StreamErrorCod
   controller.abort(new AgentStreamAbortError(code, message));
 }
 
-function readStreamError(value: unknown): { code: StreamErrorCode; message: string } | null {
-  if (!value || typeof value !== 'object') {
+function readStreamError(value: unknown, depth = 0): { code: StreamErrorCode; message: string } | null {
+  if (!value || typeof value !== 'object' || depth > MAX_ERROR_NESTING) {
     return null;
   }
 
@@ -36,7 +43,7 @@ function readStreamError(value: unknown): { code: StreamErrorCode; message: stri
   }
 
   if (candidate.cause) {
-    return readStreamError(candidate.cause);
+    return readStreamError(candidate.cause, depth + 1);
   }
 
   return null;
@@ -45,7 +52,51 @@ function readStreamError(value: unknown): { code: StreamErrorCode; message: stri
 const STREAM_ERROR_CODES_LOOKUP: Record<string, true> = {
   GENERATION_DEADLINE: true,
   MAX_STEPS: true,
+  RATE_LIMITED: true,
 };
+
+/** Tells the user the shared model key is busy, with how long to wait when that is known. */
+export function rateLimitedMessage(retryAfterMs?: number): string {
+  if (retryAfterMs === undefined) {
+    return `${RATE_LIMITED_PREFIX} Please try again in a minute.`;
+  }
+
+  const seconds = Math.max(1, Math.ceil(retryAfterMs / 1000));
+  return `${RATE_LIMITED_PREFIX} Please try again in about ${seconds} second${seconds === 1 ? '' : 's'}.`;
+}
+
+/**
+ * Recognises a provider rate-limit failure: an AI SDK APICallError with status 429, also when wrapped by a RetryError
+ * (lastError, errors) or as the cause of another error, or a message that says so.
+ */
+function isRateLimitError(error: unknown, depth = 0): boolean {
+  if (depth > MAX_ERROR_NESTING) {
+    return false;
+  }
+  if (typeof error === 'string') {
+    return RATE_LIMITED_PATTERN.test(error);
+  }
+  if (!error || typeof error !== 'object') {
+    return false;
+  }
+
+  const candidate = error as {
+    statusCode?: unknown;
+    message?: unknown;
+    lastError?: unknown;
+    errors?: unknown;
+    cause?: unknown;
+  };
+  if (candidate.statusCode === RATE_LIMITED_STATUS) {
+    return true;
+  }
+  if (typeof candidate.message === 'string' && RATE_LIMITED_PATTERN.test(candidate.message)) {
+    return true;
+  }
+
+  const wrapped = [candidate.lastError, candidate.cause, ...(Array.isArray(candidate.errors) ? candidate.errors : [])];
+  return wrapped.some((nested) => nested !== undefined && isRateLimitError(nested, depth + 1));
+}
 
 export function isAbortError(error: unknown): boolean {
   if (!error || typeof error !== 'object') {
@@ -60,6 +111,10 @@ export function mapAgentStreamError(error: unknown): { code: StreamErrorCode; me
   const mapped = readStreamError(error);
   if (mapped) {
     return mapped;
+  }
+
+  if (isRateLimitError(error)) {
+    return { code: STREAM_ERROR_CODES.RATE_LIMITED, message: rateLimitedMessage() };
   }
 
   if (isAbortError(error)) {

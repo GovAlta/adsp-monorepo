@@ -6,6 +6,7 @@ import { NotificationService } from '../notification';
 import { ConfigurationFormDefinitionRepository } from './definition';
 import { MongoFormRepository } from './form';
 import { MongoFormSubmissionRepository } from './formSubmission';
+import { MongoFormRegistrationRepository } from './registration';
 
 interface MongoRepositoryProps {
   MONGO_URI: string;
@@ -17,6 +18,10 @@ interface MongoRepositoryProps {
   configurationService: ConfigurationService;
   notificationService: NotificationService;
 }
+
+export const closeRepositories = async (): Promise<void> => {
+  await connection.close();
+};
 
 export const createRepositories = ({
   MONGO_URI,
@@ -43,10 +48,15 @@ export const createRepositories = ({
         } else {
           const definitionRepository = new ConfigurationFormDefinitionRepository(logger, configurationService);
           const formRepository = new MongoFormRepository(logger, definitionRepository, notificationService);
-          const formSubmissionRepository = new MongoFormSubmissionRepository(logger, definitionRepository, formRepository);
+          const formSubmissionRepository = new MongoFormSubmissionRepository(
+            logger,
+            definitionRepository,
+            formRepository,
+          );
           resolve({
             formRepository,
             formSubmissionRepository,
+            formRegistrationRepository: new MongoFormRegistrationRepository(logger),
             // NOTE: Typescript seems to have issues with exported enums where enum is null at runtime.
             // Possible that express js module doesn't actually export anything for ConnectionStates and
             // type definition is wrong (or intended to be substituted at transpile time... but doesn't happen)
@@ -55,6 +65,6 @@ export const createRepositories = ({
 
           logger.info(`Connected to MongoDB at: ${mongoConnectionString}`);
         }
-      }
+      },
     );
   });

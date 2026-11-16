@@ -2,6 +2,7 @@ import { MASTRA_THREAD_ID_KEY, RequestContext } from '@mastra/core/request-conte
 import { Readable } from 'node:stream';
 import { clearThreadWorkspace } from '../workspace';
 import { AgentBroker } from './broker';
+import { USAGE_RECORDER_KEY, UsageRecorder } from './conversationUsage';
 
 jest.mock('../workspace', () => ({
   ...jest.requireActual('../workspace'),
@@ -549,6 +550,129 @@ describe('AgentBroker', () => {
 
       await expect(broker.deleteThread(user as never, 'thread-1')).rejects.toThrow('storage failed');
       expect(eventService.send).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('getConversationStatus', () => {
+    function brokerWithMemory(memory: Record<string, unknown>) {
+      const agent = {
+        name: 'Test agent',
+        generate: jest.fn(),
+        stream: jest.fn(),
+        getMemory: jest.fn().mockResolvedValue(memory),
+      };
+      return new AgentBroker(logger as never, tenantId as never, [], agent as never, {});
+    }
+
+    it('reports older messages dropped once a thread without observational memory outgrows lastMessages', async () => {
+      // Arrange
+      const recall = jest.fn().mockResolvedValue({ total: 24 });
+      const broker = brokerWithMemory({
+        getMergedThreadConfig: () => ({ lastMessages: 20, observationalMemory: false }),
+        recall,
+      });
+
+      // Act
+      const status = await broker.getConversationStatus(user as never, 'thread-1', { contextTokens: 31000 });
+
+      // Assert
+      expect(status).toMatchObject({
+        state: 'notice',
+        reason: 'older-messages-dropped',
+        messageLimit: 20,
+        contextTokens: 31000,
+      });
+    });
+
+    it("counts the user's messages in the thread with a single-item page", async () => {
+      // Arrange
+      const recall = jest.fn().mockResolvedValue({ total: 3 });
+      const broker = brokerWithMemory({
+        getMergedThreadConfig: () => ({ lastMessages: 20, observationalMemory: false }),
+        recall,
+      });
+
+      // Act
+      await broker.getConversationStatus(user as never, 'thread-1', { contextTokens: 9000 });
+
+      // Assert
+      expect(recall).toHaveBeenCalledWith({ threadId: 'thread-1', resourceId: 'user-123', perPage: 1 });
+    });
+
+    it('does not count messages when observational memory manages the history', async () => {
+      // Arrange
+      const recall = jest.fn();
+      const broker = brokerWithMemory({
+        getMergedThreadConfig: () => ({ lastMessages: 20, observationalMemory: { model: 'gpt-5.1' } }),
+        recall,
+      });
+
+      // Act
+      await broker.getConversationStatus(user as never, 'thread-1', { contextTokens: 9000 });
+
+      // Assert
+      expect(recall).not.toHaveBeenCalled();
+    });
+
+    it('reports a summarised conversation from the memory status of the reply', async () => {
+      // Arrange
+      const broker = brokerWithMemory({
+        getMergedThreadConfig: () => ({ lastMessages: 20, observationalMemory: { model: 'gpt-5.1' } }),
+      });
+      const memoryStatus = {
+        messageTokens: 6000,
+        messageThreshold: 30000,
+        observationTokens: 1800,
+        observationThreshold: 40000,
+        generationCount: 0,
+      };
+
+      // Act
+      const status = await broker.getConversationStatus(user as never, 'thread-1', {
+        contextTokens: 14000,
+        memoryStatus,
+      });
+
+      // Assert
+      expect(status).toMatchObject({ state: 'notice', reason: 'summarised' });
+    });
+  });
+
+  describe('stream', () => {
+    it('gives tools the usage recorder through the request context', async () => {
+      // Arrange
+      const stream = jest.fn().mockResolvedValue({});
+      const agent = { name: 'Test agent', generate: jest.fn(), stream };
+      const broker = new AgentBroker(logger as never, tenantId as never, [], agent as never, {});
+      const recorder = new UsageRecorder();
+
+      // Act
+      await broker.stream(user as never, 'thread-1', { role: 'user', content: 'Build the form' }, {}, recorder);
+
+      // Assert
+      const { requestContext } = stream.mock.calls[0][1] as { requestContext: RequestContext<Record<string, unknown>> };
+      expect(requestContext.get(USAGE_RECORDER_KEY)).toBe(recorder);
+    });
+
+    it('does not let client context stand in for the usage recorder', async () => {
+      // Arrange
+      const stream = jest.fn().mockResolvedValue({});
+      const agent = { name: 'Test agent', generate: jest.fn(), stream };
+      const broker = new AgentBroker(logger as never, tenantId as never, [], agent as never, {});
+      const recorder = new UsageRecorder();
+
+      // Act
+      await broker.stream(
+        user as never,
+        'thread-1',
+        { role: 'user', content: 'Build the form' },
+        { [USAGE_RECORDER_KEY]: { record: 'spoofed' } },
+        recorder,
+      );
+
+      // Assert
+      const { requestContext } = stream.mock.calls[0][1] as { requestContext: RequestContext<Record<string, unknown>> };
+      expect(requestContext.get(USAGE_RECORDER_KEY)).toBe(recorder);
     });
   });
 });

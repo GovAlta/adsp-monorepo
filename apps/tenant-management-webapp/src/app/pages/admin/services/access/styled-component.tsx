@@ -124,6 +124,29 @@ export const AgentSidePanel = styled.aside`
   }
 `;
 
+export const MeterCard = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: var(--goa-space-2xs);
+  padding: var(--goa-space-s) var(--goa-space-m);
+  border: 1px solid var(--goa-color-greyscale-200);
+  border-radius: var(--goa-border-radius-m);
+
+  & h3 {
+    margin: 0;
+    font-size: var(--goa-font-size-4);
+  }
+
+  & p {
+    margin: 0;
+    font-size: var(--goa-font-size-2);
+  }
+
+  & .secondary {
+    color: var(--goa-color-text-secondary);
+  }
+`;
+
 // --agent-chat-height is the space left below the chat's top edge, measured at runtime.
 export const AgentChatContainer = styled.div`
   grid-area: chat;

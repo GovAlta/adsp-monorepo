@@ -14,7 +14,14 @@ import {
 import { Request, Response } from 'express';
 import { ServiceStatusApplicationEntity } from '../../model';
 import * as eventFuncs from '../../events';
-import { DomainEvent, ConfigurationService } from '@abgov/adsp-service-sdk';
+import { DomainEvent, ConfigurationService, AuditService } from '@abgov/adsp-service-sdk';
+import {
+  ApplicationCreatedAuditAction,
+  ApplicationDeletedAuditAction,
+  ApplicationStatusChangedAuditAction,
+  ApplicationUpdatedAuditAction,
+  HealthCheckConfiguredAuditAction,
+} from '../../audit';
 import { Logger } from 'winston';
 import { adspId } from '@abgov/adsp-service-sdk';
 import axios from 'axios';
@@ -50,6 +57,11 @@ describe('Service router', () => {
   const eventServiceMock = {
     send: jest.fn(),
   };
+
+  const auditServiceMock = {
+    record: jest.fn().mockResolvedValue({ status: 'recorded' }),
+    flush: jest.fn(),
+  } as unknown as AuditService & { record: jest.Mock };
 
   const tokenProviderMock = {
     getAccessToken: jest.fn(() => Promise.resolve('Toot!')),
@@ -230,6 +242,7 @@ describe('Service router', () => {
         logger: loggerMock,
         tenantService: tenantServiceMock,
         eventService: eventServiceMock,
+        auditService: auditServiceMock,
         serviceStatusRepository: statusRepositoryMock,
         endpointStatusEntryRepository: endpointRepositoryMock,
         tokenProvider: tokenProviderMock,
@@ -357,7 +370,7 @@ describe('Service router', () => {
 
   describe('Can toggle application', () => {
     it('Can enable application', async () => {
-      const handler = enableApplication(loggerMock, applicationRepo);
+      const handler = enableApplication(loggerMock, applicationRepo, auditServiceMock);
       const req: Request = {
         user: {
           tenantId,
@@ -387,7 +400,7 @@ describe('Service router', () => {
     });
 
     it('Can disable application', async () => {
-      const handler = disableApplication(loggerMock, applicationRepo);
+      const handler = disableApplication(loggerMock, applicationRepo, auditServiceMock);
       const req: Request = {
         user: {
           tenantId,
@@ -415,7 +428,7 @@ describe('Service router', () => {
     });
 
     it('Can toggle application', async () => {
-      const handler = toggleApplication(loggerMock, applicationRepo, eventServiceMock);
+      const handler = toggleApplication(loggerMock, applicationRepo, eventServiceMock, auditServiceMock);
       const req: Request = {
         user: {
           tenantId,
@@ -436,6 +449,13 @@ describe('Service router', () => {
       expect(resMock.json).toHaveBeenCalledWith(
         expect.objectContaining({
           enabled: true,
+        }),
+      );
+      expect(auditServiceMock.record).toHaveBeenCalledWith(
+        HealthCheckConfiguredAuditAction,
+        expect.objectContaining({
+          resource: { type: 'application', id: bobsAppKey },
+          metadata: expect.objectContaining({ monitoringEnabled: true }),
         }),
       );
     });
@@ -461,7 +481,7 @@ describe('Service router', () => {
         description: 'foo',
         tenantId: tenantId,
       };
-      const handler = createNewApplication(loggerMock, applicationRepo, tenantServiceMock);
+      const handler = createNewApplication(loggerMock, applicationRepo, tenantServiceMock, auditServiceMock);
       const randomId = 'app_do-not-mock-me';
       configurationService.getConfiguration
         .mockResolvedValueOnce(configurationMock)
@@ -469,6 +489,15 @@ describe('Service router', () => {
       statusRepositoryMock.find.mockResolvedValueOnce([applicationStatusMock[1]]);
       await handler(req, resMock, nextMock);
       expect(resMock.status).toHaveBeenCalledWith(201);
+      expect(auditServiceMock.record).toHaveBeenCalledWith(
+        ApplicationCreatedAuditAction,
+        expect.objectContaining({
+          tenantId,
+          actor: expect.objectContaining({ id: 'test' }),
+          resource: { type: 'application', id: 'new-application' },
+          metadata: expect.objectContaining({ name: 'new-application' }),
+        }),
+      );
     });
 
     it('Cant create duplicate application', async () => {
@@ -486,17 +515,18 @@ describe('Service router', () => {
           endpoint: 'http://mock-test.com',
         },
       } as unknown as Request;
-      const handler = createNewApplication(loggerMock, applicationRepo, tenantServiceMock);
+      const handler = createNewApplication(loggerMock, applicationRepo, tenantServiceMock, auditServiceMock);
       configurationService.getConfiguration.mockResolvedValueOnce(configurationMock);
       await handler(req, resMock, nextMock);
       expect(resMock.send).not.toHaveBeenCalled();
       expect(nextMock).toBeCalledWith(expect.any(InvalidValueError));
+      expect(auditServiceMock.record).not.toHaveBeenCalled();
     });
   });
 
   describe('Can update application', () => {
     it('Can update application properties', async () => {
-      const handler = updateApplication(loggerMock, applicationRepo);
+      const handler = updateApplication(loggerMock, applicationRepo, auditServiceMock);
       const req: Request = {
         user: {
           tenantId,
@@ -522,13 +552,24 @@ describe('Service router', () => {
           endpoint: { status: bobsApplicationStatus.endpoint.status, url: 'http://mock-me.com' },
         }),
       );
+      expect(auditServiceMock.record).toHaveBeenCalledWith(
+        ApplicationUpdatedAuditAction,
+        expect.objectContaining({
+          resource: { type: 'application', id: bobsAppKey },
+          metadata: expect.objectContaining({ changedFields: expect.arrayContaining(['name', 'url']) }),
+        }),
+      );
+      expect(auditServiceMock.record).toHaveBeenCalledWith(
+        HealthCheckConfiguredAuditAction,
+        expect.objectContaining({ metadata: expect.objectContaining({ url: 'http://mock-me.com' }) }),
+      );
     });
 
     it('Can update application status', async () => {
       statusRepositoryMock.get.mockResolvedValueOnce(applicationStatusMock[1]);
       jest.spyOn(eventFuncs, 'applicationStatusChange').mockReturnValue({} as unknown as DomainEvent);
 
-      const handler = updateApplicationStatus(loggerMock, applicationRepo, eventServiceMock);
+      const handler = updateApplicationStatus(loggerMock, applicationRepo, eventServiceMock, auditServiceMock);
       const req: Request = {
         user: {
           tenantId,
@@ -550,11 +591,22 @@ describe('Service router', () => {
           status: 'maintenance',
         }),
       );
+      expect(auditServiceMock.record).toHaveBeenCalledWith(
+        ApplicationStatusChangedAuditAction,
+        expect.objectContaining({
+          resource: { type: 'application', id: bobsAppKey },
+          metadata: expect.objectContaining({ newStatus: 'maintenance' }),
+          changeSet: {
+            before: { status: expect.anything() },
+            after: { status: 'maintenance' },
+          },
+        }),
+      );
     });
     it('Can delete application', async () => {
       configurationService.getConfiguration.mockResolvedValue(configurationMock);
       statusRepositoryMock.get.mockResolvedValueOnce(applicationStatusMock[1]);
-      const handler = deleteApplication(loggerMock, applicationRepo, eventServiceMock);
+      const handler = deleteApplication(loggerMock, applicationRepo, eventServiceMock, auditServiceMock);
       const req: Request = {
         user: {
           tenantId,
@@ -568,6 +620,22 @@ describe('Service router', () => {
       statusRepositoryMock.find.mockResolvedValueOnce([applicationStatusMock[1]]);
       await handler(req, resMock, nextMock);
       expect(resMock.sendStatus).toHaveBeenCalledWith(204);
+      expect(auditServiceMock.record).toHaveBeenCalledWith(
+        ApplicationDeletedAuditAction,
+        expect.objectContaining({ resource: { type: 'application', id: bobsAppKey } }),
+      );
+    });
+    it('does not audit when the delete fails', async () => {
+      const repo = {
+        getApp: jest.fn().mockResolvedValue({ name: 'Bob', url: 'http://a' }),
+        findStatus: jest.fn().mockResolvedValue(null),
+        deleteApp: jest.fn().mockRejectedValue(new Error('boom')),
+      } as unknown as ApplicationRepo;
+      const handler = deleteApplication(loggerMock, repo, eventServiceMock, auditServiceMock);
+      const req = { user: { tenantId, id: 'test', roles: ['test-updater'] }, params: { appKey: bobsAppKey } };
+      await handler(req as unknown as Request, resMock, nextMock);
+      expect(auditServiceMock.record).not.toHaveBeenCalledWith(ApplicationDeletedAuditAction, expect.anything());
+      expect(nextMock).toHaveBeenCalled();
     });
   });
 });

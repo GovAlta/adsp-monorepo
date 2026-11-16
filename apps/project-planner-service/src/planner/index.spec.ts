@@ -1,4 +1,4 @@
-import type { EventService } from '@abgov/adsp-service-sdk';
+import type { AuditService, EventService } from '@abgov/adsp-service-sdk';
 import { Application } from 'express';
 import { Logger } from 'winston';
 import { applyPlannerMiddleware } from './index';
@@ -12,6 +12,7 @@ describe('applyPlannerMiddleware', () => {
   const appMock = { use: jest.fn() };
   const logger = {} as Logger;
   const eventService = {} as EventService;
+  const auditService = {} as AuditService;
   const solutionRepository = { find: jest.fn(), get: jest.fn(), save: jest.fn(), delete: jest.fn() };
   const patternRepository = { find: jest.fn(), save: jest.fn(), delete: jest.fn() };
   const specialistChatRepository = {
@@ -45,6 +46,7 @@ describe('applyPlannerMiddleware', () => {
       specialistChatRepository,
       solutionVersionRepository,
       eventService,
+      auditService,
     });
 
     expect(appMock.use).toHaveBeenCalledWith('/planner/v1', routerMock);
@@ -58,6 +60,7 @@ describe('applyPlannerMiddleware', () => {
       specialistChatRepository,
       solutionVersionRepository,
       eventService,
+      auditService,
     });
 
     expect(createPlannerRouterMock).toHaveBeenCalledWith({
@@ -67,6 +70,7 @@ describe('applyPlannerMiddleware', () => {
       specialistChatRepository,
       solutionVersionRepository,
       eventService,
+      auditService,
     });
   });
 
@@ -80,6 +84,7 @@ describe('applyPlannerMiddleware', () => {
       specialistChatRepository,
       solutionVersionRepository,
       eventService,
+      auditService,
       readAdspCatalog,
     });
 
@@ -94,6 +99,7 @@ describe('applyPlannerMiddleware', () => {
       specialistChatRepository,
       solutionVersionRepository,
       eventService,
+      auditService,
     });
 
     expect(result).toBe(appMock);

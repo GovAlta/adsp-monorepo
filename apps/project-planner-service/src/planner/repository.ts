@@ -49,6 +49,7 @@ export interface SolutionVersionRepository {
 
 export interface Repositories {
   isConnected: () => Promise<boolean>;
+  close: () => Promise<void>;
   solutionRepository: SolutionRepository;
   patternRepository: PatternRepository;
   specialistChatRepository: SpecialistChatRepository;

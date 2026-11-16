@@ -14,7 +14,12 @@ import {
   ServiceMetricsValueDefinition,
 } from '@abgov/adsp-service-sdk';
 import type { User } from '@abgov/adsp-service-sdk';
-import { createLogger, createErrorHandler, createAmqpConfigUpdateService } from '@core-services/core-common';
+import {
+  createLogger,
+  createErrorHandler,
+  createAmqpConfigUpdateService,
+  createShutdownHandler,
+} from '@core-services/core-common';
 import { environment } from './environments/environment';
 import { createRepositories } from './mongo';
 import {
@@ -75,6 +80,7 @@ const initializeApp = async () => {
     metricsHandler,
     tenantHandler,
     traceHandler,
+    shutdownTelemetry,
   } = await initializePlatform(
     {
       serviceId,
@@ -304,10 +310,10 @@ const initializeApp = async () => {
   const errorHandler = createErrorHandler(logger);
   app.use(errorHandler);
 
-  return { app, auditService };
+  return { app, auditService, shutdownTelemetry };
 };
 
-initializeApp().then(({ app, auditService }) => {
+initializeApp().then(({ app, auditService, shutdownTelemetry }) => {
   const port = environment.PORT || 3331;
 
   const server = app.listen(port, () => {
@@ -316,21 +322,13 @@ initializeApp().then(({ app, auditService }) => {
   server.on('error', (err) => logger.error(`Error encountered in server: ${err}`));
 
   // Stop accepting requests, then deliver any buffered audit events before the process exits.
-  let stopping = false;
-  const shutdown = async () => {
-    if (stopping) return;
-    stopping = true;
-    // Fallback in case the flush or close hangs.
-    setTimeout(() => process.exit(1), 15000).unref();
-    server.close();
-    try {
-      await auditService.flush();
-      process.exit(0);
-    } catch (err) {
-      logger.error(`Error encountered flushing audit events on shutdown: ${err}`);
-      process.exit(1);
-    }
-  };
+  const shutdown = createShutdownHandler({
+    serviceName: 'Directory service',
+    server,
+    auditService,
+    shutdownTelemetry,
+    logger,
+  });
   process.once('SIGTERM', shutdown);
   process.once('SIGINT', shutdown);
 });

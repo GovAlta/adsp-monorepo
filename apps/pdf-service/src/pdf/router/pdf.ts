@@ -1,9 +1,11 @@
 import {
   AdspId,
   adspId,
+  AuditService,
   EventService,
   isAllowedUser,
   ServiceDirectory,
+  toAuditActor,
   UnauthorizedUserError,
   TokenProvider,
 } from '@abgov/adsp-service-sdk';
@@ -19,6 +21,15 @@ import { FileResult, FileService, JobRepository, mapJob } from '@core-services/j
 import { Request, RequestHandler, Response, Router } from 'express';
 import { body, param } from 'express-validator';
 import { Logger } from 'winston';
+import {
+  changedTemplateFields,
+  PdfJobCreatedAuditAction,
+  PdfTemplateCreatedAuditAction,
+  PdfTemplateDeletedAuditAction,
+  PdfTemplateUpdatedAuditAction,
+  toPdfJobAuditDetails,
+  toPdfTemplateAuditDetails,
+} from '../audit';
 import { pdfGenerationQueued } from '../events';
 import { GENERATED_PDF } from '../fileTypes';
 import { PdfServiceWorkItem } from '../job';
@@ -32,6 +43,7 @@ export interface RouterProps {
   repository: JobRepository<FileResult>;
   queueService: WorkQueueService<PdfServiceWorkItem>;
   eventService: EventService;
+  auditService: AuditService;
   fileService: FileService;
   directory: ServiceDirectory;
   tokenProvider: TokenProvider;
@@ -137,7 +149,11 @@ async function savePdfTemplate(
   });
 }
 
-export function createPdfTemplate(directory: ServiceDirectory, tokenProvider: TokenProvider): RequestHandler {
+export function createPdfTemplate(
+  directory: ServiceDirectory,
+  tokenProvider: TokenProvider,
+  auditService: AuditService,
+): RequestHandler {
   return async (req, res, next) => {
     try {
       const user = req.user;
@@ -170,6 +186,11 @@ export function createPdfTemplate(directory: ServiceDirectory, tokenProvider: To
 
       await savePdfTemplate(directory, tokenProvider, req.tenant.id.toString(), patch);
 
+      void auditService.record(
+        PdfTemplateCreatedAuditAction,
+        toPdfTemplateAuditDetails(toAuditActor(user), req.tenant.id, patch.update[id]),
+      );
+
       res.status(HttpStatusCodes.CREATED).json(patch.update[id]);
     } catch (err) {
       next(err);
@@ -195,7 +216,11 @@ async function deletePdfTemplateFromConfig(
 }
 
 // clean-code-ignore: 2.3 2.10
-export function updatePdfTemplate(directory: ServiceDirectory, tokenProvider: TokenProvider): RequestHandler {
+export function updatePdfTemplate(
+  directory: ServiceDirectory,
+  tokenProvider: TokenProvider,
+  auditService: AuditService,
+): RequestHandler {
   return async (req, res, next) => {
     try {
       const user = req.user;
@@ -227,6 +252,13 @@ export function updatePdfTemplate(directory: ServiceDirectory, tokenProvider: To
 
       await savePdfTemplate(directory, tokenProvider, req.tenant.id.toString(), patch);
 
+      void auditService.record(
+        PdfTemplateUpdatedAuditAction,
+        toPdfTemplateAuditDetails(toAuditActor(user), req.tenant.id, updated, {
+          changedFields: changedTemplateFields(template, updated),
+        }),
+      );
+
       res.status(HttpStatusCodes.CREATED).json(updated);
     } catch (err) {
       next(err);
@@ -235,7 +267,11 @@ export function updatePdfTemplate(directory: ServiceDirectory, tokenProvider: To
 }
 
 // clean-code-ignore: 2.18
-export function deletePdfTemplate(directory: ServiceDirectory, tokenProvider: TokenProvider): RequestHandler {
+export function deletePdfTemplate(
+  directory: ServiceDirectory,
+  tokenProvider: TokenProvider,
+  auditService: AuditService,
+): RequestHandler {
   return async (req, res, next) => {
     try {
       const user = req.user;
@@ -247,7 +283,14 @@ export function deletePdfTemplate(directory: ServiceDirectory, tokenProvider: To
       }
 
       const { templateId } = req.params;
+      const template: PdfTemplateEntity | undefined = req[TEMPLATE];
       await deletePdfTemplateFromConfig(directory, tokenProvider, req.tenant.id.toString(), templateId);
+
+      void auditService.record(
+        PdfTemplateDeletedAuditAction,
+        toPdfTemplateAuditDetails(toAuditActor(user), req.tenant.id, { id: templateId, name: template?.name }),
+      );
+
       res.status(HttpStatusCodes.NO_CONTENT).send();
     } catch (err) {
       next(err);
@@ -262,6 +305,7 @@ export function generatePdf(
   fileService: FileService,
   queueService: WorkQueueService<PdfServiceWorkItem>,
   logger: Logger,
+  auditService: AuditService,
 ): RequestHandler {
   return async (req, res, next) => {
     try {
@@ -286,15 +330,17 @@ export function generatePdf(
       const job = await repository.create(user, tenantId);
       logger.info(`Successfully created the job ${job.id}.`);
 
+      const targetFileType = fileType || GENERATED_PDF;
+      const targetRecordId = recordId || job.id;
       await queueService.enqueue({
         timestamp: new Date(),
         work: 'generate',
         jobId: job.id,
         tenantId: `${tenantId}`,
-        fileType: fileType || GENERATED_PDF,
+        fileType: targetFileType,
         templateId,
         filename,
-        recordId: recordId || job.id,
+        recordId: targetRecordId,
         context: context || {},
         data: data || {},
         requestedBy: {
@@ -306,6 +352,18 @@ export function generatePdf(
 
       eventService.send(pdfGenerationQueued(tenantId, job.id, templateId, context, { id: user.id, name: user.name }));
       logger.info(`Successfully sent the job ${job.id} generation message to the event queue.`);
+
+      void auditService.record(
+        PdfJobCreatedAuditAction,
+        toPdfJobAuditDetails(toAuditActor(user), {
+          tenantId,
+          jobId: job.id,
+          templateId,
+          filename,
+          fileType: targetFileType,
+          recordId: targetRecordId,
+        }),
+      );
 
       res.send(mapJob(serviceId, job));
     } catch (err) {
@@ -341,6 +399,7 @@ export function createPdfRouter({
   serviceId,
   repository,
   eventService,
+  auditService,
   fileService,
   queueService,
   logger,
@@ -372,7 +431,7 @@ export function createPdfRouter({
       body('additionalStyles').optional().isString(),
       body('variables').optional().isString(),
     ),
-    createPdfTemplate(directory, tokenProvider),
+    createPdfTemplate(directory, tokenProvider, auditService),
   );
   router.get(
     '/templates/:templateId',
@@ -393,13 +452,13 @@ export function createPdfRouter({
       body('variables').optional().isString(),
     ),
     getTemplate('params'),
-    updatePdfTemplate(directory, tokenProvider),
+    updatePdfTemplate(directory, tokenProvider, auditService),
   );
   router.delete(
     '/templates/:templateId',
     createValidationHandler(param('templateId').isString().isLength({ min: 1, max: 50 })),
     getTemplate('params'),
-    deletePdfTemplate(directory, tokenProvider),
+    deletePdfTemplate(directory, tokenProvider, auditService),
   );
   router.post(
     '/jobs',
@@ -413,7 +472,7 @@ export function createPdfRouter({
       body('context').optional().isObject(),
     ),
     getTemplate('body'),
-    generatePdf(serviceId, repository, eventService, fileService, queueService, logger),
+    generatePdf(serviceId, repository, eventService, fileService, queueService, logger, auditService),
   );
   router.get('/jobs/:jobId', createValidationHandler(param('jobId').isUUID()), getGeneratedFile(serviceId, repository));
 

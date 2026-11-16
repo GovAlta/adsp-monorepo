@@ -15,6 +15,7 @@ export interface FileType {
   anonymousRead: boolean;
   readRoles: string[];
   updateRoles: string[];
+  allowedFileTypes?: string[];
   rules?: FileTypeRules;
   securityClassification?: string;
 }

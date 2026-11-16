@@ -1,7 +1,6 @@
 ---
 layout: page
 title: Service SDK (Node.js)
-nav_order: 3
 parent: Platform development
 ---
 
@@ -24,14 +23,14 @@ npm i @abgov/adsp-service-sdk
 ```
 
 ## Generating service
-The ADSP project includes a [workspace generator](https://nx.dev/l/r/generators/workspace-generators) for creating new express based backend services. The base template includes usages of SDK capabilities and is a good starting point for understanding the SDK.
+The ADSP project includes a workspace generator (in `tools/workspace-plugin`) for creating new express based backend services. The base template includes usages of SDK capabilities and is a good starting point for understanding the SDK.
 
 Generate a new service by running:
 ```bash
-npx nx workspace-generator adsp-service
+npx nx g workspace-plugin:adsp-service
 ```
 
-The generate output includes sub-project structure and initial files under `/apps` as well as deployment manifests under `.openshift/managed` and `.compose`.
+The generate output includes sub-project structure and initial files under `/apps` as well as deployment manifests under `.openshift/managed` and `.openshift/configuration`.
 
 ## Setting up a service account
 <!-- tags: [keycloak] -->
@@ -104,7 +103,7 @@ Core requests are used by platform services making requests to other platform se
 
 ### Service specific user roles
 <!-- tags: [keycloak] -->
-Keycloak issued tokens contain client roles nested under `realm_access`. Both tenant and core strategies flatten service specific roles from the token and qualifies roles related to other service clients with the client ID..
+Keycloak issued tokens contain realm roles under `realm_access` and client roles nested under `resource_access`. Both tenant and core strategies flatten service specific roles from the token and qualifies roles related to other service clients with the client ID..
 
 For example:
 ```json
@@ -120,6 +119,7 @@ For example:
 For my-service, the roles are mapped to roles:
 - user
 - my-user
+- my-service:my-user
 - other-service:other-user
 
 ## Determining tenancy
@@ -298,7 +298,7 @@ Defining configuration for other platform services:
     ...sdkCapabilities,
   } = await initializePlatform({
     roles: [{
-      name: 'my-service-admin',
+      role: 'my-service-admin',
       description: 'Administrator role for my-service.',
       inTenantAdmin: true,
     }],

@@ -112,6 +112,7 @@ export class SubscriberEntity implements Subscriber {
     }
 
     verifyChannel.verifyKey = await verifyService.sendCode(
+      this.tenantId,
       verifyChannel,
       reason || 'Enter this code to verify your contact address.'
     );
@@ -140,6 +141,7 @@ export class SubscriberEntity implements Subscriber {
     }
 
     verifyChannel.verifyKey = await verifyService.sendCodeWithLink(
+      this.tenantId,
       verifyChannel,
       reason || 'Enter this code to verify your contact address.',
       expireIn,
@@ -175,7 +177,7 @@ export class SubscriberEntity implements Subscriber {
     if (!codeChannel) {
       throw new InvalidOperationError('Specified subscriber channel not recognized.');
     }
-    const verified = await verifyService.verifyCode(codeChannel, code);
+    const verified = await verifyService.verifyCode(this.tenantId, codeChannel, code);
 
     if (verifyChannel) {
       codeChannel.verified = verified;

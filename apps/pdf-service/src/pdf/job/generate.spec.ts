@@ -2,6 +2,7 @@ import { adspId } from '@abgov/adsp-service-sdk';
 import { NotFoundError } from '@core-services/core-common';
 import { v4 as uuid } from 'uuid';
 import { Logger } from 'winston';
+import { PdfJobGeneratedAuditAction } from '../audit';
 import { PDF_GENERATED, PDF_GENERATION_FAILED } from '../events';
 import { GENERATED_PDF } from '../fileTypes';
 import { createGenerateJob } from './generate';
@@ -47,6 +48,13 @@ describe('generate', () => {
     update: jest.fn(),
   };
 
+  const auditServiceMock = {
+    record: jest.fn(),
+    query: jest.fn(),
+    flush: jest.fn(),
+    droppedEventCount: 0,
+  };
+
   it('can create job', () => {
     const job = createGenerateJob({
       logger: loggerMock,
@@ -56,6 +64,7 @@ describe('generate', () => {
       eventService: eventServiceMock,
       fileService: fileServiceMock,
       repository: repositoryMock,
+      auditService: auditServiceMock,
     });
 
     expect(job).toBeTruthy();
@@ -70,6 +79,7 @@ describe('generate', () => {
       eventService: eventServiceMock,
       fileService: fileServiceMock,
       repository: repositoryMock,
+      auditService: auditServiceMock,
     });
 
     const templateEntity = {
@@ -86,6 +96,7 @@ describe('generate', () => {
 
       fileServiceMock.upload.mockReset();
       repositoryMock.update.mockReset();
+      auditServiceMock.record.mockReset();
     });
 
     it('can generate pdf', (done) => {
@@ -359,6 +370,78 @@ describe('generate', () => {
         expect(repositoryMock.update).not.toHaveBeenCalled();
         expect(eventServiceMock.send).not.toHaveBeenCalled();
         done();
+      });
+    });
+
+    describe('audit', () => {
+      const item: PdfServiceWorkItem = {
+        tenantId: `${tenantId}`,
+        work: 'generate',
+        jobId: 'job-1',
+        timestamp: new Date(),
+        templateId: 'test-template',
+        fileType: GENERATED_PDF,
+        recordId: 'my-domain-record-1',
+        data: {},
+        context: {},
+        filename: 'test.pdf',
+        requestedBy: { id: 'svc', name: 'service-account-urn:ads:platform:form-service' },
+      };
+      const expectedDetails = {
+        // The job parses the tenant ID, so it is a different AdspId instance.
+        tenantId: expect.objectContaining({ resource: '/tenants/test' }),
+        actor: { id: 'svc', type: 'service', name: 'service-account-urn:ads:platform:form-service' },
+        resource: { type: 'pdf-job', id: 'job-1', name: 'test.pdf' },
+        correlationId: 'my-domain-record-1',
+      };
+      const expectedMetadata = {
+        templateId: 'test-template',
+        filename: 'test.pdf',
+        fileType: GENERATED_PDF,
+        recordId: 'my-domain-record-1',
+      };
+
+      beforeEach(() => {
+        tokenProviderMock.getAccessToken.mockResolvedValueOnce('token');
+        configurationServiceMock.getConfiguration.mockResolvedValueOnce([{ 'test-template': templateEntity }]);
+        templateEntity.generate.mockResolvedValueOnce('content');
+      });
+
+      it('records job.generated with the resulting file ID', async () => {
+        fileServiceMock.upload.mockResolvedValueOnce({ id: 'file-1', urn: 'urn:file-1', filename: 'test.pdf' });
+
+        const done = jest.fn();
+        await job(item, true, done);
+
+        expect(done).toHaveBeenCalledWith();
+        expect(auditServiceMock.record).toHaveBeenCalledTimes(1);
+        expect(auditServiceMock.record).toHaveBeenCalledWith(PdfJobGeneratedAuditAction, {
+          ...expectedDetails,
+          metadata: { ...expectedMetadata, fileId: 'file-1' },
+        });
+      });
+
+      it('records a failed job.generated when the job fails', async () => {
+        fileServiceMock.upload.mockRejectedValueOnce(new Error('oh noes!'));
+
+        const done = jest.fn();
+        await job(item, false, done);
+
+        expect(done).toHaveBeenCalledWith(expect.any(Error));
+        expect(auditServiceMock.record).toHaveBeenCalledTimes(1);
+        expect(auditServiceMock.record).toHaveBeenCalledWith(PdfJobGeneratedAuditAction, {
+          ...expectedDetails,
+          status: 'failure',
+          metadata: { ...expectedMetadata, error: 'Error: oh noes!' },
+        });
+      });
+
+      it('does not record an attempt that will be retried', async () => {
+        fileServiceMock.upload.mockRejectedValueOnce(new Error('oh noes!'));
+
+        await job(item, true, jest.fn());
+
+        expect(auditServiceMock.record).not.toHaveBeenCalled();
       });
     });
   });

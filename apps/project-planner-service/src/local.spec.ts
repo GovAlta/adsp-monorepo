@@ -271,4 +271,20 @@ describe('local', () => {
       expect(mockLogger.debug).toHaveBeenCalledWith(expect.stringContaining(`"tenantId":"${tenantId.toString()}"`));
     });
   });
+
+  describe('audit service', () => {
+    it('logs audit records at debug level with ids rendered as strings', async () => {
+      const { auditService } = await startLocal();
+
+      const outcome = await auditService.record(
+        { name: 'solution.created', version: 1, category: 'administrative', severity: 'info' },
+        { tenantId, actor: { id: 'local-dev-user', type: 'user' } },
+      );
+
+      expect(outcome).toEqual({ status: 'recorded', eventId: 'local' });
+      expect(mockLogger.debug).toHaveBeenCalledWith(
+        expect.stringMatching(new RegExp(`^audit: solution\\.created .*"tenantId":"${tenantId.toString()}"`)),
+      );
+    });
+  });
 });

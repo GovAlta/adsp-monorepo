@@ -1,6 +1,7 @@
 import type { DocumentOutline } from '../../../../utils/documentOutline';
 import { FORM_GENERATION_LARGE_CHAR_COUNT, FORM_GENERATION_LARGE_PAGE_COUNT } from '../../../../utils/documentSize';
 import type { GenerationLog } from '../run/log';
+import { recordGenerateUsage, type UsageRecorder } from '../../../../model/conversationUsage';
 import type { GenerationAgents } from './agents';
 import { generationCallOptions } from './agents';
 import { describeSections, plannerSourceText, sourceCharCount, sourcePageCount } from '../run/sourceDocuments';
@@ -25,6 +26,7 @@ export interface PlanFormInput {
   variant: 'pages' | 'stepper';
   abortSignal?: AbortSignal;
   log: GenerationLog;
+  usage?: UsageRecorder;
 }
 
 export async function planFormGeneration({
@@ -35,14 +37,17 @@ export async function planFormGeneration({
   variant,
   abortSignal,
   log,
+  usage,
 }: PlanFormInput): Promise<GenerationPlan> {
   const prompt = buildPlannerPrompt({ requirement, documents, current });
   log.record('plan-prompt', { prompt });
 
-  const { object } = await agents.planner.generate(prompt, {
+  const result = await agents.planner.generate(prompt, {
     ...generationCallOptions(abortSignal, 'planner'),
     structuredOutput: { schema: generationPlanSchema },
   });
+  recordGenerateUsage(usage, result);
+  const { object } = result;
 
   log.record('plan-raw', { object });
 

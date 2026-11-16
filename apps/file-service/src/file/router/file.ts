@@ -350,7 +350,7 @@ function parseFileIds(value: unknown): string[] {
       if (Array.isArray(parsedValue)) {
         return parsedValue.flatMap((item) => parseFileIds(item));
       }
-    } catch (_err) {
+    } catch {
       // The documented query format does not quote file IDs, so fall through to comma parsing.
     }
 

@@ -82,7 +82,7 @@ const ContextProvider = ContextProviderFactory();
     renderers={GoARenderers}
     cells={GoACells}
   />
-</ContextProvider>
+</ContextProvider>;
 ```
 
 When the target arrived as a link, turn the parameters back into that same object, and clear them once they cannot be honoured so that a reload does not retry a dead target.
@@ -121,7 +121,32 @@ import { GoACells, GoAReviewRenderers, ReviewRenderProvider } from '@abgov/jsonf
       cells={GoACells}
     />
   </ReviewRenderProvider>
-</ContextProvider>
+</ContextProvider>;
 ```
 
 **NOTE**: Every control reports, including the composite ones. Address, full name, full name with date of birth, contact information and list controls report through `onReviewChange` exactly like a plain text field does. If a Change button appears to do nothing, check that `ReviewRenderProvider` is above the `JsonForms` element rather than beside it, that the category carries the `options.id` you are matching on, and that the previous target was cleared in `onNavigationChange`.
+
+### 5. Track the step the user is on
+
+`onStepChange` on the same provider reports where the user is, so a host can act on it - show progress, change a banner, or log analytics. It is called once when the form mounts and again each time the step changes, including when an answer shows or hides a page. Typing on a step does not trigger it.
+
+```javascript
+import { ContextProviderFactory, useStepChange } from '@abgov/jsonforms-components';
+
+// stepInfo is undefined until the form reports on mount. The optional listener runs on each report.
+const { stepInfo, onStepChange } = useStepChange((info) => analytics.track('step', info));
+
+<ContextProvider onStepChange={onStepChange}>
+  <JsonForms ... />
+</ContextProvider>
+```
+
+`useStepChange` is a convenience; any `(stepInfo: StepInfo) => void` callback works as `onStepChange`.
+
+| Field          | Meaning                                                                                        |
+| -------------- | ---------------------------------------------------------------------------------------------- |
+| `currentStep`  | 1-based step number over visible pages, as shown in "Step X of Y". `0` on review and overview. |
+| `isFirstStep`  | The user is on the first visible step.                                                         |
+| `isLastStep`   | The user is on the last visible step before the review.                                        |
+| `isOnReview`   | The user is on the review page.                                                                |
+| `isOnTaskList` | The user is on the application overview (`pages` variant only).                                |

@@ -51,15 +51,35 @@ describe('createClientReader', () => {
       expect(result).toEqual({ ok: true, value: [{ clientId: 'app-1' }, { clientId: 'app-2' }] });
     });
 
-    it('searches client IDs containing the search text', async () => {
-      mockedGet.mockResolvedValueOnce({ data: [] });
+    it('searches client IDs, names and descriptions containing the search text, ignoring case', async () => {
+      mockedGet.mockResolvedValueOnce({
+        data: [
+          { clientId: 'urn:ads:demo:child-care-portal' },
+          { clientId: 'urn:ads:demo:intake', name: 'Child Care Intake' },
+          { clientId: 'urn:ads:demo:reports', description: 'Reports for the CHILD CARE team' },
+          { clientId: 'urn:ads:demo:other', name: '${client_child care}' },
+          { clientId: 'urn:ads:demo:unrelated', name: 'Payments' },
+        ],
+      });
 
-      await reader.listClients(target, { search: 'web app', max: 5 });
+      const result = await reader.listClients(target, { search: 'child care', max: 5 });
 
       expect(mockedGet).toHaveBeenCalledWith(`${ADMIN_URL}/clients`, {
         ...requestOptions,
-        params: { clientId: 'web app', search: true, first: 0, max: 5 },
+        params: { first: 0, max: 500 },
       });
+      expect(result.ok === true && result.value.map((client) => client.clientId)).toEqual([
+        'urn:ads:demo:intake',
+        'urn:ads:demo:reports',
+      ]);
+    });
+
+    it('limits search results to the maximum', async () => {
+      mockedGet.mockResolvedValueOnce({ data: [{ clientId: 'app-1' }, { clientId: 'app-2' }, { clientId: 'app-3' }] });
+
+      const result = await reader.listClients(target, { search: 'app', max: 2 });
+
+      expect(result.ok === true && result.value).toHaveLength(2);
     });
 
     it('encodes the realm into the path', async () => {
@@ -258,6 +278,42 @@ describe('createClientReader', () => {
       await expect(reader.getClientConfiguration(target, 'internal/1')).resolves.toMatchObject({
         ok: false,
         problem: { reason: 'ENVIRONMENT_UNREACHABLE' },
+      });
+    });
+  });
+
+  describe('service account and token preview reads', () => {
+    it.each([
+      ['getServiceAccountUser', [target, 'c 1'], '/clients/c%201/service-account-user', undefined, { id: 'sa-1' }],
+      [
+        'generateExampleAccessToken',
+        [target, 'c-1', 'user-1', 'openid'],
+        '/clients/c-1/evaluate-scopes/generate-example-access-token',
+        { scope: 'openid', userId: 'user-1' },
+        { aud: 'account' },
+      ],
+      [
+        'listEffectiveProtocolMappers',
+        [target, 'c-1', 'openid email'],
+        '/clients/c-1/evaluate-scopes/protocol-mappers',
+        { scope: 'openid email' },
+        [],
+      ],
+    ] as const)('%s reads %s with the user token', async (method, args, path, params, data) => {
+      mockedGet.mockResolvedValueOnce({ data });
+
+      const result = await (reader[method] as (...values: unknown[]) => Promise<unknown>)(...args);
+
+      expect(result).toEqual({ ok: true, value: data });
+      expect(mockedGet).toHaveBeenCalledWith(`${ADMIN_URL}${path}`, { ...requestOptions, params });
+    });
+
+    it('reports a client without a service account as not found', async () => {
+      mockedGet.mockRejectedValueOnce(axiosError(HttpStatusCodes.NOT_FOUND));
+
+      expect(await reader.getServiceAccountUser(target, 'c-1')).toMatchObject({
+        ok: false,
+        problem: { reason: 'CLIENT_NOT_FOUND' },
       });
     });
   });

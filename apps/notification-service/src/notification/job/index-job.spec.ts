@@ -26,6 +26,7 @@ describe('createJobs', () => {
   let directory: ServiceDirectory;
   let configurationService: ConfigurationService;
   let eventService: EventService;
+  const auditor = jest.fn();
   let events: Observable<DomainEventWorkItem>;
   let queueService: WorkQueueService<NotificationWorkItem>;
   let subscriptionRepository: SubscriptionRepository;
@@ -63,6 +64,7 @@ describe('createJobs', () => {
       directory,
       configurationService,
       eventService,
+      auditor,
       events,
       queueService,
       subscriptionRepository,
@@ -98,6 +100,7 @@ describe('createJobs', () => {
       directory,
       configurationService,
       eventService,
+      auditor,
       events,
       queueService,
       subscriptionRepository,
@@ -107,6 +110,7 @@ describe('createJobs', () => {
     expect(createSendNotificationJob).toHaveBeenCalledWith({
       logger,
       eventService,
+      auditor,
       providers,
     });
 

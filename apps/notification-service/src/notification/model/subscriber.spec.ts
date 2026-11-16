@@ -309,6 +309,7 @@ describe('SubscriberEntity', () => {
         'tester@test.com'
       );
       expect(verifyServiceMock.sendCode).toHaveBeenCalledWith(
+        tenantId,
         entity.channels[0],
         'Enter this code to verify your contact address.'
       );
@@ -337,6 +338,7 @@ describe('SubscriberEntity', () => {
         'tester@test.com'
       );
       expect(verifyServiceMock.sendCode).toHaveBeenCalledWith(
+        tenantId,
         entity.channels[0],
         'Enter this code to verify your contact address.'
       );
@@ -365,6 +367,7 @@ describe('SubscriberEntity', () => {
         'tester@test.com'
       );
       expect(verifyServiceMock.sendCode).toHaveBeenCalledWith(
+        tenantId,
         entity.channels[0],
         'Enter this code to verify your contact address.'
       );
@@ -444,7 +447,7 @@ describe('SubscriberEntity', () => {
         'tester@test.com',
         '123'
       );
-      expect(verifyServiceMock.verifyCode).toHaveBeenCalledWith(entity.channels[0], '123');
+      expect(verifyServiceMock.verifyCode).toHaveBeenCalledWith(tenantId, entity.channels[0], '123');
       expect(entity.channels[0].verified).toBe(false);
     });
 
@@ -474,7 +477,7 @@ describe('SubscriberEntity', () => {
         '123',
         true
       );
-      expect(verifyServiceMock.verifyCode).toHaveBeenCalledWith(entity.channels[0], '123');
+      expect(verifyServiceMock.verifyCode).toHaveBeenCalledWith(tenantId, entity.channels[0], '123');
       expect(entity.channels[0].verified).toBe(true);
     });
 
@@ -503,7 +506,7 @@ describe('SubscriberEntity', () => {
         'tester@test.com',
         '123'
       );
-      expect(verifyServiceMock.verifyCode).toHaveBeenCalledWith(entity.channels[0], '123');
+      expect(verifyServiceMock.verifyCode).toHaveBeenCalledWith(tenantId, entity.channels[0], '123');
       expect(entity.channels[0].verified).toBe(false);
     });
 

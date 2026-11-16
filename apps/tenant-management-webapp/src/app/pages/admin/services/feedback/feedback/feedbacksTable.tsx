@@ -2,6 +2,7 @@ import React, { FunctionComponent } from 'react';
 import DataTable from '@components/DataTable';
 import { Feedback } from '@store/feedback/models';
 import { TableDiv } from '../styled-components';
+import { ActionIconsDiv } from '../../styled-components';
 import { Rating } from '@store/feedback/models';
 import moment from 'moment';
 import { FeedbackTableItem } from './feedbackTableItem';
@@ -27,7 +28,11 @@ export const FeedbackListTable: FunctionComponent<FeedbackTableProps> = ({ feedb
             <th data-testid="feedback-table-header-rating">Rating</th>
             {!showDetailsToggle && <th data-testid="feedback-table-header-comment">Comment</th>}
             {!showDetailsToggle && <th data-testid="feedback-table-header-issue">Issue</th>}
-            {showDetailsToggle && <th data-testid="feedback-table-header-action">Action</th>}
+            {showDetailsToggle && (
+              <th data-testid="feedback-table-header-action">
+                <ActionIconsDiv>Action</ActionIconsDiv>
+              </th>
+            )}
           </tr>
         </thead>
         <tbody>

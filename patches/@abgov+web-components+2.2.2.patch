@@ -190,6 +190,25 @@ diff --git a/node_modules/@abgov/web-components/index.js b/node_modules/@abgov/w
      },
      m(o, i) {
        T(o, e, i);
+@@ -21251,7 +21251,7 @@
+         t[1],
+         /*arialabel*/
+         t[4]
+-      )), f(s, "role", "presentation"), f(s, "data-testid", "button"), f(s, "class", "step-button svelte-1d4fj1l"), f(e, "class", "step-container svelte-1d4fj1l"), f(e, "role", "listitem"), f(
++      )), f(s, "data-testid", "button"), f(s, "class", "step-button svelte-1d4fj1l"), f(e, "class", "step-container svelte-1d4fj1l"), f(
+         e,
+         "data-status",
+         /*status*/
+@@ -21525,8 +21525,8 @@
+       --step-height: ${/*_stepHeight*/
+       t[9]}px;
+       --height: ${/*_progressHeight*/
+       t[10]}px;
+-    `), f(o, "role", "list"), f(
++    `), f(
+         o,
+         "data-testid",
+         /*testid*/
 @@ -23292,7 +23292,7 @@
    let e;
    return {

@@ -2,7 +2,8 @@ import { getNotices, getNoticeById, deleteNotice, createNotice, updateNotice, cr
 import { Request, Response } from 'express';
 import { NoticeApplicationEntity } from '../../model';
 import { Logger } from 'winston';
-import { adspId } from '@abgov/adsp-service-sdk';
+import { adspId, AuditService } from '@abgov/adsp-service-sdk';
+import { NoticeCreatedAuditAction, NoticeDeletedAuditAction, NoticeUpdatedAuditAction } from '../../audit';
 
 describe('Notice service', () => {
   afterEach(() => {
@@ -28,6 +29,11 @@ describe('Notice service', () => {
   const eventServiceMock = {
     send: jest.fn(),
   };
+
+  const auditServiceMock = {
+    record: jest.fn().mockResolvedValue({ status: 'recorded' }),
+    flush: jest.fn(),
+  } as unknown as AuditService & { record: jest.Mock };
 
   const nextMock = jest.fn();
 
@@ -176,6 +182,7 @@ describe('Notice service', () => {
         tenantService: tenantServiceMock,
         noticeRepository: noticeRepositoryMock,
         eventService: eventServiceMock,
+        auditService: auditServiceMock,
       });
 
       expect(router).toBeTruthy();
@@ -184,8 +191,8 @@ describe('Notice service', () => {
 
   describe('Can create new notice', () => {
     it('Can create new notice', async () => {
-      const handler = createNotice(loggerMock, tenantServiceMock, noticeRepositoryMock);
-      const createMock = jest.fn().mockResolvedValueOnce(statusNoticeMock);
+      const handler = createNotice(loggerMock, tenantServiceMock, noticeRepositoryMock, auditServiceMock);
+      const createMock = jest.fn().mockResolvedValueOnce({ ...statusNoticeMock, id: 'notice-1' });
       NoticeApplicationEntity.create = createMock;
 
       const reqMock = {
@@ -196,6 +203,15 @@ describe('Notice service', () => {
       getConfigurationMock.mockReturnValueOnce(configurationMock);
       await handler(reqMock, resMock, nextMock);
       expect(resMock.status).toHaveBeenCalledWith(201);
+      expect(auditServiceMock.record).toHaveBeenCalledWith(
+        NoticeCreatedAuditAction,
+        expect.objectContaining({
+          tenantId,
+          actor: expect.objectContaining({ id: 'test' }),
+          resource: { type: 'notice', id: 'notice-1' },
+          metadata: expect.objectContaining({ message: 'test mock' }),
+        }),
+      );
     });
   });
 
@@ -239,7 +255,7 @@ describe('Notice service', () => {
     it('Can delete notice', async () => {
       noticeRepositoryMock.get.mockResolvedValueOnce(statusNoticeMock);
 
-      const handler = deleteNotice(loggerMock, noticeRepositoryMock);
+      const handler = deleteNotice(loggerMock, noticeRepositoryMock, auditServiceMock);
       const reqMock = {
         user: { tenantId, id: 'test', roles: ['status-admin'] },
         params: {
@@ -252,6 +268,10 @@ describe('Notice service', () => {
           message: statusNoticeMock.message,
         })
       );
+      expect(auditServiceMock.record).toHaveBeenCalledWith(
+        NoticeDeletedAuditAction,
+        expect.objectContaining({ tenantId, resource: expect.objectContaining({ type: 'notice' }) }),
+      );
     });
   });
 
@@ -259,7 +279,7 @@ describe('Notice service', () => {
     it('Can update notice', async () => {
       noticeRepositoryMock.get.mockResolvedValueOnce(statusNoticeMock);
 
-      const handler = updateNotice(loggerMock, eventServiceMock, noticeRepositoryMock);
+      const handler = updateNotice(loggerMock, eventServiceMock, noticeRepositoryMock, auditServiceMock);
       const reqMock = {
         user: { tenantId, id: 'test', roles: ['status-admin'] },
         body: updateNoticePayloadMock,
@@ -278,6 +298,14 @@ describe('Notice service', () => {
           endDate: updateNoticePayloadMock.endDate,
           isAllApplications: updateNoticePayloadMock.isAllApplications,
         })
+      );
+      expect(auditServiceMock.record).toHaveBeenCalledWith(
+        NoticeUpdatedAuditAction,
+        expect.objectContaining({
+          tenantId,
+          resource: { type: 'notice', id: 1 },
+          metadata: expect.objectContaining({ message: updateNoticePayloadMock.message }),
+        }),
       );
     });
   });

@@ -1,4 +1,4 @@
-import type { ServiceDirectory, User } from '@abgov/adsp-service-sdk';
+import type { ServiceDirectory } from '@abgov/adsp-service-sdk';
 import { createTool } from '@mastra/core/tools';
 import type { ToolExecutionContext } from '@mastra/core/tools';
 import type { Logger } from 'winston';
@@ -6,29 +6,26 @@ import z from 'zod';
 import {
   accessClientDetailsSchema,
   accessClientSummarySchema,
-  AccessDiscoveryProblem,
-  AccessEnvironmentSummary,
-  AccessRealmRecord,
-  ClientReaderTarget,
-  createClientReader,
-  createProblem,
-  createRealmClient,
-  resolveAccessScope,
-  resolveRealmRecord,
   toClientDetails,
   toClientSummary,
   toProblemFields,
 } from '../agents/access/discovery';
+import { clientIdSchema, MAX_CLIENT_ID_LENGTH, toClientFailureFields } from './accessClientLookup';
+import { describeClientDetails, describeClientLookup, describeClientSummary } from './accessClientModelOutput';
+import { createModelOutput, describeItems, MAX_MODEL_LIST_ITEMS, ModelLine } from './accessModelOutput';
+import { AccessReaders, createAccessReaders } from './accessReaders';
 import {
   accessEnvironmentSchema,
   accessRealmSchema,
   accessResultFields,
   createAccessToolRunner,
+  createInspectionTargetResolver,
+  describeRealm,
+  InspectionTarget,
+  toTargetProblemFields,
 } from './accessToolSupport';
 
 const MAX_LISTED_CLIENTS = 100;
-const MAX_CLIENT_SUGGESTIONS = 5;
-const MAX_CLIENT_ID_LENGTH = 255;
 
 const listClientsInputSchema = z.object({
   search: z
@@ -36,17 +33,10 @@ const listClientsInputSchema = z.object({
     .trim()
     .max(MAX_CLIENT_ID_LENGTH)
     .optional()
-    .describe('Optional text to filter by. Only clients whose client ID contains it (ignoring case) are listed.'),
+    .describe('Text in the client ID, name or description to filter by, such as part of an app name.'),
 });
 
-const getClientInputSchema = z.object({
-  clientId: z
-    .string()
-    .trim()
-    .min(1)
-    .max(MAX_CLIENT_ID_LENGTH)
-    .describe('The exact client ID of the client, for example urn:ads:platform:tenant-admin-app.'),
-});
+const getClientInputSchema = z.object({ clientId: clientIdSchema });
 
 const clientsOutputSchema = z.object({
   ...accessResultFields,
@@ -69,41 +59,43 @@ const clientOutputSchema = z.object({
 type ClientsOutput = z.infer<typeof clientsOutputSchema>;
 type ClientOutput = z.infer<typeof clientOutputSchema>;
 
-const INSPECTION_RULES =
-  'Read-only. The environment and realm always come from the signed-in user and cannot be chosen. ' +
-  'Secrets and credentials are never returned. The user sees the result as a card, so do not repeat it in your ' +
-  'reply. If status is not "available", do not guess.';
-
-interface InspectionTarget {
-  environment: AccessEnvironmentSummary;
-  realm: AccessRealmRecord;
-  reader: ClientReaderTarget;
+/**
+ * Counts every listed client by origin when the model sees only the first ones, so it can still answer questions
+ * such as "which of my clients are not platform clients?" for the whole list.
+ */
+function describeOriginCounts(clients: ClientsOutput['clients']): string | undefined {
+  if (clients.length <= MAX_MODEL_LIST_ITEMS) {
+    return undefined;
+  }
+  const counts = new Map<string, number>();
+  for (const { origin } of clients) {
+    counts.set(origin, (counts.get(origin) ?? 0) + 1);
+  }
+  return `origins of all ${clients.length}: ${[...counts].map(([origin, count]) => `${count} ${origin}`).join(', ')}`;
 }
 
-type InspectionTargetResult =
-  | { ok: true; value: InspectionTarget }
-  | { ok: false; problem: AccessDiscoveryProblem; environment?: AccessEnvironmentSummary };
-
-function toTargetProblemFields({
-  problem,
-  environment,
-}: {
-  problem: AccessDiscoveryProblem;
-  environment?: AccessEnvironmentSummary;
-}) {
-  return { ...toProblemFields(problem), ...(environment ? { environment } : {}) };
+/**
+ * The clients, with the message only when it says why the list is empty or cut short.
+ */
+function describeClientsOutput({ status, message, search, clients, truncated }: ClientsOutput): ModelLine[] {
+  return [
+    search && `search: "${search}"`,
+    ...describeItems('clients', clients.map(describeClientSummary)),
+    describeOriginCounts(clients),
+    status === 'available' && (clients.length === 0 || truncated) && message,
+  ];
 }
 
-function describeRealm({ environment, realm }: InspectionTarget): string {
-  return `realm ${realm.name} (${realm.realm}) in ${environment.label}`;
+function describeClientOutput(output: ClientOutput): ModelLine[] {
+  return output.client ? describeClientDetails(output.client) : describeClientLookup(output);
 }
 
 function describeClientList(target: InspectionTarget, count: number, search?: string, truncated?: boolean): string {
-  const matching = search ? ` with a client ID containing "${search}"` : '';
+  const matching = search ? ` matching "${search}"` : '';
   if (truncated) {
     return (
       `Showing the first ${count} clients${matching} in ${describeRealm(target)} (read-only). ` +
-      'More clients exist; search by client ID to narrow the list.'
+      'More clients exist; search by name or client ID to narrow the list.'
     );
   }
   if (count > 0) {
@@ -118,65 +110,22 @@ interface AccessClientToolsProps {
   logger: Logger;
   directory: ServiceDirectory;
   accessServiceUrl: URL;
+  readers?: AccessReaders;
 }
 
-export function createAccessClientTools({ logger, directory, accessServiceUrl }: AccessClientToolsProps) {
-  const realmClient = createRealmClient({ directory });
-  const clientReader = createClientReader();
+export function createAccessClientTools({ logger, directory, accessServiceUrl, readers }: AccessClientToolsProps) {
+  const resolveInspectionTarget = createInspectionTargetResolver({ directory, accessServiceUrl });
+  const { clientReader, clientLookup } = readers ?? createAccessReaders({ directory });
   const run = createAccessToolRunner({ logger, logContext: 'AccessClientTools', toolKind: 'Access client tool' });
-
-  /**
-   * Resolves where clients may be read from using only the verified user token, never model input.
-   */
-  async function resolveInspectionTarget(user: User | undefined): Promise<InspectionTargetResult> {
-    const scope = resolveAccessScope(user, accessServiceUrl);
-    if (scope.status !== 'available') {
-      return { ok: false, problem: scope, environment: scope.environment };
-    }
-
-    const realmRecord = await resolveRealmRecord(realmClient, user, scope);
-    if (realmRecord.ok === false) {
-      return { ok: false, problem: realmRecord.problem, environment: scope.environment };
-    }
-
-    return {
-      ok: true,
-      value: {
-        environment: scope.environment,
-        realm: realmRecord.value,
-        reader: { host: scope.environment.host, realm: realmRecord.value.realm, user },
-      },
-    };
-  }
-
-  async function reportClientNotFound(target: InspectionTarget, clientId: string): Promise<ClientOutput> {
-    const { environment, realm, reader } = target;
-    const similar = await clientReader.listClients(reader, { search: clientId, max: MAX_CLIENT_SUGGESTIONS });
-    if (similar.ok === false) {
-      return { ...toProblemFields(similar.problem), environment, realm, clientId };
-    }
-
-    const suggestions = similar.value
-      .map((client) => toClientSummary(client)?.clientId)
-      .filter((suggestion) => !!suggestion && suggestion !== clientId);
-
-    return {
-      ...toProblemFields(createProblem('not-found', 'CLIENT_NOT_FOUND')),
-      environment,
-      realm,
-      clientId,
-      ...(suggestions.length > 0 ? { suggestions } : {}),
-    };
-  }
 
   const listAccessClients = createTool({
     id: 'listAccessClients',
     description:
-      "List the Keycloak clients in the signed-in user's realm with each client's ID, name, type (public, " +
-      'confidential or bearer-only), protocol, whether it is enabled, and whether it is a Keycloak built-in client. ' +
-      `Use getAccessClient for one client's configuration. ${INSPECTION_RULES}`,
+      'List the Keycloak clients (apps and services) in the realm with type, origin and whether each is enabled. ' +
+      "Search by part of an app's name to find someone's app.",
     inputSchema: listClientsInputSchema,
     outputSchema: clientsOutputSchema,
+    toModelOutput: createModelOutput<ClientsOutput>(describeClientsOutput),
     execute: async ({ search }, context: ToolExecutionContext) =>
       run('listAccessClients', context, async (user): Promise<ClientsOutput> => {
         const searchText = search || undefined;
@@ -212,13 +161,11 @@ export function createAccessClientTools({ logger, directory, accessServiceUrl }:
   const getAccessClient = createTool({
     id: 'getAccessClient',
     description:
-      "Get the configuration of one Keycloak client in the signed-in user's realm by its exact client ID: type and " +
-      'authentication, flows, redirect URIs, web origins, post-logout redirect URIs, client roles, client scopes, ' +
-      'role scope mappings, protocol mappers, and token and logout settings. Protocol mappers are only those defined ' +
-      'on the client itself; mappers from its assigned client scopes are not included. If no client has that ID, ' +
-      `returns status "not-found" with any client IDs containing the text as suggestions. ${INSPECTION_RULES}`,
+      "Get one client's configuration by client ID: authentication, flows, redirect URIs, web origins, roles, " +
+      'scopes, protocol mappers, and token and logout settings.',
     inputSchema: getClientInputSchema,
     outputSchema: clientOutputSchema,
+    toModelOutput: createModelOutput<ClientOutput>(describeClientOutput),
     execute: async ({ clientId }, context: ToolExecutionContext) =>
       run('getAccessClient', context, async (user): Promise<ClientOutput> => {
         const target = await resolveInspectionTarget(user);
@@ -226,21 +173,13 @@ export function createAccessClientTools({ logger, directory, accessServiceUrl }:
           return { ...toTargetProblemFields(target), clientId };
         }
 
-        const { environment, realm, reader } = target.value;
-        const internalId = await clientReader.findClientInternalId(reader, clientId);
-        if (internalId.ok === false) {
-          return { ...toProblemFields(internalId.problem), environment, realm, clientId };
-        }
-        if (!internalId.value) {
-          return reportClientNotFound(target.value, clientId);
+        const { environment, realm } = target.value;
+        const found = await clientLookup.lookupClient(target.value, clientId);
+        if (found.ok === false) {
+          return toClientFailureFields(target.value, clientId, found.failure);
         }
 
-        const configuration = await clientReader.getClientConfiguration(reader, internalId.value);
-        if (configuration.ok === false) {
-          return { ...toProblemFields(configuration.problem), environment, realm, clientId };
-        }
-
-        const client = toClientDetails(configuration.value);
+        const client = toClientDetails(found.value.configuration);
         return {
           status: 'available',
           message: `Client ${client.clientId} in ${describeRealm(target.value)} (read-only). Secrets and credentials are not included.`,

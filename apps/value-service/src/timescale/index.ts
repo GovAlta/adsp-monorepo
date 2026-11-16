@@ -1,9 +1,18 @@
 import { retry } from '@abgov/adsp-service-sdk';
 import { knex as initKnex } from 'knex';
 import { Logger } from 'winston';
-import { MetricIntervalRollupRepository, ServiceMetricRollupRepository, ValuesRepository } from '../values';
+import {
+  EventResourceRollupRepository,
+  MetricIntervalRollupRepository,
+  ServiceMetricRollupRepository,
+  ValuesRepository,
+} from '../values';
 import { TimescaleValuesRepository } from './value';
-import { TimescaleMetricIntervalRollupRepository, TimescaleServiceMetricRollupRepository } from '../values/repository';
+import {
+  TimescaleEventResourceRollupRepository,
+  TimescaleMetricIntervalRollupRepository,
+  TimescaleServiceMetricRollupRepository,
+} from '../values/repository';
 
 interface TimescaleRepositoryProps {
   logger: Logger;
@@ -22,6 +31,7 @@ interface Repositories {
   valueRepository: ValuesRepository;
   serviceMetricRollupRepository: ServiceMetricRollupRepository;
   metricIntervalRollupRepository: MetricIntervalRollupRepository;
+  eventResourceRollupRepository: EventResourceRollupRepository;
 }
 
 export const createRepositories = async ({
@@ -84,6 +94,11 @@ export const createRepositories = async ({
     valueRepository: new TimescaleValuesRepository(knex, logger),
     serviceMetricRollupRepository: new TimescaleServiceMetricRollupRepository(knex),
     metricIntervalRollupRepository: new TimescaleMetricIntervalRollupRepository(
+      knex,
+      METRIC_INTERVAL_ROLLUP_STATEMENT_TIMEOUT_MS,
+    ),
+    // The resource rollup runs under the same statement timeout as the interval rollups it sits beside.
+    eventResourceRollupRepository: new TimescaleEventResourceRollupRepository(
       knex,
       METRIC_INTERVAL_ROLLUP_STATEMENT_TIMEOUT_MS,
     ),

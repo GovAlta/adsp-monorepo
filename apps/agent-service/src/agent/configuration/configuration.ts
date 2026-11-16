@@ -1,7 +1,7 @@
-import { AdspId, ServiceDirectory, TokenProvider, EventService } from '@abgov/adsp-service-sdk';
+import { AdspId, AuditService, ServiceDirectory, TokenProvider, EventService } from '@abgov/adsp-service-sdk';
 import * as hasha from 'hasha';
 import { Mastra } from '@mastra/core';
-import { Agent } from '@mastra/core/agent';
+import { Agent, type AgentExecutionOptions } from '@mastra/core/agent';
 import type { RequestContext } from '@mastra/core/request-context';
 import { Memory } from '@mastra/memory';
 import { LibSQLStore } from '@mastra/libsql';
@@ -20,13 +20,24 @@ import { ACCESS_SERVICE_AGENT_ID } from '../model/executionLimits';
 import { createAccessServiceSupervisorOptions } from '../agents/access/supervisorOptions';
 import { withContextualInstructions } from './contextualInstructions';
 import { createAuthenticatedMcpFetch, loadKnownMcpServerSecrets, normalizeMcpServerUrl } from './mcpCredentials';
+import { withDelegationAudit, withToolAudit, type AgentToolType } from '../audit';
 
-function createAgentMemory(storage: LibSQLStore | PostgresStore, observationalMemoryEnabled: boolean) {
+function createAgentMemory(
+  storage: LibSQLStore | PostgresStore,
+  observationalMemoryEnabled: boolean,
+  lastMessages = environment.AGENT_LAST_MESSAGES,
+) {
   return new Memory({
     storage,
     options: {
-      lastMessages: environment.AGENT_LAST_MESSAGES,
-      observationalMemory: observationalMemoryEnabled ? { model: getAgentModelConfiguration() } : false,
+      lastMessages,
+      observationalMemory: observationalMemoryEnabled
+        ? {
+            model: getAgentModelConfiguration(),
+            observation: { messageTokens: environment.AGENT_OM_MESSAGE_TOKENS },
+            reflection: { observationTokens: environment.AGENT_OM_OBSERVATION_TOKENS },
+          }
+        : false,
     },
   });
 }
@@ -117,6 +128,7 @@ export class AgentServiceConfiguration {
     tenantId: AdspId,
     tenant: AgentConfigurations,
     core: AgentConfigurations,
+    private auditService?: AuditService,
   ) {
     this.knownMcpServers = loadKnownMcpServerSecrets(environment.AGENT_MCP_SERVER_CREDENTIALS_FILE, this.logger);
     const configuration = { ...tenant, ...core };
@@ -147,6 +159,7 @@ export class AgentServiceConfiguration {
 
       const sharedMemory = createAgentMemory(storage, environment.AGENT_OBSERVATIONAL_MEMORY);
       const formGenerationMemory = createAgentMemory(storage, false);
+      const accessMemory = createAgentMemory(storage, false, environment.AGENT_ACCESS_LAST_MESSAGES);
 
       const mcpToolsByAgent = Object.fromEntries(
         await Promise.all(
@@ -166,6 +179,13 @@ export class AgentServiceConfiguration {
               const externalTools = mcpToolsByAgent[key] || {};
               const availableToolMap = availableTools as Record<string, unknown>;
               const modelId = getAgentModelId(key, configuration.model);
+              const supervisorOptions: Partial<AgentExecutionOptions<undefined>> =
+                key === ACCESS_SERVICE_AGENT_ID
+                  ? createAccessServiceSupervisorOptions(this.logger, tenantId?.toString())
+                  : {};
+              const delegation = configuration.agents?.length
+                ? withDelegationAudit(this.auditService, tenantId, supervisorOptions.delegation)
+                : supervisorOptions.delegation;
               const defaultOptions = {
                 ...(configuration.outputSchema
                   ? {
@@ -175,10 +195,21 @@ export class AgentServiceConfiguration {
                       },
                     }
                   : {}),
-                ...(key === ACCESS_SERVICE_AGENT_ID
-                  ? createAccessServiceSupervisorOptions(this.logger, tenantId?.toString())
-                  : {}),
+                ...supervisorOptions,
+                ...(delegation ? { delegation } : {}),
               };
+              const auditTool = (toolId: string, toolType: AgentToolType, tool: unknown) =>
+                withToolAudit(
+                  {
+                    auditService: this.auditService,
+                    tenantId,
+                    agentId: key,
+                    agentName: configuration.name,
+                    toolId,
+                    toolType,
+                  },
+                  tool,
+                );
 
               return {
                 ...agents,
@@ -209,21 +240,27 @@ export class AgentServiceConfiguration {
                     return toolAgents;
                   },
                   tools: {
-                    ...externalTools,
+                    ...Object.fromEntries(
+                      Object.entries(externalTools).map(([toolId, tool]) => [toolId, auditTool(toolId, 'mcp', tool)]),
+                    ),
                     ...(configuration.tools?.reduce(
                       (tools, toolConfig) => {
                         if (typeof toolConfig === 'string' && availableToolMap[toolConfig]) {
-                          tools[toolConfig] = availableToolMap[toolConfig];
+                          tools[toolConfig] = auditTool(toolConfig, 'builtin', availableToolMap[toolConfig]);
                         } else if (typeof toolConfig === 'object') {
                           switch (toolConfig.type) {
                             case 'api': {
-                              tools[toolConfig.id] = createApiRequestTool(
-                                {
-                                  logger: this.logger,
-                                  directory: this.directory,
-                                  tokenProvider: this.tokenProvider,
-                                },
-                                toolConfig,
+                              tools[toolConfig.id] = auditTool(
+                                toolConfig.id,
+                                'api',
+                                createApiRequestTool(
+                                  {
+                                    logger: this.logger,
+                                    directory: this.directory,
+                                    tokenProvider: this.tokenProvider,
+                                  },
+                                  toolConfig,
+                                ),
                               );
                               break;
                             }
@@ -234,7 +271,12 @@ export class AgentServiceConfiguration {
                       {} as Record<string, unknown>,
                     ) || {}),
                   } as unknown as never,
-                  memory: key === 'formGenerationAgent' ? formGenerationMemory : sharedMemory,
+                  memory:
+                    key === 'formGenerationAgent'
+                      ? formGenerationMemory
+                      : key === ACCESS_SERVICE_AGENT_ID
+                        ? accessMemory
+                        : sharedMemory,
                   workspace: configuration.workspace?.enabled ? createWorkspaceResolver(this.logger, key) : undefined,
                   inputProcessors: ({ requestContext }) =>
                     createInputProcessors({
@@ -271,6 +313,7 @@ export class AgentServiceConfiguration {
           this.eventService,
           key,
           agentConfiguration.model,
+          this.auditService,
         );
         return {
           ...brokers,

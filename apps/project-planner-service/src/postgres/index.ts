@@ -66,6 +66,7 @@ export const createRepositories = async ({
         return false;
       }
     },
+    close: () => knex.destroy(),
     solutionRepository: new PostgresSolutionRepository(knex),
     patternRepository: new PostgresPatternRepository(knex),
     specialistChatRepository: new PostgresSpecialistChatRepository(knex),

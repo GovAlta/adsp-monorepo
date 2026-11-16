@@ -9,6 +9,9 @@ import {
   EXPORT_FEEDBACKS_SUCCESS_ACTION,
   FETCH_FEEDBACK_METRICS_SUCCESS_ACTION,
   FETCH_FEEDBACK_METRICS_MONTHLY_CHANGE_SUCCESS_ACTION,
+  FETCH_FEEDBACK_SUMMARY_ACTION,
+  FETCH_FEEDBACK_SUMMARY_SUCCESS_ACTION,
+  CLEAR_FEEDBACK_SUMMARY_ACTION,
 } from './actions';
 
 export const initialState: FeedbackState = {
@@ -18,6 +21,7 @@ export const initialState: FeedbackState = {
   isLoading: false,
   page: null,
   metrics: {},
+  summary: null,
 };
 
 function feedbackReducer(state: FeedbackState = initialState, action: FeedbackActionTypes): FeedbackState {
@@ -42,6 +46,19 @@ function feedbackReducer(state: FeedbackState = initialState, action: FeedbackAc
     case FETCH_FEEDBACKS_ACTION: {
       return {
         ...state,
+      };
+    }
+    case FETCH_FEEDBACK_SUMMARY_ACTION:
+    case CLEAR_FEEDBACK_SUMMARY_ACTION: {
+      return {
+        ...state,
+        summary: null,
+      };
+    }
+    case FETCH_FEEDBACK_SUMMARY_SUCCESS_ACTION: {
+      return {
+        ...state,
+        summary: action.summary,
       };
     }
     case FETCH_FEEDBACK_SITES_SUCCESS_ACTION: {

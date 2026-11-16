@@ -37,7 +37,7 @@ describe('GraphClient', () => {
     expect(axiosMock.post).toHaveBeenCalledWith(itemsUrl, { fields: { ProofOfIdentity: proof } }, writeAuth);
   });
 
-  it('finds an item by key with a filter on the key column', async () => {
+  it('finds an item by key, asking only for its ID', async () => {
     axiosMock.get.mockResolvedValueOnce({ data: { value: [{ id: '7' }] } });
 
     expect(await client.findItemIdByKey('token-1', siteId, 'list-1', 'AdspItemKey', 'k1')).toBe('7');
@@ -46,7 +46,6 @@ describe('GraphClient', () => {
       params: {
         $filter: "fields/AdspItemKey eq 'k1'",
         $select: 'id',
-        $expand: 'fields($select=AdspItemKey)',
       },
     });
   });

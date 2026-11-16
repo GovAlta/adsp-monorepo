@@ -5,7 +5,10 @@ import {
   HttpRequestError,
   ServiceNotInDirectoryError,
 } from '@abgov/adsp-cli';
-import { LiveToolDefinition } from './types';
+import { getMetrics } from '../metrics';
+import { LIVE_TOOL_ANNOTATIONS, LiveToolDefinition } from './types';
+import { withLiveToolPermit } from './liveToolLimit';
+import { classifyUpstreamError } from './upstreamErrors';
 
 function describeError(err: unknown): string {
   if (err instanceof ServiceNotInDirectoryError) {
@@ -39,6 +42,7 @@ export function createConfigurationSchemaTools(): LiveToolDefinition[] {
   return [
     {
       name: 'get_service_configuration_schema',
+      annotations: LIVE_TOOL_ANNOTATIONS,
       description:
         'Returns the configuration schema(s) for ADSP platform services, read live from configuration-service. ' +
         'Use this to determine the correct shape for `serviceConfigurations` entries in `initializeService` when ' +
@@ -55,32 +59,35 @@ export function createConfigurationSchemaTools(): LiveToolDefinition[] {
           },
         },
       },
-      handler: async (args: { serviceId?: string }) => {
-        const tokenResult = await getAccessToken();
+      handler: (args: { serviceId?: string }, context) =>
+        withLiveToolPermit(async () => {
+          const tokenResult = await getAccessToken();
 
-        if (tokenResult.status === 'not-authenticated') {
-          return {
-            isError: true,
-            content: [
-              { type: 'text', text: 'Not authenticated. Run `npx @abgov/adsp-cli login` in a terminal, then retry.' },
-            ],
-          };
-        }
+          if (tokenResult.status === 'not-authenticated') {
+            getMetrics().recordUpstreamError('get_service_configuration_schema', 'not_authenticated');
+            return {
+              isError: true,
+              content: [
+                { type: 'text', text: 'Not authenticated. Run `npx @abgov/adsp-cli login` in a terminal, then retry.' },
+              ],
+            };
+          }
 
-        try {
-          const directoryServiceUrl = getDirectoryServiceUrl();
-          const schemas = await getServiceConfigurationSchemas(
-            tokenResult.token,
-            directoryServiceUrl,
-            args.serviceId
-          );
-          return {
-            content: [{ type: 'text', text: JSON.stringify(schemas, null, 2) }],
-          };
-        } catch (err) {
-          return { isError: true, content: [{ type: 'text', text: describeError(err) }] };
-        }
-      },
+          try {
+            const directoryServiceUrl = getDirectoryServiceUrl();
+            const schemas = await getServiceConfigurationSchemas(
+              tokenResult.token,
+              directoryServiceUrl,
+              args.serviceId
+            );
+            return {
+              content: [{ type: 'text', text: JSON.stringify(schemas, null, 2) }],
+            };
+          } catch (err) {
+            getMetrics().recordUpstreamError('get_service_configuration_schema', classifyUpstreamError(err));
+            return { isError: true, content: [{ type: 'text', text: describeError(err) }] };
+          }
+        }, context?.signal),
     },
   ];
 }

@@ -1,5 +1,5 @@
 import { adspId } from '@abgov/adsp-service-sdk';
-import type { EventService, User } from '@abgov/adsp-service-sdk';
+import type { AuditService, EventService, User } from '@abgov/adsp-service-sdk';
 import { InvalidOperationError } from '@core-services/core-common';
 import * as express from 'express';
 import type { Request } from 'express';
@@ -89,6 +89,7 @@ describe('planner router routes', () => {
     rename: jest.fn(),
   };
   const eventService = { send: jest.fn() };
+  const auditService = { record: jest.fn(), query: jest.fn(), flush: jest.fn(), droppedEventCount: 0 };
   const logger = { info: jest.fn(), debug: jest.fn(), warn: jest.fn(), error: jest.fn() };
   const getConfiguration = jest.fn();
   const readAdspCatalog = jest.fn();
@@ -136,6 +137,7 @@ describe('planner router routes', () => {
         specialistChatRepository: chatRepository,
         solutionVersionRepository: versionRepository,
         eventService: eventService as unknown as EventService,
+        auditService: auditService as unknown as AuditService,
         llm,
         readAdspCatalog: readCatalog || undefined,
       }),

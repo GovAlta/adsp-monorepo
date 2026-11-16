@@ -240,8 +240,9 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(p
   };
 
   const hasNoElements = () => {
+    // A missing elements or detail list counts as empty, so a bare ListWithDetail still gets generated inputs.
     const hasNoLayoutElements =
-      (uischema as Layout)?.elements?.length === 0 && (uischema as Layout)?.options?.detail?.elements?.length === 0;
+      !(uischema as Layout)?.elements?.length && !(uischema as Layout)?.options?.detail?.elements?.length;
 
     return hasNoLayoutElements;
   };

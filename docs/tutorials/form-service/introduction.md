@@ -18,7 +18,7 @@ Jsonforms provides a declarative means for creating new form definitions. Develo
 
 ### Rendering
 
-Currently the Form Service only supports rendering forms in React applications through a Jsonforms React component. [Adding it to your application](/adsp-monorepo/tutorials/form-service/integration.html) enables it to:
+Currently the Form Service only supports rendering forms in React applications through a Jsonforms React component. [Adding it to your application](/adsp-monorepo/tutorials/form-service/Integration.html) enables it to:
 
 - render the form,
 - secure access to it,
