@@ -12,6 +12,7 @@ const StyledBackButton = styled.button<{ $showBackIcon?: boolean }>`
   align-items: center;
   background: none;
   border: 0;
+  box-sizing: border-box;
   color: var(--goa-color-interactive-default, #0070c4);
   cursor: pointer;
   display: inline-flex;
@@ -19,7 +20,9 @@ const StyledBackButton = styled.button<{ $showBackIcon?: boolean }>`
   font: inherit;
   white-space: nowrap;
   margin: 0;
-  padding: 0;
+  min-height: 44px;
+  min-width: 44px;
+  padding: 10px 0;
   text-decoration: underline;
   text-decoration-color: currentColor;
   text-underline-offset: 2px;
