@@ -51,6 +51,7 @@ describe('validateDestination', () => {
 describe('describeTestFailure', () => {
   it('explains common failures', () => {
     expect(describeTestFailure('credential-not-set')).toMatch(/no secret/);
+    expect(describeTestFailure('credential-unreadable')).toMatch(/can't be read.*Enter the secret again/);
     expect(describeTestFailure('graph:accessDenied')).toMatch(/grant/);
     expect(describeTestFailure('graph:invalidRequest', 'Nope')).toMatch(/'Nope'/);
     expect(describeTestFailure('something-else')).toBe(

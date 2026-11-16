@@ -61,6 +61,7 @@ export const MarginTop = styled.div`
 `;
 
 // Centring the icon box sits it above the bold label's visible text, so the label row nudges it down.
+// Nudge with top rather than transform: a transform traps the tooltip bubble under the next input.
 export const LabelRow = styled.div`
   display: flex;
   align-items: center;
@@ -70,7 +71,8 @@ export const LabelRow = styled.div`
   ${centredInfoIcon}
 
   goa-tooltip {
-    transform: translateY(0.125rem);
+    position: relative;
+    top: 0.125rem;
   }
 `;
 

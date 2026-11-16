@@ -1,5 +1,6 @@
 import { adspId } from '@abgov/adsp-service-sdk';
 import { randomBytes } from 'crypto';
+import { CredentialUnreadableError } from '../errors';
 import { parseEncryptionKey } from './crypto';
 import { StoredCredential } from './repository';
 import { CredentialStore } from './store';
@@ -43,7 +44,23 @@ describe('CredentialStore', () => {
     await store.set(tenantA, 'hr-site', 's3cret');
     const record = records.get(`${tenantA}|hr-site`);
     records.set(`${tenantB}|hr-site`, { ...record, tenantId: tenantB.toString() });
-    await expect(store.getSecret(tenantB, 'hr-site')).rejects.toThrow();
+    await expect(store.getSecret(tenantB, 'hr-site')).rejects.toBeInstanceOf(CredentialUnreadableError);
+  });
+
+  it.each([
+    ['a different key', parseEncryptionKey(randomBytes(32).toString('base64'), 1)],
+    ['a new key version', parseEncryptionKey(randomBytes(32).toString('base64'), 2)],
+  ])('reports a secret it cannot decrypt after the service moves to %s', async (_change, newKey) => {
+    await store.set(tenantA, 'hr-site', 's3cret');
+    const repository = {
+      get: async (tenantId, connectionId) => records.get(`${tenantId}|${connectionId}`) ?? null,
+      save: jest.fn(),
+      delete: jest.fn(),
+    };
+
+    await expect(new CredentialStore(repository, newKey).getSecret(tenantA, 'hr-site')).rejects.toBeInstanceOf(
+      CredentialUnreadableError,
+    );
   });
 
   it('removes a credential', async () => {

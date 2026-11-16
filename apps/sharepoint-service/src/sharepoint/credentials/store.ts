@@ -1,4 +1,5 @@
 import { AdspId } from '@abgov/adsp-service-sdk';
+import { CredentialUnreadableError } from '../errors';
 import { decryptSecret, encryptSecret, EncryptionKey } from './crypto';
 import { CredentialRepository } from './repository';
 
@@ -38,6 +39,13 @@ export class CredentialStore {
 
   async getSecret(tenantId: AdspId, connectionId: string): Promise<string | null> {
     const record = await this.repository.get(tenantId, connectionId);
-    return record ? decryptSecret(this.key, this.aad(tenantId, connectionId), record) : null;
+    if (!record) {
+      return null;
+    }
+    try {
+      return decryptSecret(this.key, this.aad(tenantId, connectionId), record);
+    } catch {
+      throw new CredentialUnreadableError(connectionId);
+    }
   }
 }
