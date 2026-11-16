@@ -92,7 +92,7 @@
     "urn": "urn:ads:platform:form-service",
     "name": "Form service",
     "title": "Form service",
-    "operations": 31,
+    "operations": 35,
     "file": "form-service.json"
   },
   {

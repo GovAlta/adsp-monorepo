@@ -69,6 +69,14 @@ class FormPage {
     return cy.xpath('//table[@data-testid="form-definitions-table"]//tbody');
   }
 
+  definitionsSearchInput() {
+    return cy.get('goa-input[testid="form-definition-search-input"]');
+  }
+
+  definitionsSearchButton() {
+    return cy.get('goa-button[testid="form-definition-search-btn"]');
+  }
+
   definitionsEditButton(rowNumber) {
     return cy.xpath(
       `(//table[@data-testid="form-definitions-table"]//*[contains(@testid, "form-definition-edit")])[${rowNumber}]`

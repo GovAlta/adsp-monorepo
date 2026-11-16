@@ -23,6 +23,7 @@ import {
   createErrorHandler,
   AjvValidationService,
   createAmqpEventService,
+  createShutdownHandler,
 } from '@core-services/core-common';
 import { environment } from './environments/environment';
 import {
@@ -56,6 +57,8 @@ import {
   FormMessageReviewerNotificationType,
   createMessageNotificationJob,
   FormAuditActions,
+  RegistrationSubmittedDefinition,
+  RegistrationReviewedDefinition,
 } from './form';
 import { closeRepositories, createRepositories } from './mongo';
 import { createNotificationService } from './notification';
@@ -65,7 +68,6 @@ import { createCommentService } from './comment';
 import { isFormDefinition } from './utils';
 import { createPdfService } from './pdf';
 import { createCalendarService } from './calendar';
-import { createShutdownHandler } from './shutdown';
 
 const logger = createLogger('form-service', environment.LOG_LEVEL);
 
@@ -142,6 +144,19 @@ const initializeApp = async () => {
           role: FormServiceRoles.Tester,
           description: 'Tester role for form service that allows access to forms without open intakes.',
         },
+        {
+          role: FormServiceRoles.RegistrationRequester,
+          description:
+            'Registration requester role that allows submitting a registration for access to a restricted form.',
+        },
+        {
+          role: FormServiceRoles.RegistrationReader,
+          description: 'Registration reader role that allows reading registrations for access to restricted forms.',
+        },
+        {
+          role: FormServiceRoles.RegistrationWriter,
+          description: 'Registration writer role that allows approving or denying registrations for restricted forms.',
+        },
       ],
       fileTypes: [FormSupportingDocFileType, FormExportFileType],
       events: [
@@ -157,6 +172,8 @@ const initializeApp = async () => {
         FormMessageToApplicantDefinition,
         FormMessageToReviewerDefinition,
         FormMessageForwardedDefinition,
+        RegistrationSubmittedDefinition,
+        RegistrationReviewedDefinition,
       ],
       eventStreams: [SubmittedFormPdfUpdatesStream, FormQuestionUpdatesStream],
       auditActions: FormAuditActions,
@@ -388,6 +405,7 @@ initializeApp().then(({ app, auditService, shutdownTelemetry }) => {
   server.on('error', (err) => logger.error(`Error encountered in server: ${err}`));
 
   const shutdown = createShutdownHandler({
+    serviceName: 'Form service',
     server,
     auditService,
     shutdownTelemetry,
