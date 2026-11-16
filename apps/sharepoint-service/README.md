@@ -1,105 +1,101 @@
-# SharePoint Service
+# SharePoint Service (prototype)
 
-Stub microservice for SharePoint integration capabilities in the ADSP platform.
+Pushes data, such as form submissions, to SharePoint lists owned by tenant teams. ADSP never reads list data back.
 
-## Overview
+- **Connections** (Entra tenant ID, client ID, site ID) and **destinations** (connection, list ID, field mappings, whether to update existing rows, enabled) are tenant configuration in Configuration Service under `platform:sharepoint-service`. They never contain a secret.
+- **Client secrets** are write-only. They are encrypted with AES-256-GCM, bound to the ADSP tenant and connection, and stored in this service's MongoDB.
+- A push maps the data to list columns, then writes it as a new row or updates an existing one:
+  - **Any caller** can send `"_adsp": { "key": "<unique key>" }` with the data. When the destination has updating turned on (Tenant Management's "Update existing rows", saved as `idempotencyFields: ["_adsp.key"]`, the default), a push with the same key updates the row that has it in the `AdspItemKey` column. The caller chooses the key, for example a submission ID or an application number.
+  - With updating turned off, every push adds a row.
+  - The configuration also accepts other data paths in `idempotencyFields` (their values joined with `|`) for callers that can't send `_adsp.key`. These can only be set through Configuration Service, not Tenant Management.
 
-This service provides endpoints for managing SharePoint destinations and file operations. Currently implemented as stubs returning 200 OK responses.
+## API (`/sharepoint/v1`)
 
-## Endpoints
+| Endpoint | Role | Result |
+|---|---|---|
+| `PUT /connections/{id}/credentials` `{ clientSecret }` | `sharepoint-admin` | Stores the secret encrypted and clears the cached token. Returns `{ isSet: true, updatedAt }`. Returns 404 if the connection isn't in this tenant's configuration |
+| `GET /connections/{id}/credentials` | `sharepoint-admin` | `{ isSet, updatedAt }`. Never the secret |
+| `DELETE /connections/{id}/credentials` | `sharepoint-admin` | Deletes the secret. Returns 204 |
+| `POST /destinations/{id}/test` with the data as the body | `sharepoint-admin` | Pushes the data through the same logic as a real push, even if the destination is disabled. Returns `{ ok: true, outcome }` or `{ ok: false, errorCode, column? }`; `row-identity-missing` means the data has no value for a row identity field |
+| `POST /destinations/{id}/data` with the data as the body | `sharepoint-writer` (core service accounts with `?tenantId=`). Tenant admins check destinations with Test instead | Returns 200 `{ dataId, outcome, date }`, where `dataId` is the SharePoint item ID and `outcome` is `created` or `updated`. Nothing is stored. Failures: 400 data missing a row identity field, 404 unknown destination or connection, 409 `destination-disabled` or `credential-not-set`, 502 `{ errorCode, retryable, column? }` |
+Error codes are `entra:AADSTS<code>`, `graph:<code>`, `network` or `unknown`. Payload values never appear in responses or logs.
 
-### POST /sharepoint/v1/sharepoint/destinations/{destination-id}/data
+## Environment
 
-Posts data to a SharePoint destination.
+| Variable | Default |
+|---|---|
+| `KEYCLOAK_ROOT_URL` | `https://access.adsp-dev.gov.ab.ca` |
+| `DIRECTORY_URL` | `http://localhost:3331` |
+| `CLIENT_ID` | `urn:ads:platform:sharepoint-service` |
+| `CLIENT_SECRET` | required |
+| `CREDENTIALS_KEY` | required; base64 of 32 random bytes |
+| `CREDENTIALS_KEY_VERSION` | `1` |
+| `MONGO_URI`, `MONGO_DB`, `MONGO_USER`, `MONGO_PASSWORD`, `MONGO_TLS` | `mongodb://localhost:27017`, `sharepointDb`, empty, empty, `false` |
+| `ENTRA_AUTHORITY_URL` | `https://login.microsoftonline.com` |
+| `GRAPH_URL` | `https://graph.microsoft.com/v1.0` |
+| `PORT` | `3350` |
 
-**Parameters:**
+Generate a key with `node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"`.
 
-- `destination-id` (path): The identifier for the SharePoint destination
+## Local demo
 
-**Response:** `200 OK`
+The service reads `.env` from the folder it is started in, and `nx serve` starts it from the repo root. So build it, then run it with `node` from `apps/sharepoint-service`.
 
-### GET /sharepoint/v1/sharepoint/destinations/{destination-id}/data
+1. Create `apps/sharepoint-service/.env`. It is git-ignored.
+   ```
+   KEYCLOAK_ROOT_URL=https://access.adsp-dev.gov.ab.ca
+   DIRECTORY_URL=https://directory-service.adsp-dev.gov.ab.ca
+   CLIENT_ID=urn:ads:platform:sharepoint-service
+   CLIENT_SECRET=<secret of the client in the dev core realm>
+   CREDENTIALS_KEY=<generated key>
+   ENTRA_AUTHORITY_URL=http://localhost:3399
+   GRAPH_URL=http://localhost:3399/v1.0
+   ```
+   Generate `CREDENTIALS_KEY` with `node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"`.
+2. Start MongoDB on port 27017, either with Docker:
+   ```powershell
+   docker run -d --name sharepoint-mongo -p 27017:27017 mongo:7
+   ```
+   or with the binary the jest setup caches after the tests have run once:
+   ```powershell
+   New-Item -ItemType Directory -Force "$env:TEMP\sharepoint-mongo" | Out-Null
+   & ".\node_modules\.cache\mongodb-memory-server\mongod-x64-win32-7.0.24.exe" --dbpath "$env:TEMP\sharepoint-mongo" --port 27017
+   ```
+3. Build the service and the SharePoint mock server: `npx nx run-many -t build build-mock-server -p sharepoint-service`. Rebuild and restart after code changes.
+4. From the repo root, start the SharePoint mock server: `node dist/apps/sharepoint-mock-server/main.js`. It stands in for Microsoft Entra sign-in and the Graph lists API for local development only; unit tests mock axios instead. The viewer at `http://localhost:3399/_mock` shows the seeded app registrations, sites, list IDs and rows.
+5. From `apps/sharepoint-service`, start the service: `node ../../dist/apps/sharepoint-service/main.js`. Check `http://localhost:3350/health` shows every value as `true`.
+6. In `apps/tenant-management-webapp/.local.env`, set `NX_PUBLIC_SHAREPOINT_SERVICE_URL=http://localhost:3350` and `NX_PUBLIC_FEATURE_FLAGS={"SharePoint":true}`. Then run `npx nx serve tenant-management-webapp`, sign in through `http://localhost:4200/<tenant realm ID>/login`, and open `http://localhost:4200/admin/services/sharepoint`.
 
-Retrieves data from a SharePoint destination.
+Inject failures into the mock server with:
 
-**Parameters:**
+```powershell
+Invoke-RestMethod -Method Post http://localhost:3399/_mock/faults -ContentType application/json -Body '{"kind":"throttle","count":3}'
+Invoke-RestMethod -Method Post http://localhost:3399/_mock/reset
+```
 
-- `destination-id` (path): The identifier for the SharePoint destination
+`kind` is `throttle` (429 with `Retry-After`) or `unavailable` (503).
 
-**Response:** `200 OK`
+## SharePoint prerequisites (site owner)
 
-### POST /sharepoint/v1/sharepoint/destinations/{destination-id}/file/{file-url}
+- An Entra app registration with `Sites.Selected` and a `write` grant on the site.
+- If the destination updates existing rows (the default for new destinations), the list has a single-line text column `AdspItemKey` that is **indexed**. ADSP writes the row key into it to find and update rows. Without updating, no extra column is needed.
 
-Posts a file to a SharePoint destination.
+## One-time Keycloak setup (dev)
 
-**Parameters:**
-
-- `destination-id` (path): The identifier for the SharePoint destination
-- `file-url` (path): The file URL or identifier
-- `delete` (query): Boolean flag (`true` or `false`) to indicate whether to delete the file
-
-**Response:** `200 OK`
+- **Core realm:**
+  - Create a confidential client `urn:ads:platform:sharepoint-service` with a service account.
+  - Give the service account the roles `urn:ads:platform:tenant-service:platform-service` and `urn:ads:platform:configuration-service:configured-service`.
+  - Add an **Audience** mapper to the client's dedicated scope with the included client audience `urn:ads:platform:push-service`, added to the access token. Without it, the service logs `User not authorized to connect` and doesn't see configuration changes until its cache expires.
+  - Create the client role `sharepoint-writer` and grant it to `service-account-urn:ads:platform:form-service`.
+- **Tenant realm:** tenants created after the service has registered get the client automatically, with `sharepoint-admin` included in `tenant-admin`. For an existing tenant:
+  - Create a client `urn:ads:platform:sharepoint-service` with every authentication flow off, holding the role `sharepoint-admin`.
+  - Add `sharepoint-admin` to the associated roles of `urn:ads:platform:tenant-service` `tenant-admin`, so every tenant admin has it.
 
 ## Development
 
-### Build
-
-```bash
-npx nx build sharepoint-service
-```
-
-### Serve
-
-```bash
-npx nx serve sharepoint-service
-```
-
-The service will start on `http://localhost:3350` (configurable via `PORT` environment variable).
-
-### Lint
-
-```bash
+```powershell
+npx jest -c apps/sharepoint-service/jest.config.ts
 npx nx lint sharepoint-service
+npx nx build sharepoint-service
+npx nx run sharepoint-service:build-mock-server
 ```
-
-### Test
-
-```bash
-npx nx test sharepoint-service
-```
-
-## Environment Variables
-
-- `PORT` - Server port (default: 3350)
-- `CLIENT_ID` - Service identifier (default: urn:ads:platform:sharepoint-service)
-- `LOG_LEVEL` - Logging level (default: debug)
-- `KEYCLOAK_ROOT_URL` - Keycloak server URL (default: https://access.adsp-dev.gov.ab.ca)
-
-## Testing Endpoints
-
-```bash
-# Health check
-curl http://localhost:3350/health
-
-# POST data
-curl -X POST http://localhost:3350/sharepoint/v1/sharepoint/destinations/test-dest/data \
-  -H "Content-Type: application/json" \
-  -d '{"test":"data"}'
-
-# GET data
-curl http://localhost:3350/sharepoint/v1/sharepoint/destinations/test-dest/data
-
-# POST file with delete flag
-curl -X POST "http://localhost:3350/sharepoint/v1/sharepoint/destinations/test-dest/file/myfile.docx?delete=true"
-```
-
-## Next Steps
-
-This is a stub implementation. Future enhancements will include:
-
-- Authentication and authorization
-- SharePoint API integration
-- Configuration management
-- Event signaling
-- Data persistence
-- Error handling and validation

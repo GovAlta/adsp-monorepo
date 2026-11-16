@@ -34,6 +34,25 @@
         "buildTarget": "sharepoint-service:build"
       }
     },
+    "build-mock-server": {
+      "executor": "@nx/webpack:webpack",
+      "options": {
+        "webpackConfig": "apps/sharepoint-service/webpack.config.js",
+        "outputPath": "dist/apps/sharepoint-mock-server",
+        "main": "apps/sharepoint-service/src/mock-server/main.ts",
+        "tsConfig": "apps/sharepoint-service/tsconfig.app.json",
+        "assets": [],
+        "target": "node",
+        "compiler": "tsc",
+        "babelUpwardRootMode": true
+      }
+    },
+    "serve-mock-server": {
+      "executor": "@nx/js:node",
+      "options": {
+        "buildTarget": "sharepoint-service:build-mock-server"
+      }
+    },
     "lint": {
       "inputs": [
         "default",

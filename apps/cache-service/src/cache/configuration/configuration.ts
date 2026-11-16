@@ -1,4 +1,4 @@
-import { AdspId, ServiceDirectory, TenantService } from '@abgov/adsp-service-sdk';
+import { AdspId, AuditService, ServiceDirectory, TenantService } from '@abgov/adsp-service-sdk';
 import { Logger } from 'winston';
 import { CacheProvider } from '../cacheProvider';
 import { AccessCacheTarget, CacheTarget } from '../model';
@@ -16,21 +16,37 @@ export class CacheServiceConfiguration {
     tenantService: TenantService,
     provider: CacheProvider,
     configuration: ConfigurationValue,
-    tenantId: AdspId
+    tenantId: AdspId,
+    auditService?: AuditService
   ) {
     this.targets = Object.entries(configuration?.targets || {}).reduce((targets, [id, value]) => {
       try {
         const target = AccessCacheTarget.isAccessTarget(id)
-          ? new AccessCacheTarget(logger, directory, tenantService, provider, tenantId, {
-              serviceId: AdspId.parse(id),
-              ttl: value.ttl,
-              invalidationEvents: value.invalidationEvents,
-            })
-          : new CacheTarget(logger, directory, provider, tenantId, {
-              serviceId: AdspId.parse(id),
-              ttl: value.ttl,
-              invalidationEvents: value.invalidationEvents,
-            });
+          ? new AccessCacheTarget(
+              logger,
+              directory,
+              tenantService,
+              provider,
+              tenantId,
+              {
+                serviceId: AdspId.parse(id),
+                ttl: value.ttl,
+                invalidationEvents: value.invalidationEvents,
+              },
+              auditService
+            )
+          : new CacheTarget(
+              logger,
+              directory,
+              provider,
+              tenantId,
+              {
+                serviceId: AdspId.parse(id),
+                ttl: value.ttl,
+                invalidationEvents: value.invalidationEvents,
+              },
+              auditService
+            );
 
         targets[id] = target;
       } catch (err) {

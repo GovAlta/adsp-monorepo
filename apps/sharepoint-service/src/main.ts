@@ -1,32 +1,138 @@
 import * as express from 'express';
+import * as passport from 'passport';
 import * as compression from 'compression';
-import * as helmet from 'helmet';
 import * as cors from 'cors';
-import { createLogger } from '@core-services/core-common';
+import * as helmet from 'helmet';
+import { AdspId, initializePlatform, instrumentAxios, ServiceMetricsValueDefinition } from '@abgov/adsp-service-sdk';
+import type { User } from '@abgov/adsp-service-sdk';
+import { createLogger, createErrorHandler } from '@core-services/core-common';
 import { environment } from './environments/environment';
-import { createSharePointRouter } from './sharepoint';
+import { connectMongo } from './mongo';
+import {
+  configurationSchema,
+  createSharePointRouter,
+  CredentialStore,
+  GraphClient,
+  GraphTokenProvider,
+  parseEncryptionKey,
+  ServiceRoles,
+  SharePointPusher,
+} from './sharepoint';
 
 const logger = createLogger('sharepoint-service', environment.LOG_LEVEL);
 
-const app = express();
+const initializeApp = async (): Promise<express.Application> => {
+  const encryptionKey = parseEncryptionKey(environment.CREDENTIALS_KEY, environment.CREDENTIALS_KEY_VERSION);
 
-app.use(cors());
-app.use(compression());
-app.use(helmet());
-app.use(express.json({ limit: '1mb' }));
+  const app = express();
+  app.use(compression());
+  app.use(helmet());
+  app.use(express.json({ limit: '1mb' }));
+  app.use(cors());
 
-app.get('/health', (_req, res) => {
-  res.json({ status: 'ok' });
-});
+  if (environment.TRUSTED_PROXY) {
+    app.set('trust proxy', environment.TRUSTED_PROXY);
+  }
 
-app.use('/sharepoint/v1/sharepoint', createSharePointRouter({ logger }));
+  instrumentAxios(logger);
 
-const port = environment.PORT;
+  const serviceId = AdspId.parse(environment.CLIENT_ID);
+  const {
+    coreStrategy,
+    configurationHandler,
+    healthCheck,
+    metricsHandler,
+    tenantHandler,
+    tenantStrategy,
+    traceHandler,
+  } = await initializePlatform(
+    {
+      serviceId,
+      displayName: 'SharePoint service',
+      description: 'Service that pushes data to SharePoint lists owned by tenant teams.',
+      roles: [
+        {
+          role: ServiceRoles.Admin,
+          description: 'Administrator role for setting SharePoint connection credentials and testing destinations.',
+          inTenantAdmin: true,
+        },
+        {
+          role: ServiceRoles.Writer,
+          description: 'Role for services that push data to SharePoint destinations.',
+        },
+      ],
+      configuration: {
+        schema: configurationSchema,
+        description: 'SharePoint connections and destinations. Connection secrets are not stored here.',
+      },
+      clientSecret: environment.CLIENT_SECRET,
+      accessServiceUrl: new URL(environment.KEYCLOAK_ROOT_URL),
+      directoryUrl: new URL(environment.DIRECTORY_URL),
+      tracing: environment.OTEL_EXPORTER_OTLP_ENDPOINT,
+      metrics: environment.OTEL_EXPORTER_OTLP_ENDPOINT,
+      values: [ServiceMetricsValueDefinition],
+      enableConfigurationInvalidation: true,
+    },
+    { logger },
+  );
 
-const server = app.listen(port, () => {
-  logger.info(`SharePoint service listening at http://localhost:${port}`);
-});
+  passport.use('core', coreStrategy);
+  passport.use('tenant', tenantStrategy);
+  passport.serializeUser(function (user, done) {
+    done(null, user);
+  });
+  passport.deserializeUser(function (user, done) {
+    done(null, user as User);
+  });
 
-server.on('error', (err) => {
-  logger.error(`Error starting server: ${err}`);
-});
+  app.use(passport.initialize());
+  app.use(traceHandler);
+
+  const { credentialRepository, isConnected } = await connectMongo({ ...environment, logger });
+  const credentialStore = new CredentialStore(credentialRepository, encryptionKey);
+  const tokens = new GraphTokenProvider(environment.ENTRA_AUTHORITY_URL, credentialStore);
+  const pusher = new SharePointPusher(tokens, new GraphClient(environment.GRAPH_URL));
+
+  app.use(
+    '/sharepoint/v1',
+    metricsHandler,
+    passport.authenticate(['core', 'tenant'], { session: false }),
+    tenantHandler,
+    configurationHandler,
+    createSharePointRouter({ logger, credentialStore, tokens, pusher }),
+  );
+
+  app.get('/health', async (_req, res) => {
+    const platform = await healthCheck();
+    res.json({ ...platform, db: isConnected() });
+  });
+
+  app.get('/', (req, res) => {
+    const rootUrl = new URL(`${req.protocol}://${req.get('host')}`);
+    res.json({
+      name: 'SharePoint service',
+      description: 'Service that pushes data to SharePoint lists owned by tenant teams.',
+      _links: {
+        self: { href: new URL(req.originalUrl, rootUrl).href },
+        health: { href: new URL('/health', rootUrl).href },
+        api: { href: new URL('/sharepoint/v1', rootUrl).href },
+      },
+    });
+  });
+
+  app.use(createErrorHandler(logger));
+
+  return app;
+};
+
+initializeApp()
+  .then((app) => {
+    const server = app.listen(environment.PORT, () => {
+      logger.info(`Listening at http://localhost:${environment.PORT}`);
+    });
+    server.on('error', (err) => logger.error(`Error encountered in server: ${err}`));
+  })
+  .catch((err) => {
+    logger.error(`Failed to start service: ${err}`);
+    process.exit(1);
+  });
