@@ -6,6 +6,7 @@ import { UpdateEventsByCalendar, CreateEventsByCalendar } from '@store/calendar/
 import { CalendarEvent } from '@store/calendar/models';
 
 import { getDateTime } from '@lib/timeUtil';
+import { setTimeString, toInputDate } from './intakeDate';
 import { Margin } from '../styled-components';
 
 import { DeleteCalendarEvent } from '@store/calendar/actions';
@@ -17,16 +18,6 @@ export interface startEndProps {
   closeIntake?: () => void;
   newEvent: boolean;
 }
-
-const setTimeString = (dateString, timeString?) => {
-  const dateDate = new Date(dateString);
-  if (timeString) {
-    dateDate.setHours(timeString?.split(':')[0]);
-    dateDate.setMinutes(timeString?.split(':')[1]);
-    dateDate.setSeconds(timeString?.split(':')[2]);
-  }
-  return dateDate.toISOString();
-};
 
 export const StartEndDateEditor: FunctionComponent<startEndProps> = ({ event, formId, closeIntake, newEvent }) => {
   const [edit, setEdit] = useState<boolean>(newEvent);
@@ -47,7 +38,7 @@ export const StartEndDateEditor: FunctionComponent<startEndProps> = ({ event, fo
             type="date"
             size="compact"
             name="startDate"
-            value={(event.start ? new Date(event.start) : new Date()).toISOString().slice(0, 10)}
+            value={toInputDate(event.start)}
             width="100%"
             testId="calendar-event-modal-start-date-input"
             disabled={!edit}
@@ -76,7 +67,7 @@ export const StartEndDateEditor: FunctionComponent<startEndProps> = ({ event, fo
             type="date"
             name="endDate"
             size="compact"
-            value={(event.end ? new Date(event.end) : new Date()).toISOString().slice(0, 10)}
+            value={toInputDate(event.end)}
             width="100%"
             testId="calendar-event-modal-end-date-input"
             disabled={!edit}
