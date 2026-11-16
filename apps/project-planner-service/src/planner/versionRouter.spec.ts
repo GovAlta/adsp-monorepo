@@ -37,6 +37,7 @@ describe('version router', () => {
     rename: jest.fn(),
   };
   const eventService = { send: jest.fn() };
+  const recordAudit = jest.fn();
 
   const buildApp = (user: User = owner) => {
     const app = express();
@@ -53,6 +54,7 @@ describe('version router', () => {
         specialistChatRepository: chatRepository,
         solutionVersionRepository: versionRepository,
         eventService: eventService as unknown as EventService,
+        recordAudit,
       }),
     );
     app.use((err: { extra?: { statusCode?: number }; message: string }, _req, res, _next) => {

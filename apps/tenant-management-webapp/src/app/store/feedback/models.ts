@@ -51,6 +51,13 @@ export interface FeedbackMetrics {
   momLowestRatingPercent?: number | null;
 }
 
+export interface FeedbackSummary {
+  totalResponses: number;
+  averageRating: number | null;
+  responsesWithComments: number;
+  responsesWithIssues: number;
+}
+
 export const FEEDBACK_PAGE_SIZES = [10, 20, 50, 100];
 export const DEFAULT_FEEDBACK_PAGE_SIZE = 20;
 
@@ -68,6 +75,7 @@ export interface FeedbackState {
   isLoading: boolean;
   page: FeedbackPage | null;
   metrics: FeedbackMetrics;
+  summary: FeedbackSummary | null;
 }
 
 export interface FeedbackSearchCriteria {

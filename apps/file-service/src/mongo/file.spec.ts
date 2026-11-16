@@ -7,6 +7,8 @@ import { MongoFileRepository } from './file';
 import { FileRepository } from '../file';
 import { FileType, FileCriteria, FileTypeEntity, FileEntity, FileStorageProvider, FileTypeRepository } from '../file';
 
+jest.mock('file-type', () => ({ fileTypeFromBuffer: jest.fn() }));
+
 describe('Mongo: FileEntity', () => {
   const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
   const type: FileType = {

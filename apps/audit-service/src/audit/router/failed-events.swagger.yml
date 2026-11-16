@@ -4,12 +4,13 @@ paths:
       tags: [Failed audit events]
       summary: List parked audit events in the resolved tenant.
       description: |
-        Requires audit-admin, not audit-reader. Includes open, replayed and discarded rows,
-        ordered by failed_at descending and id descending. Tenant callers cannot select
-        another tenant. Core administrators must explicitly select a tenant.
+        Requires the `audit-admin` role, held in the tenant or as a Core role; `audit-reader` is not enough.
+        Includes open, replayed and discarded rows, ordered by failed_at descending and id descending.
+        Tenant callers read their token's tenant and cannot select another tenant. Core administrators must
+        select a tenant with `tenantId`; without it the request responds 400.
 
-        Reads persisted PostgreSQL rows. Offset pagination is not a snapshot:
-        concurrent new failures may shift pages.
+        Reads persisted PostgreSQL rows. Paging uses a keyset cursor, so new failures parked while paging do not
+        shift later pages.
       parameters:
         - $ref: '#/components/parameters/FailedEventsTenant'
         - in: query
@@ -24,8 +25,9 @@ paths:
           description: Opaque keyset cursor (failed_at, id) returned as page.next. Stable while new failures are parked.
           schema:
             type: string
-            maxLength: 32
-          example: MjA=
+            minLength: 1
+            maxLength: 256
+          example: eyJ0IjoiMjAyNi0xMS0wMlQxODowNDoxMS4wMDBaIiwiaSI6IjNmMWMyYTllLTdiNGQtNGU4YS05YzIxLTVkNmU3ZjhhOWIwYyJ9
       responses:
         '200':
           description: Tenant-scoped page. A full page can have a next cursor even if the following page is empty.
@@ -50,12 +52,36 @@ paths:
                         type: integer
                       next:
                         type: string
+                example:
+                  results:
+                    - id: 3f1c2a9e-7b4d-4e8a-9c21-5d6e7f8a9b0c
+                      tenant_id: urn:ads:platform:tenant-service:v2:/tenants/61f2e3a8c9b1d2e3f4a5b6c7
+                      namespace: case-service
+                      event_id: 0b9f6a8e-5d8c-4f6f-9a52-7c2d1f0e4b11
+                      event:
+                        eventId: 0b9f6a8e-5d8c-4f6f-9a52-7c2d1f0e4b11
+                        occurredAt: '2026-11-02T18:04:10.000Z'
+                        action: case.update
+                        status: success
+                        actor:
+                          id: test.user@gov.ab.ca
+                          type: user
+                        resource:
+                          type: case
+                          id: case-001
+                      error: Audit database write timed out.
+                      attempts: 3
+                      failed_at: '2026-11-02T18:04:11.000Z'
+                      status: open
+                      replayed_as: null
+                  page:
+                    size: 1
         '400':
-          description: Invalid pagination, invalid tenant ID or missing Core tenant context.
+          $ref: '#/components/responses/AuditBadRequest'
         '401':
-          description: Missing or invalid bearer token.
+          $ref: '#/components/responses/AuditUnauthorized'
         '403':
-          description: Missing audit-admin or forbidden tenant override.
+          $ref: '#/components/responses/AuditForbidden'
         '503':
           $ref: '#/components/responses/FailedEventsUnavailable'
   /audit/v1/failed-events/{id}/replay:
@@ -63,9 +89,12 @@ paths:
       tags: [Failed audit events]
       summary: Replay an open parked event.
       description: |
-        Requires audit-admin. No request body is used; the stored input is the source of
-        the original actor and namespace. The Audit Service is written_by on the recovered
-        audit row, and replayed_as links to that row's id (not its event_id).
+        Requires the `audit-admin` role, held in the tenant or as a Core role. Tenant callers replay in their
+        token's tenant. Core administrators must select a tenant with `tenantId`; without it the request responds
+        400. An ID from another tenant responds 404.
+
+        No request body is used; the stored input is the source of the original actor and namespace. The Audit
+        Service is written_by on the recovered audit row, and replayed_as links to that row's id (not its event_id).
 
         PostgreSQL uses a tenant-scoped row lock and one transaction for
         the recovered row, status/link update and self-audit in namespace audit-service.
@@ -85,6 +114,7 @@ paths:
           schema:
             type: string
             format: uuid
+          example: 3f1c2a9e-7b4d-4e8a-9c21-5d6e7f8a9b0c
       responses:
         '200':
           description: Replay transaction committed; the failed row now has status replayed.
@@ -93,15 +123,33 @@ paths:
               schema:
                 $ref: '#/components/schemas/FailedAuditEvent'
         '400':
-          description: Invalid UUID, tenant context or stored event; the failed row remains open.
+          description: Invalid UUID, invalid or missing tenant context, or a stored event that fails validation; the failed row remains open.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuditError'
+              example:
+                errorMessage: Stored event cannot be replayed (unknown_action). Check its action catalog and payload.
         '401':
-          description: Missing or invalid bearer token.
+          $ref: '#/components/responses/AuditUnauthorized'
         '403':
-          description: Missing audit-admin or forbidden tenant override.
+          $ref: '#/components/responses/AuditForbidden'
         '404':
           description: No failed event with this ID in the resolved tenant.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuditError'
+              example:
+                errorMessage: failed audit event with ID '3f1c2a9e-7b4d-4e8a-9c21-5d6e7f8a9b0c' could not be found.
         '409':
           description: The event has already been replayed or discarded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuditError'
+              example:
+                errorMessage: Only open failed events can be replayed.
         '503':
           $ref: '#/components/responses/FailedEventsUnavailable'
 components:
@@ -112,6 +160,7 @@ components:
       description: Tenant URN, for example urn:ads:platform:tenant-service:v2:/tenants/case-team. Required for Core administrators; leave empty as a tenant caller, who cannot select another tenant.
       schema:
         type: string
+      example: urn:ads:platform:tenant-service:v2:/tenants/61f2e3a8c9b1d2e3f4a5b6c7
   responses:
     FailedEventsUnavailable:
       description: Database, action configuration or transactional self-auditing is unavailable; retry.
@@ -120,6 +169,12 @@ components:
           schema:
             type: integer
             example: 1
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/AuditError'
+          example:
+            errorMessage: Failed-event storage is temporarily unavailable.
   schemas:
     FailedAuditEvent:
       type: object
@@ -153,3 +208,24 @@ components:
           type: string
           format: uuid
           nullable: true
+      example:
+        id: 3f1c2a9e-7b4d-4e8a-9c21-5d6e7f8a9b0c
+        tenant_id: urn:ads:platform:tenant-service:v2:/tenants/61f2e3a8c9b1d2e3f4a5b6c7
+        namespace: case-service
+        event_id: 0b9f6a8e-5d8c-4f6f-9a52-7c2d1f0e4b11
+        event:
+          eventId: 0b9f6a8e-5d8c-4f6f-9a52-7c2d1f0e4b11
+          occurredAt: '2026-11-02T18:04:10.000Z'
+          action: case.update
+          status: success
+          actor:
+            id: test.user@gov.ab.ca
+            type: user
+          resource:
+            type: case
+            id: case-001
+        error: Audit database write timed out.
+        attempts: 3
+        failed_at: '2026-11-02T18:04:11.000Z'
+        status: replayed
+        replayed_as: 9a8b7c6d-5e4f-4a3b-8c2d-1e0f9a8b7c6d

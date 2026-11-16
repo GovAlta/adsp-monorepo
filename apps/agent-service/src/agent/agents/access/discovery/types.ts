@@ -4,7 +4,26 @@ export const ACCESS_DISCOVERY_REQUIRED_ROLES = ['urn:ads:platform:agent-service:
 
 export const ACCESS_DISCOVERY_TOOL_IDS = ['listAccessEnvironments', 'listAccessRealms', 'getAccessRealmInfo'];
 
-export const ACCESS_CLIENT_TOOL_IDS = ['listAccessClients', 'getAccessClient'];
+export const ACCESS_CLIENT_TOOL_IDS = [
+  'listAccessClients',
+  'getAccessClient',
+  'checkAccessClientSetup',
+  'checkAccessClientUrl',
+  'previewAccessToken',
+  'getAccessServiceAccount',
+];
+
+export const ACCESS_USER_TOOL_IDS = [
+  'findAccessUser',
+  'getAccessUserRoles',
+  'getAccessUserSignInStatus',
+  'checkAccessUserForService',
+  'compareAccessUsers',
+];
+
+export const ACCESS_ROLE_TOOL_IDS = ['listAccessServiceRoles', 'getAccessRole', 'listAccessRoleMembers'];
+
+export const ACCESS_GUIDE_TOOL_IDS = ['getAccessGuide'];
 
 export const ACCESS_REQUEST_TIMEOUT_MS = 5000;
 
@@ -22,6 +41,16 @@ export const ACCESS_DISCOVERY_REASONS = [
   'ENVIRONMENT_UNREACHABLE',
   'NO_CLIENT_PERMISSION',
   'CLIENT_NOT_FOUND',
+  'NO_USER_PERMISSION',
+  'USER_NOT_FOUND',
+  'USER_INSPECTION_NOT_ALLOWED',
+  'USER_AMBIGUOUS',
+  'ROLE_NOT_FOUND',
+  'ROLE_AMBIGUOUS',
+  'SERVICE_NOT_FOUND',
+  'NO_SERVICE_ACCOUNT',
+  'NO_ROLE_CATALOG_ACCESS',
+  'INVALID_URL',
 ] as const;
 
 export type AccessDiscoveryReason = (typeof ACCESS_DISCOVERY_REASONS)[number];
@@ -43,6 +72,21 @@ export const ACCESS_DISCOVERY_MESSAGES: Record<AccessDiscoveryReason, string> = 
   NO_CLIENT_PERMISSION:
     'You do not have permission to view clients in this realm. Viewing clients needs the realm-management view-clients role; ask your tenant administrator.',
   CLIENT_NOT_FOUND: 'No client with that client ID could be found in your realm, or you do not have access to it.',
+  NO_USER_PERMISSION:
+    'You do not have permission to view users in this realm. Viewing users needs the realm-management view-users role, which tenant administrators get through the tenant admin group; ask your tenant administrator to add you to it.',
+  USER_NOT_FOUND:
+    'No user with that username or email could be found in your realm, or you do not have access to them.',
+  USER_INSPECTION_NOT_ALLOWED:
+    'Users and their role assignments cannot be inspected in this environment. Inspect the user in Development or UAT instead.',
+  USER_AMBIGUOUS: 'More than one user matches. Choose one of the usernames listed.',
+  ROLE_NOT_FOUND: 'No role with that name could be found in your realm, or you do not have access to it.',
+  ROLE_AMBIGUOUS: 'More than one app or service has a role with that name. Choose one of the roles listed.',
+  SERVICE_NOT_FOUND: 'No ADSP service or client matching that name could be found in your realm.',
+  NO_SERVICE_ACCOUNT: 'This client does not have a service account. Service accounts are turned on per client.',
+  NO_ROLE_CATALOG_ACCESS:
+    'The list of ADSP service roles could not be read with your sign-in. Ask your tenant administrator for access to configuration.',
+  INVALID_URL:
+    'That is not a full web address. Give it with its scheme, for example https://my-app.alberta.ca/callback.',
 };
 
 export type AccessEnvironmentSummary = Pick<AccessEnvironment, 'id' | 'label' | 'host' | 'readOnly'>;

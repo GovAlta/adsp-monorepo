@@ -1,5 +1,13 @@
 // clean-code-ignore: RULE-19 — barrel and middleware wiring; the routers and jobs it assembles are covered by their own specs.
-import { AdspId, EventService, ServiceDirectory, TenantService, TokenProvider, adspId } from '@abgov/adsp-service-sdk';
+import {
+  AdspId,
+  AuditService,
+  EventService,
+  ServiceDirectory,
+  TenantService,
+  TokenProvider,
+  adspId,
+} from '@abgov/adsp-service-sdk';
 import { Application } from 'express';
 import { Logger } from 'winston';
 import { FileService } from '../file';
@@ -14,6 +22,7 @@ import { PdfService } from './pdf';
 import { CalendarService } from './calendar';
 
 export * from './roles';
+export * from './audit';
 export * from './comment';
 export * from './configuration';
 export * from './model';
@@ -31,6 +40,7 @@ interface FormMiddlewareProps extends Repositories {
   directory: ServiceDirectory;
   tokenProvider: TokenProvider;
   eventService: EventService;
+  auditService: AuditService;
   tenantService: TenantService;
   notificationService: NotificationService;
   fileService: FileService;
@@ -50,18 +60,20 @@ export const applyFormMiddleware = (
     directory,
     tokenProvider,
     eventService,
+    auditService,
     tenantService,
     notificationService,
     fileService,
     commentService,
     queueTaskService,
     formSubmissionRepository: submissionRepository,
+    formRegistrationRepository,
     pdfService,
     calendarService,
   }: FormMiddlewareProps,
 ): Application => {
   const apiId = adspId`${serviceId}:v1`;
-  scheduleFormJobs({ apiId, logger, repository, eventService, fileService, notificationService });
+  scheduleFormJobs({ apiId, logger, repository, eventService, auditService, fileService, notificationService });
 
   const definitionRouter = createFormDefinitionRouter({
     directory,
@@ -69,6 +81,9 @@ export const applyFormMiddleware = (
     tenantService,
     calendarService,
     logger,
+    registrationRepository: formRegistrationRepository,
+    eventService,
+    auditService,
   });
   app.use('/form/v1', definitionRouter);
 
@@ -79,6 +94,7 @@ export const applyFormMiddleware = (
     directory,
     tokenProvider,
     eventService,
+    auditService,
     queueTaskService,
     notificationService,
     fileService,
@@ -88,7 +104,11 @@ export const applyFormMiddleware = (
   });
   app.use('/form/v1', router);
 
-  const registerRouter = createRegisterRouter({ client: new DataRegisterClient(directory, tokenProvider), logger });
+  const registerRouter = createRegisterRouter({
+    client: new DataRegisterClient(directory, tokenProvider),
+    logger,
+    auditService,
+  });
   app.use('/form/v1', registerRouter);
 
   return app;

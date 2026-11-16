@@ -69,9 +69,9 @@ export class CatalogService {
   }
 
   /**
-   * The name is compared, case-insensitively and in full, with fresh configuration (not the SDK cache): the
-   * namespace's own catalog and every Core catalog. Core wins over tenant actions, so a clash would make the tenant
-   * action unreachable.
+   * The name is compared, case-insensitively and in full, with the namespace's own catalog in fresh configuration
+   * (not the SDK cache). Catalogs are resolved per namespace, so names in other namespaces, including Core ones, do
+   * not conflict. A Core namespace is rejected outright because Core wins over tenant actions.
    */
   private async addActionUnlocked(
     namespace: string,
@@ -89,16 +89,6 @@ export class CatalogService {
       const coreApplications = await this.source.listApplications();
       if (coreApplications.includes(namespace)) {
         throw new ActionConflictError(`Namespace "${namespace}" is a Core namespace; its actions cannot be changed.`);
-      }
-      const coreCatalogs = await Promise.all(
-        coreApplications.map(async (application) => ({
-          application,
-          names: (await this.store?.readActionNames(application)) ?? [],
-        })),
-      );
-      const core = coreCatalogs.find(({ names }) => names.some((existingName) => sameName(existingName, name)));
-      if (core) {
-        throw new ActionConflictError(`Action "${name}" already exists in the ${core.application} Core namespace.`);
       }
       existing = await this.store.readActionNames(namespace, tenantId);
     } catch (err) {

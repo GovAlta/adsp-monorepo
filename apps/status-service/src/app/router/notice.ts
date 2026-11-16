@@ -1,11 +1,18 @@
 import { assertAuthenticatedHandler, NotFoundError, UnauthorizedError } from '@core-services/core-common';
-import { EventService, TenantService } from '@abgov/adsp-service-sdk';
+import { AuditService, EventService, TenantService } from '@abgov/adsp-service-sdk';
 import { Router, RequestHandler } from 'express';
 import { Logger } from 'winston';
 import { NoticeApplicationEntity } from '../model/notice';
 import { NoticeRepository } from '../repository/notice';
 import { ServiceUserRoles, NoticeModeType } from '../types';
 import { applicationNoticePublished } from '../events';
+import {
+  auditStatus,
+  NoticeCreatedAuditAction,
+  NoticeDeletedAuditAction,
+  NoticeUpdatedAuditAction,
+  toNoticeAuditDetails,
+} from '../audit';
 import type { User } from '@abgov/adsp-service-sdk';
 
 export interface NoticeRouterProps {
@@ -13,6 +20,7 @@ export interface NoticeRouterProps {
   noticeRepository: NoticeRepository;
   eventService?: EventService;
   tenantService: TenantService;
+  auditService: AuditService;
 }
 
 interface NoticeFilter {
@@ -114,7 +122,7 @@ export const getNoticeById =
   };
 
 export const deleteNotice =
-  (logger: Logger, noticeRepository: NoticeRepository): RequestHandler =>
+  (logger: Logger, noticeRepository: NoticeRepository, auditService: AuditService): RequestHandler =>
   async (req, res, next) => {
     logger.info(req.method, req.url);
     try {
@@ -126,7 +134,8 @@ export const deleteNotice =
         throw new NotFoundError('Service Notice', id);
       }
 
-      notice.delete(user);
+      await notice.delete(user);
+      auditStatus(auditService, logger, NoticeDeletedAuditAction, user, toNoticeAuditDetails(notice));
       res.json(mapNotice(notice));
     } catch (err) {
       const errMessage = `Error deleting notice: ${err.message}`;
@@ -136,7 +145,12 @@ export const deleteNotice =
   };
 
 export const createNotice =
-  (logger: Logger, tenantService: TenantService, noticeRepository: NoticeRepository): RequestHandler =>
+  (
+    logger: Logger,
+    tenantService: TenantService,
+    noticeRepository: NoticeRepository,
+    auditService: AuditService,
+  ): RequestHandler =>
   async (req, res, next) => {
     logger.info(`${req.method} - ${req.url}`);
 
@@ -157,6 +171,7 @@ export const createNotice =
         tenantId: user.tenantId.toString(),
       });
 
+      auditStatus(auditService, logger, NoticeCreatedAuditAction, user, toNoticeAuditDetails(notice));
       res.status(201).json(mapNotice(notice));
     } catch (err) {
       const errMessage = `Error creating notice: ${err.message}`;
@@ -166,7 +181,12 @@ export const createNotice =
   };
 
 export const updateNotice =
-  (logger: Logger, eventService: EventService, noticeRepository: NoticeRepository): RequestHandler =>
+  (
+    logger: Logger,
+    eventService: EventService,
+    noticeRepository: NoticeRepository,
+    auditService: AuditService,
+  ): RequestHandler =>
   async (req, res, next) => {
     logger.info(`${req.method} - ${req.url}`);
 
@@ -195,6 +215,11 @@ export const updateNotice =
         eventService.send(applicationNoticePublished(notice, user));
       }
 
+      const details = toNoticeAuditDetails({ ...updatedNotice, id });
+      auditStatus(auditService, logger, NoticeUpdatedAuditAction, user, {
+        ...details,
+        metadata: { ...details.metadata, previousMode: applicationMode },
+      });
       res.json(mapNotice(updatedNotice));
     } catch (err) {
       const errMessage = `Error updating notice: ${err.message}`;
@@ -208,17 +233,26 @@ export function createNoticeRouter({
   tenantService,
   noticeRepository,
   eventService,
+  auditService,
 }: NoticeRouterProps): Router {
   const router = Router();
 
   // Get notices by query
   router.get('/notices', getNotices(logger, tenantService, noticeRepository));
   router.get('/notices/:id', assertAuthenticatedHandler, getNoticeById(logger, noticeRepository));
-  router.delete('/notices/:id', assertAuthenticatedHandler, deleteNotice(logger, noticeRepository));
+  router.delete('/notices/:id', assertAuthenticatedHandler, deleteNotice(logger, noticeRepository, auditService));
   // Add notice
-  router.post('/notices', assertAuthenticatedHandler, createNotice(logger, tenantService, noticeRepository));
+  router.post(
+    '/notices',
+    assertAuthenticatedHandler,
+    createNotice(logger, tenantService, noticeRepository, auditService),
+  );
   // Update notice fields or mode
-  router.patch('/notices/:id', assertAuthenticatedHandler, updateNotice(logger, eventService, noticeRepository));
+  router.patch(
+    '/notices/:id',
+    assertAuthenticatedHandler,
+    updateNotice(logger, eventService, noticeRepository, auditService),
+  );
 
   return router;
 }

@@ -1,4 +1,4 @@
-import { adspId, AuditService, User } from '@abgov/adsp-service-sdk';
+import { adspId, AuditService, resolveRetentionClass, User } from '@abgov/adsp-service-sdk';
 import { Logger } from 'winston';
 import {
   auditConfiguration,
@@ -19,6 +19,11 @@ describe('configuration audit', () => {
     auditService.record.mockReset();
     (logger.warn as jest.Mock).mockClear();
     auditService.record.mockResolvedValue({ status: 'recorded', eventId: 'event-1' });
+  });
+
+  it('leaves retention to the audit service, which derives compliance from the administrative category', () => {
+    expect(ConfigurationAuditActions.filter((a) => 'retentionClass' in a)).toEqual([]);
+    expect(ConfigurationAuditActions.map((a) => resolveRetentionClass(a))).toEqual(ConfigurationAuditActions.map(() => 'compliance'));
   });
 
   it('captures change set only on configuration and definition update actions', () => {

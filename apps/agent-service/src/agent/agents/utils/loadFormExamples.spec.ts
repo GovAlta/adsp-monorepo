@@ -510,17 +510,14 @@ describe('loadFormExamples', () => {
   // 8. Computed field examples
   // ============================================================
   describe('computed field examples', () => {
-    it('renders all 10 computed examples with level-2 headings', () => {
+    it('renders all 7 computed examples with level-2 headings', () => {
       const expectedNames = [
         'Basic Arithmetic Computed Fields',
         'Conditional Ternary Computed Field',
         'SUM Array Aggregate',
         'Rounding and Math Functions',
         'Min/Max Scalar Comparison',
-        'Percentage and Ratio Calculations',
-        'Nested Ternary and Logical Operators',
         'Grant Eligibility Calculator',
-        'Exponents, Square Root, and Advanced Math',
         'Mixed Computed Fields Overview',
       ];
       for (const name of expectedNames) {

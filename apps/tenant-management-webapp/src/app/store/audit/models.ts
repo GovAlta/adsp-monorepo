@@ -7,6 +7,18 @@ export const DEFAULT_RETENTION_DAYS: Record<string, number> = {
   compliance: 365,
 };
 
+// Mirrors DefaultCategoryRetentionClasses in adsp-service-sdk.
+const DEFAULT_CATEGORY_RETENTION_CLASSES: Record<string, string> = {
+  administrative: 'compliance',
+  security: 'security',
+  'data-access': 'compliance',
+  runtime: 'standard',
+  diagnostic: 'standard',
+};
+
+export const resolveRetentionClass = ({ retentionClass, category }: Pick<AuditAction, 'retentionClass' | 'category'>) =>
+  retentionClass ?? DEFAULT_CATEGORY_RETENTION_CLASSES[category ?? ''] ?? 'standard';
+
 export interface AuditAction {
   name: string;
   version?: string;

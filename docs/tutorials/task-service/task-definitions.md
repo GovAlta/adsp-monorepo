@@ -46,4 +46,4 @@ There are several [API endpoints](https://api.adsp-uat.alberta.ca/autotest/?urls
 - setting task priority
 - managing task status
 
-as well as the basic CRU operations for adding, updating, and retrieving the data. Note: tasks cannot be deleted, then can only be cancelled or completed.
+as well as the basic CRUD operations for adding, updating, retrieving, and deleting tasks. Tasks are normally completed or cancelled rather than deleted; only users with the task-admin role can delete them.

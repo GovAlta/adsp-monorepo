@@ -169,6 +169,3 @@ export function ADSPConversation({
     </>
   );
 }
-
-export type GoAConversationProps = ADSPConversationProps;
-export const GoAConversation = ADSPConversation;

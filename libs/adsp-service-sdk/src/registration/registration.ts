@@ -103,6 +103,7 @@ export class ServiceRegistrarImpl implements ServiceRegistrar {
             securityClassification: type.securityClassification,
             readRoles: type.readRoles,
             updateRoles: type.updateRoles,
+            allowedFileTypes: type.allowedFileTypes,
             rules: type?.rules,
           },
         }),

@@ -13,6 +13,15 @@ import {
   toProblemFields,
 } from '../agents/access/discovery';
 import {
+  createModelOutput,
+  describeFieldsLine,
+  describeItems,
+  describeList,
+  describeRealmRecord,
+  flag,
+  joinParts,
+} from './accessModelOutput';
+import {
   accessEnvironmentSchema,
   accessRealmSchema,
   accessResultFields,
@@ -37,6 +46,7 @@ const realmInfoOutputSchema = z.object({
     .extend({
       issuer: z.string(),
       endpoints: z.object({
+        openIdConfiguration: z.string().optional(),
         authorization: z.string().optional(),
         token: z.string().optional(),
         userInfo: z.string().optional(),
@@ -51,10 +61,17 @@ type EnvironmentsOutput = z.infer<typeof environmentsOutputSchema>;
 type RealmsOutput = z.infer<typeof realmsOutputSchema>;
 type RealmInfoOutput = z.infer<typeof realmInfoOutputSchema>;
 
-const SCOPE_RULES =
-  'Takes no input: the environment and realm always come from the signed-in user, and any input is ignored. ' +
-  'Read-only. The user sees the result as a card, so do not repeat it in your reply. If status is not "available", ' +
-  'do not guess.';
+function describeEnvironment({
+  id,
+  label,
+  host,
+  readOnly,
+  current,
+  inspectable,
+}: EnvironmentsOutput['environments'][number]) {
+  const facts = joinParts([readOnly && 'read-only', flag(current, 'current'), flag(inspectable, 'inspectable')]);
+  return `${label} (${id}): ${host}, ${facts}`;
+}
 
 interface AccessDiscoveryToolsProps {
   logger: Logger;
@@ -72,9 +89,13 @@ export function createAccessDiscoveryTools({ logger, directory, accessServiceUrl
 
   const listAccessEnvironments = createTool({
     id: 'listAccessEnvironments',
-    description: `List the known Access Service environments with their Keycloak hosts, and show which one can be inspected from this session. ${SCOPE_RULES}`,
+    description:
+      'List the Access Service environments with their Keycloak hosts, and which one this session can inspect.',
     inputSchema: z.object({}),
     outputSchema: environmentsOutputSchema,
+    toModelOutput: createModelOutput<EnvironmentsOutput>(({ environments }) =>
+      describeItems('environments', environments.map(describeEnvironment)),
+    ),
     execute: async (_input, context: ToolExecutionContext) =>
       run('listAccessEnvironments', context, async (user): Promise<EnvironmentsOutput> => {
         const scope = resolveAccessScope(user, accessServiceUrl);
@@ -103,9 +124,13 @@ export function createAccessDiscoveryTools({ logger, directory, accessServiceUrl
 
   const listAccessRealms = createTool({
     id: 'listAccessRealms',
-    description: `List the realms the signed-in user can inspect in this environment: their own tenant realm, or the core realm for core users. ${SCOPE_RULES}`,
+    description:
+      'List the realms the signed-in user can inspect: their tenant realm, or the core realm for core users.',
     inputSchema: z.object({}),
     outputSchema: realmsOutputSchema,
+    toModelOutput: createModelOutput<RealmsOutput>(({ realms }) => [
+      describeList('realms', realms.map(describeRealmRecord)),
+    ]),
     execute: async (_input, context: ToolExecutionContext) =>
       run('listAccessRealms', context, async (user): Promise<RealmsOutput> => {
         const scope = resolveAccessScope(user, accessServiceUrl);
@@ -130,9 +155,13 @@ export function createAccessDiscoveryTools({ logger, directory, accessServiceUrl
 
   const getAccessRealmInfo = createTool({
     id: 'getAccessRealmInfo',
-    description: `Get basic identifying information for the signed-in user's realm: realm ID, name, environment, issuer and public OpenID endpoints. ${SCOPE_RULES}`,
+    description: "Get the signed-in user's realm ID, name, environment, issuer and public OpenID endpoints.",
     inputSchema: z.object({}),
     outputSchema: realmInfoOutputSchema,
+    toModelOutput: createModelOutput<RealmInfoOutput>(({ realm }) => [
+      realm && `issuer: ${realm.issuer}`,
+      realm && describeFieldsLine('endpoints', realm.endpoints),
+    ]),
     execute: async (_input, context: ToolExecutionContext) =>
       run('getAccessRealmInfo', context, async (user): Promise<RealmInfoOutput> => {
         const scope = resolveAccessScope(user, accessServiceUrl);

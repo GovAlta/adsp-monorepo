@@ -21,7 +21,6 @@ export const EntryCreatedAuditAction: AuditAction = {
   version: 1,
   category: AuditCategories.Administrative,
   severity: AuditSeverities.Info,
-  retentionClass: BuiltInRetentionClasses.Compliance,
   resourceType: ENTRY_RESOURCE_TYPE,
   description: 'A directory entry (service or API) is registered.',
 };
@@ -31,7 +30,6 @@ export const EntryUpdatedAuditAction: AuditAction = {
   version: 1,
   category: AuditCategories.Administrative,
   severity: AuditSeverities.Info,
-  retentionClass: BuiltInRetentionClasses.Compliance,
   resourceType: ENTRY_RESOURCE_TYPE,
   captureChangeSet: true,
   description: 'The URL of a directory entry is modified.',
@@ -42,7 +40,6 @@ export const EntryDeletedAuditAction: AuditAction = {
   version: 1,
   category: AuditCategories.Administrative,
   severity: AuditSeverities.Warning,
-  retentionClass: BuiltInRetentionClasses.Compliance,
   resourceType: ENTRY_RESOURCE_TYPE,
   description: 'A directory entry is removed.',
 };
@@ -72,7 +69,6 @@ export const NamespaceCreatedAuditAction: AuditAction = {
   version: 1,
   category: AuditCategories.Administrative,
   severity: AuditSeverities.Info,
-  retentionClass: BuiltInRetentionClasses.Compliance,
   resourceType: NAMESPACE_RESOURCE_TYPE,
   description: 'A directory namespace is created for a tenant.',
 };
@@ -82,7 +78,6 @@ export const TagDeletedAuditAction: AuditAction = {
   version: 1,
   category: AuditCategories.Administrative,
   severity: AuditSeverities.Warning,
-  retentionClass: BuiltInRetentionClasses.Compliance,
   resourceType: TAG_RESOURCE_TYPE,
   description: 'A tag is deleted.',
 };
@@ -92,7 +87,6 @@ export const ResourceDeletedAuditAction: AuditAction = {
   version: 1,
   category: AuditCategories.Administrative,
   severity: AuditSeverities.Warning,
-  retentionClass: BuiltInRetentionClasses.Compliance,
   resourceType: RESOURCE_RESOURCE_TYPE,
   description: 'A tagged resource record is deleted.',
 };

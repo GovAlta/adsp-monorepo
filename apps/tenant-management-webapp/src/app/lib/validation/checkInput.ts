@@ -178,6 +178,17 @@ export const duplicateNameCheck = (names: string[], service: string): Validator 
   };
 };
 
+export const allowedFileTypesCheck: Validator = (input: string) => {
+  const invalid = (input || '')
+    .split(',')
+    .map((value) => value.trim())
+    .filter((value) => value.length > 0)
+    .find((value) => !/^\.[A-Za-z]+$/.test(value));
+  return invalid
+    ? `Invalid file type "${invalid}". Each file type must start with a period and contain only a-z, separated by commas.`
+    : '';
+};
+
 export interface ValidationAction {
   // Action to take when a problem is detected
   onFailure(message: string): void;

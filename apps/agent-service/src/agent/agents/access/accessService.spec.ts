@@ -1,79 +1,93 @@
 import { accessServiceAgent } from './accessService';
 import { loadAccessAgentMarkdown } from './loadMarkdown';
-import { clientAgent, identityProviderAgent, tokenRoleAgent, architectAgent } from './specialists';
 import { ACCESS_SERVICE_AGENT_IDS, ACCESS_SERVICE_PII_TYPES, isAccessServiceAgentId } from './piiGuardrailConfig';
-import { createAccessServiceSupervisorOptions } from './supervisorOptions';
+import { createAccessServiceSupervisorOptions, prepareAccessStep } from './supervisorOptions';
 import { ACCESS_ENVIRONMENTS } from './discovery/environments';
 import { ACCESS_SERVICE_AGENT_MAX_STEPS } from '../../model/executionLimits';
 
+const userMessage = (text: string) => ({ role: 'user', content: { format: 2, parts: [{ type: 'text', text }] } });
+const requestContext = (values: Record<string, unknown>) => ({ get: (key: string) => values[key] });
+
 describe('accessServiceAgent', () => {
-  it('orchestrates the configured read-only agents, discovery tools and client tools', () => {
+  it('answers with the guide and read-only live tools, without sub-agents', () => {
     expect(accessServiceAgent.name).toBe('Access Service Agent');
     expect(accessServiceAgent.userRoles).toEqual(['urn:ads:platform:agent-service:agent-user']);
-    expect(accessServiceAgent.agents).toEqual([
-      'clientAgent',
-      'tokenRoleAgent',
-      'identityProviderAgent',
-      'architectAgent',
-    ]);
+    expect(accessServiceAgent.agents).toBeUndefined();
     expect(accessServiceAgent.tools).toEqual([
+      'getAccessGuide',
       'listAccessEnvironments',
       'listAccessRealms',
       'getAccessRealmInfo',
       'listAccessClients',
       'getAccessClient',
+      'checkAccessClientSetup',
+      'checkAccessClientUrl',
+      'previewAccessToken',
+      'getAccessServiceAccount',
+      'findAccessUser',
+      'getAccessUserRoles',
+      'getAccessUserSignInStatus',
+      'checkAccessUserForService',
+      'compareAccessUsers',
+      'listAccessServiceRoles',
+      'getAccessRole',
+      'listAccessRoleMembers',
     ]);
     expect(accessServiceAgent.mcp).toBeUndefined();
     expect(accessServiceAgent.workspace?.enabled).not.toBe(true);
-  });
-
-  it('bounds the supervisor broker to the Access Service step limit', () => {
     expect(accessServiceAgent.maxSteps).toBe(ACCESS_SERVICE_AGENT_MAX_STEPS);
   });
 
-  it('uses static repository context and read-only live discovery', () => {
-    expect(accessServiceAgent.instructions).toContain('# Access Service Base Knowledge');
-    expect(accessServiceAgent.instructions).toContain('## Live Discovery Tools (read-only)');
-    expect(accessServiceAgent.instructions).toContain('never invent realms, hosts, or realm details');
-    expect(accessServiceAgent.instructions).toContain(
-      'Production can be inspected with these tools but must never be changed',
-    );
-    expect(accessServiceAgent.instructions).not.toContain('cannot inspect live Keycloak realms');
-    expect(accessServiceAgent.instructions).not.toContain('It cannot inspect clients');
-    expect(accessServiceAgent.instructions).toContain('https://access.adsp-dev.gov.ab.ca');
-    expect(accessServiceAgent.instructions).toContain('https://access-uat.alberta.ca');
-    expect(accessServiceAgent.instructions).toContain('https://access.alberta.ca');
+  it('tells the agent to answer beginners plainly, ask when vague and not repeat suggestions', () => {
+    expect(accessServiceAgent.instructions).toContain('Open with one plain sentence that answers the question');
+    expect(accessServiceAgent.instructions).toContain('ask one short question with choices instead of guessing');
+    expect(accessServiceAgent.instructions).toContain('Never repeat usernames, client IDs, or roles that a card lists');
+    expect(accessServiceAgent.instructions).toContain('end with who can fix it');
+    expect(accessServiceAgent.instructions).toContain('For a simple greeting such as "Hello world", reply briefly.');
   });
 
-  it('tells the supervisor to inspect clients read-only without inventing configuration or showing secrets', () => {
-    expect(accessServiceAgent.instructions).toContain('## Live Client Tools (read-only)');
-    expect(accessServiceAgent.instructions).toContain('never invent clients or configuration');
-    expect(accessServiceAgent.instructions).toContain('Never describe configuration for a client that was not found');
-    expect(accessServiceAgent.instructions).toContain(
-      'The tools never return client secrets, credentials, keys, or tokens',
-    );
-    expect(accessServiceAgent.instructions).toContain('Inspecting a client never changes it, in any environment');
-    expect(accessServiceAgent.instructions).toContain(
-      "Mappers from the client's assigned client scopes are not included",
-    );
+  it('tells the agent not to repeat what a card shows', () => {
+    expect(accessServiceAgent.instructions).toContain('Never repeat what a card shows');
+    expect(accessServiceAgent.instructions).toContain('give only the direct answer');
   });
 
-  it('tells the supervisor not to repeat what a tool result card already shows', () => {
-    expect(accessServiceAgent.instructions).toContain('## Replying When a Tool Result Is Shown as a Card');
+  it('names every tool the agent can use', () => {
     for (const toolId of accessServiceAgent.tools as string[]) {
       expect(accessServiceAgent.instructions).toContain(`\`${toolId}\``);
     }
-    expect(accessServiceAgent.instructions).toContain('Never repeat what a card shows');
-    expect(accessServiceAgent.instructions).toContain('give only the direct answer');
-    expect(accessServiceAgent.instructions).not.toContain('tell the user its `message` in plain language');
   });
 
-  it('lets specialists reason from client configuration the supervisor read', () => {
-    expect(clientAgent.instructions).toContain('when it gives you that configuration, reason from it');
-    expect(clientAgent.instructions).not.toContain('Never claim to inspect or mutate a client');
-    expect(tokenRoleAgent.instructions).toContain('client configuration it read with its read-only client tools');
+  it('keeps people out of Production while allowing apps and roles', () => {
+    expect(accessServiceAgent.instructions).toContain('Users can never be inspected in Production');
+    expect(accessServiceAgent.instructions).toContain("A person's token cannot be previewed in Production.");
+    expect(accessServiceAgent.instructions).toContain('Setup values always use `<client-secret>` as a placeholder.');
   });
 
+  it('keeps every environment read-only and personal details private', () => {
+    expect(accessServiceAgent.instructions).toContain(
+      'Every environment, including Production, is read-only. Refuse any request to create, change, or delete',
+    );
+    expect(accessServiceAgent.instructions).toContain(
+      'Never request or repeat passwords, client secrets, access tokens, keys, or personal details',
+    );
+  });
+
+  it('answers documented questions from the guide, without disclaimers or delegation', () => {
+    expect(accessServiceAgent.instructions).toContain('call `getAccessGuide` with the matching topic');
+    expect(accessServiceAgent.instructions).toContain('Documented facts are real: share them directly');
+    expect(accessServiceAgent.instructions).not.toMatch(/delegat|specialist/i);
+  });
+
+  it('keeps every instruction section within its size budget', () => {
+    expect(loadAccessAgentMarkdown('supervisor/supervisor.md').length).toBeLessThanOrEqual(4000);
+    expect(loadAccessAgentMarkdown('supervisor/discoveryTools.md').length).toBeLessThanOrEqual(600);
+    expect(loadAccessAgentMarkdown('supervisor/clientTools.md').length).toBeLessThanOrEqual(1800);
+    expect(loadAccessAgentMarkdown('supervisor/peopleTools.md').length).toBeLessThanOrEqual(2100);
+    expect(accessServiceAgent.instructions.length).toBeLessThanOrEqual(8400);
+  });
+});
+
+describe('Access Service knowledge', () => {
   it('documents the same environment hosts that the discovery tools use', () => {
     const baseKnowledge = loadAccessAgentMarkdown('baseKnowledge.md');
     const documentedHosts = Array.from(baseKnowledge.matchAll(/`(https:\/\/access[^`]*)`/g), ([, host]) => host);
@@ -81,66 +95,16 @@ describe('accessServiceAgent', () => {
     expect(documentedHosts).toEqual(ACCESS_ENVIRONMENTS.map(({ host }) => host));
   });
 
-  it('tells every agent that Production must never be changed', () => {
-    for (const agent of [accessServiceAgent, clientAgent, tokenRoleAgent]) {
-      expect(agent.instructions).not.toContain('Production access is prohibited');
-    }
-    expect(clientAgent.instructions).toContain('Production is read-only and must never be changed');
-    expect(tokenRoleAgent.instructions).toContain('Production is read-only and must never be changed');
-  });
-
-  it('loads each agent instruction from Markdown', () => {
+  it('loads Markdown only from inside the agent folder', () => {
     expect(loadAccessAgentMarkdown('baseKnowledge.md')).toContain('Access Service Base Knowledge');
-    expect(loadAccessAgentMarkdown('supervisor/supervisor.md')).toContain('troubleshooting orchestrator');
-    expect(loadAccessAgentMarkdown('clientAgent/clientAgent.md')).toContain('client-configuration specialist');
-    expect(loadAccessAgentMarkdown('tokenRoleAgent/tokenRoleAgent.md')).toContain(
-      'token-validation and authorization specialist',
-    );
-    expect(loadAccessAgentMarkdown('identityProviderAgent/identityProviderAgent.md')).toContain(
-      'identity-provider specialist',
-    );
-    expect(loadAccessAgentMarkdown('architectAgent/architectAgent.md')).toContain('infrastructure architect');
+    expect(loadAccessAgentMarkdown('supervisor/supervisor.md')).toContain('# Access Service assistant');
     expect(() => loadAccessAgentMarkdown('../security.md')).toThrow('Invalid Access Service agent Markdown filename');
-  });
-
-  it('loads clients.md into the client agent only', () => {
-    expect(loadAccessAgentMarkdown('clientAgent/clients.md')).toContain('Public client example: Tenant Admin Webapp');
-    expect(clientAgent.instructions).toContain('Public client example: Tenant Admin Webapp');
-    expect(tokenRoleAgent.instructions).not.toContain('Public client example: Tenant Admin Webapp');
-    expect(identityProviderAgent.instructions).not.toContain('Public client example: Tenant Admin Webapp');
-  });
-
-  it('has instructions for an initial hello-world test', () => {
-    expect(accessServiceAgent.instructions).toContain('Hello world');
-    expect(accessServiceAgent.instructions).toContain('reply briefly without delegating');
-  });
-});
-
-describe('Access Service agents', () => {
-  it.each([
-    ['clientAgent', clientAgent],
-    ['tokenRoleAgent', tokenRoleAgent],
-    ['identityProviderAgent', identityProviderAgent],
-    ['architectAgent', architectAgent],
-  ])('%s is a read-only leaf using static repository context', (_id, agent) => {
-    expect(agent.instructions).toContain('# Access Service Base Knowledge');
-    expect(agent.userRoles).toEqual(['urn:ads:platform:agent-service:agent-user']);
-    expect(agent.tools).toBeUndefined();
-    expect(agent.agents).toBeUndefined();
-    expect(agent.mcp).toBeUndefined();
-    expect(agent.workspace?.enabled).not.toBe(true);
   });
 });
 
 describe('Access Service PII guardrail scope', () => {
-  it('covers the orchestrator and its agents only', () => {
-    expect(Array.from(ACCESS_SERVICE_AGENT_IDS)).toEqual([
-      'AccessServiceAgent',
-      'clientAgent',
-      'tokenRoleAgent',
-      'identityProviderAgent',
-      'architectAgent',
-    ]);
+  it('covers the Access Service agent only', () => {
+    expect(Array.from(ACCESS_SERVICE_AGENT_IDS)).toEqual(['AccessServiceAgent']);
     expect(isAccessServiceAgentId('formGenerationAgent')).toBe(false);
   });
 
@@ -157,14 +121,56 @@ describe('Access Service PII guardrail scope', () => {
   });
 });
 
-describe('Access Service supervisor options', () => {
-  it('bounds delegation and filters worker context', () => {
-    const logger = { debug: jest.fn() } as never;
+describe('Access Service agent options', () => {
+  const logger = { debug: jest.fn() } as never;
+
+  it('bounds steps and reply length, and stops after display-only tools', () => {
     const options = createAccessServiceSupervisorOptions(logger);
 
-    expect(options.maxSteps).toBe(6);
-    expect(options.delegation?.messageFilter).toBeDefined();
-    expect(options.delegation?.onDelegationStart).toBeDefined();
-    expect(options.delegation?.onDelegationComplete).toBeDefined();
+    expect(options.maxSteps).toBe(ACCESS_SERVICE_AGENT_MAX_STEPS);
+    expect(options.modelSettings?.maxOutputTokens).toBe(1000);
+    expect(options.stopWhen).toBeDefined();
+    expect(options.prepareStep).toBeDefined();
+    expect((options as { delegation?: unknown }).delegation).toBeUndefined();
+  });
+
+  it('sends a person question only the guide and people tools', () => {
+    const step = prepareAccessStep({
+      messages: [userMessage('Is jsmith an admin?')],
+      requestContext: requestContext({ user: { name: 'Sam Lee' } }),
+    });
+
+    expect(step.groups).toEqual(['people']);
+    expect(step.activeTools).toContain('checkAccessUserForService');
+    expect(step.activeTools).toContain('getAccessGuide');
+    expect(step.activeTools).not.toContain('getAccessClient');
+    expect(step.systemMessages[0].content).toContain('## People and role tools');
+    expect(step.systemMessages[0].content).not.toContain('## Client and app tools');
+    expect(step.systemMessages[0].content).toContain('User: Sam Lee');
+  });
+
+  it('follows the predefined question hint', () => {
+    const step = prepareAccessStep({
+      messages: [userMessage('List the Access Service environments and tell me which ones I can inspect.')],
+      requestContext: requestContext({
+        agentContext: { context: 'environment-realm', subtopic: 'inspectable-environments' },
+      }),
+    });
+
+    expect(step.groups).toEqual(['discovery']);
+  });
+
+  it('gives small talk only the guide', () => {
+    const step = prepareAccessStep({ messages: [userMessage('hi')], requestContext: requestContext({}) });
+
+    expect(step.groups).toEqual([]);
+    expect(step.activeTools).toEqual(['getAccessGuide']);
+  });
+
+  it('leaves the time of day out of the instructions so the prefix can be cached', () => {
+    const step = prepareAccessStep({ messages: [userMessage('hi')], requestContext: requestContext({}) });
+
+    expect(step.systemMessages[0].content).toMatch(/Current date: \d{4}-\d{2}-\d{2}\n/);
+    expect(step.systemMessages[0].content).not.toMatch(/Current time|T\d{2}:\d{2}/);
   });
 });

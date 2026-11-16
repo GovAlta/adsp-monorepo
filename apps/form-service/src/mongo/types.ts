@@ -1,4 +1,4 @@
-import { Form, FormSubmission } from '../form';
+import { Form, FormRegistration, FormSubmission } from '../form';
 
 export type FormDoc = Omit<Form, 'definition' | 'applicant' | 'files'> & {
   tenantId: string;
@@ -16,4 +16,8 @@ export type FormSubmissionDoc = Omit<FormSubmission, 'updatedBy' | 'updated' | '
   updatedById: string;
   updatedDateTime: Date;
   formFiles: Record<string, string>;
+};
+
+export type FormRegistrationDoc = Omit<FormRegistration, 'tenantId'> & {
+  tenantId: string;
 };

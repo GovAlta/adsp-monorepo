@@ -3,9 +3,14 @@ module.exports = {
   info: {
     title: 'Cache service',
     version: '0.0.0',
-    description: '',
+    description: 'Cache service provides a read through http request cache.',
   },
-  tags: [],
+  tags: [
+    {
+      name: 'Cache',
+      description: 'Read through cache for upstream services and APIs.',
+    },
+  ],
   components: {
     securitySchemes: {
       accessToken: {

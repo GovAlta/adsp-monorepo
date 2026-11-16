@@ -1,4 +1,4 @@
-import { ServiceMetricRollupMapping } from './types';
+import { ResourceRollupSource, ServiceMetricRollupMapping } from './types';
 
 export const serviceMetricRollupMappings: ServiceMetricRollupMapping[] = [
   {
@@ -36,3 +36,9 @@ export const serviceMetricRollupMappings: ServiceMetricRollupMapping[] = [
     duration: { metric: 'notification-service:notification-send:duration' },
   },
 ];
+
+// The resources the mappings name, rolled up per day by the event resource rollup job. Kept here so a
+// report reading templates or definitions and the rollup that answers it are configured in one place.
+export const eventResourceRollupSources: ResourceRollupSource[] = serviceMetricRollupMappings
+  .map(({ resource }) => resource)
+  .filter((resource): resource is ResourceRollupSource => !!resource);

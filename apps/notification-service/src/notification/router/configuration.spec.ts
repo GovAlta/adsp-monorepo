@@ -18,6 +18,7 @@ describe('configuration router', () => {
   const plain = { id: 'plain', tenantId, roles: [] } as User;
 
   const writerMock = { update: jest.fn(), delete: jest.fn() };
+  const auditorMock = jest.fn();
 
   const tenantType = {
     id: 'tenant-type',
@@ -107,30 +108,39 @@ describe('configuration router', () => {
     it('saves the type definition', async () => {
       const res = createResponse();
       const next = jest.fn();
-      await createNotificationType(writerMock as never)(createRequest(admin, { body: newType }), res, next);
+      await createNotificationType(writerMock as never, auditorMock)(createRequest(admin, { body: newType }), res, next);
 
       const { sortedChannels: _sortedChannels, ...definition } = newType;
       expect(writerMock.update).toHaveBeenCalledWith(tenantId, { 'new-type': definition });
       expect(res.status).toHaveBeenCalledWith(201);
       expect(res.json).toHaveBeenCalledWith(definition);
       expect(next).not.toHaveBeenCalled();
+      expect(auditorMock).toHaveBeenCalledWith(
+        expect.objectContaining({ name: 'notification-type.created' }),
+        expect.objectContaining({
+          tenantId,
+          resource: { type: 'notification-type', id: 'new-type', name: 'Tenant type' },
+          metadata: { typeId: 'new-type', channels: [Channel.email] },
+        }),
+      );
     });
 
     it('rejects a type that already exists with 409', async () => {
       configurationMock.getNotificationType.mockReturnValueOnce({});
       const next = jest.fn();
-      await createNotificationType(writerMock as never)(
+      await createNotificationType(writerMock as never, auditorMock)(
         createRequest(admin, { body: newType }),
         createResponse(),
         next,
       );
       expect(next).toHaveBeenCalledWith(expect.objectContaining({ extra: { statusCode: 409 } }));
       expect(writerMock.update).not.toHaveBeenCalled();
+      expect(auditorMock).not.toHaveBeenCalled();
     });
 
     it('rejects an invalid type', async () => {
       const next = jest.fn();
-      await createNotificationType(writerMock as never)(
+      await createNotificationType(writerMock as never, auditorMock)(
         createRequest(admin, { body: { ...newType, channels: [] } }),
         createResponse(),
         next,
@@ -141,7 +151,7 @@ describe('configuration router', () => {
 
     it('rejects a user without subscription-admin or configuration-admin', async () => {
       const next = jest.fn();
-      await createNotificationType(writerMock as never)(
+      await createNotificationType(writerMock as never, auditorMock)(
         createRequest(plain, { body: newType }),
         createResponse(),
         next,
@@ -153,7 +163,7 @@ describe('configuration router', () => {
   describe('updateNotificationType', () => {
     it('updates a tenant type with the changed fields', async () => {
       const res = createResponse();
-      await updateNotificationType(writerMock as never)(
+      await updateNotificationType(writerMock as never, auditorMock)(
         createRequest(admin, { params: { type: tenantType.id }, body: { name: 'Renamed', id: 'ignored' } }),
         res,
         jest.fn(),
@@ -161,23 +171,34 @@ describe('configuration router', () => {
       const expected = { ...tenantType, name: 'Renamed' };
       expect(writerMock.update).toHaveBeenCalledWith(tenantId, { [tenantType.id]: expected });
       expect(res.json).toHaveBeenCalledWith(expected);
+      expect(auditorMock).toHaveBeenCalledWith(
+        expect.objectContaining({ name: 'notification-type.updated' }),
+        expect.objectContaining({
+          resource: expect.objectContaining({ id: tenantType.id }),
+          metadata: expect.objectContaining({ customizesCoreType: false }),
+        }),
+      );
     });
 
     it('saves a customization of a platform type', async () => {
       const events = [
         { namespace: 'test', name: 'run', templates: { email: { subject: 'Custom', body: 'Custom body' } } },
       ];
-      await updateNotificationType(writerMock as never)(
+      await updateNotificationType(writerMock as never, auditorMock)(
         createRequest(admin, { params: { type: coreType.id }, body: { events } }),
         createResponse(),
         jest.fn(),
       );
       expect(writerMock.update).toHaveBeenCalledWith(tenantId, { [coreType.id]: { ...coreType, events } });
+      expect(auditorMock).toHaveBeenCalledWith(
+        expect.objectContaining({ name: 'notification-type.updated' }),
+        expect.objectContaining({ metadata: { typeId: coreType.id, channels: [Channel.email], customizesCoreType: true } }),
+      );
     });
 
     it('responds 404 for an unknown type', async () => {
       const next = jest.fn();
-      await updateNotificationType(writerMock as never)(
+      await updateNotificationType(writerMock as never, auditorMock)(
         createRequest(admin, { params: { type: 'unknown' } }),
         createResponse(),
         next,
@@ -187,7 +208,7 @@ describe('configuration router', () => {
 
     it('rejects a user without subscription-admin or configuration-admin', async () => {
       const next = jest.fn();
-      await updateNotificationType(writerMock as never)(
+      await updateNotificationType(writerMock as never, auditorMock)(
         createRequest(plain, { params: { type: tenantType.id } }),
         createResponse(),
         next,
@@ -199,29 +220,37 @@ describe('configuration router', () => {
   describe('deleteNotificationType', () => {
     it('deletes a tenant type', async () => {
       const res = createResponse();
-      await deleteNotificationType(writerMock as never)(
+      await deleteNotificationType(writerMock as never, auditorMock)(
         createRequest(admin, { params: { type: tenantType.id } }),
         res,
         jest.fn(),
       );
       expect(writerMock.delete).toHaveBeenCalledWith(tenantId, tenantType.id);
       expect(res.json).toHaveBeenCalledWith({ deleted: true });
+      expect(auditorMock).toHaveBeenCalledWith(
+        expect.objectContaining({ name: 'notification-type.deleted' }),
+        expect.objectContaining({
+          resource: expect.objectContaining({ id: tenantType.id }),
+          metadata: expect.objectContaining({ revertsToCoreType: false }),
+        }),
+      );
     });
 
     it('responds 404 for a platform type without a tenant customization', async () => {
       const next = jest.fn();
-      await deleteNotificationType(writerMock as never)(
+      await deleteNotificationType(writerMock as never, auditorMock)(
         createRequest(admin, { params: { type: coreType.id } }),
         createResponse(),
         next,
       );
       expect(next).toHaveBeenCalledWith(expect.any(NotFoundError));
       expect(writerMock.delete).not.toHaveBeenCalled();
+      expect(auditorMock).not.toHaveBeenCalled();
     });
 
     it('rejects a user without subscription-admin or configuration-admin', async () => {
       const next = jest.fn();
-      await deleteNotificationType(writerMock as never)(
+      await deleteNotificationType(writerMock as never, auditorMock)(
         createRequest(plain, { params: { type: tenantType.id } }),
         createResponse(),
         next,

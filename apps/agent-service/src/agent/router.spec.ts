@@ -2,6 +2,7 @@ import { environment } from '../environments/environment';
 import { AgentConfigurations } from './configuration';
 import { deleteThread, getAccessScope, onIoConnection } from './router';
 import { WorkspaceChangeProjector } from './workspace';
+import { TokenBudget, TokenBudgetConfig, UsageRecorder } from './model';
 
 jest.mock('@abgov/adsp-service-sdk', () => ({
   ...jest.requireActual('@abgov/adsp-service-sdk'),
@@ -29,6 +30,7 @@ describe('onIoConnection workspace socket events', () => {
     readWorkspace?: jest.Mock;
     createProjector?: jest.Mock;
     stream?: jest.Mock;
+    getConversationStatus?: jest.Mock;
   }
 
   function buildSocketHarness(brokerOverrides: MockBrokerOverrides = {}, user: Record<string, unknown> = mockUser) {
@@ -66,6 +68,10 @@ describe('onIoConnection workspace socket events', () => {
           })(),
           object: Promise.resolve(null),
         }),
+      getConversationStatus:
+        brokerOverrides.getConversationStatus ??
+        jest.fn().mockResolvedValue({ contextTokens: 0, contextWindowTokens: 256000, state: 'ok' }),
+      recordResponseCompleted: jest.fn(),
     };
 
     const getAgent = jest.fn().mockResolvedValue(mockBroker);
@@ -421,8 +427,624 @@ describe('onIoConnection workspace socket events', () => {
   });
 
   // -------------------------------------------------------------------------
+  // reply usage and conversation status
+  // -------------------------------------------------------------------------
+
+  describe('reply usage and conversation status', () => {
+    const omStatusPart = {
+      type: 'data-om-status',
+      data: {
+        windows: {
+          active: {
+            messages: { tokens: 6000, threshold: 30000 },
+            observations: { tokens: 1800, threshold: 40000 },
+          },
+        },
+      },
+    };
+
+    function streamWith(chunks: unknown[], usage: { steps?: unknown[]; totalUsage?: unknown } = {}) {
+      return jest.fn().mockResolvedValue({
+        fullStream: (async function* () {
+          yield* chunks;
+        })(),
+        textStream: (async function* () {})(),
+        object: Promise.resolve(null),
+        steps: Promise.resolve(usage.steps),
+        totalUsage: Promise.resolve(usage.totalUsage),
+      });
+    }
+
+    const sendMessage = (eventHandlers: Record<string, (...args: unknown[]) => Promise<void>>) =>
+      eventHandlers['message']({
+        agent: 'AccessServiceAgent',
+        threadId: 'thread-1',
+        messageId: 'user-message-1',
+        content: 'Which clients are in the core realm?',
+        rawChunks: true,
+      });
+
+    it('adds the reply usage to the done event', async () => {
+      // Arrange
+      const stream = streamWith([{ type: 'text-delta', payload: { text: 'Three clients.' } }], {
+        steps: [
+          { usage: { inputTokens: 9000, outputTokens: 200 } },
+          { usage: { inputTokens: 11000, outputTokens: 450 } },
+        ],
+        totalUsage: { inputTokens: 20000, outputTokens: 650, totalTokens: 20650 },
+      });
+      const { socket, eventHandlers } = await connect({ stream });
+
+      // Act
+      await sendMessage(eventHandlers);
+
+      // Assert
+      expect(socket.emit).toHaveBeenCalledWith(
+        'stream',
+        expect.objectContaining({
+          done: true,
+          usage: {
+            contextTokens: 11000,
+            contextWindowTokens: 256000,
+            totalTokens: 20650,
+            outputTokens: 650,
+            modelCalls: 2,
+          },
+        }),
+      );
+    });
+
+    it('leaves usage off the done event when the provider reports none', async () => {
+      // Arrange
+      const stream = streamWith([{ type: 'text-delta', payload: { text: 'Three clients.' } }]);
+      const { socket, eventHandlers } = await connect({ stream });
+
+      // Act
+      await sendMessage(eventHandlers);
+
+      // Assert
+      const done = socket.emit.mock.calls.find(([event, payload]) => event === 'stream' && payload.done)?.[1];
+      expect(done).not.toHaveProperty('usage');
+    });
+
+    it('works out the conversation status from the memory status the stream reported', async () => {
+      // Arrange
+      const stream = streamWith([omStatusPart, { type: 'text-delta', payload: { text: 'Three clients.' } }], {
+        steps: [{ usage: { inputTokens: 14000, outputTokens: 300 } }],
+        totalUsage: { inputTokens: 14000, outputTokens: 300, totalTokens: 14300 },
+      });
+      const { eventHandlers, mockBroker } = await connect({ stream });
+
+      // Act
+      await sendMessage(eventHandlers);
+
+      // Assert
+      expect(mockBroker.getConversationStatus).toHaveBeenCalledWith(mockUser, 'thread-1', {
+        contextTokens: 14000,
+        memoryStatus: {
+          messageTokens: 6000,
+          messageThreshold: 30000,
+          observationTokens: 1800,
+          observationThreshold: 40000,
+          generationCount: 0,
+        },
+      });
+    });
+
+    it('sends the conversation status to the client after the reply', async () => {
+      // Arrange
+      const status = { contextTokens: 14000, contextWindowTokens: 256000, state: 'notice', reason: 'summarised' };
+      const getConversationStatus = jest.fn().mockResolvedValue(status);
+      const stream = streamWith([{ type: 'text-delta', payload: { text: 'Three clients.' } }]);
+      const { socket, eventHandlers } = await connect({ stream, getConversationStatus });
+
+      // Act
+      await sendMessage(eventHandlers);
+
+      // Assert
+      expect(socket.emit).toHaveBeenCalledWith('conversation-status', {
+        agent: 'AccessServiceAgent',
+        threadId: 'thread-1',
+        ...status,
+      });
+    });
+
+    it('does not forward the memory status part as a stream chunk', async () => {
+      // Arrange
+      const stream = streamWith([omStatusPart]);
+      const { socket, eventHandlers } = await connect({ stream });
+
+      // Act
+      await sendMessage(eventHandlers);
+
+      // Assert
+      expect(socket.emit).not.toHaveBeenCalledWith(
+        'stream',
+        expect.objectContaining({ chunk: expect.objectContaining({ type: 'data-om-status' }) }),
+      );
+    });
+
+    it('gives the agent a usage recorder for model calls made inside tools', async () => {
+      // Arrange
+      const stream = streamWith([]);
+      const { eventHandlers } = await connect({ stream });
+
+      // Act
+      await sendMessage(eventHandlers);
+
+      // Assert
+      expect(stream.mock.calls[0][4]).toBeInstanceOf(UsageRecorder);
+    });
+
+    it('still completes the reply when the conversation status cannot be worked out', async () => {
+      // Arrange
+      const getConversationStatus = jest.fn().mockRejectedValue(new Error('storage unavailable'));
+      const stream = streamWith([{ type: 'text-delta', payload: { text: 'Three clients.' } }]);
+      const { socket, eventHandlers } = await connect({ stream, getConversationStatus });
+
+      // Act
+      await sendMessage(eventHandlers);
+
+      // Assert
+      expect(socket.emit).toHaveBeenCalledWith('stream', expect.objectContaining({ done: true }));
+      expect(socket.emit).not.toHaveBeenCalledWith('error', expect.anything());
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // token budget and provider rate limits
+  // -------------------------------------------------------------------------
+
+  describe('token budget and provider rate limits', () => {
+    const START_MS = Date.parse('2026-11-10T15:00:00.000Z');
+    const userKey = `${mockTenant.id}:${mockUser.id}`;
+    const message = {
+      agent: 'AccessServiceAgent',
+      threadId: 'thread-1',
+      messageId: 'user-message-1',
+      content: 'Which clients are in the core realm?',
+      rawChunks: true,
+    };
+    const replyUsage = {
+      steps: [
+        { usage: { inputTokens: 9000, outputTokens: 200 } },
+        { usage: { inputTokens: 11000, outputTokens: 450 } },
+      ],
+      totalUsage: { inputTokens: 20000, outputTokens: 650, totalTokens: 20650 },
+    };
+
+    /** A budget whose clock the tests move by hand, in milliseconds after START_MS. */
+    function createBudget(config: Partial<TokenBudgetConfig> = {}) {
+      let elapsedMs = 0;
+      const budget = new TokenBudget(
+        {
+          limitPerMinute: 0,
+          limitPer5Minutes: 0,
+          agentShares: new Map(),
+          userLimitPerMinute: 0,
+          warnRatio: 0.8,
+          ...config,
+        },
+        logger as never,
+        () => START_MS + elapsedMs,
+      );
+      const moveClockTo = (ms: number) => {
+        elapsedMs = ms;
+      };
+      return { budget, moveClockTo };
+    }
+
+    /** A budget whose 1-minute key limit the agent's previous 9000-token reply, 20 seconds ago, nearly used up. */
+    function createSpentBudget() {
+      const { budget, moveClockTo } = createBudget({ limitPerMinute: 10_000 });
+      budget.record({ agent: 'AccessServiceAgent', userKey, tokens: 9000 });
+      moveClockTo(20_000);
+      return budget;
+    }
+
+    // Each call answers with a fresh stream, so the same agent can be messaged more than once.
+    function replyingStream(usage: { steps?: unknown[]; totalUsage?: unknown } = replyUsage) {
+      return jest.fn().mockImplementation(async () => ({
+        fullStream: (async function* () {
+          yield { type: 'text-delta', payload: { text: 'The core realm has three clients.' } };
+        })(),
+        textStream: (async function* () {})(),
+        object: Promise.resolve(null),
+        steps: Promise.resolve(usage.steps),
+        totalUsage: Promise.resolve(usage.totalUsage),
+      }));
+    }
+
+    async function connectWithBudget(budget: TokenBudget, brokerOverrides: MockBrokerOverrides = {}) {
+      const harness = buildSocketHarness(brokerOverrides);
+      await onIoConnection(logger as never, budget)(harness.socket as never);
+      return harness;
+    }
+
+    afterEach(() => {
+      jest.resetAllMocks();
+    });
+
+    it('answers a message over the token budget with a RATE_LIMITED error chunk that ends the reply', async () => {
+      // Arrange
+      const { socket, eventHandlers } = await connectWithBudget(createSpentBudget(), { stream: replyingStream() });
+
+      // Act
+      await eventHandlers['message'](message);
+
+      // Assert
+      expect(socket.emit).toHaveBeenCalledWith('stream', {
+        agent: 'AccessServiceAgent',
+        threadId: 'thread-1',
+        messageId: expect.any(String),
+        replyTo: 'user-message-1',
+        chunk: {
+          type: 'error',
+          payload: {
+            code: 'RATE_LIMITED',
+            message: 'The AI service is busy right now. Please try again in about 40 seconds.',
+          },
+        },
+        done: true,
+      });
+    });
+
+    it('does not call the agent when the message is over the token budget', async () => {
+      // Arrange
+      const stream = replyingStream();
+      const { eventHandlers } = await connectWithBudget(createSpentBudget(), { stream });
+
+      // Act
+      await eventHandlers['message'](message);
+
+      // Assert
+      expect(stream).not.toHaveBeenCalled();
+    });
+
+    it('does not report a socket error when the message is over the token budget', async () => {
+      // Arrange
+      const { socket, eventHandlers } = await connectWithBudget(createSpentBudget(), { stream: replyingStream() });
+
+      // Act
+      await eventHandlers['message'](message);
+
+      // Assert
+      expect(socket.emit).not.toHaveBeenCalledWith('error', expect.anything());
+    });
+
+    it('logs which token budget refused the message and how long to wait', async () => {
+      // Arrange
+      const { eventHandlers } = await connectWithBudget(createSpentBudget(), { stream: replyingStream() });
+
+      // Act
+      await eventHandlers['message'](message);
+
+      // Assert
+      expect(logger.info).toHaveBeenCalledWith(
+        'Refused a message to agent AccessServiceAgent because its key token budget is used up.',
+        expect.objectContaining({ agent: 'AccessServiceAgent', scope: 'key', retryAfterMs: 40_000 }),
+      );
+    });
+
+    it("checks the budget for the user in the connection's tenant with the agent's estimate", async () => {
+      // Arrange
+      const { budget } = createBudget();
+      const check = jest.spyOn(budget, 'check');
+      const { eventHandlers } = await connectWithBudget(budget, { stream: replyingStream() });
+
+      // Act
+      await eventHandlers['message'](message);
+
+      // Assert
+      expect(check).toHaveBeenCalledWith({
+        agent: 'AccessServiceAgent',
+        userKey: 'urn:ads:platform:tenant-service:v2:/tenants/test:user-1',
+        estimate: 6000,
+      });
+    });
+
+    it('refuses a message from a user who has used up the per-user limit', async () => {
+      // Arrange
+      const { budget } = createBudget({ userLimitPerMinute: 8000 });
+      budget.record({ agent: 'AccessServiceAgent', userKey, tokens: 7000 });
+      const stream = replyingStream();
+      const { eventHandlers } = await connectWithBudget(budget, { stream });
+
+      // Act
+      await eventHandlers['message'](message);
+
+      // Assert
+      expect(stream).not.toHaveBeenCalled();
+    });
+
+    it("does not refuse a message because of another user's usage", async () => {
+      // Arrange
+      const { budget } = createBudget({ userLimitPerMinute: 8000 });
+      budget.record({ agent: 'AccessServiceAgent', userKey: `${mockTenant.id}:user-2`, tokens: 7000 });
+      const stream = replyingStream();
+      const { eventHandlers } = await connectWithBudget(budget, { stream });
+
+      // Act
+      await eventHandlers['message'](message);
+
+      // Assert
+      expect(stream).toHaveBeenCalledTimes(1);
+    });
+
+    it("records the reply's total tokens against the agent and the user", async () => {
+      // Arrange
+      const { budget } = createBudget();
+      const record = jest.spyOn(budget, 'record');
+      const { eventHandlers } = await connectWithBudget(budget, { stream: replyingStream() });
+
+      // Act
+      await eventHandlers['message'](message);
+
+      // Assert
+      expect(record).toHaveBeenCalledWith(
+        { agent: 'AccessServiceAgent', userKey, tokens: 20650 },
+        expect.objectContaining({ id: expect.any(Number) }),
+      );
+    });
+
+    it('logs the tokens and model calls the reply used', async () => {
+      // Arrange
+      const { budget } = createBudget();
+      const { eventHandlers } = await connectWithBudget(budget, { stream: replyingStream() });
+
+      // Act
+      await eventHandlers['message'](message);
+
+      // Assert
+      expect(logger.info).toHaveBeenCalledWith(
+        'Agent AccessServiceAgent reply used 20650 tokens in 2 model calls.',
+        expect.objectContaining({
+          context: 'AgentRouter',
+          agent: 'AccessServiceAgent',
+          totalTokens: 20650,
+          modelCalls: 2,
+        }),
+      );
+    });
+
+    it('does not record usage when the provider reports none', async () => {
+      // Arrange
+      const { budget } = createBudget();
+      const record = jest.spyOn(budget, 'record');
+      const { eventHandlers } = await connectWithBudget(budget, { stream: replyingStream({}) });
+
+      // Act
+      await eventHandlers['message'](message);
+
+      // Assert
+      expect(record).not.toHaveBeenCalled();
+    });
+
+    it('refuses the next message once a recorded reply has used up the budget', async () => {
+      // Arrange
+      const { budget } = createBudget({ limitPerMinute: 30_000 });
+      const { socket, eventHandlers } = await connectWithBudget(budget, { stream: replyingStream() });
+      await eventHandlers['message'](message);
+
+      // Act
+      await eventHandlers['message']({ ...message, messageId: 'user-message-2' });
+
+      // Assert
+      expect(socket.emit).toHaveBeenCalledWith(
+        'stream',
+        expect.objectContaining({
+          replyTo: 'user-message-2',
+          chunk: {
+            type: 'error',
+            payload: {
+              code: 'RATE_LIMITED',
+              message: 'The AI service is busy right now. Please try again in about 60 seconds.',
+            },
+          },
+          done: true,
+        }),
+      );
+    });
+
+    it('sends a RATE_LIMITED error chunk when the provider rate limits the agent before the stream starts', async () => {
+      // Arrange
+      const rateLimited = Object.assign(new Error('Provider request failed.'), {
+        name: 'AI_APICallError',
+        statusCode: 429,
+      });
+      const stream = jest.fn().mockRejectedValue(rateLimited);
+      const { budget } = createBudget();
+      const { socket, eventHandlers } = await connectWithBudget(budget, { stream });
+
+      // Act
+      await eventHandlers['message'](message);
+
+      // Assert
+      expect(socket.emit).toHaveBeenCalledWith('stream', {
+        agent: 'AccessServiceAgent',
+        threadId: 'thread-1',
+        messageId: expect.any(String),
+        replyTo: 'user-message-1',
+        chunk: {
+          type: 'error',
+          payload: {
+            code: 'RATE_LIMITED',
+            message: 'The AI service is busy right now. Please try again in a minute.',
+          },
+        },
+        done: true,
+      });
+    });
+
+    it('does not report a socket error when the provider rate limits the agent before the stream starts', async () => {
+      // Arrange
+      const rateLimited = Object.assign(new Error('Provider request failed.'), { statusCode: 429 });
+      const stream = jest.fn().mockRejectedValue(rateLimited);
+      const { budget } = createBudget();
+      const { socket, eventHandlers } = await connectWithBudget(budget, { stream });
+
+      // Act
+      await eventHandlers['message'](message);
+
+      // Assert
+      expect(socket.emit).not.toHaveBeenCalledWith('error', expect.anything());
+    });
+
+    it('still reports other failures before the stream starts as a socket error', async () => {
+      // Arrange
+      const stream = jest.fn().mockRejectedValue(new Error('model unavailable'));
+      const { budget } = createBudget();
+      const { socket, eventHandlers } = await connectWithBudget(budget, { stream });
+
+      // Act
+      await eventHandlers['message'](message);
+
+      // Assert
+      expect(socket.emit).toHaveBeenCalledWith('error', 'model unavailable');
+    });
+
+    it('sends a RATE_LIMITED error chunk that ends the reply when the stream is rate limited part way through', async () => {
+      // Arrange
+      const retryError = Object.assign(new Error('Failed after 3 attempts.'), {
+        name: 'AI_RetryError',
+        lastError: Object.assign(new Error('Provider request failed.'), { statusCode: 429 }),
+      });
+      const stream = jest.fn().mockResolvedValue({
+        fullStream: (async function* () {
+          yield { type: 'text-delta', payload: { text: 'The core realm has' } };
+          throw retryError;
+        })(),
+        textStream: (async function* () {})(),
+        object: Promise.resolve(null),
+      });
+      const { budget } = createBudget();
+      const { socket, eventHandlers } = await connectWithBudget(budget, { stream });
+
+      // Act
+      await eventHandlers['message'](message);
+
+      // Assert
+      expect(socket.emit).toHaveBeenCalledWith('stream', {
+        agent: 'AccessServiceAgent',
+        threadId: 'thread-1',
+        messageId: expect.any(String),
+        replyTo: 'user-message-1',
+        chunk: {
+          type: 'error',
+          payload: {
+            code: 'RATE_LIMITED',
+            message: 'The AI service is busy right now. Please try again in a minute.',
+          },
+        },
+        done: true,
+      });
+    });
+
+    it('forwards a rate-limit error chunk from the stream with the RATE_LIMITED code', async () => {
+      // Arrange
+      const stream = jest.fn().mockResolvedValue({
+        fullStream: (async function* () {
+          yield { type: 'error', payload: { error: new Error('Too Many Requests') } };
+        })(),
+        textStream: (async function* () {})(),
+        object: Promise.resolve(null),
+      });
+      const { budget } = createBudget();
+      const { socket, eventHandlers } = await connectWithBudget(budget, { stream });
+
+      // Act
+      await eventHandlers['message'](message);
+
+      // Assert
+      expect(socket.emit).toHaveBeenCalledWith(
+        'stream',
+        expect.objectContaining({
+          chunk: {
+            type: 'error',
+            payload: {
+              code: 'RATE_LIMITED',
+              message: 'The AI service is busy right now. Please try again in a minute.',
+            },
+          },
+        }),
+      );
+    });
+  });
+
+  // -------------------------------------------------------------------------
   // message latency logging
   // -------------------------------------------------------------------------
+
+  describe('response audit', () => {
+    function streamReplying(failWith?: Error) {
+      return jest.fn().mockResolvedValue({
+        fullStream: (async function* () {
+          yield { type: 'text-delta', payload: { text: 'Done.' } };
+          if (failWith) {
+            throw failWith;
+          }
+        })(),
+        textStream: (async function* () {
+          yield 'Done.';
+          if (failWith) {
+            throw failWith;
+          }
+        })(),
+        object: Promise.resolve({ status: 'ok' }),
+      });
+    }
+
+    it.each([
+      ['text', false],
+      ['raw chunks', true],
+    ])('records the finished %s reply with its stream result and structured output', async (_mode, rawChunks) => {
+      // Arrange
+      const stream = streamReplying();
+      const { eventHandlers, mockBroker } = await connect({ stream });
+
+      // Act
+      await eventHandlers['message']({ agent: 'builder', threadId: 'thread-1', content: 'Build it', rawChunks });
+
+      // Assert
+      const result = await stream.mock.results[0].value;
+      expect(mockBroker.recordResponseCompleted).toHaveBeenCalledTimes(1);
+      expect(mockBroker.recordResponseCompleted).toHaveBeenCalledWith(mockUser, 'thread-1', result, {
+        output: { status: 'ok' },
+      });
+    });
+
+    it.each([
+      ['text', false],
+      ['raw chunks', true],
+    ])('records a %s reply that fails while streaming', async (_mode, rawChunks) => {
+      // Arrange
+      const error = new Error('connection reset');
+      const stream = streamReplying(error);
+      const { socket, eventHandlers, mockBroker } = await connect({ stream });
+
+      // Act
+      await eventHandlers['message']({ agent: 'builder', threadId: 'thread-1', content: 'Build it', rawChunks });
+
+      // Assert
+      const result = await stream.mock.results[0].value;
+      expect(socket.emit).toHaveBeenCalledWith('error', 'connection reset');
+      expect(mockBroker.recordResponseCompleted).toHaveBeenCalledTimes(1);
+      expect(mockBroker.recordResponseCompleted).toHaveBeenCalledWith(mockUser, 'thread-1', result, { error });
+    });
+
+    it('leaves a reply that cannot start to the broker to record', async () => {
+      // Arrange
+      const stream = jest.fn().mockRejectedValue(new Error('model unavailable'));
+      const { socket, eventHandlers, mockBroker } = await connect({ stream });
+
+      // Act
+      await eventHandlers['message']({ agent: 'builder', threadId: 'thread-1', content: 'Build it' });
+
+      // Assert
+      expect(socket.emit).toHaveBeenCalledWith('error', expect.anything());
+      expect(mockBroker.recordResponseCompleted).not.toHaveBeenCalled();
+    });
+  });
 
   describe('message latency logging', () => {
     const PRE_STREAM_DELAY_MS = 25;
@@ -435,7 +1057,9 @@ describe('onIoConnection workspace socket events', () => {
         })(),
         object: Promise.resolve(null),
       };
-      const stream = jest.fn(() => new Promise((resolve) => setTimeout(() => resolve(streamResult), PRE_STREAM_DELAY_MS)));
+      const stream = jest.fn(
+        () => new Promise((resolve) => setTimeout(() => resolve(streamResult), PRE_STREAM_DELAY_MS)),
+      );
       const { eventHandlers } = await connect({ stream });
 
       await eventHandlers['message']({
@@ -478,7 +1102,12 @@ describe('onIoConnection workspace socket events', () => {
       object: Promise.resolve(null),
     });
     const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
-    const message = { agent: 'formGenerationAgent', threadId: 'thread-1', messageId: 'user-message-1', content: 'Validate' };
+    const message = {
+      agent: 'formGenerationAgent',
+      threadId: 'thread-1',
+      messageId: 'user-message-1',
+      content: 'Validate',
+    };
 
     it('sends the reply before disconnecting when the token expires before the stream starts', async () => {
       let startStream: (result: unknown) => void = () => undefined;
@@ -492,14 +1121,23 @@ describe('onIoConnection workspace socket events', () => {
       await handling;
 
       expect(disconnectedBeforeReply).toBe(false);
-      expect(socket.emit).toHaveBeenCalledWith('stream', expect.objectContaining({ replyTo: 'user-message-1', done: true }));
+      expect(socket.emit).toHaveBeenCalledWith(
+        'stream',
+        expect.objectContaining({ replyTo: 'user-message-1', done: true }),
+      );
       expect(socket.disconnect).toHaveBeenCalledWith(true);
-      expect(socket.emit).toHaveBeenLastCalledWith('session-expired', expect.objectContaining({ code: 'USER_TOKEN_EXPIRED' }));
+      expect(socket.emit).toHaveBeenLastCalledWith(
+        'session-expired',
+        expect.objectContaining({ code: 'USER_TOKEN_EXPIRED' }),
+      );
     });
 
     it('reports the error before disconnecting when the agent fails before the stream starts', async () => {
       const stream = jest.fn(
-        () => new Promise((_resolve, reject) => setTimeout(() => reject(new Error('model unavailable')), EXPIRY_TIMER_MS * 2)),
+        () =>
+          new Promise((_resolve, reject) =>
+            setTimeout(() => reject(new Error('model unavailable')), EXPIRY_TIMER_MS * 2),
+          ),
       );
       const { socket, eventHandlers } = await connect({ stream }, expiringUser());
 
@@ -507,7 +1145,10 @@ describe('onIoConnection workspace socket events', () => {
 
       expect(socket.emit).toHaveBeenCalledWith('error', expect.anything());
       expect(socket.disconnect).toHaveBeenCalledWith(true);
-      expect(socket.emit).toHaveBeenLastCalledWith('session-expired', expect.objectContaining({ code: 'USER_TOKEN_EXPIRED' }));
+      expect(socket.emit).toHaveBeenLastCalledWith(
+        'session-expired',
+        expect.objectContaining({ code: 'USER_TOKEN_EXPIRED' }),
+      );
     });
 
     it('disconnects as soon as the token expires when no message is in progress', async () => {

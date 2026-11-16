@@ -1,72 +1,94 @@
 # jsonforms-components
 
-This library was generated with [Nx](https://nx.dev).
+React renderers for [JSON Forms](https://jsonforms.io) built on the Government of Alberta [design system](https://design.alberta.ca/) components. The ADSP form app and the form editor preview use them, and they are published to npm as `@abgov/jsonforms-components` so product teams can render ADSP form definitions in their own applications.
 
-## Running unit tests
+Inside this monorepo, import it through the `@abgov/jsonforms-components` path alias in `tsconfig.base.json`.
 
-Run `nx test jsonforms-components` to execute the unit tests via [Jest](https://jestjs.io).
+## Install
 
-# Folder hierarchy
-
-```
-- src
-  - lib
-    - Additional
-    - Cells
-    - common
-    - Components
-    - Controls
-    - Context
-    - ErrorHandling
-    - layouts
-    - util
-
+```bash
+npm install @abgov/jsonforms-components
 ```
 
-# Embedding ADSP Form service UI components in your application
+These packages are peer dependencies, so install them in your application too (see `package.json` for the exact ranges):
 
-To use ADSP Forms service UI components add in JSON Forms into your application. You will have to include the following JSX markup and imports into your React components as an example.
+- `react`, `@jsonforms/core`, `@jsonforms/react`
+- `@abgov/react-components`, `@abgov/ui-components-common`
+- `ajv`, `ajv-errors`, `ajv-formats`
+- `@mdx-js/mdx`, `react-markdown`, `rehype-sanitize`, `dompurify`, `xss`
+- `expr-eval-fork`, `pluralize`
 
-```
+`@apidevtools/json-schema-ref-parser` is an optional dependency, used by `resolveRefs` and `tryResolveRefs`.
+
+## Usage
+
+Pass `GoARenderers` and `GoACells` to the `JsonForms` component. Wrap it in the two context providers the renderers read from:
+
+- the provider returned by `ContextProviderFactory()`, which supplies file management, submit and save callbacks, auto-populated data and stepper navigation to the renderers;
+- `JsonFormRegisterProvider`, which supplies data register values to dropdown and text controls that use the `register` option.
+
+```tsx
 import { JsonForms } from '@jsonforms/react';
 import {
+  ContextProviderFactory,
+  createDefaultAjv,
+  GoACells,
   GoARenderers,
+  JsonFormRegisterProvider,
 } from '@abgov/jsonforms-components';
-```
 
-```
+// Create both once, at module level. JsonForms recompiles the schema when the ajv instance changes.
+const ContextProvider = ContextProviderFactory();
+const ajv = createDefaultAjv();
+
+export const MyForm = ({ schema, uischema, data, onChange }) => (
+  <ContextProvider>
+    <JsonFormRegisterProvider defaultRegisters={undefined}>
       <JsonForms
-        schema={yourJSONDataSchema}
-        uischema={yourJSONUISchema}
+        schema={schema}
+        uischema={uischema}
         data={data}
-        validationMode="ValidateAndShow"
         renderers={GoARenderers}
+        cells={GoACells}
+        ajv={ajv}
+        validationMode="ValidateAndShow"
         onChange={onChange}
       />
+    </JsonFormRegisterProvider>
+  </ContextProvider>
+);
 ```
 
-# ADSP Form service UI components UI schema
+To show a read-only summary of submitted data, pass `GoAReviewRenderers` instead of `GoARenderers`.
 
-[UI Schema](https://jsonforms.io/docs/uischema) in the JSON Forms defines the general layout of the forms generated. @abgov/jsonforms-components lib integrates the [GoA UI components](https://github.com/GovAlta/ui-components) form components by extending the "options" attribute in the UI Schema. Take GoAInput UI Schema as example:
-https://govalta.github.io/adsp-monorepo/tutorials/form-service/building-forms.html
+The UI schema selects and configures these renderers through its `options`. The [Form service tutorials](https://govalta.github.io/adsp-monorepo/tutorials/form-service/form-service.html) cover the schema side; the [Cheat sheet](https://govalta.github.io/adsp-monorepo/tutorials/form-service/cheat-sheet.html) has examples for each control, layout and stepper.
 
+## Reference
+
+Main exports from `src/index.ts`:
+
+- **Renderer sets**: `GoARenderers` (full form, including stepper, file uploader, address lookup, name, phone, calculation and contact controls), `GoAReviewRenderers` (read-only review), `GoABaseRenderers`, `GoABaseReviewRenderers` and `GoABaseTableReviewRenderers` (subsets to build your own set), and `GoACells`.
+- **Context**: `ContextProviderFactory`, `JsonFormContext`, `useShowChangeButtons`, `ReviewRenderProvider`, `useReviewContext`.
+- **Data registers**: `JsonFormRegisterProvider`, `JsonFormsRegisterContext`, `useRegisterUser`, and the register types.
+- **Validation and schemas**: `createDefaultAjv` (an Ajv instance with the formats the renderers use, such as `phone`, `sin` and `file-urn`), `resolveRefs`, `tryResolveRefs`.
+- **Auto-populate**: `getAutoPopulatedData`, `mergeAutoPopulatedData`, `createAutoPopulateMiddleware`.
+- **Controls**: the individual controls and their testers, for example `GoAInputTextControl` and `GoATextControlTester`, plus the stepper navigation helpers such as `getNavigationTargets` and `useStepChange`.
+- **Performance**: `memoizeTester` and `memoizeRendererTesters`, which cache tester ranks so large forms don't re-run every tester on each render.
+
+## Development
+
+```bash
+npx nx test jsonforms-components
+npx nx lint jsonforms-components
+npx nx build jsonforms-components
 ```
-    {
-      "type": "Control",
-      "scope": "#/properties/name",
-      "options": {
-        "GoAInput": {
-          "name": "Name",
-          "label": "Name",
-          "testId": ""
-          ...
-        }
-      }
-    }
-```
 
-The presence of the "GoAInput" indicates we are going to use the GoAInput to render the input. The attributes in the "GoAInput" will be passed to the GoAInput as component properties.
+The package is published to npm with semantic-release through the `release` target (`.releaserc.json`). Commits with the scope `jsonforms-components` trigger a release, for example `feat(jsonforms-components): add a new control`. See [AGENTS.md](../../AGENTS.md#commit-conventions) for the commit conventions.
 
-For additional information and usage pertaining to the controls, layouts, steppers, please refer to the ADSP Form service guide which provides more in [depth information](https://govalta.github.io/adsp-monorepo/tutorials/form-service/form-service.html) on the usage.
+## Related guides
 
-Please refer to the [Cheat sheet](https://govalta.github.io/adsp-monorepo/tutorials/form-service/cheat-sheet.html) which contains schema examples for the different types of controls, steppers, layouts, etc that are currently available from ADSP Form service UI components that can used in your UI schema of your application.
+- [Integration](../../docs/tutorials/form-service/Integration.md): adding the renderers to your application.
+- [Data registers](../../docs/tutorials/form-service/data-registers.md): `JsonFormRegisterProvider` and the `register` option.
+- [File uploader](../../docs/tutorials/form-service/file-uploader.md): the `fileManagement` callbacks on the context provider.
+- [External navigation](../../docs/tutorials/form-service/external-navigation.md): driving the stepper and review "Change" links from the host.
+- [Building forms](../../docs/tutorials/form-service/building-forms.md) and the [Cheat sheet](../../docs/tutorials/form-service/cheat-sheet.md): UI schema options for each renderer.

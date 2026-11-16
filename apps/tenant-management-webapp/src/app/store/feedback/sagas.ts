@@ -22,6 +22,9 @@ import {
   fetchFeedbackMetricsSuccess,
   FETCH_FEEDBACK_METRICS_MONTHLY_CHANGE_ACTION,
   fetchFeedbackMetricsMonthlyChangeSuccess,
+  FETCH_FEEDBACK_SUMMARY_ACTION,
+  FetchFeedbackSummaryAction,
+  getFeedbackSummarySuccess,
 } from './actions';
 import { getAccessToken } from '@store/tenant/sagas';
 import { SagaIterator } from 'redux-saga';
@@ -44,6 +47,16 @@ const toFeedbackQuery = (site: string, { startDate, endDate }: FeedbackSearchCri
   ...(startDate && endDate && { timestampMin: startDate, timestampMax: toTimestampMax(endDate) }),
 });
 
+export const normalizeFeedbackDateRange = ({ startDate, endDate }: FeedbackSearchCriteria) => {
+  if (!startDate || !endDate) {
+    return null;
+  }
+
+  const normalizedEnd = new Date(endDate);
+  normalizedEnd.setUTCHours(23, 59, 59, 999);
+  return { start: new Date(startDate).toISOString(), end: normalizedEnd.toISOString() };
+};
+
 export function* fetchFeedbacks({
   feedback,
   searchCriteria,
@@ -55,7 +68,7 @@ export function* fetchFeedbacks({
     UpdateIndicator({
       show: true,
       message: 'Loading Feedbacks...',
-    })
+    }),
   );
   const configBaseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.valueServiceApiUrl);
   const token: string = yield call(getAccessToken);
@@ -83,12 +96,30 @@ export function* fetchFeedbacks({
   yield put(UpdateIndicator({ show: false }));
 }
 
+export function* fetchFeedbackSummary({ site, searchCriteria }: FetchFeedbackSummaryAction): SagaIterator {
+  const baseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.feedbackServiceUrl);
+  const token: string = yield call(getAccessToken);
+  const dateRange = normalizeFeedbackDateRange(searchCriteria);
+
+  if (baseUrl && token && dateRange) {
+    const query = new URLSearchParams({ site, start: dateRange.start, end: dateRange.end });
+    try {
+      const { data } = yield call(axios.get, `${baseUrl}/feedback/v1/feedback/summary?${query.toString()}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      yield put(getFeedbackSummarySuccess(data));
+    } catch (error) {
+      yield put({ type: 'FETCH_FEEDBACK_SUMMARY_FAILURE', error });
+    }
+  }
+}
+
 export function* exportFeedbacks(payload: ExportFeedbacksAction) {
   yield put(
     UpdateIndicator({
       show: true,
       message: 'Loading Feedbacks...',
-    })
+    }),
   );
 
   const configBaseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.valueServiceApiUrl);
@@ -110,7 +141,7 @@ export function* exportFeedbacks(payload: ExportFeedbacksAction) {
         const url = `${configBaseUrl}/value/v1/feedback-service/values/feedback?context=${contextData}${
           payload.searchCriteria.startDate && payload.searchCriteria.endDate
             ? `&timestampMin=${payload.searchCriteria.startDate}&timestampMax=${toTimestampMax(
-                payload.searchCriteria.endDate
+                payload.searchCriteria.endDate,
               )}`
             : ''
         }&top=${pageSize}${nextPage !== '' ? `&after=${nextPage}` : ''}`;
@@ -123,14 +154,13 @@ export function* exportFeedbacks(payload: ExportFeedbacksAction) {
         }
 
         allFeedbacks = allFeedbacks.concat(feedbacks);
-
       }
 
       yield put(exportFeedbacksSuccess(incrementRatingValue(allFeedbacks)));
       yield put(
         UpdateIndicator({
           show: false,
-        })
+        }),
       );
     } catch (error) {
       yield put({ type: 'FETCH_FEEDBACKS_FAILURE', error });
@@ -144,10 +174,10 @@ function* fetchFeedbackSites() {
     UpdateIndicator({
       show: true,
       message: 'Loading Feedback Sites...',
-    })
+    }),
   );
   const configBaseUrl: string = yield select(
-    (state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl
+    (state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl,
   );
   const token: string = yield call(getAccessToken);
   const url = `${configBaseUrl}/configuration/v2/configuration/platform/feedback-service/latest`;
@@ -162,7 +192,7 @@ function* fetchFeedbackSites() {
       yield put(
         UpdateIndicator({
           show: false,
-        })
+        }),
       );
     } catch (error) {
       yield put({ type: 'FETCH_FEEDBACK_SITES_FAILURE', error });
@@ -174,10 +204,10 @@ function* updateFeedbackSite(request: UpdateFeedbackSiteAction) {
     UpdateIndicator({
       show: true,
       message: 'Loading Feedback Sites...',
-    })
+    }),
   );
   const configBaseUrl: string = yield select(
-    (state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl
+    (state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl,
   );
   const token: string = yield call(getAccessToken);
   const url = `${configBaseUrl}/configuration/v2/configuration/platform/feedback-service`;
@@ -198,7 +228,7 @@ function* updateFeedbackSite(request: UpdateFeedbackSiteAction) {
       yield put(
         UpdateIndicator({
           show: false,
-        })
+        }),
       );
     } catch (error) {
       yield put({ type: 'FETCH_FEEDBACK_SITES_FAILURE', error });
@@ -211,10 +241,10 @@ function* deleteFeedbackSite(action: DeleteFeedbackSiteAction) {
     UpdateIndicator({
       show: true,
       message: 'Deleting Feedback Site...',
-    })
+    }),
   );
   const configBaseUrl: string = yield select(
-    (state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl
+    (state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl,
   );
   const sites = yield select((state: RootState) => state.feedback.sites);
   const filteredSites = sites.filter((s) => s.url !== action.site.url);
@@ -231,7 +261,7 @@ function* deleteFeedbackSite(action: DeleteFeedbackSiteAction) {
       yield put(
         UpdateIndicator({
           show: false,
-        })
+        }),
       );
     } catch (error) {
       yield put({ type: 'DELETE_FEEDBACK_SITE_FAILURE', error });
@@ -265,7 +295,7 @@ const foldBuckets = (metric?: MetricResponse) =>
         min: isNaN(min) ? folded.min : folded.min === null ? min : Math.min(folded.min, min),
       };
     },
-    { sum: 0, count: 0, min: null as number | null }
+    { sum: 0, count: 0, min: null as number | null },
   );
 
 export function* fetchFeedbackMetrics(): SagaIterator {
@@ -282,7 +312,7 @@ export function* fetchFeedbackMetrics(): SagaIterator {
       const { data }: { data: Record<string, MetricResponse> } = yield call(
         axios.get,
         `${baseUrl}/value/v1/feedback-service/values/feedback/metrics?interval=daily&criteria=${criteria}`,
-        { headers: { Authorization: `Bearer ${token}` } }
+        { headers: { Authorization: `Bearer ${token}` } },
       );
 
       const isSiteMetric = (name: string, suffix: string) => name.split(':').length === 3 && name.endsWith(suffix);
@@ -294,17 +324,20 @@ export function* fetchFeedbackMetrics(): SagaIterator {
             ...counts,
             [`${name.replace(':count', '')}`]: foldBuckets(value).sum,
           }),
-          {} as Record<string, number>
+          {} as Record<string, number>,
         );
       const siteRatings = Object.entries(data)
         .filter(([name]) => isSiteMetric(name, ':rating'))
-        .reduce((ratings, [name, value]) => {
-          const { sum, count } = foldBuckets(value);
-          if (count > 0) {
-            ratings.push([name.replace(':rating', ''), sum / count]);
-          }
-          return ratings;
-        }, [] as [string, number][]);
+        .reduce(
+          (ratings, [name, value]) => {
+            const { sum, count } = foldBuckets(value);
+            if (count > 0) {
+              ratings.push([name.replace(':rating', ''), sum / count]);
+            }
+            return ratings;
+          },
+          [] as [string, number][],
+        );
       // The lowest rating is the lowest rating anyone submitted, so it comes from the metric's own
       // `min`. Taking Math.min over the site averages instead returns the overall average whenever
       // a tenant has a single site, which is why this card used to mirror the average card.
@@ -327,11 +360,11 @@ export function* fetchFeedbackMetrics(): SagaIterator {
                     .map(([name, rating]) => rating * (siteCounts[name] || 0))
                     .reduce((total, rating) => total + rating, 0) *
                     10) /
-                    Object.values(siteCounts).reduce((total, count) => total + count, 0)
+                    Object.values(siteCounts).reduce((total, count) => total + count, 0),
                 ) / 10
               : null,
           lowestRating: siteRatingMins.length > 0 ? Math.min(...siteRatingMins) : null,
-        })
+        }),
       );
     } catch (err) {
       yield put(ErrorNotification({ error: err }));
@@ -362,7 +395,7 @@ export function* fetchFeedbackMetricsMoM(): SagaIterator {
 
       const [currentResp, previousResp]: [
         { data: Record<string, MetricResponse> },
-        { data: Record<string, MetricResponse> }
+        { data: Record<string, MetricResponse> },
       ] = yield all([
         call(axios.get, `${baseUrl}/value/v1/feedback-service/values/feedback/metrics?criteria=${criteriaCurrent}`, {
           headers: { Authorization: `Bearer ${token}` },
@@ -375,21 +408,27 @@ export function* fetchFeedbackMetricsMoM(): SagaIterator {
       const extractCounts = (data: Record<string, MetricResponse>) =>
         Object.entries(data)
           .filter(([name]) => name.split(':').length === 3 && name.endsWith(':count'))
-          .reduce((acc, [name, metric]) => {
-            acc[name.replace(':count', '')] = parseInt(metric?.values[0]?.sum || '0');
-            return acc;
-          }, {} as Record<string, number>);
+          .reduce(
+            (acc, [name, metric]) => {
+              acc[name.replace(':count', '')] = parseInt(metric?.values[0]?.sum || '0');
+              return acc;
+            },
+            {} as Record<string, number>,
+          );
 
       const extractRatings = (data: Record<string, MetricResponse>) =>
         Object.entries(data)
           .filter(([name]) => name.split(':').length === 3 && name.endsWith(':rating'))
-          .reduce((acc, [name, metric]) => {
-            const rating = metric?.values[0]?.avg;
-            if (rating) {
-              acc.push([name.replace(':rating', ''), parseFloat(rating)]);
-            }
-            return acc;
-          }, [] as [string, number][]);
+          .reduce(
+            (acc, [name, metric]) => {
+              const rating = metric?.values[0]?.avg;
+              if (rating) {
+                acc.push([name.replace(':rating', ''), parseFloat(rating)]);
+              }
+              return acc;
+            },
+            [] as [string, number][],
+          );
 
       const getWeightedAverage = (ratings: [string, number][], counts: Record<string, number>) => {
         const total = ratings.reduce((sum, [site, rating]) => sum + rating * (counts[site] || 0), 0);
@@ -441,7 +480,7 @@ export function* fetchFeedbackMetricsMoM(): SagaIterator {
           momAvgRatingPercent: momAvg,
 
           momLowestRatingPercent: momLowest,
-        })
+        }),
       );
     } catch (err) {
       yield put(ErrorNotification({ error: err }));
@@ -463,6 +502,7 @@ function incrementRatingValue(feedback: Feedback[]): Feedback[] {
 }
 export function* watchFeedbackSagas(): Generator {
   yield takeLatest(FETCH_FEEDBACKS_ACTION, fetchFeedbacks);
+  yield takeLatest(FETCH_FEEDBACK_SUMMARY_ACTION, fetchFeedbackSummary);
   yield takeLatest(EXPORT_FEEDBACKS_ACTION, exportFeedbacks);
   yield takeLatest(FETCH_FEEDBACK_SITES_ACTION, fetchFeedbackSites);
   yield takeLatest(UPDATE_FEEDBACK_SITE_ACTION, updateFeedbackSite);

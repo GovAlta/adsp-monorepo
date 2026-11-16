@@ -2,6 +2,7 @@ import { FileCriteria, FileItem, FileMetrics, FileTypeItem, Result } from './mod
 import { AppDispatch, RootState } from '@store/index';
 import { FileApi } from './api';
 import { getAccessToken } from '../tenant/actions';
+import { ErrorNotification } from '@store/notifications/actions';
 
 export const UPLOAD_FILE = 'tenant/file-service/upload';
 export const UPLOAD_FILE_SUCCESSES = 'tenant/file-service/upload/success';
@@ -352,6 +353,10 @@ export const UploadFileService =
         type: UPLOAD_FILE_FAILED,
         payload: { result: { propertyId: data.propertyId } },
       });
+      // 400 is returned when the file type or extension is not allowed.
+      if (error?.response?.status === 400) {
+        dispatch(ErrorNotification({ message: `Failed to upload ${data.file?.name || 'file'}`, error }));
+      }
       throw error;
     }
   };

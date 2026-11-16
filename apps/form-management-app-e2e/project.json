@@ -1,0 +1,35 @@
+{
+  "name": "form-management-app-e2e",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/form-management-app-e2e/src",
+  "projectType": "application",
+  "tags": [],
+  "implicitDependencies": ["form-management-app"],
+  "targets": {
+    "e2e": {
+      "executor": "@nx/cypress:cypress",
+      "options": {
+        "cypressConfig": "apps/form-management-app-e2e/cypress.json",
+        "devServerTarget": "form-management-app:serve:development",
+        "testingType": "e2e"
+      },
+      "configurations": {
+        "production": {
+          "devServerTarget": "form-management-app:serve:production"
+        },
+        "ci": {
+          "devServerTarget": "form-management-app:serve-static"
+        }
+      }
+    },
+    "lint": {
+      "inputs": [
+        "default",
+        "^default",
+        "!{projectRoot}/Dockerfile",
+        "{workspaceRoot}/eslint.config.mjs",
+        "{workspaceRoot}/tools/eslint-rules/**/*"
+      ]
+    }
+  }
+}

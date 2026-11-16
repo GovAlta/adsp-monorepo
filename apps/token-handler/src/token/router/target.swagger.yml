@@ -4,74 +4,251 @@ components:
       type: apiKey
       in: cookie
       name: adsp_tk_session
-
-  schemas:
-    UserSessionData:
-      type: object
-      properties:
-        tenantId:
-          type: string
-        id:
-          type: string
-        name:
-          type: string
-        email:
-          type: string
-        roles:
-          type: array
-          items:
-            type: string
-        expiry:
-          type: string
-          format: date-time
+  parameters:
+    TokenHandlerCsrfToken:
+      name: X-XSRF-TOKEN
+      description: >-
+        Value of the XSRF-TOKEN cookie that was set when the user signed in. Required for requests other than GET, HEAD,
+        and OPTIONS.
+      in: header
+      required: true
+      schema:
+        type: string
+      example: 6f1c2d3e4a5b69788796a5b4c3d2e1f0
+  responses:
+    TokenHandlerTargetBadRequest:
+      description: >-
+        Request is invalid: the X-XSRF-TOKEN header does not match the session, the target ID failed validation, the
+        request path has dot segments or encoded path separators, or the upstream of the target cannot be resolved by
+        the directory service or is not in the allowed upstream domains.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/TokenHandlerError'
+          example:
+            errorMessage: Request must include valid CSRF token.
+    TokenHandlerTargetNotFound:
+      description: The client that the user signed in with has no target with the ID.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/TokenHandlerError'
+          example:
+            errorMessage: target with ID 'form-service' could not be found.
+    TokenHandlerTargetUpstreamResponse:
+      description: >-
+        Any other response is the response of the upstream, passed back unchanged except that Set-Cookie, Set-Cookie2,
+        and Clear-Site-Data headers are removed.
 
 /token-handler/v1/targets/{targetId}/{targetPath}:
   parameters:
     - name: targetId
-      description: ID of the target.
+      description: ID of the target of the client that the user signed in with.
       in: path
       required: true
       schema:
         type: string
+        minLength: 1
+        maxLength: 50
+      example: form-service
     - name: targetPath
-      description: Request path on the target. Paths with dot segments ('.' or '..') or encoded path separators are rejected as invalid.
+      description: >-
+        Request path on the upstream, relative to the base URL of the upstream in the directory service. It can have
+        any number of segments (for example form/v1/forms), which OpenAPI cannot express. Paths with dot segments ('.'
+        or '..') or encoded path separators are rejected as invalid. The query string is passed to the upstream
+        unchanged.
       in: path
       required: true
       schema:
         type: string
+      example: form/v1/forms
   get:
     tags:
       - Target
-    description: Perform GET request to target. Note that sub-paths are supported by the API, but not in OpenAPI.
+    description: >-
+      Proxies a GET request to the upstream of the target, with the access token of the signed in user as the bearer
+      token. The access token is refreshed if it is about to expire. The session cookie, CSRF token, and tenant
+      headers of the request are not passed on. The upstream determines the response.
+
+
+      Requires a signed in user on the session cookie; the target must be a target of the client that the user signed
+      in with. No token handler role is required; the upstream checks the roles of the user.
     security:
       - sessionCookie: []
     responses:
       200:
-        description: Request completed successfully.
+        description: Request completed successfully by the upstream.
+      400:
+        $ref: '#/components/responses/TokenHandlerTargetBadRequest'
+      401:
+        description: >-
+          No user is signed in on the session cookie, or the client of the session is no longer registered so the
+          access token cannot be refreshed.
+        content:
+          text/plain:
+            schema:
+              type: string
+            example: Unauthorized
+      404:
+        $ref: '#/components/responses/TokenHandlerTargetNotFound'
+      default:
+        $ref: '#/components/responses/TokenHandlerTargetUpstreamResponse'
   post:
     tags:
       - Target
-    description: Perform POST request to target. Note that sub-paths are supported by the API, but not in OpenAPI.
+    description: >-
+      Proxies a POST request to the upstream of the target, with the access token of the signed in user as the bearer
+      token. The access token is refreshed if it is about to expire. The session cookie, CSRF token, and tenant
+      headers of the request are not passed on. The upstream determines the response.
+
+
+      Requires a signed in user on the session cookie; the target must be a target of the client that the user signed
+      in with. No token handler role is required; the upstream checks the roles of the user. The X-XSRF-TOKEN header is required.
     security:
       - sessionCookie: []
+    parameters:
+      - $ref: '#/components/parameters/TokenHandlerCsrfToken'
+    requestBody:
+      description: Request body for the upstream, passed on unchanged with its content type.
+      required: false
+      content:
+        application/json:
+          schema:
+            type: object
+          example:
+            definitionId: my-form-definition
     responses:
       200:
-        description: Request completed successfully.
+        description: Request completed successfully by the upstream.
+      400:
+        $ref: '#/components/responses/TokenHandlerTargetBadRequest'
+      401:
+        description: >-
+          No user is signed in on the session cookie, or the client of the session is no longer registered so the
+          access token cannot be refreshed.
+        content:
+          text/plain:
+            schema:
+              type: string
+            example: Unauthorized
+      404:
+        $ref: '#/components/responses/TokenHandlerTargetNotFound'
+      default:
+        $ref: '#/components/responses/TokenHandlerTargetUpstreamResponse'
   put:
     tags:
       - Target
-    description: Perform PUT request to target. Note that sub-paths are supported by the API, but not in OpenAPI.
+    description: >-
+      Proxies a PUT request to the upstream of the target, with the access token of the signed in user as the bearer
+      token. The access token is refreshed if it is about to expire. The session cookie, CSRF token, and tenant
+      headers of the request are not passed on. The upstream determines the response.
+
+
+      Requires a signed in user on the session cookie; the target must be a target of the client that the user signed
+      in with. No token handler role is required; the upstream checks the roles of the user. The X-XSRF-TOKEN header is required.
     security:
       - sessionCookie: []
+    parameters:
+      - $ref: '#/components/parameters/TokenHandlerCsrfToken'
+    requestBody:
+      description: Request body for the upstream, passed on unchanged with its content type.
+      required: false
+      content:
+        application/json:
+          schema:
+            type: object
+          example:
+            definitionId: my-form-definition
     responses:
       200:
-        description: Request completed successfully.
+        description: Request completed successfully by the upstream.
+      400:
+        $ref: '#/components/responses/TokenHandlerTargetBadRequest'
+      401:
+        description: >-
+          No user is signed in on the session cookie, or the client of the session is no longer registered so the
+          access token cannot be refreshed.
+        content:
+          text/plain:
+            schema:
+              type: string
+            example: Unauthorized
+      404:
+        $ref: '#/components/responses/TokenHandlerTargetNotFound'
+      default:
+        $ref: '#/components/responses/TokenHandlerTargetUpstreamResponse'
+  patch:
+    tags:
+      - Target
+    description: >-
+      Proxies a PATCH request to the upstream of the target, with the access token of the signed in user as the bearer
+      token. The access token is refreshed if it is about to expire. The session cookie, CSRF token, and tenant
+      headers of the request are not passed on. The upstream determines the response.
+
+
+      Requires a signed in user on the session cookie; the target must be a target of the client that the user signed
+      in with. No token handler role is required; the upstream checks the roles of the user. The X-XSRF-TOKEN header is required.
+    security:
+      - sessionCookie: []
+    parameters:
+      - $ref: '#/components/parameters/TokenHandlerCsrfToken'
+    requestBody:
+      description: Request body for the upstream, passed on unchanged with its content type.
+      required: false
+      content:
+        application/json:
+          schema:
+            type: object
+          example:
+            definitionId: my-form-definition
+    responses:
+      200:
+        description: Request completed successfully by the upstream.
+      400:
+        $ref: '#/components/responses/TokenHandlerTargetBadRequest'
+      401:
+        description: >-
+          No user is signed in on the session cookie, or the client of the session is no longer registered so the
+          access token cannot be refreshed.
+        content:
+          text/plain:
+            schema:
+              type: string
+            example: Unauthorized
+      404:
+        $ref: '#/components/responses/TokenHandlerTargetNotFound'
+      default:
+        $ref: '#/components/responses/TokenHandlerTargetUpstreamResponse'
   delete:
     tags:
       - Target
-    description: Perform DELETE request to target. Note that sub-paths are supported by the API, but not in OpenAPI.
+    description: >-
+      Proxies a DELETE request to the upstream of the target, with the access token of the signed in user as the bearer
+      token. The access token is refreshed if it is about to expire. The session cookie, CSRF token, and tenant
+      headers of the request are not passed on. The upstream determines the response.
+
+
+      Requires a signed in user on the session cookie; the target must be a target of the client that the user signed
+      in with. No token handler role is required; the upstream checks the roles of the user. The X-XSRF-TOKEN header is required.
     security:
       - sessionCookie: []
+    parameters:
+      - $ref: '#/components/parameters/TokenHandlerCsrfToken'
     responses:
       200:
-        description: Request completed successfully.
+        description: Request completed successfully by the upstream.
+      400:
+        $ref: '#/components/responses/TokenHandlerTargetBadRequest'
+      401:
+        description: >-
+          No user is signed in on the session cookie, or the client of the session is no longer registered so the
+          access token cannot be refreshed.
+        content:
+          text/plain:
+            schema:
+              type: string
+            example: Unauthorized
+      404:
+        $ref: '#/components/responses/TokenHandlerTargetNotFound'
+      default:
+        $ref: '#/components/responses/TokenHandlerTargetUpstreamResponse'

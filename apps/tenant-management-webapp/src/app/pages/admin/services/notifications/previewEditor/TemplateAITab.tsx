@@ -5,6 +5,7 @@ import { messagesSelector } from '@store/agent/selectors';
 import { messageAgent } from '@store/agent/actions';
 import { AppDispatch, RootState } from '@store/index';
 import { Template } from '@store/notification/models';
+import { AgentChatStatusBar } from '@components/AgentChatStatusBar';
 
 export interface EmailTemplateProposal {
   subject?: string;
@@ -32,6 +33,8 @@ interface TemplateAITabProps {
   onProposal: (proposal: EmailTemplateProposal) => void;
   onApply: (id: string) => void;
   onAttachmentUpload?: (file: File) => Promise<Attachment>;
+  /** Starts a new chat once the user confirms resetting the current one. */
+  onReset: () => void;
 }
 
 export const TemplateAITab: React.FunctionComponent<TemplateAITabProps> = ({
@@ -48,6 +51,7 @@ export const TemplateAITab: React.FunctionComponent<TemplateAITabProps> = ({
   onProposal,
   onApply,
   onAttachmentUpload,
+  onReset,
 }) => {
   const dispatch = useDispatch<AppDispatch>();
   const messages = useSelector((state: RootState) => messagesSelector(state, threadId));
@@ -93,6 +97,7 @@ export const TemplateAITab: React.FunctionComponent<TemplateAITabProps> = ({
   return (
     <div style={{ height }}>
       <AgentChat
+        key={threadId}
         disabled={disabled}
         threadId={threadId}
         context={context}
@@ -117,6 +122,15 @@ export const TemplateAITab: React.FunctionComponent<TemplateAITabProps> = ({
           dispatch(messageAgent(tid, ctx, content))
         }
         onAttachmentUpload={onAttachmentUpload}
+        showUsage
+        status={
+          <AgentChatStatusBar
+            threadId={threadId}
+            onReset={onReset}
+            keptContent="Your template isn’t changed."
+            testId="notification-editor-agent"
+          />
+        }
       />
     </div>
   );

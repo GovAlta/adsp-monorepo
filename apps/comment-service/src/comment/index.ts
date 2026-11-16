@@ -1,4 +1,4 @@
-import { AdspId, EventService, adspId } from '@abgov/adsp-service-sdk';
+import { AdspId, AuditService, EventService, adspId } from '@abgov/adsp-service-sdk';
 import type { ServiceDirectory, TokenProvider } from '@abgov/adsp-service-sdk';
 import { Application } from 'express';
 import { Logger } from 'winston';
@@ -8,6 +8,7 @@ import { TopicRepository } from './repository';
 import { TopicTypeConfiguration } from './types';
 import { TopicTypeEntity } from './model';
 
+export * from './audit';
 export * from './events';
 export * from './model';
 export * from './repository';
@@ -21,6 +22,7 @@ interface CommentMiddlewareProps {
   repository: TopicRepository;
   directory: ServiceDirectory;
   tokenProvider: TokenProvider;
+  auditService: AuditService;
 }
 
 export function applyCommentMiddleware(app: Application, { serviceId, ...props }: CommentMiddlewareProps): Application {

@@ -3,38 +3,102 @@ components:
     CalendarDate:
       type: object
       properties:
+        id:
+          type: integer
+          description: ID of the date in the format yyyyMMdd.
         date:
           type: string
           format: date-time
+        dayOfWeek:
+          type: integer
+          minimum: 1
+          maximum: 7
+          description: ISO day of the week, from 1 (Monday) to 7 (Sunday).
         isWeekend:
           type: boolean
         isHoliday:
           type: boolean
         isBusinessDay:
           type: boolean
+        holiday:
+          type: string
+          nullable: true
+          description: Name of the holiday, if the date is a holiday.
         isInLieuOfDay:
           type: boolean
+          description: Indicates the date is a day off in lieu of a holiday that falls on a weekend.
+      example:
+        id: 20261111
+        date: '2026-11-11T00:00:00.000Z'
+        dayOfWeek: 3
+        isWeekend: false
+        isHoliday: true
+        isBusinessDay: false
+        holiday: Remembrance Day
+        isInLieuOfDay: false
+    CalendarDatesPage:
+      type: object
+      properties:
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/CalendarDate'
+        page:
+          $ref: '#/components/schemas/CalendarPage'
+      example:
+        results:
+          - id: 20261111
+            date: '2026-11-11T00:00:00.000Z'
+            dayOfWeek: 3
+            isWeekend: false
+            isHoliday: true
+            isBusinessDay: false
+            holiday: Remembrance Day
+            isInLieuOfDay: false
+          - id: 20261225
+            date: '2026-12-25T00:00:00.000Z'
+            dayOfWeek: 5
+            isWeekend: false
+            isHoliday: true
+            isBusinessDay: false
+            holiday: Christmas Day
+            isInLieuOfDay: false
+        page:
+          next: Mg==
+          size: 2
 
 /calendar/v1/dates:
   get:
     tags:
       - Dates
-    description: Retrieves date values.
+    description: >
+      Retrieves calendar dates in ascending order, with information about weekends, holidays, and business days in
+      Alberta. Public: no roles are required and anonymous requests are allowed. Dates are platform data and the same
+      for every tenant, so no tenant context is used.
+    security:
+      - {}
+      - accessToken: []
     parameters:
       - name: top
-        description: Number of dates to return in a page.
+        description: Number of dates to return in a page. Must be a positive integer.
         in: query
         required: false
         schema:
-          type: number
+          type: integer
+          minimum: 1
+          default: 10
+        example: 50
       - name: after
-        description: Cursor for page of results to retrieve.
+        description: Cursor for the page of results to retrieve, from page.next of the previous page.
         in: query
         required: false
         schema:
           type: string
+        example: Mg==
       - name: criteria
-        description: Criteria for dates to retrieve.
+        description: >
+          JSON criteria for the dates to retrieve. Must be valid JSON. min and max are inclusive date IDs in the
+          format yyyyMMdd.
         in: query
         required: false
         content:
@@ -44,8 +108,10 @@ components:
               properties:
                 max:
                   type: integer
+                  example: 20261231
                 min:
                   type: integer
+                  example: 20260101
                 isWeekend:
                   type: boolean
                 isHoliday:
@@ -54,46 +120,46 @@ components:
                   type: boolean
                 isInLieuOfDay:
                   type: boolean
+            example:
+              min: 20260101
+              max: 20261231
+              isHoliday: true
     responses:
       200:
-        description: Request completed successfully.
+        description: Dates successfully retrieved.
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                results:
-                  type: array
-                  items:
-                    $ref: '#/components/schemas/CalendarDate'
-                page:
-                  type: object
-                  properties:
-                    after:
-                      type: string
-                    next:
-                      type: string
-                    size:
-                      type: number
+              $ref: '#/components/schemas/CalendarDatesPage'
 
 /calendar/v1/dates/{id}:
   parameters:
     - name: id
-      description: ID (yyyydd) of the date to retrieve.
+      description: ID of the date to retrieve, in the format yyyyMMdd.
       in: path
       required: true
       schema:
         type: integer
+        minimum: 20200000
+        maximum: 20600000
+      example: 20261111
   get:
     tags:
       - Dates
-    description: Retrieves information about a calendar date.
+    description: >
+      Retrieves information about a calendar date. Public: no roles are required and anonymous requests are allowed.
+      Dates are platform data and the same for every tenant, so no tenant context is used.
+    security:
+      - {}
+      - accessToken: []
     responses:
-      404:
-        description: Calendar date not found.
       200:
-        description: Request completed successfully.
+        description: Date successfully retrieved.
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/CalendarDate'
+      400:
+        $ref: '#/components/responses/CalendarBadRequest'
+      404:
+        $ref: '#/components/responses/CalendarNotFound'

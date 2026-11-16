@@ -1,28 +1,64 @@
 components:
+  responses:
+    TokenHandlerNoSession:
+      description: No user is signed in on the session cookie.
+      content:
+        text/plain:
+          schema:
+            type: string
+          example: Unauthorized
   schemas:
     UserSessionData:
       type: object
       properties:
         tenantId:
           type: string
+          description: URN of the tenant of the user.
         id:
           type: string
+          description: ID of the user in access service.
         name:
           type: string
         email:
           type: string
         roles:
           type: array
-          items: string
+          description: >-
+            Roles of the user, from the access token. Realm roles are listed by name, and client roles as
+            '<client>:<role>'.
+          items:
+            type: string
         expiry:
           type: string
           format: date-time
+          description: When the session expires, based on the expiry of the refresh token.
+        authenticatedBy:
+          type: string
+          description: ID of the token handler client that the user signed in with.
+      example:
+        tenantId: urn:ads:platform:tenant-service:v2:/tenants/61f2e3a8c9b1d2e3f4a5b6c7
+        id: 0a1b2c3d-4e5f-6789-abcd-ef0123456789
+        name: Test User
+        email: test.user@gov.ab.ca
+        roles:
+          - default-roles-my-realm
+          - urn:ads:platform:form-service:form-applicant
+        expiry: '2026-11-10T20:30:00.000Z'
+        authenticatedBy: my-client
 
 /token-handler/v1/sessions:
   get:
     tags:
       - Session
-    description: Retrieves sessions. Returns session of current user for user authenticated by handler.
+    description: >-
+      Retrieves the session of the signed in user, as an array with one item. Frontend applications use it to find out
+      whether the user is signed in, and who they are.
+
+
+      Requires a signed in user on the session cookie; no role is required. The token-handler-admin role is intended to
+      list all sessions of the user's tenant, but that listing is not currently supported.
+    security:
+      - sessionCookie: []
     responses:
       200:
         description: Request completed successfully.
@@ -31,4 +67,6 @@ components:
             schema:
               type: array
               items:
-                $ref: "#/components/schemas/UserSessionData"
+                $ref: '#/components/schemas/UserSessionData'
+      401:
+        $ref: '#/components/responses/TokenHandlerNoSession'

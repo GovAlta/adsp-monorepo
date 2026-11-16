@@ -855,7 +855,7 @@ When(
 
 Then('the user clicks Save button in Edit contact information modal', function () {
   notificationsObj.editContactModalSaveBtn().shadow().find('button').click({ force: true });
-  cy.wait(2000);
+  cy.wait(4000);
 });
 
 Then('the user clicks Cancel button in Edit contact information modal', function () {

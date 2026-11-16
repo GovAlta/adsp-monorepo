@@ -7,7 +7,7 @@ import * as cors from 'cors';
 import * as path from 'path';
 import { config as loadEnv } from 'dotenv';
 import { adspId } from '@abgov/adsp-service-sdk';
-import type { EventService, User } from '@abgov/adsp-service-sdk';
+import type { AuditAction, AuditRecordDetails, AuditService, EventService, User } from '@abgov/adsp-service-sdk';
 import { createErrorHandler, createLogger } from '@core-services/core-common';
 import { createLlmFromEnv, driftMessage, PlannerServiceRoles, registeredServices, unmappedServices } from './planner';
 import { createPlannerRouter } from './planner/router';
@@ -20,12 +20,23 @@ const port = Number(process.env.PORT || 3381);
 const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/local`;
 const logger = createLogger('project-planner-local', 'debug');
 
+const renderIds = (_k: string, v: unknown) =>
+  typeof v === 'object' && v?.constructor?.name === 'AdspId' ? v.toString() : v;
+
 const eventService = {
-  send: (event: unknown) =>
-    logger.debug(
-      `event: ${JSON.stringify(event, (_k, v) => (typeof v === 'object' && v?.constructor?.name === 'AdspId' ? v.toString() : v))}`,
-    ),
+  send: (event: unknown) => logger.debug(`event: ${JSON.stringify(event, renderIds)}`),
 } as unknown as EventService;
+
+// No audit service locally, so audit records are logged instead.
+const auditService = {
+  record: async (action: AuditAction, details: AuditRecordDetails) => {
+    logger.debug(`audit: ${action.name} ${JSON.stringify(details, renderIds)}`);
+    return { status: 'recorded', eventId: 'local' };
+  },
+  query: async () => ({ results: [], page: {} }),
+  flush: async () => undefined,
+  droppedEventCount: 0,
+} as unknown as AuditService;
 
 const devUser = {
   id: process.env.LOCAL_USER_ID || 'local-dev-user',
@@ -72,6 +83,7 @@ const startLocal = async () => {
       specialistChatRepository: repositories.specialistChatRepository,
       solutionVersionRepository: repositories.solutionVersionRepository,
       eventService,
+      auditService,
       llm: createLlmFromEnv(process.env, logger),
     }),
   );

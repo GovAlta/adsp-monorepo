@@ -1,4 +1,4 @@
-import { adspId, AuditService, User } from '@abgov/adsp-service-sdk';
+import { adspId, AuditService, resolveRetentionClass, User } from '@abgov/adsp-service-sdk';
 import { Logger } from 'winston';
 import {
   auditDirectory,
@@ -20,7 +20,8 @@ describe('audit', () => {
   });
 
   it('defines deleted as warning severity with compliance retention', () => {
-    expect(EntryDeletedAuditAction).toMatchObject({ severity: 'warning', retentionClass: 'compliance' });
+    expect(EntryDeletedAuditAction.severity).toBe('warning');
+    expect(resolveRetentionClass(EntryDeletedAuditAction)).toBe('compliance');
     expect(DirectoryAuditActions.map((a) => a.name)).toEqual([
       'namespace.created',
       'tag.deleted',
@@ -31,6 +32,19 @@ describe('audit', () => {
       'resource-tag.added',
       'resource-tag.removed',
     ]);
+  });
+
+  it('derives compliance retention from the category, except tag changes which keep standard', () => {
+    expect(Object.fromEntries(DirectoryAuditActions.map((a) => [a.name, resolveRetentionClass(a)]))).toEqual({
+      'namespace.created': 'compliance',
+      'tag.deleted': 'compliance',
+      'resource.deleted': 'compliance',
+      'entry.created': 'compliance',
+      'entry.updated': 'compliance',
+      'entry.deleted': 'compliance',
+      'resource-tag.added': 'standard',
+      'resource-tag.removed': 'standard',
+    });
   });
 
   describe('details', () => {

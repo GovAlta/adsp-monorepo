@@ -112,6 +112,8 @@ describe('toClientSummary', () => {
       type: 'confidential',
       protocol: 'openid-connect',
       builtIn: false,
+      origin: 'tenant',
+      serviceAccount: true,
     });
     expect(JSON.stringify(summary)).not.toContain('super-secret-value');
   });
@@ -130,6 +132,20 @@ describe('toClientSummary', () => {
     expect(toClientSummary({ clientId: 'urn:ads:platform:tenant-service' })?.builtIn).toBe(false);
   });
 
+  it.each([
+    ['realm-management', 'keycloak'],
+    ['urn:ads:platform:tenant-service', 'platform'],
+    ['urn:ads:demo:web-app', 'tenant'],
+    ['my-app', 'tenant'],
+  ])('labels %s as a %s client', (clientId, origin) => {
+    expect(toClientSummary({ clientId })?.origin).toBe(origin);
+  });
+
+  it('says whether the client has a service account', () => {
+    expect(toClientSummary({ clientId: 'api', serviceAccountsEnabled: true })?.serviceAccount).toBe(true);
+    expect(toClientSummary({ clientId: 'api' })?.serviceAccount).toBeUndefined();
+  });
+
   it('leaves out settings Keycloak did not return instead of guessing them', () => {
     expect(toClientSummary({ id: 'internal-1', clientId: 'limited', description: 'Listed only' })).toEqual({
       clientId: 'limited',
@@ -139,6 +155,8 @@ describe('toClientSummary', () => {
       type: undefined,
       protocol: undefined,
       builtIn: false,
+      origin: 'tenant',
+      serviceAccount: undefined,
     });
   });
 

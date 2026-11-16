@@ -1,7 +1,6 @@
 ---
 layout: page
 title: Notification service
-nav_order: 9
 parent: Services
 ---
 
@@ -17,6 +16,38 @@ client `urn:ads:platform:notification-service`
 |:-|:-|
 | subscription-admin | Administrator role for notification service subscriptions. This role grants read and write of subscriptions. For example, a user with this role can remove subscriptions and delete subscribers.  |
 | subscription-app | Subscription application role for the notification service. This role is used to grant service accounts permission to manage subscribers and subscriptions.  |
+| code-sender | Role for service accounts that send and check verification codes for any subscriber of the tenant. It does not allow verifying the channel. |
+
+The `configuration-admin` role of the [configuration service](configuration-service.md) can also manage notification types and the tenant contact.
+
+## Tenancy
+Every notification service resource belongs to one tenant. Notification types, subscribers, subscriptions, and the contact information are all stored and read per tenant.
+
+- **Tenant users and service accounts** always act on the tenant of their token. Any `tenantId` query parameter is ignored.
+- **Core (platform) users and service accounts** have no tenant of their own, so they must set the `tenantId` query parameter (for example, `?tenantId=urn:ads:platform:tenant-service:v2:/tenants/{id}`). Endpoints that change configuration (`/types` writes and `/contact`) respond `400` when there is no tenant context. Other endpoints may fail without a clear error, so always include it. Only operations on a specific subscriber (`/subscribers/{subscriber}` and its sub-paths) can find the subscriber without it.
+- **Notification types** combine *platform* types (configured by ADSP for all tenants) with the tenant's own types. A tenant type with the same ID as a platform type is a *customization*: only its event templates replace the platform templates. Use `GET /types?source=tenant` or `GET /types?source=core` to see the definitions separately.
+- **Subscribers and subscriptions** are never shared across tenants. The same person subscribing in two tenants has two subscribers. A subscriber ID from one tenant responds `404` in another.
+- **Events** trigger notifications only for the tenant that sent the event. A platform type that includes an event generates notifications for subscribers of the tenant the event was sent for.
+
+## API overview
+All endpoints are under `https://notification-service.adsp.alberta.ca/subscription/v1` and require a bearer token. See the [API documentation](https://api.adsp.alberta.ca) for request and response schemas.
+
+| Area | Endpoints | Required role |
+|:-|:-|:-|
+| Notification types and templates | `GET /types`, `GET /types/{type}` | Any authenticated user |
+| | `GET /types?source=tenant\|core`, `POST /types`, `PATCH /types/{type}`, `DELETE /types/{type}` | subscription-admin or configuration-admin |
+| Contact | `GET /contact`, `PATCH /contact` | subscription-admin or configuration-admin |
+| Subscriptions | `GET /types/{type}/subscriptions` | subscription-admin or subscription-app |
+| | `POST /types/{type}/subscriptions`, `POST\|DELETE /types/{type}/subscriptions/{subscriber}`, `DELETE /types/{type}/subscriptions/{subscriber}/criteria` | subscription-admin, subscription-app, or the subscriber's own user when the type allows it |
+| | `GET /types/{type}/subscriptions/{subscriber}` | subscription-admin |
+| Subscribers (recipients) | `GET /subscribers` | subscription-admin |
+| | `POST /subscribers`, `GET\|PATCH\|DELETE /subscribers/{subscriber}`, `GET /subscribers/{subscriber}/subscriptions`, `GET /subscribers/{subscriber}/types/{type}/channels` | subscription-admin, subscription-app, or the subscriber's own user |
+| | `POST /subscribers/{subscriber}` (verification operations) | As above, or code-sender for `send-code`, `send-code-with-link`, and `check-code` |
+| | `GET /subscribers/my-subscriber` | Any authenticated user |
+
+There are no separate template or event endpoints. Templates are part of each notification type's `events`, and events are sent through the [event service](event-service.md).
+
+`POST /provider/v1/bot/messages` is the Bot Framework webhook used by the `bot` channel provider. Only the Bot Framework calls it, so it is not part of the API documentation.
 
 ## Concepts
 ### Notification type
@@ -31,8 +62,141 @@ A subscriber represents a receiver of notifications. Subscriber is not a represe
 ### Subscription
 *Subscribers* have subscriptions to *notification types*. Each subscription relates a subscriber to a notification type and optionally includes criteria. The subscription criteria filters events that result in notifications to the associated subscriber. For example, in the case of 'Application Progress', the applicant is only subscribed to notifications regarding their specific application and this is handled as a subscription criteria.
 
+### Template
+Each event of a notification type has a template per channel (`email`, `sms`, `bot`, `mail`), with a `subject` and `body`. Templates use [Handlebars](https://handlebarsjs.com/) syntax, and email bodies are wrapped in the standard email layout. The following values are available in templates:
+
+| Value | Description |
+|:-|:-|
+| `event` | The triggering domain event, including `namespace`, `name`, `timestamp`, `correlationId`, `context`, and `payload`. |
+| `subscriber` | The subscriber's `id`, `userId`, and `addressAs`. |
+| `tenant` | The tenant the event was sent for, including `name`. |
+| `managementUrl` | Link to the subscriber app, where the subscriber can manage their subscriptions. |
+
+## Events
+Notifications are triggered by domain events from other services. A notification type lists the events (`namespace` and `name`) that it sends notifications for. Events in the `notification-service` namespace never trigger notifications, to avoid loops.
+
+The notification service sends the following domain events under the `notification-service` namespace:
+
+| Event | Description |
+|:-|:-|
+| `notifications-generated` | Notifications were generated for an event. |
+| `notification-generation-failed` | Generation of notifications for an event failed. |
+| `notification-sent` | A notification was sent. |
+| `notification-send-failed` | Sending a notification failed. |
+| `notification-config-retried` | Generation retried reading configuration because the tenant's from email was not yet set. |
+| `subscriber-created` | A subscriber was created. |
+| `subscriber-updated` | A subscriber was updated, including verification of a channel. |
+| `subscriber-deleted` | A subscriber was deleted. |
+| `subscription-set` | A subscription was created or its criteria changed. |
+| `subscription-deleted` | A subscription was deleted. |
+
+## Audit
+Notification service records audit events in the `notification-service` namespace of the [audit service](/adsp-monorepo/services/audit-service.html). Records are written to the tenant of the subscriber, subscription, notification type or notification. All actions are version 1.
+
+| Action | Category | Severity | Retention class | Recorded when |
+|:-|:-|:-|:-|:-|
+| `subscriber.created` | administrative | info | standard | A subscriber is created, including when a user first subscribes. |
+| `subscriber.updated` | administrative | info | standard | The name or channels of a subscriber are changed, or a subscriber channel is verified. |
+| `subscriber.deleted` | administrative | warning | compliance | A subscriber and its subscriptions are deleted. |
+| `subscription.created` | administrative | info | standard | A subscriber is subscribed to a notification type. |
+| `subscription.updated` | administrative | info | standard | The criteria of a subscription are changed or one criteria is removed. |
+| `subscription.deleted` | administrative | info | standard | A subscriber is unsubscribed from a notification type. |
+| `notification.sent` | runtime | info | standard | A notification is sent to a subscriber through a channel provider. |
+| `notification.send-failed` | runtime | warning | standard | A notification to a subscriber could not be sent after all retries, with the `error` message in the metadata. |
+| `notification.direct-sent` | runtime | info | standard | A notification of a direct type (with an `addressPath`) is sent to the address in the event. |
+| `notification.direct-send-failed` | runtime | warning | standard | A notification of a direct type could not be sent after all retries, with the `error` message in the metadata. |
+| `notification-type.created` | administrative | info | compliance | A tenant notification type is created through the notification API. |
+| `notification-type.updated` | administrative | warning | compliance | A tenant notification type is changed, or a platform type is customized (`customizesCoreType: true`). |
+| `notification-type.deleted` | administrative | warning | compliance | A tenant notification type or a platform type customization is deleted (`revertsToCoreType: true`). |
+
+Subscriber and subscription changes record the user or service account (ID, name and roles, without the email address) as the actor. Subscriber records include only the channel types and whether each is verified; channel addresses are not recorded. Sent and failed notifications are recorded with the system actor `notification-service-job` and the event correlation ID. Notifications to subscribers are recorded against the subscription (`<type ID>:<subscriber ID>`), and notifications of direct types are recorded against the notification type with the `direct-` actions. The recipient address, message content and context values are not recorded (only the context keys).
+
+Contact information changes and notification type changes made directly in the configuration service are not recorded by notification service. Notifications can be high volume, so audit events are sent in batches of up to 100 events. Audit failures are logged and do not fail the operation. The service account of notification service needs the `audit-writer` role of `urn:ads:platform:audit-service`. Set `NOTIFICATION_AUDIT_ENABLED` to `false` to disable recording; when unset it follows the SDK `AUDIT_ENABLED` variable (on by default).
+
 ## Code examples
-### Configure a notification type
+### Create a notification type
+Users with the subscription-admin or configuration-admin role can create notification types for their tenant. The definition is validated, including its channels, events, and templates. The service responds `409` if a type with the ID already exists.
+
+```typescript
+  const response = await fetch(
+    'https://notification-service.adsp.alberta.ca/subscription/v1/types',
+    {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        id: 'application-status',
+        name: 'Application status',
+        description: 'Notifications about changes to an application.',
+        manageSubscribe: true,
+        publicSubscribe: false,
+        subscriberRoles: ['applicant'],
+        channels: ['email'],
+        events: [
+          {
+            namespace: 'application-service',
+            name: 'application-status-changed',
+            templates: {
+              email: {
+                subject: 'Your application status changed',
+                body: '<p>Hi {{ subscriber.addressAs }}, your application is now {{ event.payload.status }}.</p>',
+              },
+            },
+          },
+        ],
+      }),
+    }
+  );
+
+  const { id, events } = await response.json();
+```
+
+### Customize a platform notification type template
+Updating a platform type saves a tenant customization of it. Only the event templates in the customization apply. Deleting the customization with `DELETE /types/{type}` reverts to the platform templates.
+
+```typescript
+  await fetch(
+    'https://notification-service.adsp.alberta.ca/subscription/v1/types/application-health-updates',
+    {
+      method: 'PATCH',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        events: [
+          {
+            namespace: 'status-service',
+            name: 'health-check-started',
+            templates: {
+              email: {
+                subject: '{{ event.payload.application.name }} is being monitored',
+                body: '<p>Health checks started for {{ event.payload.application.name }}.</p>',
+              },
+            },
+          },
+        ],
+      }),
+    }
+  );
+```
+
+### Act on a tenant as a platform service account
+Core service accounts set the `tenantId` query parameter on every request.
+
+```typescript
+  const tenantId = 'urn:ads:platform:tenant-service:v2:/tenants/61f2e3a8c9b1d2e3f4a5b6c7';
+  const response = await fetch(
+    `https://notification-service.adsp.alberta.ca/subscription/v1/types?tenantId=${encodeURIComponent(tenantId)}`,
+    { headers: { 'Authorization': `Bearer ${coreAccessToken}` } }
+  );
+
+  const types = await response.json();
+```
+
+### Configure a notification type in the configuration service
 Notification types are configured using the [configuration service](configuration-service.md).
 
 ```typescript
@@ -104,6 +268,116 @@ For this type of subscription request, the user must have a subscriber role.
     subscriber,
     criteria,
   } = await response.json();
+```
+
+### Subscribe a subscriber from an application
+Service accounts with the subscription-app role can subscribe anyone. A subscriber is created if no subscriber exists for the `userId` (or `id`) in the request.
+
+```typescript
+  const response = await fetch(
+    `https://notification-service.adsp.alberta.ca/subscription/v1/types/${typeId}/subscriptions`,
+    {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        userId,
+        addressAs: 'A.N.Other',
+        channels: [{ channel: 'email', address: 'a.n.other@acme.org' }],
+        criteria: { correlationId: 'application-1234' },
+      }),
+    }
+  );
+
+  const { subscriberId, criteria } = await response.json();
+```
+
+### Find subscriptions to a notification type
+Service accounts can check whether anyone is subscribed before sending an event. Results are paged; pass `page.next` as `after` to get the next page.
+
+```typescript
+  const subscriptionMatch = encodeURIComponent(JSON.stringify({ correlationId: 'application-1234' }));
+  const response = await fetch(
+    `https://notification-service.adsp.alberta.ca/subscription/v1/types/${typeId}/subscriptions?top=50&subscriptionMatch=${subscriptionMatch}`,
+    { headers: { 'Authorization': `Bearer ${accessToken}` } }
+  );
+
+  const { results, page } = await response.json();
+```
+
+### Remove one subscription criteria
+Removes the criteria that match. The subscription is deleted when its last criteria is removed.
+
+```typescript
+  const criteria = encodeURIComponent(JSON.stringify({ correlationId: 'application-1234' }));
+  const response = await fetch(
+    `https://notification-service.adsp.alberta.ca/subscription/v1/types/${typeId}/subscriptions/${subscriberId}/criteria?criteria=${criteria}`,
+    {
+      method: 'DELETE',
+      headers: { 'Authorization': `Bearer ${accessToken}` },
+    }
+  );
+
+  const { deleted } = await response.json();
+```
+
+### Get the current user's subscriber
+```typescript
+  const response = await fetch(
+    'https://notification-service.adsp.alberta.ca/subscription/v1/subscribers/my-subscriber?includeSubscriptions=true',
+    { headers: { 'Authorization': `Bearer ${accessToken}` } }
+  );
+
+  const { id, channels, subscriptions } = await response.json();
+```
+
+### Search subscribers
+Users with the subscription-admin role can search subscribers of their tenant by name, email, or SMS number.
+
+```typescript
+  const response = await fetch(
+    'https://notification-service.adsp.alberta.ca/subscription/v1/subscribers?search=other&sortBy=created&sortDirection=desc',
+    { headers: { 'Authorization': `Bearer ${accessToken}` } }
+  );
+
+  const { results, page: { total, next } } = await response.json();
+```
+
+### Verify a subscriber channel
+Send a code to the channel address, then verify the channel with the code the subscriber received.
+
+```typescript
+  const subscriberUrl = `https://notification-service.adsp.alberta.ca/subscription/v1/subscribers/${subscriberId}`;
+  const headers = {
+    'Authorization': `Bearer ${accessToken}`,
+    'Content-Type': 'application/json',
+  };
+
+  await fetch(subscriberUrl, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({
+      operation: 'send-code',
+      channel: 'email',
+      address: 'a.n.other@acme.org',
+      reason: 'Verify your email address.',
+    }),
+  });
+
+  const response = await fetch(subscriberUrl, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({
+      operation: 'verify-channel',
+      channel: 'email',
+      address: 'a.n.other@acme.org',
+      code,
+    }),
+  });
+
+  const { verified } = await response.json();
 ```
 
 ### Update subscriber (notification preferences)

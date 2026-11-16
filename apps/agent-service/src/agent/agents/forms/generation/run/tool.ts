@@ -8,6 +8,7 @@ import { runFormGeneration } from './orchestrator';
 import { createProgressEmitter } from './progress';
 import { readSourceDocuments } from './sourceDocuments';
 import { AdspRequestContext } from '../../../../types';
+import { getUsageRecorder } from '../../../../model/conversationUsage';
 
 interface FormGenerationToolsProps {
   directory: ServiceDirectory;
@@ -83,6 +84,7 @@ for a targeted edit to content that already exists.`,
         variant: inputData.variant ?? 'pages',
         emit: createProgressEmitter(context.writer),
         abortSignal: context.abortSignal,
+        usage: getUsageRecorder(requestContext),
       });
 
       return { ...result, summary: summarize(result) };

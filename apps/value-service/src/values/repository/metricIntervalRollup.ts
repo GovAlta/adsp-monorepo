@@ -23,6 +23,43 @@ export interface MetricIntervalRollupRepository {
 // has to stay stable. Advisory keys share one database-wide space; this one is the ticket number.
 export const METRIC_INTERVAL_ROLLUP_LOCK_KEY = 5318;
 
+/**
+ * Run work in a transaction that holds an advisory lock, resolving to null without running it when
+ * another session holds the same key.
+ *
+ * pg_try_advisory_xact_lock is scoped to the transaction: it is taken on that transaction's own
+ * connection and released when it ends, so the lock cannot be released onto a different pooled
+ * connection than the one that took it, nor outlive a run whose pod was killed. The try_ form
+ * rather than the blocking one, because a replica that loses the race should skip this tick
+ * instead of queueing up behind the winner and running the same work a moment later.
+ */
+export const withTransactionLock = async <T>(
+  knex: Knex,
+  key: number,
+  statementTimeoutMs: number,
+  work: (trx: Knex.Transaction) => Promise<T>,
+): Promise<T | null> =>
+  knex.transaction(async (trx) => {
+    const result = await trx.raw<{ rows: { locked: boolean }[] }>('SELECT pg_try_advisory_xact_lock(?) AS locked', [
+      key,
+    ]);
+
+    if (!result?.rows?.[0]?.locked) {
+      return null;
+    }
+
+    if (statementTimeoutMs > 0) {
+      // A refresh that runs away holds its connection for as long as it takes, and the pool is
+      // shared with the API. SET LOCAL so the timeout reverts when the transaction ends rather
+      // than sticking to a pooled connection that goes on to serve a request. The value is
+      // interpolated because SET does not take a bind parameter; it is truncated to an integer
+      // rather than passed through as given.
+      await trx.raw(`SET LOCAL statement_timeout = ${Math.trunc(statementTimeoutMs)}`);
+    }
+
+    return work(trx);
+  });
+
 type RangeRow = {
   start?: Date | string | null;
   end?: Date | string | null;
@@ -49,34 +86,11 @@ export class TimescaleMetricIntervalRollupRepository implements MetricIntervalRo
    * Scoped to one interval rather than a whole run so that the work commits as it goes: coverage is
    * per interval, so this is already the unit whose read-and-extend has to be atomic, and an
    * interval that exceeds its statement timeout then rolls back only itself.
-   *
-   * pg_try_advisory_xact_lock is scoped to the transaction: it is taken on that transaction's own
-   * connection and released when it ends, so the lock cannot be released onto a different pooled
-   * connection than the one that took it, nor outlive a run whose pod was killed. The try_ form
-   * rather than the blocking one, because a replica that loses the race should skip this tick
-   * instead of queueing up behind the winner and running the same work a moment later.
    */
   async withRollupLock<T>(work: (repository: MetricIntervalRollupRepository) => Promise<T>): Promise<T | null> {
-    return this.knex.transaction(async (trx) => {
-      const result = await trx.raw<{ rows: { locked: boolean }[] }>('SELECT pg_try_advisory_xact_lock(?) AS locked', [
-        METRIC_INTERVAL_ROLLUP_LOCK_KEY,
-      ]);
-
-      if (!result?.rows?.[0]?.locked) {
-        return null;
-      }
-
-      if (this.statementTimeoutMs > 0) {
-        // A refresh that runs away holds its connection for as long as it takes, and the pool is
-        // shared with the API. SET LOCAL so the timeout reverts when the transaction ends rather
-        // than sticking to a pooled connection that goes on to serve a request. The value is
-        // interpolated because SET does not take a bind parameter; it is truncated to an integer
-        // rather than passed through as given.
-        await trx.raw(`SET LOCAL statement_timeout = ${Math.trunc(this.statementTimeoutMs)}`);
-      }
-
-      return work(new TimescaleMetricIntervalRollupRepository(trx, this.statementTimeoutMs));
-    });
+    return withTransactionLock(this.knex, METRIC_INTERVAL_ROLLUP_LOCK_KEY, this.statementTimeoutMs, (trx) =>
+      work(new TimescaleMetricIntervalRollupRepository(trx, this.statementTimeoutMs)),
+    );
   }
 
   /**
