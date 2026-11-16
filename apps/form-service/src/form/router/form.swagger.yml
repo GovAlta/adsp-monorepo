@@ -359,6 +359,31 @@ components:
           type: object
         uiSchema:
           type: object
+        registration:
+          type: object
+          description: >
+            Access request settings, merged into the existing settings. Omitted properties keep their current
+            value, and enabled defaults to false for definitions that have no registration settings yet.
+          additionalProperties: false
+          properties:
+            enabled:
+              type: boolean
+              description: Whether the form is restricted and accepts access requests.
+            accessGroup:
+              type: string
+              writeOnly: true
+              minLength: 1
+              maxLength: 255
+              description: >
+                Keycloak group containing the roles needed to access the form. Not returned by the form APIs.
+            dataSchema:
+              type: object
+              description: >
+                JSON schema (draft-07) of the registration questions. Must not define firstName, lastName or email,
+                which are standard fields of every access request.
+            uiSchema:
+              type: object
+              description: Layout of the registration questions.
       additionalProperties: false
       example:
         description: Application for a municipal business licence, including home-based businesses.

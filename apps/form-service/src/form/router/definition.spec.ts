@@ -812,6 +812,79 @@ describe('definition router', () => {
       expect(next).not.toHaveBeenCalled();
     });
 
+    it('merges registration into the existing settings and keeps the access group', async () => {
+      const existingDefinition = {
+        id: 'test',
+        name: 'Test',
+        registration: { enabled: false, accessGroup: 'test-users' },
+      };
+      const expectedPatchedDefinition = {
+        ...existingDefinition,
+        registration: { enabled: true, accessGroup: 'test-users' },
+      };
+
+      axiosMock.get.mockResolvedValue({ status: HttpStatusCodes.OK, data: existingDefinition });
+      mockPatchSuccess(expectedPatchedDefinition, 2);
+
+      const req = {
+        user: { tenantId, id: 'tester', roles: [FormServiceRoles.Admin], isCore: true },
+        params: { definitionId: 'test' },
+        body: { registration: { enabled: true } },
+        tenant: { id: tenantId },
+      };
+      const res = { status: jest.fn().mockReturnThis(), send: jest.fn() };
+      const next = jest.fn();
+
+      await patchFormDefinition(directoryMock, tokenProviderMock)(
+        req as unknown as Request,
+        res as unknown as Response,
+        next,
+      );
+
+      expect(axiosMock.patch).toHaveBeenCalledWith(
+        expect.stringContaining('test'),
+        { operation: 'REPLACE', configuration: expectedPatchedDefinition },
+        expect.any(Object),
+      );
+      expect(res.send).toHaveBeenCalledWith(
+        expect.objectContaining({ registration: expect.objectContaining({ enabled: true }) }),
+      );
+      expect(next).not.toHaveBeenCalled();
+    });
+
+    it('defaults enabled to false when patching registration on a definition without registration', async () => {
+      const existingDefinition = { id: 'test', name: 'Test' };
+      const expectedPatchedDefinition = {
+        ...existingDefinition,
+        registration: { enabled: false, accessGroup: 'test-users' },
+      };
+
+      axiosMock.get.mockResolvedValue({ status: HttpStatusCodes.OK, data: existingDefinition });
+      mockPatchSuccess(expectedPatchedDefinition, 2);
+
+      const req = {
+        user: { tenantId, id: 'tester', roles: [FormServiceRoles.Admin], isCore: true },
+        params: { definitionId: 'test' },
+        body: { registration: { accessGroup: 'test-users' } },
+        tenant: { id: tenantId },
+      };
+      const res = { status: jest.fn().mockReturnThis(), send: jest.fn() };
+      const next = jest.fn();
+
+      await patchFormDefinition(directoryMock, tokenProviderMock)(
+        req as unknown as Request,
+        res as unknown as Response,
+        next,
+      );
+
+      expect(axiosMock.patch).toHaveBeenCalledWith(
+        expect.stringContaining('test'),
+        { operation: 'REPLACE', configuration: expectedPatchedDefinition },
+        expect.any(Object),
+      );
+      expect(next).not.toHaveBeenCalled();
+    });
+
     it('calls next with 400 when configuration service rejects the patch', async () => {
       axiosMock.get.mockResolvedValue({ status: HttpStatusCodes.OK, data: { id: 'test', name: 'Test' } });
 
