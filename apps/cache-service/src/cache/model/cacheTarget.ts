@@ -1,5 +1,6 @@
 import {
   AdspId,
+  AuditService,
   getContextTrace,
   isAllowedUser,
   ServiceDirectory,
@@ -16,6 +17,7 @@ import * as _ from 'lodash';
 import * as path from 'path';
 import { ParsedQs } from 'qs';
 import { Logger } from 'winston';
+import { auditCacheInvalidated } from '../audit';
 import { CacheProvider } from '../cacheProvider';
 import { ServiceRoles } from '../roles';
 import { CachedResponse, InvalidationEvent, Target } from '../types';
@@ -36,7 +38,8 @@ export class CacheTarget implements Target {
     protected directory: ServiceDirectory,
     protected provider: CacheProvider,
     protected tenantId: AdspId,
-    target: Target
+    target: Target,
+    protected auditService?: AuditService
   ) {
     this.serviceId = target.serviceId;
     this.ttl = typeof target.ttl === 'number' ? target.ttl : DEFAULT_TTL;
@@ -248,7 +251,18 @@ export class CacheTarget implements Target {
     }, {} as Record<string, string | string[]>);
   }
 
-  async processEvent({ namespace, name, payload }: DomainEvent): Promise<void> {
+  protected auditInvalidated(event: DomainEvent, paths: string[]): void {
+    auditCacheInvalidated(this.auditService, this.logger, {
+      tenantId: this.tenantId,
+      targetId: this.serviceId,
+      ttl: this.ttl,
+      event,
+      paths,
+    });
+  }
+
+  async processEvent(event: DomainEvent): Promise<void> {
+    const { namespace, name, payload } = event;
     try {
       const invalidationEvent = this.invalidationEvents.find(
         (invalidationEvent) => invalidationEvent.namespace === namespace && invalidationEvent.name == name
@@ -281,6 +295,8 @@ export class CacheTarget implements Target {
                 context: 'CacheTarget',
                 tenant: this.tenantId.toString(),
               });
+
+              this.auditInvalidated(event, [cachedPath]);
             } else {
               this.logger.info(`No entries invalidated for path '${cachedPath}' on event ${namespace}:${name}.`, {
                 context: 'CacheTarget',

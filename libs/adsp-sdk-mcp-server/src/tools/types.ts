@@ -11,10 +11,19 @@ export interface ToolCallContext {
   signal?: AbortSignal;
 }
 
+/**
+ * MCP tool annotations are hints for the client, not enforcement. Every tool here only reads, so all declare
+ * `readOnlyHint`. Offline tools answer from content bundled in the package, so they also declare a closed world;
+ * live tools call ADSP APIs and keep the spec's default open world.
+ */
+export const OFFLINE_TOOL_ANNOTATIONS = { readOnlyHint: true, openWorldHint: false } as const;
+export const LIVE_TOOL_ANNOTATIONS = { readOnlyHint: true } as const;
+
 export interface ToolDefinition {
   name: string;
   description: string;
   inputSchema: JsonSchemaObject;
+  annotations: typeof OFFLINE_TOOL_ANNOTATIONS;
   /**
    * Must be a pure lookup/computation over `args` and this tool's own read-only data (docs, SDK reference) — no
    * network calls, filesystem writes, or other external side effects. `CallToolResult.isError` on the return value
@@ -28,6 +37,7 @@ export interface LiveToolDefinition {
   name: string;
   description: string;
   inputSchema: JsonSchemaObject;
+  annotations: typeof LIVE_TOOL_ANNOTATIONS;
   /**
    * Unlike ToolDefinition.handler, this MAY make network calls and read local files (e.g. an
    * ADSP API call authenticated via a cached CLI login token) — it is not required to be a pure,

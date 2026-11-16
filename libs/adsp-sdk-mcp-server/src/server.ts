@@ -4,6 +4,7 @@ import { join, resolve } from 'path';
 import { performance } from 'perf_hooks';
 import { ApiSpecsRepository } from './api-specs/apiSpecsRepository';
 import { DocsRepository } from './docs/docsRepository';
+import { SERVER_INSTRUCTIONS } from './instructions';
 import { getMetrics, ToolErrorType } from './metrics';
 import { createApiTools } from './tools/registerApiTools';
 import { createConfigurationSchemaTools } from './tools/registerConfigurationSchemaTool';
@@ -78,11 +79,16 @@ export function createAdspMcpServer(options: CreateAdspMcpServerOptions = {}): S
   // args with zod as a plain value (see tools/*.ts), never passing a schema through the SDK's type machinery.
   const server = new Server(
     { name: 'adsp-sdk-mcp-server', version: readPackageVersion() },
-    { capabilities: { tools: {} } },
+    { capabilities: { tools: {} }, instructions: SERVER_INSTRUCTIONS },
   );
 
   server.setRequestHandler(ListToolsRequestSchema, async () => ({
-    tools: tools.map(({ name, description, inputSchema }) => ({ name, description, inputSchema })),
+    tools: tools.map(({ name, description, inputSchema, annotations }) => ({
+      name,
+      description,
+      inputSchema,
+      annotations,
+    })),
   }));
 
   server.setRequestHandler(CallToolRequestSchema, async (request, extra) => {

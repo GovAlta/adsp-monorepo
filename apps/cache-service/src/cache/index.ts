@@ -5,6 +5,7 @@ import { createCacheJobs } from './job';
 import { Logger } from 'winston';
 import { ConfigurationService } from '@abgov/adsp-service-sdk';
 
+export * from './audit';
 export * from './cacheProvider';
 export * from './configuration';
 export * from './roles';

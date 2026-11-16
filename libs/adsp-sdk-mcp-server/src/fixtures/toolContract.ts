@@ -15,7 +15,14 @@ export interface ContractCall {
   outcome: unknown;
 }
 
+export interface ContractTool {
+  name: string;
+  annotations: unknown;
+}
+
 export interface ToolContract {
+  /** tools/list, in order, pinned to the fields clients act on without reading the description. */
+  tools: ContractTool[];
   calls: ContractCall[];
 }
 
