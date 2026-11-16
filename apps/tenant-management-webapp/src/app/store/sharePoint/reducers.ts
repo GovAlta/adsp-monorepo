@@ -1,45 +1,47 @@
 import {
-  FETCH_SHAREPOINT_CONNECTIONS_SUCCESS_ACTION,
-  UPDATE_SHAREPOINT_CONNECTION_SUCCESS_ACTION,
+  FETCH_SHAREPOINT_CONFIGURATION_SUCCESS_ACTION,
+  FETCH_SHAREPOINT_CREDENTIAL_STATUS_SUCCESS_ACTION,
+  SharepointActionTypes,
   SharepointConnection,
-  SharepointConnectionActionTypes,
-  DELETE_SHAREPOINT_CONNECTION_SUCCESS_ACTION,
+  SharepointCredentialStatus,
+  SharepointDestination,
+  SharepointTestResult,
+  TEST_SHAREPOINT_DESTINATION_ACTION,
+  TEST_SHAREPOINT_DESTINATION_SUCCESS_ACTION,
+  UPDATE_SHAREPOINT_CONFIGURATION_SUCCESS_ACTION,
 } from './actions';
 
-export interface SharepointConnectionsState {
+export interface SharepointState {
   connections: Record<string, SharepointConnection>;
-  isLoading: boolean;
+  destinations: Record<string, SharepointDestination>;
+  credentialStatus: Record<string, SharepointCredentialStatus>;
+  testResults: Record<string, SharepointTestResult>;
 }
 
-const defaultState: SharepointConnectionsState = {
+const defaultState: SharepointState = {
   connections: {},
-  isLoading: false,
+  destinations: {},
+  credentialStatus: {},
+  testResults: {},
 };
 
 export default function sharepointReducer(
-  state: SharepointConnectionsState = defaultState,
-  action: SharepointConnectionActionTypes,
-): SharepointConnectionsState {
+  state: SharepointState = defaultState,
+  action: SharepointActionTypes,
+): SharepointState {
   switch (action.type) {
-    case FETCH_SHAREPOINT_CONNECTIONS_SUCCESS_ACTION:
-      return {
-        ...state,
-        isLoading: true,
-        connections: action.payload,
-      };
-
-    case UPDATE_SHAREPOINT_CONNECTION_SUCCESS_ACTION:
-      return {
-        ...state,
-        connections: action.payload,
-      };
-
-    case DELETE_SHAREPOINT_CONNECTION_SUCCESS_ACTION:
-      return {
-        ...state,
-        connections: action.payload,
-      };
-
+    case FETCH_SHAREPOINT_CONFIGURATION_SUCCESS_ACTION:
+    case UPDATE_SHAREPOINT_CONFIGURATION_SUCCESS_ACTION:
+      return { ...state, connections: action.payload.connections, destinations: action.payload.destinations };
+    case FETCH_SHAREPOINT_CREDENTIAL_STATUS_SUCCESS_ACTION:
+      return { ...state, credentialStatus: { ...state.credentialStatus, [action.id]: action.payload } };
+    case TEST_SHAREPOINT_DESTINATION_ACTION: {
+      const testResults = { ...state.testResults };
+      delete testResults[action.id];
+      return { ...state, testResults };
+    }
+    case TEST_SHAREPOINT_DESTINATION_SUCCESS_ACTION:
+      return { ...state, testResults: { ...state.testResults, [action.id]: action.payload } };
     default:
       return state;
   }
