@@ -47,7 +47,7 @@ export const ArrayControlBase = (props: ControlProps) => {
   );
 };
 
-export const ArrayControlReview = (props: ControlProps) => {
+export const ArrayControlReview = (props: ControlProps & { isTableReview?: boolean }) => {
   const { visible } = props;
 
   if (!visible) return null;
@@ -59,6 +59,10 @@ export const ArrayControlReview = (props: ControlProps) => {
 
 export const GoAArrayControlRenderer = withJsonFormsControlProps(ArrayControlBase);
 export const GoAArrayControlReviewRenderer = withJsonFormsControlProps(ArrayControlReview);
+
+// The stepper summary dispatches each element inside a table body, so this variant renders a table row.
+export const ArrayControlTableReview = (props: ControlProps) => <ArrayControlReview {...props} isTableReview={true} />;
+export const GoAArrayControlTableReviewRenderer = withJsonFormsControlProps(ArrayControlTableReview);
 
 export const PrimitiveArrayControl = (props: ControlProps) => {
   const { data, path, handleChange, visible, enabled, uischema, schema, renderers, cells } = props;
