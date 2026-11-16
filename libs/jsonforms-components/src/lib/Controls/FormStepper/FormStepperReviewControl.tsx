@@ -40,6 +40,7 @@ import {
 import {
   GoAArrayControlTester,
   GoAArrayControlReviewRenderer,
+  GoAArrayControlTableReviewRenderer,
   GoAPrimitiveArrayTester,
 } from '../ObjectArray/ObjectArray';
 import { GoAListWithDetailsTester } from '../ObjectArray/listWithDetails';
@@ -98,11 +99,11 @@ export const GoABaseTableReviewRenderers: JsonFormsRendererRegistryEntry[] = [
   },
   {
     tester: GoAArrayControlTester,
-    renderer: GoAArrayControlReviewRenderer,
+    renderer: GoAArrayControlTableReviewRenderer,
   },
   {
     tester: GoAListWithDetailsTester,
-    renderer: GoAArrayControlReviewRenderer,
+    renderer: GoAArrayControlTableReviewRenderer,
   },
   {
     tester: FullNameDobTester,

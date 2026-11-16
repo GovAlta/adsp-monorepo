@@ -1,10 +1,13 @@
 import {
   AdspId,
+  AuditService,
+  EventService,
   isAllowedUser,
   TenantService,
   TokenProvider,
   ServiceDirectory,
   UnauthorizedUserError,
+  User,
   adspId,
   toKebabCase,
 } from '@abgov/adsp-service-sdk';
@@ -17,13 +20,21 @@ import {
 } from '@core-services/core-common';
 import axios from 'axios';
 import * as HttpStatusCodes from 'http-status-codes';
-import { RequestHandler, Router } from 'express';
+import { Request, RequestHandler, Router } from 'express';
 import { body, param, query } from 'express-validator';
 import { Logger } from 'winston';
-import { FormDefinitionEntity } from '../model';
-import { mapFormDefinition } from '../mapper';
+import {
+  RegistrationReviewedAuditAction,
+  RegistrationSubmittedAuditAction,
+  recordFormAudit,
+  toRegistrationAuditDetails,
+} from '../audit';
+import { registrationReviewed, registrationSubmitted } from '../events';
+import { FormDefinitionEntity, FormRegistrationEntity, normalizeEmail } from '../model';
+import { mapFormDefinition, mapRegistration } from '../mapper';
+import { FormRegistrationRepository } from '../repository';
 import { FormServiceRoles } from '../roles';
-import { FormDefinition, Intake } from '../types';
+import { FormDefinition, FormRegistrationCreate, Intake, RegistrationStatus } from '../types';
 import { CalendarService } from '../calendar';
 
 const configurationApiId = adspId`urn:ads:platform:configuration-service:v2`;
@@ -640,12 +651,175 @@ export function patchFormDefinitionSubmissionActions(
   };
 }
 
+const allowedRegistrationProperties = ['firstName', 'lastName', 'email', 'data'];
+const registrationRequesterRoles = [FormServiceRoles.RegistrationRequester, FormServiceRoles.Admin];
+const registrationReaderRoles = [
+  FormServiceRoles.RegistrationReader,
+  FormServiceRoles.RegistrationWriter,
+  FormServiceRoles.Admin,
+];
+const registrationWriterRoles = [FormServiceRoles.RegistrationWriter, FormServiceRoles.Admin];
+
+const hasOnlyProperties = (allowed: string[]) => (value: unknown) => {
+  const extra = Object.keys((value as Record<string, unknown>) ?? {}).filter((key) => !allowed.includes(key));
+  if (extra.length > 0) {
+    throw new Error(`Unsupported properties: ${extra.join(', ')}`);
+  }
+  return true;
+};
+
+const getRequiredTenantId = (req: Request): AdspId => {
+  if (!req.tenant?.id) {
+    throw new InvalidOperationError('Tenant context is required for operation.');
+  }
+  return req.tenant.id;
+};
+
+const assertAllowed = (user: User, tenantId: AdspId, roles: string | string[], operation: string): void => {
+  if (!isAllowedUser(user, tenantId, roles, true)) {
+    throw new UnauthorizedUserError(operation, user);
+  }
+};
+
+const getRequiredDefinition = async (req: Request, tenantId: AdspId): Promise<FormDefinitionEntity> => {
+  const { definitionId } = req.params;
+  const [definition] = await req.getServiceConfiguration<FormDefinitionEntity>(definitionId, tenantId);
+  if (!definition) {
+    throw new NotFoundError('form definition', definitionId);
+  }
+  return definition;
+};
+
+export function submitRegistration(
+  repository: FormRegistrationRepository,
+  eventService: EventService,
+  auditService: AuditService,
+  logger: Logger,
+): RequestHandler {
+  return async (req, res, next) => {
+    try {
+      const tenantId = getRequiredTenantId(req);
+      const user = req.user;
+      assertAllowed(user, tenantId, registrationRequesterRoles, 'submit registration');
+
+      const definition = await getRequiredDefinition(req, tenantId);
+      if (!definition.isRegistrationEnabled()) {
+        throw new InvalidOperationError(`Form definition '${definition.id}' does not accept registrations.`);
+      }
+
+      const request = req.body as FormRegistrationCreate;
+      definition.validateRegistrationData(request.data || {});
+
+      const registration = await repository.create(FormRegistrationEntity.create(tenantId, definition.id, request));
+      res.status(HttpStatusCodes.CREATED).send({
+        id: registration.id,
+        formDefinitionId: registration.formDefinitionId,
+        status: registration.status,
+        submittedAt: registration.submittedAt,
+      });
+
+      eventService.send(registrationSubmitted(registration));
+      recordFormAudit(auditService, logger, RegistrationSubmittedAuditAction, () =>
+        toRegistrationAuditDetails(user, registration),
+      );
+    } catch (err) {
+      next(err);
+    }
+  };
+}
+
+export function getRegistrations(repository: FormRegistrationRepository): RequestHandler {
+  return async (req, res, next) => {
+    try {
+      const tenantId = getRequiredTenantId(req);
+      assertAllowed(req.user, tenantId, registrationReaderRoles, 'get registrations');
+
+      const definition = await getRequiredDefinition(req, tenantId);
+      const { top: topValue, after, status } = req.query;
+      const top = topValue ? parseInt(topValue as string) : 10;
+
+      const { results, page } = await repository.find(top, after as string, {
+        tenantIdEquals: tenantId,
+        definitionIdEquals: definition.id,
+        statusEquals: status as RegistrationStatus,
+      });
+      res.send({ results: results.map(mapRegistration), page });
+    } catch (err) {
+      next(err);
+    }
+  };
+}
+
+export function getRegistrationByEmail(repository: FormRegistrationRepository): RequestHandler {
+  return async (req, res, next) => {
+    try {
+      const tenantId = getRequiredTenantId(req);
+      const user = req.user;
+      const email = normalizeEmail(req.params.email);
+      const isOwnRegistration = !!user?.email && normalizeEmail(user.email) === email;
+      if (!isOwnRegistration) {
+        assertAllowed(user, tenantId, registrationReaderRoles, 'get registration');
+      }
+
+      const definition = await getRequiredDefinition(req, tenantId);
+      const registration = await repository.getLatestByEmail(tenantId, definition.id, email);
+      if (!registration) {
+        throw new NotFoundError('registration', email);
+      }
+      res.send(mapRegistration(registration));
+    } catch (err) {
+      next(err);
+    }
+  };
+}
+
+export function updateRegistration(
+  repository: FormRegistrationRepository,
+  eventService: EventService,
+  auditService: AuditService,
+  logger: Logger,
+): RequestHandler {
+  return async (req, res, next) => {
+    try {
+      const tenantId = getRequiredTenantId(req);
+      const user = req.user;
+      assertAllowed(user, tenantId, registrationWriterRoles, 'update registration');
+
+      const definition = await getRequiredDefinition(req, tenantId);
+      const { requestId } = req.params;
+      const registration = await repository.get(tenantId, definition.id, requestId);
+      if (!registration) {
+        throw new NotFoundError('registration', requestId);
+      }
+
+      registration.review(user, req.body.status as RegistrationStatus);
+      const updated = await repository.updateIfPending(registration);
+      if (!updated) {
+        throw new InvalidOperationError('Registration has already been reviewed.', {
+          statusCode: HttpStatusCodes.CONFLICT,
+        });
+      }
+      res.send(mapRegistration(updated));
+
+      eventService.send(registrationReviewed(updated));
+      recordFormAudit(auditService, logger, RegistrationReviewedAuditAction, () =>
+        toRegistrationAuditDetails(user, updated),
+      );
+    } catch (err) {
+      next(err);
+    }
+  };
+}
+
 interface FormDefinitionRouterProps {
   directory: ServiceDirectory;
   tokenProvider: TokenProvider;
   tenantService: TenantService;
   calendarService: CalendarService;
   logger: Logger;
+  registrationRepository: FormRegistrationRepository;
+  eventService: EventService;
+  auditService: AuditService;
 }
 
 export function createFormDefinitionRouter({
@@ -654,6 +828,9 @@ export function createFormDefinitionRouter({
   tenantService,
   calendarService,
   logger,
+  registrationRepository,
+  eventService,
+  auditService,
 }: FormDefinitionRouterProps): Router {
   const router = Router();
 
@@ -805,6 +982,56 @@ export function createFormDefinitionRouter({
       body('end').isISO8601().withMessage('end date is required'),
     ),
     updateIntakeSchedule(calendarService),
+  );
+
+  const registrationStatuses = Object.values(RegistrationStatus);
+
+  router.post(
+    '/definitions/:definitionId/access-requests',
+    assertAuthenticatedHandler,
+    createValidationHandler(
+      param('definitionId').isString().isLength({ min: 1, max: 50 }).matches(DEFINITION_ID_REGEX),
+      body().custom(hasOnlyProperties(allowedRegistrationProperties)),
+      body('firstName').isString().trim().isLength({ min: 1, max: 100 }),
+      body('lastName').isString().trim().isLength({ min: 1, max: 100 }),
+      body('email').isString().trim().isEmail().isLength({ max: 254 }),
+      body('data').optional().isObject(),
+    ),
+    submitRegistration(registrationRepository, eventService, auditService, logger),
+  );
+
+  router.get(
+    '/definitions/:definitionId/access-requests',
+    assertAuthenticatedHandler,
+    createValidationHandler(
+      param('definitionId').isString().isLength({ min: 1, max: 50 }).matches(DEFINITION_ID_REGEX),
+      query('top').optional().isInt({ min: 1, max: 5000 }),
+      query('after').optional().isString(),
+      query('status').optional().isIn(registrationStatuses),
+    ),
+    getRegistrations(registrationRepository),
+  );
+
+  router.get(
+    '/definitions/:definitionId/access-requests/:email',
+    assertAuthenticatedHandler,
+    createValidationHandler(
+      param('definitionId').isString().isLength({ min: 1, max: 50 }).matches(DEFINITION_ID_REGEX),
+      param('email').isEmail(),
+    ),
+    getRegistrationByEmail(registrationRepository),
+  );
+
+  router.patch(
+    '/definitions/:definitionId/access-requests/:requestId',
+    assertAuthenticatedHandler,
+    createValidationHandler(
+      param('definitionId').isString().isLength({ min: 1, max: 50 }).matches(DEFINITION_ID_REGEX),
+      param('requestId').isUUID(),
+      body().custom(hasOnlyProperties(['status'])),
+      body('status').isIn(registrationStatuses),
+    ),
+    updateRegistration(registrationRepository, eventService, auditService, logger),
   );
   return router;
 }
