@@ -48,6 +48,7 @@ All endpoints are under `https://value-service.adsp.alberta.ca/value/v1`. See th
 | `GET /value/v1/{namespace}/values/{name}/metrics/{metric}` | Read interval aggregates of one metric.                      | `value-reader`                                    |
 | `GET /value/v1/{namespace}/values/{name}/platform-metrics` | Read a value's metrics across all tenants.                   | `value-platform-metrics-reader` (core users only) |
 | `POST /value/v1/service-metric-rollups/run`                | Run the service metric rollup for completed days.            | `value-writer`                                    |
+| `GET /value/v1/event-resources/distinct-count`             | Count the distinct resources events named over a period.     | `value-reader`                                    |
 | `GET /value/v1/definitions`                                | List tenant and core value definitions.                      | `value-reader` or `value-writer`                  |
 | `POST /value/v1/definitions`                               | Create a tenant value definition.                            | `value-writer`                                    |
 | `GET /value/v1/definitions/{namespace}/{name}`             | Get a value definition (tenant, otherwise core).             | `value-reader` or `value-writer`                  |
@@ -125,6 +126,21 @@ ORDER BY "interval";
 ```
 
 Rollups store `sum` and `count` rather than an average, because an average of averages is not the average; the read path divides the two.
+
+### Event resource rollups
+
+Reports count how many distinct resources a tenant's events named over a period, such as the PDF templates behind `pdf-service` events. Reading that from the event log means reading every event in the period. The `event_resource_rollups` table instead records, per day, which resources each tenant's events named: one row per day, tenant, event and resource, with the number of events. A distinct count does not add up across days the way a sum does — a template used on two days is still one template — so the rollup keeps the resources themselves, and a period's count is a distinct count over its days.
+
+The resources rolled up are the `resource` entries of the service metric rollup mappings: `templateId` for `pdf-service` and `definitionId` for `form-service` events.
+
+The job runs alongside the metric interval rollups, under `METRIC_INTERVAL_ROLLUP_JOB_ENABLED`, `METRIC_INTERVAL_ROLLUP_MAX_CHUNK_HOURS` (bounded to between a day and a week) and `METRIC_INTERVAL_ROLLUP_STATEMENT_TIMEOUT_MS`, on ticks offset two minutes from theirs and under its own advisory lock. It moves each source's coverage forward over closed days — a day is rolled up an hour after it ends, so events timestamped just before midnight land in it — and backward through history, recorded in `event_resource_rollup_coverage`. Walking back starts from the newest event log chunk below coverage, read from chunk metadata, so a span of years with no data at all, such as between a stray old event and the rest of the log, is crossed in a single step.
+
+`GET /value/v1/event-resources/distinct-count` reads the count for a `namespace`, `contextKey`, optional comma separated `names` (defaulting to every event rolled up for the namespace) and a period from `intervalMin` (inclusive) to `intervalMax` (exclusive), at most 731 days. Whole days inside coverage come from the rollup; the current day, and any history the backfill has not reached yet, are read from the event log for that span alone, and the two are combined before counting. Only the sources above and their own events are accepted, since the rollup has no rows for anything else and would undercount.
+
+```sql
+SELECT namespace, context_key, covered_from, covered_to, updated_at
+FROM event_resource_rollup_coverage;
+```
 
 ### Service metric rollups
 

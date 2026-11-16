@@ -8,7 +8,7 @@ parent: Services
 
 ## Overview
 
-Push service provides a push mode gateway to domain events sent through the [event service](event-service.md). Applications subscribe to a configured stream and receive matching events as they happen, using [socket.io](https://socket.io) or server-sent events, instead of polling.
+Push service provides a push mode gateway to domain events sent through the [event service](event-service.md). Applications subscribe to a configured stream and receive matching events as they happen, using a WebSocket connection through [socket.io](https://socket.io), or server-sent events, instead of polling.
 
 The push service also calls tenant configured webhooks when matching domain events occur.
 
@@ -48,9 +48,9 @@ See the [API reference](https://api.adsp.alberta.ca) for request and response de
 | :------------------------------------ | :------------------------------------------------- | :------------------------------------------------------------------ |
 | `GET /stream/v1/streams`              | List the streams that the caller can subscribe to. | None. The result only includes streams the caller can subscribe to. |
 | `GET /stream/v1/streams/{stream}`     | Subscribe to a stream using server-sent events.    | `stream-listener` or one of `subscriberRoles`, or a public stream.  |
-| socket.io connection (not in OpenAPI) | Subscribe to a stream using socket.io.             | `stream-listener` or one of `subscriberRoles`, or a public stream.  |
+| socket.io connection (not in OpenAPI) | Subscribe to a stream over WebSocket (socket.io).  | `stream-listener` or one of `subscriberRoles`, or a public stream.  |
 
-The socket.io connection is not a REST endpoint, so it isn't in the OpenAPI documentation. It works as follows:
+The socket.io connection is a WebSocket connection, not a REST endpoint, so it isn't in the OpenAPI documentation. It works as follows:
 
 - **URL**: `https://push-service.adsp.alberta.ca/<namespace>` with the default socket.io path (`/socket.io`). The namespace is `/` (the default namespace), or a tenant name in kebab case, for example `/my-tenant`.
 - **Stream ID**: the `stream` query parameter of the connection. An optional `criteria` query parameter holds JSON encoded criteria (`correlationId`, `context`) that each event must match.

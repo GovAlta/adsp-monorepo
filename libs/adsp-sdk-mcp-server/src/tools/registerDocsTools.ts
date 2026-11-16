@@ -1,10 +1,15 @@
 import { z } from 'zod';
 import { DocsRepository } from '../docs/docsRepository';
+import { queryTerms } from '../search/textSearch';
 import { ToolDefinition } from './types';
 
 const SearchArgs = z.object({
   query: z.string(),
   limit: z.number().int().min(1).max(20).optional(),
+});
+
+const ListArgs = z.object({
+  prefix: z.string().optional(),
 });
 
 const ReadArgs = z.object({
@@ -34,12 +39,71 @@ export function createDocsTools(docs: DocsRepository): ToolDefinition[] {
       },
       handler: (args) => {
         const { query, limit } = SearchArgs.parse(args);
-        return { content: [{ type: 'text', text: JSON.stringify(docs.search(query, limit ?? 5), null, 2) }] };
+        if (queryTerms(query).length === 0) {
+          return {
+            content: [
+              {
+                type: 'text',
+                text:
+                  `"${query}" has only common words such as "how" or "the", so there is nothing to search for. ` +
+                  'Use a service or feature name, e.g. "send a domain event", or call list_adsp_docs to browse.',
+              },
+            ],
+          };
+        }
+
+        const results = docs.search(query, limit ?? 5);
+        if (results.length === 0) {
+          return {
+            content: [
+              {
+                type: 'text',
+                text: `No ADSP docs match "${query}". Try other keywords, or call list_adsp_docs to browse.`,
+              },
+            ],
+          };
+        }
+
+        return { content: [{ type: 'text', text: JSON.stringify(results, null, 2) }] };
+      },
+    },
+    {
+      name: 'list_adsp_docs',
+      description:
+        'List the paths and titles of every bundled ADSP doc page, optionally only those under a path prefix ' +
+        '(e.g. "services/" or "tutorials/"). Use it to browse what exists when keyword search misses; read a page ' +
+        'with read_adsp_doc.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          prefix: {
+            type: 'string',
+            description: 'Only list doc paths that start with this, e.g. "services/".',
+          },
+        },
+      },
+      handler: (args) => {
+        const { prefix } = ListArgs.parse(args);
+        const pages = docs.list().filter(({ path }) => !prefix || path.startsWith(prefix));
+        if (pages.length === 0) {
+          return {
+            content: [
+              {
+                type: 'text',
+                text: `No doc paths start with "${prefix}". Call list_adsp_docs without a prefix to see all.`,
+              },
+            ],
+          };
+        }
+
+        return { content: [{ type: 'text', text: JSON.stringify(pages, null, 2) }] };
       },
     },
     {
       name: 'read_adsp_doc',
-      description: 'Return the full markdown content of an ADSP doc page by its path, as returned by search_adsp_docs.',
+      description:
+        'Return the full markdown content of an ADSP doc page by its path, as returned by search_adsp_docs or ' +
+        'list_adsp_docs.',
       inputSchema: {
         type: 'object',
         properties: {
@@ -58,7 +122,10 @@ export function createDocsTools(docs: DocsRepository): ToolDefinition[] {
           return {
             isError: true,
             content: [
-              { type: 'text', text: `No doc found at path "${path}". Use search_adsp_docs to find a valid path.` },
+              {
+                type: 'text',
+                text: `No doc found at path "${path}". Use search_adsp_docs or list_adsp_docs to find a valid path.`,
+              },
             ],
           };
         }

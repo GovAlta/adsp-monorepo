@@ -147,4 +147,24 @@ describe('describeConversationStatus', () => {
     expect(text?.heading).toBe('Close to the assistant’s limit');
     expect(text?.detail).toContain(detail);
   });
+
+  it('suggests a new chat once the conversation is long enough to use more of the shared AI capacity', () => {
+    // Act
+    const text = describeConversationStatus({ ...CONTEXT, state: 'notice', reason: 'long-conversation' });
+
+    // Assert
+    expect(text).toEqual({
+      heading: 'Long conversation',
+      shortHeading: 'Long chat',
+      detail: 'Long chats use more of the shared AI capacity. Start a new chat for a new question.',
+    });
+  });
+
+  it('has nothing to say without a status', () => {
+    // Act
+    const text = describeConversationStatus(undefined);
+
+    // Assert
+    expect(text).toBeUndefined();
+  });
 });

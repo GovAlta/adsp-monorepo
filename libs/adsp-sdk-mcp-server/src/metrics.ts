@@ -1,7 +1,7 @@
 import type { BatchObservableCallback, MeterProvider } from '@opentelemetry/api';
-import { readFileSync } from 'fs';
-import { join } from 'path';
+import { hostname } from 'os';
 import { monitorEventLoopDelay } from 'perf_hooks';
+import { readPackageVersion } from './version';
 
 export type RejectionReason = 'in_flight_cap' | 'rate_limit' | 'origin' | 'live_tool_cap';
 export type ToolErrorType = 'tool_error' | 'exception' | 'unknown_tool' | 'busy';
@@ -135,14 +135,6 @@ export interface StartedMetrics {
 const DEFAULT_EXPORT_INTERVAL_MS = 60_000;
 const EXPORT_TIMEOUT_MS = 30_000;
 
-function readPackageVersion(): string {
-  try {
-    return JSON.parse(readFileSync(join(__dirname, '..', 'package.json'), 'utf8')).version ?? 'unknown';
-  } catch {
-    return 'unknown';
-  }
-}
-
 function readExportIntervalMs(env: NodeJS.ProcessEnv): number {
   const interval = parseInt(env['OTEL_METRIC_EXPORT_INTERVAL'] ?? '', 10);
   return interval > 0 ? interval : DEFAULT_EXPORT_INTERVAL_MS;
@@ -163,7 +155,12 @@ export async function startMetricsFromEnv(env: NodeJS.ProcessEnv = process.env):
     const exportIntervalMillis = readExportIntervalMs(env);
     const provider = new MeterProvider({
       resource: defaultResource().merge(
-        resourceFromAttributes({ 'service.name': 'adsp-sdk-mcp-server', 'service.version': readPackageVersion() })
+        resourceFromAttributes({
+          'service.name': 'adsp-sdk-mcp-server',
+          'service.version': readPackageVersion(),
+          // Without it, replicas send identical label sets and their series overwrite each other; in a pod this is the pod name.
+          'service.instance.id': hostname(),
+        })
       ),
       readers: [
         new PeriodicExportingMetricReader({

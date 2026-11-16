@@ -6,6 +6,8 @@ const FILE_ERROR_MESSAGES: Readonly<Record<FileServiceErrorReason, string>> = {
   forbidden: "You don't have permission to download this file.",
   'scan-pending': 'This file is still being checked for viruses. Try again in a moment.',
   unavailable: "This file can't be downloaded.",
+  // File service only rejects a format on upload; listed so every reason has a download message.
+  'unsupported-format': "This file's format isn't supported.",
   unexpected: 'Something went wrong while downloading this file.',
 };
 
@@ -21,6 +23,7 @@ const FILE_UPLOAD_ERROR_MESSAGES: Readonly<Record<FileServiceErrorReason, string
   // File service only reports a pending scan for downloads; listed so every reason has an upload message.
   'scan-pending': 'This file is still being checked for viruses. Try again in a moment.',
   unavailable: "File service didn't accept this file. Check the file and try again.",
+  'unsupported-format': "This file format isn't supported. Choose a file in one of the allowed formats.",
   unexpected: 'Something went wrong while uploading this file.',
 };
 

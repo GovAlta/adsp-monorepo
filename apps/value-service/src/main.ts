@@ -23,6 +23,7 @@ import { AjvValueValidationService } from './ajv';
 import type { User } from '@abgov/adsp-service-sdk';
 import { scheduleServiceMetricRollupJob } from './values/jobs/serviceMetricRollup';
 import { scheduleMetricIntervalRollupJob } from './values/jobs/metricIntervalRollup';
+import { scheduleEventResourceRollupJob } from './values/jobs/eventResourceRollup';
 
 const initializeApp = async () => {
   const app = express();
@@ -155,6 +156,7 @@ const initializeApp = async () => {
     repository: repositories.valueRepository,
     serviceMetricRollupRepository: repositories.serviceMetricRollupRepository,
     serviceMetricRollupTrailingDays: environment.SERVICE_METRIC_ROLLUP_TRAILING_DAYS,
+    eventResourceRollupRepository: repositories.eventResourceRollupRepository,
     eventService,
     auditService,
     directory,
@@ -176,6 +178,13 @@ const initializeApp = async () => {
     scheduleMetricIntervalRollupJob({
       logger,
       repository: repositories.metricIntervalRollupRepository,
+      maxChunkHours: environment.METRIC_INTERVAL_ROLLUP_MAX_CHUNK_HOURS,
+    });
+    // Rides on the same switch and chunk cap: it is the same kind of bounded, locked backfill, and
+    // an environment that has the interval rollups wants the report counts they sit beside.
+    scheduleEventResourceRollupJob({
+      logger,
+      repository: repositories.eventResourceRollupRepository,
       maxChunkHours: environment.METRIC_INTERVAL_ROLLUP_MAX_CHUNK_HOURS,
     });
   }

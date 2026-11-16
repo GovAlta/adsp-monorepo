@@ -264,6 +264,10 @@ function findDefinition(name, description) {
     try {
       let rowNumber = 0;
       const targetedNumber = 2;
+      // Search by the first 8 characters of the name to narrow the table before scanning rows
+      formObj.definitionsSearchInput().shadow().find('input').clear().type(name.substring(0, 8), { force: true });
+      formObj.definitionsSearchButton().shadow().find('button').click({ force: true });
+      cy.wait(2000);
       // Click Load More button 10 times if it's there
       for (let i = 0; i < 10; i++) {
         formObj.definitionsPage().then((parentElement) => {
@@ -1165,7 +1169,7 @@ When('the user enters {string} in the tag input field in Add tags modal', functi
       ('0' + currentTime.getSeconds()).substr(-2);
     tagName = commonlib.stringReplacement(tagName, replacementString);
   }
-  formObj.definitionsAddTagsModalTagField().shadow().find('input').clear().type(tagName, { force: true, delay: 500 });
+  formObj.definitionsAddTagsModalTagField().shadow().find('input').clear().type(tagName, { force: true, delay: 200 });
 });
 
 Then('the user views the error message of {string} in Add tags modal', function (errorMsg) {
@@ -1340,7 +1344,7 @@ When('the user deletes all tags for the form definition of {string}, {string}', 
       } else {
         formObj.definitionsAddTagsModalTagChips().then((chips) => {
           for (let i = 0; i < chips.length; i++) {
-            cy.wrap(chips[i]).shadow().find('goa-icon-button').click({ force: true });
+            cy.wrap(chips[i]).shadow().find('goa-icon-button').shadow().find('button').click({ force: true });
             cy.log(chips[i].getAttribute('content') + ' tag removed');
             cy.wait(1000); // Wait for tag chips to update
           }

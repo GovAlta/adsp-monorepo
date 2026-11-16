@@ -190,7 +190,8 @@ const ContainerDiv = styled.div`
     margin-right: var(--goa-space-l);
   }
 
-  & .usage {
+  & .usage,
+  & .caption {
     margin: calc(-1 * var(--goa-space-s)) var(--goa-space-xs) var(--goa-space-m) var(--goa-space-xs);
     color: var(--goa-color-text-secondary);
     font-size: var(--goa-font-size-1);
@@ -822,6 +823,11 @@ export const AgentChat: FunctionComponent<AgentChatProps> = ({
                 {showUsage && !message.streaming && message.usage && (
                   <div className="usage" data-testid="agent-message-usage">
                     {describeUsage(message.usage)}
+                  </div>
+                )}
+                {!message.streaming && message.caption && (
+                  <div className="caption" data-testid="agent-message-caption">
+                    {message.caption}
                   </div>
                 )}
               </Fragment>

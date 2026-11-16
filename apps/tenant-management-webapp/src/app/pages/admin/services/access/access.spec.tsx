@@ -9,6 +9,13 @@ import { KeycloakApi } from '@store/config/models';
 import AccessPage from './access';
 
 jest.mock('@store/agent/actions', () => ({
+  answerFromAccessGuide: (threadId: string, topic: string, context: Record<string, unknown>, content: unknown) => ({
+    type: 'agent/ANSWER_FROM_ACCESS_GUIDE',
+    threadId,
+    topic,
+    context,
+    content,
+  }),
   clearThread: (threadId: string) => ({ type: 'agent/CLEAR_THREAD', threadId }),
   connectAgent: () => ({ type: 'agent/CONNECT_AGENT' }),
   disconnectAgent: () => ({ type: 'agent/DISCONNECT_AGENT' }),
@@ -242,6 +249,58 @@ describe('Access Page', () => {
     });
   });
 
+  describe('Guide questions', () => {
+    type RecordedAction = { type: string; threadId?: string };
+
+    async function askGuideQuestion() {
+      const store = mockStore({
+        config: {
+          keycloakApi: mockKeycloak,
+          tenantApi: { host: 'foo' },
+          serviceUrls: { tenantManagementWebApp: 'http://localhost' },
+          featureFlags: { AccessServiceAI: true },
+        },
+        access: { users: {}, metrics: { users: 3, activeUsers: 2 }, roles },
+        user: { jwt: { token: '' } },
+        agent: { connected: true, threads: {}, threadMessages: {}, messages: {} },
+        session: { realm: 'core', indicator: { show: false, message: 'loading' } },
+      });
+      const { getByTestId, getByText, container } = render(
+        <Provider store={store}>
+          <AccessPage />
+        </Provider>,
+      );
+      fireEvent.click(getByTestId('access-ai-agent-tab-btn'));
+      await waitFor(() => expect(getByTestId('access-scope-banner').getAttribute('data-status')).toBe('available'));
+      fireEvent.change(container.querySelector('#topic-select') as Element, { target: { value: 'tokens' } });
+      fireEvent.click(getByText('Token Expiry'));
+      return store.getActions() as RecordedAction[];
+    }
+
+    it('answers a guide question from the Access Service guide in the current conversation', async () => {
+      // Act
+      const actions = await askGuideQuestion();
+
+      // Assert
+      const startedThread = actions.find(({ type }) => type === 'agent/START_THREAD');
+      expect(actions).toContainEqual({
+        type: 'agent/ANSWER_FROM_ACCESS_GUIDE',
+        threadId: startedThread?.threadId,
+        topic: 'token-expiry',
+        context: { agentContext: { context: 'tokens', subtopic: 'token-expiry', agent: 'AccessServiceAgent' } },
+        content: [{ type: 'text', text: 'Why is my token expiring too quickly? How do I adjust token lifetimes?' }],
+      });
+    });
+
+    it('does not message the agent for a question the guide answers', async () => {
+      // Act
+      const actions = await askGuideQuestion();
+
+      // Assert
+      expect(actions).not.toContainEqual(expect.objectContaining({ type: 'agent/MESSAGE_AGENT' }));
+    });
+  });
+
   describe('New chat', () => {
     type RecordedAction = { type: string; threadId?: string };
 
@@ -464,6 +523,103 @@ describe('Access Page', () => {
 
       expect(store.getActions()).not.toContainEqual(expect.objectContaining({ type: 'agent/RESET_THREAD' }));
       expect(getByText('Earlier answer')).toBeTruthy();
+    });
+
+    describe('predefined questions after agent-service reports on the conversation', () => {
+      const CONTEXT = { contextTokens: 61000, contextWindowTokens: 256000 };
+      const LONG_CONVERSATION = { ...CONTEXT, state: 'notice', reason: 'long-conversation' };
+      const NEAR_LIMIT = { ...CONTEXT, state: 'warning', reason: 'near-context-limit' };
+      const FINE = { ...CONTEXT, state: 'ok' };
+
+      async function askPredefinedQuestion(conversationStatus: Record<string, unknown>, topic: string, label: string) {
+        const store = createChatStore({ conversationStatus });
+        const { container, getByText } = await openAgentTab(store);
+        const firstThreadId = (store.getActions() as RecordedAction[]).find(
+          ({ type }) => type === 'agent/START_THREAD',
+        )?.threadId;
+
+        fireEvent.change(container.querySelector('#topic-select') as Element, { target: { value: topic } });
+        fireEvent.click(getByText(label));
+
+        const actions = store.getActions() as RecordedAction[];
+        const askedIndex = actions.findIndex(({ type }) =>
+          ['agent/MESSAGE_AGENT', 'agent/ANSWER_FROM_ACCESS_GUIDE'].includes(type),
+        );
+        return {
+          firstThreadId,
+          actions,
+          asked: actions[askedIndex],
+          actionsBeforeAsking: actions.slice(0, askedIndex),
+        };
+      }
+
+      it.each([
+        ['a long-conversation notice', LONG_CONVERSATION],
+        ['a near-limit warning', NEAR_LIMIT],
+      ])('asks a predefined question in a new chat after %s', async (_description, conversationStatus) => {
+        // Act
+        const { firstThreadId, asked } = await askPredefinedQuestion(
+          conversationStatus,
+          'environment-realm',
+          'My Realms',
+        );
+
+        // Assert
+        expect(asked.threadId).not.toBe(firstThreadId);
+      });
+
+      it('resets the long conversation when a predefined question starts a new chat', async () => {
+        // Act
+        const { firstThreadId, actions } = await askPredefinedQuestion(
+          LONG_CONVERSATION,
+          'environment-realm',
+          'My Realms',
+        );
+
+        // Assert
+        expect(actions).toContainEqual({ type: 'agent/RESET_THREAD', threadId: firstThreadId });
+      });
+
+      it('starts the new thread before the predefined question is sent to it', async () => {
+        // Act
+        const { asked, actionsBeforeAsking } = await askPredefinedQuestion(
+          LONG_CONVERSATION,
+          'environment-realm',
+          'My Realms',
+        );
+
+        // Assert
+        expect(actionsBeforeAsking).toContainEqual({
+          type: 'agent/START_THREAD',
+          agent: 'AccessServiceAgent',
+          threadId: asked.threadId,
+        });
+      });
+
+      it('answers a guide question in a new chat after a long-conversation notice', async () => {
+        // Act
+        const { firstThreadId, asked } = await askPredefinedQuestion(LONG_CONVERSATION, 'tokens', 'Token Expiry');
+
+        // Assert
+        expect(asked).toMatchObject({ type: 'agent/ANSWER_FROM_ACCESS_GUIDE', topic: 'token-expiry' });
+        expect(asked.threadId).not.toBe(firstThreadId);
+      });
+
+      it('continues the conversation for a predefined question while agent-service reports it is fine', async () => {
+        // Act
+        const { firstThreadId, asked } = await askPredefinedQuestion(FINE, 'environment-realm', 'My Realms');
+
+        // Assert
+        expect(asked.threadId).toBe(firstThreadId);
+      });
+
+      it('does not reset the conversation for a predefined question while agent-service reports it is fine', async () => {
+        // Act
+        const { actions } = await askPredefinedQuestion(FINE, 'environment-realm', 'My Realms');
+
+        // Assert
+        expect(actions).not.toContainEqual(expect.objectContaining({ type: 'agent/RESET_THREAD' }));
+      });
     });
   });
 

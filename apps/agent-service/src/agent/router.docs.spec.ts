@@ -3,9 +3,12 @@ import { assertAuthenticatedHandler, createErrorHandler } from '@core-services/c
 import { createDocumentedResponseRecorder } from '@core-services/core-common/testing';
 import * as express from 'express';
 import { Express } from 'express';
+import { readFileSync } from 'fs';
 import { join } from 'path';
 import * as request from 'supertest';
 import { Logger } from 'winston';
+import { parse } from 'yaml';
+import { ACCESS_GUIDE_TOPIC_IDS } from './agents/access/guide';
 import { AgentBroker } from './model';
 import { createAgentRouter } from './router';
 
@@ -148,6 +151,32 @@ describe('agent router documented behaviour', () => {
         .query({ tenantId: 'my-tenant' });
       expect(res.status).toBe(400);
       expect(res.body.errorMessage).toContain('must begin with');
+    });
+  });
+
+  describe('GET /agent/v1/access/guide/:topic', () => {
+    it('responds with the documented guidance for the topic, for a user without roles', async () => {
+      const res = await request(createApp(noRole)).get('/agent/v1/access/guide/token-expiry');
+      expect(res.status).toBe(200);
+      expect(res.body).toMatchObject({ topic: 'token-expiry', title: 'Token expiry and refresh' });
+      expect(res.body.markdown).toContain('Access Token Lifespan');
+    });
+
+    it('responds 404 for a topic that does not exist', async () => {
+      const res = await request(createApp(agentUser)).get('/agent/v1/access/guide/no-such-topic');
+      expect(res.status).toBe(404);
+      expect(res.body.errorMessage).toBe("access guide topic with ID 'no-such-topic' could not be found.");
+    });
+
+    it('responds 401 when there is no authenticated user', async () => {
+      const res = await request(createApp(null)).get('/agent/v1/access/guide/token-expiry');
+      expect(res.status).toBe(401);
+    });
+
+    it('documents every guide topic', () => {
+      const swagger = parse(readFileSync(join(__dirname, 'router.swagger.yml'), 'utf8'));
+      const [topic] = swagger['/agent/v1/access/guide/{topic}'].get.parameters;
+      expect(topic.schema.enum).toEqual(ACCESS_GUIDE_TOPIC_IDS);
     });
   });
 

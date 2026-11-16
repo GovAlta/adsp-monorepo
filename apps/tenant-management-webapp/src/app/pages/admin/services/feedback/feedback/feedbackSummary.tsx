@@ -14,12 +14,12 @@ const Summary = styled.div`
   line-height: 1.5;
 `;
 
-const SummarySkeleton = styled.div`
-  padding-top: var(--goa-space-l);
-`;
-
 const Separator = styled.span`
   margin: 0 var(--goa-space-s);
+`;
+
+const SummarySkeleton = styled.div`
+  padding-top: var(--goa-space-l);
 `;
 
 export const FeedbackSummaryLoading = (): JSX.Element => (

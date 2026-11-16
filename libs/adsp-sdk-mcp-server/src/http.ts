@@ -4,6 +4,7 @@ import { createServer, Server as HttpServer } from 'http';
 import { performance } from 'perf_hooks';
 import { McpServerConfig, readConfig } from './config';
 import { createCorsAndOriginGuard, createInFlightGate, createRateLimit } from './guards';
+import { createLifecycle, ServerLifecycle } from './lifecycle';
 import { bucketMcpMethod, getMetrics } from './metrics';
 import { Semaphore } from './semaphore';
 import { createAdspMcpServer, CreateAdspMcpServerOptions, loadAdspMcpTools } from './server';
@@ -14,6 +15,8 @@ const MAX_REQUEST_BODY_BYTES = 1024 * 1024;
 export interface McpHttpAppOptions extends CreateAdspMcpServerOptions {
   /** Defaults to `readConfig()` over `process.env`. */
   config?: McpServerConfig;
+  /** Drives `/ready`; shutdown flips it. */
+  lifecycle?: ServerLifecycle;
 }
 
 function createStatelessPostHandler(options: CreateAdspMcpServerOptions): express.RequestHandler {
@@ -70,7 +73,11 @@ function methodNotAllowed(_req: express.Request, res: express.Response): void {
     .json({ jsonrpc: '2.0', error: { code: -32000, message: 'Method not allowed.' }, id: null });
 }
 
-export function createMcpHttpApp({ config = readConfig(), ...serverOptions }: McpHttpAppOptions = {}): express.Express {
+export function createMcpHttpApp({
+  config = readConfig(),
+  lifecycle = createLifecycle(),
+  ...serverOptions
+}: McpHttpAppOptions = {}): express.Express {
   loadAdspMcpTools(serverOptions);
   configureLiveToolLimit({ maxConcurrent: config.liveToolMaxConcurrent, waitMs: config.inFlightWaitMs });
 
@@ -78,8 +85,30 @@ export function createMcpHttpApp({ config = readConfig(), ...serverOptions }: Mc
   const app = express();
   app.set('trust proxy', config.trustedProxy);
 
+  app.use((_req, res, next) => {
+    // Decided when the head is written, not on arrival, so a request already running when draining starts also tells
+    // its client not to reuse a socket that is about to close.
+    const writeHead = res.writeHead;
+    res.writeHead = function (this: express.Response, ...args: Parameters<typeof writeHead>) {
+      if (lifecycle.draining && !this.headersSent) {
+        this.setHeader('Connection', 'close');
+      }
+      return writeHead.apply(this, args);
+    } as typeof res.writeHead;
+    next();
+  });
+
   app.get('/health', (_req, res) => {
     res.json({ status: 'ok' });
+  });
+
+  // The server listens only after the docs index is built, so this also fails while the index is loading.
+  app.get('/ready', (_req, res) => {
+    if (lifecycle.draining) {
+      res.status(503).json({ status: 'draining' });
+      return;
+    }
+    res.json({ status: 'ready' });
   });
 
   app.use('/mcp', createCorsAndOriginGuard(config.corsOrigins));

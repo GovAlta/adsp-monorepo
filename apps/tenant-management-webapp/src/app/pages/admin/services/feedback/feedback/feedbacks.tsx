@@ -10,7 +10,6 @@ import {
   GoabBadge,
   GoabButton,
   GoabButtonGroup,
-  GoabCircularProgress,
   GoabDropdown,
   GoabDropdownItem,
   GoabFormItem,
@@ -26,7 +25,7 @@ import {
   getFeedbackSummary,
 } from '@store/feedback/actions';
 import { FeedbackPagination } from './feedbackPagination';
-import { ExportDates, FeedbackFilterError, FeedbackFilterErrorWrapper, ProgressWrapper } from '../styled-components';
+import { ExportDates, FeedbackFilterError, FeedbackFilterErrorWrapper } from '../styled-components';
 import { transformedData } from '../ratings';
 import { FullScreenModalWrapper } from '../styled-components';
 import { GoabInputOnChangeDetail, GoabDropdownOnChangeDetail } from '@abgov/ui-components-common';
@@ -256,12 +255,6 @@ export const FeedbacksList = (): JSX.Element => {
             </GoabButton>
           </GoabButtonGroup>
         </div>
-      )}
-
-      {indicator.show && (
-        <ProgressWrapper>
-          <GoabCircularProgress visible={indicator.show} size="large" />
-        </ProgressWrapper>
       )}
 
       {!expandView &&

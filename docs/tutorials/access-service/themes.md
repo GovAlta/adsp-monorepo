@@ -40,4 +40,4 @@ Probably the easiest way to build and test a new theme is:
 - clone the Access service repository, and
 - follow the instructions in the repository to build, test, and deploy your new templates.
 
-The Access service repository is maintained by the ADSP team in a private Government of Alberta organization, so you will need to request access before you can clone it. Please contact the ADSP team on slack (#adsp-connect) or email us at [ADSP Support](adsp@gov.ab.ca) to request access, or if you have any questions.
+The Access service repository is maintained by the ADSP team in a private Government of Alberta organization, so you will need to request access before you can clone it. Please contact the ADSP team on slack (#adsp-connect) or email us at [ADSP Support](mailto:adsp@gov.ab.ca) to request access, or if you have any questions.

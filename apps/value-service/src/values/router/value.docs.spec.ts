@@ -47,6 +47,8 @@ describe('value router documented behaviour', () => {
 
   const eventServiceMock = { send: jest.fn() };
 
+  const eventResourceRollupRepositoryMock = { countDistinct: jest.fn() };
+
   const namespace = new NamespaceEntity(
     validationServiceMock,
     repositoryMock,
@@ -83,6 +85,7 @@ describe('value router documented behaviour', () => {
         repository: repositoryMock as never,
         serviceMetricRollupRepository: {} as never,
         serviceMetricRollupTrailingDays: 7,
+        eventResourceRollupRepository: eventResourceRollupRepositoryMock as never,
         eventService: eventServiceMock,
         auditService: { record: jest.fn().mockResolvedValue({}), flush: jest.fn() } as never,
       }),
@@ -103,6 +106,7 @@ describe('value router documented behaviour', () => {
     repositoryMock.readMetrics.mockResolvedValue({});
     repositoryMock.readMetric.mockResolvedValue({ name: 'test', values: [], page: {} });
     repositoryMock.readPlatformMetrics.mockResolvedValue({});
+    eventResourceRollupRepositoryMock.countDistinct.mockResolvedValue(0);
     repositoryMock.writeValues.mockImplementation((_ns, _name, tenantId, values) =>
       Promise.resolve(values.map((value) => ({ ...value, tenantId }))),
     );
@@ -296,6 +300,96 @@ describe('value router documented behaviour', () => {
         'test-service': { 'test-value': [{ value: 120 }] },
         page: { after: null, next: 'MTA=', size: 1 },
       });
+    });
+  });
+
+  describe('GET /event-resources/distinct-count', () => {
+    const period = 'intervalMin=2025-11-01T00:00:00.000Z&intervalMax=2026-11-01T00:00:00.000Z';
+    const pdfTemplates = `namespace=pdf-service&contextKey=templateId&${period}`;
+
+    it('responds with the distinct count across every rolled-up event by default', async () => {
+      eventResourceRollupRepositoryMock.countDistinct.mockResolvedValueOnce(12);
+      const res = await request(createApp(reader)).get(`/value/v1/event-resources/distinct-count?${pdfTemplates}`);
+      expect(res.status).toBe(200);
+      expect(res.body).toEqual({
+        namespace: 'pdf-service',
+        contextKey: 'templateId',
+        names: ['pdf-generation-queued', 'pdf-generated', 'pdf-generation-failed'],
+        intervalMin: '2025-11-01T00:00:00.000Z',
+        intervalMax: '2026-11-01T00:00:00.000Z',
+        count: 12,
+      });
+      expect(eventResourceRollupRepositoryMock.countDistinct).toHaveBeenCalledWith({
+        tenant: tenantId.toString(),
+        namespace: 'pdf-service',
+        names: ['pdf-generation-queued', 'pdf-generated', 'pdf-generation-failed'],
+        contextKey: 'templateId',
+        from: new Date('2025-11-01T00:00:00.000Z'),
+        to: new Date('2026-11-01T00:00:00.000Z'),
+      });
+    });
+
+    it('counts across only the events named', async () => {
+      const res = await request(createApp(reader)).get(
+        `/value/v1/event-resources/distinct-count?${pdfTemplates}&names=pdf-generated`,
+      );
+      expect(res.status).toBe(200);
+      expect(eventResourceRollupRepositoryMock.countDistinct).toHaveBeenCalledWith(
+        expect.objectContaining({ names: ['pdf-generated'] }),
+      );
+    });
+
+    it('responds 403 without the value-reader role', async () => {
+      const res = await request(createApp(noRole)).get(`/value/v1/event-resources/distinct-count?${pdfTemplates}`);
+      expect(res.status).toBe(403);
+    });
+
+    it('responds 400 without a tenant context', async () => {
+      const coreReader = user([ServiceUserRoles.Reader], { isCore: true, tenantId: undefined });
+      const res = await request(createApp(coreReader, false)).get(
+        `/value/v1/event-resources/distinct-count?${pdfTemplates}`,
+      );
+      expect(res.status).toBe(400);
+    });
+
+    // The rollup only has rows for its own sources, so anything else would undercount rather than fail.
+    it('responds 400 for a namespace and context key that are not rolled up', async () => {
+      const res = await request(createApp(reader)).get(
+        `/value/v1/event-resources/distinct-count?namespace=test-service&contextKey=templateId&${period}`,
+      );
+      expect(res.status).toBe(400);
+      expect(eventResourceRollupRepositoryMock.countDistinct).not.toHaveBeenCalled();
+    });
+
+    it('responds 400 for an event the rollup does not maintain', async () => {
+      const res = await request(createApp(reader)).get(
+        `/value/v1/event-resources/distinct-count?${pdfTemplates}&names=pdf-generated,pdf-deleted`,
+      );
+      expect(res.status).toBe(400);
+      expect(res.body.errorMessage).toContain('pdf-deleted');
+    });
+
+    it('responds 400 when the period is missing', async () => {
+      const res = await request(createApp(reader)).get(
+        '/value/v1/event-resources/distinct-count?namespace=pdf-service&contextKey=templateId',
+      );
+      expect(res.status).toBe(400);
+    });
+
+    it('responds 400 for an empty period', async () => {
+      const res = await request(createApp(reader)).get(
+        '/value/v1/event-resources/distinct-count?namespace=pdf-service&contextKey=templateId' +
+          '&intervalMin=2026-11-01T00:00:00.000Z&intervalMax=2026-11-01T00:00:00.000Z',
+      );
+      expect(res.status).toBe(400);
+    });
+
+    it('responds 400 for a period longer than two years', async () => {
+      const res = await request(createApp(reader)).get(
+        '/value/v1/event-resources/distinct-count?namespace=pdf-service&contextKey=templateId' +
+          '&intervalMin=2023-01-01T00:00:00.000Z&intervalMax=2026-01-01T00:00:00.000Z',
+      );
+      expect(res.status).toBe(400);
     });
   });
 

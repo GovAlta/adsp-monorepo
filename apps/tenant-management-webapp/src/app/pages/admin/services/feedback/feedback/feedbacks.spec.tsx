@@ -264,6 +264,31 @@ describe('Feedbacks Components', () => {
     expect(summary.compareDocumentPosition(table) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
+  it('shows only the summary skeleton while feedback is loading', () => {
+    store = mockStore({
+      tenant: { name: 'autotest' },
+      feedback: {
+        sites: [newSite],
+        feedbacks: [],
+        exportData: [],
+        page: null,
+        summary: null,
+      },
+      session: { indicator: { show: true } },
+    });
+    store.dispatch = jest.fn();
+    const { baseElement } = render(
+      <Provider store={store}>
+        <FeedbacksList />
+      </Provider>,
+    );
+
+    selectSite(baseElement);
+
+    expect(screen.getByTestId('feedback-summary-loading')).toBeInTheDocument();
+    expect(baseElement.querySelector('goa-circular-progress')).not.toBeInTheDocument();
+  });
+
   it('should show details of feedback when toggle-details-visibility icon button is clicked', () => {
     const { baseElement } = render(
       <Provider store={store}>

@@ -31,6 +31,7 @@ export const TRANSPORT_EQUIVALENCE_CALLS: ToolCall[] = [
   { name: 'search_sdk_reference', arguments: { query: 'send event', limit: 3 } },
   { name: 'get_platform_quickstart', arguments: {} },
   { name: 'search_adsp_docs', arguments: { limit: 3 } },
+  { name: 'get_adsp_mcp_server_info', arguments: {} },
 ];
 
 export async function callForContract(client: Client, call: ToolCall): Promise<unknown> {

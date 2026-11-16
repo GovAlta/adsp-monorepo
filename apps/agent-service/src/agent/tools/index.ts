@@ -18,6 +18,11 @@ import { createBuilderFormSchemaTools } from './builderFormSchema';
 import { createFormGenerationTools } from '../agents/forms/generation';
 import { createAccessDiscoveryTools } from './accessDiscovery';
 import { createAccessClientTools } from './accessClients';
+import { createAccessUserTools } from './accessUsers';
+import { createAccessRoleTools } from './accessRoles';
+import { createAccessClientCheckTools } from './accessClientChecks';
+import { createAccessReaders } from './accessReaders';
+import { createAccessGuideTools } from './accessGuide';
 import { environment } from '../../environments/environment';
 
 interface ToolsProps {
@@ -72,7 +77,19 @@ export async function createTools({ logger, directory, tokenProvider }: ToolsPro
     directory,
     accessServiceUrl,
   });
-  const { listAccessClients, getAccessClient } = createAccessClientTools({ logger, directory, accessServiceUrl });
+  const accessToolProps = { logger, directory, accessServiceUrl, readers: createAccessReaders({ directory }) };
+  const { listAccessClients, getAccessClient } = createAccessClientTools(accessToolProps);
+  const { checkAccessClientSetup, checkAccessClientUrl, previewAccessToken, getAccessServiceAccount } =
+    createAccessClientCheckTools(accessToolProps);
+  const {
+    findAccessUser,
+    getAccessUserRoles,
+    getAccessUserSignInStatus,
+    checkAccessUserForService,
+    compareAccessUsers,
+  } = createAccessUserTools(accessToolProps);
+  const { listAccessServiceRoles, getAccessRole, listAccessRoleMembers } = createAccessRoleTools(accessToolProps);
+  const { getAccessGuide } = createAccessGuideTools();
 
   return {
     fileDownloadTool,
@@ -107,6 +124,19 @@ export async function createTools({ logger, directory, tokenProvider }: ToolsPro
     getAccessRealmInfo,
     listAccessClients,
     getAccessClient,
+    checkAccessClientSetup,
+    checkAccessClientUrl,
+    previewAccessToken,
+    getAccessServiceAccount,
+    findAccessUser,
+    getAccessUserRoles,
+    getAccessUserSignInStatus,
+    checkAccessUserForService,
+    compareAccessUsers,
+    listAccessServiceRoles,
+    getAccessRole,
+    listAccessRoleMembers,
+    getAccessGuide,
   };
 }
 

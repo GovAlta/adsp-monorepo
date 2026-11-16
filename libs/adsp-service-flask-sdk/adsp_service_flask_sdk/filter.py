@@ -3,6 +3,7 @@ from typing import Any, Callable, Dict, Optional, Tuple, TypeVar
 
 from adsp_py_common.access import IssuerCache, User
 from adsp_py_common.adsp_id import AdspId
+from adsp_py_common.audit import SERVICE_ACCOUNT_PREFIX
 from adsp_py_common.constants import CONTEXT_TENANT, CONTEXT_USER
 from adsp_py_common.tenant import Tenant, TenantService
 from operator import itemgetter
@@ -78,13 +79,22 @@ class AccessRequestFilter:
         return User(
             tenant,
             payload.get("sub"),
-            payload.get("preferred_username"),
+            self._user_name(payload),
             payload.get("given_name", None),
             payload.get("family_name", None),
             payload.get("email", None),
             roles,
             tenant is None,
         )
+
+    @staticmethod
+    def _user_name(payload: Dict[str, Any]) -> Optional[str]:
+        name = payload.get("preferred_username")
+        client_id = payload.get("client_id")
+        # Keycloak service account tokens without the profile scope only identify the client.
+        if not name and client_id:
+            name = f"{SERVICE_ACCOUNT_PREFIX}{client_id}"
+        return name
 
     def filter(self):
         user: Optional[User] = None

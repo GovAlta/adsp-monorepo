@@ -41,6 +41,7 @@ export interface SectionLoaderContext {
   period: ReportingPeriod;
   token: string;
   serviceUrls: Record<string, string>;
+  signal: AbortSignal;
 }
 
 export type SectionLoader<T = unknown> = (context: SectionLoaderContext) => Promise<T>;

@@ -23,6 +23,7 @@ import { environment } from './environments/environment';
 import {
   applyNotificationMiddleware,
   configurationSchema,
+  NotificationAuditActions,
   NotificationConfiguration,
   NotificationConfigRetriedDefinition, // clean-code-ignore: RULE-19
   NotificationGenerationFailedDefinition,
@@ -72,6 +73,7 @@ async function initializeApp() {
     clearCached,
     directory,
     eventService,
+    auditService,
     healthCheck,
     metricsHandler,
     traceHandler,
@@ -121,6 +123,9 @@ async function initializeApp() {
         },
       ],
       values: [ServiceMetricsValueDefinition],
+      auditActions: NotificationAuditActions,
+      // Batched because a send of a notification to many subscribers records an event for each.
+      audit: { batchSize: 100, enabled: environment.NOTIFICATION_AUDIT_ENABLED },
       useLongConfigurationCacheTTL: true,
       tracing: environment.OTEL_EXPORTER_OTLP_ENDPOINT,
       metrics: environment.OTEL_EXPORTER_OTLP_ENDPOINT,
@@ -194,6 +199,7 @@ async function initializeApp() {
     configurationService,
     directory,
     eventService,
+    auditService,
     tenantService,
     eventSubscriber,
     queueService,
@@ -232,14 +238,37 @@ async function initializeApp() {
   const errorHandler = createErrorHandler(logger);
   app.use(errorHandler);
 
-  return app;
+  return { app, auditService };
 }
 
-initializeApp().then((app) => {
+initializeApp().then(({ app, auditService }) => {
   const port = environment.PORT || 3335;
 
   const server = app.listen(port, () => {
     logger.info(`Listening at http://localhost:${port}`);
   });
+
   server.on('error', (err) => logger.error(`Error encountered in server: ${err}`));
+
+  // Stop accepting requests, then deliver any buffered audit events before the process exits.
+  let stopping = false;
+  const shutdown = async () => {
+    if (stopping) return;
+    stopping = true;
+    // Fallback in case the flush or close hangs.
+    setTimeout(() => process.exit(1), 15000).unref();
+    await new Promise<void>((resolve) => {
+      server.close(() => resolve());
+      server.closeIdleConnections();
+    });
+    try {
+      await auditService.flush();
+      process.exit(0);
+    } catch (err) {
+      logger.error(`Error encountered flushing audit events on shutdown: ${err}`);
+      process.exit(1);
+    }
+  };
+  process.once('SIGTERM', shutdown);
+  process.once('SIGINT', shutdown);
 });

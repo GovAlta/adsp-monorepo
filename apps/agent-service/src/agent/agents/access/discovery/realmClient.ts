@@ -21,6 +21,7 @@ export interface AccessRealmRecord {
 export interface RealmOpenIdConfiguration {
   issuer: string;
   endpoints: {
+    openIdConfiguration?: string;
     authorization?: string;
     token?: string;
     userInfo?: string;
@@ -132,6 +133,7 @@ export function createRealmClient({ directory }: RealmClientProps) {
         value: {
           issuer,
           endpoints: {
+            openIdConfiguration: configurationUrl.href,
             authorization: optionalString(data.authorization_endpoint),
             token: optionalString(data.token_endpoint),
             userInfo: optionalString(data.userinfo_endpoint),

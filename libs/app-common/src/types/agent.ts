@@ -83,6 +83,8 @@ export interface AgentMessage {
   local?: boolean;
   /** What the reply used, when the model provider reports it. */
   usage?: AgentUsage;
+  /** A short line shown under the finished reply, such as where an answer came from when no model wrote it. */
+  caption?: string;
 }
 
 /** What one agent reply used, as agent-service reports it on the finished reply. */
@@ -96,8 +98,11 @@ export interface AgentUsage {
   modelCalls: number;
 }
 
-/** Memory has started keeping the conversation short; normal behaviour that users should know about. */
-export type ConversationNoticeReason = 'summarised' | 'older-messages-dropped';
+/**
+ * Memory has started keeping the conversation short, or the conversation has grown long enough that a new chat would
+ * use less of the shared AI capacity; normal behaviour that users should know about.
+ */
+export type ConversationNoticeReason = 'summarised' | 'older-messages-dropped' | 'long-conversation';
 /** The conversation is close to what the assistant can handle well. */
 export type ConversationWarningReason = 'near-context-limit' | 'notes-condensed';
 

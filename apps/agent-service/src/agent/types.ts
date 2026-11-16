@@ -16,3 +16,6 @@ export type AdspRequestContext<TAdditional = never> = RequestContext<{
 } | TAdditional>
 
 export const SOURCE_DOCUMENTS_KEY = 'sourceDocuments';
+
+// Mastra drops its own thread key from the request context of delegated agents, so the user's thread is also kept here.
+export const THREAD_ID_KEY = 'threadId';
