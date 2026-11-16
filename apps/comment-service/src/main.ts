@@ -13,7 +13,7 @@ import {
   instrumentAxios,
 } from '@abgov/adsp-service-sdk';
 import type { User } from '@abgov/adsp-service-sdk';
-import { createLogger, createErrorHandler } from '@core-services/core-common';
+import { createLogger, createErrorHandler, createShutdownHandler } from '@core-services/core-common';
 import { environment } from './environments/environment';
 import {
   CommentAuditActions,
@@ -33,7 +33,7 @@ import { createRepositories } from './postgres';
 
 const logger = createLogger('comment-service', environment.LOG_LEVEL);
 
-const initializeApp = async (): Promise<express.Application> => {
+const initializeApp = async () => {
   const app = express();
 
   app.use(compression());
@@ -66,6 +66,7 @@ const initializeApp = async (): Promise<express.Application> => {
     tokenProvider,
     traceHandler,
     healthCheck,
+    shutdownTelemetry,
   } = await initializePlatform(
     {
       serviceId,
@@ -192,14 +193,25 @@ const initializeApp = async (): Promise<express.Application> => {
   const errorHandler = createErrorHandler(logger);
   app.use(errorHandler);
 
-  return app;
+  return { app, auditService, shutdownTelemetry };
 };
 
-initializeApp().then((app) => {
+initializeApp().then(({ app, auditService, shutdownTelemetry }) => {
   const port = environment.PORT || 3346;
 
   const server = app.listen(port, () => {
     logger.info(`Listening at http://localhost:${port}`);
   });
   server.on('error', (err) => logger.error(`Error encountered in server: ${err}`));
+
+  // Stop accepting requests, then deliver any buffered audit events before the process exits.
+  const shutdown = createShutdownHandler({
+    serviceName: 'Comment service',
+    server,
+    auditService,
+    shutdownTelemetry,
+    logger,
+  });
+  process.once('SIGTERM', shutdown);
+  process.once('SIGINT', shutdown);
 });
