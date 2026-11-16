@@ -1,6 +1,6 @@
 import { AdspId, initializePlatform, ServiceMetricsValueDefinition } from '@abgov/adsp-service-sdk';
 import type { User } from '@abgov/adsp-service-sdk';
-import { createLogger, createErrorHandler } from '@core-services/core-common';
+import { createLogger, createErrorHandler, createShutdownHandler } from '@core-services/core-common';
 import * as cors from 'cors';
 import * as express from 'express';
 import { readFile } from 'fs';
@@ -13,6 +13,7 @@ import { promisify } from 'util';
 import { environment } from './environments/environment';
 import {
   applyCacheMiddleware,
+  CacheAuditActions,
   CacheServiceConfiguration,
   configurationSchema,
   ConfigurationValue,
@@ -25,7 +26,7 @@ import { accessApiId } from './cache/model';
 
 const logger = createLogger('cache-service', environment.LOG_LEVEL);
 
-const initializeApp = async (): Promise<express.Application> => {
+const initializeApp = async () => {
   const app = express();
 
   // app.use(compression());
@@ -55,6 +56,8 @@ const initializeApp = async (): Promise<express.Application> => {
     configurationHandler,
     configurationService,
     coreStrategy,
+    auditService,
+    shutdownTelemetry,
     directory,
     tenantHandler,
     tenantService,
@@ -74,6 +77,8 @@ const initializeApp = async (): Promise<express.Application> => {
         },
       ],
       events: [],
+      auditActions: CacheAuditActions,
+      audit: { enabled: environment.CACHE_AUDIT_ENABLED },
       configuration: {
         schema: configurationSchema,
         description: 'Upstream targets for cache read through requests.',
@@ -91,6 +96,7 @@ const initializeApp = async (): Promise<express.Application> => {
             },
           },
           tenantId,
+          auditService
         );
       },
       enableConfigurationInvalidation: true,
@@ -177,14 +183,25 @@ const initializeApp = async (): Promise<express.Application> => {
   const errorHandler = createErrorHandler(logger);
   app.use(errorHandler);
 
-  return app;
+  return { app, auditService, shutdownTelemetry };
 };
 
-initializeApp().then((app) => {
+initializeApp().then(({ app, auditService, shutdownTelemetry }) => {
   const port = environment.PORT || 3347;
 
   const server = app.listen(port, () => {
     logger.info(`Listening at http://localhost:${port}`);
   });
   server.on('error', (err) => logger.error(`Error encountered in server: ${err}`));
+
+  // Stop accepting requests, then deliver any buffered audit events before the process exits.
+  const shutdown = createShutdownHandler({
+    serviceName: 'Cache service',
+    server,
+    auditService,
+    shutdownTelemetry,
+    logger,
+  });
+  process.once('SIGTERM', shutdown);
+  process.once('SIGINT', shutdown);
 });

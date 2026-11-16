@@ -1,4 +1,4 @@
-import { AdspId, ServiceDirectory, Tenant, TenantService } from '@abgov/adsp-service-sdk';
+import { AdspId, AuditService, ServiceDirectory, Tenant, TenantService } from '@abgov/adsp-service-sdk';
 import { DomainEvent, InvalidOperationError, UnauthorizedError } from '@core-services/core-common';
 import { Request, Response } from 'express';
 import * as path from 'path';
@@ -30,8 +30,9 @@ export class AccessCacheTarget extends CacheTarget {
     provider: CacheProvider,
     tenantId: AdspId,
     target: Target,
+    auditService?: AuditService,
   ) {
-    super(logger, directory, provider, tenantId, target);
+    super(logger, directory, provider, tenantId, target, auditService);
 
     if (this.serviceId.toString() !== accessApiId.toString()) {
       throw new Error(`Access cache target cannot be created against ${this.serviceId}`);
@@ -92,6 +93,7 @@ export class AccessCacheTarget extends CacheTarget {
 
           const relatedPaths = this.getRelatedInvalidationPaths(resourceType, upstreamResourcePath);
           let relatedDeleted = 0;
+          const invalidatedPaths: string[] = deleted ? [resourcePath] : [];
           for (const relPath of relatedPaths) {
             const fullPath = path.join(this.basePath, relPath);
             this.logger.debug(
@@ -104,10 +106,12 @@ export class AccessCacheTarget extends CacheTarget {
             const [_k, relInvalidateKey] = await this.getCacheKey(fullPath);
             if (await this.provider.del(relInvalidateKey)) {
               relatedDeleted++;
+              invalidatedPaths.push(fullPath);
             }
           }
 
           if (deleted || relatedDeleted > 0) {
+            this.auditInvalidated(event, invalidatedPaths);
             this.logger.info(
               `Invalidated cache entry ${deleted} and ${relatedDeleted} related entries for path ` +
                 `'${resourcePath}' on admin event ${namespace}:${name}.`,
