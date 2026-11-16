@@ -24,6 +24,8 @@ export interface ToolDefinition {
   description: string;
   inputSchema: JsonSchemaObject;
   annotations: typeof OFFLINE_TOOL_ANNOTATIONS;
+  /** JSON Schema for `structuredContent`. A tool that declares it must return `structuredContent` on success. */
+  outputSchema?: { type: 'object'; [key: string]: unknown };
   /**
    * Must be a pure lookup/computation over `args` and this tool's own read-only data (docs, SDK reference) — no
    * network calls, filesystem writes, or other external side effects. `CallToolResult.isError` on the return value

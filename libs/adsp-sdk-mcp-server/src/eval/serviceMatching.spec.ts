@@ -6,6 +6,7 @@ import {
   formatServiceMatchingReport,
   loadServiceMatchingQueries,
   passesWithin,
+  rankWithFindAdspServices,
   rankWithSearchAdspDocs,
   serviceOfDocPath,
 } from './serviceMatching';
@@ -109,5 +110,24 @@ describe('rankWithSearchAdspDocs', () => {
 
   it('returns no services when the search finds nothing', async () => {
     expect(await rankWithSearchAdspDocs(FIXTURE_DOCS_ROOT)('zzzunmatched')).toEqual([]);
+  });
+});
+
+describe('find_adsp_services on the evaluation set', () => {
+  // CS-5764: the expected service ranks first or second for at least 90% of the queries. A query with two expected
+  // services passes only when both are in the top 2.
+  it('ranks every expected service in the top 2 for at least 90% of the queries', async () => {
+    const queries = loadServiceMatchingQueries();
+    const evaluations = await evaluateServiceMatching(queries, rankWithFindAdspServices());
+    const passing = evaluations.filter((evaluation) => passesWithin(evaluation, 2)).length;
+
+    expect({ passing, rate: passing / queries.length >= 0.9 }).toEqual({ passing, rate: true });
+  });
+
+  it('ranks the 2026-11-14 probes first', async () => {
+    const rank = rankWithFindAdspServices();
+
+    expect((await rank('applicants attach supporting documents to an application'))[0]).toBe('file-service');
+    expect((await rank('upload file'))[0]).toBe('file-service');
   });
 });

@@ -5,9 +5,9 @@
  */
 export const SERVER_INSTRUCTIONS = [
   'Use this server to build services and apps on ADSP (Alberta Digital Service Platform). Pick the tool by the question:',
-  '- What ADSP offers, which service fits a need, platform concepts or how-tos: search_adsp_docs, then read_adsp_doc.',
-  '  Search matches words, not meaning. If a need described in product terms finds nothing useful, search again with',
-  '  the capability\'s name (e.g. "file", "calendar", "notification") or browse services/ with list_adsp_docs.',
+  '- Before designing or building any capability of an ADSP app, call find_adsp_services with the need. If a result',
+  '  has ask set, put its fitQuestions to the user rather than picking a service yourself. noMatch: no service fits.',
+  '- Platform concepts or how-tos: search_adsp_docs, then read_adsp_doc. Browse services/ with list_adsp_docs.',
   '- Writing a Node service: get_platform_quickstart first, then search_sdk_reference for a specific symbol.',
   "- Calling a service's REST API: search_service_endpoints, then read_service_endpoint.",
   '- Roles a service account needs, or the configuration a platform service accepts from yours: list_service_roles,',

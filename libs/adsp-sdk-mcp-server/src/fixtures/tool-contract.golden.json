@@ -1,6 +1,13 @@
 {
   "tools": [
     {
+      "name": "find_adsp_services",
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false
+      }
+    },
+    {
       "name": "search_adsp_docs",
       "annotations": {
         "readOnlyHint": true,
