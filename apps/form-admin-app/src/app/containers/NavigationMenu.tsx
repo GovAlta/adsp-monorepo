@@ -6,6 +6,10 @@ import styled from 'styled-components';
 import { AppDispatch, definitionSelector, loginUser, logoutUser, tenantSelector, userSelector } from '../state';
 
 const Nav = styled.nav<{ type: 'menu' | 'side' }>`
+  goa-side-menu a.current {
+    --goa-color-text-secondary: var(--goa-color-text-default);
+  }
+
   @media screen and (max-width: 1023px) {
     display: ${({ type }) => (type === 'side' ? 'none' : 'block')};
   }
