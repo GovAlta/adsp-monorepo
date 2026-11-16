@@ -6,7 +6,7 @@ import type { Request } from 'express';
 import * as request from 'supertest';
 import { Logger } from 'winston';
 import { CredentialRepository, CredentialStore, parseEncryptionKey, StoredCredential } from './credentials';
-import { CredentialNotSetError, DestinationDisabledError, SharePointError } from './errors';
+import { CredentialNotSetError, CredentialUnreadableError, DestinationDisabledError, SharePointError } from './errors';
 import { SharePointFileService } from './files';
 import { GraphTokenProvider } from './graph';
 import { RowIdentityMissingError } from './mapper';
@@ -150,6 +150,21 @@ describe('SharePoint router', () => {
       expect((await setSecret()).status).toBe(403);
     });
 
+    it("forbids core service accounts from setting, reading or deleting a tenant's secret, even with the admin role", async () => {
+      await setSecret();
+      currentUser = { id: 'core-service', name: 'Core service', roles: [ServiceRoles.Admin], isCore: true } as unknown as User;
+
+      expect((await setSecret('hr-site', 'replaced')).status).toBe(403);
+      expect((await request(app).get('/sharepoint/v1/connections/hr-site/credentials')).status).toBe(403);
+      expect((await request(app).delete('/sharepoint/v1/connections/hr-site/credentials')).status).toBe(403);
+
+      currentUser = admin;
+      expect((await request(app).get('/sharepoint/v1/connections/hr-site/credentials')).body).toEqual({
+        isSet: true,
+        updatedAt: expect.any(String),
+      });
+    });
+
     it('deletes a credential and clears the cached token', async () => {
       await setSecret();
       tokens.evict.mockClear();
@@ -197,6 +212,13 @@ describe('SharePoint router', () => {
       const res = await push();
       expect(res.status).toBe(409);
       expect(res.body).toEqual({ errorCode: 'credential-not-set' });
+    });
+
+    it('returns 409 when the stored credential cannot be decrypted', async () => {
+      pusher.push.mockRejectedValueOnce(new CredentialUnreadableError('hr-site'));
+      const res = await push();
+      expect(res.status).toBe(409);
+      expect(res.body).toEqual({ errorCode: 'credential-unreadable' });
     });
 
     it('returns 502 with the SharePoint error code and whether to retry', async () => {
@@ -253,6 +275,13 @@ describe('SharePoint router', () => {
       const res = await runTest();
       expect(res.status).toBe(200);
       expect(res.body).toEqual({ ok: false, errorCode: 'graph:invalidRequest', column: 'Nope' });
+    });
+
+    it('reports a stored credential that cannot be decrypted', async () => {
+      pusher.test.mockRejectedValueOnce(new CredentialUnreadableError('hr-site'));
+      const res = await runTest();
+      expect(res.status).toBe(200);
+      expect(res.body).toEqual({ ok: false, errorCode: 'credential-unreadable' });
     });
 
     it('reports test data with no value for a row identity field', async () => {
@@ -373,6 +402,14 @@ describe('SharePoint router', () => {
 
       expect(res.status).toBe(409);
       expect(res.body).toEqual({ errorCode: 'credential-not-set' });
+    });
+
+    it('returns 409 when the stored credential cannot be decrypted', async () => {
+      fileService.upload.mockRejectedValueOnce(new CredentialUnreadableError('hr-site'));
+      const res = await upload();
+
+      expect(res.status).toBe(409);
+      expect(res.body).toEqual({ errorCode: 'credential-unreadable' });
     });
 
     it('returns 502 with the error code when Microsoft sign-in fails', async () => {

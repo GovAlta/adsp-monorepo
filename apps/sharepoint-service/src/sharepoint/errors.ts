@@ -18,6 +18,14 @@ export class CredentialNotSetError extends Error {
   }
 }
 
+// Raised when the stored secret can't be decrypted, usually because CREDENTIALS_KEY changed.
+export class CredentialUnreadableError extends Error {
+  constructor(public readonly connectionId: string) {
+    super(`The credential for SharePoint connection '${connectionId}' cannot be decrypted.`);
+    Object.setPrototypeOf(this, CredentialUnreadableError.prototype);
+  }
+}
+
 export class DestinationDisabledError extends Error {
   constructor(public readonly destinationId: string) {
     super(`SharePoint destination '${destinationId}' is disabled.`);
