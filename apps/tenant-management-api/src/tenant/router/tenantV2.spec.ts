@@ -258,6 +258,42 @@ describe('createTenantV2Router', () => {
       expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedError));
     });
 
+    it('can get active tenants as tenant-service-admin', async () => {
+      const req = { query: { status: 'active' }, user: adminUser };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+      const handler = getTenants(loggerMock, repositoryMock);
+
+      repositoryMock.find.mockResolvedValueOnce([new TenantEntity(repositoryMock, tenant)]);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(repositoryMock.find).toHaveBeenCalledWith(expect.objectContaining({ statusEquals: 'active' }));
+      expect(res.send).toHaveBeenCalledWith(
+        expect.objectContaining({ results: [expect.objectContaining({ name: tenant.name })] }),
+      );
+    });
+
+    it('can reject active status filter for non-admin', async () => {
+      const req = { query: { status: 'active' }, user: { isCore: true, roles: [] } };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+      const handler = getTenants(loggerMock, repositoryMock);
+
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedError));
+      expect(repositoryMock.find).not.toHaveBeenCalled();
+    });
+
+    it('can reject active status filter for anonymous', async () => {
+      const req = { query: { status: 'active' } };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+      const handler = getTenants(loggerMock, repositoryMock);
+
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedError));
+      expect(repositoryMock.find).not.toHaveBeenCalled();
+    });
+
     it('can limit default results to active tenants', async () => {
       const req = { query: {}, user: { isCore: true } };
       const res = { send: jest.fn() };

@@ -156,7 +156,7 @@
     "urn": "urn:ads:platform:tenant-service",
     "name": "Tenant service",
     "title": "Tenant management service",
-    "operations": 15,
+    "operations": 16,
     "file": "tenant-management-api.json"
   },
   {

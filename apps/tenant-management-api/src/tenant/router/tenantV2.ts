@@ -70,6 +70,11 @@ export function getTenants(logger: Logger, repository: TenantRepository): Reques
           throw new UnauthorizedError('tenant-service-admin role needed!');
         }
         criteria.statusEquals = 'archived';
+      } else if (status === 'active') {
+        if (!user?.isCore || !user.roles.includes(TenantServiceRoles.TenantServiceAdmin)) {
+          throw new UnauthorizedError('tenant-service-admin role needed!');
+        }
+        criteria.statusEquals = 'active';
       }
 
       if (user?.tenantId) {
