@@ -5,9 +5,15 @@ import * as passport from 'passport';
 import * as compression from 'compression';
 import * as cors from 'cors';
 import * as helmet from 'helmet';
-import { AdspId, adspId, initializePlatform, instrumentAxios, ServiceMetricsValueDefinition } from '@abgov/adsp-service-sdk';
+import {
+  AdspId,
+  adspId,
+  initializePlatform,
+  instrumentAxios,
+  ServiceMetricsValueDefinition,
+} from '@abgov/adsp-service-sdk';
 import type { AuditService, User } from '@abgov/adsp-service-sdk';
-import { createLogger, createErrorHandler } from '@core-services/core-common';
+import { createLogger, createErrorHandler, createShutdownHandler } from '@core-services/core-common';
 import { environment } from './environments/environment';
 import {
   applyPlannerMiddleware,
@@ -20,7 +26,6 @@ import {
   SolutionUpdatedDefinition,
 } from './planner';
 import { createRepositories } from './postgres';
-import { createShutdownHandler } from './shutdown';
 
 const logger = createLogger('project-planner-service', environment.LOG_LEVEL);
 
@@ -141,7 +146,10 @@ const initializeApp = async (): Promise<InitializedApp> => {
     // The core configuration-service configuration holds one key per platform service's configuration.
     readAdspCatalog: async () => {
       const token = await tokenProvider.getAccessToken();
-      const [, core] = await configurationService.getConfiguration<Record<string, unknown>>(adspId`urn:ads:platform:configuration-service`, token);
+      const [, core] = await configurationService.getConfiguration<Record<string, unknown>>(
+        adspId`urn:ads:platform:configuration-service`,
+        token,
+      );
       return Object.keys(core || {});
     },
   });
@@ -186,7 +194,14 @@ initializeApp()
     server.on('error', (err) => logger.error(`Error encountered in server: ${err}`));
 
     // Audit records still being sent are delivered before the process exits.
-    const shutdown = createShutdownHandler({ server, auditService, shutdownTelemetry, closeDatabase, logger });
+    const shutdown = createShutdownHandler({
+      serviceName: 'Project planner service',
+      server,
+      auditService,
+      shutdownTelemetry,
+      closeDatabase,
+      logger,
+    });
     process.once('SIGTERM', shutdown);
     process.once('SIGINT', shutdown);
   })
