@@ -10,6 +10,7 @@ export class TenantEntity implements Tenant {
   createdBy: string;
   name: string;
   status: TenantStatus;
+  deletedAt?: Date | null;
 
   static create(
     repository: TenantRepository,
@@ -22,7 +23,10 @@ export class TenantEntity implements Tenant {
     return repository.save(entity);
   }
 
-  constructor(private repository: TenantRepository, tenant: Tenant | New<Tenant>) {
+  constructor(
+    private repository: TenantRepository,
+    tenant: Tenant | New<Tenant>,
+  ) {
     const record = tenant as Tenant;
     if (record.id) {
       this.id = record.id;
@@ -32,6 +36,17 @@ export class TenantEntity implements Tenant {
     this.adminEmail = tenant.adminEmail;
     this.name = tenant.name;
     this.status = tenant.status || 'active';
+    this.deletedAt = tenant.deletedAt;
+  }
+
+  archive(): void {
+    this.status = 'archived';
+    this.deletedAt = new Date();
+  }
+
+  restore(): void {
+    this.status = 'active';
+    this.deletedAt = null;
   }
 
   save(): Promise<TenantEntity> {
