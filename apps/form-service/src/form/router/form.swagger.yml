@@ -1040,7 +1040,8 @@ components:
         description: >
           Revision of the form definition to retrieve. Defaults to the active revision, or the latest revision if none
           is set as active. Use `latest` to read the latest revision, which can include changes that are not active
-          yet; this requires the form-service admin role and always reads from configuration service.
+          yet; this requires the form-service admin role, always reads from configuration service, and doesn't include
+          the scheduled intake (`intake` is null).
         in: query
         required: false
         schema:

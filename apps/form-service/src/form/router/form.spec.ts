@@ -20,7 +20,7 @@ import {
   updateFormSubmissionDisposition,
   validateCriteria,
 } from './form';
-import { getFormDefinitions } from './definition';
+import { assertCanReadLatestDefinition, getFormDefinitions } from './definition';
 
 jest.mock('axios');
 const axiosMock = axios as jest.Mocked<typeof axios>;
@@ -575,9 +575,7 @@ describe('form router', () => {
         expect(next).not.toHaveBeenCalled();
       });
 
-      it('includes the scheduled intake', async () => {
-        const intake = { name: 'Spring intake' };
-        calendarServiceMock.getScheduledIntake.mockResolvedValueOnce(intake);
+      it('does not read the scheduled intake', async () => {
         axiosMock.get.mockResolvedValueOnce({
           data: { latest: { revision: 1, configuration: { id: 'test', name: 'Test', scheduledIntakes: true } } },
         });
@@ -590,24 +588,34 @@ describe('form router', () => {
           jest.fn(),
         );
 
-        expect(calendarServiceMock.getScheduledIntake).toHaveBeenCalledWith(
-          expect.objectContaining({ id: 'test', tenantId }),
-        );
-        expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ intake }));
+        expect(calendarServiceMock.getScheduledIntake).not.toHaveBeenCalled();
+        expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ scheduledIntakes: true, intake: null }));
       });
 
-      it('can call next with unauthorized for a user without form-admin', async () => {
-        const next = jest.fn();
+      describe('assertCanReadLatestDefinition', () => {
+        const runMiddleware = (req: Record<string, unknown>) => {
+          const next = jest.fn();
+          assertCanReadLatestDefinition(req as unknown as Request, {} as Response, next);
+          return next;
+        };
 
-        const handler = getFormDefinition(tenantServiceMock, calendarServiceMock, directoryMock, tokenProviderMock);
-        await handler(
-          latestRequest(['test-applicant']) as unknown as Request,
-          { send: jest.fn() } as unknown as Response,
-          next,
-        );
+        it('allows the form-service admin role', () => {
+          const next = runMiddleware(latestRequest([FormServiceRoles.Admin]));
+          expect(next).toHaveBeenCalledWith();
+        });
 
-        expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedUserError));
-        expect(axiosMock.get).not.toHaveBeenCalled();
+        it.each([
+          ['a user without form-admin', { user: { tenantId, id: 'tester', roles: ['test-applicant'] } }],
+          ['an anonymous request', { user: undefined }],
+        ])('rejects %s', (_case, override) => {
+          const next = runMiddleware({ ...latestRequest([]), ...override });
+          expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedUserError));
+        });
+
+        it('does not check roles for other versions', () => {
+          const next = runMiddleware({ ...latestRequest(['test-applicant']), query: { version: '2' } });
+          expect(next).toHaveBeenCalledWith();
+        });
       });
 
       it('can call next with not found when the definition has no latest revision', async () => {

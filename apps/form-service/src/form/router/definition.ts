@@ -173,6 +173,15 @@ export function getFormDefinitions(directory: ServiceDirectory, tokenProvider: T
   };
 }
 
+// The latest revision can hold unpublished changes, so only administrators can read it.
+export const assertCanReadLatestDefinition: RequestHandler = (req, _res, next) => {
+  if (req.query.version === 'latest' && !isAllowedUser(req.user, req.tenant?.id, FormServiceRoles.Admin, true)) {
+    next(new UnauthorizedUserError('access latest definition revision', req.user));
+  } else {
+    next();
+  }
+};
+
 // Reads the latest revision directly, bypassing the SDK cache, which only tracks the active revision.
 async function getLatestFormDefinition(
   directory: ServiceDirectory,
@@ -218,21 +227,8 @@ export function getFormDefinition(
       const { version } = req.query;
 
       if (version === 'latest') {
-        // The latest revision can hold unpublished changes, so only administrators can read it.
-        if (!isAllowedUser(user, req.tenant.id, FormServiceRoles.Admin, true)) {
-          throw new UnauthorizedUserError('access latest definition revision', user);
-        }
-
         const latest = await getLatestFormDefinition(directory, tokenProvider, req.tenant.id, definitionId);
-        // Calendar service only uses the definition ID and tenant to find the intake.
-        const intake = latest.configuration.scheduledIntakes
-          ? await calendarService.getScheduledIntake({
-              id: definitionId,
-              tenantId: req.tenant.id,
-            } as FormDefinitionEntity)
-          : undefined;
-
-        res.send(mapFormDefinition(latest.configuration, latest.revision, intake));
+        res.send(mapFormDefinition(latest.configuration, latest.revision));
         return;
       }
 
@@ -995,6 +991,7 @@ export function createFormDefinitionRouter({
         .optional()
         .matches(/^(latest|\d+)$/),
     ),
+    assertCanReadLatestDefinition,
     getFormDefinition(tenantService, calendarService, directory, tokenProvider),
   );
   router.put(
