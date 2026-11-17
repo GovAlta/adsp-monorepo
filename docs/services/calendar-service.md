@@ -126,6 +126,25 @@ Calendar service sends these [domain events](event-service.md). It doesn't consu
 
 Event payloads include the fields of private events, and the `add-attendee` and `set-attendee` updates include the attendee's name and email. Anyone who can read the tenant's event log can see them.
 
+## Audit
+Calendar service records audit events in the `calendar-service` namespace of the [audit service](/adsp-monorepo/services/audit-service.html). Records are written to the tenant of the calendar, with the user or service account making the request as the actor. All actions are version 1. Administrative actions explicitly use the `standard` retention class; the retention class of attendee actions is derived from the category.
+
+| Action | Category | Severity | Retention class | Recorded when |
+|:-|:-|:-|:-|:-|
+| `calendar.created` | administrative | info | standard | A tenant calendar is created. |
+| `calendar.updated` | administrative | info | standard | Calendar metadata or access roles are updated. |
+| `calendar.deleted` | administrative | warning | standard | A tenant calendar is deleted. |
+| `event.created` | administrative | info | standard | A calendar event is created. |
+| `event.updated` | administrative | info | standard | A calendar event's details are modified. |
+| `event.deleted` | administrative | warning | standard | A calendar event is deleted. |
+| `event.occurrence-cancelled` | administrative | info | standard | A single occurrence of a recurring event is cancelled. The event itself is not recorded as deleted. |
+| `attendee.added` | data-access | info | compliance | An attendee is added to an event. |
+| `attendee.removed` | data-access | info | compliance | An attendee is removed from an event. |
+
+Calendar records use the calendar name as the resource ID and record `calendarName` and `displayName` in the metadata. `calendar.updated` lists the changed fields in `updatedFields`, sets `accessRolesChanged` when the read or update roles changed, and records the changed display name and roles as the change set; the description is not recorded. Event records use the event ID as the resource and record `calendarName`, `eventName` and the event `start` and `end` in the metadata. Attendee records add only the `attendeeName`; attendee email addresses are personal information and are never recorded.
+
+Reading calendars, events and dates is not audited, and neither are core calendars registered by platform services at startup. Failed operations are not recorded, and audit failures are logged and do not fail the operation. The service account of calendar service needs the `audit-writer` role of `urn:ads:platform:audit-service`. Set `CALENDAR_AUDIT_ENABLED` to `false` to disable recording; when unset it follows the SDK `AUDIT_ENABLED` variable (on by default). The action catalog is registered on startup either way.
+
 ## Code examples
 ### Getting business days
 Calendar service API provides information endpoints for dates, including which dates are business days.

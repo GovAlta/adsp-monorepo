@@ -16,6 +16,7 @@ interface PostgresRepositoryProps {
 
 interface Repositories {
   isConnected: () => Promise<boolean>;
+  close: () => Promise<void>;
   calendarRepository: CalendarRepository;
 }
 
@@ -66,6 +67,7 @@ export const createRepositories = async ({
         return false;
       }
     },
+    close: () => knex.destroy(),
     calendarRepository: new PostgresCalendarRepository(knex),
   };
 };
