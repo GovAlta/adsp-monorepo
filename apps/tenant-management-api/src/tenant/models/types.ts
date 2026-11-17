@@ -1,4 +1,4 @@
-export type TenantStatus = 'provisioning' | 'active';
+export type TenantStatus = 'provisioning' | 'active' | 'archived';
 
 export interface Tenant {
   id: string;
@@ -15,4 +15,6 @@ export interface Tenant {
   adminEmail: string;
   name: string;
   status?: TenantStatus;
+  /** Time the tenant was archived. */
+  deletedAt?: Date | null;
 }

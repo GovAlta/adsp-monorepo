@@ -42,6 +42,48 @@ export const TenantDeletedDefinition: DomainEventDefinition = {
   },
 };
 
+export const TenantArchivedDefinition: DomainEventDefinition = {
+  name: 'tenant-archived',
+  description: 'Signalled when a tenant is archived.',
+  payloadSchema: {
+    type: 'object',
+    properties: {
+      tenant: {
+        type: 'object',
+      },
+      archivedBy: {
+        type: 'object',
+        properties: {
+          id: { type: 'string' },
+          name: { type: 'string' },
+        },
+      },
+    },
+    required: ['tenant', 'archivedBy'],
+  },
+};
+
+export const TenantRestoredDefinition: DomainEventDefinition = {
+  name: 'tenant-restored',
+  description: 'Signalled when an archived tenant is restored.',
+  payloadSchema: {
+    type: 'object',
+    properties: {
+      tenant: {
+        type: 'object',
+      },
+      restoredBy: {
+        type: 'object',
+        properties: {
+          id: { type: 'string' },
+          name: { type: 'string' },
+        },
+      },
+    },
+    required: ['tenant', 'restoredBy'],
+  },
+};
+
 export function tenantCreated(user: User, tenant: Tenant): DomainEvent {
   return {
     name: 'tenant-created',
@@ -67,6 +109,38 @@ export function tenantDeleted(user: User, tenant: Tenant): DomainEvent {
     payload: {
       tenant,
       deletedBy: {
+        id: user.id,
+        name: user.name,
+      },
+    },
+  };
+}
+
+export function tenantArchived(user: User, tenant: Tenant): DomainEvent {
+  return {
+    name: 'tenant-archived',
+    timestamp: new Date(),
+    correlationId: `${tenant.id}`,
+    tenantId: tenant.id,
+    payload: {
+      tenant,
+      archivedBy: {
+        id: user.id,
+        name: user.name,
+      },
+    },
+  };
+}
+
+export function tenantRestored(user: User, tenant: Tenant): DomainEvent {
+  return {
+    name: 'tenant-restored',
+    timestamp: new Date(),
+    correlationId: `${tenant.id}`,
+    tenantId: tenant.id,
+    payload: {
+      tenant,
+      restoredBy: {
         id: user.id,
         name: user.name,
       },

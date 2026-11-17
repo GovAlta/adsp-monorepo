@@ -7,6 +7,7 @@ interface TenantResponse {
   name: string;
   status: TenantStatus;
   adminEmail?: string;
+  deletedAt?: Date;
 }
 
 export function mapTenant(tenant: TenantEntity, anonymous = false): TenantResponse {
@@ -23,5 +24,6 @@ export function mapTenant(tenant: TenantEntity, anonymous = false): TenantRespon
         name: tenant.name,
         status: tenant.status,
         adminEmail: tenant.adminEmail,
+        ...(tenant.deletedAt ? { deletedAt: tenant.deletedAt } : {}),
       };
 }
