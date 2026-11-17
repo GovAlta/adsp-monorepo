@@ -1,6 +1,7 @@
 import {
   AdspId,
   AuditService,
+  ConfigurationService,
   EventService,
   isAllowedUser,
   TenantService,
@@ -551,6 +552,62 @@ export function patchFormDefinitionLifecycle(
   };
 }
 
+// Rewrites the latest revision and makes it the one form-service reads. Returns false when update returns null.
+async function publishDefinitionUpdate(
+  directory: ServiceDirectory,
+  tokenProvider: TokenProvider,
+  configurationService: ConfigurationService,
+  tenantId: AdspId,
+  definitionId: string,
+  update: (existing: FormDefinition) => FormDefinition | null,
+): Promise<boolean> {
+  const encodedDefinitionId = encodeURIComponent(definitionId);
+  const configurationApiUrl = await directory.getServiceUrl(configurationApiId);
+  const token = await tokenProvider.getAccessToken();
+
+  const existingDefinition = await fetchExistingDefinition(
+    configurationApiUrl,
+    token,
+    encodedDefinitionId,
+    tenantId.toString(),
+    definitionId,
+  );
+
+  const updatedDefinition = update(existingDefinition);
+  if (!updatedDefinition) {
+    return false;
+  }
+
+  const data = await patchConfigurationDefinition(configurationApiUrl, token, definitionId, tenantId.toString(), {
+    ...updatedDefinition,
+    id: definitionId,
+  });
+
+  const definitionUrl = new URL(`v2/configuration/form-service/${encodedDefinitionId}`, configurationApiUrl).href;
+  const requestConfig = { headers: { Authorization: `Bearer ${token}` }, params: { tenantId: tenantId.toString() } };
+  try {
+    const { data: document } = await axios.get<{ active?: { revision: number } }>(definitionUrl, requestConfig);
+    if (document?.active && document.active.revision !== data.latest.revision) {
+      await axios.post(
+        definitionUrl,
+        { operation: 'SET-ACTIVE-REVISION', revision: data.latest.revision },
+        requestConfig,
+      );
+    }
+  } catch (err) {
+    if (axios.isAxiosError(err)) {
+      // Setting the active revision needs the configuration-admin role on the form-service service account.
+      const message = err.response?.data?.errorMessage || 'Configuration service could not set the active revision.';
+      throw new InvalidOperationError(message, { statusCode: HttpStatusCodes.BAD_GATEWAY });
+    }
+    throw err;
+  }
+
+  // Other instances are invalidated by the configuration update events.
+  configurationService.clearCached?.(tenantId, 'form-service', definitionId);
+  return true;
+}
+
 function parseNamespacedValue(value: string): { namespace: string; name: string } {
   const [namespace, name] = value.split(':');
   return { namespace, name };
@@ -700,6 +757,9 @@ export function submitRegistration(
   eventService: EventService,
   auditService: AuditService,
   logger: Logger,
+  directory: ServiceDirectory,
+  tokenProvider: TokenProvider,
+  configurationService: ConfigurationService,
 ): RequestHandler {
   return async (req, res, next) => {
     try {
@@ -708,12 +768,25 @@ export function submitRegistration(
       assertAllowed(user, tenantId, registrationRequesterRoles, 'submit registration');
 
       const definition = await getRequiredDefinition(req, tenantId);
-      if (!definition.isRegistrationEnabled()) {
-        throw new InvalidOperationError(`Form definition '${definition.id}' does not accept registrations.`);
-      }
 
       const request = req.body as FormRegistrationCreate;
       definition.validateRegistrationData(request.data || {});
+
+      if (!definition.isRegistrationEnabled()) {
+        await publishDefinitionUpdate(
+          directory,
+          tokenProvider,
+          configurationService,
+          tenantId,
+          definition.id,
+          (existing) => ({ ...existing, registration: { ...existing.registration, enabled: true } }),
+        );
+        logger.info(`Registration enabled for form definition '${definition.id}' by first access request.`, {
+          context: 'definition-router',
+          tenant: tenantId.toString(),
+          user: `${user.name} (ID: ${user.id})`,
+        });
+      }
 
       const registration = await repository.create(FormRegistrationEntity.create(tenantId, definition.id, request));
       res.status(HttpStatusCodes.CREATED).send({
@@ -727,6 +800,42 @@ export function submitRegistration(
       recordFormAudit(auditService, logger, RegistrationSubmittedAuditAction, () =>
         toRegistrationAuditDetails(user, registration),
       );
+    } catch (err) {
+      next(err);
+    }
+  };
+}
+
+export function deleteRegistrationSettings(
+  directory: ServiceDirectory,
+  tokenProvider: TokenProvider,
+  configurationService: ConfigurationService,
+  logger: Logger,
+): RequestHandler {
+  return async (req, res, next) => {
+    try {
+      const tenantId = getRequiredTenantId(req);
+      const user = req.user;
+      assertAllowed(user, tenantId, FormServiceRoles.Admin, 'delete registration');
+
+      const { definitionId } = req.params;
+      const removed = await publishDefinitionUpdate(
+        directory,
+        tokenProvider,
+        configurationService,
+        tenantId,
+        definitionId,
+        ({ registration, ...existing }) => (registration ? existing : null),
+      );
+
+      if (removed) {
+        logger.info(`Registration removed from form definition '${definitionId}'.`, {
+          context: 'definition-router',
+          tenant: tenantId.toString(),
+          user: `${user.name} (ID: ${user.id})`,
+        });
+      }
+      res.status(HttpStatusCodes.NO_CONTENT).send();
     } catch (err) {
       next(err);
     }
@@ -819,6 +928,7 @@ export function updateRegistration(
 interface FormDefinitionRouterProps {
   directory: ServiceDirectory;
   tokenProvider: TokenProvider;
+  configurationService: ConfigurationService;
   tenantService: TenantService;
   calendarService: CalendarService;
   logger: Logger;
@@ -830,6 +940,7 @@ interface FormDefinitionRouterProps {
 export function createFormDefinitionRouter({
   directory,
   tokenProvider,
+  configurationService,
   tenantService,
   calendarService,
   logger,
@@ -1003,7 +1114,24 @@ export function createFormDefinitionRouter({
       body('email').isString().trim().isEmail().isLength({ max: 254 }),
       body('data').optional().isObject(),
     ),
-    submitRegistration(registrationRepository, eventService, auditService, logger),
+    submitRegistration(
+      registrationRepository,
+      eventService,
+      auditService,
+      logger,
+      directory,
+      tokenProvider,
+      configurationService,
+    ),
+  );
+
+  router.delete(
+    '/definitions/:definitionId/access-requests',
+    assertAuthenticatedHandler,
+    createValidationHandler(
+      param('definitionId').isString().isLength({ min: 1, max: 50 }).matches(DEFINITION_ID_REGEX),
+    ),
+    deleteRegistrationSettings(directory, tokenProvider, configurationService, logger),
   );
 
   router.get(

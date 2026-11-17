@@ -55,7 +55,8 @@ All endpoints are under `https://form-service.adsp.alberta.ca/form/v1`. See the 
 | `PATCH /form/v1/definitions/{definitionId}/lifecycle`                                               | Update the anonymous application, applicant limit, support topic and security classification settings. | `form-admin`                                                                                                                                                                    |
 | `PATCH /form/v1/definitions/{definitionId}/submission-actions`                                      | Update what happens when a form is submitted.                                                          | `form-admin`                                                                                                                                                                    |
 | `PUT /form/v1/definitions/{definitionId}/schedule`                                                  | Update the scheduled intake period.                                                                    | `form-admin`                                                                                                                                                                    |
-| `POST /form/v1/definitions/{definitionId}/access-requests`                                          | Request access to a restricted form.                                                                   | `form-access-requester` or `form-admin`                                                                                                                                         |
+| `POST /form/v1/definitions/{definitionId}/access-requests`                                          | Request access to a restricted form, enabling registration on the first request.                       | `form-access-requester` or `form-admin`                                                                                                                                         |
+| `DELETE /form/v1/definitions/{definitionId}/access-requests`                                        | Remove the registration settings, so the form no longer accepts access requests.                       | `form-admin`                                                                                                                                                                    |
 | `GET /form/v1/definitions/{definitionId}/access-requests`                                           | Find the access requests of a form, by status, newest first.                                           | `form-access-reader`, `form-access-writer` or `form-admin`                                                                                                                      |
 | `GET /form/v1/definitions/{definitionId}/access-requests/{email}`                                   | Read the latest access request of an email address.                                                    | The user with that email address, `form-access-reader`, `form-access-writer` or `form-admin`                                                                                    |
 | `PATCH /form/v1/definitions/{definitionId}/access-requests/{requestId}`                             | Approve or deny a pending access request.                                                              | `form-access-writer` or `form-admin`                                                                                                                                            |
@@ -103,6 +104,10 @@ Some forms are restricted to a segment of the population, for example to physici
 - `enabled`: whether the form is restricted and accepts access requests.
 - `dataSchema` and `uiSchema`: the registration questions that help a reviewer decide whether the applicant meets the criteria. The questions can't define `firstName`, `lastName` or `email`, since every request includes them.
 - `accessGroup`: the Keycloak group containing the roles needed to access the form. It is not returned by the form APIs.
+
+Submitting the first access request for a form enables registration: form service sets `registration.enabled` to `true` in the definition, creating the `registration` settings if the definition has none. If an older revision of the definition is set as active, the active revision is moved to the updated one so the change takes effect immediately, which also publishes any other changes in the latest revision. Moving the active revision needs the form service account to have the configuration service `configuration-admin` role; without it the request responds 502.
+
+`DELETE /form/v1/definitions/{definitionId}/access-requests` removes the `registration` settings from the definition, the same way, so the form no longer accepts access requests until a new request enables it again. Existing access requests are kept.
 
 An applicant submits an _access request_ with their name, email address and answers. Answers are validated against the registration questions, and answers to questions that aren't defined are rejected. The request starts as `pending`, and an administrator then approves or denies it. Each email address can have only one pending request per form; after a request is reviewed, the applicant can submit a new one. Approved or denied requests can't be reviewed again.
 
@@ -374,7 +379,7 @@ const { disposition } = await dispositionResponse.json();
 
 ### Request and review access to a restricted form
 
-An applicant with the `form-access-requester` role requests access to a form whose definition has registration enabled.
+An applicant with the `form-access-requester` role requests access to a form. The first request enables registration on the form.
 
 ```typescript
 const response = await fetch(

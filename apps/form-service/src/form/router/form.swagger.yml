@@ -1447,9 +1447,10 @@ components:
     description: >
       Submits a request for access to a restricted form. Requires the `form-access-requester` role
       (`urn:ads:platform:form-service:form-access-requester`) or the `form-admin` role; core users with either role must
-      set `tenantId`. The form
-      definition must have registration enabled, otherwise the request responds 400. The registration is created with
-      status `pending`. Only one pending registration is allowed per email address and form.
+      set `tenantId`. If the form definition doesn't have registration enabled yet, the request enables it: it sets
+      `registration.enabled` to true in the definition and, if an older revision of the definition is set as active,
+      moves the active revision to the updated one so the change takes effect immediately. The registration is created
+      with status `pending`. Only one pending registration is allowed per email address and form.
     parameters:
       - $ref: '#/components/parameters/FormDefinitionIdPath'
       - $ref: '#/components/parameters/FormTenantId'
@@ -1468,14 +1469,14 @@ components:
               $ref: '#/components/schemas/FormRegistrationSubmitted'
       400:
         description: >
-          Request is invalid, the answers don't match the registration questions, the form definition doesn't accept
-          access requests, or the request has no tenant context.
+          Request is invalid, the answers don't match the registration questions, or the request has no tenant
+          context.
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/FormError'
             example:
-              errorMessage: Form definition 'medical-intake' does not accept registrations.
+              errorMessage: 'Validation failed with error(s): email (body) - Invalid value'
       401:
         $ref: '#/components/responses/FormUnauthorized'
       403:
@@ -1490,6 +1491,14 @@ components:
               $ref: '#/components/schemas/FormError'
             example:
               errorMessage: A pending registration already exists for this email address and form.
+      502:
+        description: >
+          Registration could not be enabled because configuration service rejected setting the active revision, for
+          example because the form service account lacks the configuration-admin role.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FormError'
   get:
     tags:
       - Form registration
@@ -1536,6 +1545,36 @@ components:
         $ref: '#/components/responses/FormForbidden'
       404:
         $ref: '#/components/responses/FormDefinitionNotFound'
+  delete:
+    tags:
+      - Form registration
+    description: >
+      Removes the registration settings from a form definition, so the form no longer accepts access requests. If an
+      older revision of the definition is set as active, the active revision is moved to the updated one so the change
+      takes effect immediately. Existing access requests are kept. Requires the `form-admin` role; core users with the
+      role must set `tenantId`. A definition without registration settings also responds 204.
+    parameters:
+      - $ref: '#/components/parameters/FormDefinitionIdPath'
+      - $ref: '#/components/parameters/FormTenantId'
+    responses:
+      204:
+        description: Successfully removed the registration settings.
+      400:
+        $ref: '#/components/responses/FormBadRequest'
+      401:
+        $ref: '#/components/responses/FormUnauthorized'
+      403:
+        $ref: '#/components/responses/FormForbidden'
+      404:
+        $ref: '#/components/responses/FormDefinitionNotFound'
+      502:
+        description: >
+          Configuration service rejected setting the active revision, for example because the form service account
+          lacks the configuration-admin role.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FormError'
 
 /form/v1/definitions/{definitionId}/access-requests/{id}:
   get:

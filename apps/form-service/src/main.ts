@@ -354,6 +354,7 @@ const initializeApp = async () => {
     logger,
     directory,
     tokenProvider,
+    configurationService,
     eventService,
     auditService,
     tenantService,

@@ -12,6 +12,7 @@ import {
   createFormDefinition,
   createFormDefinitionRouter,
   deleteFormDefinition,
+  deleteRegistrationSettings,
   getFormDefinitions,
   getRegistrationByEmail,
   getRegistrations,
@@ -80,10 +81,19 @@ describe('definition router', () => {
     error: jest.fn(),
   };
 
+  const configurationServiceMock = {
+    getConfiguration: jest.fn(),
+    getServiceConfiguration: jest.fn(),
+    getServiceConfigurationRevision: jest.fn(),
+    clearCached: jest.fn(),
+  };
+
   beforeEach(() => {
     axiosMock.get.mockReset();
     axiosMock.patch.mockReset();
+    axiosMock.post.mockReset();
     axiosMock.delete.mockReset();
+    configurationServiceMock.clearCached.mockReset();
     jest.mocked(axiosMock.isAxiosError).mockReturnValue(false);
     directoryMock.getServiceUrl.mockReset();
     directoryMock.getServiceUrl.mockResolvedValue(new URL('http://configuration-service'));
@@ -98,6 +108,7 @@ describe('definition router', () => {
     const router = createFormDefinitionRouter({
       directory: directoryMock,
       tokenProvider: tokenProviderMock,
+      configurationService: configurationServiceMock,
       tenantService: tenantServiceMock,
       calendarService: calendarServiceMock,
       logger: loggerMock as unknown as Logger,
@@ -1508,6 +1519,132 @@ describe('definition router', () => {
     });
   });
 
+  describe('deleteRegistrationSettings', () => {
+    const existingDefinition = {
+      id: 'test',
+      name: 'Test Form',
+      applicantRoles: [],
+      assessorRoles: [],
+      registration: { enabled: true, accessGroup: 'test-access' },
+    };
+    const { registration: _removed, ...definitionWithoutRegistration } = existingDefinition;
+    const admin = { tenantId, id: 'tester', name: 'Tester', roles: [FormServiceRoles.Admin], isCore: true };
+
+    let res: { status: jest.Mock; send: jest.Mock };
+    let next: jest.Mock;
+
+    const runHandler = (req: Record<string, unknown>) =>
+      deleteRegistrationSettings(
+        directoryMock,
+        tokenProviderMock,
+        configurationServiceMock,
+        loggerMock as unknown as Logger,
+      )(req as unknown as Request, res as unknown as Response, next);
+
+    const adminReq = { user: admin, params: { definitionId: 'test' }, tenant: { id: tenantId } };
+
+    const mockDocument = (document: Record<string, unknown>) =>
+      axiosMock.get
+        .mockResolvedValueOnce({ status: HttpStatusCodes.OK, data: existingDefinition })
+        .mockResolvedValueOnce({ data: document });
+
+    beforeEach(() => {
+      res = { status: jest.fn().mockReturnThis(), send: jest.fn() };
+      next = jest.fn();
+    });
+
+    it('can call next with unauthorized for a user without form-admin', async () => {
+      await runHandler({ ...adminReq, user: { ...admin, roles: [FormServiceRoles.RegistrationWriter] } });
+
+      expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedUserError));
+      expect(axiosMock.patch).not.toHaveBeenCalled();
+    });
+
+    it('can call next with not found when definition does not exist', async () => {
+      axiosMock.get.mockResolvedValueOnce({ status: HttpStatusCodes.NOT_FOUND, data: {} });
+
+      await runHandler(adminReq);
+
+      expect(axiosMock.patch).not.toHaveBeenCalled();
+      expect(next).toHaveBeenCalledWith(expect.any(NotFoundError));
+    });
+
+    it('removes the registration settings and responds 204', async () => {
+      mockDocument({ latest: { revision: 4 } });
+      mockPatchSuccess(definitionWithoutRegistration, 4);
+
+      await runHandler(adminReq);
+
+      expect(axiosMock.patch).toHaveBeenCalledWith(
+        'http://configuration-service/v2/configuration/form-service/test',
+        { operation: 'REPLACE', configuration: definitionWithoutRegistration },
+        expect.any(Object),
+      );
+      expect(res.status).toHaveBeenCalledWith(HttpStatusCodes.NO_CONTENT);
+      expect(next).not.toHaveBeenCalled();
+    });
+
+    it('does not write a definition that has no registration settings', async () => {
+      axiosMock.get.mockResolvedValueOnce({ status: HttpStatusCodes.OK, data: definitionWithoutRegistration });
+
+      await runHandler(adminReq);
+
+      expect(axiosMock.patch).not.toHaveBeenCalled();
+      expect(configurationServiceMock.clearCached).not.toHaveBeenCalled();
+      expect(res.status).toHaveBeenCalledWith(HttpStatusCodes.NO_CONTENT);
+    });
+
+    it('moves a pinned older active revision to the updated revision', async () => {
+      mockDocument({ latest: { revision: 5 }, active: { revision: 3 } });
+      mockPatchSuccess(definitionWithoutRegistration, 5);
+
+      await runHandler(adminReq);
+
+      expect(axiosMock.post).toHaveBeenCalledWith(
+        'http://configuration-service/v2/configuration/form-service/test',
+        { operation: 'SET-ACTIVE-REVISION', revision: 5 },
+        expect.objectContaining({ params: { tenantId: tenantId.toString() } }),
+      );
+      expect(next).not.toHaveBeenCalled();
+    });
+
+    it.each([
+      ['no revision is set as active', { latest: { revision: 5 } }],
+      ['the updated revision is already active', { latest: { revision: 5 }, active: { revision: 5 } }],
+    ])('does not set the active revision when %s', async (_case, document) => {
+      mockDocument(document);
+      mockPatchSuccess(definitionWithoutRegistration, 5);
+
+      await runHandler(adminReq);
+
+      expect(axiosMock.post).not.toHaveBeenCalled();
+      expect(next).not.toHaveBeenCalled();
+    });
+
+    it('clears the cached definition so the next read sees the change', async () => {
+      mockDocument({ latest: { revision: 5 }, active: { revision: 3 } });
+      mockPatchSuccess(definitionWithoutRegistration, 5);
+
+      await runHandler(adminReq);
+
+      expect(configurationServiceMock.clearCached).toHaveBeenCalledWith(tenantId, 'form-service', 'test');
+    });
+
+    it('calls next with 502 when configuration service refuses to set the active revision', async () => {
+      mockDocument({ latest: { revision: 5 }, active: { revision: 3 } });
+      mockPatchSuccess(definitionWithoutRegistration, 5);
+      jest.mocked(axiosMock.isAxiosError).mockReturnValue(true);
+      axiosMock.post.mockRejectedValueOnce({ response: { status: HttpStatusCodes.FORBIDDEN, data: {} } });
+
+      await runHandler(adminReq);
+
+      expect(next).toHaveBeenCalledWith(
+        expect.objectContaining({ extra: expect.objectContaining({ statusCode: HttpStatusCodes.BAD_GATEWAY }) }),
+      );
+      expect(configurationServiceMock.clearCached).not.toHaveBeenCalled();
+    });
+  });
+
   describe('patchFormDefinitionLifecycle', () => {
     const existingDefinition = {
       id: 'test',
@@ -2042,9 +2179,33 @@ describe('definition router registrations', () => {
   });
 
   describe('submitRegistration', () => {
+    const directoryMock = { getServiceUrl: jest.fn(), getResourceUrl: jest.fn() };
+    const tokenProviderMock = { getAccessToken: jest.fn() };
+    const configurationServiceMock = {
+      getConfiguration: jest.fn(),
+      getServiceConfiguration: jest.fn(),
+      getServiceConfigurationRevision: jest.fn(),
+      clearCached: jest.fn(),
+    };
     const handler = () =>
-      submitRegistration(registrationRepositoryMock, eventServiceMock, auditServiceMock, loggerMock);
+      submitRegistration(
+        registrationRepositoryMock,
+        eventServiceMock,
+        auditServiceMock,
+        loggerMock,
+        directoryMock,
+        tokenProviderMock,
+        configurationServiceMock,
+      );
     const body = { firstName: 'Test', lastName: 'User', email: 'Test.User@gov.ab.ca', data: { profession: 'nurse' } };
+
+    beforeEach(() => {
+      axiosMock.get.mockReset();
+      axiosMock.patch.mockReset();
+      axiosMock.post.mockReset();
+      directoryMock.getServiceUrl.mockResolvedValue(new URL('http://configuration-service'));
+      tokenProviderMock.getAccessToken.mockResolvedValue('token');
+    });
 
     it.each([FormServiceRoles.RegistrationRequester, FormServiceRoles.Admin])(
       'creates a pending registration for a user with %s and responds 201',
@@ -2102,13 +2263,70 @@ describe('definition router registrations', () => {
       expect(next).toHaveBeenCalledWith(expect.any(NotFoundError));
     });
 
-    it('rejects when registration is not enabled for the form', async () => {
+    it('enables registration on the definition when it is not enabled yet', async () => {
       definitionMock.isRegistrationEnabled.mockReturnValueOnce(false);
+      registrationRepositoryMock.create.mockImplementationOnce((entity) => Promise.resolve(entity));
+      const existing = { id: definitionId, name: 'Medical intake', registration: { enabled: false, accessGroup: 'g' } };
+      axiosMock.get
+        .mockResolvedValueOnce({ status: HttpStatusCodes.OK, data: existing })
+        .mockResolvedValueOnce({ data: { latest: { revision: 3 }, active: { revision: 2 } } });
+      axiosMock.patch.mockResolvedValueOnce({ data: { latest: { revision: 3, configuration: existing } } });
+      const res = createRes();
+      const next = jest.fn();
+
+      await handler()(createReq([FormServiceRoles.RegistrationRequester], { body }), res, next);
+
+      expect(next).not.toHaveBeenCalled();
+      expect(axiosMock.patch).toHaveBeenCalledWith(
+        `http://configuration-service/v2/configuration/form-service/${definitionId}`,
+        { operation: 'REPLACE', configuration: { ...existing, registration: { enabled: true, accessGroup: 'g' } } },
+        expect.any(Object),
+      );
+      expect(axiosMock.post).toHaveBeenCalledWith(
+        `http://configuration-service/v2/configuration/form-service/${definitionId}`,
+        { operation: 'SET-ACTIVE-REVISION', revision: 3 },
+        expect.any(Object),
+      );
+      expect(configurationServiceMock.clearCached).toHaveBeenCalledWith(tenantId, 'form-service', definitionId);
+      expect(res.status).toHaveBeenCalledWith(HttpStatusCodes.CREATED);
+    });
+
+    it('creates registration settings on a definition that has none', async () => {
+      definitionMock.isRegistrationEnabled.mockReturnValueOnce(false);
+      registrationRepositoryMock.create.mockImplementationOnce((entity) => Promise.resolve(entity));
+      const existing = { id: definitionId, name: 'Medical intake' };
+      axiosMock.get
+        .mockResolvedValueOnce({ status: HttpStatusCodes.OK, data: existing })
+        .mockResolvedValueOnce({ data: { latest: { revision: 1 } } });
+      axiosMock.patch.mockResolvedValueOnce({ data: { latest: { revision: 1, configuration: existing } } });
+
+      await handler()(createReq([FormServiceRoles.RegistrationRequester], { body }), createRes(), jest.fn());
+
+      expect(axiosMock.patch).toHaveBeenCalledWith(
+        expect.any(String),
+        { operation: 'REPLACE', configuration: { ...existing, registration: { enabled: true } } },
+        expect.any(Object),
+      );
+      expect(axiosMock.post).not.toHaveBeenCalled();
+    });
+
+    it('does not change the definition when registration is already enabled', async () => {
+      registrationRepositoryMock.create.mockImplementationOnce((entity) => Promise.resolve(entity));
+
+      await handler()(createReq([FormServiceRoles.RegistrationRequester], { body }), createRes(), jest.fn());
+
+      expect(axiosMock.patch).not.toHaveBeenCalled();
+      expect(configurationServiceMock.clearCached).not.toHaveBeenCalled();
+    });
+
+    it('does not create the request when registration cannot be enabled', async () => {
+      definitionMock.isRegistrationEnabled.mockReturnValueOnce(false);
+      axiosMock.get.mockResolvedValueOnce({ status: HttpStatusCodes.NOT_FOUND, data: {} });
       const next = jest.fn();
 
       await handler()(createReq([FormServiceRoles.RegistrationRequester], { body }), createRes(), next);
 
-      expect(next).toHaveBeenCalledWith(expect.any(InvalidOperationError));
+      expect(next).toHaveBeenCalledWith(expect.any(NotFoundError));
       expect(registrationRepositoryMock.create).not.toHaveBeenCalled();
     });
 
