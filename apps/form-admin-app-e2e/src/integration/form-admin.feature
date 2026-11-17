@@ -28,8 +28,7 @@ Feature: Form admin app
     And the user clicks Clear Filters button on responses page
     Then the user views the responses page for the form definition
 
-  # One serious accessibility issue - CS-5639
-  @accessibility @regression @ignore
+  @accessibility @regression
   Scenario: As a form admin user, I can use the form admin app without critical accessibility issues
     Given an authenticated user is logged into form admin app site
     Then no critical or serious accessibility issues on "form admin form definitions page"
