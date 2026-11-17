@@ -22,11 +22,11 @@ async function endMcpSession(
   server: HttpMcpServerDefinition,
   timeoutMs: number,
 ): Promise<McpSessionEnd> {
-  const headers = new Headers(server.requestInit?.headers);
-  headers.set('mcp-session-id', sessionId);
-  const init: RequestInit = { method: 'DELETE', headers, signal: AbortSignal.timeout(timeoutMs) };
-
   try {
+    const headers = new Headers(server.requestInit?.headers);
+    headers.set('mcp-session-id', sessionId);
+    // Not followed, like the SDK's own requests, so configured headers never reach another origin.
+    const init: RequestInit = { method: 'DELETE', headers, redirect: 'manual', signal: AbortSignal.timeout(timeoutMs) };
     const response = server.fetch ? await server.fetch(server.url, init) : await fetch(server.url, init);
     await response.body?.cancel().catch(() => undefined);
     const { status } = response;
@@ -56,7 +56,7 @@ export async function endMcpSessions(
   return Promise.all(ends);
 }
 
-/** Ends the client's open sessions, then disconnects it. A disconnect error is passed on. */
+/** Ends the client's open sessions and disconnects it. A disconnect error is passed on. */
 export async function closeMcpClient(
   client: Pick<MCPClient, 'sessionIds' | 'disconnect'>,
   servers: Record<string, MastraMCPServerDefinition>,
@@ -64,9 +64,11 @@ export async function closeMcpClient(
 ): Promise<McpSessionEnd[]> {
   // Read before disconnecting: Mastra forgets the session ids once a transport closes.
   const sessionIds = client.sessionIds;
+  // Disconnect first: a live client would keep using a session as it is deleted, and Mastra's retry would run a tool twice.
+  const disconnected = client.disconnect();
   try {
     return await endMcpSessions(sessionIds, servers, timeoutMs);
   } finally {
-    await client.disconnect();
+    await disconnected;
   }
 }

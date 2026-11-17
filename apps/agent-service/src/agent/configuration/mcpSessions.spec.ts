@@ -203,6 +203,37 @@ describe('endMcpSessions', () => {
     expect(Date.now() - started).toBeLessThan(2000);
   });
 
+  it('does not follow a redirect to another origin', async () => {
+    const other = await startStatefulMcpServer();
+    const redirecting = createServer((_req, res) => {
+      res.writeHead(307, { location: other.url.toString() }).end();
+    });
+    await new Promise<void>((resolve) => redirecting.listen(0, '127.0.0.1', resolve));
+    const { port } = redirecting.address() as AddressInfo;
+    try {
+      const ended = await endMcpSessions(
+        { echo: 'abc' },
+        { echo: { url: new URL(`http://127.0.0.1:${port}/mcp`), requestInit: { headers: { 'x-api-key': 'secret' } } } },
+      );
+
+      expect(ended[0]).toMatchObject({ serverId: 'echo', outcome: 'failed' });
+      expect(other.deletes).toEqual([]);
+    } finally {
+      redirecting.closeAllConnections();
+      await new Promise((resolve) => redirecting.close(resolve));
+      await other.close();
+    }
+  });
+
+  it('reports a malformed configured header as failed instead of throwing', async () => {
+    const ended = await endMcpSessions(
+      { echo: 'abc' },
+      { echo: { url: new URL('http://127.0.0.1:9/mcp'), requestInit: { headers: { 'bad header': 'x' } } } },
+    );
+
+    expect(ended).toEqual([{ serverId: 'echo', sessionId: 'abc', outcome: 'failed', error: expect.any(String) }]);
+  });
+
   it('skips servers without a URL', async () => {
     const ended = await endMcpSessions({ local: 'abc' }, { local: { command: 'node', args: [] } });
 
@@ -224,7 +255,7 @@ describe('closeMcpClient', () => {
     };
   }
 
-  it('ends the sessions before disconnecting', async () => {
+  it('ends the sessions and disconnects', async () => {
     const server = await startStatefulMcpServer();
     try {
       const sessionId = await openSession(server.url);
@@ -235,6 +266,22 @@ describe('closeMcpClient', () => {
       expect(ended).toEqual([{ serverId: 'echo', sessionId, outcome: 'ended', status: 200 }]);
       expect(server.openSessions.has(sessionId)).toBe(false);
       expect(client.disconnect).toHaveBeenCalledTimes(1);
+    } finally {
+      await server.close();
+    }
+  });
+
+  it('starts disconnecting before the session DELETEs finish', async () => {
+    const server = await startStatefulMcpServer({ hangOnDelete: true });
+    try {
+      const client = fakeClient({ echo: 'abc' });
+
+      const closing = closeMcpClient(client, { echo: { url: server.url } }, 300);
+      await new Promise((resolve) => setTimeout(resolve, 50));
+      const disconnectCallsWhileDeletePending = client.disconnect.mock.calls.length;
+      await closing;
+
+      expect(disconnectCallsWhileDeletePending).toBe(1);
     } finally {
       await server.close();
     }
