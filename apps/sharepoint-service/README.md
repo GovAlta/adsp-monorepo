@@ -16,7 +16,7 @@ Pushes data, such as form submissions, to SharePoint lists owned by tenant teams
 | `PUT /connections/{id}/credentials` `{ clientSecret }` | `sharepoint-admin` | Stores the secret encrypted and clears the cached token. Returns `{ isSet: true, updatedAt }`. Returns 404 if the connection isn't in this tenant's configuration |
 | `GET /connections/{id}/credentials` | `sharepoint-admin` | `{ isSet, updatedAt }`. Never the secret |
 | `DELETE /connections/{id}/credentials` | `sharepoint-admin` | Deletes the secret. Returns 204 |
-| `POST /destinations/{id}/test` with the data as the body | `sharepoint-admin` | Pushes the data through the same logic as a real push, even if the destination is disabled. Returns `{ ok: true, outcome }` or `{ ok: false, errorCode, column? }`; `row-identity-missing` means the data has no value for a row identity field, and `credential-unreadable` means the saved secret can't be decrypted (for example after `CREDENTIALS_KEY` changes) and must be entered again |
+| `POST /destinations/{id}/test` with the data as the body | `sharepoint-admin` | Pushes the data through the same logic as a real push, even if the destination is disabled. Returns `{ ok: true, outcome }` or `{ ok: false, errorCode, column? }`; `row-identity-missing` means the data has no value for a row identity field, and `credential-unreadable` means the saved secret can't be decrypted (for example after `CREDENTIALS_KEY` changed without its previous key being kept for the rotation) and must be entered again |
 | `POST /destinations/{id}/data` with the data as the body | `sharepoint-writer` (core service accounts with `?tenantId=`). Tenant admins check destinations with Test instead | Returns 200 `{ dataId, outcome, date }`, where `dataId` is the SharePoint item ID and `outcome` is `created` or `updated`. Nothing is stored. Failures: 400 data missing a row identity field, 404 unknown destination or connection, 409 `destination-disabled`, `credential-not-set` or `credential-unreadable`, 502 `{ errorCode, retryable, column? }` |
 | `POST /destinations/{id}/files` `{ submissionId, files: [{ field, fileId }], data? }` | `sharepoint-writer` (core service accounts with `?tenantId=`). Tenant admins check destinations with Test instead | Reads each file from File Service by file ID or `urn:ads:platform:file-service` URN (any other URN is rejected), uploads it to the site's default Documents library under `{submissionId}/{filename}`, then writes `data` as a list row with each file's link set at its `field`. Up to 20 files per request, uploaded 3 at a time. The link is a Hyperlink value unless the destination's field mapping for that field sets `linkFormat: "text"`, which writes the plain URL. The row is written only when every file uploaded, so a retry of the whole request is safe: files are overwritten by path, and the row is updated when its key matches. Without `data`, only the files are uploaded. Returns `{ files: [{ field, fileId, status, id, name, url, size } or { field, fileId, status: "failed", errorCode, retryable }], row?: { written, dataId, outcome } or { written: false, errorCode, retryable } }`; `row` is missing when `data` was not sent or a file failed. 200 when everything succeeds, 502 when any file fails or the row can't be written, 409 `destination-disabled`, `credential-not-set` or `credential-unreadable`, 404 unknown destination or connection, 400 invalid request, more than 20 files, or data missing a row identity field |
 Error codes are `entra:AADSTS<code>`, `graph:<code>`, `file:<code>`, `network` or `unknown`. The `file:` codes are `invalid-reference`, `not-found`, `access-denied`, `not-ready` (File Service has not finished scanning the file, so retry), `unavailable` and `size-mismatch`. Payload values never appear in responses or logs.
@@ -42,6 +42,7 @@ A request rejected before any upload (invalid, disabled destination, no secret) 
 | `CLIENT_SECRET` | required |
 | `CREDENTIALS_KEY` | required; base64 of 32 random bytes |
 | `CREDENTIALS_KEY_VERSION` | `1` |
+| `CREDENTIALS_KEY_PREVIOUS`, `CREDENTIALS_KEY_PREVIOUS_VERSION` | empty, `0`. Set only during a key rotation: the previous key is used to read secrets not yet re-encrypted, never to encrypt |
 | `MONGO_URI`, `MONGO_DB`, `MONGO_USER`, `MONGO_PASSWORD`, `MONGO_TLS` | `mongodb://localhost:27017`, `sharepointDb`, empty, empty, `false` |
 | `ENTRA_AUTHORITY_URL` | `https://login.microsoftonline.com` |
 | `GRAPH_URL` | `https://graph.microsoft.com/v1.0` |
@@ -88,6 +89,51 @@ Invoke-RestMethod -Method Post http://localhost:3399/_mock/reset
 ```
 
 `kind` is `throttle` (429 with `Retry-After`) or `unavailable` (503).
+
+## Rotating `CREDENTIALS_KEY`
+
+Every saved secret records the key version it was encrypted with. During a rotation the service reads secrets with either the current or the previous key, so pushes keep working, and a one-off job (`dist/apps/sharepoint-service/reencrypt.js`, in the service image) re-encrypts the saved secrets with the new key. Tenants don't need to do anything.
+
+If `CREDENTIALS_KEY_PREVIOUS` is already set, run the job (step 3) first, and continue only when it reports `0 failed`. Step 1 replaces the previous key, so a secret still on it would become unreadable.
+
+1. **Set the new key**, moving the current key to the previous key, in one command (`$ns` is `adsp-dev`, `adsp-uat` or `adsp-prod`):
+   ```powershell
+   $decode = { param($value) [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($value)) }
+   $secret = oc get secret sharepoint-service -n $ns -o json | ConvertFrom-Json
+   $currentVersion = if ($secret.data.CREDENTIALS_KEY_VERSION) { [int](& $decode $secret.data.CREDENTIALS_KEY_VERSION) } else { 1 }
+   $newKey = [Convert]::ToBase64String([System.Security.Cryptography.RandomNumberGenerator]::GetBytes(32))
+   oc set data secret/sharepoint-service -n $ns `
+     "CREDENTIALS_KEY_PREVIOUS=$(& $decode $secret.data.CREDENTIALS_KEY)" "CREDENTIALS_KEY_PREVIOUS_VERSION=$currentVersion" `
+     "CREDENTIALS_KEY=$newKey" "CREDENTIALS_KEY_VERSION=$($currentVersion + 1)"
+   Remove-Variable secret, newKey
+   ```
+2. **Restart the service** with a rolling restart, so the new pod is ready before the old one stops:
+   ```powershell
+   oc rollout resume deployment/sharepoint-service -n $ns
+   oc rollout restart deployment/sharepoint-service -n $ns
+   oc rollout status deployment/sharepoint-service -n $ns
+   oc rollout pause deployment/sharepoint-service -n $ns
+   ```
+3. **Run the re-encryption job**, built from the deployment's pod spec so it always has the service's image, settings and database. The labels are left out so the Service doesn't route traffic to the job, and the probes and ports because the job doesn't serve HTTP:
+   ```powershell
+   $deployment = oc get deployment sharepoint-service -n $ns -o json | ConvertFrom-Json
+   $pod = $deployment.spec.template.spec
+   $container = $pod.containers[0]
+   'livenessProbe', 'readinessProbe', 'startupProbe', 'ports' | ForEach-Object { $container.PSObject.Properties.Remove($_) }
+   $container.name = 'reencrypt'
+   $container | Add-Member -Force -NotePropertyName command -NotePropertyValue @('node', 'dist/apps/sharepoint-service/reencrypt.js')
+   $pod.containers = @($container)
+   $pod.restartPolicy = 'Never'
+   $job = @{ apiVersion = 'batch/v1'; kind = 'Job'; metadata = @{ name = 'sharepoint-service-reencrypt' }; spec = @{ backoffLimit = 0; ttlSecondsAfterFinished = 86400; template = @{ spec = $pod } } } | ConvertTo-Json -Depth 30
+   oc delete job sharepoint-service-reencrypt -n $ns --ignore-not-found
+   $job | oc create -n $ns -f -
+   oc wait --for=jsonpath='{.status.conditions[0].type}' job/sharepoint-service-reencrypt -n $ns --timeout=600s
+   oc logs job/sharepoint-service-reencrypt -n $ns
+   ```
+   The log reports how many secrets were on an older version, converted, saved again during the run (already on the new key) and failed. The job fails if any secret failed; those were already unreadable before the rotation, and their tenants must enter them again. It is safe to run again.
+4. **Keep the previous key** until the next rotation replaces it. It isn't needed once the job reports no failures.
+
+To roll back, swap the current and previous keys and versions with `oc set data`, restart (step 2) and run the job again (step 3).
 
 ## SharePoint prerequisites (site owner)
 
