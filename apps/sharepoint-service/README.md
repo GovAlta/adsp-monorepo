@@ -90,51 +90,6 @@ Invoke-RestMethod -Method Post http://localhost:3399/_mock/reset
 
 `kind` is `throttle` (429 with `Retry-After`) or `unavailable` (503).
 
-## Rotating `CREDENTIALS_KEY`
-
-Every saved secret records the key version it was encrypted with. During a rotation the service reads secrets with either the current or the previous key, so pushes keep working, and a one-off job (`dist/apps/sharepoint-service/reencrypt.js`, in the service image) re-encrypts the saved secrets with the new key. Tenants don't need to do anything.
-
-If `CREDENTIALS_KEY_PREVIOUS` is already set, run the job (step 3) first, and continue only when it reports `0 failed`. Step 1 replaces the previous key, so a secret still on it would become unreadable.
-
-1. **Set the new key**, moving the current key to the previous key, in one command (`$ns` is `adsp-dev`, `adsp-uat` or `adsp-prod`):
-   ```powershell
-   $decode = { param($value) [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($value)) }
-   $secret = oc get secret sharepoint-service -n $ns -o json | ConvertFrom-Json
-   $currentVersion = if ($secret.data.CREDENTIALS_KEY_VERSION) { [int](& $decode $secret.data.CREDENTIALS_KEY_VERSION) } else { 1 }
-   $newKey = [Convert]::ToBase64String([System.Security.Cryptography.RandomNumberGenerator]::GetBytes(32))
-   oc set data secret/sharepoint-service -n $ns `
-     "CREDENTIALS_KEY_PREVIOUS=$(& $decode $secret.data.CREDENTIALS_KEY)" "CREDENTIALS_KEY_PREVIOUS_VERSION=$currentVersion" `
-     "CREDENTIALS_KEY=$newKey" "CREDENTIALS_KEY_VERSION=$($currentVersion + 1)"
-   Remove-Variable secret, newKey
-   ```
-2. **Restart the service** with a rolling restart, so the new pod is ready before the old one stops:
-   ```powershell
-   oc rollout resume deployment/sharepoint-service -n $ns
-   oc rollout restart deployment/sharepoint-service -n $ns
-   oc rollout status deployment/sharepoint-service -n $ns
-   oc rollout pause deployment/sharepoint-service -n $ns
-   ```
-3. **Run the re-encryption job**, built from the deployment's pod spec so it always has the service's image, settings and database. The labels are left out so the Service doesn't route traffic to the job, and the probes and ports because the job doesn't serve HTTP:
-   ```powershell
-   $deployment = oc get deployment sharepoint-service -n $ns -o json | ConvertFrom-Json
-   $pod = $deployment.spec.template.spec
-   $container = $pod.containers[0]
-   'livenessProbe', 'readinessProbe', 'startupProbe', 'ports' | ForEach-Object { $container.PSObject.Properties.Remove($_) }
-   $container.name = 'reencrypt'
-   $container | Add-Member -Force -NotePropertyName command -NotePropertyValue @('node', 'dist/apps/sharepoint-service/reencrypt.js')
-   $pod.containers = @($container)
-   $pod.restartPolicy = 'Never'
-   $job = @{ apiVersion = 'batch/v1'; kind = 'Job'; metadata = @{ name = 'sharepoint-service-reencrypt' }; spec = @{ backoffLimit = 0; ttlSecondsAfterFinished = 86400; template = @{ spec = $pod } } } | ConvertTo-Json -Depth 30
-   oc delete job sharepoint-service-reencrypt -n $ns --ignore-not-found
-   $job | oc create -n $ns -f -
-   oc wait --for=jsonpath='{.status.conditions[0].type}' job/sharepoint-service-reencrypt -n $ns --timeout=600s
-   oc logs job/sharepoint-service-reencrypt -n $ns
-   ```
-   The log reports how many secrets were on an older version, converted, saved again during the run (already on the new key) and failed. The job fails if any secret failed; those were already unreadable before the rotation, and their tenants must enter them again. It is safe to run again.
-4. **Keep the previous key** until the next rotation replaces it. It isn't needed once the job reports no failures.
-
-To roll back, swap the current and previous keys and versions with `oc set data`, restart (step 2) and run the job again (step 3).
-
 ## SharePoint prerequisites (site owner)
 
 - An Entra app registration with `Sites.Selected` and a `write` grant on the site.
