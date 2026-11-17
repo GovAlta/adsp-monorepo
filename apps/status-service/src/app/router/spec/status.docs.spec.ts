@@ -60,7 +60,8 @@ describe('status router documented behaviour', () => {
     delete: jest.fn(),
   };
 
-  const user = { id: 'tester', name: 'Test User', tenantId, isCore: false, roles: [] } as unknown as User;
+  const user = { id: 'tester', name: 'Test User', tenantId, isCore: false, roles: ['status-admin'] } as unknown as User;
+  const tenantUser = { id: 'reader', name: 'Reader', tenantId, isCore: false, roles: [] } as unknown as User;
   const coreUser = { id: 'core', name: 'Core User', isCore: true, roles: [] } as unknown as User;
   const appKey = 'my-application';
   const statusConfiguration = {
@@ -156,7 +157,7 @@ describe('status router documented behaviour', () => {
 
   describe('GET /status/v1/applications', () => {
     it('retrieves the applications of the tenant', async () => {
-      const res = await request(createApp(user)).get('/status/v1/applications');
+      const res = await request(createApp(tenantUser)).get('/status/v1/applications');
 
       expect(res.status).toBe(200);
       expect(res.body).toEqual([
@@ -206,6 +207,12 @@ describe('status router documented behaviour', () => {
 
       expect(res.status).toBe(401);
     });
+
+    it('returns 403 for a user without the status-admin role', async () => {
+      const res = await request(createApp(tenantUser)).post('/status/v1/applications').send(body);
+
+      expect(res.status).toBe(403);
+    });
   });
 
   describe('PUT /status/v1/applications/{appKey}', () => {
@@ -229,6 +236,12 @@ describe('status router documented behaviour', () => {
 
       expect(res.status).toBe(401);
     });
+
+    it('returns 403 for a user without the status-admin role', async () => {
+      const res = await request(createApp(tenantUser)).put(`/status/v1/applications/${appKey}`).send(body);
+
+      expect(res.status).toBe(403);
+    });
   });
 
   describe('DELETE /status/v1/applications/{appKey}', () => {
@@ -250,6 +263,12 @@ describe('status router documented behaviour', () => {
 
       expect(res.status).toBe(401);
     });
+
+    it('returns 403 for a user without the status-admin role', async () => {
+      const res = await request(createApp(tenantUser)).delete(`/status/v1/applications/${appKey}`);
+
+      expect(res.status).toBe(403);
+    });
   });
 
   describe.each(['enable', 'disable', 'toggle'])('PATCH /status/v1/applications/{appKey}/%s', (action) => {
@@ -270,6 +289,12 @@ describe('status router documented behaviour', () => {
       const res = await request(createApp(null)).patch(`/status/v1/applications/${appKey}/${action}`);
 
       expect(res.status).toBe(401);
+    });
+
+    it('returns 403 for a user without the status-admin role', async () => {
+      const res = await request(createApp(tenantUser)).patch(`/status/v1/applications/${appKey}/${action}`);
+
+      expect(res.status).toBe(403);
     });
   });
 
@@ -301,13 +326,21 @@ describe('status router documented behaviour', () => {
 
       expect(res.status).toBe(401);
     });
+
+    it('returns 403 for a user without the status-admin role', async () => {
+      const res = await request(createApp(tenantUser))
+        .patch(`/status/v1/applications/${appKey}/status`)
+        .send({ status: 'maintenance' });
+
+      expect(res.status).toBe(403);
+    });
   });
 
   describe('GET /status/v1/applications/{appKey}/endpoint-status-entries', () => {
     it('retrieves the ping results of the application', async () => {
       endpointStatusEntryRepositoryMock.findRecentByUrlAndApplicationId.mockResolvedValueOnce([entry]);
 
-      const res = await request(createApp(user)).get(
+      const res = await request(createApp(tenantUser)).get(
         `/status/v1/applications/${appKey}/endpoint-status-entries?topValue=20`,
       );
 
@@ -322,7 +355,7 @@ describe('status router documented behaviour', () => {
     });
 
     it('returns 404 when the application is not found', async () => {
-      const res = await request(createApp(user)).get(
+      const res = await request(createApp(tenantUser)).get(
         '/status/v1/applications/other-application/endpoint-status-entries',
       );
 
@@ -334,7 +367,7 @@ describe('status router documented behaviour', () => {
     it('retrieves the recent ping results', async () => {
       endpointStatusEntryRepositoryMock.findRecent.mockResolvedValueOnce([entry]);
 
-      const res = await request(createApp(user)).get('/status/v1/applications/endpoint-status-entries?ageInMinutes=20');
+      const res = await request(createApp(tenantUser)).get('/status/v1/applications/endpoint-status-entries?ageInMinutes=20');
 
       expect(res.status).toBe(200);
       expect(res.body).toHaveLength(1);
@@ -343,6 +376,14 @@ describe('status router documented behaviour', () => {
   });
 
   describe('GET /status/v1/webhook/{id}/test/{eventName}', () => {
+    it('returns 403 for a user without the status-admin role', async () => {
+      const res = await request(createApp(tenantUser)).get(
+        `/status/v1/webhook/${webhook.id}/test/monitored-service-down`,
+      );
+
+      expect(res.status).toBe(403);
+    });
+
     it('sends the test event', async () => {
       const res = await request(createApp(user)).get(`/status/v1/webhook/${webhook.id}/test/monitored-service-down`);
 
