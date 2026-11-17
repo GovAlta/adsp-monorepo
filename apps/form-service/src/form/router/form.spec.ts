@@ -382,7 +382,7 @@ describe('form router', () => {
 
   describe('getFormDefinition', () => {
     it('can create handler', () => {
-      const handler = getFormDefinition(tenantServiceMock, calendarServiceMock);
+      const handler = getFormDefinition(tenantServiceMock, calendarServiceMock, directoryMock, tokenProviderMock);
       expect(handler).toBeTruthy();
     });
 
@@ -405,7 +405,7 @@ describe('form router', () => {
       const next = jest.fn();
 
       req.getServiceConfiguration.mockResolvedValueOnce([definitionWithFileUrnSchema]);
-      const handler = getFormDefinition(tenantServiceMock, calendarServiceMock);
+      const handler = getFormDefinition(tenantServiceMock, calendarServiceMock, directoryMock, tokenProviderMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(req.getServiceConfiguration).toHaveBeenCalledWith('test', tenantId);
@@ -431,7 +431,7 @@ describe('form router', () => {
       const next = jest.fn();
 
       req.getServiceConfiguration.mockResolvedValueOnce([definitionWithFileUrnSchema]);
-      const handler = getFormDefinition(tenantServiceMock, calendarServiceMock);
+      const handler = getFormDefinition(tenantServiceMock, calendarServiceMock, directoryMock, tokenProviderMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(req.getServiceConfiguration).toHaveBeenCalled();
@@ -458,7 +458,7 @@ describe('form router', () => {
 
       req.getServiceConfiguration.mockResolvedValueOnce([]);
       expect(res.send).not.toHaveBeenCalled();
-      const handler = getFormDefinition(tenantServiceMock, calendarServiceMock);
+      const handler = getFormDefinition(tenantServiceMock, calendarServiceMock, directoryMock, tokenProviderMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(req.getServiceConfiguration).toHaveBeenCalled();
@@ -476,7 +476,7 @@ describe('form router', () => {
       };
       const res = { send: jest.fn() };
       const next = jest.fn();
-      const handler = getFormDefinition(tenantServiceMock, calendarServiceMock);
+      const handler = getFormDefinition(tenantServiceMock, calendarServiceMock, directoryMock, tokenProviderMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(next).toHaveBeenCalledWith(expect.any(InvalidOperationError));
     });
@@ -510,7 +510,7 @@ describe('form router', () => {
 
       tenantServiceMock.getTenant.mockResolvedValueOnce({ id: tenantId });
       req.getServiceConfiguration.mockResolvedValueOnce([definition]);
-      const handler = getFormDefinition(tenantServiceMock, calendarServiceMock);
+      const handler = getFormDefinition(tenantServiceMock, calendarServiceMock, directoryMock, tokenProviderMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(req.getServiceConfiguration).toHaveBeenCalledWith('test', tenantId);
@@ -529,12 +529,100 @@ describe('form router', () => {
 
       tenantServiceMock.getTenant.mockResolvedValueOnce({ id: tenantId });
       req.getServiceConfiguration.mockResolvedValueOnce([definition]);
-      const handler = getFormDefinition(tenantServiceMock, calendarServiceMock);
+      const handler = getFormDefinition(tenantServiceMock, calendarServiceMock, directoryMock, tokenProviderMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(req.getServiceConfiguration).toHaveBeenCalledWith('test', tenantId);
       expect(res.send).not.toHaveBeenCalled();
       expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedUserError));
+    });
+
+    describe('with version=latest', () => {
+      const latestRequest = (roles: string[]) => ({
+        user: { tenantId, id: 'tester', roles },
+        params: { definitionId: 'test' },
+        query: { version: 'latest' },
+        getServiceConfiguration: jest.fn(),
+        getServiceConfigurationRevision: jest.fn(),
+        tenant: { id: tenantId },
+      });
+
+      beforeEach(() => {
+        axiosMock.get.mockReset();
+        directoryMock.getServiceUrl.mockResolvedValue(new URL('http://configuration-service'));
+      });
+
+      it('reads the latest revision from configuration service', async () => {
+        const latest = { id: 'test', name: 'Latest name', registration: { enabled: true } };
+        axiosMock.get.mockResolvedValueOnce({
+          data: { latest: { revision: 4, configuration: latest }, active: { revision: 2 } },
+        });
+        const req = latestRequest([FormServiceRoles.Admin]);
+        const res = { send: jest.fn() };
+        const next = jest.fn();
+
+        const handler = getFormDefinition(tenantServiceMock, calendarServiceMock, directoryMock, tokenProviderMock);
+        await handler(req as unknown as Request, res as unknown as Response, next);
+
+        expect(axiosMock.get).toHaveBeenCalledWith(
+          'http://configuration-service/v2/configuration/form-service/test',
+          expect.objectContaining({ params: { tenantId: tenantId.toString() } }),
+        );
+        expect(req.getServiceConfiguration).not.toHaveBeenCalled();
+        expect(res.send).toHaveBeenCalledWith(
+          expect.objectContaining({ id: 'test', revision: 4, name: 'Latest name', registration: { enabled: true } }),
+        );
+        expect(next).not.toHaveBeenCalled();
+      });
+
+      it('includes the scheduled intake', async () => {
+        const intake = { name: 'Spring intake' };
+        calendarServiceMock.getScheduledIntake.mockResolvedValueOnce(intake);
+        axiosMock.get.mockResolvedValueOnce({
+          data: { latest: { revision: 1, configuration: { id: 'test', name: 'Test', scheduledIntakes: true } } },
+        });
+        const res = { send: jest.fn() };
+
+        const handler = getFormDefinition(tenantServiceMock, calendarServiceMock, directoryMock, tokenProviderMock);
+        await handler(
+          latestRequest([FormServiceRoles.Admin]) as unknown as Request,
+          res as unknown as Response,
+          jest.fn(),
+        );
+
+        expect(calendarServiceMock.getScheduledIntake).toHaveBeenCalledWith(
+          expect.objectContaining({ id: 'test', tenantId }),
+        );
+        expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ intake }));
+      });
+
+      it('can call next with unauthorized for a user without form-admin', async () => {
+        const next = jest.fn();
+
+        const handler = getFormDefinition(tenantServiceMock, calendarServiceMock, directoryMock, tokenProviderMock);
+        await handler(
+          latestRequest(['test-applicant']) as unknown as Request,
+          { send: jest.fn() } as unknown as Response,
+          next,
+        );
+
+        expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedUserError));
+        expect(axiosMock.get).not.toHaveBeenCalled();
+      });
+
+      it('can call next with not found when the definition has no latest revision', async () => {
+        axiosMock.get.mockResolvedValueOnce({ data: {} });
+        const next = jest.fn();
+
+        const handler = getFormDefinition(tenantServiceMock, calendarServiceMock, directoryMock, tokenProviderMock);
+        await handler(
+          latestRequest([FormServiceRoles.Admin]) as unknown as Request,
+          { send: jest.fn() } as unknown as Response,
+          next,
+        );
+
+        expect(next).toHaveBeenCalledWith(expect.any(NotFoundError));
+      });
     });
   });
 

@@ -173,7 +173,32 @@ export function getFormDefinitions(directory: ServiceDirectory, tokenProvider: T
   };
 }
 
-export function getFormDefinition(tenantService: TenantService, calendarService: CalendarService): RequestHandler {
+// Reads the latest revision directly, bypassing the SDK cache, which only tracks the active revision.
+async function getLatestFormDefinition(
+  directory: ServiceDirectory,
+  tokenProvider: TokenProvider,
+  tenantId: AdspId,
+  definitionId: string,
+): Promise<{ revision: number; configuration: FormDefinition }> {
+  const configurationApiUrl = await directory.getServiceUrl(configurationApiId);
+  const token = await tokenProvider.getAccessToken();
+  const { data } = await axios.get<{ latest?: { revision: number; configuration: FormDefinition } }>(
+    new URL(`v2/configuration/form-service/${encodeURIComponent(definitionId)}`, configurationApiUrl).href,
+    { headers: { Authorization: `Bearer ${token}` }, params: { tenantId: tenantId.toString() } },
+  );
+
+  if (!data?.latest?.configuration) {
+    throw new NotFoundError('form definition', definitionId);
+  }
+  return data.latest;
+}
+
+export function getFormDefinition(
+  tenantService: TenantService,
+  calendarService: CalendarService,
+  directory: ServiceDirectory,
+  tokenProvider: TokenProvider,
+): RequestHandler {
   return async (req, res, next) => {
     try {
       const user = req.user;
@@ -191,6 +216,25 @@ export function getFormDefinition(tenantService: TenantService, calendarService:
       }
 
       const { version } = req.query;
+
+      if (version === 'latest') {
+        // The latest revision can hold unpublished changes, so only administrators can read it.
+        if (!isAllowedUser(user, req.tenant.id, FormServiceRoles.Admin, true)) {
+          throw new UnauthorizedUserError('access latest definition revision', user);
+        }
+
+        const latest = await getLatestFormDefinition(directory, tokenProvider, req.tenant.id, definitionId);
+        // Calendar service only uses the definition ID and tenant to find the intake.
+        const intake = latest.configuration.scheduledIntakes
+          ? await calendarService.getScheduledIntake({
+              id: definitionId,
+              tenantId: req.tenant.id,
+            } as FormDefinitionEntity)
+          : undefined;
+
+        res.send(mapFormDefinition(latest.configuration, latest.revision, intake));
+        return;
+      }
 
       let definition: FormDefinitionEntity;
 
@@ -552,8 +596,8 @@ export function patchFormDefinitionLifecycle(
   };
 }
 
-// Rewrites the latest revision and makes it the one form-service reads. Returns false when update returns null.
-async function publishDefinitionUpdate(
+// Rewrites the latest revision, like the other definition endpoints. Returns false when update returns null.
+async function updateLatestDefinition(
   directory: ServiceDirectory,
   tokenProvider: TokenProvider,
   configurationService: ConfigurationService,
@@ -561,14 +605,13 @@ async function publishDefinitionUpdate(
   definitionId: string,
   update: (existing: FormDefinition) => FormDefinition | null,
 ): Promise<boolean> {
-  const encodedDefinitionId = encodeURIComponent(definitionId);
   const configurationApiUrl = await directory.getServiceUrl(configurationApiId);
   const token = await tokenProvider.getAccessToken();
 
   const existingDefinition = await fetchExistingDefinition(
     configurationApiUrl,
     token,
-    encodedDefinitionId,
+    encodeURIComponent(definitionId),
     tenantId.toString(),
     definitionId,
   );
@@ -578,30 +621,10 @@ async function publishDefinitionUpdate(
     return false;
   }
 
-  const data = await patchConfigurationDefinition(configurationApiUrl, token, definitionId, tenantId.toString(), {
+  await patchConfigurationDefinition(configurationApiUrl, token, definitionId, tenantId.toString(), {
     ...updatedDefinition,
     id: definitionId,
   });
-
-  const definitionUrl = new URL(`v2/configuration/form-service/${encodedDefinitionId}`, configurationApiUrl).href;
-  const requestConfig = { headers: { Authorization: `Bearer ${token}` }, params: { tenantId: tenantId.toString() } };
-  try {
-    const { data: document } = await axios.get<{ active?: { revision: number } }>(definitionUrl, requestConfig);
-    if (document?.active && document.active.revision !== data.latest.revision) {
-      await axios.post(
-        definitionUrl,
-        { operation: 'SET-ACTIVE-REVISION', revision: data.latest.revision },
-        requestConfig,
-      );
-    }
-  } catch (err) {
-    if (axios.isAxiosError(err)) {
-      // Setting the active revision needs the configuration-admin role on the form-service service account.
-      const message = err.response?.data?.errorMessage || 'Configuration service could not set the active revision.';
-      throw new InvalidOperationError(message, { statusCode: HttpStatusCodes.BAD_GATEWAY });
-    }
-    throw err;
-  }
 
   // Other instances are invalidated by the configuration update events.
   configurationService.clearCached?.(tenantId, 'form-service', definitionId);
@@ -773,7 +796,7 @@ export function submitRegistration(
       definition.validateRegistrationData(request.data || {});
 
       if (!definition.isRegistrationEnabled()) {
-        await publishDefinitionUpdate(
+        await updateLatestDefinition(
           directory,
           tokenProvider,
           configurationService,
@@ -819,7 +842,7 @@ export function deleteRegistrationSettings(
       assertAllowed(user, tenantId, FormServiceRoles.Admin, 'delete registration');
 
       const { definitionId } = req.params;
-      const removed = await publishDefinitionUpdate(
+      const removed = await updateLatestDefinition(
         directory,
         tokenProvider,
         configurationService,
@@ -968,8 +991,11 @@ export function createFormDefinitionRouter({
     '/definitions/:definitionId',
     createValidationHandler(
       param('definitionId').isString().isLength({ min: 1, max: 50 }).matches(DEFINITION_ID_REGEX),
+      query('version')
+        .optional()
+        .matches(/^(latest|\d+)$/),
     ),
-    getFormDefinition(tenantService, calendarService),
+    getFormDefinition(tenantService, calendarService, directory, tokenProvider),
   );
   router.put(
     '/definitions/:definitionId',

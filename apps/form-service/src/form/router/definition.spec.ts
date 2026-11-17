@@ -1543,10 +1543,8 @@ describe('definition router', () => {
 
     const adminReq = { user: admin, params: { definitionId: 'test' }, tenant: { id: tenantId } };
 
-    const mockDocument = (document: Record<string, unknown>) =>
-      axiosMock.get
-        .mockResolvedValueOnce({ status: HttpStatusCodes.OK, data: existingDefinition })
-        .mockResolvedValueOnce({ data: document });
+    const mockExisting = () =>
+      axiosMock.get.mockResolvedValueOnce({ status: HttpStatusCodes.OK, data: existingDefinition });
 
     beforeEach(() => {
       res = { status: jest.fn().mockReturnThis(), send: jest.fn() };
@@ -1569,8 +1567,8 @@ describe('definition router', () => {
       expect(next).toHaveBeenCalledWith(expect.any(NotFoundError));
     });
 
-    it('removes the registration settings and responds 204', async () => {
-      mockDocument({ latest: { revision: 4 } });
+    it('removes the registration settings from the latest revision and responds 204', async () => {
+      mockExisting();
       mockPatchSuccess(definitionWithoutRegistration, 4);
 
       await runHandler(adminReq);
@@ -1594,25 +1592,8 @@ describe('definition router', () => {
       expect(res.status).toHaveBeenCalledWith(HttpStatusCodes.NO_CONTENT);
     });
 
-    it('moves a pinned older active revision to the updated revision', async () => {
-      mockDocument({ latest: { revision: 5 }, active: { revision: 3 } });
-      mockPatchSuccess(definitionWithoutRegistration, 5);
-
-      await runHandler(adminReq);
-
-      expect(axiosMock.post).toHaveBeenCalledWith(
-        'http://configuration-service/v2/configuration/form-service/test',
-        { operation: 'SET-ACTIVE-REVISION', revision: 5 },
-        expect.objectContaining({ params: { tenantId: tenantId.toString() } }),
-      );
-      expect(next).not.toHaveBeenCalled();
-    });
-
-    it.each([
-      ['no revision is set as active', { latest: { revision: 5 } }],
-      ['the updated revision is already active', { latest: { revision: 5 }, active: { revision: 5 } }],
-    ])('does not set the active revision when %s', async (_case, document) => {
-      mockDocument(document);
+    it('does not change the active revision', async () => {
+      mockExisting();
       mockPatchSuccess(definitionWithoutRegistration, 5);
 
       await runHandler(adminReq);
@@ -1622,26 +1603,12 @@ describe('definition router', () => {
     });
 
     it('clears the cached definition so the next read sees the change', async () => {
-      mockDocument({ latest: { revision: 5 }, active: { revision: 3 } });
+      mockExisting();
       mockPatchSuccess(definitionWithoutRegistration, 5);
 
       await runHandler(adminReq);
 
       expect(configurationServiceMock.clearCached).toHaveBeenCalledWith(tenantId, 'form-service', 'test');
-    });
-
-    it('calls next with 502 when configuration service refuses to set the active revision', async () => {
-      mockDocument({ latest: { revision: 5 }, active: { revision: 3 } });
-      mockPatchSuccess(definitionWithoutRegistration, 5);
-      jest.mocked(axiosMock.isAxiosError).mockReturnValue(true);
-      axiosMock.post.mockRejectedValueOnce({ response: { status: HttpStatusCodes.FORBIDDEN, data: {} } });
-
-      await runHandler(adminReq);
-
-      expect(next).toHaveBeenCalledWith(
-        expect.objectContaining({ extra: expect.objectContaining({ statusCode: HttpStatusCodes.BAD_GATEWAY }) }),
-      );
-      expect(configurationServiceMock.clearCached).not.toHaveBeenCalled();
     });
   });
 
@@ -2263,13 +2230,11 @@ describe('definition router registrations', () => {
       expect(next).toHaveBeenCalledWith(expect.any(NotFoundError));
     });
 
-    it('enables registration on the definition when it is not enabled yet', async () => {
+    it('enables registration in the latest revision when it is not enabled yet', async () => {
       definitionMock.isRegistrationEnabled.mockReturnValueOnce(false);
       registrationRepositoryMock.create.mockImplementationOnce((entity) => Promise.resolve(entity));
       const existing = { id: definitionId, name: 'Medical intake', registration: { enabled: false, accessGroup: 'g' } };
-      axiosMock.get
-        .mockResolvedValueOnce({ status: HttpStatusCodes.OK, data: existing })
-        .mockResolvedValueOnce({ data: { latest: { revision: 3 }, active: { revision: 2 } } });
+      axiosMock.get.mockResolvedValueOnce({ status: HttpStatusCodes.OK, data: existing });
       axiosMock.patch.mockResolvedValueOnce({ data: { latest: { revision: 3, configuration: existing } } });
       const res = createRes();
       const next = jest.fn();
@@ -2282,11 +2247,7 @@ describe('definition router registrations', () => {
         { operation: 'REPLACE', configuration: { ...existing, registration: { enabled: true, accessGroup: 'g' } } },
         expect.any(Object),
       );
-      expect(axiosMock.post).toHaveBeenCalledWith(
-        `http://configuration-service/v2/configuration/form-service/${definitionId}`,
-        { operation: 'SET-ACTIVE-REVISION', revision: 3 },
-        expect.any(Object),
-      );
+      expect(axiosMock.post).not.toHaveBeenCalled();
       expect(configurationServiceMock.clearCached).toHaveBeenCalledWith(tenantId, 'form-service', definitionId);
       expect(res.status).toHaveBeenCalledWith(HttpStatusCodes.CREATED);
     });
@@ -2295,9 +2256,7 @@ describe('definition router registrations', () => {
       definitionMock.isRegistrationEnabled.mockReturnValueOnce(false);
       registrationRepositoryMock.create.mockImplementationOnce((entity) => Promise.resolve(entity));
       const existing = { id: definitionId, name: 'Medical intake' };
-      axiosMock.get
-        .mockResolvedValueOnce({ status: HttpStatusCodes.OK, data: existing })
-        .mockResolvedValueOnce({ data: { latest: { revision: 1 } } });
+      axiosMock.get.mockResolvedValueOnce({ status: HttpStatusCodes.OK, data: existing });
       axiosMock.patch.mockResolvedValueOnce({ data: { latest: { revision: 1, configuration: existing } } });
 
       await handler()(createReq([FormServiceRoles.RegistrationRequester], { body }), createRes(), jest.fn());
@@ -2307,7 +2266,6 @@ describe('definition router registrations', () => {
         { operation: 'REPLACE', configuration: { ...existing, registration: { enabled: true } } },
         expect.any(Object),
       );
-      expect(axiosMock.post).not.toHaveBeenCalled();
     });
 
     it('does not change the definition when registration is already enabled', async () => {
