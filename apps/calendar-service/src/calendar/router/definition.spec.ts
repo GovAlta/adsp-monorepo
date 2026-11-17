@@ -1,6 +1,7 @@
 import {
   adspId,
   AdspId,
+  AuditService,
   ConfigurationService,
   EventService,
   ServiceDirectory,
@@ -56,6 +57,7 @@ const configurationServiceMock = { clearCached: jest.fn() };
 const eventServiceMock = { send: jest.fn() };
 const repositoryMock = { getCalendarEvents: jest.fn() };
 const loggerMock = { warn: jest.fn() };
+const auditServiceMock = { record: jest.fn() };
 
 interface RouteResponse {
   status: number;
@@ -124,6 +126,7 @@ function createApp(user: User | null = adminUser, tenant: { id: AdspId } | null 
       logger: loggerMock as unknown as Logger,
       repository: repositoryMock as unknown as CalendarRepository,
       eventService: eventServiceMock as unknown as EventService,
+      auditService: auditServiceMock as unknown as AuditService,
       directory: directoryMock as unknown as ServiceDirectory,
       tenantService: {} as TenantService,
       tokenProvider: tokenProviderMock as unknown as TokenProvider,
@@ -142,6 +145,7 @@ describe('calendar definition routes', () => {
     axiosMock.patch.mockResolvedValue({ status: 200 });
     axiosMock.isAxiosError.mockReturnValue(false);
     repositoryMock.getCalendarEvents.mockResolvedValue({ results: [], page: {} });
+    auditServiceMock.record.mockReset().mockResolvedValue({ status: 'recorded', eventId: 'audit-1' });
   });
 
   afterEach(() => jest.resetAllMocks());
@@ -284,6 +288,24 @@ describe('calendar definition routes', () => {
         ...definition,
         source: 'tenant',
       });
+      expect(auditServiceMock.record).toHaveBeenCalledWith(
+        expect.objectContaining({ name: 'calendar.created', severity: 'info', retentionClass: 'standard' }),
+        expect.objectContaining({
+          tenantId,
+          resource: expect.objectContaining({ type: 'calendar', id: definition.name }),
+          metadata: expect.objectContaining({ calendarName: definition.name }),
+        }),
+      );
+    });
+
+    test('does not audit a rejected create for an existing name', async () => {
+      axiosMock.get.mockResolvedValueOnce({ data: { [definition.name]: definition } }).mockResolvedValueOnce({ data: {} });
+      const app = createApp();
+
+      const response = await request(app).post(collectionPath).send(definition);
+
+      expect(response.status).toBe(409);
+      expect(auditServiceMock.record).not.toHaveBeenCalled();
     });
 
     test('updates only the new tenant key with a service-account token, not the whole configuration', async () => {
@@ -347,6 +369,16 @@ describe('calendar definition routes', () => {
         ...updated,
         source: 'tenant',
       });
+      expect(auditServiceMock.record).toHaveBeenCalledWith(
+        expect.objectContaining({ name: 'calendar.updated' }),
+        expect.objectContaining({
+          metadata: expect.objectContaining({ updatedFields: ['displayName'], accessRolesChanged: false }),
+          changeSet: {
+            before: { displayName: definition.displayName },
+            after: { displayName: 'Updated Public Meetings' },
+          },
+        }),
+      );
     });
 
     test('reads only tenant configuration and updates only the named key', async () => {
@@ -408,6 +440,10 @@ describe('calendar definition routes', () => {
       // Assert
       expect(response.status).toBe(204);
       expect(response.text).toBe('');
+      expect(auditServiceMock.record).toHaveBeenCalledWith(
+        expect.objectContaining({ name: 'calendar.deleted', severity: 'warning' }),
+        expect.objectContaining({ resource: expect.objectContaining({ type: 'calendar', id: definition.name }) }),
+      );
     });
 
     test('omits a deleted definition from the next list while retaining other calendars', async () => {
