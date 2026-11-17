@@ -5,6 +5,7 @@ import {
   JsonFormRegisterProvider,
   createAutoPopulateMiddleware,
   User,
+  RegisterConfigData,
 } from '@abgov/jsonforms-components';
 import { GoabCallout } from '@abgov/react-components';
 import { ajv } from '@lib/validation/checkInput';
@@ -17,7 +18,7 @@ import { useSelector } from 'react-redux';
 import FallbackRender from './FallbackRenderer';
 import { clearRegisterPlaceholders } from './registerPlaceholder';
 import { FormPreviewSpacer } from './style-components';
-import { RegisterConfigData } from '../../../../jsonforms-components/src';
+import { PreviewSubmit } from './PreviewSubmit';
 
 interface JSONFormPreviewerProps {
   data: unknown;
@@ -42,6 +43,7 @@ export const JSONFormPreviewer = ({
 
   const newUser = user ? ({ ...user, roles: [], id: '' } as User) : undefined; // Create a new user object with the same properties as the original user, but with an empty roles array
   const autoPopulateMiddleware = createAutoPopulateMiddleware(uiSchema, newUser);
+  const previewSchema = clearRegisterPlaceholders(dataSchema);
 
   return (
     <ErrorBoundary fallbackRender={FallbackRender}>
@@ -64,10 +66,11 @@ export const JSONFormPreviewer = ({
           middleware={autoPopulateMiddleware}
           validationMode={'ValidateAndShow'}
           //need to re-create the schemas here in order to trigger a refresh when passing data back through the context
-          schema={clearRegisterPlaceholders(dataSchema)}
+          schema={previewSchema}
           uischema={{ ...uiSchema }}
         />
       </JsonFormRegisterProvider>
+      {!useReviewRenderers && <PreviewSubmit data={data} schema={previewSchema} uiSchema={uiSchema} />}
     </ErrorBoundary>
   );
 };
