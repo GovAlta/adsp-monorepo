@@ -34,7 +34,7 @@ export const getApplicationsByName =
         theApps[k] = { ...config[k], tenantId };
       });
       const apps = new StatusApplications(theApps);
-      const statuses = await serviceStatusRepository.find({ appKey: { $in: appKeys } });
+      const statuses = await serviceStatusRepository.find({ appKey: { $in: appKeys }, tenantId: tenantId.toString() });
 
       const results = apps
         .map((app) => {

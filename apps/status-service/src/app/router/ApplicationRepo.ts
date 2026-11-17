@@ -55,7 +55,7 @@ export class ApplicationRepo {
    * is that this method is being called because the status is now needed.
    */
   getStatus = async (user: User, appKey: string): Promise<ServiceStatusApplicationEntity> => {
-    const statuses = await this.#repository.find({ appKey: appKey });
+    const statuses = await this.#repository.find({ appKey: appKey, tenantId: user.tenantId.toString() });
     return statuses.length == 1
       ? statuses[0]
       : ServiceStatusApplicationEntity.create(user, this.#repository, {
@@ -69,8 +69,8 @@ export class ApplicationRepo {
         });
   };
 
-  findStatus = async (appKey: string): Promise<ServiceStatusApplicationEntity> => {
-    const statuses = await this.#repository.find({ appKey: appKey });
+  findStatus = async (appKey: string, tenantId: string): Promise<ServiceStatusApplicationEntity> => {
+    const statuses = await this.#repository.find({ appKey: appKey, tenantId: tenantId });
     return statuses.length == 1 ? statuses[0] : null;
   };
 

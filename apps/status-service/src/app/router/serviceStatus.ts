@@ -237,7 +237,7 @@ export const updateApplication =
           toApplicationAuditDetails(appKey, name, { previousUrl: app.url, url: update.url }),
         );
       }
-      const status = await applicationRepo.findStatus(appKey);
+      const status = await applicationRepo.findStatus(appKey, tenantId);
 
       res.json(applicationRepo.mergeApplicationData(tenantId, update, status));
     } catch (err) {
@@ -261,7 +261,7 @@ export const deleteApplication =
       if (!app) {
         throw new NotFoundError('Status application', appKey);
       }
-      const status = await applicationRepo.findStatus(appKey);
+      const status = await applicationRepo.findStatus(appKey, user.tenantId.toString());
 
       // Stop health checks if necessary.  Note, there is a lag
       // between requesting the stop and having the service
@@ -424,7 +424,7 @@ export const getAllApplicationEntries =
       const { ageInMinutes } = req.query;
       const minutes = ageInMinutes ? parseInt(ageInMinutes as string) : 31;
 
-      const entries = await endpointStatusEntryRepository.findRecent(minutes);
+      const entries = await endpointStatusEntryRepository.findRecent(tenantId.toString(), minutes);
       res.send(entries.map(mapEndpointStatusEntry));
     } catch (err) {
       logger.error(`Failed: ${err.message}`);

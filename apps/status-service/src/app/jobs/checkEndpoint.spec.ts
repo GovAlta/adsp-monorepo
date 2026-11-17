@@ -22,6 +22,7 @@ describe('checkEndpoint', () => {
     enable: jest.fn(),
     disable: jest.fn(),
     get: jest.fn(),
+    getByAppKey: jest.fn(),
     find: jest.fn(),
     save: jest.fn((entity) => Promise.resolve(entity)),
     delete: jest.fn(),
@@ -99,7 +100,7 @@ describe('checkEndpoint', () => {
         eventServiceMock.send.mockReset();
         endpointRepositoryMock.save.mockReset();
         endpointRepositoryMock.findRecentByUrlAndApplicationId.mockReset();
-        statusRepositoryMock.get.mockReset();
+        statusRepositoryMock.getByAppKey.mockReset();
         statusRepositoryMock.save.mockReset();
         configurationServiceMock.getConfiguration.mockReset();
       });
@@ -136,7 +137,7 @@ describe('checkEndpoint', () => {
           .mockReturnValueOnce({})
           .mockResolvedValueOnce({ applicationWebhookIntervals: {} });
 
-        statusRepositoryMock.get.mockResolvedValueOnce(
+        statusRepositoryMock.getByAppKey.mockResolvedValueOnce(
           new ServiceStatusApplicationEntity(statusRepositoryMock, {
             _id: 'test-app',
             endpoint: { status: 'n/a' },
@@ -181,7 +182,7 @@ describe('checkEndpoint', () => {
           .mockReturnValueOnce({})
           .mockResolvedValueOnce({ applicationWebhookIntervals: {} });
 
-        statusRepositoryMock.get.mockResolvedValueOnce(
+        statusRepositoryMock.getByAppKey.mockResolvedValueOnce(
           new ServiceStatusApplicationEntity(statusRepositoryMock, {
             _id: 'test-app',
             endpoint: { status: 'online' },
@@ -247,7 +248,7 @@ describe('checkEndpoint', () => {
           applicationWebhookIntervals: applicationWebhookIntervals,
         });
 
-        statusRepositoryMock.get.mockResolvedValueOnce(
+        statusRepositoryMock.getByAppKey.mockResolvedValueOnce(
           new ServiceStatusApplicationEntity(statusRepositoryMock, {
             _id: 'test-app',
             endpoint: { status: 'online' },
@@ -310,7 +311,7 @@ describe('checkEndpoint', () => {
           applicationWebhookIntervals: applicationWebhookIntervals,
         });
 
-        statusRepositoryMock.get.mockResolvedValueOnce(
+        statusRepositoryMock.getByAppKey.mockResolvedValueOnce(
           new ServiceStatusApplicationEntity(statusRepositoryMock, {
             _id: 'test-app',
             endpoint: { status: 'online' },
@@ -373,7 +374,7 @@ describe('checkEndpoint', () => {
           applicationWebhookIntervals: applicationWebhookIntervals,
         });
 
-        statusRepositoryMock.get.mockResolvedValueOnce(
+        statusRepositoryMock.getByAppKey.mockResolvedValueOnce(
           new ServiceStatusApplicationEntity(statusRepositoryMock, {
             _id: 'test-app',
             endpoint: { status: 'online' },
@@ -420,7 +421,7 @@ describe('checkEndpoint', () => {
           applicationWebhookIntervals: applicationWebhookIntervals,
         });
 
-        statusRepositoryMock.get.mockResolvedValueOnce(
+        statusRepositoryMock.getByAppKey.mockResolvedValueOnce(
           new ServiceStatusApplicationEntity(statusRepositoryMock, {
             _id: 'test-app',
             endpoint: { status: 'offline' },

@@ -10,6 +10,7 @@ const repositoryMock = {
   findRecent: jest.fn(),
   deleteOldUrlStatus: jest.fn(),
   findEnabledApplications: jest.fn(),
+  getByAppKey: jest.fn(),
   find: jest.fn(),
   disable: jest.fn(),
   enable: jest.fn(),

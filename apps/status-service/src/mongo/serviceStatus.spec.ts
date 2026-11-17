@@ -122,4 +122,35 @@ describe('Service status mongo repository', () => {
     expect(status).not.toBeNull();
     expect(status.appKey).toEqual(editedApp.appKey);
   });
+
+  describe('two tenants with the same appKey', () => {
+    const tenantA = 'urn:ads:platform:tenant-service:v2:/tenants/a';
+    const tenantB = 'urn:ads:platform:tenant-service:v2:/tenants/b';
+
+    beforeEach(async () => {
+      await insertMockData([
+        { appKey: 'portal', tenantId: tenantA, status: 'operational', enabled: true, endpoint: { status: 'online' } },
+        { appKey: 'portal', tenantId: tenantB, status: 'outage', enabled: false, endpoint: { status: 'offline' } },
+      ]);
+    });
+
+    it('find returns only the status for the given tenant', async () => {
+      const statuses = await repo.find({ appKey: 'portal', tenantId: tenantB });
+      expect(statuses).toHaveLength(1);
+      expect(statuses[0].tenantId).toBe(tenantB);
+      expect(statuses[0].status).toBe('outage');
+    });
+
+    it('getByAppKey returns the status for the given tenant', async () => {
+      const statusA = await repo.getByAppKey('portal', tenantA);
+      const statusB = await repo.getByAppKey('portal', tenantB);
+      expect(statusA.status).toBe('operational');
+      expect(statusB.status).toBe('outage');
+    });
+
+    it('getByAppKey returns null for a tenant without the app', async () => {
+      const status = await repo.getByAppKey('portal', 'urn:ads:platform:tenant-service:v2:/tenants/c');
+      expect(status).toBeNull();
+    });
+  });
 });

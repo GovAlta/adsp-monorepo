@@ -44,6 +44,7 @@ describe('status router documented behaviour', () => {
     find: jest.fn(),
     get: jest.fn(),
     findEnabledApplications: jest.fn(),
+    getByAppKey: jest.fn(),
     save: jest.fn(),
     enable: jest.fn(),
     disable: jest.fn(),
@@ -371,7 +372,7 @@ describe('status router documented behaviour', () => {
 
       expect(res.status).toBe(200);
       expect(res.body).toHaveLength(1);
-      expect(endpointStatusEntryRepositoryMock.findRecent).toHaveBeenCalledWith(20);
+      expect(endpointStatusEntryRepositoryMock.findRecent).toHaveBeenCalledWith(tenantId.toString(), 20);
     });
   });
 

@@ -45,9 +45,9 @@ export default class MongoEndpointStatusEntryRepository implements EndpointStatu
     return entries;
   }
 
-  async findRecent(minutes = this.opts.ageInMinutes): Promise<EndpointStatusEntryEntity[]> {
+  async findRecent(tenantId: string, minutes = this.opts.ageInMinutes): Promise<EndpointStatusEntryEntity[]> {
     const since = new Date(Date.now() - minutes * 60_000); // X minutes ago
-    const docs = await this.model.find({ timestamp: { $gte: since } }); // only docs newer than `since`.sort({ timestamp: -1 });
+    const docs = await this.model.find({ tenantId: tenantId, timestamp: { $gte: since } });
 
     const entries = docs.map((doc) => this.fromDoc(doc));
 

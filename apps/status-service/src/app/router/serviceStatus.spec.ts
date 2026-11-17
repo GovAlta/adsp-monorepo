@@ -1,6 +1,8 @@
 import { UnauthorizedUserError } from '@abgov/adsp-service-sdk';
 import { Request, Response } from 'express';
-import { assertStatusAdmin } from './serviceStatus';
+import { Logger } from 'winston';
+import { assertStatusAdmin, getAllApplicationEntries } from './serviceStatus';
+import { EndpointStatusEntryRepository } from '../repository/endpointStatusEntry';
 
 describe('assertStatusAdmin', () => {
   const res = {} as Response;
@@ -27,5 +29,25 @@ describe('assertStatusAdmin', () => {
     const next = jest.fn();
     assertStatusAdmin({} as Request, res, next);
     expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedUserError));
+  });
+});
+
+describe('getAllApplicationEntries', () => {
+  const logger = { info: jest.fn(), error: jest.fn() } as unknown as Logger;
+
+  it('returns recent entries for the caller tenant only', async () => {
+    const tenantId = 'urn:ads:platform:tenant-service:v2:/tenants/a';
+    const repository = {
+      findRecent: jest.fn().mockResolvedValue([
+        { applicationId: 'portal', tenantId, ok: true, url: 'u', status: 200, timestamp: 1, responseTime: 1 },
+      ]),
+    } as unknown as EndpointStatusEntryRepository;
+    const req = { user: { tenantId: { toString: () => tenantId } }, query: { ageInMinutes: '10' } } as unknown as Request;
+    const res = { send: jest.fn() } as unknown as Response;
+
+    await getAllApplicationEntries(logger, repository)(req, res, jest.fn());
+
+    expect(repository.findRecent).toHaveBeenCalledWith(tenantId, 10);
+    expect(res.send).toHaveBeenCalledWith([expect.objectContaining({ applicationId: 'portal' })]);
   });
 });

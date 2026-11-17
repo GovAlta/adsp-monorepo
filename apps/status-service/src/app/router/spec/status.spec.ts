@@ -191,6 +191,7 @@ describe('Service router', () => {
 
   const statusRepositoryMock = {
     findEnabledApplications: jest.fn(),
+    getByAppKey: jest.fn(),
     enable: jest.fn(),
     disable: jest.fn(),
     get: jest.fn(),
