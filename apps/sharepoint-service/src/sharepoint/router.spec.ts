@@ -30,6 +30,14 @@ class MemoryCredentialRepository implements CredentialRepository {
   async delete(tenantId: AdspId, connectionId: string) {
     return this.records.delete(`${tenantId}|${connectionId}`);
   }
+
+  async findNotOnKeyVersion() {
+    return [];
+  }
+
+  async replaceIfUnchanged() {
+    return false;
+  }
 }
 
 const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
@@ -85,10 +93,9 @@ describe('SharePoint router', () => {
     tokens = { evict: jest.fn() };
     currentUser = admin;
 
-    const credentialStore = new CredentialStore(
-      new MemoryCredentialRepository(),
-      parseEncryptionKey(randomBytes(32).toString('base64'), 1),
-    );
+    const credentialStore = new CredentialStore(new MemoryCredentialRepository(), {
+      current: parseEncryptionKey(randomBytes(32).toString('base64'), 1),
+    });
 
     app = express();
     app.use(express.json());

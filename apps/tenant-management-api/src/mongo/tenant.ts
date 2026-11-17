@@ -76,6 +76,10 @@ export class MongoTenantRepository implements TenantRepository {
       } else if (criteria.excludeArchived) {
         query.status = { $ne: 'archived' };
       }
+
+      if (criteria.deletedBefore) {
+        query.deletedAt = { $lt: criteria.deletedBefore };
+      }
     }
 
     const docs = (await this.tenantModel.find(query)) || [];

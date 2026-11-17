@@ -46,6 +46,7 @@ export class FormDefinitionEntity implements FormDefinition {
   includeDataInSubmission: boolean;
   registeredId?: string;
   customSubmissionEvent?: CustomSubmissionEvent;
+  sharepointConfigurationId?: string;
   reviewConfiguration: ReviewConfiguration;
   registration: RegistrationConfiguration;
 
@@ -85,6 +86,7 @@ export class FormDefinitionEntity implements FormDefinition {
     this.includeDataInSubmission = definition?.includeDataInSubmission || false;
     this.registeredId = definition?.registeredId || null;
     this.customSubmissionEvent = definition?.customSubmissionEvent || null;
+    this.sharepointConfigurationId = definition?.sharepointConfigurationId || null;
     this.reviewConfiguration = definition?.reviewConfiguration || { columns: [] };
     this.registration = definition?.registration || { enabled: false };
     this.validationService.setSchema(this.registrationSchemaKey, {

@@ -1,6 +1,6 @@
 import { AdspId } from '@abgov/adsp-service-sdk';
 import { Model, model, models, Schema } from 'mongoose';
-import { CredentialRepository, StoredCredential } from '../sharepoint/credentials';
+import { CredentialRepository, EncryptedSecret, StoredCredential } from '../sharepoint/credentials';
 
 const credentialSchema = new Schema<StoredCredential>(
   {
@@ -40,5 +40,25 @@ export class MongoCredentialRepository implements CredentialRepository {
   async delete(tenantId: AdspId, connectionId: string): Promise<boolean> {
     const { deletedCount } = await this.model.deleteOne({ tenantId: tenantId.toString(), connectionId }).exec();
     return deletedCount > 0;
+  }
+
+  async findNotOnKeyVersion(version: number): Promise<StoredCredential[]> {
+    const docs = await this.model.find({ keyVersion: { $ne: version } }, { _id: 0 }).lean().exec();
+    return docs as StoredCredential[];
+  }
+
+  async replaceIfUnchanged(previous: StoredCredential, { ciphertext, iv, authTag, keyVersion }: EncryptedSecret): Promise<boolean> {
+    const { modifiedCount } = await this.model
+      .updateOne(
+        {
+          tenantId: previous.tenantId,
+          connectionId: previous.connectionId,
+          keyVersion: previous.keyVersion,
+          ciphertext: previous.ciphertext,
+        },
+        { $set: { ciphertext, iv, authTag, keyVersion } },
+      )
+      .exec();
+    return modifiedCount > 0;
   }
 }

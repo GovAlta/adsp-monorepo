@@ -68,6 +68,7 @@ import {
   SET_TO_DRAFT_FORM_OPERATION,
 } from './types';
 import { PdfService } from '../pdf';
+import { SharePointService } from '../sharepoint';
 import * as HttpStatusCodes from 'http-status-codes';
 
 const configurationApiId = adspId`urn:ads:platform:configuration-service:v2`;
@@ -291,6 +292,34 @@ export function findFormSubmissions(
   };
 }
 
+export function pushToSharePoint(
+  logger: Logger,
+  sharepointService: SharePointService | undefined,
+  form: FormEntity,
+  submission: FormSubmissionEntity | null,
+  dryRun?: boolean,
+): void {
+  if (!sharepointService || dryRun || !form.definition?.sharepointConfigurationId) {
+    return;
+  }
+
+  const context = { context: 'FormRouter', tenant: form.tenantId.toString() };
+  const target = `form (ID: ${form.id}, submission ID: ${submission?.id ?? 'none'})`;
+  sharepointService
+    .push(form, submission)
+    .then((result) => {
+      if (result.success === false) {
+        logger.warn(
+          `Failed to push ${target} to SharePoint: ${result.errorCode} (retryable: ${result.retryable}).`,
+          context,
+        );
+      }
+    })
+    .catch((err) => {
+      logger.warn(`Failed to push ${target} to SharePoint: ${err?.message ?? 'unknown error'}`, context);
+    });
+}
+
 export function createForm(
   apiId: AdspId,
   logger: Logger,
@@ -305,6 +334,7 @@ export function createForm(
   queueTaskService: QueueTaskService,
   pdfService: PdfService,
   auditService: AuditService,
+  sharepointService?: SharePointService,
 ): RequestHandler {
   return async (req, res, next) => {
     try {
@@ -380,6 +410,7 @@ export function createForm(
         recordFormAudit(auditService, logger, FormSubmittedAuditAction, () =>
           toFormOperationAuditDetails(user, form, { submissionId: formSubmission?.id ?? null }),
         );
+        pushToSharePoint(logger, sharepointService, form, formSubmission, dryRun);
       }
       if (submit && form.definition.customSubmissionEvent?.namespace && form.definition.customSubmissionEvent?.name) {
         const customEvent = customFormSubmitted(apiId, user, form, formSubmission, dryRun);
@@ -760,6 +791,7 @@ export function formOperation(
   submissionRepository: FormSubmissionRepository,
   pdfService: PdfService,
   auditService: AuditService,
+  sharepointService?: SharePointService,
 ): RequestHandler {
   return async (req, res, next) => {
     try {
@@ -852,6 +884,10 @@ export function formOperation(
         recordFormAudit(auditService, logger, auditAction, () =>
           toFormOperationAuditDetails(user, result, auditMetadata),
         );
+      }
+
+      if (request.operation === SUBMIT_FORM_OPERATION) {
+        pushToSharePoint(logger, sharepointService, result, formSubmissionResult, dryRun);
       }
 
       if (event) {
@@ -966,6 +1002,7 @@ interface FormRouterProps {
   commentService: CommentService;
   submissionRepository: FormSubmissionRepository;
   pdfService: PdfService;
+  sharepointService?: SharePointService;
 }
 
 export function createFormRouter({
@@ -982,6 +1019,7 @@ export function createFormRouter({
   commentService,
   submissionRepository,
   pdfService,
+  sharepointService,
 }: FormRouterProps): Router {
   const router = Router();
 
@@ -1030,6 +1068,7 @@ export function createFormRouter({
       queueTaskService,
       pdfService,
       auditService,
+      sharepointService,
     ),
   );
 
@@ -1065,6 +1104,7 @@ export function createFormRouter({
       submissionRepository,
       pdfService,
       auditService,
+      sharepointService,
     ),
   );
   router.delete(

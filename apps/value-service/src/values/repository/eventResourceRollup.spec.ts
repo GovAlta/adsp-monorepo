@@ -250,5 +250,25 @@ describe('TimescaleEventResourceRollupRepository', () => {
 
       expect(raws[0].bindings.filter((binding) => binding === criteria.tenant)).toHaveLength(2);
     });
+
+    it('bounds the read by its own statement timeout, not the rollup job one', async () => {
+      const { knex, raws } = createKnex({ first: coverage, count: 5 });
+
+      const count = await new TimescaleEventResourceRollupRepository(knex, 180000, 60000).countDistinct(criteria);
+
+      expect(count).toBe(5);
+      expect(knex.transaction).toHaveBeenCalledTimes(1);
+      expect(raws[0].sql).toBe('SET LOCAL statement_timeout = 60000');
+      expect(raws[1].sql).toContain('COUNT(DISTINCT resource)');
+    });
+
+    it('reads outside a transaction when no read timeout is set', async () => {
+      const { knex, raws } = createKnex({ first: coverage });
+
+      await new TimescaleEventResourceRollupRepository(knex, 180000).countDistinct(criteria);
+
+      expect(knex.transaction).not.toHaveBeenCalled();
+      expect(raws.map(({ sql }) => sql).join('\n')).not.toContain('statement_timeout');
+    });
   });
 });

@@ -217,10 +217,20 @@ describe('createValueServiceClient', () => {
     );
   });
 
-  it.each([404, 400])('pages the event log when the rolled-up count answers %s', async (status) => {
+  it.each([
+    ['404 without the endpoint', { status: 404 }],
+    [
+      '400 for a resource that is not rolled up',
+      { status: 400, data: { errorMessage: 'Distinct templateId is not rolled up for pdf-service events.' } },
+    ],
+    [
+      '400 for an event that is not rolled up',
+      { status: 400, data: { errorMessage: 'Events pdf-deleted are not rolled up for pdf-service.' } },
+    ],
+  ])('pages the event log when the rolled-up count answers %s', async (_label, response) => {
     mockedAxios.isAxiosError.mockReturnValue(true);
     mockedAxios.get
-      .mockRejectedValueOnce({ response: { status } })
+      .mockRejectedValueOnce({ response })
       .mockResolvedValue({ data: { page: { size: 0 }, 'event-service': { event: [] } } });
     const client = createValueServiceClient({ valueServiceUrl: 'https://value-service.example/value/v1/' });
 
@@ -229,6 +239,22 @@ describe('createValueServiceClient', () => {
       'https://value-service.example/value/v1/event-service/values/event',
       expect.anything()
     );
+  });
+
+  // A 400 for any other reason, such as the old period cap, used to fall back too and turned a
+  // two second report into a thirty second one with nothing to say why.
+  it.each([
+    ['a period value-service rejects', { status: 400, data: { errorMessage: 'Period cannot be longer than 731 days.' } }],
+    ['no error message', { status: 400 }],
+    ['a server error', { status: 500 }],
+  ])('passes on a rejection for %s instead of paging the event log', async (_label, response) => {
+    mockedAxios.isAxiosError.mockReturnValue(true);
+    const rejection = { response };
+    mockedAxios.get.mockRejectedValueOnce(rejection);
+    const client = createValueServiceClient({ valueServiceUrl: 'https://value-service.example/value/v1/' });
+
+    await expect(client.countDistinctContext('t', pdfTemplates, '2023-11-15', '2026-11-16')).rejects.toBe(rejection);
+    expect(mockedAxios.get).toHaveBeenCalledTimes(1);
   });
 
   it.each([401, 403])('reports a %s from the rolled-up count as unauthorized', async (status) => {
