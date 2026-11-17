@@ -1,6 +1,7 @@
 import {
   adspId,
   AdspId,
+  AuditService,
   ConfigurationService,
   EventService,
   isAllowedUser,
@@ -18,6 +19,15 @@ import axios from 'axios';
 import { RequestHandler, Router } from 'express';
 import { body, param } from 'express-validator';
 import * as HttpStatusCodes from 'http-status-codes';
+import { Logger } from 'winston';
+import {
+  CalendarCreatedAuditAction,
+  CalendarDeletedAuditAction,
+  CalendarUpdatedAuditAction,
+  recordCalendarAudit,
+  toCalendarAuditDetails,
+  toCalendarUpdatedAuditDetails,
+} from '../audit';
 import { calendarNamePattern } from '../configuration';
 import {
   calendarDefinitionCreated,
@@ -42,10 +52,12 @@ interface CalendarConfigurationClient {
 interface CalendarDefinitionRouterProps {
   apiId: AdspId;
   serviceId: AdspId;
+  logger: Logger;
   directory: ServiceDirectory;
   tokenProvider: TokenProvider;
   configurationService: ConfigurationService;
   eventService: EventService;
+  auditService: AuditService;
   repository: CalendarRepository;
 }
 
@@ -226,6 +238,9 @@ function createCalendarDefinition(props: CalendarDefinitionRouterProps): Request
       });
       clearTenantCalendarCache(props.configurationService, props.serviceId, tenantId);
       props.eventService.send(calendarDefinitionCreated(req.user, tenantId, definition));
+      recordCalendarAudit(props.auditService, props.logger, CalendarCreatedAuditAction, () =>
+        toCalendarAuditDetails(tenantId, req.user, definition),
+      );
       res.status(HttpStatusCodes.CREATED).send(mapCalendar(props.apiId, definition, 'tenant'));
     } catch (err) {
       next(asConfigurationError(err));
@@ -240,13 +255,16 @@ function updateCalendarDefinition(props: CalendarDefinitionRouterProps): Request
       const { name } = req.params;
       const definition = toDefinition(req.body);
       const client = await getConfigurationClient(props.directory, props.tokenProvider);
-      await requireTenantDefinition(client, tenantId, name);
+      const previous = await requireTenantDefinition(client, tenantId, name);
       await patchCalendarDefinitions(client, tenantId, {
         operation: 'UPDATE',
         update: { [name]: definition },
       });
       clearTenantCalendarCache(props.configurationService, props.serviceId, tenantId);
       props.eventService.send(calendarDefinitionUpdated(req.user, tenantId, definition));
+      recordCalendarAudit(props.auditService, props.logger, CalendarUpdatedAuditAction, () =>
+        toCalendarUpdatedAuditDetails(tenantId, req.user, previous, definition),
+      );
       res.status(HttpStatusCodes.OK).send(mapCalendar(props.apiId, definition, 'tenant'));
     } catch (err) {
       next(asConfigurationError(err));
@@ -272,6 +290,9 @@ function deleteCalendarDefinition(props: CalendarDefinitionRouterProps): Request
       await patchCalendarDefinitions(client, tenantId, { operation: 'DELETE', property: name });
       clearTenantCalendarCache(props.configurationService, props.serviceId, tenantId);
       props.eventService.send(calendarDefinitionDeleted(req.user, tenantId, definition));
+      recordCalendarAudit(props.auditService, props.logger, CalendarDeletedAuditAction, () =>
+        toCalendarAuditDetails(tenantId, req.user, definition),
+      );
       res.status(HttpStatusCodes.NO_CONTENT).send();
     } catch (err) {
       next(asConfigurationError(err));
