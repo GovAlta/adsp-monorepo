@@ -160,6 +160,11 @@ describe('Mongo: Tenant', () => {
       expect(names(await repo.find({ statusEquals: 'archived' }))).toEqual(['Archived', 'Newly archived']);
     });
 
+    it('can find archived tenants deleted before a date', async () => {
+      const results = await repo.find({ statusEquals: 'archived', deletedBefore: new Date('2026-06-01') });
+      expect(names(results)).toEqual(['Archived']);
+    });
+
     it('can save archive and restore of a tenant', async () => {
       const [tenant] = await repo.find({ nameEquals: 'Active' });
 
