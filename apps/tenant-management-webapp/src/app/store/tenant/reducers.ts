@@ -1,6 +1,7 @@
 import {
   ActionType,
   CREATE_TENANT_SUCCESS,
+  FETCH_REALM_ROLES_FAILED,
   FETCH_REALM_ROLES_SUCCESS,
   FETCH_TENANT_SUCCESS,
   SELECT_TENANT,
@@ -51,6 +52,13 @@ export default (state = TENANT_INIT, action: ActionType): Tenant => {
       return {
         ...state,
         realmRoles: action.payload,
+        realmRolesFailed: false,
+      };
+
+    case FETCH_REALM_ROLES_FAILED:
+      return {
+        ...state,
+        realmRolesFailed: true,
       };
 
     case UPDATE_LOGIN_SUCCESS: {
