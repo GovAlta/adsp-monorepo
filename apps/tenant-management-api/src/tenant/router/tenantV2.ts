@@ -517,6 +517,7 @@ export const createTenantV2Router = ({
   router.get('/tenants/:id', assertAuthenticatedHandler, getTenant(logger, tenantRepository));
   router.delete(
     '/tenants/:id',
+    rateLimitHandler,
     assertAuthenticatedHandler,
     requireTenantServiceAdmin,
     createValidationHandler(
@@ -535,6 +536,7 @@ export const createTenantV2Router = ({
 
   router.post(
     '/tenants/:id/restore',
+    rateLimitHandler,
     assertAuthenticatedHandler,
     requireTenantServiceAdmin,
     restoreTenant(logger, realmService, tenantRepository, eventService, auditService),
