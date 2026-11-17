@@ -1,4 +1,12 @@
-import { AdspId, AuditService, ServiceDirectory, TokenProvider, User } from '@abgov/adsp-service-sdk';
+import {
+  AdspId,
+  AuditService,
+  hasRequiredRole,
+  ServiceDirectory,
+  TokenProvider,
+  UnauthorizedUserError,
+  User,
+} from '@abgov/adsp-service-sdk';
 import {
   assertAuthenticatedHandler,
   InvalidValueError,
@@ -10,7 +18,7 @@ import { Logger } from 'winston';
 import { ApplicationConfiguration, EndpointStatusEntryEntity } from '../model';
 import { EndpointStatusEntryRepository } from '../repository/endpointStatusEntry';
 import { ServiceStatusRepository } from '../repository/serviceStatus';
-import { PublicServiceStatusType } from '../types';
+import { PublicServiceStatusType, ServiceUserRoles } from '../types';
 import { TenantService, EventService, ConfigurationService } from '@abgov/adsp-service-sdk';
 import { applicationStatusToStarted, applicationStatusToStopped, applicationStatusChange } from '../events';
 import { ApplicationRepo } from './ApplicationRepo';
@@ -468,6 +476,15 @@ export const testWebhook =
     }
   };
 
+export const assertStatusAdmin: RequestHandler = (req, res, next) => {
+  const user = req.user as User;
+  if (!hasRequiredRole(user, ServiceUserRoles.StatusAdmin)) {
+    next(new UnauthorizedUserError('modify status applications', user));
+  } else {
+    next();
+  }
+};
+
 export function createServiceStatusRouter({
   logger,
   serviceStatusRepository,
@@ -499,6 +516,7 @@ export function createServiceStatusRouter({
   router.patch(
     '/applications/:appKey/enable',
     assertAuthenticatedHandler,
+    assertStatusAdmin,
     enableApplication(logger, applicationRepo, auditService),
   );
 
@@ -506,33 +524,39 @@ export function createServiceStatusRouter({
   router.patch(
     '/applications/:appKey/disable',
     assertAuthenticatedHandler,
+    assertStatusAdmin,
     disableApplication(logger, applicationRepo, auditService),
   );
   // add application
   router.post(
     '/applications',
     assertAuthenticatedHandler,
+    assertStatusAdmin,
     createNewApplication(logger, applicationRepo, tenantService, auditService),
   );
   router.put(
     '/applications/:appKey',
     assertAuthenticatedHandler,
+    assertStatusAdmin,
     updateApplication(logger, applicationRepo, auditService),
   );
   router.delete(
     '/applications/:appKey',
     assertAuthenticatedHandler,
+    assertStatusAdmin,
     deleteApplication(logger, applicationRepo, eventService, auditService),
   );
   router.patch(
     '/applications/:appKey/status',
     assertAuthenticatedHandler,
+    assertStatusAdmin,
     updateApplicationStatus(logger, applicationRepo, eventService, auditService),
   );
 
   router.patch(
     '/applications/:appKey/toggle',
     assertAuthenticatedHandler,
+    assertStatusAdmin,
     toggleApplication(logger, applicationRepo, eventService, auditService),
   );
 
@@ -546,6 +570,7 @@ export function createServiceStatusRouter({
   router.get(
     '/webhook/:id/test/:eventName',
     assertAuthenticatedHandler,
+    assertStatusAdmin,
     testWebhook(logger, webhookRepo, applicationRepo, eventService),
   );
 

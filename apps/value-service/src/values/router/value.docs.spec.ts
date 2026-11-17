@@ -358,6 +358,8 @@ describe('value router documented behaviour', () => {
         `/value/v1/event-resources/distinct-count?namespace=test-service&contextKey=templateId&${period}`,
       );
       expect(res.status).toBe(400);
+      // tenant-management-gateway falls back to the event log on this wording, and only on this.
+      expect(res.body.errorMessage).toContain('not rolled up');
       expect(eventResourceRollupRepositoryMock.countDistinct).not.toHaveBeenCalled();
     });
 
@@ -367,6 +369,7 @@ describe('value router documented behaviour', () => {
       );
       expect(res.status).toBe(400);
       expect(res.body.errorMessage).toContain('pdf-deleted');
+      expect(res.body.errorMessage).toContain('not rolled up');
     });
 
     it('responds 400 when the period is missing', async () => {
@@ -384,12 +387,19 @@ describe('value router documented behaviour', () => {
       expect(res.status).toBe(400);
     });
 
-    it('responds 400 for a period longer than two years', async () => {
+    // A report can reach back years, and the rolled up days cost the same however many there are.
+    it('counts a period longer than two years', async () => {
       const res = await request(createApp(reader)).get(
         '/value/v1/event-resources/distinct-count?namespace=pdf-service&contextKey=templateId' +
           '&intervalMin=2023-01-01T00:00:00.000Z&intervalMax=2026-01-01T00:00:00.000Z',
       );
-      expect(res.status).toBe(400);
+      expect(res.status).toBe(200);
+      expect(eventResourceRollupRepositoryMock.countDistinct).toHaveBeenCalledWith(
+        expect.objectContaining({
+          from: new Date('2023-01-01T00:00:00.000Z'),
+          to: new Date('2026-01-01T00:00:00.000Z'),
+        }),
+      );
     });
   });
 

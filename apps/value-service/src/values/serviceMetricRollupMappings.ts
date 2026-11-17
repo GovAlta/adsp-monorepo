@@ -1,4 +1,4 @@
-import { ResourceRollupSource, ServiceMetricRollupMapping } from './types';
+import { ResourceRollupSource, ServiceMetricRollupMapping } from './types'; // clean-code-ignore: RULE-19 — configuration; eventResourceRollupSources is covered in jobs/eventResourceRollup.spec.ts.
 
 export const serviceMetricRollupMappings: ServiceMetricRollupMapping[] = [
   {

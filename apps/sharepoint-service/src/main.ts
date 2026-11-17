@@ -19,7 +19,7 @@ import {
   GraphFileClient,
   GraphTokenProvider,
   LocalFileSource,
-  parseEncryptionKey,
+  parseEncryptionKeyring,
   ServiceRoles,
   SharePointFileService,
   SharePointPusher,
@@ -28,7 +28,7 @@ import {
 const logger = createLogger('sharepoint-service', environment.LOG_LEVEL);
 
 const initializeApp = async (): Promise<express.Application> => {
-  const encryptionKey = parseEncryptionKey(environment.CREDENTIALS_KEY, environment.CREDENTIALS_KEY_VERSION);
+  const encryptionKeys = parseEncryptionKeyring(environment);
 
   const app = express();
   app.use(compression());
@@ -99,7 +99,7 @@ const initializeApp = async (): Promise<express.Application> => {
   app.use(traceHandler);
 
   const { credentialRepository, isConnected } = await connectMongo({ ...environment, logger });
-  const credentialStore = new CredentialStore(credentialRepository, encryptionKey);
+  const credentialStore = new CredentialStore(credentialRepository, encryptionKeys);
   const tokens = new GraphTokenProvider(environment.ENTRA_AUTHORITY_URL, credentialStore);
   const pusher = new SharePointPusher(tokens, new GraphClient(environment.GRAPH_URL));
 

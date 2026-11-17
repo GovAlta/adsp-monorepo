@@ -23,7 +23,7 @@ import { AjvValueValidationService } from './ajv';
 import type { User } from '@abgov/adsp-service-sdk';
 import { scheduleServiceMetricRollupJob } from './values/jobs/serviceMetricRollup';
 import { scheduleMetricIntervalRollupJob } from './values/jobs/metricIntervalRollup';
-import { scheduleEventResourceRollupJob } from './values/jobs/eventResourceRollup';
+import { scheduleEventResourceRollupJob } from './values/jobs/eventResourceRollup'; // clean-code-ignore: RULE-19 — app bootstrap; the job is covered in values/jobs/eventResourceRollup.spec.ts.
 
 const initializeApp = async () => {
   const app = express();

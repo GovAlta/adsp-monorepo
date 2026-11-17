@@ -44,16 +44,24 @@ export class TimescaleEventResourceRollupRepository implements EventResourceRoll
   constructor(
     private knex: Knex,
     private statementTimeoutMs = 0,
+    private readStatementTimeoutMs = 0,
   ) {}
 
   async withRollupLock<T>(work: (repository: EventResourceRollupRepository) => Promise<T>): Promise<T | null> {
     return withTransactionLock(this.knex, EVENT_RESOURCE_ROLLUP_LOCK_KEY, this.statementTimeoutMs, (trx) =>
-      work(new TimescaleEventResourceRollupRepository(trx, this.statementTimeoutMs)),
+      work(new TimescaleEventResourceRollupRepository(trx, this.statementTimeoutMs, this.readStatementTimeoutMs)),
     );
   }
 
-  async getCoverage({ namespace, contextKey }: ResourceRollupSource): Promise<EventResourceCoverage | null> {
-    const row = await this.knex('event_resource_rollup_coverage')
+  async getCoverage(source: ResourceRollupSource): Promise<EventResourceCoverage | null> {
+    return this.readCoverage(this.knex, source);
+  }
+
+  private async readCoverage(
+    knex: Knex,
+    { namespace, contextKey }: ResourceRollupSource,
+  ): Promise<EventResourceCoverage | null> {
+    const row = await knex('event_resource_rollup_coverage')
       .where({ namespace, context_key: contextKey })
       .first<CoverageRow>();
 
@@ -114,10 +122,27 @@ export class TimescaleEventResourceRollupRepository implements EventResourceRoll
    * is never rolled up, or history the backfill has not reached yet -- is read from the event log
    * for that span alone. The parts are unioned before counting, since a resource seen in both is
    * still one resource.
+   *
+   * The read is bounded by a statement timeout rather than by the length of the period: the rolled
+   * up days are cheap however many there are, and the event log edges are only large while the
+   * backfill is still walking history, which a timeout bounds by what it actually costs.
    */
   async countDistinct(criteria: EventResourceCriteria): Promise<number> {
+    if (this.readStatementTimeoutMs <= 0) {
+      return this.countDistinctOn(this.knex, criteria);
+    }
+
+    return this.knex.transaction(async (trx) => {
+      // SET LOCAL so the timeout reverts when the transaction ends instead of sticking to the pooled
+      // connection; interpolated because SET does not take a bind parameter.
+      await trx.raw(`SET LOCAL statement_timeout = ${Math.trunc(this.readStatementTimeoutMs)}`);
+      return this.countDistinctOn(trx, criteria);
+    });
+  }
+
+  private async countDistinctOn(knex: Knex, criteria: EventResourceCriteria): Promise<number> {
     const { from, to } = criteria;
-    const coverage = await this.getCoverage(criteria);
+    const coverage = await this.readCoverage(knex, criteria);
     const rolledFrom = coverage ? laterOf(ceilUtcDay(from), coverage.coveredFrom) : null;
     const rolledTo = coverage ? earlierOf(floorUtcDay(to), coverage.coveredTo) : null;
 
@@ -134,7 +159,7 @@ export class TimescaleEventResourceRollupRepository implements EventResourceRoll
       parts.push(this.eventLogPart(criteria, from, to));
     }
 
-    const result = await this.knex.raw<{ rows: { count: number | string }[] }>(
+    const result = await knex.raw<{ rows: { count: number | string }[] }>(
       `SELECT COUNT(DISTINCT resource)::int AS count FROM (${parts.map(({ sql }) => sql).join(' UNION ALL ')}) AS resources`,
       parts.flatMap(({ bindings }) => bindings),
     );

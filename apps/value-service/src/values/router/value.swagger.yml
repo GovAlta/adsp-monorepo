@@ -390,7 +390,7 @@ components:
           format: date-time
         example: '2025-11-01T00:00:00.000Z'
       - name: intervalMax
-        description: Exclusive end of the period (ISO 8601). The period can be at most 731 days.
+        description: Exclusive end of the period (ISO 8601).
         in: query
         required: true
         schema:
@@ -435,7 +435,7 @@ components:
       400:
         description: >
           A parameter failed validation, tenant context is missing, the namespace and contextKey are not rolled up,
-          names includes an event that is not rolled up, or the period is empty or longer than 731 days.
+          names includes an event that is not rolled up, or the period is not valid timestamps or is empty.
         content:
           application/json:
             schema:

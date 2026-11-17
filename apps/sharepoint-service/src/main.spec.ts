@@ -47,7 +47,7 @@ jest.mock('./sharepoint', () => ({
   LocalFileSource: mockLocalFileSource,
   SharePointFileService: mockSharePointFileService,
   SharePointPusher: jest.fn(),
-  parseEncryptionKey: jest.fn(() => ({ version: 1, key: Buffer.alloc(32) })),
+  parseEncryptionKeyring: jest.fn(() => ({ current: { version: 1, key: Buffer.alloc(32) } })),
 }));
 
 describe('main', () => {

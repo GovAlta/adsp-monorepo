@@ -14,4 +14,5 @@ export interface TenantCriteria {
   activeOnly?: boolean;
   excludeArchived?: boolean;
   statusEquals?: TenantStatus;
+  deletedBefore?: Date;
 }
