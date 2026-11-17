@@ -625,6 +625,20 @@ describe('Service router', () => {
         expect.objectContaining({ resource: { type: 'application', id: bobsAppKey } }),
       );
     });
+    it('returns an error when the configuration delete fails', async () => {
+      configurationService.getConfiguration.mockResolvedValue(configurationMock);
+      statusRepositoryMock.get.mockResolvedValueOnce(applicationStatusMock[1]);
+      statusRepositoryMock.find.mockResolvedValueOnce([applicationStatusMock[1]]);
+      const failure = new Error('configuration unavailable');
+      axiosMock.patch.mockRejectedValueOnce(failure);
+      (resMock.sendStatus as jest.Mock).mockClear();
+      const next = jest.fn();
+      const handler = deleteApplication(loggerMock, applicationRepo, eventServiceMock, auditServiceMock);
+      const req = { user: { tenantId, id: 'test', roles: ['test-updater'] }, params: { appKey: bobsAppKey } };
+      await handler(req as unknown as Request, resMock, next);
+      expect(next).toHaveBeenCalledWith(failure);
+      expect(resMock.sendStatus).not.toHaveBeenCalled();
+    });
     it('does not audit when the delete fails', async () => {
       const repo = {
         getApp: jest.fn().mockResolvedValue({ name: 'Bob', url: 'http://a' }),

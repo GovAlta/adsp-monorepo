@@ -54,7 +54,7 @@ describe('ServiceStatusApplicationEntity', () => {
       expect(repositoryMock.save).toHaveBeenCalledWith(
         expect.objectContaining({
           appKey: applicationEntityMock.appKey,
-        })
+        }),
       );
     });
   });
@@ -66,7 +66,7 @@ describe('ServiceStatusApplicationEntity', () => {
       expect(repositoryMock.save).toHaveBeenLastCalledWith(
         expect.objectContaining({
           endpoint: applicationEntityMock.endpoint,
-        })
+        }),
       );
     });
   });
@@ -78,7 +78,7 @@ describe('ServiceStatusApplicationEntity', () => {
       expect(repositoryMock.enable).toHaveBeenCalledWith(
         expect.objectContaining({
           appKey: applicationEntityMock.appKey,
-        })
+        }),
       );
     });
 
@@ -88,7 +88,7 @@ describe('ServiceStatusApplicationEntity', () => {
       expect(repositoryMock.disable).toHaveBeenCalledWith(
         expect.objectContaining({
           appKey: applicationEntityMock.appKey,
-        })
+        }),
       );
     });
   });
@@ -101,7 +101,7 @@ describe('ServiceStatusApplicationEntity', () => {
       expect(repositoryMock.save).toHaveBeenCalledWith(
         expect.objectContaining({
           status: 'operational',
-        })
+        }),
       );
     });
   });
@@ -114,8 +114,46 @@ describe('ServiceStatusApplicationEntity', () => {
       expect(repositoryMock.delete).toHaveBeenCalledWith(
         expect.objectContaining({
           appKey: applicationEntityMock.appKey,
-        })
+        }),
       );
     });
+  });
+
+  describe('internalStatus', () => {
+    it('is stopped when the application is disabled', () => {
+      const entity = new ServiceStatusApplicationEntity(repositoryMock, applicationEntityMock);
+      expect(entity.internalStatus).toBe('stopped');
+    });
+
+    it('maps the endpoint status when enabled', () => {
+      const entity = new ServiceStatusApplicationEntity(repositoryMock, { ...applicationEntityMock, enabled: true });
+      expect(entity.internalStatus).toBe('unhealthy');
+    });
+
+    it('is pending for an unknown endpoint status', () => {
+      const entity = new ServiceStatusApplicationEntity(repositoryMock, {
+        ...applicationEntityMock,
+        enabled: true,
+        endpoint: { ...endpointMock, status: 'unknown' as EndpointStatusType },
+      });
+      expect(entity.internalStatus).toBe('pending');
+    });
+  });
+
+  it('keeps existing values for fields missing from an update', async () => {
+    const entity = new ServiceStatusApplicationEntity(repositoryMock, {
+      ...applicationEntityMock,
+      status: 'maintenance' as PublicServiceStatusType,
+    });
+    await entity.update(userMock, {});
+    expect(repositoryMock.save).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        endpoint: endpointMock,
+        status: 'maintenance',
+        enabled: false,
+        statusTimestamp: 0,
+        metadata: '',
+      }),
+    );
   });
 });

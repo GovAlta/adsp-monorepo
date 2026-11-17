@@ -301,7 +301,7 @@ const updateAppStatus = async (
  * This is an attached job that checks auto change status boolean flag and determines
  * what status to update based on the health check
  */
-async function checkAndUpdateAutoChangeStatus(props: CreateCheckEndpointProps) {
+export async function checkAndUpdateAutoChangeStatus(props: CreateCheckEndpointProps) {
   const { app, serviceStatusRepository, endpointStatusEntryRepository, logger } = props;
 
   try {

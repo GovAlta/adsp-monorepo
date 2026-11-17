@@ -30,7 +30,7 @@ describe('Service status mongo repository', () => {
       notices.map(async (entity: NoticeApplicationEntity) => {
         entity.id = generateId();
         return await repo.save(entity);
-      })
+      }),
     );
   }
 
@@ -96,5 +96,29 @@ describe('Service status mongo repository', () => {
     expect(draft.results.length).toEqual(1);
     const archived = await repo.find(10, 0, { mode: 'archived' });
     expect(archived.results.length).toEqual(1);
+  });
+
+  it('scopes get and find to the tenant and pages results', async () => {
+    const base = {
+      message: 'Tenant',
+      tennantServRef: '[]',
+      startDate: new Date('2021-09-27T16:00:00.000Z'),
+      endDate: new Date('2021-09-27T20:00:00.000Z'),
+      isAllApplications: true,
+    };
+    const [a] = await insertMockData([{ ...base, tenantId: 'tenant-a' }]);
+    await insertMockData([
+      { ...base, tenantId: 'tenant-a' },
+      { ...base, tenantId: 'tenant-b' },
+    ]);
+
+    expect(String((await repo.get(a.id, 'tenant-a')).id)).toEqual(String(a.id));
+    expect(await repo.get(a.id, 'tenant-b')).toBeNull();
+    expect(await repo.get(generateId(), 'tenant-a')).toBeNull();
+
+    const page = await repo.find(1, 0, { tenantId: 'tenant-a' });
+    expect(page.results.length).toEqual(1);
+    expect(page.page.total).toEqual(2);
+    expect(page.page.next).toEqual('after=1&top=1');
   });
 });

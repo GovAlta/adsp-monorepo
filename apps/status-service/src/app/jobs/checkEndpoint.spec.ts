@@ -1,4 +1,4 @@
-import { createCheckEndpointJob, getNewEndpointStatus } from '../jobs/checkEndpoint';
+import { checkAndUpdateAutoChangeStatus, createCheckEndpointJob, getNewEndpointStatus } from '../jobs/checkEndpoint';
 import { EndpointStatusEntryEntity } from '../model/endpointStatusEntry';
 import { Logger } from 'winston';
 import { ServiceStatusApplicationEntity } from '../model';
@@ -503,6 +503,58 @@ describe('checkEndpoint', () => {
       ]);
 
       expect(result).toBe('offline');
+    });
+  });
+
+  describe('checkAndUpdateAutoChangeStatus', () => {
+    const history = (ok: boolean) => [0, 1, 2, 3, 4].map((m) => ({ ok, timestamp: Date.now() - m * 60_000 }));
+    const props = (autoChangeStatus: boolean) =>
+      ({
+        app: { url: 'https//test.co', appKey: 'auto', name: 'auto', tenantId, autoChangeStatus },
+        logger: loggerMock,
+        serviceStatusRepository: statusRepositoryMock,
+        endpointStatusEntryRepository: endpointRepositoryMock,
+      }) as unknown as Parameters<typeof checkAndUpdateAutoChangeStatus>[0];
+
+    beforeEach(() => {
+      statusRepositoryMock.save.mockClear();
+      endpointRepositoryMock.findRecentByUrlAndApplicationId.mockReset();
+      statusRepositoryMock.get.mockReset();
+    });
+
+    it('does nothing when auto change is off', async () => {
+      await checkAndUpdateAutoChangeStatus(props(false));
+      expect(endpointRepositoryMock.findRecentByUrlAndApplicationId).not.toHaveBeenCalled();
+    });
+
+    it('reports issues after five minutes of failures', async () => {
+      endpointRepositoryMock.findRecentByUrlAndApplicationId.mockResolvedValueOnce(history(false));
+      const status = { status: 'operational' };
+      statusRepositoryMock.get.mockResolvedValueOnce(status);
+      await checkAndUpdateAutoChangeStatus(props(true));
+      expect(status.status).toBe('reported-issues');
+      expect(statusRepositoryMock.save).toHaveBeenCalledWith(status);
+    });
+
+    it('returns to operational after five minutes of successes', async () => {
+      endpointRepositoryMock.findRecentByUrlAndApplicationId.mockResolvedValueOnce(history(true));
+      const status = { status: 'reported-issues' };
+      statusRepositoryMock.get.mockResolvedValueOnce(status);
+      await checkAndUpdateAutoChangeStatus(props(true));
+      expect(status.status).toBe('operational');
+    });
+
+    it('leaves the status alone when the history does not warrant a change', async () => {
+      endpointRepositoryMock.findRecentByUrlAndApplicationId.mockResolvedValueOnce(history(true));
+      statusRepositoryMock.get.mockResolvedValueOnce({ status: 'operational' });
+      await checkAndUpdateAutoChangeStatus(props(true));
+      expect(statusRepositoryMock.save).not.toHaveBeenCalled();
+    });
+
+    it('logs instead of throwing when the lookup fails', async () => {
+      endpointRepositoryMock.findRecentByUrlAndApplicationId.mockRejectedValueOnce(new Error('db down'));
+      await checkAndUpdateAutoChangeStatus(props(true));
+      expect(loggerMock.error).toHaveBeenCalledWith(expect.stringContaining('db down'));
     });
   });
 });
