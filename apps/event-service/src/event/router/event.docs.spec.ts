@@ -95,6 +95,7 @@ describe('event router documented behaviour', () => {
       createDefinitionRouter({
         client: configurationClientMock as unknown as ConfigurationClient<EventConfiguration>,
         validationService: new AjvValidationService(loggerMock),
+        recordAudit: jest.fn(),
       }),
     );
     app.use(createErrorHandler(loggerMock));

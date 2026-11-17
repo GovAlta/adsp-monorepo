@@ -10,6 +10,14 @@ import {
 import { RequestHandler, Router } from 'express';
 import * as HttpStatusCodes from 'http-status-codes';
 import { body, param } from 'express-validator';
+import {
+  EventDefinitionAuditRecorder,
+  EventDefinitionCreatedAuditAction,
+  EventDefinitionDeletedAuditAction,
+  EventDefinitionUpdatedAuditAction,
+  getChangedFields,
+  toUpdateChangeSet,
+} from '../audit';
 import { EventServiceConfigurationRoles, EventServiceRoles } from '../role';
 import type { EventDefinition, Namespace } from '../types';
 
@@ -141,6 +149,7 @@ export function findDefinition(client: ConfigurationClient<EventConfiguration>):
 export function createDefinition(
   client: ConfigurationClient<EventConfiguration>,
   validationService: ValidationService,
+  recordAudit: EventDefinitionAuditRecorder,
 ): RequestHandler {
   return async (req, res, next) => {
     try {
@@ -159,6 +168,9 @@ export function createDefinition(
       }
 
       const updated = await client.updateEntry(tenantId, namespace, mergeDefinition(tenant, namespace, definition));
+      recordAudit(EventDefinitionCreatedAuditAction, req.user, tenantId, namespace, definition.name, {
+        metadata: { namespaceCreated: !tenant?.[namespace] },
+      });
       res.send(toDefinitionResponse(namespace, getDefinition(updated, namespace, definition.name), false));
     } catch (err) {
       next(err);
@@ -170,6 +182,7 @@ export function createDefinition(
 export function updateDefinition(
   client: ConfigurationClient<EventConfiguration>,
   validationService: ValidationService,
+  recordAudit: EventDefinitionAuditRecorder,
 ): RequestHandler {
   return async (req, res, next) => {
     try {
@@ -178,7 +191,8 @@ export function updateDefinition(
       assertUserCanAdminister(req.user, tenantId, 'update event definition');
 
       const tenant = await client.getTenantConfiguration(tenantId);
-      if (!getDefinition(tenant, namespace, name)) {
+      const existing = getDefinition(tenant, namespace, name);
+      if (!existing) {
         throw new NotFoundError('event definition', `${namespace}:${name}`);
       }
 
@@ -186,6 +200,11 @@ export function updateDefinition(
       assertValidJsonSchema(validationService, namespace, definition);
 
       const updated = await client.updateEntry(tenantId, namespace, mergeDefinition(tenant, namespace, definition));
+      const changedFields = getChangedFields(existing, definition);
+      recordAudit(EventDefinitionUpdatedAuditAction, req.user, tenantId, namespace, name, {
+        metadata: { changedFields },
+        changeSet: toUpdateChangeSet(existing, definition, changedFields),
+      });
       res.send(toDefinitionResponse(namespace, getDefinition(updated, namespace, name), false));
     } catch (err) {
       next(err);
@@ -193,7 +212,10 @@ export function updateDefinition(
   };
 }
 
-export function deleteDefinition(client: ConfigurationClient<EventConfiguration>): RequestHandler {
+export function deleteDefinition(
+  client: ConfigurationClient<EventConfiguration>,
+  recordAudit: EventDefinitionAuditRecorder,
+): RequestHandler {
   return async (req, res, next) => {
     try {
       const tenantId = getRequiredTenantId(req);
@@ -201,17 +223,23 @@ export function deleteDefinition(client: ConfigurationClient<EventConfiguration>
       assertUserCanAdminister(req.user, tenantId, 'delete event definition');
 
       const tenant = await client.getTenantConfiguration(tenantId);
-      if (!getDefinition(tenant, namespace, name)) {
+      const existing = getDefinition(tenant, namespace, name);
+      if (!existing) {
         throw new NotFoundError('event definition', `${namespace}:${name}`);
       }
 
       const remaining = removeDefinition(tenant, namespace, name);
-      if (Object.keys(remaining.definitions).length === 0) {
+      const namespaceDeleted = Object.keys(remaining.definitions).length === 0;
+      if (namespaceDeleted) {
         await client.deleteEntry(tenantId, namespace);
       } else {
         await client.updateEntry(tenantId, namespace, remaining);
       }
 
+      recordAudit(EventDefinitionDeletedAuditAction, req.user, tenantId, namespace, name, {
+        metadata: { namespaceDeleted },
+        changeSet: { before: { ...existing }, after: null },
+      });
       res.send({ deleted: true });
     } catch (err) {
       next(err);
@@ -222,6 +250,7 @@ export function deleteDefinition(client: ConfigurationClient<EventConfiguration>
 interface DefinitionRouterProps {
   client: ConfigurationClient<EventConfiguration>;
   validationService: ValidationService;
+  recordAudit: EventDefinitionAuditRecorder;
 }
 
 const validateDefinitionBody = () => [
@@ -238,7 +267,7 @@ const validateCreateDefinitionBody = () => [
   ...validateDefinitionBody(),
 ];
 
-export const createDefinitionRouter = ({ client, validationService }: DefinitionRouterProps): Router => {
+export const createDefinitionRouter = ({ client, validationService, recordAudit }: DefinitionRouterProps): Router => {
   const router = Router();
 
   const validateNamespaceNameParams = createValidationHandler(
@@ -257,20 +286,20 @@ export const createDefinitionRouter = ({ client, validationService }: Definition
     '/definitions',
     assertAuthenticatedHandler,
     createValidationHandler(...validateCreateDefinitionBody()),
-    createDefinition(client, validationService),
+    createDefinition(client, validationService, recordAudit),
   );
   router.patch(
     '/definitions/:namespace/:name',
     assertAuthenticatedHandler,
     validateNamespaceNameParams,
     createValidationHandler(...validateDefinitionBody()),
-    updateDefinition(client, validationService),
+    updateDefinition(client, validationService, recordAudit),
   );
   router.delete(
     '/definitions/:namespace/:name',
     assertAuthenticatedHandler,
     validateNamespaceNameParams,
-    deleteDefinition(client),
+    deleteDefinition(client, recordAudit),
   );
 
   return router;
