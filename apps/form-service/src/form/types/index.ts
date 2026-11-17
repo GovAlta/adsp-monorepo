@@ -5,4 +5,5 @@ export * from './form';
 export * from './formSubmission';
 export * from './intake';
 export * from './register';
+export * from './registration';
 export * from './sort';

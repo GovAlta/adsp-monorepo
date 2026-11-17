@@ -37,6 +37,7 @@ describe('queue router documented behaviour', () => {
     delete: jest.fn(() => Promise.resolve(true)),
   };
   const eventServiceMock = { send: jest.fn() };
+  const auditServiceMock = { record: jest.fn(), query: jest.fn(), flush: jest.fn(), droppedEventCount: 0 };
   const commentServiceMock = { createTopic: jest.fn() };
   const directoryMock = { getServiceUrl: jest.fn(), getResourceUrl: jest.fn() };
   const tokenProviderMock = { getAccessToken: jest.fn(() => Promise.resolve('token')) };
@@ -110,6 +111,7 @@ describe('queue router documented behaviour', () => {
       tokenProvider: tokenProviderMock,
       taskRepository: repositoryMock,
       eventService: eventServiceMock,
+      auditService: auditServiceMock,
       commentService: commentServiceMock,
     });
     server.use(createErrorHandler(loggerMock));

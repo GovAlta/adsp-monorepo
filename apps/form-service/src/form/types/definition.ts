@@ -24,6 +24,15 @@ export interface FormDefinition {
   registeredId?: string;
   customSubmissionEvent?: CustomSubmissionEvent;
   reviewConfiguration?: ReviewConfiguration;
+  registration?: RegistrationConfiguration;
+}
+
+export interface RegistrationConfiguration {
+  enabled: boolean;
+  // Keycloak group whose roles grant access to the form once a request is approved.
+  accessGroup?: string;
+  dataSchema?: Record<string, unknown>;
+  uiSchema?: Record<string, unknown>;
 }
 
 export interface CustomSubmissionEvent {

@@ -3,6 +3,7 @@ export enum TenantServiceRoles {
   TenantAdmin = 'tenant-admin',
   // These are core realm roles:
   TenantServiceAdmin = 'tenant-service-admin',
+  TenantPurge = 'tenant-purge',
   PlatformService = 'platform-service',
   BetaTester = 'beta-tester',
 }

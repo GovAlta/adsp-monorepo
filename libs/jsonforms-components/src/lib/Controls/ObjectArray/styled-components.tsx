@@ -8,11 +8,7 @@ export const MarginTop = styled.div`
   margin-top: var(--goa-space-l);
 `;
 
-export const NonEmptyCellStyle = styled.div`
-  goa-table thead th {
-    background-color: #000:
-  }
-`;
+export const NonEmptyCellStyle = styled.div``;
 
 export const ToolBarHeader = styled.div`
   margin-bottom: var(--goa-space-s);
@@ -254,12 +250,58 @@ export const FixTableHeaderAlignment = styled.div`
   table tbody td:nth-child(3) {
     text-align: center;
   }
+
+  /*
+   * A row of inputs doesn't fit a phone, so each row stacks its cells and labels them from data-label.
+   * && and the goa-table prefix outrank GoA's goa-table[version="2"] tbody td:first-child/:last-child padding.
+   */
+  @media (max-width: 639px) {
+    /* The surrounding card already frames the list, so drop the table's own rounded border. */
+    goa-table {
+      --goa-table-container-border: none;
+      --goa-table-border-radius-container: 0;
+    }
+
+    && goa-table table thead {
+      display: none;
+    }
+
+    && goa-table table tbody tr {
+      display: block;
+      padding: var(--goa-space-s) 0;
+      border-bottom: 1px solid var(--goa-color-greyscale-200);
+    }
+
+    && goa-table table tbody tr:last-child {
+      border-bottom: none;
+    }
+
+    && goa-table table tbody td {
+      display: block;
+      padding: var(--goa-space-2xs) 0;
+      border-bottom: none;
+      text-align: left;
+    }
+
+    && goa-table table tbody td[data-label]::before {
+      content: attr(data-label);
+      display: block;
+      margin-bottom: var(--goa-space-2xs);
+      color: var(--goa-color-text-secondary);
+      font: var(--goa-typography-body-s);
+    }
+
+    && goa-table table tbody td:not([data-label]) {
+      padding-top: 0 !important;
+      text-align: right;
+    }
+  }
 `;
 
 export const ListWithDetailsReviewCellDiv = styled.div`
-  display: 'flex';
-  flex-direction: 'column';
-  text-align: 'start';
+  display: flex;
+  flex-direction: column;
+  text-align: start;
 `;
 
 export const IconsContainer = styled.div`
@@ -270,9 +312,14 @@ export const IconsContainer = styled.div`
   padding-bottom: var(--goa-space-xs);
 `;
 
-/* A row of inputs can't wrap, so a wide table scrolls here rather than widening the form. */
+/*
+ * A row of inputs can't wrap, so a wide table scrolls here rather than widening the form.
+ * contain keeps the table's width out of the ancestors' sizing: a group's goa-container
+ * otherwise grows to fit the table and pushes it off a narrow screen.
+ */
 export const TableScrollContainer = styled.div`
   overflow-x: auto;
+  contain: inline-size;
 `;
 
 export const TableContentContainer = styled.div`

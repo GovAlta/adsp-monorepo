@@ -47,6 +47,38 @@ parameters:
     description: Cookie used for authentication of cluster nodes.
     generate: expression
     from: '[a-zA-Z0-9]{16}'
+  - name: RABBITMQ_CPU_LIMIT
+    description: CPU limit for the RabbitMQ container.
+    displayName: RabbitMQ CPU Limit
+    value: '1000m'
+  - name: RABBITMQ_MEMORY_LIMIT
+    description: Memory limit for the RabbitMQ container.
+    displayName: RabbitMQ Memory Limit
+    value: '4Gi'
+  - name: RABBITMQ_CPU_REQUEST
+    description: CPU request for the RabbitMQ container.
+    displayName: RabbitMQ CPU Request
+    value: '100m'
+  - name: RABBITMQ_MEMORY_REQUEST
+    description: Memory request for the RabbitMQ container.
+    displayName: RabbitMQ Memory Request
+    value: '200Mi'
+  - name: RABBITMQ_INIT_CPU_LIMIT
+    description: CPU limit for the RabbitMQ init container.
+    displayName: RabbitMQ Init CPU Limit
+    value: '200m'
+  - name: RABBITMQ_INIT_MEMORY_LIMIT
+    description: Memory limit for the RabbitMQ init container.
+    displayName: RabbitMQ Init Memory Limit
+    value: '500Mi'
+  - name: RABBITMQ_INIT_CPU_REQUEST
+    description: CPU request for the RabbitMQ init container.
+    displayName: RabbitMQ Init CPU Request
+    value: '100m'
+  - name: RABBITMQ_INIT_MEMORY_REQUEST
+    description: Memory request for the RabbitMQ init container.
+    displayName: RabbitMQ Init Memory Request
+    value: '200Mi'
 objects:
   # RabbitMQ Objects
   - apiVersion: v1
@@ -225,11 +257,11 @@ objects:
                 - rm -f /var/lib/rabbitmq/.erlang.cookie
               resources:
                 limits:
-                  cpu: 200m
-                  memory: 500Mi
+                  cpu: ${RABBITMQ_INIT_CPU_LIMIT}
+                  memory: ${RABBITMQ_INIT_MEMORY_LIMIT}
                 requests:
-                  cpu: 100m
-                  memory: 200Mi
+                  cpu: ${RABBITMQ_INIT_CPU_REQUEST}
+                  memory: ${RABBITMQ_INIT_MEMORY_REQUEST}
               volumeMounts:
                 - name: ${APP_NAME}-rabbitmq-storage
                   mountPath: /var/lib/rabbitmq
@@ -311,11 +343,11 @@ objects:
                   value: /var/lib/rabbitmq/rabbitmq
               resources:
                 limits:
-                  cpu: 1000m
-                  memory: 4Gi
+                  cpu: ${RABBITMQ_CPU_LIMIT}
+                  memory: ${RABBITMQ_MEMORY_LIMIT}
                 requests:
-                  cpu: 100m
-                  memory: 200Mi
+                  cpu: ${RABBITMQ_CPU_REQUEST}
+                  memory: ${RABBITMQ_MEMORY_REQUEST}
           volumes:
             - name: config-volume
               configMap:

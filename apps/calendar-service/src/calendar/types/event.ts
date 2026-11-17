@@ -46,7 +46,9 @@ export interface CalendarEventCriteria {
   isPublic?: boolean;
   startsAfter?: DateTime;
   endsBefore?: DateTime;
-  activeOn?: DateTime;
+  startsBefore?: DateTime;
+  endsAfter?: DateTime;
+  activeOn?: DateTime; // clean-code-ignore: RULE-19 type-only file, criteria behaviour is covered by model and postgres specs
   attendeeCriteria?: AttendeeCriteria;
   orderBy?: 'id' | 'start';
 }

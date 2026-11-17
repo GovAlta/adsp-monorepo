@@ -435,6 +435,8 @@ describe('calendar router', () => {
             isPublic: false,
             startsAfter: '2020-03-05',
             endsBefore: '2020-05-01',
+            startsBefore: '2020-04-01',
+            endsAfter: '2020-03-01',
           }),
         },
         calendar: entity,
@@ -460,6 +462,12 @@ describe('calendar router', () => {
       );
       expect(repositoryMock.getCalendarEvents.mock.calls[0][3].endsBefore.valueOf()).toBe(
         DateTime.fromISO('2020-05-01T00:00:00', { zone: calendarTimeZone }).valueOf(),
+      );
+      expect(repositoryMock.getCalendarEvents.mock.calls[0][3].startsBefore.valueOf()).toBe(
+        DateTime.fromISO('2020-04-01T00:00:00', { zone: calendarTimeZone }).valueOf(),
+      );
+      expect(repositoryMock.getCalendarEvents.mock.calls[0][3].endsAfter.valueOf()).toBe(
+        DateTime.fromISO('2020-03-01T00:00:00', { zone: calendarTimeZone }).valueOf(),
       );
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ name: calendar.displayName }));
     });
@@ -901,6 +909,8 @@ describe('calendar router', () => {
             isPublic: false,
             startsAfter: '2020-03-05',
             endsBefore: '2020-05-01',
+            startsBefore: '2020-04-01',
+            endsAfter: '2020-03-01',
           }),
         },
         calendar: entity,
@@ -926,6 +936,12 @@ describe('calendar router', () => {
       );
       expect(repositoryMock.getCalendarEvents.mock.calls[0][3].endsBefore.valueOf()).toBe(
         DateTime.fromISO('2020-05-01T00:00:00', { zone: calendarTimeZone }).valueOf(),
+      );
+      expect(repositoryMock.getCalendarEvents.mock.calls[0][3].startsBefore.valueOf()).toBe(
+        DateTime.fromISO('2020-04-01T00:00:00', { zone: calendarTimeZone }).valueOf(),
+      );
+      expect(repositoryMock.getCalendarEvents.mock.calls[0][3].endsAfter.valueOf()).toBe(
+        DateTime.fromISO('2020-03-01T00:00:00', { zone: calendarTimeZone }).valueOf(),
       );
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ page: result.page }));
     });

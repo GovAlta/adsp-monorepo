@@ -34,6 +34,8 @@ describe('queue', () => {
     send: jest.fn(),
   };
 
+  const auditServiceMock = { record: jest.fn(), query: jest.fn(), flush: jest.fn(), droppedEventCount: 0 };
+
   const directoryMock = {
     getServiceUrl: jest.fn(),
     getResourceUrl: jest.fn(),
@@ -88,6 +90,7 @@ describe('queue', () => {
     repositoryMock.getTaskMetrics.mockClear();
     repositoryMock.save.mockClear();
     eventServiceMock.send.mockReset();
+    auditServiceMock.record.mockReset();
     axiosMock.get.mockReset();
   });
 
@@ -101,6 +104,7 @@ describe('queue', () => {
         logger: loggerMock,
         taskRepository: repositoryMock,
         eventService: eventServiceMock,
+        auditService: auditServiceMock,
         commentService: commentServiceMock,
       });
 
@@ -440,10 +444,10 @@ describe('queue', () => {
   });
 
   describe('createTask', () => {
-    const handler = createTask(apiId, loggerMock, repositoryMock, eventServiceMock, commentServiceMock);
+    const handler = createTask(apiId, loggerMock, repositoryMock, eventServiceMock, commentServiceMock, auditServiceMock);
 
     it('can create handler', () => {
-      const result = createTask(apiId, loggerMock, repositoryMock, eventServiceMock, commentServiceMock);
+      const result = createTask(apiId, loggerMock, repositoryMock, eventServiceMock, commentServiceMock, auditServiceMock);
       expect(result).toBeTruthy();
     });
 

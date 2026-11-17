@@ -5,11 +5,12 @@ import type { Logger } from 'winston';
 // Below the 30 second termination grace period of the deployment.
 const SHUTDOWN_TIMEOUT_MS = 25000;
 
-interface ShutdownProps {
+export interface ShutdownProps {
+  serviceName: string;
   server: Pick<Server, 'close'>;
   auditService: Pick<AuditService, 'flush'>;
   shutdownTelemetry: () => Promise<void>;
-  closeDatabase: () => Promise<void>;
+  closeDatabase?: () => Promise<void>;
   logger: Logger;
   exit?: (code: number) => void;
   timeoutMs?: number;
@@ -17,12 +18,13 @@ interface ShutdownProps {
 
 /**
  * Creates the handler for termination signals. In-flight requests are allowed to complete before audit events they
- * recorded are delivered, then the database connection is closed and telemetry is flushed before the process exits.
+ * recorded are delivered, then the database connection (if any) is closed and telemetry is flushed before the process exits.
  *
  * The SDK flushes telemetry on its own signal listener, but does not wait when another listener owns the exit, so the
  * handler awaits the same flush before exiting. The SDK does not flush audit events on shutdown.
  */
 export function createShutdownHandler({
+  serviceName,
   server,
   auditService,
   shutdownTelemetry,
@@ -39,10 +41,10 @@ export function createShutdownHandler({
     }
     stopping = true;
 
-    logger.info('Form service is shutting down; waiting for in-flight requests to complete...');
+    logger.info(`${serviceName} is shutting down; waiting for in-flight requests to complete...`);
     // Fallback in case requests do not drain or a step hangs.
     setTimeout(() => {
-      logger.error(`Form service did not shut down within ${timeoutMs} ms; exiting.`);
+      logger.error(`${serviceName} did not shut down within ${timeoutMs} ms; exiting.`);
       exit(1);
     }, timeoutMs).unref();
 
@@ -54,18 +56,25 @@ export function createShutdownHandler({
       logger.error(`Error encountered closing the server on shutdown: ${err}`);
     }
 
-    await auditService.flush();
-
     try {
-      await closeDatabase();
+      await auditService.flush();
     } catch (err) {
       code = 1;
-      logger.error(`Error encountered closing the database connection on shutdown: ${err}`);
+      logger.error(`Error encountered flushing audit events on shutdown: ${err}`);
+    }
+
+    if (closeDatabase) {
+      try {
+        await closeDatabase();
+      } catch (err) {
+        code = 1;
+        logger.error(`Error encountered closing the database connection on shutdown: ${err}`);
+      }
     }
 
     await shutdownTelemetry();
 
-    logger.info('Form service shut down.');
+    logger.info(`${serviceName} shut down.`);
     exit(code);
   };
 }

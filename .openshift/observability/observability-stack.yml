@@ -177,6 +177,70 @@ parameters:
     displayName: Grafana Storage Size
     required: true
     value: 1Gi
+  - name: TEMPO_CPU_REQUEST
+    description: CPU request for the Tempo container.
+    displayName: Tempo CPU Request
+    value: '100m'
+  - name: TEMPO_MEMORY_REQUEST
+    description: Memory request for the Tempo container.
+    displayName: Tempo Memory Request
+    value: '512Mi'
+  - name: TEMPO_CPU_LIMIT
+    description: CPU limit for the Tempo container.
+    displayName: Tempo CPU Limit
+    value: '500m'
+  - name: TEMPO_MEMORY_LIMIT
+    description: Memory limit for the Tempo container.
+    displayName: Tempo Memory Limit
+    value: '1Gi'
+  - name: COLLECTOR_CPU_REQUEST
+    description: CPU request for the Collector container.
+    displayName: Collector CPU Request
+    value: '100m'
+  - name: COLLECTOR_MEMORY_REQUEST
+    description: Memory request for the Collector container.
+    displayName: Collector Memory Request
+    value: '256Mi'
+  - name: COLLECTOR_CPU_LIMIT
+    description: CPU limit for the Collector container.
+    displayName: Collector CPU Limit
+    value: '500m'
+  - name: COLLECTOR_MEMORY_LIMIT
+    description: Memory limit for the Collector container.
+    displayName: Collector Memory Limit
+    value: '1Gi'
+  - name: PROMETHEUS_CPU_REQUEST
+    description: CPU request for the Prometheus container.
+    displayName: Prometheus CPU Request
+    value: '100m'
+  - name: PROMETHEUS_MEMORY_REQUEST
+    description: Memory request for the Prometheus container.
+    displayName: Prometheus Memory Request
+    value: '256Mi'
+  - name: PROMETHEUS_CPU_LIMIT
+    description: CPU limit for the Prometheus container.
+    displayName: Prometheus CPU Limit
+    value: '500m'
+  - name: PROMETHEUS_MEMORY_LIMIT
+    description: Memory limit for the Prometheus container.
+    displayName: Prometheus Memory Limit
+    value: '2Gi'
+  - name: GRAFANA_CPU_REQUEST
+    description: CPU request for the Grafana container.
+    displayName: Grafana CPU Request
+    value: '50m'
+  - name: GRAFANA_MEMORY_REQUEST
+    description: Memory request for the Grafana container.
+    displayName: Grafana Memory Request
+    value: '128Mi'
+  - name: GRAFANA_CPU_LIMIT
+    description: CPU limit for the Grafana container.
+    displayName: Grafana CPU Limit
+    value: '300m'
+  - name: GRAFANA_MEMORY_LIMIT
+    description: Memory limit for the Grafana container.
+    displayName: Grafana Memory Limit
+    value: '512Mi'
 objects:
   - apiVersion: v1
     kind: ImageStream
@@ -381,11 +445,11 @@ objects:
                 periodSeconds: 20
               resources:
                 requests:
-                  cpu: 100m
-                  memory: 512Mi
+                  cpu: ${TEMPO_CPU_REQUEST}
+                  memory: ${TEMPO_MEMORY_REQUEST}
                 limits:
-                  cpu: 500m
-                  memory: 1Gi
+                  cpu: ${TEMPO_CPU_LIMIT}
+                  memory: ${TEMPO_MEMORY_LIMIT}
               volumeMounts:
                 - name: config
                   mountPath: /conf
@@ -624,12 +688,12 @@ objects:
                 periodSeconds: 20
               resources:
                 requests:
-                  cpu: 100m
-                  memory: 256Mi
+                  cpu: ${COLLECTOR_CPU_REQUEST}
+                  memory: ${COLLECTOR_MEMORY_REQUEST}
                 limits:
-                  cpu: 500m
+                  cpu: ${COLLECTOR_CPU_LIMIT}
                   # Paired with memory_limiter.limit_mib in the ConfigMap above; change together.
-                  memory: 1Gi
+                  memory: ${COLLECTOR_MEMORY_LIMIT}
               volumeMounts:
                 - name: config
                   mountPath: /conf
@@ -855,13 +919,13 @@ objects:
                 periodSeconds: 20
               resources:
                 requests:
-                  cpu: 100m
-                  memory: 256Mi
+                  cpu: ${PROMETHEUS_CPU_REQUEST}
+                  memory: ${PROMETHEUS_MEMORY_REQUEST}
                 limits:
-                  cpu: 500m
+                  cpu: ${PROMETHEUS_CPU_LIMIT}
                   # 2Gi in dev and uat. The template previously said 1Gi, so applying it would have
                   # halved the limit on a Prometheus that has been OOMKilling at 2Gi.
-                  memory: 2Gi
+                  memory: ${PROMETHEUS_MEMORY_LIMIT}
               volumeMounts:
                 - name: config
                   mountPath: /etc/prometheus
@@ -1096,11 +1160,11 @@ objects:
                 periodSeconds: 20
               resources:
                 requests:
-                  cpu: 50m
-                  memory: 128Mi
+                  cpu: ${GRAFANA_CPU_REQUEST}
+                  memory: ${GRAFANA_MEMORY_REQUEST}
                 limits:
-                  cpu: 300m
-                  memory: 512Mi
+                  cpu: ${GRAFANA_CPU_LIMIT}
+                  memory: ${GRAFANA_MEMORY_LIMIT}
               volumeMounts:
                 - name: datasources
                   mountPath: /etc/grafana/provisioning/datasources

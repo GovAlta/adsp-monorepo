@@ -1,6 +1,7 @@
 import axios from 'axios';
 import {
   AdspId,
+  AuditService,
   EventService,
   SecurityClassifications,
   ServiceDirectory,
@@ -22,6 +23,23 @@ import { Request, RequestHandler, Response, Router } from 'express';
 import { body, param, query } from 'express-validator';
 import * as HttpStatusCodes from 'http-status-codes';
 import { Logger } from 'winston';
+import {
+  CommentCreatedAuditAction,
+  CommentDeletedAuditAction,
+  CommentUpdatedAuditAction,
+  TopicCreatedAuditAction,
+  TopicDeletedAuditAction,
+  TopicTypeCreatedAuditAction,
+  TopicTypeDeletedAuditAction,
+  TopicTypeUpdatedAuditAction,
+  TopicUpdatedAuditAction,
+  recordCommentAudit,
+  toCommentAuditDetails,
+  toTopicAuditDetails,
+  toTopicTypeAuditDetails,
+  toTopicTypeUpdatedAuditDetails,
+  toTopicUpdatedAuditDetails,
+} from '../audit';
 import { commentCreated, commentDeleted, commentUpdated, topicCreated, topicDeleted, topicUpdated } from '../events';
 import { TopicEntity, TopicTypeEntity } from '../model';
 import { TopicRepository } from '../repository';
@@ -36,6 +54,7 @@ interface TopicRouterProps {
   directory: ServiceDirectory;
   tokenProvider: TokenProvider;
   client: ConfigurationClient<TopicTypeConfiguration>;
+  auditService: AuditService;
 }
 
 type TopicTypeResponse = Omit<TopicType, 'tenantId'>;
@@ -140,6 +159,7 @@ export function createTopicType(
   directory: ServiceDirectory,
   client: ConfigurationClient<TopicTypeConfiguration>,
   tokenProvider: TokenProvider,
+  auditService: AuditService,
 ): RequestHandler {
   return async (req, res, next) => {
     try {
@@ -196,6 +216,14 @@ export function createTopicType(
 
       res.send(mapTopicType(newtype));
 
+      recordCommentAudit(auditService, logger, TopicTypeCreatedAuditAction, () =>
+        toTopicTypeAuditDetails(tenantId, user, newtype, {
+          adminRoles: newtype.adminRoles ?? [],
+          readerRoles: newtype.readerRoles ?? [],
+          commenterRoles: newtype.commenterRoles ?? [],
+        }),
+      );
+
       logger.info(`Topic type ${name} (ID: ${id}) created by user ${user.name} (ID: ${user.id}).`, {
         context: 'comment-router',
         tenantId: tenantId?.toString(),
@@ -213,6 +241,7 @@ export function updateTopicType(
   directory: ServiceDirectory,
   client: ConfigurationClient<TopicTypeConfiguration>,
   tokenProvider: TokenProvider,
+  auditService: AuditService,
 ): RequestHandler {
   return async (req, res, next) => {
     try {
@@ -260,6 +289,10 @@ export function updateTopicType(
 
       res.send(mapTopicType({ ...topicType, tenantId }));
 
+      recordCommentAudit(auditService, logger, TopicTypeUpdatedAuditAction, () =>
+        toTopicTypeUpdatedAuditDetails(tenantId, user, type, topicType),
+      );
+
       logger.info(`Topic type ${topicTypeId} updated by user ${user.name} (ID: ${user.id}).`, {
         context: 'comment-router',
         tenantId: tenantId?.toString(),
@@ -276,8 +309,9 @@ export function deleteTopicType(
   logger: Logger,
   repository: TopicRepository,
   directory: ServiceDirectory,
-  client: ConfigurationClient,
+  client: ConfigurationClient<TopicTypeConfiguration>,
   tokenProvider: TokenProvider,
+  auditService: AuditService,
 ): RequestHandler {
   return async (req, res, next) => {
     try {
@@ -294,7 +328,8 @@ export function deleteTopicType(
 
       const types = await client.getTenantConfiguration(tenantId);
 
-      if (!types?.[topicTypeId]) {
+      const type = types?.[topicTypeId];
+      if (!type) {
         throw new NotFoundError('topic type', topicTypeId);
       }
 
@@ -325,6 +360,10 @@ export function deleteTopicType(
       );
 
       res.send({ deleted: true, id: topicTypeId });
+
+      recordCommentAudit(auditService, logger, TopicTypeDeletedAuditAction, () =>
+        toTopicTypeAuditDetails(tenantId, user, { id: topicTypeId, name: type.name }),
+      );
 
       logger.info(`Topic type ${topicTypeId} deleted by user ${user.name} (ID: ${user.id}).`, {
         context: 'comment-router',
@@ -373,6 +412,7 @@ export function createTopic(
   logger: Logger,
   repository: TopicRepository,
   eventService: EventService,
+  auditService: AuditService,
 ): RequestHandler {
   return async (req, res, next) => {
     try {
@@ -395,6 +435,9 @@ export function createTopic(
       res.send(mapTopic(apiId, result));
 
       eventService.send(topicCreated(apiId, result, user));
+      recordCommentAudit(auditService, logger, TopicCreatedAuditAction, () =>
+        toTopicAuditDetails(user, result, { securityClassification: result.securityClassification ?? null }),
+      );
 
       logger.info(
         `Topic ${result.name} (ID: ${result.id}) of type ${typeId} created by user ${user.name} (ID: ${user.id}).`,
@@ -439,18 +482,27 @@ export function getTopic(repository: TopicRepository, ...roles: string[]): Reque
   };
 }
 
-export function updateTopic(apiId: AdspId, logger: Logger, eventService: EventService): RequestHandler {
+export function updateTopic(
+  apiId: AdspId,
+  logger: Logger,
+  eventService: EventService,
+  auditService: AuditService,
+): RequestHandler {
   return async (req, res, next) => {
     try {
       const user = req.user;
       const update = req.body;
       const topic: TopicEntity = req[TopicKey];
+      const previous = { name: topic.name, description: topic.description, commenters: [...(topic.commenters ?? [])] };
 
       const result = await topic.update(user, update);
 
       res.send(mapTopic(apiId, result));
 
       eventService.send(topicUpdated(apiId, result, user));
+      recordCommentAudit(auditService, logger, TopicUpdatedAuditAction, () =>
+        toTopicUpdatedAuditDetails(user, result, previous),
+      );
 
       logger.info(`Topic ${result.name} (ID: ${result.id}) updated by user ${user.name} (ID: ${user.id}).`, {
         context: 'comment-router',
@@ -463,7 +515,12 @@ export function updateTopic(apiId: AdspId, logger: Logger, eventService: EventSe
   };
 }
 
-export function deleteTopic(apiId: AdspId, logger: Logger, eventService: EventService): RequestHandler {
+export function deleteTopic(
+  apiId: AdspId,
+  logger: Logger,
+  eventService: EventService,
+  auditService: AuditService,
+): RequestHandler {
   return async (req, res, next) => {
     try {
       const user = req.user;
@@ -475,6 +532,7 @@ export function deleteTopic(apiId: AdspId, logger: Logger, eventService: EventSe
 
       if (deleted) {
         eventService.send(topicDeleted(apiId, topic, user));
+        recordCommentAudit(auditService, logger, TopicDeletedAuditAction, () => toTopicAuditDetails(user, topic));
 
         logger.info(`Topic ${topic.name} (ID: ${topic.id}) deleted by user ${user.name} (ID: ${user.id}).`, {
           context: 'comment-router',
@@ -505,7 +563,12 @@ export function getTopicComments(): RequestHandler {
   };
 }
 
-export function createTopicComment(apiId: AdspId, logger: Logger, eventService: EventService): RequestHandler {
+export function createTopicComment(
+  apiId: AdspId,
+  logger: Logger,
+  eventService: EventService,
+  auditService: AuditService,
+): RequestHandler {
   return async (req, res, next) => {
     try {
       const user = req.user;
@@ -516,6 +579,11 @@ export function createTopicComment(apiId: AdspId, logger: Logger, eventService: 
       res.send(result);
 
       eventService.send(commentCreated(apiId, topic, result));
+      recordCommentAudit(auditService, logger, CommentCreatedAuditAction, () =>
+        toCommentAuditDetails(user, topic, result, 'created', {
+          ...(typeof requiresAttention === 'boolean' ? { requiresAttention } : {}),
+        }),
+      );
 
       logger.info(
         `Topic ${topic.name} (ID: ${topic.id}) comment (ID: ${result.id}) created by user ${user.name} (ID: ${user.id}).`,
@@ -550,7 +618,12 @@ export function getTopicComment(): RequestHandler {
   };
 }
 
-export function updateTopicComment(apiId: AdspId, logger: Logger, eventService: EventService): RequestHandler {
+export function updateTopicComment(
+  apiId: AdspId,
+  logger: Logger,
+  eventService: EventService,
+  auditService: AuditService,
+): RequestHandler {
   return async (req, res, next) => {
     try {
       const user = req.user;
@@ -563,10 +636,20 @@ export function updateTopicComment(apiId: AdspId, logger: Logger, eventService: 
         throw new NotFoundError('topic comment', commentIdValue);
       }
 
+      const authorId = comment.createdBy?.id;
       const result = await topic.updateComment(user, comment, update);
       res.send(result);
 
       eventService.send(commentUpdated(apiId, topic, result));
+      recordCommentAudit(auditService, logger, CommentUpdatedAuditAction, () =>
+        toCommentAuditDetails(user, topic, result, 'updated', {
+          authorId: authorId ?? null,
+          // Only the names of the edited fields are recorded; comment text is never included.
+          updatedFields: ['title', 'content', 'context'].filter((field) =>
+            field === 'title' ? !!update.title : update[field] !== undefined,
+          ),
+        }),
+      );
 
       logger.info(
         `Topic ${topic.name} (ID: ${topic.id}) comment (ID: ${result.id}) updated by user ${user.name} (ID: ${user.id}).`,
@@ -582,7 +665,12 @@ export function updateTopicComment(apiId: AdspId, logger: Logger, eventService: 
   };
 }
 
-export function deleteTopicComment(apiId: AdspId, logger: Logger, eventService: EventService): RequestHandler {
+export function deleteTopicComment(
+  apiId: AdspId,
+  logger: Logger,
+  eventService: EventService,
+  auditService: AuditService,
+): RequestHandler {
   return async (req, res, next) => {
     try {
       const user = req.user;
@@ -599,6 +687,9 @@ export function deleteTopicComment(apiId: AdspId, logger: Logger, eventService: 
 
       if (deleted) {
         eventService.send(commentDeleted(apiId, topic, comment, user));
+        recordCommentAudit(auditService, logger, CommentDeletedAuditAction, () =>
+          toCommentAuditDetails(user, topic, comment, 'deleted', { authorId: comment.createdBy?.id ?? null }),
+        );
         logger.info(
           `Topic ${topic.name} (ID: ${topic.id}) comment (ID: ${comment.id}) deleted by user ${user.name} (ID: ${user.id}).`,
           {
@@ -622,6 +713,7 @@ export function createTopicRouter({
   directory,
   tokenProvider,
   client,
+  auditService,
 }: TopicRouterProps): Router {
   const router = Router();
 
@@ -641,7 +733,7 @@ export function createTopicRouter({
       body('writeRoles').optional().isArray(),
       body('writerRoles.*').optional().isString(),
     ),
-    createTopicType(apiId, logger, directory, client, tokenProvider),
+    createTopicType(apiId, logger, directory, client, tokenProvider, auditService),
   );
   router.get(
     '/topic-types/:topicTypeId',
@@ -669,7 +761,7 @@ export function createTopicRouter({
       body('commenterRoles.*').optional().isString(),
       body('securityClassification').optional().isString().isIn(Object.values(SecurityClassifications)),
     ),
-    updateTopicType(apiId, logger, directory, client, tokenProvider),
+    updateTopicType(apiId, logger, directory, client, tokenProvider, auditService),
   );
   router.delete(
     '/topic-types/:topicTypeId',
@@ -679,7 +771,7 @@ export function createTopicRouter({
         .isLength({ min: 1, max: 50 })
         .matches(/^[a-zA-Z0-9-_ ]{1,50}$/),
     ),
-    deleteTopicType(apiId, logger, repository, directory, client, tokenProvider),
+    deleteTopicType(apiId, logger, repository, directory, client, tokenProvider, auditService),
   );
 
   router.get(
@@ -704,7 +796,7 @@ export function createTopicRouter({
       body('securityClassification').optional().isString(),
       body('resourceId').optional().isString().isLength({ min: 1, max: 1200 }),
     ),
-    createTopic(apiId, logger, repository, eventService),
+    createTopic(apiId, logger, repository, eventService, auditService),
   );
 
   router.get(
@@ -722,13 +814,13 @@ export function createTopicRouter({
       body('commenters').optional().isArray(),
     ),
     getTopic(repository),
-    updateTopic(apiId, logger, eventService),
+    updateTopic(apiId, logger, eventService, auditService),
   );
   router.delete(
     '/topics/:topicId',
     createValidationHandler(param('topicId').isInt()),
     getTopic(repository),
-    deleteTopic(apiId, logger, eventService),
+    deleteTopic(apiId, logger, eventService, auditService),
   );
 
   router.get(
@@ -756,7 +848,7 @@ export function createTopicRouter({
       body('requiresAttention').optional({ nullable: true }).isBoolean(),
     ),
     getTopic(repository),
-    createTopicComment(apiId, logger, eventService),
+    createTopicComment(apiId, logger, eventService, auditService),
   );
 
   router.get(
@@ -775,13 +867,13 @@ export function createTopicRouter({
       body('context').optional().isObject(),
     ),
     getTopic(repository),
-    updateTopicComment(apiId, logger, eventService),
+    updateTopicComment(apiId, logger, eventService, auditService),
   );
   router.delete(
     '/topics/:topicId/comments/:commentId',
     createValidationHandler(param('topicId').isInt(), param('commentId').isInt()),
     getTopic(repository),
-    deleteTopicComment(apiId, logger, eventService),
+    deleteTopicComment(apiId, logger, eventService, auditService),
   );
 
   return router;

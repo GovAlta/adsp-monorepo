@@ -5,7 +5,7 @@ import * as passport from 'passport';
 import * as compression from 'compression';
 import * as helmet from 'helmet';
 import * as cors from 'cors';
-import { assertAuthenticatedHandler, createErrorHandler } from '@core-services/core-common';
+import { assertAuthenticatedHandler, createErrorHandler, createShutdownHandler } from '@core-services/core-common';
 import { environment } from './environments/environment';
 import { logger } from './logger';
 import {
@@ -44,7 +44,8 @@ const initializeApp = async () => {
 
   const repositories = await createRepositories({ ...environment, logger });
 
-  const { // clean-code-ignore: RULE-19 — app bootstrap; routes are covered in router/definition.spec.ts.
+  const {
+    // clean-code-ignore: RULE-19 — app bootstrap; routes are covered in router/definition.spec.ts.
     coreStrategy,
     tenantStrategy,
     tenantHandler,
@@ -55,6 +56,7 @@ const initializeApp = async () => {
     traceHandler,
     directory,
     tokenProvider,
+    shutdownTelemetry,
   } = await initializePlatform(
     {
       serviceId,
@@ -219,10 +221,10 @@ const initializeApp = async () => {
   const errorHandler = createErrorHandler(logger);
   app.use(errorHandler);
 
-  return { app, auditService };
+  return { app, auditService, shutdownTelemetry };
 };
 
-initializeApp().then(({ app, auditService }) => {
+initializeApp().then(({ app, auditService, shutdownTelemetry }) => {
   const port = process.env.PORT || 3336;
 
   const server = app.listen(port, () => {
@@ -231,21 +233,13 @@ initializeApp().then(({ app, auditService }) => {
   server.on('error', (err) => logger.error(`Error encountered in server: ${err}`));
 
   // Stop accepting requests, then deliver any buffered audit events before the process exits.
-  let stopping = false;
-  const shutdown = async () => {
-    if (stopping) return;
-    stopping = true;
-    // Fallback in case the flush or close hangs.
-    setTimeout(() => process.exit(1), 15000).unref();
-    server.close();
-    try {
-      await auditService.flush();
-      process.exit(0);
-    } catch (err) {
-      logger.error(`Error encountered flushing audit events on shutdown: ${err}`);
-      process.exit(1);
-    }
-  };
+  const shutdown = createShutdownHandler({
+    serviceName: 'Value service',
+    server,
+    auditService,
+    shutdownTelemetry,
+    logger,
+  });
   process.once('SIGTERM', shutdown);
   process.once('SIGINT', shutdown);
 });
