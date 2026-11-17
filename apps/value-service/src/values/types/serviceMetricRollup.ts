@@ -29,6 +29,7 @@ export interface ResourceRollupSource {
   contextKey: string;
 }
 
+// clean-code-ignore: RULE-19 — type declarations only; there is nothing here to execute.
 // Coverage is a single contiguous span of whole days per source, extended from one of its edges like
 // the metric interval coverage.
 export interface EventResourceCoverage {

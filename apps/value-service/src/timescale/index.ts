@@ -24,6 +24,7 @@ interface TimescaleRepositoryProps {
   DB_TLS: boolean;
   DB_POOL_MAX: number;
   METRIC_INTERVAL_ROLLUP_STATEMENT_TIMEOUT_MS: number;
+  EVENT_RESOURCE_READ_STATEMENT_TIMEOUT_MS?: number;
 }
 
 interface Repositories {
@@ -44,6 +45,7 @@ export const createRepositories = async ({
   DB_TLS,
   DB_POOL_MAX,
   METRIC_INTERVAL_ROLLUP_STATEMENT_TIMEOUT_MS,
+  EVENT_RESOURCE_READ_STATEMENT_TIMEOUT_MS = 0,
 }: TimescaleRepositoryProps): Promise<Repositories> => {
   const knex = initKnex({
     client: 'postgresql',
@@ -97,10 +99,12 @@ export const createRepositories = async ({
       knex,
       METRIC_INTERVAL_ROLLUP_STATEMENT_TIMEOUT_MS,
     ),
-    // The resource rollup runs under the same statement timeout as the interval rollups it sits beside.
+    // The resource rollup runs under the same statement timeout as the interval rollups it sits beside;
+    // its report reads have a shorter one of their own, since a person is waiting on them.
     eventResourceRollupRepository: new TimescaleEventResourceRollupRepository(
       knex,
       METRIC_INTERVAL_ROLLUP_STATEMENT_TIMEOUT_MS,
+      EVENT_RESOURCE_READ_STATEMENT_TIMEOUT_MS,
     ),
   };
 };
