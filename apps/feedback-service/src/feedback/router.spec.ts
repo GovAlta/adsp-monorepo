@@ -1,4 +1,4 @@
-import { AdspId, TenantService, UnauthorizedUserError, adspId } from '@abgov/adsp-service-sdk';
+import { AdspId, AuditService, TenantService, UnauthorizedUserError, adspId } from '@abgov/adsp-service-sdk';
 import { InvalidOperationError, UnauthorizedError, WorkQueueService } from '@core-services/core-common';
 import { Logger } from 'winston';
 import { Request, Response } from 'express';
@@ -50,7 +50,15 @@ describe('router', () => {
     countTenantSites: jest.fn(),
   };
 
+  const auditServiceMock = {
+    record: jest.fn(),
+    query: jest.fn(),
+    flush: jest.fn(),
+    droppedEventCount: 0,
+  };
+
   beforeEach(() => {
+    auditServiceMock.record.mockReset();
     tenantServiceMock.getTenant.mockReset();
     tenantServiceMock.getTenantByName.mockReset();
     queueServiceMock.enqueue.mockReset();
@@ -71,6 +79,7 @@ describe('router', () => {
         queueService: queueServiceMock as unknown as WorkQueueService<FeedbackWorkItem>,
         valueService: valueServiceMock,
         feedbackSiteService: feedbackSiteServiceMock,
+        auditService: auditServiceMock as unknown as AuditService,
       });
       expect(router).toBeTruthy();
     });
@@ -208,7 +217,11 @@ describe('router', () => {
 
   describe('sendFeedback', () => {
     it('can create handler', () => {
-      const handler = sendFeedback(loggerMock, queueServiceMock as unknown as WorkQueueService<FeedbackWorkItem>);
+      const handler = sendFeedback(
+        loggerMock,
+        queueServiceMock as unknown as WorkQueueService<FeedbackWorkItem>,
+        auditServiceMock as unknown as AuditService,
+      );
       expect(handler).toBeTruthy();
     });
 
@@ -231,7 +244,11 @@ describe('router', () => {
       req.getConfiguration.mockResolvedValueOnce({ sites: { 'http://test.org': { url: 'http://test.org' } } });
       queueServiceMock.enqueue.mockResolvedValueOnce(undefined);
 
-      const handler = sendFeedback(loggerMock, queueServiceMock as unknown as WorkQueueService<FeedbackWorkItem>);
+      const handler = sendFeedback(
+        loggerMock,
+        queueServiceMock as unknown as WorkQueueService<FeedbackWorkItem>,
+        auditServiceMock as unknown as AuditService,
+      );
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ sent: true }));
       expect(queueServiceMock.enqueue).toHaveBeenCalledWith(
@@ -264,7 +281,11 @@ describe('router', () => {
       });
       queueServiceMock.enqueue.mockResolvedValueOnce(undefined);
 
-      const handler = sendFeedback(loggerMock, queueServiceMock as unknown as WorkQueueService<FeedbackWorkItem>);
+      const handler = sendFeedback(
+        loggerMock,
+        queueServiceMock as unknown as WorkQueueService<FeedbackWorkItem>,
+        auditServiceMock as unknown as AuditService,
+      );
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ sent: true }));
       expect(queueServiceMock.enqueue).toHaveBeenCalledWith(
@@ -296,7 +317,11 @@ describe('router', () => {
       req.getConfiguration.mockResolvedValueOnce({ sites: {} });
       queueServiceMock.enqueue.mockResolvedValueOnce(undefined);
 
-      const handler = sendFeedback(loggerMock, queueServiceMock as unknown as WorkQueueService<FeedbackWorkItem>);
+      const handler = sendFeedback(
+        loggerMock,
+        queueServiceMock as unknown as WorkQueueService<FeedbackWorkItem>,
+        auditServiceMock as unknown as AuditService,
+      );
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(next).toHaveBeenCalledWith(expect.any(InvalidOperationError));
       expect(res.json).not.toHaveBeenCalled();
@@ -321,7 +346,11 @@ describe('router', () => {
       req.getConfiguration.mockResolvedValueOnce({ sites: { 'http://test.org': { url: 'http://test.org' } } });
       queueServiceMock.enqueue.mockResolvedValueOnce(undefined);
 
-      const handler = sendFeedback(loggerMock, queueServiceMock as unknown as WorkQueueService<FeedbackWorkItem>);
+      const handler = sendFeedback(
+        loggerMock,
+        queueServiceMock as unknown as WorkQueueService<FeedbackWorkItem>,
+        auditServiceMock as unknown as AuditService,
+      );
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedError));
       expect(res.json).not.toHaveBeenCalled();
@@ -349,7 +378,11 @@ describe('router', () => {
       });
       queueServiceMock.enqueue.mockResolvedValueOnce(undefined);
 
-      const handler = sendFeedback(loggerMock, queueServiceMock as unknown as WorkQueueService<FeedbackWorkItem>);
+      const handler = sendFeedback(
+        loggerMock,
+        queueServiceMock as unknown as WorkQueueService<FeedbackWorkItem>,
+        auditServiceMock as unknown as AuditService,
+      );
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(next).toHaveBeenCalledWith(expect.any(InvalidOperationError));
       expect(res.json).not.toHaveBeenCalled();
