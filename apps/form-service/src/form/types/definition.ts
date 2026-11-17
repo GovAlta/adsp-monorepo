@@ -23,6 +23,7 @@ export interface FormDefinition {
   includeDataInSubmission?: boolean;
   registeredId?: string;
   customSubmissionEvent?: CustomSubmissionEvent;
+  sharepointConfigurationId?: string;
   reviewConfiguration?: ReviewConfiguration;
   registration?: RegistrationConfiguration;
 }
