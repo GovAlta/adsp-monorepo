@@ -27,7 +27,7 @@ export class MongoTenantRepository implements TenantRepository {
         upsert: true,
         new: true,
         lean: true,
-      }
+      },
     );
     return Promise.resolve(this.fromDoc(doc));
   }
@@ -69,8 +69,16 @@ export class MongoTenantRepository implements TenantRepository {
         query.name = { $regex: `^${escapeRegExp(criteria.nameEquals)}$`, $options: 'i' };
       }
 
-      if (criteria.activeOnly) {
-        query.status = { $ne: 'provisioning' };
+      if (criteria.statusEquals) {
+        query.status = criteria.statusEquals;
+      } else if (criteria.activeOnly) {
+        query.status = { $nin: ['provisioning', 'archived'] };
+      } else if (criteria.excludeArchived) {
+        query.status = { $ne: 'archived' };
+      }
+
+      if (criteria.deletedBefore) {
+        query.deletedAt = { $lt: criteria.deletedBefore };
       }
     }
 
@@ -86,6 +94,7 @@ export class MongoTenantRepository implements TenantRepository {
       realm: doc.realm,
       adminEmail: doc.adminEmail,
       status: doc.status || 'active',
+      deletedAt: doc.deletedAt,
     });
   }
 
@@ -95,6 +104,7 @@ export class MongoTenantRepository implements TenantRepository {
       realm: entity.realm,
       adminEmail: entity.adminEmail,
       status: entity.status,
+      deletedAt: entity.deletedAt,
     };
   }
 }

@@ -1,4 +1,4 @@
-import { AuditActionDefinition } from '@abgov/adsp-service-sdk';
+import { AuditActionDefinition, resolveRetentionClass } from '@abgov/adsp-service-sdk';
 import { randomUUID } from 'crypto';
 import { ActionCatalog, RetentionSettings } from '../configuration';
 import { calculateRetentionUntil } from '../model/retention';
@@ -31,6 +31,8 @@ export function enrichEvent(
 ): EnrichedEvent {
   const changeSet = getCapturedChangeSet(event, definition);
   const occurredAt = new Date(event.occurredAt);
+  const retentionClass = resolveRetentionClass(definition);
+
   return {
     id: randomUUID(),
     event_id: event.eventId.toLowerCase(),
@@ -58,8 +60,8 @@ export function enrichEvent(
     change_set_before: changeSet.before ?? null,
     change_set_after: changeSet.after ?? null,
     metadata: event.metadata ?? {},
-    retention_class: definition.retentionClass,
-    retention_until: calculateRetentionUntil(occurredAt, definition.retentionClass, classes),
+    retention_class: retentionClass,
+    retention_until: calculateRetentionUntil(occurredAt, retentionClass, classes),
     originalEvent: event,
   };
 }

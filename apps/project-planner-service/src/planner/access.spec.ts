@@ -10,6 +10,7 @@ import {
   loadSolution,
   requirePlannerAdmin,
   requirePlannerUser,
+  requireSolutionOwner,
 } from './access';
 import { PlannerServiceRoles } from './roles';
 import { Solution } from './types';
@@ -142,6 +143,35 @@ describe('planner access', () => {
       await getSolution(repository)(makeRequest(owner), res, next);
 
       expect(next).toHaveBeenCalledWith(expect.any(NotFoundError));
+    });
+  });
+
+  describe('requireSolutionOwner', () => {
+    it('lets the creator through', () => {
+      const req = makeRequest(owner);
+      req['solution'] = solution;
+
+      requireSolutionOwner(req, res, next);
+
+      expect(next).toHaveBeenCalledWith();
+    });
+
+    it('rejects an admin who is not the creator', () => {
+      const req = makeRequest(admin);
+      req['solution'] = solution;
+
+      requireSolutionOwner(req, res, next);
+
+      expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedUserError));
+    });
+
+    it('rejects a non-owner, non-admin user', () => {
+      const req = makeRequest(stranger);
+      req['solution'] = solution;
+
+      requireSolutionOwner(req, res, next);
+
+      expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedUserError));
     });
   });
 });

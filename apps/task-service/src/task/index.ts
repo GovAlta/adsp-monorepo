@@ -1,10 +1,11 @@
-import { AdspId, adspId, EventService, ServiceDirectory, TokenProvider } from '@abgov/adsp-service-sdk';
+import { AdspId, adspId, AuditService, EventService, ServiceDirectory, TokenProvider } from '@abgov/adsp-service-sdk';
 import { Application } from 'express';
 import { Logger } from 'winston';
 import { TaskRepository } from './repository';
 import { createQueueRouter, createTaskRouter } from './router';
 import { CommentService } from './comment';
 
+export * from './audit';
 export * from './configuration';
 export * from './events';
 export * from './roles';
@@ -21,6 +22,7 @@ interface TaskMiddlewareProps {
   tokenProvider: TokenProvider;
   taskRepository: TaskRepository;
   eventService: EventService;
+  auditService: AuditService;
   commentService: CommentService;
 }
 export function applyTaskMiddleware(app: Application, { serviceId, ...props }: TaskMiddlewareProps): Application {

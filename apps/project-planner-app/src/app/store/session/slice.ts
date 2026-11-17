@@ -6,6 +6,7 @@ import { createKeycloakClient, getKeycloakClient } from './keycloak';
 export interface SessionState {
   initialized: boolean;
   authenticated: boolean;
+  userId?: string;
   userInfo?: { name: string; email: string };
   resourceAccess?: Record<string, { roles: string[] }>;
 }
@@ -16,6 +17,7 @@ const toSession = (authenticated: boolean, token?: KeycloakTokenParsed): Session
   authenticated && token
     ? {
         authenticated: true,
+        userId: token.sub,
         userInfo: { name: token['name'] || token['preferred_username'] || token['email'], email: token['email'] },
         resourceAccess: token.resource_access,
       }
@@ -54,6 +56,7 @@ const sessionSlice = createSlice({
   reducers: {
     sessionExpired: (state) => {
       state.authenticated = false;
+      state.userId = undefined;
       state.userInfo = undefined;
       state.resourceAccess = undefined;
     },

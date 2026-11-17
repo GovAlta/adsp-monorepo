@@ -7,7 +7,10 @@ import { FileRepository } from '../repository';
 import { getBeforeLastAccessed } from './deleteOldFiles';
 import { createDeleteOldFilesJob } from './deleteOldFiles';
 import { FileEntity } from '../model';
+import { FileDeletedAuditAction, FileServiceJobAuditActor } from '../audit';
 import { Results } from '@core-services/core-common';
+
+jest.mock('file-type', () => ({ fileTypeFromBuffer: jest.fn() }));
 
 describe('Delete old files', () => {
   it('can return correct before last accessed date', () => {
@@ -53,6 +56,7 @@ describe('Delete old files', () => {
     getTenantByRealm: jest.fn(),
   };
 
+  const auditServiceMock = { record: jest.fn(), query: jest.fn(), flush: jest.fn(), droppedEventCount: 0 };
   const eventServiceMock = {
     send: jest.fn(),
   };
@@ -112,6 +116,7 @@ describe('Delete old files', () => {
       tenantService: tenantServiceMock,
       tokenProvider: tokenProviderMock,
       eventService: eventServiceMock,
+      auditService: auditServiceMock,
     });
 
     expect(deleteJob).toBeTruthy();
@@ -144,6 +149,7 @@ describe('Delete old files', () => {
       tenantService: tenantServiceMock,
       tokenProvider: tokenProviderMock,
       eventService: eventServiceMock,
+      auditService: auditServiceMock,
     });
 
     configurationService.getConfiguration.mockResolvedValueOnce({
@@ -182,6 +188,7 @@ describe('Delete old files', () => {
       tenantService: tenantServiceMock,
       tokenProvider: tokenProviderMock,
       eventService: eventServiceMock,
+      auditService: auditServiceMock,
     });
 
     configurationService.getConfiguration.mockResolvedValueOnce({
@@ -204,6 +211,7 @@ describe('Delete old files', () => {
       tenantService: tenantServiceMock,
       tokenProvider: tokenProviderMock,
       eventService: eventServiceMock,
+      auditService: auditServiceMock,
     });
 
     configurationService.getConfiguration.mockResolvedValueOnce({
@@ -213,5 +221,50 @@ describe('Delete old files', () => {
     await deleteJob();
 
     expect(entity.markForDeletion).toHaveBeenCalled();
+  });
+
+  it('records file deleted by the job for retention', async () => {
+    auditServiceMock.record.mockReset();
+    const marked = new FileEntity(null, null, null, {
+      tenantId,
+      id: 'file-1',
+      filename: 'test.txt',
+      recordId: 'my-record-1',
+      size: 100,
+      created: new Date(),
+      createdBy: { id: 'user-1', name: 'testy' },
+      scanned: true,
+      deleted: true,
+      infected: false,
+    });
+    jest.spyOn(entity, 'markForDeletion').mockResolvedValue(marked);
+
+    const deleteJob = createDeleteOldFilesJob({
+      apiId: adspId`urn:ads:platform:file-service`,
+      serviceId: adspId`urn:ads:platform:file-service`,
+      logger,
+      fileRepository: fileServiceMock,
+      configurationService: configurationService as unknown as ConfigurationService,
+      tenantService: tenantServiceMock,
+      tokenProvider: tokenProviderMock,
+      eventService: eventServiceMock,
+      auditService: auditServiceMock,
+    });
+
+    configurationService.getConfiguration.mockResolvedValueOnce({
+      a: { id: 'a', rules: { retention: { active: true, deleteInDays: 12 } } },
+    });
+
+    await deleteJob();
+
+    expect(auditServiceMock.record).toHaveBeenCalledWith(
+      FileDeletedAuditAction,
+      expect.objectContaining({
+        tenantId,
+        actor: FileServiceJobAuditActor,
+        resource: { type: 'file', id: 'file-1', name: 'test.txt' },
+        metadata: expect.objectContaining({ reason: 'retention', retentionDays: 12 }),
+      }),
+    );
   });
 });

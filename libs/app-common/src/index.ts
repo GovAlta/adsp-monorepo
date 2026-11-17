@@ -12,6 +12,9 @@ export * from './components/Recaptcha';
 export * from './components/RowSkeleton';
 export * from './components/RowLoadMore';
 export * from './components/AgentChat';
+export * from './components/ConversationStatusBar';
+export * from './components/ResetChatButton';
+export * from './components/conversationUsage';
 export * from './components/resizable';
 
 export * from './formTemplates/defaultMultiPageForm';

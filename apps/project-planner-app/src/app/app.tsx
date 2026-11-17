@@ -14,12 +14,42 @@ import {
 import { useDispatch, useSelector } from 'react-redux';
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import styled from 'styled-components';
+import { Page, Main } from '@components/Html';
 import { AppDispatch, RootState } from './store';
 import { DismissNotification } from './store/notifications/actions';
-import { MessageType } from './store/notifications/models';
+import { Notification, MessageType } from './store/notifications/models';
 import { selectIsPlannerUser } from './store/session/selectors';
 import { initializeSession, loginUser, logoutUser } from './store/session/slice';
 import { ProjectPlannerRouter } from './planner';
+
+const SUCCESS_NOTIFICATION_DISMISS_MS = 6000;
+
+const NotificationItem = styled.div`
+  margin-bottom: 2px;
+`;
+
+interface NotificationBannerProps {
+  notification: Notification;
+  onDismiss: () => void;
+}
+
+const NotificationBanner: FunctionComponent<NotificationBannerProps> = ({ notification, onDismiss }) => {
+  useEffect(() => {
+    if (notification.type !== MessageType.success) {
+      return;
+    }
+    const timer = window.setTimeout(onDismiss, SUCCESS_NOTIFICATION_DISMISS_MS);
+    return () => window.clearTimeout(timer);
+  }, []);
+
+  return (
+    <NotificationItem>
+      <GoabNotification type={notification.type === MessageType.error ? 'emergency' : 'event'} onDismiss={onDismiss}>
+        {notification.message}
+      </GoabNotification>
+    </NotificationItem>
+  );
+};
 
 const Notifications: FunctionComponent = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -28,13 +58,11 @@ const Notifications: FunctionComponent = () => {
   return (
     <>
       {notifications.map((notification, index) => (
-        <GoabNotification
-          key={index}
-          type={notification.type === MessageType.error ? 'emergency' : 'event'}
+        <NotificationBanner
+          key={notification.id ?? index}
+          notification={notification}
           onDismiss={() => dispatch(DismissNotification(notification))}
-        >
-          {notification.message}
-        </GoabNotification>
+        />
       ))}
     </>
   );
@@ -71,23 +99,27 @@ export const AppContent: FunctionComponent = () => {
     content = <GoabCircularProgress visible message="Loading..." />;
   } else if (!session.authenticated) {
     content = (
-      <section>
-        <h1>Project planner</h1>
-        <p>
-          Describe a business problem, and the planner recommends which ADSP services could help. Sign in with your
-          Government of Alberta account to start.
-        </p>
-        <GoabButton testId="sign-in" onClick={() => dispatch(loginUser())}>
-          Sign in
-        </GoabButton>
-      </section>
+      <Page>
+        <Main>
+          <h1>Project planner</h1>
+          <p>
+            Describe a business problem, and the planner recommends which ADSP services could help. Sign in with your
+            Government of Alberta account to start.
+          </p>
+          <GoabButton testId="sign-in" onClick={() => dispatch(loginUser())}>
+            Sign in
+          </GoabButton>
+        </Main>
+      </Page>
     );
   } else if (!isPlannerUser) {
     content = (
-      <section>
-        <h1>Project planner</h1>
-        <p>You don't have access to the project planner.</p>
-      </section>
+      <Page>
+        <Main>
+          <h1>Project planner</h1>
+          <p>You don't have access to the project planner.</p>
+        </Main>
+      </Page>
     );
   } else {
     content = (

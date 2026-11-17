@@ -8,7 +8,7 @@ grand_parent: Tutorials
 
 ## Getting Started
 
-The PDF Service allows you to automatically build a customized PDF document from an HTML template and some template variables. You can use the PDF Service's [Template Editor](/adsp-monorepo/templates/pdf/building-a-template.html) to build one interactively, and once it's in the system you can start using it in your application to generate downloadable PDF documents for your end users.
+The PDF Service allows you to automatically build a customized PDF document from an HTML template and some template variables. You can use the PDF Service's [Template Editor](/adsp-monorepo/tutorials/pdf-service/building-a-template.html) to build one interactively, and once it's in the system you can start using it in your application to generate downloadable PDF documents for your end users.
 
 PDF generation is accomplished through a series of API calls that create the PDF and store it within the [File Service](/adsp-monorepo/services/file-service.html), where you have access to it through a file ID. The main steps are:
 
@@ -21,9 +21,9 @@ Although you can call the API's from any language, the tutorial examples are wri
 
 The API calls to the Platform Service require authentication, via Keycloak. See the instructions for [setting up a tenant and getting access tokens](/adsp-monorepo/tutorials/access-service/introduction.html) for details on how to do this.
 
-Continuing on from the tutorial on how to [build a template](/adsp-monorepo/tutorials/building-a-template.html) with the PDF service, our examples will be based on the template set up there for the Child Service's Intervention Record Check. Familiarity with that particular template is not necessary to follow along here, but the information will be useful if you want to understand how the pieces relate to each other.
+Continuing on from the tutorial on how to [build a template](/adsp-monorepo/tutorials/pdf-service/building-a-template.html) with the PDF service, our examples will be based on the template set up there for the Child Service's Intervention Record Check. Familiarity with that particular template is not necessary to follow along here, but the information will be useful if you want to understand how the pieces relate to each other.
 
-See the [PDF Service](https://api.adsp-uat.alberta.ca/autotest/?urls.primaryName=PDF%20service) Swagger documentation for detailed descriptions of the APIs.
+See the [PDF Service](https://api.adsp.alberta.ca/platform/?urls.primaryName=PDF%20service) Swagger documentation for detailed descriptions of the APIs.
 
 ## Submit a PDF Generator Job
 
@@ -99,7 +99,7 @@ where the first three properties are as described above, and the _result_ proper
 
 - _id_ the id of the PDF file generated, which can be used to access the file along with the [File Service](/adsp-monorepo/services/file-service.html)
 - _filename_ the name of the file generated
-- _urn_ the [Universal Resource Name](https://en.wikipedia.org/wiki/Uniform_Resource_Name) of the PDF file that you can use along with the [File Service](/adsp-monorepo/services/directory-service.html) to lookup the URL to use for downloading it.
+- _urn_ the [Universal Resource Name](https://en.wikipedia.org/wiki/Uniform_Resource_Name) of the PDF file that you can use along with the [Directory Service](/adsp-monorepo/services/directory-service.html) to lookup the URL to use for downloading it.
 
 Polling forces the application developer to manage retrying and sleeping between tries, however. A less fussy approach would be to use the [Push Service](/adsp-monorepo/services/push-service.html). It enables applications to connect to a socket and listen for events of a specific type, such as "pdf-generated". The latter occurs when a Job successfully creates a PDF. You can connect to a Push Service socket as follows:
 
@@ -115,7 +115,7 @@ const socket = io(
 );
 
 socket.on('pdf-service:pdf-generated', (pdfEvent) => {
-  If (pdfEvent.jobId === jobID ) {
+  if (pdfEvent.payload.jobId === jobId) {
         // Handle the event.
   }
 });
@@ -125,14 +125,21 @@ The listener will pick up on all pdf-generated events for your tenant, so you wi
 
 ```typescript
 {
-    jobId,
-    templateId,
-    file: { id, filename, urn },
-    requestedBy
+    namespace: 'pdf-service',
+    name: 'pdf-generated',
+    correlationId, // the job ID
+    context,
+    timestamp,
+    payload: {
+        jobId,
+        templateId,
+        file: { id, filename, urn },
+        requestedBy
+    }
 }
 ```
 
-Whichever method you use, the important part is the file ID you get upon successful generation. This identifies the PDF document in the [File Service](/adsp-monorepo/services/file-service.html) which you can use to access it. Job information is cached and has a finite TTL of about 12 hours. Please be sure your application accesses the file ID before the job information expires.
+Whichever method you use, the important part is the file ID you get upon successful generation. This identifies the PDF document in the [File Service](/adsp-monorepo/services/file-service.html) which you can use to access it. Job information is cached and has a finite TTL of about 24 hours after its last update. Please be sure your application accesses the file ID before the job information expires.
 
 ## Download a PDF File
 

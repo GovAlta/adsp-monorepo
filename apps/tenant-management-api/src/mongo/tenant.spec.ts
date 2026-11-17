@@ -45,7 +45,7 @@ describe('Mongo: Tenant', () => {
     const createTenants = async (...names: string[]) => {
       created = await createMockData<TenantEntity>(
         repo,
-        names.map((name, index) => ({ adminEmail: `admin${index}@example.ca`, realm: `realm-${index}`, name }))
+        names.map((name, index) => ({ adminEmail: `admin${index}@example.ca`, realm: `realm-${index}`, name })),
       );
       return created;
     };
@@ -79,7 +79,7 @@ describe('Mongo: Tenant', () => {
         await createTenants('My Tenant', 'Other Tenant');
 
         expect(await repo.find({ nameEquals: name })).toEqual([]);
-      }
+      },
     );
 
     // New tenants cannot have these characters in their name, but a name is still matched literally.
@@ -91,7 +91,7 @@ describe('Mongo: Tenant', () => {
         const results = await repo.find({ nameEquals: name });
 
         expect(results.map((result) => result.name)).toEqual([name]);
-      }
+      },
     );
 
     it('does not find a tenant for a name that differs by a character that a pattern could match', async () => {
@@ -107,6 +107,76 @@ describe('Mongo: Tenant', () => {
 
       expect(await repo.find({ nameEquals: 'my tenant', realmEquals: 'realm-0' })).toHaveLength(1);
       expect(await repo.find({ nameEquals: 'my tenant', realmEquals: 'other' })).toHaveLength(0);
+    });
+  });
+
+  describe('find by status', () => {
+    let created: TenantEntity[] = [];
+
+    beforeEach(async () => {
+      created = await createMockData<TenantEntity>(repo, [
+        { adminEmail: 'a@example.ca', realm: 'realm-a', name: 'Active', status: 'active' },
+        { adminEmail: 'p@example.ca', realm: 'realm-p', name: 'Provisioning', status: 'provisioning' },
+        {
+          adminEmail: 'r@example.ca',
+          realm: 'realm-r',
+          name: 'Archived',
+          status: 'archived',
+          deletedAt: new Date('2026-01-01'),
+        },
+        {
+          adminEmail: 'n@example.ca',
+          realm: 'realm-n',
+          name: 'Newly archived',
+          status: 'archived',
+          deletedAt: new Date(),
+        },
+      ]);
+    });
+
+    afterEach(async () => {
+      for (const tenant of created) {
+        await repo.delete(tenant.id);
+      }
+      created = [];
+    });
+
+    // Other tests leave tenants behind, so only the tenants of this block are compared.
+    const names = (results: TenantEntity[]) =>
+      results
+        .filter((result) => created.some((tenant) => tenant.id === result.id))
+        .map((result) => result.name)
+        .sort();
+
+    it('can find only active tenants', async () => {
+      expect(names(await repo.find({ activeOnly: true }))).toEqual(['Active']);
+    });
+
+    it('can exclude archived tenants', async () => {
+      expect(names(await repo.find({ excludeArchived: true }))).toEqual(['Active', 'Provisioning']);
+    });
+
+    it('can find archived tenants', async () => {
+      expect(names(await repo.find({ statusEquals: 'archived' }))).toEqual(['Archived', 'Newly archived']);
+    });
+
+    it('can find archived tenants deleted before a date', async () => {
+      const results = await repo.find({ statusEquals: 'archived', deletedBefore: new Date('2026-06-01') });
+      expect(names(results)).toEqual(['Archived']);
+    });
+
+    it('can save archive and restore of a tenant', async () => {
+      const [tenant] = await repo.find({ nameEquals: 'Active' });
+
+      tenant.archive();
+      const archived = await tenant.save();
+      expect(archived.status).toBe('archived');
+      expect(archived.deletedAt).toBeInstanceOf(Date);
+
+      archived.restore();
+      const restored = await archived.save();
+      expect(restored.status).toBe('active');
+      expect(restored.deletedAt).toBeFalsy();
     });
   });
 });

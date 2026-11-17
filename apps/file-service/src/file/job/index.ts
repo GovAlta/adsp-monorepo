@@ -1,5 +1,6 @@
 import {
   AdspId,
+  AuditService,
   EventService,
   TenantService,
   TokenProvider,
@@ -33,6 +34,7 @@ interface FileJobProps {
   scanService: ScanService;
   queueService: WorkQueueService<FileServiceWorkItem>;
   eventService: EventService;
+  auditService: AuditService;
   tenantService: TenantService;
   tokenProvider: TokenProvider;
   configurationService: ConfigurationService;
@@ -67,7 +69,7 @@ export const createFileJobs = (props: FileJobProps): void => {
         break;
       default: {
         props.logger.debug(
-          `Received unrecognized file job '${item.work}' for file ${item.file.filename} (ID: ${item.file.id}).`
+          `Received unrecognized file job '${item.work}' for file ${item.file.filename} (ID: ${item.file.id}).`,
         );
         done();
         break;

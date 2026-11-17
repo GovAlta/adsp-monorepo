@@ -4,6 +4,7 @@ import { Logger } from 'winston';
 import { FileEntity } from '../model';
 import { FileRepository } from '../repository';
 import { ScanService } from '../scan';
+import { FileScanCompletedAuditAction, FileScanThreatFoundAuditAction, FileServiceJobAuditActor } from '../audit';
 import { createScanJob } from './scan';
 
 describe('Scan Job', () => {
@@ -18,11 +19,13 @@ describe('Scan Job', () => {
   let repositoryMock: Mock<FileRepository> = null;
   let scanServiceMock: Mock<ScanService> = null;
   let eventServiceMock: Mock<EventService> = null;
+  const auditServiceMock = { record: jest.fn(), query: jest.fn(), flush: jest.fn(), droppedEventCount: 0 };
 
   beforeEach(() => {
     repositoryMock = new Mock<FileRepository>();
     scanServiceMock = new Mock<ScanService>();
     eventServiceMock = new Mock<EventService>();
+    auditServiceMock.record.mockReset();
   });
 
   it('can be created', () => {
@@ -32,6 +35,7 @@ describe('Scan Job', () => {
       scanService: scanServiceMock.object(),
       fileRepository: repositoryMock.object(),
       eventService: eventServiceMock.object(),
+      auditService: auditServiceMock,
     });
 
     expect(scanJob).toBeTruthy();
@@ -44,6 +48,7 @@ describe('Scan Job', () => {
       scanService: scanServiceMock.object(),
       fileRepository: repositoryMock.object(),
       eventService: eventServiceMock.object(),
+      auditService: auditServiceMock,
     });
 
     const fileEntityMock = new Mock<FileEntity>();
@@ -73,6 +78,7 @@ describe('Scan Job', () => {
       scanService: scanServiceMock.object(),
       fileRepository: repositoryMock.object(),
       eventService: eventServiceMock.object(),
+      auditService: auditServiceMock,
     });
 
     const fileEntityMock = new Mock<FileEntity>();
@@ -103,6 +109,7 @@ describe('Scan Job', () => {
       scanService: scanServiceMock.object(),
       fileRepository: repositoryMock.object(),
       eventService: eventServiceMock.object(),
+      auditService: auditServiceMock,
     });
 
     const fileEntityMock = new Mock<FileEntity>();
@@ -132,6 +139,7 @@ describe('Scan Job', () => {
       scanService: scanServiceMock.object(),
       fileRepository: repositoryMock.object(),
       eventService: eventServiceMock.object(),
+      auditService: auditServiceMock,
     });
 
     const fileEntityMock = new Mock<FileEntity>();
@@ -162,6 +170,7 @@ describe('Scan Job', () => {
       scanService: scanServiceMock.object(),
       fileRepository: repositoryMock.object(),
       eventService: eventServiceMock.object(),
+      auditService: auditServiceMock,
     });
 
     const fileEntityMock = new Mock<FileEntity>();
@@ -182,6 +191,7 @@ describe('Scan Job', () => {
       scanService: scanServiceMock.object(),
       fileRepository: repositoryMock.object(),
       eventService: eventServiceMock.object(),
+      auditService: auditServiceMock,
     });
 
     const fileEntityMock = new Mock<FileEntity>();
@@ -202,6 +212,7 @@ describe('Scan Job', () => {
       scanService: scanServiceMock.object(),
       fileRepository: repositoryMock.object(),
       eventService: eventServiceMock.object(),
+      auditService: auditServiceMock,
     });
 
     const fileEntityMock = new Mock<FileEntity>();
@@ -225,6 +236,7 @@ describe('Scan Job', () => {
       scanService: scanServiceMock.object(),
       fileRepository: repositoryMock.object(),
       eventService: eventServiceMock.object(),
+      auditService: auditServiceMock,
     });
 
     const fileEntityMock = new Mock<FileEntity>();
@@ -247,6 +259,7 @@ describe('Scan Job', () => {
       scanService: scanServiceMock.object(),
       fileRepository: repositoryMock.object(),
       eventService: eventServiceMock.object(),
+      auditService: auditServiceMock,
     });
 
     const fileEntityMock = new Mock<FileEntity>();
@@ -261,5 +274,103 @@ describe('Scan Job', () => {
     await scanJob(null, fileEntityMock.object(), done);
     expect(done).toHaveBeenCalledWith(expect.any(Error));
     fileEntityMock.verify((instance) => instance.updateScanResult(It.IsAny()), Times.Never());
+  });
+
+  describe('audit', () => {
+    const createJob = (scanService: ScanService) =>
+      createScanJob({
+        apiId,
+        logger,
+        scanService,
+        fileRepository: repositoryMock.object(),
+        eventService: { send: jest.fn() },
+        auditService: auditServiceMock,
+      });
+
+    const createFile = () =>
+      ({
+        tenantId,
+        id: 'file-1',
+        filename: 'invoice.pdf',
+        typeId: 'supporting-documents',
+        recordId: 'application-123',
+        size: 100,
+        deleted: false,
+        updateScanResult: jest.fn(function (infected: boolean) {
+          this.scanned = true;
+          this.infected = infected;
+          return Promise.resolve(this);
+        }),
+      }) as unknown as FileEntity;
+
+    it('records scan completed for a clean file', async () => {
+      const file = createFile();
+      repositoryMock.setup((instance) => instance.get(It.IsAny())).returns(Promise.resolve(file));
+      const scanJob = createJob({ scan: jest.fn().mockResolvedValue({ scanned: true, infected: false }) });
+
+      const done = jest.fn();
+      await scanJob(tenantId, file, done);
+
+      expect(done).toHaveBeenCalledWith();
+      expect(auditServiceMock.record).toHaveBeenCalledTimes(1);
+      expect(auditServiceMock.record).toHaveBeenCalledWith(
+        FileScanCompletedAuditAction,
+        expect.objectContaining({
+          tenantId,
+          actor: FileServiceJobAuditActor,
+          resource: { type: 'file', id: 'file-1', name: 'invoice.pdf' },
+          metadata: expect.objectContaining({ scanResult: 'clean', recordId: 'application-123' }),
+        }),
+      );
+    });
+
+    it('records scan completed and critical threat found for an infected file', async () => {
+      const file = createFile();
+      repositoryMock.setup((instance) => instance.get(It.IsAny())).returns(Promise.resolve(file));
+      const scanJob = createJob({
+        scan: jest.fn().mockResolvedValue({ scanned: true, infected: true, threats: ['Eicar-Signature'] }),
+      });
+
+      await scanJob(tenantId, file, jest.fn());
+
+      expect(auditServiceMock.record).toHaveBeenCalledTimes(2);
+      expect(auditServiceMock.record).toHaveBeenCalledWith(
+        FileScanCompletedAuditAction,
+        expect.objectContaining({
+          metadata: expect.objectContaining({ scanResult: 'threat', threats: ['Eicar-Signature'] }),
+        }),
+      );
+      expect(auditServiceMock.record).toHaveBeenCalledWith(
+        FileScanThreatFoundAuditAction,
+        expect.objectContaining({
+          resource: { type: 'file', id: 'file-1', name: 'invoice.pdf' },
+          metadata: expect.objectContaining({ threats: ['Eicar-Signature'] }),
+        }),
+      );
+      expect(FileScanThreatFoundAuditAction.severity).toBe('critical');
+    });
+
+    it('records threat found without threat names when the provider does not report them', async () => {
+      const file = createFile();
+      repositoryMock.setup((instance) => instance.get(It.IsAny())).returns(Promise.resolve(file));
+      const scanJob = createJob({ scan: jest.fn().mockResolvedValue({ scanned: true, infected: true }) });
+
+      await scanJob(tenantId, file, jest.fn());
+
+      expect(auditServiceMock.record).toHaveBeenCalledWith(
+        FileScanThreatFoundAuditAction,
+        expect.objectContaining({ metadata: expect.not.objectContaining({ threats: expect.anything() }) }),
+      );
+    });
+
+    it('does not record when the file is not scanned', async () => {
+      const file = createFile();
+      repositoryMock.setup((instance) => instance.get(It.IsAny())).returns(Promise.resolve(file));
+      const scanJob = createJob({ scan: jest.fn().mockResolvedValue({ scanned: false, infected: false }) });
+
+      await scanJob(tenantId, file, jest.fn());
+
+      expect(auditServiceMock.record).not.toHaveBeenCalled();
+    });
   });
 });

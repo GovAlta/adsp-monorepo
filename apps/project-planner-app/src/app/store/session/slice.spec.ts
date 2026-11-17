@@ -31,6 +31,7 @@ describe('session', () => {
     });
 
   const plannerRoles = (roles: string[]) => ({
+    sub: 'user-1',
     name: 'Pat Planner',
     email: 'pat@example.com',
     resource_access: { 'urn:ads:platform:project-planner-service': { roles } },
@@ -81,6 +82,7 @@ describe('session', () => {
     expect(store.getState().session).toEqual(
       expect.objectContaining({
         authenticated: true,
+        userId: 'user-1',
         userInfo: { name: 'Pat Planner', email: 'pat@example.com' },
         resourceAccess: { 'urn:ads:platform:project-planner-service': { roles: ['planner-user'] } },
       }),

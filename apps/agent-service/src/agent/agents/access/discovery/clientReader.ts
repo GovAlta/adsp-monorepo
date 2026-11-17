@@ -1,20 +1,14 @@
-import type { User } from '@abgov/adsp-service-sdk';
-import axios from 'axios';
-import { mapRequestError, RealmClientResult, RequestErrorReasons } from './realmClient';
-import { ACCESS_REQUEST_TIMEOUT_MS, createProblem } from './types';
-import { isRecord } from './values';
+import { AdminReadTarget, isRepresentationList, KeycloakRepresentation, readAdmin } from './adminRead';
+import { RealmClientResult, RequestErrorReasons } from './realmClient';
+import { displayText, isRecord, optionalString } from './values';
+
+export type { KeycloakRepresentation } from './adminRead';
 
 /**
  * Where a client read goes: the Keycloak host and realm from the user's resolved scope, read with the user's own
  * token so Keycloak enforces the user's realm-management permissions.
  */
-export interface ClientReaderTarget {
-  host: string;
-  realm: string;
-  user: User;
-}
-
-export type KeycloakRepresentation = Record<string, unknown>;
+export type ClientReaderTarget = AdminReadTarget;
 
 export interface KeycloakClientConfiguration {
   client: KeycloakRepresentation;
@@ -27,51 +21,47 @@ interface ListClientsOptions {
   max: number;
 }
 
-const LIST_REASONS: RequestErrorReasons = { forbidden: 'NO_CLIENT_PERMISSION', notFound: 'REALM_NOT_FOUND' };
-const CLIENT_REASONS: RequestErrorReasons = { forbidden: 'NO_CLIENT_PERMISSION', notFound: 'CLIENT_NOT_FOUND' };
+// Searching by name or description reads the realm's clients and filters them here, since Keycloak's client search
+// only matches client IDs. Realms rarely have more clients than this.
+export const MAX_SCANNED_CLIENTS = 500;
 
-function isRepresentationList(value: unknown): value is KeycloakRepresentation[] {
-  return Array.isArray(value) && value.every(isRecord);
+/**
+ * Whether the client's ID, name or description contains the text, ignoring case.
+ */
+export function clientMatchesText(client: KeycloakRepresentation, text: string): boolean {
+  const search = text.toLowerCase();
+  return [optionalString(client.clientId), displayText(client.name), displayText(client.description)].some((value) =>
+    value?.toLowerCase().includes(search),
+  );
 }
 
-// A response that isn't JSON of the expected shape (for example a proxy error page) means Keycloak wasn't reached.
-const UNEXPECTED_RESPONSE = createProblem('unreachable', 'ENVIRONMENT_UNREACHABLE');
+const LIST_REASONS: RequestErrorReasons = { forbidden: 'NO_CLIENT_PERMISSION', notFound: 'REALM_NOT_FOUND' };
+const CLIENT_REASONS: RequestErrorReasons = { forbidden: 'NO_CLIENT_PERMISSION', notFound: 'CLIENT_NOT_FOUND' };
 
 /**
  * Reads Keycloak client configuration through the Admin REST API. Only GET requests are ever made.
  */
 export function createClientReader() {
-  async function get<T>(
-    { host, realm, user }: ClientReaderTarget,
-    path: string,
-    reasons: RequestErrorReasons,
-    isExpected: (data: unknown) => data is T,
-    params?: Record<string, string | number | boolean>,
-  ): Promise<RealmClientResult<T>> {
-    const url = new URL(`/auth/admin/realms/${encodeURIComponent(realm)}${path}`, host);
-
-    try {
-      const { data } = await axios.get<unknown>(url.href, {
-        headers: { Authorization: `Bearer ${user.token.bearer}`, Accept: 'application/json' },
-        params,
-        timeout: ACCESS_REQUEST_TIMEOUT_MS,
-      });
-
-      return isExpected(data) ? { ok: true, value: data } : { ok: false, problem: UNEXPECTED_RESPONSE };
-    } catch (err) {
-      return { ok: false, problem: mapRequestError(err, reasons) };
-    }
+  function listAllClients(target: ClientReaderTarget): Promise<RealmClientResult<KeycloakRepresentation[]>> {
+    return readAdmin(target, '/clients', LIST_REASONS, isRepresentationList, { first: 0, max: MAX_SCANNED_CLIENTS });
   }
 
   /**
-   * Lists clients in the realm, optionally only those whose client ID contains the search text (case-insensitive).
+   * Lists clients in the realm, optionally only those whose client ID, name or description contains the search text
+   * (case-insensitive).
    */
   async function listClients(
     target: ClientReaderTarget,
     { search, max }: ListClientsOptions,
   ): Promise<RealmClientResult<KeycloakRepresentation[]>> {
-    const params = search ? { clientId: search, search: true, first: 0, max } : { first: 0, max };
-    return get(target, '/clients', LIST_REASONS, isRepresentationList, params);
+    if (!search) {
+      return readAdmin(target, '/clients', LIST_REASONS, isRepresentationList, { first: 0, max });
+    }
+
+    const all = await listAllClients(target);
+    return all.ok === false
+      ? all
+      : { ok: true, value: all.value.filter((client) => clientMatchesText(client, search)).slice(0, max) };
   }
 
   /**
@@ -83,7 +73,7 @@ export function createClientReader() {
     target: ClientReaderTarget,
     clientId: string,
   ): Promise<RealmClientResult<string | undefined>> {
-    const result = await get(target, '/clients', LIST_REASONS, isRepresentationList, { clientId });
+    const result = await readAdmin(target, '/clients', LIST_REASONS, isRepresentationList, { clientId });
     if (result.ok === false) {
       return result;
     }
@@ -106,9 +96,9 @@ export function createClientReader() {
   ): Promise<RealmClientResult<KeycloakClientConfiguration>> {
     const clientPath = `/clients/${encodeURIComponent(id)}`;
     const [client, roles, scopeMappings] = await Promise.all([
-      get(target, clientPath, CLIENT_REASONS, isRecord),
-      get(target, `${clientPath}/roles`, CLIENT_REASONS, isRepresentationList),
-      get(target, `${clientPath}/scope-mappings`, CLIENT_REASONS, isRecord),
+      readAdmin(target, clientPath, CLIENT_REASONS, isRecord),
+      readAdmin(target, `${clientPath}/roles`, CLIENT_REASONS, isRepresentationList),
+      readAdmin(target, `${clientPath}/scope-mappings`, CLIENT_REASONS, isRecord),
     ]);
 
     if (client.ok === false) {
@@ -124,7 +114,62 @@ export function createClientReader() {
     return { ok: true, value: { client: client.value, roles: roles.value, scopeMappings: scopeMappings.value } };
   }
 
-  return { listClients, findClientInternalId, getClientConfiguration };
+  /**
+   * Reads the Keycloak user that represents the client's service account.
+   */
+  function getServiceAccountUser(
+    target: ClientReaderTarget,
+    id: string,
+  ): Promise<RealmClientResult<KeycloakRepresentation>> {
+    return readAdmin(target, `/clients/${encodeURIComponent(id)}/service-account-user`, CLIENT_REASONS, isRecord);
+  }
+
+  /**
+   * Asks Keycloak which claims an access token from this client would carry for the user, without issuing a token.
+   * Keycloak returns the claims as JSON; no signed token is created.
+   */
+  function generateExampleAccessToken(
+    target: ClientReaderTarget,
+    id: string,
+    userId: string,
+    scope: string,
+  ): Promise<RealmClientResult<KeycloakRepresentation>> {
+    return readAdmin(
+      target,
+      `/clients/${encodeURIComponent(id)}/evaluate-scopes/generate-example-access-token`,
+      CLIENT_REASONS,
+      isRecord,
+      { scope, userId },
+    );
+  }
+
+  /**
+   * Lists the protocol mappers that apply to tokens from this client for the scope, including those from its client
+   * scopes, with where each comes from.
+   */
+  function listEffectiveProtocolMappers(
+    target: ClientReaderTarget,
+    id: string,
+    scope: string,
+  ): Promise<RealmClientResult<KeycloakRepresentation[]>> {
+    return readAdmin(
+      target,
+      `/clients/${encodeURIComponent(id)}/evaluate-scopes/protocol-mappers`,
+      CLIENT_REASONS,
+      isRepresentationList,
+      { scope },
+    );
+  }
+
+  return {
+    listAllClients,
+    listClients,
+    findClientInternalId,
+    getClientConfiguration,
+    getServiceAccountUser,
+    generateExampleAccessToken,
+    listEffectiveProtocolMappers,
+  };
 }
 
 export type ClientReader = ReturnType<typeof createClientReader>;

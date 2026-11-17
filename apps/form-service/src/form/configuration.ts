@@ -58,6 +58,7 @@ export const configurationSchema = {
         { type: 'null' },
       ],
     },
+    sharepointConfigurationId: { type: ['string', 'null'] },
     reviewConfiguration: {
       type: 'object',
       additionalProperties: false,
@@ -80,6 +81,28 @@ export const configurationSchema = {
             { type: 'null' },
           ],
         },
+      },
+    },
+    registration: {
+      type: 'object',
+      additionalProperties: false,
+      required: ['enabled'],
+      properties: {
+        enabled: { type: 'boolean' },
+        accessGroup: { type: 'string', minLength: 1, maxLength: 255 },
+        dataSchema: {
+          allOf: [
+            { $ref: 'http://json-schema.org/draft-07/schema#' },
+            {
+              properties: {
+                properties: {
+                  propertyNames: { not: { enum: ['firstName', 'lastName', 'email'] } },
+                },
+              },
+            },
+          ],
+        },
+        uiSchema: { type: 'object' },
       },
     },
   },

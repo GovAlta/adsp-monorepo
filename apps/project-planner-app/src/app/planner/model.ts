@@ -77,6 +77,7 @@ export interface Solution {
   description?: string;
   scenario: string;
   status: string;
+  createdById?: string;
   createdByName: string;
   updatedOn: string;
   version: number;

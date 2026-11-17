@@ -25,6 +25,8 @@ export const environment = envalid.cleanEnv(
     MAAS_BASE_URL: envalid.str({ default: 'https://maas.int.gov.ab.ca/v1' }),
     MAAS_MODEL: envalid.str({ default: 'GOA-Default' }),
     MAAS_TIMEOUT_MS: envalid.num({ default: 120000 }),
+    // Unset falls back to the SDK AUDIT_ENABLED variable, which defaults to on.
+    PROJECT_PLANNER_AUDIT_ENABLED: envalid.bool({ default: undefined }),
   },
   {
     reporter: ({ errors }) => {

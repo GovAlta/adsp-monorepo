@@ -7,6 +7,7 @@ import { createDirectoryRouter, createResourceRouter } from './router';
 import {
   TenantService,
   EventService,
+  AuditService,
   ConfigurationService,
   AdspId,
   ServiceDirectory,
@@ -16,6 +17,7 @@ import {
 import { assertAuthenticatedHandler, DomainEvent, WorkQueueService } from '@core-services/core-common';
 import { createDirectoryJobs } from './job';
 
+export * from './audit';
 export * from './bootstrap';
 export * from './configuration';
 export * from './directory';
@@ -33,6 +35,7 @@ interface DirectoryMiddlewareProps extends Repositories {
   tokenProvider: TokenProvider;
   tenantService: TenantService;
   eventService: EventService;
+  auditService: AuditService;
   configurationService: ConfigurationService;
   queueService: WorkQueueService<DomainEvent>;
 }
@@ -47,6 +50,7 @@ export const applyDirectoryMiddleware = (
     tokenProvider,
     tenantService,
     eventService,
+    auditService,
     configurationService,
     queueService,
   }: DirectoryMiddlewareProps
@@ -58,6 +62,7 @@ export const applyDirectoryMiddleware = (
     directoryRepository,
     tenantService,
     eventService,
+    auditService,
   });
 
   const resourceRouter = createResourceRouter({
@@ -65,6 +70,7 @@ export const applyDirectoryMiddleware = (
     apiId,
     directory,
     eventService,
+    auditService,
     repository: directoryRepository,
   });
 

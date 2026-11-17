@@ -14,7 +14,12 @@ import {
   ServiceMetricsValueDefinition,
 } from '@abgov/adsp-service-sdk';
 import type { User } from '@abgov/adsp-service-sdk';
-import { createLogger, createErrorHandler, createAmqpConfigUpdateService } from '@core-services/core-common';
+import {
+  createLogger,
+  createErrorHandler,
+  createAmqpConfigUpdateService,
+  createShutdownHandler,
+} from '@core-services/core-common';
 import { environment } from './environments/environment';
 import { createRepositories } from './mongo';
 import {
@@ -33,12 +38,13 @@ import {
   ResourceResolutionFailedDefinition,
   ResourceDeletedDefinition,
   TagDeletedDefinition,
+  DirectoryAuditActions,
 } from './directory';
 import { createDirectoryQueueService } from './amqp';
 
 const logger = createLogger('directory-service', environment.LOG_LEVEL);
 
-const initializeApp = async (): Promise<express.Application> => {
+const initializeApp = async () => {
   const app = express();
 
   app.use(compression());
@@ -63,6 +69,7 @@ const initializeApp = async (): Promise<express.Application> => {
   const {
     coreStrategy,
     eventService,
+    auditService,
     healthCheck,
     tenantStrategy,
     tenantService,
@@ -73,6 +80,7 @@ const initializeApp = async (): Promise<express.Application> => {
     metricsHandler,
     tenantHandler,
     traceHandler,
+    shutdownTelemetry,
   } = await initializePlatform(
     {
       serviceId,
@@ -108,6 +116,8 @@ const initializeApp = async (): Promise<express.Application> => {
         ResourceDeletedDefinition,
         TagDeletedDefinition,
       ],
+      auditActions: DirectoryAuditActions,
+      audit: { enabled: environment.DIRECTORY_AUDIT_ENABLED },
       configuration: {
         description: 'Resource types for resolving browse name and description for tagged resources.',
         schema: configurationSchema,
@@ -255,6 +265,7 @@ const initializeApp = async (): Promise<express.Application> => {
     tokenProvider,
     tenantService,
     eventService,
+    auditService,
     configurationService,
     queueService,
   });
@@ -299,14 +310,25 @@ const initializeApp = async (): Promise<express.Application> => {
   const errorHandler = createErrorHandler(logger);
   app.use(errorHandler);
 
-  return app;
+  return { app, auditService, shutdownTelemetry };
 };
 
-initializeApp().then((app) => {
+initializeApp().then(({ app, auditService, shutdownTelemetry }) => {
   const port = environment.PORT || 3331;
 
   const server = app.listen(port, () => {
     logger.info(`Listening at http://localhost:${port}`);
   });
   server.on('error', (err) => logger.error(`Error encountered in server: ${err}`));
+
+  // Stop accepting requests, then deliver any buffered audit events before the process exits.
+  const shutdown = createShutdownHandler({
+    serviceName: 'Directory service',
+    server,
+    auditService,
+    shutdownTelemetry,
+    logger,
+  });
+  process.once('SIGTERM', shutdown);
+  process.once('SIGINT', shutdown);
 });

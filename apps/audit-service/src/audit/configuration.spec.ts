@@ -167,11 +167,17 @@ describe('audit configuration schema', () => {
     });
   });
 
-  it.each(['version', 'category', 'severity', 'retentionClass'])('rejects missing %s', (field) => {
+  it.each(['version', 'category', 'severity'])('rejects missing %s', (field) => {
     const action = { ...definition };
     delete action[field];
 
     expect(() => validate({ ...catalog, actions: { 'case.update': action } })).toThrow(field);
+  });
+
+  it('accepts an action without a retentionClass', () => {
+    const { retentionClass, ...action } = definition;
+
+    expect(() => validate({ ...catalog, actions: { 'case.update': action } })).not.toThrow();
   });
 
   it.each([

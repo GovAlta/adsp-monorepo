@@ -1,6 +1,7 @@
 import {
   adspId,
   AdspId,
+  AuditService,
   EventService,
   isAllowedUser,
   startBenchmark,
@@ -35,11 +36,20 @@ import {
   PostRequests,
 } from './types';
 import { ConfigurationServiceRoles, ExportServiceRoles } from '../roles';
+import {
+  auditConfiguration,
+  auditConfigurationDefinitions,
+  ConfigurationActiveRevisionSetAuditAction,
+  ConfigurationDeletedAuditAction,
+  ConfigurationRevisionCreatedAuditAction,
+  ConfigurationUpdatedAuditAction,
+} from '../audit';
 
 export interface ConfigurationRouterProps extends Repositories {
   serviceId: AdspId;
   logger: Logger;
   eventService: EventService;
+  auditService: AuditService;
 }
 
 const ENTITY_KEY = 'entity';
@@ -279,7 +289,7 @@ export function getConfigurationWithActive(apiId: AdspId): RequestHandler {
 }
 
 export const patchConfigurationRevision =
-  (apiId: AdspId, logger: Logger, eventService: EventService): RequestHandler =>
+  (apiId: AdspId, logger: Logger, eventService: EventService, auditService: AuditService): RequestHandler =>
   async (req, res, next) => {
     try {
       const end = startBenchmark(req, 'operation-handler-time');
@@ -331,11 +341,26 @@ export const patchConfigurationRevision =
         end();
         res.send(mapConfiguration(apiId, entity));
       } else {
+        const before = entity.latest?.configuration;
         let updated = null;
         updated = await entity.update(user, update);
         end();
         res.send(mapConfiguration(apiId, updated));
-        
+
+        auditConfiguration(auditService, logger, ConfigurationUpdatedAuditAction, user, updated, {
+          operation: request.operation,
+          changeSet: { before: before ?? null, after: updated.latest?.configuration ?? null },
+        });
+        auditConfigurationDefinitions(
+          auditService,
+          logger,
+          user,
+          updated,
+          before,
+          updated.latest?.configuration,
+          request.operation,
+        );
+
         // Send event with size calculation (non-blocking)
         if (updated.tenantId) {
           const sizeBytes = calculateConfigurationSize(
@@ -420,7 +445,7 @@ export const getActiveRevision =
   };
 
 export const configurationOperations =
-  (apiId: AdspId, logger: Logger, eventService: EventService): RequestHandler =>
+  (apiId: AdspId, logger: Logger, eventService: EventService, auditService: AuditService): RequestHandler =>
   async (req, res, next) => {
     try {
       const end = startBenchmark(req, 'operation-handler-time');
@@ -434,7 +459,11 @@ export const configurationOperations =
           const updated = await configuration.createRevision(user);
 
           res.send(mapConfiguration(apiId, updated));
-          
+
+          auditConfiguration(auditService, logger, ConfigurationRevisionCreatedAuditAction, user, updated, {
+            operation: request.operation,
+            metadata: { revision: updated.latest?.revision },
+          });
           // Send event with size calculation (non-blocking)
           if (updated.tenantId) {
             const sizeBytes = calculateConfigurationSize(
@@ -481,6 +510,10 @@ export const configurationOperations =
           const oldRevision = await configuration.getActiveRevision();
           if (oldRevision?.revision !== request.revision) {
             const newRevision = await configuration.setActiveRevision(user, request.revision);
+            auditConfiguration(auditService, logger, ConfigurationActiveRevisionSetAuditAction, user, configuration, {
+              operation: request.operation,
+              metadata: { revision: newRevision.revision, previousRevision: oldRevision?.revision ?? null },
+            });
             eventService.send(
               activeRevisionSet(
                 user,
@@ -527,7 +560,12 @@ export const configurationOperations =
     }
   };
 
-export function deleteConfiguration(apiId: AdspId, logger: Logger, eventService: EventService): RequestHandler {
+export function deleteConfiguration(
+  apiId: AdspId,
+  logger: Logger,
+  eventService: EventService,
+  auditService: AuditService
+): RequestHandler {
   return async (req, res, next) => {
     try {
       const end = startBenchmark(req, 'operation-handler-time');
@@ -540,6 +578,7 @@ export function deleteConfiguration(apiId: AdspId, logger: Logger, eventService:
       end();
       res.send({ deleted });
       if (deleted) {
+        auditConfiguration(auditService, logger, ConfigurationDeletedAuditAction, user, configuration);
         eventService.send(
           configurationDeleted(apiId, user, configuration.tenantId, configuration.namespace, configuration.name)
         );
@@ -589,6 +628,7 @@ export function createConfigurationRouter({
   logger,
   serviceId,
   eventService,
+  auditService,
   configuration: configurationRepository,
 }: ConfigurationRouterProps): Router {
   const apiId = adspId`${serviceId}:v2`;
@@ -661,7 +701,7 @@ export function createConfigurationRouter({
     validateNamespaceNameHandler,
     createValidationHandler(body('operation').isString().isIn([OPERATION_DELETE, OPERATION_UPDATE, OPERATION_REPLACE])),
     getConfigurationEntity(serviceId, configurationRepository, rateLimitHandler),
-    patchConfigurationRevision(apiId, logger, eventService)
+    patchConfigurationRevision(apiId, logger, eventService, auditService)
   );
 
   router.post(
@@ -674,7 +714,7 @@ export function createConfigurationRouter({
       body('setActiveRevision').optional().isNumeric()
     ),
     getConfigurationEntity(serviceId, configurationRepository, rateLimitHandler),
-    configurationOperations(apiId, logger, eventService)
+    configurationOperations(apiId, logger, eventService, auditService)
   );
 
   router.delete(
@@ -682,7 +722,7 @@ export function createConfigurationRouter({
     assertAuthenticatedHandler,
     validateNamespaceNameHandler,
     getConfigurationEntity(serviceId, configurationRepository, rateLimitHandler),
-    deleteConfiguration(apiId, logger, eventService)
+    deleteConfiguration(apiId, logger, eventService, auditService)
   );
 
   router.get(

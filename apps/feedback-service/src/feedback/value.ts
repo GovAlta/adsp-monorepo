@@ -70,13 +70,24 @@ export type FeedbackEntry = {
 };
 
 export type ReadQueryParameters = {
-  site: string;
+  site?: string;
   top: number;
   start?: string | undefined;
   end?: string | undefined;
   after?: string | undefined;
 };
+
+export type FeedbackSummaryQueryParameters = Pick<ReadQueryParameters, 'site' | 'start' | 'end'>;
+
+export interface FeedbackSummary {
+  totalResponses: number;
+  averageRating: number | null;
+  responsesWithComments: number;
+  responsesWithIssues: number;
+}
+
 export interface ValueService {
   writeValue(tenantId: AdspId, value: FeedbackValue): Promise<void>;
   readValues(tenantId: AdspId, queryParameters: ReadQueryParameters): Promise<FeedbackResponse>;
+  readSummary(tenantId: AdspId, queryParameters: FeedbackSummaryQueryParameters): Promise<FeedbackSummary>;
 }

@@ -822,8 +822,9 @@ const templateSchema = z.object({
   id: z.string(),
   description: z.string(),
   compatibleWith: z.string(),
-  newFiles: z.record(z.string()).optional(),
+  newFiles: z.record(z.string(), z.string()).optional(),
   integrationChanges: z.record(
+    z.string(),
     z.object({
       description: z.string(),
       pattern: z.string(),

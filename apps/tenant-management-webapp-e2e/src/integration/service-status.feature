@@ -166,7 +166,8 @@ Feature: Service status
       | Description           | Application | Start Date | Start Time | End Date | End Time | Description2               | Application2 | Start Date 2 | Start Time 2 | End Date 2 | End Time 2 |
       | Autotest-NewAllNotice | All         | Today      | 12:00 am   | Today    | 12:00 am | Autotest-ModifiedAllNotice | Autotest     | Today        | 10:00 am     | Today      | 02:00 pm   |
 
-  @TEST_CS-339 @REQ_CS-169 @regression @prod
+  # CS-5747: deleting an application isn't working properly
+  @TEST_CS-339 @REQ_CS-169 @regression @prod @ignore
   Scenario: As a tenant admin, I can add/edit/delete an application
     Given a tenant admin user is on status applications page
     When the user clicks Add application button

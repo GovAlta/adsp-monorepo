@@ -37,6 +37,8 @@ export const environment = envalid.cleanEnv(
     PORT: envalid.num({ default: 3337 }),
     TRUSTED_PROXY: envalid.str({ default: 'uniquelocal' }),
     POD_TYPE: envalid.str({ default: POD_TYPES.api }),
+    // Unset falls back to the SDK AUDIT_ENABLED variable, which defaults to on.
+    FILE_AUDIT_ENABLED: envalid.bool({ default: undefined }),
   },
   {
     reporter: ({ errors }) => {

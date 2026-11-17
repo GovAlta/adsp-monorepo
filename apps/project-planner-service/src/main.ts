@@ -5,14 +5,21 @@ import * as passport from 'passport';
 import * as compression from 'compression';
 import * as cors from 'cors';
 import * as helmet from 'helmet';
-import { AdspId, adspId, initializePlatform, instrumentAxios, ServiceMetricsValueDefinition } from '@abgov/adsp-service-sdk';
-import type { User } from '@abgov/adsp-service-sdk';
-import { createLogger, createErrorHandler } from '@core-services/core-common';
+import {
+  AdspId,
+  adspId,
+  initializePlatform,
+  instrumentAxios,
+  ServiceMetricsValueDefinition,
+} from '@abgov/adsp-service-sdk';
+import type { AuditService, User } from '@abgov/adsp-service-sdk';
+import { createLogger, createErrorHandler, createShutdownHandler } from '@core-services/core-common';
 import { environment } from './environments/environment';
 import {
   applyPlannerMiddleware,
   configurationSchema,
   createLlmFromEnv,
+  PlannerAuditActions,
   PlannerServiceRoles,
   SolutionCreatedDefinition,
   SolutionDeletedDefinition,
@@ -22,7 +29,14 @@ import { createRepositories } from './postgres';
 
 const logger = createLogger('project-planner-service', environment.LOG_LEVEL);
 
-const initializeApp = async (): Promise<express.Application> => {
+interface InitializedApp {
+  app: express.Application;
+  auditService: AuditService;
+  shutdownTelemetry: () => Promise<void>;
+  closeDatabase: () => Promise<void>;
+}
+
+const initializeApp = async (): Promise<InitializedApp> => {
   const app = express();
 
   app.use(compression());
@@ -39,6 +53,7 @@ const initializeApp = async (): Promise<express.Application> => {
   const serviceId = AdspId.parse(environment.CLIENT_ID);
   const accessServiceUrl = new URL(environment.KEYCLOAK_ROOT_URL);
   const {
+    auditService,
     coreStrategy,
     configurationHandler,
     configurationService,
@@ -48,6 +63,7 @@ const initializeApp = async (): Promise<express.Application> => {
     tenantStrategy,
     tokenProvider,
     healthCheck,
+    shutdownTelemetry,
     traceHandler,
   } = await initializePlatform(
     {
@@ -67,6 +83,8 @@ const initializeApp = async (): Promise<express.Application> => {
         },
       ],
       events: [SolutionCreatedDefinition, SolutionUpdatedDefinition, SolutionDeletedDefinition],
+      auditActions: PlannerAuditActions,
+      audit: { enabled: environment.PROJECT_PLANNER_AUDIT_ENABLED },
       configuration: {
         schema: configurationSchema,
         description: 'Tenant-defined business patterns that extend the planner built-in pattern catalog.',
@@ -115,6 +133,7 @@ const initializeApp = async (): Promise<express.Application> => {
     specialistChatRepository: repositories.specialistChatRepository,
     solutionVersionRepository: repositories.solutionVersionRepository,
     eventService,
+    auditService,
     llm: createLlmFromEnv(
       {
         MAAS_API_KEY: environment.MAAS_API_KEY,
@@ -127,7 +146,10 @@ const initializeApp = async (): Promise<express.Application> => {
     // The core configuration-service configuration holds one key per platform service's configuration.
     readAdspCatalog: async () => {
       const token = await tokenProvider.getAccessToken();
-      const [, core] = await configurationService.getConfiguration<Record<string, unknown>>(adspId`urn:ads:platform:configuration-service`, token);
+      const [, core] = await configurationService.getConfiguration<Record<string, unknown>>(
+        adspId`urn:ads:platform:configuration-service`,
+        token,
+      );
       return Object.keys(core || {});
     },
   });
@@ -159,17 +181,29 @@ const initializeApp = async (): Promise<express.Application> => {
   const errorHandler = createErrorHandler(logger);
   app.use(errorHandler);
 
-  return app;
+  return { app, auditService, shutdownTelemetry, closeDatabase: repositories.close };
 };
 
 initializeApp()
-  .then((app) => {
+  .then(({ app, auditService, shutdownTelemetry, closeDatabase }) => {
     const port = environment.PORT || 3381;
 
     const server = app.listen(port, () => {
       logger.info(`Listening at http://localhost:${port}`);
     });
     server.on('error', (err) => logger.error(`Error encountered in server: ${err}`));
+
+    // Audit records still being sent are delivered before the process exits.
+    const shutdown = createShutdownHandler({
+      serviceName: 'Project planner service',
+      server,
+      auditService,
+      shutdownTelemetry,
+      closeDatabase,
+      logger,
+    });
+    process.once('SIGTERM', shutdown);
+    process.once('SIGINT', shutdown);
   })
   .catch((err) => {
     logger.error(`Failed to start service: ${err}`);

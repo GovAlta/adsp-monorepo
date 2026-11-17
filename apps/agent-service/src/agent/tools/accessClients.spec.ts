@@ -2,6 +2,7 @@ import type { User } from '@abgov/adsp-service-sdk';
 import axios from 'axios';
 import * as HttpStatusCodes from 'http-status-codes';
 import { createAccessClientTools } from './accessClients';
+import type { ModelTextOutput } from './accessModelOutput';
 
 jest.mock('axios', () => {
   const actual = jest.requireActual('axios');
@@ -129,7 +130,65 @@ const scopeMappings = {
   },
 };
 
+const APP_ORIGINS = [
+  'https://demo.alberta.ca',
+  'https://demo-uat.alberta.ca',
+  'https://demo-dev.alberta.ca',
+  'https://demo-test.alberta.ca',
+  'https://demo-preview.alberta.ca',
+  'http://localhost:4200',
+];
+const MAPPED_CLAIMS = ['department', 'employee_number', 'program', 'region', 'office', 'cost_centre'];
+
+/**
+ * A busy web app client: an address per environment, several roles and protocol mappers, and token and logout
+ * settings. Its configuration is what makes getAccessClient results large.
+ */
+const busyKeycloakClient = {
+  ...keycloakClient,
+  description: 'Web app residents use to apply for and track demo program benefits.',
+  rootUrl: 'https://demo.alberta.ca',
+  baseUrl: '/home',
+  redirectUris: APP_ORIGINS.flatMap((origin) => [`${origin}/*`, `${origin}/callback`]),
+  webOrigins: APP_ORIGINS,
+  defaultClientScopes: ['acr', 'basic', 'email', 'profile', 'roles', 'web-origins'],
+  optionalClientScopes: ['address', 'microprofile-jwt', 'offline_access', 'organization', 'phone'],
+  attributes: {
+    ...keycloakClient.attributes,
+    'post.logout.redirect.uris': APP_ORIGINS.map((origin) => `${origin}/signed-out`).join('##'),
+    'access.token.lifespan': '300',
+    'client.session.idle.timeout': '1800',
+    'use.refresh.tokens': 'true',
+    'access.token.signed.response.alg': 'RS256',
+    'backchannel.logout.url': 'https://demo.alberta.ca/api/logout',
+    'backchannel.logout.session.required': 'true',
+  },
+  protocolMappers: [
+    ...keycloakClient.protocolMappers,
+    ...MAPPED_CLAIMS.map((claim) => ({
+      name: `${claim} attribute`,
+      protocol: 'openid-connect',
+      protocolMapper: 'oidc-usermodel-attribute-mapper',
+      config: {
+        'user.attribute': claim,
+        'claim.name': claim,
+        'jsonType.label': 'String',
+        'access.token.claim': 'true',
+        'id.token.claim': 'true',
+        'userinfo.token.claim': 'false',
+        'introspection.token.claim': 'true',
+      },
+    })),
+  ],
+};
+const busyClientRoles = ['applicant', 'reviewer', 'approver', 'auditor', 'program-admin', 'support'].map((name) => ({
+  name,
+  description: `Can act as a ${name} in the demo program web app.`,
+  composite: name === 'program-admin',
+}));
+
 const LIST_KEY = adminKey('/clients', { first: 0, max: 101 });
+const SCAN_KEY = adminKey('/clients', { first: 0, max: 500 });
 const LOOKUP_KEY = adminKey('/clients', { clientId: CLIENT_ID });
 const CLIENT_KEY = adminKey('/clients/internal-1');
 
@@ -172,8 +231,10 @@ describe('createAccessClientTools', () => {
             type: 'confidential',
             protocol: 'openid-connect',
             builtIn: false,
+            origin: 'tenant',
+            serviceAccount: true,
           },
-          { clientId: 'realm-management', type: 'bearer-only', builtIn: true },
+          { clientId: 'realm-management', type: 'bearer-only', builtIn: true, origin: 'keycloak' },
         ],
       });
       expect(mockedGet).toHaveBeenCalledWith(`${DEV_HOST}/auth/admin/realms/realm-1/clients`, {
@@ -193,19 +254,19 @@ describe('createAccessClientTools', () => {
       }
     });
 
-    it('filters to client IDs containing the trimmed search text', async () => {
+    it('filters to clients whose ID, name or description contains the trimmed search text', async () => {
       routeRequests({
         [TENANT_URL]: tenantResponse,
-        [adminKey('/clients', { clientId: 'web', search: true, first: 0, max: 101 })]: [keycloakClient],
+        [SCAN_KEY]: [keycloakClient, { clientId: 'urn:ads:demo:other', name: 'Other' }],
       });
 
-      const result = await listAccessClients.execute({ search: '  web ' }, contextFor(createUser()));
+      const result = await listAccessClients.execute({ search: '  demo web ' }, contextFor(createUser()));
 
       expect(result).toMatchObject({
         status: 'available',
-        search: 'web',
-        message:
-          'Found 1 client with a client ID containing "web" in realm Tenant One (realm-1) in Development (read-only).',
+        search: 'demo web',
+        clients: [expect.objectContaining({ clientId: CLIENT_ID })],
+        message: 'Found 1 client matching "demo web" in realm Tenant One (realm-1) in Development (read-only).',
       });
     });
 
@@ -226,7 +287,7 @@ describe('createAccessClientTools', () => {
     it('says when no client matches the search text', async () => {
       routeRequests({
         [TENANT_URL]: tenantResponse,
-        [adminKey('/clients', { clientId: 'missing', search: true, first: 0, max: 101 })]: [],
+        [SCAN_KEY]: [keycloakClient],
       });
 
       const result = await listAccessClients.execute({ search: 'missing' }, contextFor(createUser()));
@@ -234,8 +295,7 @@ describe('createAccessClientTools', () => {
       expect(result).toMatchObject({
         status: 'available',
         clients: [],
-        message:
-          'No clients with a client ID containing "missing" were found in realm Tenant One (realm-1) in Development.',
+        message: 'No clients matching "missing" were found in realm Tenant One (realm-1) in Development.',
       });
     });
 
@@ -248,7 +308,7 @@ describe('createAccessClientTools', () => {
       expect(result.clients).toHaveLength(100);
       expect(result.truncated).toBe(true);
       expect(result.message).toBe(
-        'Showing the first 100 clients in realm Tenant One (realm-1) in Development (read-only). More clients exist; search by client ID to narrow the list.',
+        'Showing the first 100 clients in realm Tenant One (realm-1) in Development (read-only). More clients exist; search by name or client ID to narrow the list.',
       );
     });
 
@@ -338,6 +398,52 @@ describe('createAccessClientTools', () => {
         environment: { id: 'prod', label: 'Production', host: PROD_HOST, readOnly: true },
         clients: [{ clientId: 'app' }],
       });
+    });
+  });
+
+  describe('listAccessClients model output', () => {
+    it('gives the model one line per client with its type, origin and status', async () => {
+      routeRequests({
+        [TENANT_URL]: tenantResponse,
+        [LIST_KEY]: [keycloakClient, { id: 'internal-2', clientId: 'realm-management', bearerOnly: true }],
+      });
+      const result = await listAccessClients.execute({}, contextFor(createUser()));
+
+      const { value } = listAccessClients.toModelOutput(result) as ModelTextOutput;
+
+      expect(value).toBe(
+        [
+          'status: available',
+          'env: Development (dev, read-only); realm: Tenant One (realm-1, tenant, active)',
+          'clients (2):',
+          `- ${CLIENT_ID} "Demo web app": confidential, openid-connect, enabled, origin tenant, service account`,
+          '- realm-management: bearer-only, origin keycloak, built-in',
+        ].join('\n'),
+      );
+    });
+
+    it('keeps the message saying why the list is empty', async () => {
+      routeRequests({ [TENANT_URL]: tenantResponse, [SCAN_KEY]: [keycloakClient] });
+      const result = await listAccessClients.execute({ search: 'missing' }, contextFor(createUser()));
+
+      const { value } = listAccessClients.toModelOutput(result) as ModelTextOutput;
+
+      expect(value).toContain(
+        'search: "missing"\nclients: none\nNo clients matching "missing" were found in realm Tenant One (realm-1) in ' +
+          'Development.',
+      );
+    });
+
+    it('lists at most 40 clients, counts all of them by origin and says the card lists the rest', async () => {
+      const clients = Array.from({ length: 101 }, (_, index) => ({ id: `id-${index}`, clientId: `client-${index}` }));
+      routeRequests({ [TENANT_URL]: tenantResponse, [LIST_KEY]: clients });
+      const result = await listAccessClients.execute({}, contextFor(createUser()));
+
+      const { value } = listAccessClients.toModelOutput(result) as ModelTextOutput;
+
+      expect(value).toContain(
+        '- client-39: origin tenant\n…and 60 more (listed in the card)\norigins of all 100: 100 tenant\nShowing the first 100',
+      );
     });
   });
 
@@ -436,9 +542,7 @@ describe('createAccessClientTools', () => {
       routeRequests({
         [TENANT_URL]: tenantResponse,
         [adminKey('/clients', { clientId: 'web-app' })]: [],
-        [adminKey('/clients', { clientId: 'web-app', search: true, first: 0, max: 5 })]: [
-          { clientId: CLIENT_ID, secret: 'super-secret-value' },
-        ],
+        [SCAN_KEY]: [{ clientId: CLIENT_ID, secret: 'super-secret-value' }, { clientId: 'urn:ads:demo:api' }],
       });
 
       const result = await getAccessClient.execute({ clientId: 'web-app' }, contextFor(createUser()));
@@ -454,11 +558,77 @@ describe('createAccessClientTools', () => {
       });
     });
 
+    it.each([
+      `client: ${CLIENT_ID} "Demo web app": confidential, openid-connect, enabled, origin tenant, service account`,
+      'authentication: authenticator=Client ID and secret, pkceMethod=S256; true: clientAuthentication; false: ' +
+        'consentRequired',
+      'flows: true: standardFlow, serviceAccounts; false: implicitFlow, directAccessGrants, deviceAuthorizationGrant, ' +
+        'ciba, authorizationServicesEnabled',
+      'redirect URIs: https://demo.alberta.ca/*',
+      'web origins: https://demo.alberta.ca',
+      'post-logout redirect URIs: none',
+      'client roles (1):\n- reader — Can read',
+      'full scope allowed: false',
+      'client role scope mappings: urn:ads:platform:form-service: form-applicant',
+      'protocol mappers (own only; mappers from client scopes not included) (1):\n' +
+        '- form audience (oidc-audience-mapper): includedClientAudience=urn:ads:platform:form-service; true: ' +
+        'addToAccessToken',
+    ])('gives the model the client fact "%s"', async (fact) => {
+      routeRequests(configurationRoutes);
+      const result = await getAccessClient.execute({ clientId: CLIENT_ID }, contextFor(createUser()));
+
+      const { value } = getAccessClient.toModelOutput(result) as ModelTextOutput;
+      expect(value).toContain(fact);
+    });
+
+    it('gives the model the reason and the similar client IDs when no client has the ID', async () => {
+      routeRequests({
+        [TENANT_URL]: tenantResponse,
+        [adminKey('/clients', { clientId: 'web-app' })]: [],
+        [SCAN_KEY]: [{ clientId: CLIENT_ID }, { clientId: 'urn:ads:demo:api' }],
+      });
+      const result = await getAccessClient.execute({ clientId: 'web-app' }, contextFor(createUser()));
+
+      const { value } = getAccessClient.toModelOutput(result) as ModelTextOutput;
+
+      expect(value).toBe(
+        [
+          'status: not-found (CLIENT_NOT_FOUND): No client with that client ID could be found in your realm, or you ' +
+            'do not have access to it.',
+          'env: Development (dev, read-only); realm: Tenant One (realm-1, tenant, active)',
+          'client ID: web-app',
+          `suggestions: ${CLIENT_ID}`,
+        ].join('\n'),
+      );
+    });
+
+    it('never gives the model secrets', async () => {
+      routeRequests({ ...configurationRoutes, [LOOKUP_KEY]: [busyKeycloakClient], [CLIENT_KEY]: busyKeycloakClient });
+      const result = await getAccessClient.execute({ clientId: CLIENT_ID }, contextFor(createUser()));
+
+      const { value } = getAccessClient.toModelOutput(result) as ModelTextOutput;
+
+      expect(value).not.toMatch(/super-secret-value|rotated-secret-value/);
+    });
+
+    it('is at least a fifth shorter than the raw configuration of a busy client', async () => {
+      routeRequests({
+        ...configurationRoutes,
+        [LOOKUP_KEY]: [busyKeycloakClient],
+        [CLIENT_KEY]: busyKeycloakClient,
+        [`${CLIENT_KEY}/roles`]: busyClientRoles,
+      });
+      const result = await getAccessClient.execute({ clientId: CLIENT_ID }, contextFor(createUser()));
+
+      const { value } = getAccessClient.toModelOutput(result) as ModelTextOutput;
+      expect(value.length).toBeLessThan(JSON.stringify(result).length * 0.8);
+    });
+
     it('reports CLIENT_NOT_FOUND without suggestions when nothing is similar', async () => {
       routeRequests({
         [TENANT_URL]: tenantResponse,
         [adminKey('/clients', { clientId: 'missing' })]: [],
-        [adminKey('/clients', { clientId: 'missing', search: true, first: 0, max: 5 })]: [],
+        [SCAN_KEY]: [keycloakClient],
       });
 
       const result = await getAccessClient.execute({ clientId: 'missing' }, contextFor(createUser()));
@@ -472,7 +642,7 @@ describe('createAccessClientTools', () => {
       routeRequests({
         [TENANT_URL]: tenantResponse,
         [adminKey('/clients', { clientId: 'missing' })]: [],
-        [adminKey('/clients', { clientId: 'missing', search: true, first: 0, max: 5 })]: axiosError(),
+        [SCAN_KEY]: axiosError(),
       });
 
       const result = await getAccessClient.execute({ clientId: 'missing' }, contextFor(createUser()));

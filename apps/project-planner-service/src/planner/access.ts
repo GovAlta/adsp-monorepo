@@ -67,3 +67,15 @@ export const getSolution =
   };
 
 export const loaded = (req: Request): Solution => req[SOLUTION_KEY];
+
+export const requireSolutionOwner: RequestHandler = (req, _res, next) => {
+  try {
+    const solution = loaded(req);
+    if (solution.createdById !== req.user.id) {
+      throw new UnauthorizedUserError('delete solution', req.user);
+    }
+    next();
+  } catch (err) {
+    next(err);
+  }
+};

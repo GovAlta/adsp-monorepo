@@ -1,4 +1,13 @@
-import { AdspId, DomainEvent, EventService, isAllowedUser, UnauthorizedUserError } from '@abgov/adsp-service-sdk';
+import {
+  AdspId,
+  AuditAction,
+  AuditRecordDetails,
+  AuditService,
+  DomainEvent,
+  EventService,
+  isAllowedUser,
+  UnauthorizedUserError,
+} from '@abgov/adsp-service-sdk';
 import {
   createValidationHandler,
   InvalidOperationError,
@@ -9,6 +18,19 @@ import {
 import { Request, RequestHandler, Response, Router } from 'express';
 import { body, checkSchema, param, query } from 'express-validator';
 import { Logger } from 'winston';
+import {
+  recordTaskAudit,
+  TaskCancelledAuditAction,
+  TaskCompletedAuditAction,
+  TaskDeletedAuditAction,
+  TaskPriorityChangedAuditAction,
+  TaskStartedAuditAction,
+  toTaskAssignmentAuditAction,
+  toTaskAssignmentAuditDetails,
+  toTaskAuditDetails,
+  toTaskCancelledAuditDetails,
+  toTaskPriorityChangedAuditDetails,
+} from '../audit';
 import {
   taskAssigned,
   taskCancelled,
@@ -38,6 +60,7 @@ interface TaskRouterProps {
   logger: Logger;
   taskRepository: TaskRepository;
   eventService: EventService;
+  auditService: AuditService;
 }
 
 export const TASK_KEY = 'task';
@@ -101,7 +124,12 @@ export const getTask =
     }
   };
 
-export function updateTask(apiId: AdspId, logger: Logger, eventService: EventService): RequestHandler {
+export function updateTask(
+  apiId: AdspId,
+  logger: Logger,
+  eventService: EventService,
+  auditService: AuditService,
+): RequestHandler {
   return async (req, res, next) => {
     try {
       const user = req.user;
@@ -120,10 +148,16 @@ export function updateTask(apiId: AdspId, logger: Logger, eventService: EventSer
         user: `${user.name} (ID: ${user.id})`,
       });
 
+      const previousPriority = task.priority;
       const updated = await task.update(user, update);
       res.send(mapTask(apiId, updated));
 
       eventService.send(taskUpdated(apiId, user, updated, update));
+      if (updated.priority !== previousPriority) {
+        recordTaskAudit(auditService, logger, TaskPriorityChangedAuditAction, () =>
+          toTaskPriorityChangedAuditDetails(user, updated, previousPriority),
+        );
+      }
 
       logger.info(`Updated task (ID: ${task.id}) in queue ${task.queue?.namespace}:${task.queue?.name}.`, {
         context: 'TaskRouter',
@@ -165,7 +199,12 @@ export function updateTaskData(apiId: AdspId, logger: Logger, eventService: Even
   };
 }
 
-export function taskOperation(apiId: AdspId, logger: Logger, eventService: EventService): RequestHandler {
+export function taskOperation(
+  apiId: AdspId,
+  logger: Logger,
+  eventService: EventService,
+  auditService: AuditService,
+): RequestHandler {
   return async (req, res, next) => {
     try {
       const user = req.user;
@@ -174,6 +213,8 @@ export function taskOperation(apiId: AdspId, logger: Logger, eventService: Event
 
       let result: TaskEntity = null;
       let event: DomainEvent = null;
+      let auditAction: AuditAction = null;
+      let getAuditDetails: () => AuditRecordDetails = null;
 
       logger.debug(
         `Performing operation ${request.operation} on task (ID: ${task.id}) in queue ${task.queue?.namespace}:${task.queue?.name}...`,
@@ -188,25 +229,39 @@ export function taskOperation(apiId: AdspId, logger: Logger, eventService: Event
         case OPERATION_START:
           result = await task.start(user);
           event = taskStarted(apiId, user, result);
+          auditAction = TaskStartedAuditAction;
+          getAuditDetails = () => toTaskAuditDetails(user, result);
           break;
         case OPERATION_COMPLETE:
           result = await task.complete(user);
           event = taskCompleted(apiId, user, result);
+          auditAction = TaskCompletedAuditAction;
+          getAuditDetails = () => toTaskAuditDetails(user, result);
           break;
-        case OPERATION_CANCEL:
+        case OPERATION_CANCEL: {
+          const from = task.status;
           result = await task.cancel(user);
           event = taskCancelled(apiId, user, result, request.reason);
+          auditAction = TaskCancelledAuditAction;
+          getAuditDetails = () => toTaskCancelledAuditDetails(user, result, from, request.reason);
           break;
+        }
         case OPERATION_SET_PRIORITY: {
           const from = task.priority;
           result = await task.setPriority(user, TaskPriority[request.priority]);
           event = taskPrioritySet(apiId, user, result, from);
+          if (result.priority !== from) {
+            auditAction = TaskPriorityChangedAuditAction;
+            getAuditDetails = () => toTaskPriorityChangedAuditDetails(user, result, from);
+          }
           break;
         }
         case OPERATION_ASSIGN: {
           const from = task.assignment;
           result = await task.assign(user, request.assignTo);
           event = taskAssigned(apiId, user, result, from);
+          auditAction = toTaskAssignmentAuditAction(user, result);
+          getAuditDetails = () => toTaskAssignmentAuditDetails(user, result, from);
           break;
         }
         default:
@@ -216,6 +271,9 @@ export function taskOperation(apiId: AdspId, logger: Logger, eventService: Event
       res.send(mapTask(apiId, result));
 
       eventService.send(event);
+      if (auditAction) {
+        recordTaskAudit(auditService, logger, auditAction, getAuditDetails);
+      }
 
       logger.info(
         `Performed operation ${request.operation} on task (ID: ${task.id}) in queue ${task.queue?.namespace}:${task.queue?.name}.`,
@@ -231,7 +289,12 @@ export function taskOperation(apiId: AdspId, logger: Logger, eventService: Event
   };
 }
 
-export function deleteTask(apiId: AdspId, logger: Logger, eventService: EventService): RequestHandler {
+export function deleteTask(
+  apiId: AdspId,
+  logger: Logger,
+  eventService: EventService,
+  auditService: AuditService,
+): RequestHandler {
   return async (req, res, next) => {
     try {
       const user = req.user;
@@ -248,6 +311,7 @@ export function deleteTask(apiId: AdspId, logger: Logger, eventService: EventSer
       res.send({ deleted });
       if (deleted) {
         eventService.send(taskDeleted(apiId, user, task));
+        recordTaskAudit(auditService, logger, TaskDeletedAuditAction, () => toTaskAuditDetails(user, task));
       }
 
       logger.info(
@@ -264,7 +328,13 @@ export function deleteTask(apiId: AdspId, logger: Logger, eventService: EventSer
   };
 }
 
-export function createTaskRouter({ logger, apiId, taskRepository: repository, eventService }: TaskRouterProps): Router {
+export function createTaskRouter({
+  logger,
+  apiId,
+  taskRepository: repository,
+  eventService,
+  auditService,
+}: TaskRouterProps): Router {
   const router = Router();
 
   const validateIdHandler = createValidationHandler(param('id').isUUID());
@@ -303,7 +373,7 @@ export function createTaskRouter({ logger, apiId, taskRepository: repository, ev
       ),
     ),
     getTask(repository),
-    updateTask(apiId, logger, eventService),
+    updateTask(apiId, logger, eventService, auditService),
   );
   router.patch(
     '/tasks/:id/data',
@@ -313,9 +383,19 @@ export function createTaskRouter({ logger, apiId, taskRepository: repository, ev
     updateTaskData(apiId, logger, eventService),
   );
 
-  router.post('/tasks/:id', validateIdHandler, getTask(repository), taskOperation(apiId, logger, eventService));
+  router.post(
+    '/tasks/:id',
+    validateIdHandler,
+    getTask(repository),
+    taskOperation(apiId, logger, eventService, auditService),
+  );
 
-  router.delete('/tasks/:id', validateIdHandler, getTask(repository), deleteTask(apiId, logger, eventService));
+  router.delete(
+    '/tasks/:id',
+    validateIdHandler,
+    getTask(repository),
+    deleteTask(apiId, logger, eventService, auditService),
+  );
 
   return router;
 }

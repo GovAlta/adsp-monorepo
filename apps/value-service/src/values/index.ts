@@ -1,8 +1,8 @@
 import { Application } from 'express';
 import { Logger } from 'winston';
-import { EventService, ServiceDirectory, TokenProvider } from '@abgov/adsp-service-sdk'; // clean-code-ignore: RULE-19 — wiring only; routes are covered in router/definition.spec.ts.
+import { AuditService, EventService, ServiceDirectory, TokenProvider } from '@abgov/adsp-service-sdk'; // clean-code-ignore: RULE-19 — wiring only; routes are covered in router/definition.spec.ts.
 import { ConfigurationClient, ValidationService } from '@core-services/core-common';
-import { ServiceMetricRollupRepository, ValuesRepository } from './repository';
+import { EventResourceRollupRepository, ServiceMetricRollupRepository, ValuesRepository } from './repository'; // clean-code-ignore: RULE-19 — wiring only; routes are covered in router/value.spec.ts.
 import { createDefinitionRouter, createValueRouter } from './router';
 import { ValueConfiguration } from './types';
 
@@ -11,13 +11,16 @@ export * from './model';
 export * from './repository';
 export * from './events';
 export * from './configuration';
+export * from './audit';
 
 interface ValuesMiddlewareProps {
   logger: Logger;
   repository: ValuesRepository;
   serviceMetricRollupRepository: ServiceMetricRollupRepository;
   serviceMetricRollupTrailingDays: number;
+  eventResourceRollupRepository: EventResourceRollupRepository;
   eventService: EventService;
+  auditService: AuditService;
   directory: ServiceDirectory;
   tokenProvider: TokenProvider;
   validationService: ValidationService;
@@ -32,6 +35,8 @@ export const applyValuesMiddleware = (app: Application, props: ValuesMiddlewareP
       'value-service',
     ),
     validationService: props.validationService,
+    logger: props.logger,
+    auditService: props.auditService,
   });
   const valueRouter = createValueRouter(props);
   // Definition routes are registered first so that /definitions/... is not read as a value namespace.

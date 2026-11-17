@@ -337,6 +337,7 @@ The index is always rebuilt fresh from the current schemas — it is never stale
         }),
       ),
       dataProperties: z.record(
+        z.string(),
         z.object({
           dataPointer: z.string(),
           type: z.string(),

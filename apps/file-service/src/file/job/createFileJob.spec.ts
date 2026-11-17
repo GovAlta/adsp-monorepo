@@ -28,6 +28,7 @@ describe('Create File Job', () => {
   jest.spyOn(scanModule, 'createScanJob').mockImplementation(() => mockScanJob);
   jest.spyOn(deleteModule, 'createDeleteJob').mockImplementation(() => mockDeleteJob);
 
+  const auditServiceMock = { record: jest.fn(), query: jest.fn(), flush: jest.fn(), droppedEventCount: 0 };
   const eventServiceMock = {
     send: jest.fn(),
   };
@@ -83,6 +84,7 @@ describe('Create File Job', () => {
       scanService: scanServiceMock.object(),
       queueService: queueServiceMock as unknown as WorkQueueService<FileServiceWorkItem>,
       eventService: eventServiceMock,
+      auditService: auditServiceMock,
       tenantService: tenantServiceMock,
       configurationService: configurationService as unknown as ConfigurationService,
       tokenProvider: tokenProviderMock,
@@ -115,6 +117,7 @@ describe('Create File Job', () => {
       scanService: scanServiceMock.object(),
       queueService: queueServiceMock as unknown as WorkQueueService<FileServiceWorkItem>,
       eventService: eventServiceMock,
+      auditService: auditServiceMock,
       tenantService: tenantServiceMock,
       configurationService: configurationService as unknown as ConfigurationService,
       tokenProvider: tokenProviderMock,
@@ -148,6 +151,7 @@ describe('Create File Job', () => {
       scanService: scanServiceMock.object(),
       queueService: queueServiceMock as unknown as WorkQueueService<FileServiceWorkItem>,
       eventService: eventServiceMock,
+      auditService: auditServiceMock,
       tenantService: tenantServiceMock,
       configurationService: configurationService as unknown as ConfigurationService,
       tokenProvider: tokenProviderMock,

@@ -5,10 +5,16 @@ import { Grid, GridItem } from '@core-services/app-common';
 import { JsonSchema4, JsonSchema7 } from '@jsonforms/core';
 import { DateTime } from 'luxon';
 import { FunctionComponent } from 'react';
+import styled from 'styled-components';
 import { Form, FormDefinition, ValidationError } from '../state';
 import { DraftForm } from './DraftForm';
 
 export const ContextProvider = ContextProviderFactory();
+
+// Keeps a wide control from widening the whole form past the screen.
+const FormContent = styled(GridItem)`
+  min-width: 0;
+`;
 
 export type JsonSchema = JsonSchema4 | JsonSchema7;
 interface DraftFormProps {
@@ -90,7 +96,7 @@ export const DraftFormWrapper: FunctionComponent<DraftFormProps> = ({
   return (
     <Grid>
       <GridItem md={1} />
-      <GridItem md={10}>
+      <FormContent md={10}>
         {daysTilIntakeEnd <= 5 && (
           <GoabCallout type="information" heading="Intake closing soon">
             Intake is closing in {daysTilIntakeEnd} days. Please complete and submit your form before{' '}
@@ -113,7 +119,7 @@ export const DraftFormWrapper: FunctionComponent<DraftFormProps> = ({
           onNavigationChange={onNavigationChange}
         />
         <ButtonGroup showSubmit={showSubmit} canSubmit={canSubmit} onSubmit={onSubmit} form={form} />
-      </GridItem>
+      </FormContent>
       <GridItem md={1} />
     </Grid>
   );

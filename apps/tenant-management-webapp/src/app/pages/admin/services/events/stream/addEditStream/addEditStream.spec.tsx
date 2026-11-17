@@ -98,3 +98,12 @@ describe('AddEditStream subscriber roles', () => {
     );
   });
 });
+
+describe('AddEditStream accessibility', () => {
+  it('gives the events dropdown input an accessible name', () => {
+    renderModal();
+
+    const eventsInput = document.querySelector('[data-testid="streamEvents-dropdown"] input');
+    expect(eventsInput).toHaveAttribute('placeholder', 'Select events');
+  });
+});

@@ -1,5 +1,5 @@
 import { adspId, User } from '@abgov/adsp-service-sdk';
-import { createErrorHandler } from '@core-services/core-common';
+import { createErrorHandler, InvalidOperationError } from '@core-services/core-common';
 import { createDocumentedResponseRecorder } from '@core-services/core-common/testing';
 import * as express from 'express';
 import { Express, RequestHandler } from 'express';
@@ -14,6 +14,9 @@ import { createTenantV2Router } from './tenantV2';
 
 jest.mock('../../keycloak', () => ({ createkcAdminClient: jest.fn() }));
 const createkcAdminClientMock = createkcAdminClient as jest.MockedFunction<typeof createkcAdminClient>;
+
+// Requests allowed per 5 minutes by the rate limited routes.
+const RATE_LIMIT = 200;
 
 // Verifies the roles, request validation, and error responses documented in tenant.swagger.yml by sending requests
 // through the v1 and v2 routers as mounted in the service, with the real error handler.
@@ -31,6 +34,8 @@ describe('tenant routers documented behaviour', () => {
   const repositoryMock = { find: jest.fn(), get: jest.fn(), save: jest.fn(), delete: jest.fn() };
   const realmServiceMock = {
     createRealm: jest.fn(),
+    disableRealm: jest.fn(),
+    enableRealm: jest.fn(),
     deleteRealm: jest.fn(),
     findUserId: jest.fn(),
     deleteUserIdp: jest.fn(),
@@ -59,28 +64,16 @@ describe('tenant routers documented behaviour', () => {
     }) as unknown as User;
   const core = (id: string, roles: string[]) => user(id, roles, { isCore: true, tenantId: undefined });
   const serviceAdmin = core('service-admin', [TenantServiceRoles.TenantServiceAdmin]);
+  const purgeAdmin = core('purge-admin', [TenantServiceRoles.TenantServiceAdmin, TenantServiceRoles.TenantPurge]);
   const betaTester = core('beta-tester', [TenantServiceRoles.BetaTester]);
   const tenantAdmin = user('tenant-admin', [TenantServiceRoles.TenantAdmin]);
   const plain = user('plain', []);
 
-  function createApp(currentUser: User | null): Express {
+  function createApp(currentUser: User | null, routers = { createTenantRouter, createTenantV2Router }): Express {
     const app = express();
     app.use(documented.middleware);
-    app.use(createRouters(currentUser));
-    return app;
-  }
-
-  // The deprecated v1 operations are left out of the swagger, so their responses aren't checked against it.
-  function createUndocumentedApp(currentUser: User | null): Express {
-    const app = express();
-    app.use(createRouters(currentUser));
-    return app;
-  }
-
-  function createRouters(currentUser: User | null): express.Router {
-    const router = express.Router();
-    router.use(express.json());
-    router.use((req, _res, next) => {
+    app.use(express.json());
+    app.use((req, _res, next) => {
       req.user = currentUser;
       req.isAuthenticated = (() => !!currentUser) as typeof req.isAuthenticated;
       req.getConfiguration = jest.fn().mockResolvedValue([null, []]);
@@ -88,19 +81,19 @@ describe('tenant routers documented behaviour', () => {
     });
     // v1 is mounted behind the jwt strategies only, which reject requests without a valid token.
     const requireToken: RequestHandler = (req, res, next) => (req.user ? next() : res.sendStatus(401));
-    router.use(
+    app.use(
       '/api/tenant/v1',
       requireToken,
-      createTenantRouter({
+      routers.createTenantRouter({
         tenantRepository: repositoryMock as never,
         realmService: realmServiceMock as never,
         eventService: eventServiceMock,
         auditService: auditServiceMock,
       }),
     );
-    router.use(
+    app.use(
       '/api/tenant/v2',
-      createTenantV2Router({
+      routers.createTenantV2Router({
         logger: loggerMock,
         tenantRepository: repositoryMock as never,
         realmService: realmServiceMock as never,
@@ -108,14 +101,38 @@ describe('tenant routers documented behaviour', () => {
         auditService: auditServiceMock,
       }),
     );
-    router.use(createErrorHandler(loggerMock));
-    return router;
+    app.use(createErrorHandler(loggerMock));
+    return app;
+  }
+
+  // The rate limiters are created when the router modules load, so a fresh copy of the modules is used to exhaust
+  // them without limiting the other tests.
+  function createRateLimitedApp(currentUser: User | null): Express {
+    let routers: { createTenantRouter: typeof createTenantRouter; createTenantV2Router: typeof createTenantV2Router };
+    jest.isolateModules(() => {
+      routers = { ...require('./tenant'), ...require('./tenantV2') };
+    });
+    return createApp(currentUser, routers);
+  }
+
+  async function exhaustRateLimit(app: Express, send: (agent: request.SuperAgentTest) => request.Test) {
+    const server = app.listen();
+    try {
+      const agent = request.agent(server);
+      for (let i = 0; i < RATE_LIMIT; i++) {
+        await send(agent);
+      }
+      return await send(agent);
+    } finally {
+      server.close();
+    }
   }
 
   const matches = (tenant: TenantEntity, criteria: Record<string, string>) =>
     (!criteria.idEquals || tenant.id === criteria.idEquals) &&
     (!criteria.nameEquals || tenant.name === criteria.nameEquals) &&
     (!criteria.realmEquals || tenant.realm === criteria.realmEquals) &&
+    (!criteria.statusEquals || tenant.status === criteria.statusEquals) &&
     (!criteria.adminEmailEquals || tenant.adminEmail === criteria.adminEmailEquals);
 
   afterEach(async () => {
@@ -154,6 +171,8 @@ describe('tenant routers documented behaviour', () => {
     });
     repositoryMock.delete.mockResolvedValue(true);
     realmServiceMock.createRealm.mockResolvedValue(undefined);
+    realmServiceMock.disableRealm.mockResolvedValue(undefined);
+    realmServiceMock.enableRealm.mockResolvedValue(undefined);
     realmServiceMock.deleteRealm.mockResolvedValue(true);
     realmServiceMock.findUserId.mockResolvedValue('user-id');
     realmServiceMock.deleteUserIdp.mockResolvedValue(undefined);
@@ -162,65 +181,80 @@ describe('tenant routers documented behaviour', () => {
 
   describe('v1', () => {
     it('responds 401 without a bearer token', async () => {
-      const res = await request(createUndocumentedApp(null)).get('/api/tenant/v1/test');
+      const res = await request(createApp(null)).get('/api/tenant/v1/test');
       expect(res.status).toBe(401);
     });
 
     describe('POST /api/tenant/v1', () => {
       it('allows a core beta-tester to create a tenant, which is provisioned asynchronously', async () => {
-        const res = await request(createUndocumentedApp(betaTester))
-          .post('/api/tenant/v1')
-          .send({ name: 'New Tenant' });
+        const res = await request(createApp(betaTester)).post('/api/tenant/v1').send({ name: 'New Tenant' });
         expect(res.status).toBe(202);
         expect(res.body).toMatchObject({ name: 'New Tenant', status: 'provisioning' });
       });
 
       it('rejects a tenant user', async () => {
-        const res = await request(createUndocumentedApp(user('tester', [TenantServiceRoles.BetaTester])))
+        const res = await request(createApp(user('tester', [TenantServiceRoles.BetaTester])))
           .post('/api/tenant/v1')
           .send({ name: 'New Tenant' });
         expect(res.status).toBe(401);
       });
 
+      it('lets a tenant-service-admin associate an existing realm and responds 200', async () => {
+        const res = await request(createApp(serviceAdmin))
+          .post('/api/tenant/v1')
+          .send({ name: 'New Tenant', realm: 'existing-realm', adminEmail: 'new@test.co' });
+        expect(res.status).toBe(200);
+        expect(res.body).toMatchObject({ realm: 'existing-realm', status: 'active' });
+      });
+
       it('responds 400 when name is missing', async () => {
-        const res = await request(createUndocumentedApp(betaTester)).post('/api/tenant/v1').send({});
+        const res = await request(createApp(betaTester)).post('/api/tenant/v1').send({});
         expect(res.status).toBe(400);
+        expect(res.body.success).toBe(false);
+      });
+
+      it('responds 400 when the name is already used', async () => {
+        const res = await request(createApp(betaTester)).post('/api/tenant/v1').send({ name: 'Other' });
+        expect(res.status).toBe(400);
+        expect(res.body.errorMessage).toContain('already been used');
       });
     });
 
     describe('DELETE /api/tenant/v1', () => {
-      it('allows a core tenant-service-admin to delete a tenant by realm', async () => {
-        const res = await request(createUndocumentedApp(serviceAdmin)).delete('/api/tenant/v1?realm=other-realm');
+      it('allows a core tenant-service-admin to archive a tenant by realm', async () => {
+        const res = await request(createApp(serviceAdmin)).delete('/api/tenant/v1?realm=other-realm');
         expect(res.status).toBe(200);
-        expect(res.body).toEqual({ deletedRealm: true, deletedTenant: true, success: true });
+        expect(res.body).toMatchObject({ name: 'Other', status: 'archived' });
+        expect(realmServiceMock.disableRealm).toHaveBeenCalled();
+        expect(realmServiceMock.deleteRealm).not.toHaveBeenCalled();
       });
 
       it('rejects a user without the tenant-service-admin role', async () => {
-        const res = await request(createUndocumentedApp(betaTester)).delete('/api/tenant/v1?realm=other-realm');
+        const res = await request(createApp(betaTester)).delete('/api/tenant/v1?realm=other-realm');
         expect(res.status).toBe(401);
         expect(realmServiceMock.deleteRealm).not.toHaveBeenCalled();
       });
 
       it('responds 400 when realm is missing', async () => {
-        const res = await request(createUndocumentedApp(serviceAdmin)).delete('/api/tenant/v1');
+        const res = await request(createApp(serviceAdmin)).delete('/api/tenant/v1');
         expect(res.status).toBe(400);
       });
 
       it('responds 404 for an unknown realm', async () => {
-        const res = await request(createUndocumentedApp(serviceAdmin)).delete('/api/tenant/v1?realm=unknown');
+        const res = await request(createApp(serviceAdmin)).delete('/api/tenant/v1?realm=unknown');
         expect(res.status).toBe(404);
       });
     });
 
     describe('GET /api/tenant/v1/:id', () => {
       it("lets any authenticated user retrieve a tenant, including one that isn't theirs", async () => {
-        const res = await request(createUndocumentedApp(plain)).get('/api/tenant/v1/other');
+        const res = await request(createApp(plain)).get('/api/tenant/v1/other');
         expect(res.status).toBe(200);
         expect(res.body).toMatchObject({ success: true, tenant: { name: 'Other' } });
       });
 
       it('responds 404 for an unknown tenant', async () => {
-        const res = await request(createUndocumentedApp(plain)).get('/api/tenant/v1/unknown');
+        const res = await request(createApp(plain)).get('/api/tenant/v1/unknown');
         expect(res.status).toBe(404);
       });
     });
@@ -229,27 +263,37 @@ describe('tenant routers documented behaviour', () => {
       it('returns the realm roles of the tenant of a tenant-admin', async () => {
         const find = jest.fn().mockResolvedValue([{ name: 'tenant-admin' }]);
         createkcAdminClientMock.mockResolvedValue({ roles: { find } } as never);
-        const res = await request(createUndocumentedApp(tenantAdmin)).get('/api/tenant/v1/realm/roles');
+        const res = await request(createApp(tenantAdmin)).get('/api/tenant/v1/realm/roles');
         expect(res.status).toBe(200);
         expect(find).toHaveBeenCalledWith({ realm: 'test-realm' });
       });
 
       it('rejects a user without the tenant-admin role', async () => {
-        const res = await request(createUndocumentedApp(plain)).get('/api/tenant/v1/realm/roles');
+        const res = await request(createApp(plain)).get('/api/tenant/v1/realm/roles');
+        expect(res.status).toBe(401);
+      });
+
+      it('responds 401 without a bearer token', async () => {
+        const res = await request(createApp(null)).get('/api/tenant/v1/realm/roles');
         expect(res.status).toBe(401);
       });
     });
 
     describe('GET /api/tenant/v1/realm/:realm', () => {
       it('lets any authenticated user retrieve a tenant by realm', async () => {
-        const res = await request(createUndocumentedApp(plain)).get('/api/tenant/v1/realm/other-realm');
+        const res = await request(createApp(plain)).get('/api/tenant/v1/realm/other-realm');
         expect(res.status).toBe(200);
         expect(res.body.tenant.name).toBe('Other');
       });
 
       it('responds 404 for an unknown realm', async () => {
-        const res = await request(createUndocumentedApp(plain)).get('/api/tenant/v1/realm/unknown');
+        const res = await request(createApp(plain)).get('/api/tenant/v1/realm/unknown');
         expect(res.status).toBe(404);
+      });
+
+      it('responds 401 without a bearer token', async () => {
+        const res = await request(createApp(null)).get('/api/tenant/v1/realm/other-realm');
+        expect(res.status).toBe(401);
       });
     });
 
@@ -258,19 +302,24 @@ describe('tenant routers documented behaviour', () => {
       ['name', { name: 'Other' }, { name: 'Unknown' }],
     ])('POST /api/tenant/v1/%s', (path, found, notFound) => {
       it('lets any authenticated user find a tenant', async () => {
-        const res = await request(createUndocumentedApp(plain)).post(`/api/tenant/v1/${path}`).send(found);
+        const res = await request(createApp(plain)).post(`/api/tenant/v1/${path}`).send(found);
         expect(res.status).toBe(200);
         expect(res.body.name).toBe('Other');
       });
 
       it(`responds 400 when ${path} is missing`, async () => {
-        const res = await request(createUndocumentedApp(plain)).post(`/api/tenant/v1/${path}`).send({});
+        const res = await request(createApp(plain)).post(`/api/tenant/v1/${path}`).send({});
         expect(res.status).toBe(400);
       });
 
       it('responds 404 when there is no matching tenant', async () => {
-        const res = await request(createUndocumentedApp(plain)).post(`/api/tenant/v1/${path}`).send(notFound);
+        const res = await request(createApp(plain)).post(`/api/tenant/v1/${path}`).send(notFound);
         expect(res.status).toBe(404);
+      });
+
+      it('responds 401 without a bearer token', async () => {
+        const res = await request(createApp(null)).post(`/api/tenant/v1/${path}`).send(found);
+        expect(res.status).toBe(401);
       });
     });
 
@@ -291,6 +340,13 @@ describe('tenant routers documented behaviour', () => {
         const res = await request(createApp(tenantAdmin)).get('/api/tenant/v1/user/id');
         expect(res.status).toBe(400);
       });
+
+      it('responds 429 when the rate limit is exceeded', async () => {
+        const res = await exhaustRateLimit(createRateLimitedApp(tenantAdmin), (agent) =>
+          agent.get('/api/tenant/v1/user/id?email=someone@test.co'),
+        );
+        expect(res.status).toBe(429);
+      });
     });
 
     describe('GET /api/tenant/v1/user/default-idp', () => {
@@ -303,6 +359,24 @@ describe('tenant routers documented behaviour', () => {
       it('responds 400 when userId is missing', async () => {
         const res = await request(createApp(tenantAdmin)).get('/api/tenant/v1/user/default-idp');
         expect(res.status).toBe(400);
+      });
+
+      it('responds 400 when the identity providers of the user cannot be read', async () => {
+        realmServiceMock.checkUserDefaultIdpInCore.mockRejectedValueOnce(new InvalidOperationError('Failed'));
+        const res = await request(createApp(tenantAdmin)).get('/api/tenant/v1/user/default-idp?userId=unknown');
+        expect(res.status).toBe(400);
+      });
+
+      it('rejects a user without the tenant-admin role', async () => {
+        const res = await request(createApp(plain)).get('/api/tenant/v1/user/default-idp?userId=user-id');
+        expect(res.status).toBe(401);
+      });
+
+      it('responds 429 when the rate limit is exceeded', async () => {
+        const res = await exhaustRateLimit(createRateLimitedApp(tenantAdmin), (agent) =>
+          agent.get('/api/tenant/v1/user/default-idp?userId=user-id'),
+        );
+        expect(res.status).toBe(429);
       });
     });
 
@@ -320,9 +394,24 @@ describe('tenant routers documented behaviour', () => {
         expect(res.status).toBe(400);
       });
 
+      it('responds 400 when the identity provider link cannot be removed', async () => {
+        realmServiceMock.deleteUserIdp.mockRejectedValueOnce(new InvalidOperationError('Failed'));
+        const res = await request(createApp(tenantAdmin)).delete(
+          '/api/tenant/v1/user/idp?userId=user-id&realm=test-realm',
+        );
+        expect(res.status).toBe(400);
+      });
+
       it('rejects a user without the tenant-admin role', async () => {
         const res = await request(createApp(plain)).delete('/api/tenant/v1/user/idp?userId=user-id&realm=test-realm');
         expect(res.status).toBe(401);
+      });
+
+      it('responds 429 when the rate limit is exceeded', async () => {
+        const res = await exhaustRateLimit(createRateLimitedApp(tenantAdmin), (agent) =>
+          agent.delete('/api/tenant/v1/user/idp?userId=user-id&realm=test-realm'),
+        );
+        expect(res.status).toBe(429);
       });
     });
   });
@@ -361,6 +450,23 @@ describe('tenant routers documented behaviour', () => {
       it('only includes active tenants', async () => {
         await request(createApp(null)).get('/api/tenant/v2/tenants?name=Other');
         expect(repositoryMock.find).toHaveBeenCalledWith(expect.objectContaining({ activeOnly: true }));
+      });
+
+      it('lets a core tenant-service-admin find archived tenants', async () => {
+        tenants[1].archive();
+        const res = await request(createApp(serviceAdmin)).get('/api/tenant/v2/tenants?status=archived');
+        expect(res.status).toBe(200);
+        expect(res.body.results).toEqual([expect.objectContaining({ name: 'Other', status: 'archived' })]);
+      });
+
+      it('responds 401 for archived tenants without the tenant-service-admin role', async () => {
+        const res = await request(createApp(core('core', []))).get('/api/tenant/v2/tenants?status=archived');
+        expect(res.status).toBe(401);
+      });
+
+      it('responds 400 for an unsupported status', async () => {
+        const res = await request(createApp(serviceAdmin)).get('/api/tenant/v2/tenants?status=provisioning');
+        expect(res.status).toBe(400);
       });
 
       it.each([`name=${'a'.repeat(51)}`, `realm=${'a'.repeat(51)}`, 'adminEmail=not-an-email'])(
@@ -403,6 +509,11 @@ describe('tenant routers documented behaviour', () => {
           .post('/api/tenant/v2/tenants')
           .send({ name: 'New Tenant', ...body });
         expect(res.status).toBe(401);
+      });
+
+      it('responds 400 when the name is already used', async () => {
+        const res = await request(createApp(betaTester)).post('/api/tenant/v2/tenants').send({ name: 'Other' });
+        expect(res.status).toBe(400);
       });
 
       it('responds 400 when a beta-tester is already the administrator of a tenant', async () => {
@@ -490,13 +601,50 @@ describe('tenant routers documented behaviour', () => {
           .send({ name: 'Renamed' });
         expect(res.status).toBe(404);
       });
+
+      it('responds 401 without a bearer token', async () => {
+        const res = await request(createApp(null)).patch('/api/tenant/v2/tenants/other/name').send({ name: 'Renamed' });
+        expect(res.status).toBe(401);
+      });
+
+      it('responds 429 when the rate limit is exceeded', async () => {
+        const res = await exhaustRateLimit(createRateLimitedApp(serviceAdmin), (agent) =>
+          agent.patch('/api/tenant/v2/tenants/other/name').send({ name: 'Renamed' }),
+        );
+        expect(res.status).toBe(429);
+      });
     });
 
     describe('DELETE /api/tenant/v2/tenants/:id', () => {
-      it('allows a core tenant-service-admin', async () => {
+      it('allows a core tenant-service-admin to archive a tenant', async () => {
         const res = await request(createApp(serviceAdmin)).delete('/api/tenant/v2/tenants/other');
         expect(res.status).toBe(200);
+        expect(res.body).toMatchObject({ name: 'Other', status: 'archived', deletedAt: expect.any(String) });
+        expect(realmServiceMock.deleteRealm).not.toHaveBeenCalled();
+      });
+
+      it('responds 403 for purge without the tenant-purge role', async () => {
+        const res = await request(createApp(serviceAdmin)).delete('/api/tenant/v2/tenants/other?purge=true');
+        expect(res.status).toBe(403);
+        expect(realmServiceMock.deleteRealm).not.toHaveBeenCalled();
+      });
+
+      it('responds 400 for purge of a tenant that is not archived', async () => {
+        const res = await request(createApp(purgeAdmin)).delete('/api/tenant/v2/tenants/other?purge=true');
+        expect(res.status).toBe(400);
+        expect(realmServiceMock.deleteRealm).not.toHaveBeenCalled();
+      });
+
+      it('allows a tenant-purge user to purge an archived tenant', async () => {
+        tenants[1].archive();
+        const res = await request(createApp(purgeAdmin)).delete('/api/tenant/v2/tenants/other?purge=true');
+        expect(res.status).toBe(200);
         expect(res.body).toEqual({ deletedRealm: true, deletedTenant: true, success: true });
+      });
+
+      it('responds 400 for an invalid purge value', async () => {
+        const res = await request(createApp(purgeAdmin)).delete('/api/tenant/v2/tenants/other?purge=maybe');
+        expect(res.status).toBe(400);
       });
 
       it('rejects a user without the tenant-service-admin role', async () => {
@@ -508,6 +656,42 @@ describe('tenant routers documented behaviour', () => {
       it('responds 404 for an unknown tenant', async () => {
         const res = await request(createApp(serviceAdmin)).delete('/api/tenant/v2/tenants/unknown');
         expect(res.status).toBe(404);
+      });
+
+      it('responds 401 without a bearer token', async () => {
+        const res = await request(createApp(null)).delete('/api/tenant/v2/tenants/other');
+        expect(res.status).toBe(401);
+      });
+    });
+
+    describe('POST /api/tenant/v2/tenants/:id/restore', () => {
+      it('allows a core tenant-service-admin to restore an archived tenant', async () => {
+        tenants[1].archive();
+        const res = await request(createApp(serviceAdmin)).post('/api/tenant/v2/tenants/other/restore');
+        expect(res.status).toBe(200);
+        expect(res.body).toMatchObject({ name: 'Other', status: 'active' });
+        expect(res.body.deletedAt).toBeUndefined();
+        expect(realmServiceMock.enableRealm).toHaveBeenCalled();
+      });
+
+      it('responds 400 for a tenant that is not archived', async () => {
+        const res = await request(createApp(serviceAdmin)).post('/api/tenant/v2/tenants/other/restore');
+        expect(res.status).toBe(400);
+      });
+
+      it('rejects a user without the tenant-service-admin role', async () => {
+        const res = await request(createApp(tenantAdmin)).post('/api/tenant/v2/tenants/test/restore');
+        expect(res.status).toBe(401);
+      });
+
+      it('responds 404 for an unknown tenant', async () => {
+        const res = await request(createApp(serviceAdmin)).post('/api/tenant/v2/tenants/unknown/restore');
+        expect(res.status).toBe(404);
+      });
+
+      it('responds 401 without a bearer token', async () => {
+        const res = await request(createApp(null)).post('/api/tenant/v2/tenants/other/restore');
+        expect(res.status).toBe(401);
       });
     });
   });

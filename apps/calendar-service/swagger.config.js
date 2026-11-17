@@ -33,7 +33,16 @@ Any date returned by the API will indicate whether or not;
 You can retrieve the information for a specific date, or all dates between a min and a max.
 `,
   },
-  tags: [],
+  tags: [
+    {
+      name: 'Calendar',
+      description: 'API to manage calendars, calendar events, and event attendees.',
+    },
+    {
+      name: 'Dates',
+      description: 'API to retrieve information about dates, such as holidays and business days.',
+    },
+  ],
   components: {
     securitySchemes: {
       accessToken: {

@@ -1,57 +1,41 @@
 import React, { FunctionComponent } from 'react';
 import { useDispatch } from 'react-redux';
-import { TableDiv } from '../styled-components';
 import { DeleteModal } from '@components/DeleteModal';
-import { deleteSharepointConnection } from '@store/sharePoint/actions';
+import { deleteSharepointConnection, SharepointConnection } from '@store/sharePoint/actions';
 import { MarginTop } from '../styled-components';
 
-interface connectionTableProps {
-  connectionSite: string;
-  connectionList: string;
-  connectionName: string;
-  connectionId: string;
-  showDeleteConfig: (show: boolean) => void;
+interface DeleteConnectionProps {
+  connection: SharepointConnection;
+  destinationNames: string[];
+  onClose: () => void;
 }
 
-export const DeleteConfirmationsView: FunctionComponent<connectionTableProps> = ({
-  connectionSite,
-  connectionList,
-  connectionName,
-  connectionId,
-  showDeleteConfig,
+export const DeleteConfirmationsView: FunctionComponent<DeleteConnectionProps> = ({
+  connection,
+  destinationNames,
+  onClose,
 }) => {
   const dispatch = useDispatch();
 
   return (
-    <TableDiv key="connection">
-      <DeleteModal
-        title="Delete connection"
-        isOpen={true}
-        onCancel={() => {
-          showDeleteConfig(false);
-        }}
-        content={
-          <div>
-            Are you sure you want to delete this connection?
+    <DeleteModal
+      title="Delete connection"
+      isOpen={true}
+      onCancel={onClose}
+      content={
+        <div>
+          Are you sure you want to delete <b>{connection.name}</b>? Its secret is deleted as well.
+          {destinationNames.length > 0 && (
             <MarginTop>
-              <div>
-                <b>Connection Name:</b> {connectionName}
-              </div>
-              <div>
-                <b>Site ID</b>: {connectionSite}
-              </div>
-              <div>
-                <b>List ID:</b> {connectionList}
-              </div>
+              These destinations use this connection and will stop working: {destinationNames.join(', ')}.
             </MarginTop>
-          </div>
-        }
-        onDelete={() => {
-          showDeleteConfig(false);
-          dispatch(deleteSharepointConnection(connectionId));
-        }}
-      />
-      <br />
-    </TableDiv>
+          )}
+        </div>
+      }
+      onDelete={() => {
+        onClose();
+        dispatch(deleteSharepointConnection(connection.id));
+      }}
+    />
   );
 };

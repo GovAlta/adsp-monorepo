@@ -9,6 +9,8 @@ import { FileType, ServiceUserRoles } from '../types';
 import { createFileRouter, deleteFile, deleteFiles, fileOperation, getFile, getType, getTypes } from './file';
 import { Readable } from 'stream';
 
+jest.mock('file-type', () => ({ fileTypeFromBuffer: jest.fn() }));
+
 describe('file router', () => {
   const serviceId = adspId`urn:ads:platform:file-service`;
   const apiId = adspId`${serviceId}:v1`;
@@ -36,6 +38,13 @@ describe('file router', () => {
 
   const eventServiceMock = {
     send: jest.fn(),
+  };
+
+  const auditServiceMock = {
+    record: jest.fn(),
+    query: jest.fn(),
+    flush: jest.fn(),
+    droppedEventCount: 0,
   };
 
   const publicFileType: FileType & { typeId: string } = {
@@ -163,6 +172,7 @@ describe('file router', () => {
     fileRepositoryMock.delete.mockReset();
 
     eventServiceMock.send.mockReset();
+    auditServiceMock.record.mockReset();
   });
 
   it('can create router', () => {
@@ -172,6 +182,7 @@ describe('file router', () => {
       storageProvider: storageProviderMock,
       fileRepository: fileRepositoryMock,
       eventService: eventServiceMock,
+      auditService: auditServiceMock,
     });
     expect(router).toBeTruthy();
   });
@@ -415,7 +426,7 @@ describe('file router', () => {
 
   describe('uploadFile', () => {
     it('can create handler', () => {
-      const handler = uploadFile(apiId, loggerMock, eventServiceMock);
+      const handler = uploadFile(apiId, loggerMock, eventServiceMock, auditServiceMock);
       expect(handler).toBeTruthy();
     });
 
@@ -432,7 +443,7 @@ describe('file router', () => {
       const res = { send: jest.fn() };
       const next = jest.fn();
 
-      const handler = uploadFile(apiId, loggerMock, eventServiceMock);
+      const handler = uploadFile(apiId, loggerMock, eventServiceMock, auditServiceMock);
       handler(req as unknown as Request, res as unknown as Response, next);
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ id: file.id, filename: file.filename }));
     });
@@ -448,7 +459,7 @@ describe('file router', () => {
       const res = { send: jest.fn() };
       const next = jest.fn();
 
-      const handler = uploadFile(apiId, loggerMock, eventServiceMock);
+      const handler = uploadFile(apiId, loggerMock, eventServiceMock, auditServiceMock);
       handler(req as unknown as Request, res as unknown as Response, next);
       expect(next).toHaveBeenCalledWith(expect.any(InvalidOperationError));
     });
@@ -553,7 +564,7 @@ describe('file router', () => {
       storageProviderMock.readFile.mockResolvedValueOnce(stream);
       fileRepositoryMock.get.mockResolvedValueOnce(file);
 
-      const handler = downloadFile(loggerMock);
+      const handler = downloadFile(loggerMock, auditServiceMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(storageProviderMock.readFile).toHaveBeenCalledWith(file, 0, file.size - 1);
       expect(res.status).toHaveBeenCalledWith(200);
@@ -582,7 +593,7 @@ describe('file router', () => {
       storageProviderMock.readFile.mockResolvedValueOnce(stream);
       fileRepositoryMock.get.mockResolvedValueOnce(publicFile);
 
-      const handler = downloadFile(loggerMock);
+      const handler = downloadFile(loggerMock, auditServiceMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(res.status).toHaveBeenCalledWith(200);
@@ -611,7 +622,7 @@ describe('file router', () => {
       storageProviderMock.readFile.mockResolvedValueOnce(stream);
       fileRepositoryMock.get.mockResolvedValueOnce(fileImage);
 
-      const handler = downloadFile(loggerMock);
+      const handler = downloadFile(loggerMock, auditServiceMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(res.status).toHaveBeenCalledWith(200);
       expect(res.setHeader).toHaveBeenCalledWith('Cache-Control', 'no-store');
@@ -639,7 +650,7 @@ describe('file router', () => {
       storageProviderMock.readFile.mockResolvedValueOnce(stream);
       fileRepositoryMock.get.mockResolvedValueOnce(fileVideo);
 
-      const handler = downloadFile(loggerMock);
+      const handler = downloadFile(loggerMock, auditServiceMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(res.status).toHaveBeenCalledWith(200);
       expect(res.setHeader).toHaveBeenCalledWith('Cache-Control', 'no-store');
@@ -669,7 +680,7 @@ describe('file router', () => {
       storageProviderMock.readFile.mockResolvedValueOnce(stream);
       fileRepositoryMock.get.mockResolvedValueOnce(file);
 
-      const handler = downloadFile(loggerMock);
+      const handler = downloadFile(loggerMock, auditServiceMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(res.status).toHaveBeenCalledWith(200);
       expect(res.setHeader).toHaveBeenCalledWith('Content-Disposition', "inline; filename*=UTF-8''test.txt");
@@ -707,7 +718,7 @@ describe('file router', () => {
       storageProviderMock.readFile.mockResolvedValueOnce(stream);
       fileRepositoryMock.get.mockResolvedValueOnce(file);
 
-      const handler = downloadFile(loggerMock);
+      const handler = downloadFile(loggerMock, auditServiceMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(next).toHaveBeenCalledWith(expect.any(InvalidOperationError));
     });
@@ -745,7 +756,7 @@ describe('file router', () => {
       storageProviderMock.readFile.mockResolvedValueOnce(stream);
       fileRepositoryMock.get.mockResolvedValueOnce(file);
 
-      const handler = downloadFile(loggerMock);
+      const handler = downloadFile(loggerMock, auditServiceMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(res.status).toHaveBeenCalledWith(200);
       expect(res.setHeader).toHaveBeenCalled();
@@ -777,7 +788,7 @@ describe('file router', () => {
       storageProviderMock.readFile.mockResolvedValueOnce(stream);
       fileRepositoryMock.get.mockResolvedValueOnce(file);
 
-      const handler = downloadFile(loggerMock);
+      const handler = downloadFile(loggerMock, auditServiceMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(storageProviderMock.readFile).toHaveBeenCalledWith(file, 10, file.size - 1);
       expect(res.status).toHaveBeenCalledWith(206);
@@ -807,7 +818,7 @@ describe('file router', () => {
       };
       const next = jest.fn();
 
-      const handler = downloadFile(loggerMock);
+      const handler = downloadFile(loggerMock, auditServiceMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(res.status).not.toHaveBeenCalled();
@@ -832,7 +843,7 @@ describe('file router', () => {
       };
       const next = jest.fn();
 
-      const handler = downloadFile(loggerMock);
+      const handler = downloadFile(loggerMock, auditServiceMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(res.status).not.toHaveBeenCalled();
@@ -842,7 +853,7 @@ describe('file router', () => {
 
   describe('deleteFile', () => {
     it('can create handler', () => {
-      const handler = deleteFile(apiId, loggerMock, eventServiceMock);
+      const handler = deleteFile(apiId, loggerMock, eventServiceMock, auditServiceMock);
       expect(handler).toBeTruthy();
     });
 
@@ -864,7 +875,7 @@ describe('file router', () => {
 
       fileRepositoryMock.save.mockResolvedValueOnce(file);
 
-      const handler = deleteFile(apiId, loggerMock, eventServiceMock);
+      const handler = deleteFile(apiId, loggerMock, eventServiceMock, auditServiceMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ deleted: true }));
     });
@@ -886,7 +897,7 @@ describe('file router', () => {
 
       fileRepositoryMock.save.mockResolvedValueOnce(file);
 
-      const handler = deleteFile(apiId, loggerMock, eventServiceMock);
+      const handler = deleteFile(apiId, loggerMock, eventServiceMock, auditServiceMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ deleted: true }));
     });
@@ -907,7 +918,7 @@ describe('file router', () => {
       };
       const next = jest.fn();
 
-      const handler = deleteFile(apiId, loggerMock, eventServiceMock);
+      const handler = deleteFile(apiId, loggerMock, eventServiceMock, auditServiceMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(next).toHaveBeenCalledWith(new Error('Some error'));
     });
@@ -929,7 +940,7 @@ describe('file router', () => {
       });
 
     it('can create handler', () => {
-      const handler = deleteFiles(apiId, loggerMock, eventServiceMock, fileRepositoryMock);
+      const handler = deleteFiles(apiId, loggerMock, eventServiceMock, auditServiceMock, fileRepositoryMock);
       expect(handler).toBeTruthy();
     });
 
@@ -953,7 +964,7 @@ describe('file router', () => {
       fileRepositoryMock.get.mockResolvedValueOnce(firstFile).mockResolvedValueOnce(secondFile);
       fileRepositoryMock.save.mockResolvedValue(file);
 
-      const handler = deleteFiles(apiId, loggerMock, eventServiceMock, fileRepositoryMock);
+      const handler = deleteFiles(apiId, loggerMock, eventServiceMock, auditServiceMock, fileRepositoryMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(fileRepositoryMock.get).toHaveBeenCalledWith('file-1');
@@ -988,7 +999,7 @@ describe('file router', () => {
       fileRepositoryMock.get.mockResolvedValueOnce(firstFile).mockResolvedValueOnce(secondFile);
       fileRepositoryMock.save.mockResolvedValue(file);
 
-      const handler = deleteFiles(apiId, loggerMock, eventServiceMock, fileRepositoryMock);
+      const handler = deleteFiles(apiId, loggerMock, eventServiceMock, auditServiceMock, fileRepositoryMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(fileRepositoryMock.get).toHaveBeenCalledWith('file-1');
@@ -1011,7 +1022,7 @@ describe('file router', () => {
       };
       const next = jest.fn();
 
-      const handler = deleteFiles(apiId, loggerMock, eventServiceMock, fileRepositoryMock);
+      const handler = deleteFiles(apiId, loggerMock, eventServiceMock, auditServiceMock, fileRepositoryMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(next).toHaveBeenCalledWith(expect.any(InvalidOperationError));
@@ -1034,7 +1045,7 @@ describe('file router', () => {
 
       fileRepositoryMock.get.mockResolvedValueOnce(null);
 
-      const handler = deleteFiles(apiId, loggerMock, eventServiceMock, fileRepositoryMock);
+      const handler = deleteFiles(apiId, loggerMock, eventServiceMock, auditServiceMock, fileRepositoryMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(next).toHaveBeenCalledWith(expect.any(NotFoundError));
@@ -1043,7 +1054,7 @@ describe('file router', () => {
 
   describe('fileOperation', () => {
     it('can create handler', () => {
-      const handler = fileOperation(apiId, loggerMock, eventServiceMock);
+      const handler = fileOperation(apiId, loggerMock, eventServiceMock, auditServiceMock);
       expect(handler).toBeTruthy();
     });
 
@@ -1070,7 +1081,7 @@ describe('file router', () => {
       fileRepositoryMock.save.mockImplementation((e) => Promise.resolve(e));
       storageProviderMock.copyFile.mockResolvedValueOnce(true);
 
-      const handler = fileOperation(apiId, loggerMock, eventServiceMock);
+      const handler = fileOperation(apiId, loggerMock, eventServiceMock, auditServiceMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(res.send).toHaveBeenCalledWith(
         expect.objectContaining({ id: expect.any(String), filename: file.filename }),
@@ -1115,7 +1126,7 @@ describe('file router', () => {
       fileRepositoryMock.save.mockImplementation((e) => Promise.resolve(e));
       storageProviderMock.copyFile.mockResolvedValueOnce(true);
 
-      const handler = fileOperation(apiId, loggerMock, eventServiceMock);
+      const handler = fileOperation(apiId, loggerMock, eventServiceMock, auditServiceMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(res.send).toHaveBeenCalledWith(
         expect.objectContaining({ id: expect.any(String), filename: req.body.filename }),
@@ -1148,7 +1159,7 @@ describe('file router', () => {
 
       req.getConfiguration.mockResolvedValueOnce({});
 
-      const handler = fileOperation(apiId, loggerMock, eventServiceMock);
+      const handler = fileOperation(apiId, loggerMock, eventServiceMock, auditServiceMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(res.send).not.toHaveBeenCalled();
       expect(next).toHaveBeenCalledWith(expect.any(NotFoundError));
@@ -1173,7 +1184,7 @@ describe('file router', () => {
       };
       const next = jest.fn();
 
-      const handler = fileOperation(apiId, loggerMock, eventServiceMock);
+      const handler = fileOperation(apiId, loggerMock, eventServiceMock, auditServiceMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(next).toBeCalledWith(expect.any(InvalidOperationError));

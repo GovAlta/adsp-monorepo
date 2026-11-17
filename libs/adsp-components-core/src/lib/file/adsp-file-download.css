@@ -1,0 +1,36 @@
+.adsp-file-download {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--adsp-spacing-xs);
+  margin: 0;
+  color: var(--adsp-color-text-default);
+  font-family: var(--adsp-typography-font-family);
+  font-size: var(--adsp-typography-body-m-font-size);
+  line-height: var(--adsp-typography-body-m-line-height);
+}
+
+.adsp-file-download .adsp-file-download__metadata {
+  color: var(--adsp-components-file-download-metadata-text-color);
+  font-size: var(--adsp-typography-body-s-font-size);
+  line-height: var(--adsp-typography-body-s-line-height);
+}
+
+.adsp-file-download .adsp-file-download__status {
+  color: var(--adsp-components-file-download-status-text-color);
+  font-size: var(--adsp-typography-body-s-font-size);
+  line-height: var(--adsp-typography-body-s-line-height);
+}
+
+/* The error starts its own line so it reads as being about the control above it. */
+.adsp-file-download .adsp-file-download__error {
+  display: flex;
+  flex-basis: 100%;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--adsp-spacing-xs);
+  margin: 0;
+  color: var(--adsp-components-file-download-error-text-color);
+  font-size: var(--adsp-typography-body-s-font-size);
+  line-height: var(--adsp-typography-body-s-line-height);
+}

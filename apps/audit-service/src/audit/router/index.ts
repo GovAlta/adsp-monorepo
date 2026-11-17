@@ -122,7 +122,7 @@ export const validateAction = createValidationHandler(
   body('version').isInt({ min: 1 }),
   body('category').isIn(Object.values(AuditCategories)),
   body('severity').isIn(Object.values(AuditSeverities)),
-  body('retentionClass').isString().matches(APPLICATION_PATTERN),
+  body('retentionClass').optional().isString().matches(APPLICATION_PATTERN),
   body('description').optional().isString().notEmpty(),
   body('resourceType').optional().isString().notEmpty(),
   body('captureChangeSet').optional().isBoolean({ strict: true }),

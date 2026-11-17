@@ -1,25 +1,74 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import styled from 'styled-components';
 import { AgentContextSelection } from '@core-services/app-common';
+import { ACCESS_SERVICE_AGENT_ID, AccessGuideTopic } from '@store/agent/model';
+import { PredefinedQuestionForm } from './PredefinedQuestionForm';
+import { isTemplatedQuestion, PredefinedQuestion, QuestionInput, QuestionTopic } from './predefinedQuestion';
+
+const PERSON_INPUT: QuestionInput = { name: 'person', label: 'Username or email', placeholder: 'jane.doe@gov.ab.ca' };
+const APP_INPUT: QuestionInput = { name: 'app', label: 'App name or client ID', placeholder: 'my-app' };
+const ROLE_INPUT: QuestionInput = { name: 'role', label: 'Role name', placeholder: 'form-admin' };
 
 /**
- * Predefined question hierarchy for agent routing
- * Maps topics to subtopics with predefined questions and specialist hints
+ * Predefined questions by topic. The topic and subtopic keys are sent as the agentContext hint the agent routes by.
+ * Questions with a guideTopic are answered from the Access Service guide without AI; questions with a template ask for
+ * the names they need before they are sent.
  */
-export const QUESTION_HIERARCHY = {
+export const QUESTION_HIERARCHY: Record<string, QuestionTopic> = {
+  'common-questions': {
+    label: 'Common Questions (start here)',
+    subtopics: {
+      'is-admin': {
+        label: 'Is Someone an Admin?',
+        question: 'I want to check whether someone in my tenant is a tenant admin.',
+        inputs: [PERSON_INPUT],
+        template: 'Is {person} a tenant admin?',
+      },
+      'cannot-sign-in': {
+        label: "Why Can't Someone Sign In?",
+        question: "Someone in my tenant can't sign in. Help me find out why.",
+        inputs: [PERSON_INPUT],
+        template: "Why can't {person} sign in?",
+      },
+      'access-denied': {
+        label: 'Why "Access Denied"?',
+        question:
+          'Someone gets an access denied or 403 error in an app or ADSP service. Help me find out what they are missing.',
+        inputs: [PERSON_INPUT, { name: 'service', label: 'App or ADSP service', placeholder: 'form-service' }],
+        template: '{person} gets access denied in {service}. What are they missing?',
+      },
+      'who-is-admin': {
+        label: 'Who Has Admin?',
+        question: 'Who are the tenant admins in my realm?',
+      },
+      'app-setup': {
+        label: 'Is My App Set Up Right?',
+        question: 'Is my app set up correctly in Keycloak? Help me check it.',
+        inputs: [APP_INPUT],
+        template: 'Is my app {app} set up correctly in Keycloak?',
+      },
+      'service-account-roles': {
+        label: 'What Can My Service Call?',
+        question:
+          "What roles does my backend service's service account have, and can it call the ADSP services it needs?",
+        inputs: [{ ...APP_INPUT, label: "Service's client ID", placeholder: 'my-backend-service' }],
+        template: 'What roles does the service account of {app} have, and can it call the ADSP services it needs?',
+      },
+    },
+  },
   overview: {
     label: 'Overview',
     subtopics: {
       environments: {
         label: 'Environments',
         question: 'What environments does the Access Service run in, and what is the purpose of each?',
-        agent: 'architectAgent',
+        guideTopic: 'environments',
       },
       responsibility: {
         label: 'Responsibility',
         question:
           'What is the relationship between ADSP and tenants, and who is responsible for each part of the Access Service?',
-        agent: 'architectAgent',
+        guideTopic: 'responsibility',
       },
     },
   },
@@ -29,17 +78,14 @@ export const QUESTION_HIERARCHY = {
       'inspectable-environments': {
         label: 'Inspectable Environments',
         question: 'List the Access Service environments and tell me which ones I can inspect.',
-        agent: 'AccessServiceAgent',
       },
       'my-realms': {
         label: 'My Realms',
         question: 'Which realms can I inspect in this environment?',
-        agent: 'AccessServiceAgent',
       },
       'realm-details': {
         label: 'Realm Details',
         question: 'Show me the basic identifying information for my realm.',
-        agent: 'AccessServiceAgent',
       },
     },
   },
@@ -49,22 +95,76 @@ export const QUESTION_HIERARCHY = {
       'list-clients': {
         label: 'List Clients',
         question: 'List the clients in my realm.',
-        agent: 'AccessServiceAgent',
       },
       'inspect-client': {
         label: 'Inspect a Client',
         question: 'I want to inspect the configuration of a client in my realm.',
-        agent: 'AccessServiceAgent',
+        inputs: [APP_INPUT],
+        template: 'Show me the configuration of the client {app}.',
       },
       'client-redirects': {
         label: 'Redirect URIs & Web Origins',
         question: 'Show me the redirect URIs and web origins configured for a client in my realm.',
-        agent: 'AccessServiceAgent',
+        inputs: [APP_INPUT],
+        template: 'Show me the redirect URIs and web origins configured for {app}.',
       },
       'client-roles-scopes': {
         label: 'Roles, Scopes & Mappers',
         question: 'Show me the roles, client scopes and protocol mappers configured for a client in my realm.',
-        agent: 'AccessServiceAgent',
+        inputs: [APP_INPUT],
+        template: 'Show me the roles, client scopes and protocol mappers configured for {app}.',
+      },
+      'redirect-error': {
+        label: 'Sign-in Address Error',
+        question:
+          'My app shows "Invalid parameter: redirect_uri" or a CORS error when signing in. Help me check its addresses.',
+        inputs: [APP_INPUT, { name: 'address', label: 'App address', placeholder: 'https://myapp.alberta.ca' }],
+        template:
+          'My app {app} at {address} shows "Invalid parameter: redirect_uri" or a CORS error when signing in. Check its addresses.',
+      },
+      'token-preview': {
+        label: 'Preview a Token',
+        question: 'Show me what an access token from one of my apps would contain.',
+        inputs: [APP_INPUT],
+        template: 'Show me what an access token from {app} would contain.',
+      },
+    },
+  },
+  'my-users': {
+    label: 'My Users & Roles',
+    subtopics: {
+      'find-user': {
+        label: 'Find a User',
+        question: 'I want to find a user in my realm.',
+        inputs: [PERSON_INPUT],
+        template: 'Find user {person}.',
+      },
+      'user-roles': {
+        label: 'User Role Assignments',
+        question: 'Show me the realm and client roles assigned to a user in my realm, and where each one comes from.',
+        inputs: [PERSON_INPUT],
+        template: 'Show me the roles assigned to {person}, and where each one comes from.',
+      },
+      'compare-users': {
+        label: 'Compare Two Users',
+        question: 'Why can one person in my tenant do something another person cannot? Compare their access.',
+        inputs: [
+          { ...PERSON_INPUT, name: 'first', label: 'First person' },
+          { ...PERSON_INPUT, name: 'second', label: 'Second person', placeholder: 'john.smith@gov.ab.ca' },
+        ],
+        template: 'Why can {first} do something {second} cannot? Compare their access.',
+      },
+      'role-members': {
+        label: 'Who Has a Role',
+        question: 'I want to see who in my realm has a particular role.',
+        inputs: [ROLE_INPUT],
+        template: 'Who in my realm has the {role} role?',
+      },
+      'role-meaning': {
+        label: 'What a Role Means',
+        question: 'Explain what a role lets someone do and which roles give it.',
+        inputs: [ROLE_INPUT],
+        template: 'Explain what the {role} role lets someone do and which roles give it.',
       },
     },
   },
@@ -74,18 +174,19 @@ export const QUESTION_HIERARCHY = {
       'public-client': {
         label: 'Browser App (Client auth: Off)',
         question: 'How do I configure a browser application client in Keycloak v24? (Client authentication OFF)',
-        agent: 'clientAgent',
+        guideTopic: 'public-client',
       },
       'confidential-client': {
         label: 'Server-to-Server (Client auth: On)',
         question:
           'How do I configure a server-to-server client in Keycloak v24 with client credentials? (Client authentication ON)',
-        agent: 'clientAgent',
+        guideTopic: 'confidential-client',
       },
       'client-troubleshooting': {
         label: 'Client Troubleshooting',
         question: 'My client configuration seems wrong. Can you help me troubleshoot?',
-        agent: 'clientAgent',
+        inputs: [APP_INPUT],
+        template: 'My client {app} configuration seems wrong. Help me troubleshoot it.',
       },
     },
   },
@@ -95,22 +196,22 @@ export const QUESTION_HIERARCHY = {
       'token-claims': {
         label: 'Token Claims',
         question: 'What claims should be in my access token and how do I add custom claims?',
-        agent: 'tokenRoleAgent',
+        guideTopic: 'token-claims',
       },
       'token-expiry': {
         label: 'Token Expiry',
         question: 'Why is my token expiring too quickly? How do I adjust token lifetimes?',
-        agent: 'tokenRoleAgent',
+        guideTopic: 'token-expiry',
       },
       'token-audience': {
         label: 'Token Audience',
         question: 'My token is missing the audience claim. How do I add the correct audience?',
-        agent: 'tokenRoleAgent',
+        guideTopic: 'token-audience',
       },
       'idp-claim-to-token': {
         label: 'IdP Claim to Token',
         question: 'How do I add a claim from the identity provider to my access token (JWT)?',
-        agent: 'tokenRoleAgent',
+        guideTopic: 'idp-claim-to-token',
       },
     },
   },
@@ -121,17 +222,21 @@ export const QUESTION_HIERARCHY = {
         label: 'Tenant Brokering',
         question:
           'What is the goa-ad cross-tenant IdP linked in the core realm, and how is it used for ADSP cross-tenant management?',
-        agent: 'identityProviderAgent',
+      },
+      'goa-ad': {
+        label: 'goa-ad and UIAM',
+        question: 'What are the goa-ad and UIAM identity providers, and when is each one used?',
+        guideTopic: 'goa-ad',
       },
       'uiam-integration': {
         label: 'UIAM Integration',
         question: 'What are the steps to integrate a UIAM (citizen or business) identity provider in Keycloak?',
-        agent: 'identityProviderAgent',
+        guideTopic: 'uiam-integration',
       },
       'saml-certificates': {
         label: 'SAML 2.0 Certificates',
         question: 'What are the SAML 2.0 certificate requirements and renewal process for a UIAM identity provider?',
-        agent: 'identityProviderAgent',
+        guideTopic: 'saml-certificates',
       },
     },
   },
@@ -142,19 +247,20 @@ export const QUESTION_HIERARCHY = {
         label: 'Access Service Infrastructure',
         question:
           'Tell me about the Access Service infrastructure, high-availability design, and deployment topology. Include the deployment diagram, and explain how Keycloak pods are scheduled on ARO and how autoscaling works.',
-        agent: 'architectAgent',
+        guideTopic: 'architecture',
       },
       'disaster-recovery': {
         label: 'Disaster Recovery',
         question: 'What is the disaster recovery procedure for the Access Service? How do we recover from failures?',
-        agent: 'architectAgent',
+        guideTopic: 'disaster-recovery',
       },
     },
   },
 };
 
 export interface AgentContextSelectorProps {
-  onAskQuestion: (question: string, context: AgentContextSelection) => void;
+  /** guideTopic is set for a question the Access Service guide answers without AI. */
+  onAskQuestion: (question: string, context: AgentContextSelection, guideTopic?: AccessGuideTopic) => void;
   disabled?: boolean;
 }
 
@@ -291,35 +397,39 @@ const QuestionPill = styled.button`
 `;
 
 export const AgentContextSelector: React.FC<AgentContextSelectorProps> = ({ onAskQuestion, disabled = false }) => {
-  const [selectedTopic, setSelectedTopic] = React.useState<string | null>(null);
+  const [selectedTopic, setSelectedTopic] = useState<string | null>(null);
+  const [formSubtopicKey, setFormSubtopicKey] = useState<string | null>(null);
 
   const subtopics = useMemo(
-    () => (selectedTopic ? QUESTION_HIERARCHY[selectedTopic as keyof typeof QUESTION_HIERARCHY]?.subtopics : null),
+    () => (selectedTopic ? QUESTION_HIERARCHY[selectedTopic]?.subtopics : null),
     [selectedTopic],
   );
+  const formQuestion = formSubtopicKey ? subtopics?.[formSubtopicKey] : undefined;
 
   const handleTopicChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const newTopic = e.target.value || null;
-    setSelectedTopic(newTopic);
+    setSelectedTopic(e.target.value || null);
+    setFormSubtopicKey(null);
   };
 
-  const handleAskQuestion = (subtopicKey: string) => {
-    if (!selectedTopic) return;
+  const contextFor = (subtopicKey: string): AgentContextSelection => ({
+    context: selectedTopic,
+    subtopic: subtopicKey,
+    agent: ACCESS_SERVICE_AGENT_ID,
+  });
 
-    const topicSubtopics = QUESTION_HIERARCHY[selectedTopic as keyof typeof QUESTION_HIERARCHY]?.subtopics as
-      | Record<string, { label: string; question: string; agent: string }>
-      | undefined;
-    const subtopic = topicSubtopics?.[subtopicKey];
+  const handleQuestionClick = (subtopicKey: string, subtopic: PredefinedQuestion) => {
+    if (isTemplatedQuestion(subtopic)) {
+      setFormSubtopicKey(subtopicKey);
+      return;
+    }
 
-    if (!subtopic) return;
+    setFormSubtopicKey(null);
+    onAskQuestion(subtopic.question, contextFor(subtopicKey), subtopic.guideTopic);
+  };
 
-    const context: AgentContextSelection = {
-      context: selectedTopic,
-      subtopic: subtopicKey,
-      agent: subtopic.agent,
-    };
-
-    onAskQuestion(subtopic.question, context);
+  const handleFormAsk = (question: string) => {
+    onAskQuestion(question, contextFor(formSubtopicKey));
+    setFormSubtopicKey(null);
   };
 
   return (
@@ -343,8 +453,9 @@ export const AgentContextSelector: React.FC<AgentContextSelectorProps> = ({ onAs
             {Object.entries(subtopics).map(([key, value]) => (
               <QuestionPill
                 key={key}
-                onClick={() => handleAskQuestion(key)}
+                onClick={() => handleQuestionClick(key, value)}
                 disabled={disabled}
+                aria-expanded={isTemplatedQuestion(value) ? formSubtopicKey === key : undefined}
                 data-tooltip={value.question}
                 title={value.question}
               >
@@ -353,6 +464,16 @@ export const AgentContextSelector: React.FC<AgentContextSelectorProps> = ({ onAs
             ))}
           </SubtopicButtonsWrapper>
         </>
+      )}
+
+      {formQuestion && isTemplatedQuestion(formQuestion) && (
+        <PredefinedQuestionForm
+          key={formSubtopicKey}
+          question={formQuestion}
+          disabled={disabled}
+          onAsk={handleFormAsk}
+          onCancel={() => setFormSubtopicKey(null)}
+        />
       )}
     </SelectorContainer>
   );

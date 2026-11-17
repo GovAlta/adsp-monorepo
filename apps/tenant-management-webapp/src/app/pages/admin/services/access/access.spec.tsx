@@ -9,14 +9,17 @@ import { KeycloakApi } from '@store/config/models';
 import AccessPage from './access';
 
 jest.mock('@store/agent/actions', () => ({
+  answerFromAccessGuide: (threadId: string, topic: string, context: Record<string, unknown>, content: unknown) => ({
+    type: 'agent/ANSWER_FROM_ACCESS_GUIDE',
+    threadId,
+    topic,
+    context,
+    content,
+  }),
   clearThread: (threadId: string) => ({ type: 'agent/CLEAR_THREAD', threadId }),
   connectAgent: () => ({ type: 'agent/CONNECT_AGENT' }),
   disconnectAgent: () => ({ type: 'agent/DISCONNECT_AGENT' }),
-  discardThread: (threadId: string, options: { deleteOnServer: boolean }) => ({
-    type: 'agent/DISCARD_THREAD',
-    threadId,
-    ...options,
-  }),
+  resetThread: (threadId: string) => ({ type: 'agent/RESET_THREAD', threadId }),
   getAccessScope: () => async () => ({
     status: 'available',
     message: 'You can inspect the mock-realm realm in Development (read-only).',
@@ -246,6 +249,58 @@ describe('Access Page', () => {
     });
   });
 
+  describe('Guide questions', () => {
+    type RecordedAction = { type: string; threadId?: string };
+
+    async function askGuideQuestion() {
+      const store = mockStore({
+        config: {
+          keycloakApi: mockKeycloak,
+          tenantApi: { host: 'foo' },
+          serviceUrls: { tenantManagementWebApp: 'http://localhost' },
+          featureFlags: { AccessServiceAI: true },
+        },
+        access: { users: {}, metrics: { users: 3, activeUsers: 2 }, roles },
+        user: { jwt: { token: '' } },
+        agent: { connected: true, threads: {}, threadMessages: {}, messages: {} },
+        session: { realm: 'core', indicator: { show: false, message: 'loading' } },
+      });
+      const { getByTestId, getByText, container } = render(
+        <Provider store={store}>
+          <AccessPage />
+        </Provider>,
+      );
+      fireEvent.click(getByTestId('access-ai-agent-tab-btn'));
+      await waitFor(() => expect(getByTestId('access-scope-banner').getAttribute('data-status')).toBe('available'));
+      fireEvent.change(container.querySelector('#topic-select') as Element, { target: { value: 'tokens' } });
+      fireEvent.click(getByText('Token Expiry'));
+      return store.getActions() as RecordedAction[];
+    }
+
+    it('answers a guide question from the Access Service guide in the current conversation', async () => {
+      // Act
+      const actions = await askGuideQuestion();
+
+      // Assert
+      const startedThread = actions.find(({ type }) => type === 'agent/START_THREAD');
+      expect(actions).toContainEqual({
+        type: 'agent/ANSWER_FROM_ACCESS_GUIDE',
+        threadId: startedThread?.threadId,
+        topic: 'token-expiry',
+        context: { agentContext: { context: 'tokens', subtopic: 'token-expiry', agent: 'AccessServiceAgent' } },
+        content: [{ type: 'text', text: 'Why is my token expiring too quickly? How do I adjust token lifetimes?' }],
+      });
+    });
+
+    it('does not message the agent for a question the guide answers', async () => {
+      // Act
+      const actions = await askGuideQuestion();
+
+      // Assert
+      expect(actions).not.toContainEqual(expect.objectContaining({ type: 'agent/MESSAGE_AGENT' }));
+    });
+  });
+
   describe('New chat', () => {
     type RecordedAction = { type: string; threadId?: string };
 
@@ -254,6 +309,7 @@ describe('Access Page', () => {
       questionCount: number,
       replyStreaming: boolean,
       replyInterrupted: boolean,
+      usage?: Record<string, unknown>,
     ) {
       const messageIds: string[] = [];
       const messages: Record<string, unknown> = {};
@@ -273,6 +329,7 @@ describe('Access Page', () => {
           content: last ? 'Earlier answer' : `Answer ${index}`,
           streaming: last && replyStreaming,
           ...(last && replyInterrupted ? { interrupted: true } : {}),
+          ...(last && usage ? { usage } : {}),
           toolCalls: [],
         };
       }
@@ -281,7 +338,13 @@ describe('Access Page', () => {
 
     // Puts finished questions and replies in the first thread the page starts. The state is derived from the actions
     // recorded so far and cached per action count, so the store returns the same snapshot until something is dispatched.
-    function createChatStore({ replyStreaming = false, replyInterrupted = false, questionCount = 1 } = {}) {
+    function createChatStore({
+      replyStreaming = false,
+      replyInterrupted = false,
+      questionCount = 1,
+      conversationStatus = undefined as Record<string, unknown> | undefined,
+      usage = undefined as Record<string, unknown> | undefined,
+    } = {}) {
       let cached: { actionCount: number; state: unknown } | undefined;
       return mockStore((actions: RecordedAction[]) => {
         if (cached?.actionCount === actions.length) {
@@ -290,7 +353,7 @@ describe('Access Page', () => {
 
         const firstThreadId = actions.find(({ type }) => type === 'agent/START_THREAD')?.threadId;
         const conversation = firstThreadId
-          ? createConversation(firstThreadId, questionCount, replyStreaming, replyInterrupted)
+          ? createConversation(firstThreadId, questionCount, replyStreaming, replyInterrupted, usage)
           : { threadMessages: {}, messages: {} };
         const state = {
           config: {
@@ -305,6 +368,7 @@ describe('Access Page', () => {
             connected: true,
             threads: {},
             ...conversation,
+            conversationStatus: firstThreadId && conversationStatus ? { [firstThreadId]: conversationStatus } : {},
           },
           session: { realm: 'core', indicator: { show: false, message: 'loading' } },
         };
@@ -328,7 +392,7 @@ describe('Access Page', () => {
       return rendered;
     }
 
-    it('starts a new thread, deletes the old one on the server and clears the chat', async () => {
+    it('resets the old thread, starts a new one and clears the chat', async () => {
       const store = createChatStore();
       const { container, queryByText } = await openAgentTab(store);
       const firstThreadId = (store.getActions() as RecordedAction[]).find(
@@ -339,7 +403,7 @@ describe('Access Page', () => {
       click(container, 'access-agent-new-chat-confirm');
 
       const actions = store.getActions() as RecordedAction[];
-      expect(actions).toContainEqual({ type: 'agent/DISCARD_THREAD', threadId: firstThreadId, deleteOnServer: true });
+      expect(actions).toContainEqual({ type: 'agent/RESET_THREAD', threadId: firstThreadId });
       const startedThreads = actions
         .filter(({ type }) => type === 'agent/START_THREAD')
         .map(({ threadId }) => threadId);
@@ -351,41 +415,103 @@ describe('Access Page', () => {
       );
     });
 
-    it('leaves the old thread to expire on the server while a reply is still in progress', async () => {
-      const store = createChatStore({ replyStreaming: true });
-      const { container } = await openAgentTab(store);
+    it('warns that the reply in progress will be discarded', async () => {
+      const { container } = await openAgentTab(createChatStore({ replyStreaming: true }));
 
       click(container, 'access-agent-new-chat');
-      click(container, 'access-agent-new-chat-confirm');
 
-      expect(store.getActions()).toContainEqual(
-        expect.objectContaining({ type: 'agent/DISCARD_THREAD', deleteOnServer: false }),
-      );
+      expect(container.querySelector('goa-modal')?.textContent).toContain('The reply in progress will be discarded.');
     });
 
-    it('leaves the old thread to expire on the server when a reply was cut off by a reconnect', async () => {
-      const store = createChatStore({ replyInterrupted: true });
-      const { container } = await openAgentTab(store);
+    it('does not warn about a reply in progress when the reply was cut off by a reconnect', async () => {
+      const { container } = await openAgentTab(createChatStore({ replyInterrupted: true }));
 
       click(container, 'access-agent-new-chat');
 
       expect(container.querySelector('goa-modal')?.textContent).not.toContain(
         'The reply in progress will be discarded.',
       );
-      click(container, 'access-agent-new-chat-confirm');
+    });
 
-      expect(store.getActions()).toContainEqual(
-        expect.objectContaining({ type: 'agent/DISCARD_THREAD', deleteOnServer: false }),
+    it('gives an information notice once earlier messages are summarised', async () => {
+      const store = createChatStore({
+        conversationStatus: {
+          contextTokens: 14000,
+          contextWindowTokens: 256000,
+          state: 'notice',
+          reason: 'summarised',
+        },
+      });
+
+      const { container } = await openAgentTab(store);
+
+      const callout = container.querySelector('[testid="access-agent-conversation-status"]');
+      expect(callout?.getAttribute('heading')).toBe('Earlier messages summarised');
+      expect(callout?.getAttribute('type')).toBe('information');
+      expect(callout?.textContent).toContain('Details from early in the chat may be missed.');
+    });
+
+    it('warns once the conversation is close to the assistant’s limit', async () => {
+      const store = createChatStore({
+        conversationStatus: {
+          contextTokens: 180200,
+          contextWindowTokens: 256000,
+          state: 'warning',
+          reason: 'near-context-limit',
+        },
+      });
+
+      const { container } = await openAgentTab(store);
+
+      const callout = container.querySelector('[testid="access-agent-conversation-status"]');
+      expect(callout?.getAttribute('heading')).toBe('Close to the assistant’s limit');
+      expect(callout?.getAttribute('type')).toBe('important');
+    });
+
+    it('says nothing about the conversation while agent-service reports it is fine', async () => {
+      const store = createChatStore({
+        questionCount: 12,
+        conversationStatus: { contextTokens: 31000, contextWindowTokens: 256000, state: 'ok' },
+      });
+
+      const { container } = await openAgentTab(store);
+
+      expect(container.querySelector('[testid="access-agent-conversation-status"]')).toBeNull();
+    });
+
+    it('shows how much of the context window the conversation takes up', async () => {
+      const usage = {
+        contextTokens: 36000,
+        contextWindowTokens: 256000,
+        totalTokens: 111000,
+        outputTokens: 1400,
+        modelCalls: 3,
+      };
+      const store = createChatStore({
+        usage,
+        conversationStatus: { contextTokens: 36000, contextWindowTokens: 256000, state: 'ok' },
+      });
+
+      const { getByTestId } = await openAgentTab(store);
+
+      expect(getByTestId('access-agent-conversation-meter').textContent).toContain('36k of 256k tokens');
+      expect(getByTestId('access-agent-conversation-meter').textContent).toContain(
+        'Last answer: about 111k tokens across 3 model calls',
       );
     });
 
-    it('suggests a new chat once the conversation is long', async () => {
-      const longConversation = await openAgentTab(createChatStore({ questionCount: 10 }));
-      expect(longConversation.container.querySelector('[testid="access-agent-long-conversation"]')).not.toBeNull();
-      longConversation.unmount();
+    it('shows what each finished answer used', async () => {
+      const usage = {
+        contextTokens: 36000,
+        contextWindowTokens: 256000,
+        totalTokens: 111000,
+        outputTokens: 1400,
+        modelCalls: 3,
+      };
 
-      const shortConversation = await openAgentTab(createChatStore({ questionCount: 9 }));
-      expect(shortConversation.container.querySelector('[testid="access-agent-long-conversation"]')).toBeNull();
+      const { getByTestId } = await openAgentTab(createChatStore({ usage }));
+
+      expect(getByTestId('agent-message-usage').textContent).toBe('About 111k tokens · 3 model calls');
     });
 
     it('does nothing until the user confirms', async () => {
@@ -395,8 +521,105 @@ describe('Access Page', () => {
       click(container, 'access-agent-new-chat');
       click(container, 'access-agent-new-chat-cancel');
 
-      expect(store.getActions()).not.toContainEqual(expect.objectContaining({ type: 'agent/DISCARD_THREAD' }));
+      expect(store.getActions()).not.toContainEqual(expect.objectContaining({ type: 'agent/RESET_THREAD' }));
       expect(getByText('Earlier answer')).toBeTruthy();
+    });
+
+    describe('predefined questions after agent-service reports on the conversation', () => {
+      const CONTEXT = { contextTokens: 61000, contextWindowTokens: 256000 };
+      const LONG_CONVERSATION = { ...CONTEXT, state: 'notice', reason: 'long-conversation' };
+      const NEAR_LIMIT = { ...CONTEXT, state: 'warning', reason: 'near-context-limit' };
+      const FINE = { ...CONTEXT, state: 'ok' };
+
+      async function askPredefinedQuestion(conversationStatus: Record<string, unknown>, topic: string, label: string) {
+        const store = createChatStore({ conversationStatus });
+        const { container, getByText } = await openAgentTab(store);
+        const firstThreadId = (store.getActions() as RecordedAction[]).find(
+          ({ type }) => type === 'agent/START_THREAD',
+        )?.threadId;
+
+        fireEvent.change(container.querySelector('#topic-select') as Element, { target: { value: topic } });
+        fireEvent.click(getByText(label));
+
+        const actions = store.getActions() as RecordedAction[];
+        const askedIndex = actions.findIndex(({ type }) =>
+          ['agent/MESSAGE_AGENT', 'agent/ANSWER_FROM_ACCESS_GUIDE'].includes(type),
+        );
+        return {
+          firstThreadId,
+          actions,
+          asked: actions[askedIndex],
+          actionsBeforeAsking: actions.slice(0, askedIndex),
+        };
+      }
+
+      it.each([
+        ['a long-conversation notice', LONG_CONVERSATION],
+        ['a near-limit warning', NEAR_LIMIT],
+      ])('asks a predefined question in a new chat after %s', async (_description, conversationStatus) => {
+        // Act
+        const { firstThreadId, asked } = await askPredefinedQuestion(
+          conversationStatus,
+          'environment-realm',
+          'My Realms',
+        );
+
+        // Assert
+        expect(asked.threadId).not.toBe(firstThreadId);
+      });
+
+      it('resets the long conversation when a predefined question starts a new chat', async () => {
+        // Act
+        const { firstThreadId, actions } = await askPredefinedQuestion(
+          LONG_CONVERSATION,
+          'environment-realm',
+          'My Realms',
+        );
+
+        // Assert
+        expect(actions).toContainEqual({ type: 'agent/RESET_THREAD', threadId: firstThreadId });
+      });
+
+      it('starts the new thread before the predefined question is sent to it', async () => {
+        // Act
+        const { asked, actionsBeforeAsking } = await askPredefinedQuestion(
+          LONG_CONVERSATION,
+          'environment-realm',
+          'My Realms',
+        );
+
+        // Assert
+        expect(actionsBeforeAsking).toContainEqual({
+          type: 'agent/START_THREAD',
+          agent: 'AccessServiceAgent',
+          threadId: asked.threadId,
+        });
+      });
+
+      it('answers a guide question in a new chat after a long-conversation notice', async () => {
+        // Act
+        const { firstThreadId, asked } = await askPredefinedQuestion(LONG_CONVERSATION, 'tokens', 'Token Expiry');
+
+        // Assert
+        expect(asked).toMatchObject({ type: 'agent/ANSWER_FROM_ACCESS_GUIDE', topic: 'token-expiry' });
+        expect(asked.threadId).not.toBe(firstThreadId);
+      });
+
+      it('continues the conversation for a predefined question while agent-service reports it is fine', async () => {
+        // Act
+        const { firstThreadId, asked } = await askPredefinedQuestion(FINE, 'environment-realm', 'My Realms');
+
+        // Assert
+        expect(asked.threadId).toBe(firstThreadId);
+      });
+
+      it('does not reset the conversation for a predefined question while agent-service reports it is fine', async () => {
+        // Act
+        const { actions } = await askPredefinedQuestion(FINE, 'environment-realm', 'My Realms');
+
+        // Assert
+        expect(actions).not.toContainEqual(expect.objectContaining({ type: 'agent/RESET_THREAD' }));
+      });
     });
   });
 

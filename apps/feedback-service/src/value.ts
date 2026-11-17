@@ -7,14 +7,21 @@ import {
   Rating,
   ValueService,
   FeedbackEntry,
+  FeedbackSummary,
+  FeedbackSummaryQueryParameters,
   ReadQueryParameters,
   ValueResponse,
 } from './feedback';
 
 const VALUE_API_ID = adspId`urn:ads:platform:value-service:v1`;
+type ValueRequestConfig = { headers: { Authorization: string }; params: { tenantId: string } };
 
 class ValueServiceImpl implements ValueService {
-  constructor(private logger: Logger, private directory: ServiceDirectory, private tokenProvider: TokenProvider) {}
+  constructor(
+    private logger: Logger,
+    private directory: ServiceDirectory,
+    private tokenProvider: TokenProvider,
+  ) {}
 
   async writeValue(tenantId: AdspId, { timestamp, digest, context, ...feedback }: FeedbackValue): Promise<void> {
     try {
@@ -44,7 +51,7 @@ class ValueServiceImpl implements ValueService {
         {
           headers: { Authorization: `Bearer ${token}` },
           params: { tenantId: tenantId.toString() },
-        }
+        },
       );
     } catch (err) {
       this.logger.warn(`Error encountered writing feedback value. ${err}`, {
@@ -74,6 +81,102 @@ class ValueServiceImpl implements ValueService {
       });
       throw err;
     }
+  }
+
+  async readSummary(tenantId: AdspId, queryParameters: FeedbackSummaryQueryParameters): Promise<FeedbackSummary> {
+    try {
+      const valueApiUrl = await this.directory.getServiceUrl(VALUE_API_ID);
+      const token = await this.tokenProvider.getAccessToken();
+      const requestConfig = {
+        headers: { Authorization: `Bearer ${token}` },
+        params: { tenantId: tenantId.toString() },
+      };
+      const countUrl = new URL('v1/feedback-service/values/feedback/count', valueApiUrl).href;
+      const ratingUrl = new URL('v1/feedback-service/values/feedback/metrics', valueApiUrl).href;
+      const ratingMetric = `${queryParameters.site}:rating`;
+      const metricCriteria = JSON.stringify(this.getMetricCriteria(queryParameters, ratingMetric));
+
+      const [counts, ratingTotals] = await Promise.all([
+        this.readSummaryCounts(countUrl, requestConfig, queryParameters),
+        this.readRatingTotals(ratingUrl, requestConfig, metricCriteria, ratingMetric),
+      ]);
+
+      const averageRating =
+        counts.totalResponses > 0 && ratingTotals.count > 0
+          ? Math.round((ratingTotals.sum / ratingTotals.count + 1) * 10) / 10
+          : null;
+
+      return { ...counts, averageRating };
+    } catch (err) {
+      this.logger.warn(`Error encountered reading feedback summary. ${err}`, {
+        context: 'ValueService',
+        tenant: tenantId,
+      });
+      throw err;
+    }
+  }
+
+  private async readSummaryCounts(
+    url: string,
+    requestConfig: ValueRequestConfig,
+    queryParameters: FeedbackSummaryQueryParameters,
+  ) {
+    const criteria = this.getValueCriteria(queryParameters);
+    const count = (context: Record<string, unknown>) =>
+      axios.get(url, {
+        ...requestConfig,
+        params: { ...requestConfig.params, ...criteria, context: JSON.stringify(context) },
+      });
+    const [total, comments, issues] = await Promise.all([
+      count({ site: queryParameters.site }),
+      count({ site: queryParameters.site, includesComment: true }),
+      count({ site: queryParameters.site, includesTechnicalIssue: true }),
+    ]);
+
+    return {
+      totalResponses: total.data?.count ?? 0,
+      responsesWithComments: comments.data?.count ?? 0,
+      responsesWithIssues: issues.data?.count ?? 0,
+    };
+  }
+
+  private async readRatingTotals(url: string, requestConfig: ValueRequestConfig, criteria: string, metric: string) {
+    let after: string | undefined;
+    let totals = { sum: 0, count: 0 };
+
+    do {
+      const { data } = await axios.get(url, {
+        ...requestConfig,
+        params: { ...requestConfig.params, top: 5000, interval: 'daily', criteria, after },
+      });
+      totals = (data?.[metric]?.values ?? []).reduce(
+        (result, value) => ({
+          sum: result.sum + Number(value.sum || 0),
+          count: result.count + Number(value.count || 0),
+        }),
+        totals,
+      );
+      after = data?.page?.next;
+    } while (after);
+
+    return totals;
+  }
+
+  private getValueCriteria(queryParameters: FeedbackSummaryQueryParameters) {
+    return {
+      context: JSON.stringify({ site: queryParameters.site }),
+      ...(queryParameters.start ? { timestampMin: queryParameters.start } : {}),
+      ...(queryParameters.end ? { timestampMax: queryParameters.end } : {}),
+    };
+  }
+
+  private getMetricCriteria(queryParameters: FeedbackSummaryQueryParameters, metric: string) {
+    const intervalMax = queryParameters.end ? new Date(queryParameters.end).getTime() + 1 : Date.now();
+    return {
+      metricLike: metric,
+      intervalMin: queryParameters.start ?? new Date(0).toISOString(),
+      intervalMax: new Date(intervalMax).toISOString(),
+    };
   }
 
   composeUri = (path: string, queryParameters: ReadQueryParameters): string => {

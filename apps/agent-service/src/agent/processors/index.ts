@@ -3,6 +3,9 @@ import { type InputProcessor, PromptInjectionDetector } from '@mastra/core/proce
 import type { RequestContext } from '@mastra/core/request-context';
 import { Logger } from 'winston';
 import { getAgentModelConfiguration, getAgentModelId } from '../model/modelConfiguration';
+import { withUsageRecording } from '../model/usageRecordingModel';
+import { ACCESS_SERVICE_AGENT_ID } from '../model/executionLimits';
+import { createAccessHistoryProcessor } from './accessHistory';
 import { BrokerInputProcessor } from '../types';
 import { FileServiceDownloadProcessor } from './file';
 
@@ -15,9 +18,14 @@ export function createInputProcessors({ requestContext }: InputProcessorProps): 
   const agentId = requestContext.get('agentId') as string | undefined;
   const processors: InputProcessor[] = [];
 
+  if (agentId === ACCESS_SERVICE_AGENT_ID) {
+    processors.push(createAccessHistoryProcessor());
+  }
+
   processors.push(
     new PromptInjectionDetector({
-      model: getAgentModelConfiguration(getAgentModelId(agentId)),
+      // The detector's model calls are not part of the agent's own usage, so they are recorded for the reply.
+      model: withUsageRecording(getAgentModelConfiguration(getAgentModelId(agentId)), requestContext),
       threshold: 0.8,
       strategy: 'block',
       detectionTypes: ['injection', 'jailbreak', 'system-override'],

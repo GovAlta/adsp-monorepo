@@ -6,3 +6,5 @@
 /.nx/cache
 /.nx/workspace-data
 .nx/self-healing
+# Generated, minified OpenAPI specs bundled by the MCP server.
+/libs/adsp-sdk-mcp-server/api-specs

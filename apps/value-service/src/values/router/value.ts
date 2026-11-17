@@ -1,5 +1,6 @@
 import {
   AdspId,
+  AuditService,
   DomainEvent,
   EventService,
   hasRequiredRole,
@@ -11,19 +12,22 @@ import { createValidationHandler, InvalidOperationError, NotFoundError, decodeAf
 import { RequestHandler, Router } from 'express';
 import { checkSchema, param, query } from 'express-validator';
 import { Logger } from 'winston';
+import { auditValue, ServiceMetricRollupTriggeredAuditAction, toRollupAuditDetails } from '../audit';
 import { valueWritten } from '../events';
 import { NamespaceEntity } from '../model';
-import { ServiceMetricRollupRepository, ValuesRepository } from '../repository';
+import { EventResourceRollupRepository, ServiceMetricRollupRepository, ValuesRepository } from '../repository';
 import {
   ExportServiceRoles,
   MetricCriteria,
   MetricInterval,
+  ResourceRollupSource,
   ServiceUserRoles,
   Value,
   ValueCriteria,
   ValueOrder,
 } from '../types';
 import { createServiceMetricRollupJob, getTrailingCompletedDayRange } from '../jobs/serviceMetricRollup';
+import { eventResourceRollupSources } from '../serviceMetricRollupMappings';
 import { parsePayloadSearchQuery, validatePayloadSearchQuery } from './payloadSearch';
 
 interface ValueRouterProps {
@@ -31,7 +35,9 @@ interface ValueRouterProps {
   repository: ValuesRepository;
   serviceMetricRollupRepository: ServiceMetricRollupRepository;
   serviceMetricRollupTrailingDays: number;
+  eventResourceRollupRepository: EventResourceRollupRepository;
   eventService: EventService;
+  auditService: AuditService;
 }
 
 const mapValue = (value: Value) => {
@@ -279,6 +285,85 @@ export function readPlatformMetrics(repository: ValuesRepository): RequestHandle
   };
 }
 
+/**
+ * Count the distinct resources (such as PDF templates) a tenant's events named over a period.
+ *
+ * Only the sources the rollup maintains are accepted, and only their own event names: the rollup has
+ * rows for nothing else, so any other combination would silently read as fewer resources than there
+ * are.
+ */
+export function countDistinctEventResources(
+  repository: EventResourceRollupRepository,
+  sources: ResourceRollupSource[] = eventResourceRollupSources,
+): RequestHandler {
+  return async (req, res, next) => {
+    try {
+      const tenant = req.tenant;
+      const user = req.user as User;
+      const {
+        namespace,
+        contextKey,
+        names: namesValue,
+        intervalMin: intervalMinValue,
+        intervalMax: intervalMaxValue,
+      } = req.query as Record<string, string>;
+
+      if (!tenant) {
+        throw new InvalidOperationError('Tenant context is required for operation.');
+      }
+
+      if (!isAllowedUser(user, tenant.id, ServiceUserRoles.Reader, true)) {
+        throw new UnauthorizedUserError('read values', user);
+      }
+
+      const source = sources.find(
+        (candidate) => candidate.namespace === namespace && candidate.contextKey === contextKey,
+      );
+      if (!source) {
+        throw new InvalidOperationError(`Distinct ${contextKey} is not rolled up for ${namespace} events.`);
+      }
+
+      const names = namesValue ? namesValue.split(',').map((name) => name.trim()) : source.names;
+      const unknownNames = names.filter((name) => !source.names.includes(name));
+      if (unknownNames.length > 0) {
+        throw new InvalidOperationError(`Events ${unknownNames.join(', ')} are not rolled up for ${namespace}.`);
+      }
+
+      const from = new Date(intervalMinValue);
+      const to = new Date(intervalMaxValue);
+      if (Number.isNaN(from.getTime()) || Number.isNaN(to.getTime())) {
+        throw new InvalidOperationError('intervalMin and intervalMax must be ISO 8601 timestamps.');
+      }
+      if (from >= to) {
+        throw new InvalidOperationError('intervalMin must be before intervalMax.');
+      }
+      // No cap on the span: the days coverage holds cost the same however many there are, and only
+      // what the backfill has not reached yet is read from the event log. The repository bounds that
+      // read with a statement timeout instead, since it is the actual cost a cap would guess at.
+
+      const count = await repository.countDistinct({
+        tenant: tenant.id.toString(),
+        namespace,
+        names,
+        contextKey,
+        from,
+        to,
+      });
+
+      res.send({
+        namespace,
+        contextKey,
+        names,
+        intervalMin: from.toISOString(),
+        intervalMax: to.toISOString(),
+        count,
+      });
+    } catch (err) {
+      next(err);
+    }
+  };
+}
+
 export const assertUserCanWrite: RequestHandler = async (req, _res, next) => {
   try {
     const user = req.user;
@@ -405,6 +490,7 @@ export function runServiceMetricRollup(
   logger: Logger,
   repository: ServiceMetricRollupRepository,
   trailingDays: number,
+  auditService: AuditService,
 ): RequestHandler {
   return async (req, res, next) => {
     try {
@@ -432,7 +518,25 @@ export function runServiceMetricRollup(
       }
 
       const tenant = user.isCore ? tenantIdValue : user.tenantId?.toString();
-      const rollupCount = await createServiceMetricRollupJob(repository, logger)(range, { tenant });
+      const rollupsByTenant: Record<string, number> = {};
+      const rollupCount = await createServiceMetricRollupJob(repository, logger)(
+        range,
+        { tenant },
+        (counts) => Object.assign(rollupsByTenant, counts)
+      );
+
+      // A rollup across all tenants is audited once per tenant it rolled up, since an event is recorded to a tenant.
+      const auditedTenants = tenant ? { [tenant]: rollupsByTenant[tenant] ?? rollupCount } : rollupsByTenant;
+      for (const [auditedTenant, count] of Object.entries(auditedTenants)) {
+        auditValue(
+          auditService,
+          logger,
+          ServiceMetricRollupTriggeredAuditAction,
+          user,
+          toAuditTenantId(auditedTenant),
+          toRollupAuditDetails({ start: formatDay(range.start), end: formatDay(range.end) }, count, auditedTenant)
+        );
+      }
 
       res.send({
         start: formatDay(range.start),
@@ -454,12 +558,22 @@ function formatDay(day: Date): string {
   return day.toISOString().slice(0, 10);
 }
 
+function toAuditTenantId(tenant?: string): AdspId | undefined {
+  try {
+    return tenant ? AdspId.parse(tenant) : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 export const createValueRouter = ({
   logger,
   repository,
   serviceMetricRollupRepository,
   serviceMetricRollupTrailingDays,
+  eventResourceRollupRepository,
   eventService,
+  auditService,
 }: ValueRouterProps): Router => {
   const valueRouter = Router();
 
@@ -494,7 +608,24 @@ export const createValueRouter = ({
         ['body'],
       ),
     ),
-    runServiceMetricRollup(logger, serviceMetricRollupRepository, serviceMetricRollupTrailingDays),
+    runServiceMetricRollup(logger, serviceMetricRollupRepository, serviceMetricRollupTrailingDays, auditService),
+  );
+
+  valueRouter.get(
+    '/event-resources/distinct-count',
+    createValidationHandler(
+      ...checkSchema(
+        {
+          namespace: { isString: true, isLength: { options: { min: 1, max: 50 } } },
+          contextKey: { isString: true, isLength: { options: { min: 1, max: 50 } } },
+          names: { optional: true, isString: true },
+          intervalMin: { isISO8601: true },
+          intervalMax: { isISO8601: true },
+        },
+        ['query'],
+      ),
+    ),
+    countDistinctEventResources(eventResourceRollupRepository),
   );
 
   valueRouter.get(

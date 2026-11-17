@@ -298,6 +298,7 @@ Before completing any task, verify:
 - [ ] OpenAPI documentation updated
 - [ ] Error responses follow standard format
 - [ ] Proper HTTP status codes used
+- [ ] MCP server content synced: changes to `docs/`, `*.swagger.yml`, `swagger.config.js`, project-planner-service's `specialists.ts` or `patterns.ts`, or `adsp-service-sdk` exports or `registration.ts` need `npx nx run adsp-sdk-mcp-server:sync-content` (and `reference.ts` for SDK exports), committed in the same PR; `nx test adsp-sdk-mcp-server` fails otherwise
 
 ### New Features
 - [ ] Configuration is tenant-scoped appropriately
@@ -383,6 +384,7 @@ All standards are centralized in the `architecture/` folder at the repo root:
 - `architecture/clean-code-rules.md` — code quality rules (used by agents AND GitHub PR review)
 - `architecture/unit-testing-standards.md` — testing conventions
 - `architecture/jira-ticket-templates.md` — ticket templates for Story, Bug, and Spike
+- `architecture/api-documentation-maintenance.md` — what to update in OpenAPI, docs specs, and service docs when adding an endpoint
 
 For questions about specific services, check:
 - Service README (if exists)

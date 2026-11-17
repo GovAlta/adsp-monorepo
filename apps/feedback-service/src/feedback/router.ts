@@ -1,26 +1,41 @@
-import { AdspId, Tenant, TenantService, UnauthorizedUserError, User, isAllowedUser } from '@abgov/adsp-service-sdk';
+import {
+  AdspId,
+  AuditService,
+  Tenant,
+  TenantService,
+  UnauthorizedUserError,
+  User,
+  isAllowedUser,
+} from '@abgov/adsp-service-sdk';
 import {
   InvalidOperationError,
   UnauthorizedError,
   WorkQueueService,
   createValidationHandler,
 } from '@core-services/core-common';
+import { randomUUID } from 'crypto';
 import { RequestHandler, Router } from 'express';
 import { RateLimitRequestHandler, rateLimit } from 'express-rate-limit';
 import { checkSchema } from 'express-validator';
 import { readFile } from 'fs/promises';
 import * as hasha from 'hasha';
 import { Logger } from 'winston';
+import {
+  FeedbackSubmittedAuditAction,
+  recordFeedbackAudit,
+  toFeedbackAuditActor,
+  toFeedbackAuditDetails,
+} from './audit';
 import { FeedbackConfiguration } from './configuration';
 import { FeedbackWorkItem } from './job';
 import { ServiceRoles } from './roles';
 import { Feedback } from './types';
-import { ReadQueryParameters, ValueService } from './value';
+import { FeedbackSummaryQueryParameters, ReadQueryParameters, ValueService } from './value';
 import { FeedbackSiteService } from './feedbackSiteService';
 
 export function resolveFeedbackContext(
   tenantService: TenantService,
-  rateLimitHandler: RateLimitRequestHandler
+  rateLimitHandler: RateLimitRequestHandler,
 ): RequestHandler {
   return async function (req, res, next) {
     try {
@@ -55,7 +70,11 @@ export function resolveFeedbackContext(
   };
 }
 
-export function sendFeedback(logger: Logger, queueService: WorkQueueService<FeedbackWorkItem>): RequestHandler {
+export function sendFeedback(
+  logger: Logger,
+  queueService: WorkQueueService<FeedbackWorkItem>,
+  auditService: AuditService,
+): RequestHandler {
   return async function (req, res, next) {
     try {
       const tenantId = req.tenant.id;
@@ -86,13 +105,19 @@ export function sendFeedback(logger: Logger, queueService: WorkQueueService<Feed
       // Hash the content for duplicate detection later.
       // Perform this here so the impact is on the producer side of the job queue.
       const digest = hasha(JSON.stringify(feedback), { algorithm: 'sha256' });
+      const id = randomUUID();
 
       await queueService.enqueue({
+        id,
         tenantId: tenantId.toString(),
         timestamp: new Date().toISOString(),
         digest,
         feedback,
       });
+
+      recordFeedbackAudit(auditService, logger, FeedbackSubmittedAuditAction, () =>
+        toFeedbackAuditDetails(toFeedbackAuditActor(user), tenantId, id, feedback),
+      );
 
       logger.info(`Received and queued feedback on '${context.site}${context.view}' for processing.`, {
         context: 'FeedbackRouter',
@@ -128,8 +153,8 @@ export const readValues =
         tenantIdToUse === undefined
           ? undefined
           : typeof tenantIdToUse === 'string'
-          ? AdspId.parse(tenantIdToUse)
-          : tenantIdToUse;
+            ? AdspId.parse(tenantIdToUse)
+            : tenantIdToUse;
 
       const queryParameters: ReadQueryParameters = {
         site: req.query?.site ? (req.query?.site as string) : undefined,
@@ -145,6 +170,23 @@ export const readValues =
           : await valueService.readValues(tenantIdParam, queryParameters);
 
       res.json(values);
+    } catch (err) {
+      next(err);
+    }
+  };
+
+export const readSummary =
+  (valueService: ValueService): RequestHandler =>
+  async (req, res, next) => {
+    try {
+      const queryParameters: FeedbackSummaryQueryParameters = {
+        site: req.query.site as string,
+        start: req.query.start as string | undefined,
+        end: req.query.end as string | undefined,
+      };
+      const summary = await valueService.readSummary(req.tenant.id, queryParameters);
+
+      res.json(summary);
     } catch (err) {
       next(err);
     }
@@ -240,6 +282,7 @@ interface RouterProps {
   queueService: WorkQueueService<FeedbackWorkItem>;
   valueService: ValueService;
   feedbackSiteService: FeedbackSiteService;
+  auditService: AuditService;
 }
 
 export async function createFeedbackRouter({
@@ -248,6 +291,7 @@ export async function createFeedbackRouter({
   queueService,
   valueService,
   feedbackSiteService,
+  auditService,
 }: RouterProps) {
   const rateLimitHandler = rateLimit({
     windowMs: 5 * 60 * 1000,
@@ -291,11 +335,11 @@ export async function createFeedbackRouter({
             isLength: { options: { min: 1, max: 2000 } },
           },
         },
-        ['body']
-      )
+        ['body'],
+      ),
     ),
     resolveFeedbackContext(tenantService, rateLimitHandler),
-    sendFeedback(logger, queueService)
+    sendFeedback(logger, queueService, auditService),
   );
 
   router.get('/script/adspFeedback.js', downloadWidgetScript(loadWidgetInformation));
@@ -303,6 +347,21 @@ export async function createFeedbackRouter({
   router.get('/script/integrity', getWidgetScriptIntegrity(loadWidgetInformation));
 
   router.get('/feedback', readValues(valueService));
+
+  router.get(
+    '/feedback/summary',
+    createValidationHandler(
+      ...checkSchema(
+        {
+          site: { isString: true, isLength: { options: { min: 1, max: 100 } } },
+          start: { optional: true, isISO8601: true },
+          end: { optional: true, isISO8601: true },
+        },
+        ['query'],
+      ),
+    ),
+    readSummary(valueService),
+  );
 
   router.get('/sites', getSites(feedbackSiteService, tenantService));
 

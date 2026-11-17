@@ -22,6 +22,8 @@ export const environment = envalid.cleanEnv(
     PORT: envalid.num({ default: 3345 }),
     TRUSTED_PROXY: envalid.str({ default: 'uniquelocal' }),
     IS_JOB_POD: envalid.bool({ default: false }),
+    // Unset falls back to the SDK AUDIT_ENABLED variable, which defaults to on.
+    PDF_AUDIT_ENABLED: envalid.bool({ default: undefined }),
   },
   {
     reporter: ({ errors }) => {

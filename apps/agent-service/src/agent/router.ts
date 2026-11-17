@@ -6,13 +6,28 @@ import { v4 as uuid } from 'uuid';
 import { Logger } from 'winston';
 import { ServiceRoles } from './roles';
 import { AgentServiceConfiguration } from './configuration';
-import { AgentBroker } from './model';
+import {
+  AgentBroker,
+  MemoryStatus,
+  readMemoryStatus,
+  readReplyUsage,
+  readTokenBudgetConfig,
+  ReplyUsage,
+  TokenBudget,
+  TokenBudgetReservation,
+  TokenBudgetScope,
+  UsageRecorder,
+} from './model';
 import { CoreUserMessage } from '@mastra/core/llm';
 import { environment } from '../environments/environment';
 import { resolveAccessScope } from './agents/access/discovery/scope';
+import { getAccessGuideSection, isAccessGuideTopic } from './agents/access/guide';
 import {
   describeStreamError,
   mapAgentStreamError,
+  rateLimitedMessage,
+  STREAM_ERROR_CODES,
+  StreamErrorCode,
   toStreamErrorPayload,
   toStreamTripwirePayload,
 } from './model/streamAbort';
@@ -45,22 +60,116 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
 }
 
-function emitMappedStreamError(
-  socket: Socket,
-  meta: { agent: string; threadId: string; messageId: string; replyTo: string },
-  err: unknown,
-): boolean {
+interface StreamMeta {
+  agent: string;
+  threadId: string;
+  messageId: string;
+  replyTo: string;
+}
+
+interface BudgetTurn {
+  agent: string;
+  userKey: string;
+  tenant?: string;
+  reservation?: TokenBudgetReservation;
+}
+
+function emitStreamError(socket: Socket, meta: StreamMeta, error: { code: StreamErrorCode; message: string }): void {
+  socket.emit('stream', {
+    ...meta,
+    chunk: { type: 'error', payload: { code: error.code, message: error.message } },
+    done: true,
+  });
+}
+
+function emitMappedStreamError(socket: Socket, meta: StreamMeta, err: unknown): boolean {
   const mapped = mapAgentStreamError(err);
   if (!mapped) {
     return false;
   }
 
-  socket.emit('stream', {
-    ...meta,
-    chunk: { type: 'error', payload: { code: mapped.code, message: mapped.message } },
-    done: true,
-  });
+  emitStreamError(socket, meta, mapped);
   return true;
+}
+
+/** Answers a turn the shared model key cannot afford with the error chunk the client already shows. */
+function emitBudgetRefusal(
+  socket: Socket,
+  logger: Logger,
+  meta: StreamMeta,
+  tenant: string | undefined,
+  refusal: { scope: TokenBudgetScope; retryAfterMs: number },
+): void {
+  logger.info(`Refused a message to agent ${meta.agent} because its ${refusal.scope} token budget is used up.`, {
+    context: 'AgentRouter',
+    tenant,
+    agent: meta.agent,
+    scope: refusal.scope,
+    retryAfterMs: refusal.retryAfterMs,
+  });
+  emitStreamError(socket, meta, {
+    code: STREAM_ERROR_CODES.RATE_LIMITED,
+    message: rateLimitedMessage(refusal.retryAfterMs),
+  });
+}
+
+function recordReplyUsage(logger: Logger, budget: TokenBudget, turn: BudgetTurn, usage: ReplyUsage | undefined): void {
+  if (!usage) {
+    return;
+  }
+
+  budget.record({ agent: turn.agent, userKey: turn.userKey, tokens: usage.totalTokens }, turn.reservation);
+  logger.info(`Agent ${turn.agent} reply used ${usage.totalTokens} tokens in ${usage.modelCalls} model calls.`, {
+    context: 'AgentRouter',
+    tenant: turn.tenant,
+    agent: turn.agent,
+    totalTokens: usage.totalTokens,
+    outputTokens: usage.outputTokens,
+    contextTokens: usage.contextTokens,
+    modelCalls: usage.modelCalls,
+  });
+}
+
+function createTokenBudget(logger: Logger): TokenBudget {
+  return new TokenBudget(readTokenBudgetConfig(environment, logger), logger);
+}
+
+// Usage is informational, so a provider that reports none, or fails to, never costs the user the reply.
+async function readUsage(
+  logger: Logger,
+  result: Parameters<typeof readReplyUsage>[0],
+  toolUsage: UsageRecorder,
+  meta: { agent: string; threadId: string },
+): Promise<ReplyUsage | undefined> {
+  try {
+    return await readReplyUsage(result, toolUsage, environment.AGENT_MODEL_CONTEXT_TOKENS);
+  } catch (err) {
+    logger.warn(`Unable to read token usage for agent ${meta.agent} in thread ${meta.threadId}.`, {
+      context: 'AgentRouter',
+      error: err instanceof Error ? err.message : String(err),
+    });
+    return undefined;
+  }
+}
+
+/** Tells the user's client whether the conversation has grown long enough that the agent may miss earlier details. */
+async function emitConversationStatus(
+  socket: Socket,
+  logger: Logger,
+  broker: AgentBroker,
+  user: User,
+  meta: { agent: string; threadId: string },
+  reply: { contextTokens: number; memoryStatus?: MemoryStatus },
+): Promise<void> {
+  try {
+    const status = await broker.getConversationStatus(user, meta.threadId, reply);
+    socket.emit('conversation-status', { agent: meta.agent, threadId: meta.threadId, ...status });
+  } catch (err) {
+    logger.warn(`Unable to work out the conversation status for agent ${meta.agent} in thread ${meta.threadId}.`, {
+      context: 'AgentRouter',
+      error: err instanceof Error ? err.message : String(err),
+    });
+  }
 }
 
 interface ToolChunk {
@@ -188,7 +297,7 @@ function disconnectExpiredSocket(socket: Socket, logger: Logger, user: User, ten
   socket.disconnect(true);
 }
 
-export function onIoConnection(logger: Logger) {
+export function onIoConnection(logger: Logger, budget: TokenBudget = createTokenBudget(logger)) {
   return (socket: Socket): void => {
     try {
       const req = socket.request as Request;
@@ -300,25 +409,49 @@ export function onIoConnection(logger: Logger) {
               throw new InvalidValueError('content', 'content must string or array of text, image, or file parts.');
             }
 
+            const replyId = uuid();
+            const streamMeta = { agent, threadId, messageId: replyId, replyTo: messageId };
+            const tenantId = tenant?.id?.toString();
+            const budgetTurn: BudgetTurn = { agent, userKey: `${tenantId}:${user.id}`, tenant: tenantId };
+            const budgetDecision = budget.reserve({
+              agent,
+              userKey: budgetTurn.userKey,
+              estimate: budget.estimate(agent),
+            });
+            if (budgetDecision.allowed === false) {
+              emitBudgetRefusal(socket, logger, streamMeta, tenantId, budgetDecision);
+              return;
+            }
+            budgetTurn.reservation = budgetDecision.reservation;
+
             // Thread memory and input processors (such as prompt injection detection) run before the stream starts.
             const requestStartTime = Date.now();
-            const result = await aiAgent.stream(
-              user,
-              threadId,
-              {
-                role: 'user',
-                content: userContent,
-              },
-              context,
-            );
-            const replyId = uuid();
+            const toolUsage = new UsageRecorder();
+            let result: Awaited<ReturnType<typeof aiAgent.stream>>;
+            try {
+              result = await aiAgent.stream(
+                user,
+                threadId,
+                {
+                  role: 'user',
+                  content: userContent,
+                },
+                context,
+                toolUsage,
+              );
+            } catch (err) {
+              // A model call made before the stream starts, such as the prompt injection check, can be rate limited.
+              if (emitMappedStreamError(socket, streamMeta, err)) {
+                return;
+              }
+              throw err;
+            }
 
             // Send periodic heartbeats during streaming to prevent reverse proxy
             // (e.g. OpenShift HAProxy route) from timing out the WebSocket connection
             // during long LLM thinking or tool execution gaps.
             const streamStartTime = Date.now();
             const preStreamDurationMs = streamStartTime - requestStartTime;
-            const streamMeta = { agent, threadId, messageId: replyId, replyTo: messageId };
             const heartbeatInterval = setInterval(() => {
               if (socket.connected) {
                 socket.emit('stream', {
@@ -327,6 +460,8 @@ export function onIoConnection(logger: Logger) {
                 });
               }
             }, 15_000);
+            // Observational memory reports its token counts before each model call; the last report is the current one.
+            let memoryStatus: MemoryStatus | undefined;
             try {
               if (rawChunks === true) {
                 const projector = await aiAgent.createProjector(user, threadId);
@@ -350,6 +485,7 @@ export function onIoConnection(logger: Logger) {
                 };
 
                 for await (const chunk of result.fullStream) {
+                  memoryStatus = readMemoryStatus(chunk) ?? memoryStatus;
                   if (!FORWARDABLE_CHUNK_TYPES.has(chunk.type)) {
                     continue;
                   }
@@ -424,15 +560,24 @@ export function onIoConnection(logger: Logger) {
                 },
               );
 
+              const usage = await readUsage(logger, result, toolUsage, streamMeta);
+              recordReplyUsage(logger, budget, budgetTurn, usage);
               socket.emit('stream', {
                 agent,
                 threadId,
                 messageId: replyId,
                 replyTo: messageId,
                 output,
+                ...(usage ? { usage } : {}),
                 done: true,
               });
+              await aiAgent.recordResponseCompleted(user, threadId, result, { output });
+              await emitConversationStatus(socket, logger, aiAgent, user, streamMeta, {
+                contextTokens: usage?.contextTokens ?? 0,
+                memoryStatus,
+              });
             } catch (err) {
+              void aiAgent.recordResponseCompleted(user, threadId, result, { error: err });
               if (!emitMappedStreamError(socket, streamMeta, err)) {
                 throw err;
               }
@@ -780,10 +925,25 @@ export function getAccessScope(accessServiceUrl: URL): RequestHandler {
   };
 }
 
+/**
+ * Returns one topic of the documented Access Service guidance. Static and AI-free, so predefined questions about
+ * documented topics are answered without a model call.
+ */
+export const getAccessGuide: RequestHandler = (req, res, next) => {
+  const { topic } = req.params;
+  if (!isAccessGuideTopic(topic)) {
+    next(new NotFoundError('access guide topic', topic));
+    return;
+  }
+
+  res.send(getAccessGuideSection(topic));
+};
+
 export function createAgentRouter(ios: IoNamespace[], { logger, tenantService }: AgentRouterProps): Router {
   const router = Router();
 
   router.get('/access/scope', getAccessScope(new URL(environment.KEYCLOAK_ROOT_URL)));
+  router.get('/access/guide/:topic', getAccessGuide);
 
   router.get('/agents', getAgents);
 
@@ -799,9 +959,11 @@ export function createAgentRouter(ios: IoNamespace[], { logger, tenantService }:
 
   router.delete('/agents/:agentId/threads/:threadId', getAgent, deleteThread(logger));
 
+  // One budget for the process, shared by every tenant namespace, since they all use the same model key.
+  const budget = createTokenBudget(logger);
   for (const io of ios) {
     io.use(tenantHandler(tenantService));
-    io.on('connection', onIoConnection(logger));
+    io.on('connection', onIoConnection(logger, budget));
   }
 
   return router;

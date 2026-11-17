@@ -18,7 +18,13 @@ import {
 } from '@abgov/adsp-service-sdk';
 import type { User } from '@abgov/adsp-service-sdk';
 // clean-code-ignore: RULE-19 — service bootstrap; the routers, jobs and types it wires are covered by their own specs.
-import { createLogger, createErrorHandler, AjvValidationService, createAmqpEventService } from '@core-services/core-common';
+import {
+  createLogger,
+  createErrorHandler,
+  AjvValidationService,
+  createAmqpEventService,
+  createShutdownHandler,
+} from '@core-services/core-common';
 import { environment } from './environments/environment';
 import {
   applyFormMiddleware,
@@ -50,19 +56,23 @@ import {
   FormMessageNotificationType,
   FormMessageReviewerNotificationType,
   createMessageNotificationJob,
+  FormAuditActions,
+  RegistrationSubmittedDefinition,
+  RegistrationReviewedDefinition,
 } from './form';
-import { createRepositories } from './mongo';
+import { closeRepositories, createRepositories } from './mongo';
 import { createNotificationService } from './notification';
 import { createFileService } from './file';
 import { createQueueTaskService } from './task';
 import { createCommentService } from './comment';
 import { isFormDefinition } from './utils';
 import { createPdfService } from './pdf';
+import { createSharePointService } from './sharepoint';
 import { createCalendarService } from './calendar';
 
 const logger = createLogger('form-service', environment.LOG_LEVEL);
 
-const initializeApp = async (): Promise<express.Application> => {
+const initializeApp = async () => {
   const app = express();
 
   app.use(compression());
@@ -84,6 +94,7 @@ const initializeApp = async (): Promise<express.Application> => {
     tenantStrategy,
     tenantHandler,
     eventService,
+    auditService,
     directory,
     tenantService,
     tokenProvider,
@@ -93,6 +104,7 @@ const initializeApp = async (): Promise<express.Application> => {
     metricsHandler,
     healthCheck,
     traceHandler,
+    shutdownTelemetry,
   } = await initializePlatform(
     {
       serviceId,
@@ -133,6 +145,19 @@ const initializeApp = async (): Promise<express.Application> => {
           role: FormServiceRoles.Tester,
           description: 'Tester role for form service that allows access to forms without open intakes.',
         },
+        {
+          role: FormServiceRoles.RegistrationRequester,
+          description:
+            'Registration requester role that allows submitting a registration for access to a restricted form.',
+        },
+        {
+          role: FormServiceRoles.RegistrationReader,
+          description: 'Registration reader role that allows reading registrations for access to restricted forms.',
+        },
+        {
+          role: FormServiceRoles.RegistrationWriter,
+          description: 'Registration writer role that allows approving or denying registrations for restricted forms.',
+        },
       ],
       fileTypes: [FormSupportingDocFileType, FormExportFileType],
       events: [
@@ -148,8 +173,13 @@ const initializeApp = async (): Promise<express.Application> => {
         FormMessageToApplicantDefinition,
         FormMessageToReviewerDefinition,
         FormMessageForwardedDefinition,
+        RegistrationSubmittedDefinition,
+        RegistrationReviewedDefinition,
       ],
       eventStreams: [SubmittedFormPdfUpdatesStream, FormQuestionUpdatesStream],
+      auditActions: FormAuditActions,
+      // Draft data is saved as applicants type, so audit events are sent in batches; flushed on shutdown.
+      audit: { batchSize: 100, enabled: environment.FORM_AUDIT_ENABLED },
       notifications: [FormStatusNotificationType, FormMessageNotificationType, FormMessageReviewerNotificationType],
       values: [ServiceMetricsValueDefinition],
       serviceConfigurations: [
@@ -287,6 +317,7 @@ const initializeApp = async (): Promise<express.Application> => {
   const commentService = await createCommentService(logger, directory, tokenProvider, SUPPORT_COMMENT_TOPIC_TYPE_ID);
   const queueTaskService = createQueueTaskService(serviceId, logger, directory, tokenProvider);
   const pdfService = createPdfService(logger, directory, tokenProvider);
+  const sharepointService = createSharePointService(logger, directory, tokenProvider);
   const calendarService = await createCalendarService(logger, directory, tokenProvider, INTAKE_CALENDAR_NAME);
 
   const repositories = await createRepositories({
@@ -326,12 +357,14 @@ const initializeApp = async (): Promise<express.Application> => {
     directory,
     tokenProvider,
     eventService,
+    auditService,
     tenantService,
     notificationService,
     fileService,
     commentService,
     queueTaskService,
     pdfService,
+    sharepointService,
     calendarService,
   });
 
@@ -363,14 +396,25 @@ const initializeApp = async (): Promise<express.Application> => {
   const errorHandler = createErrorHandler(logger);
   app.use(errorHandler);
 
-  return app;
+  return { app, auditService, shutdownTelemetry };
 };
 
-initializeApp().then((app) => {
+initializeApp().then(({ app, auditService, shutdownTelemetry }) => {
   const port = environment.PORT || 3343;
 
   const server = app.listen(port, () => {
     logger.info(`Listening at http://localhost:${port}`);
   });
   server.on('error', (err) => logger.error(`Error encountered in server: ${err}`));
+
+  const shutdown = createShutdownHandler({
+    serviceName: 'Form service',
+    server,
+    auditService,
+    shutdownTelemetry,
+    closeDatabase: closeRepositories,
+    logger,
+  });
+  process.once('SIGTERM', shutdown);
+  process.once('SIGINT', shutdown);
 });

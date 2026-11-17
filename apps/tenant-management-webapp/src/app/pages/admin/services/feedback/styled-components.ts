@@ -110,10 +110,6 @@ export const IconDiv = styled.div`
     margin: 0 11px;
   }
 `;
-export const ProgressWrapper = styled.div`
-  margin-left: 30%;
-`;
-
 export const URL = styled.div`
   line-break: anywhere;
 `;
@@ -172,4 +168,28 @@ export const FullScreenModalWrapper = styled.div`
 
   box-sizing: border-box;
   z-index: 1000;
+`;
+
+export const PaginationRow = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--goa-space-m);
+  margin-top: var(--goa-space-m);
+  width: 100%;
+`;
+
+export const PaginationSummary = styled.div`
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: var(--goa-space-l);
+  white-space: nowrap;
+`;
+
+export const PageSizeSelector = styled.div`
+  display: flex;
+  align-items: center;
+  gap: var(--goa-space-s);
 `;

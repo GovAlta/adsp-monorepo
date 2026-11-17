@@ -1,16 +1,100 @@
 components:
+  parameters:
+    TaskTenantId:
+      name: tenantId
+      description: >
+        ID of the tenant to act on. Only used for core (platform) users; tenant users always act on the tenant of their
+        token and this parameter is ignored. Core users must set it, since tasks and queues are scoped to a tenant.
+      in: query
+      required: false
+      schema:
+        type: string
+      example: urn:ads:platform:tenant-service:v2:/tenants/61f2e3a8c9b1d2e3f4a5b6c7
+    TaskId:
+      name: id
+      description: ID of the task.
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      example: f3a3bc74-494e-4bb5-b5f3-d29a34edd275
+    TaskTop:
+      name: top
+      description: Maximum number of tasks to return in the page.
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 5000
+        default: 10
+      example: 10
+    TaskAfter:
+      name: after
+      description: >
+        Cursor of the page to retrieve. Use the `page.next` value of the previous response to page sequentially through
+        the results.
+      in: query
+      required: false
+      schema:
+        type: string
+      example: MTA=
+  responses:
+    TaskBadRequest:
+      description: >
+        Request is invalid. For example, a path, query, or body parameter failed validation, there is no tenant context,
+        or the operation is not valid for the task's status.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/TaskError'
+          example:
+            errorMessage: 'Validation failed with error(s): id (params) - Invalid value'
+    TaskUnauthorized:
+      description: Request does not include a valid bearer token.
+    TaskForbidden:
+      description: User does not have a role required for the operation.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/TaskError'
+          example:
+            errorMessage: 'User Test User (ID: 3f0c7a2e-1b4d-4c8e-9a6f-2d5b8e1c7a90) not permitted to access task.'
+    TaskNotFound:
+      description: Task not found in the tenant (or, for a queue path, not found in that queue).
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/TaskError'
+          example:
+            errorMessage: "task with ID 'f3a3bc74-494e-4bb5-b5f3-d29a34edd275' could not be found."
   schemas:
+    TaskError:
+      type: object
+      properties:
+        errorMessage:
+          type: string
     Task:
       type: object
       description: A task represents an action that a user must perform within a specified period of time.
       properties:
+        urn:
+          type: string
+          readOnly: true
+          description: URN of the task resource.
+          example: urn:ads:platform:task-service:v1:/tasks/f3a3bc74-494e-4bb5-b5f3-d29a34edd275
         id:
           type: string
-          description: Used to uniquely identify the task in the system.  Generated when the task is created, use this ID in subsequent API calls.
+          format: uuid
+          readOnly: true
+          description: >
+            Used to uniquely identify the task in the system. Generated when the task is created, use this ID in
+            subsequent API calls.
           example: f3a3bc74-494e-4bb5-b5f3-d29a34edd275
         name:
           type: string
-          description: The name of the task, unique to the namespace in which it resides.
+          description: The name of the task.
           example: IRC-approval
         description:
           type: string
@@ -18,6 +102,7 @@ components:
           example: Please sign off on the completed IRC
         queue:
           type: object
+          readOnly: true
           description: The queue to which the task has been submitted.
           properties:
             namespace:
@@ -29,14 +114,23 @@ components:
               description: The name of the queue.
               example: IRC-approvals
           required: [namespace, name]
+        definition:
+          type: object
+          nullable: true
+          description: Optional application-defined task definition the task was created from.
+          properties:
+            namespace:
+              type: string
+            name:
+              type: string
         recordId:
           type: string
-          description: An optional value for additional application defined context.
+          description: An optional value for additional application defined context, such as the ID of a related record.
           example: irc-document-number-42
         context:
           type: object
-          description: A JSON object used to provide an application-defined context for the task.  Defaults to {}.
-          example: { "application": "IRC" }
+          description: A JSON object used to provide an application-defined context for the task. Defaults to {}.
+          example: { 'application': 'IRC' }
           additionalProperties:
             oneOf:
               - type: string
@@ -48,84 +142,232 @@ components:
           example: {}
         priority:
           type: string
-          description: Tasks can be prioritized in a queue.  Higher priority tasks are pushed to the front.
+          description: Tasks can be prioritized in a queue. Higher priority tasks are pushed to the front.
           enum:
             - Normal
             - High
             - Urgent
         status:
           type: string
-          description: Applications can use the task's status to mark its progress through some workflow.
+          readOnly: true
+          description: Status of the task in its lifecycle. Changed by the start, complete, and cancel operations.
           enum:
             - Pending
             - In Progress
+            - Stopped
             - Completed
             - Cancelled
         assignment:
-          $ref: "#/components/schemas/TaskAssignment"
+          $ref: '#/components/schemas/TaskAssignment'
         createdOn:
           type: string
           format: date-time
+          readOnly: true
           description: Task creation date
         startedOn:
           type: string
           format: date-time
-          description: task start date
+          nullable: true
+          readOnly: true
+          description: Task start date
         endedOn:
           type: string
           format: date-time
-          description: task completion  date
+          nullable: true
+          readOnly: true
+          description: Task completion or cancellation date
+      example:
+        urn: urn:ads:platform:task-service:v1:/tasks/f3a3bc74-494e-4bb5-b5f3-d29a34edd275
+        id: f3a3bc74-494e-4bb5-b5f3-d29a34edd275
+        name: process-application-123
+        description: Process application 123
+        queue:
+          namespace: support
+          name: intake-processing
+        definition: null
+        recordId: f669be59-bd38-4ca4-8749-19248060fc63
+        context:
+          application: intake
+        data: {}
+        priority: High
+        status: In Progress
+        assignment:
+          assignedOn: '2026-03-02T16:05:00.000Z'
+          assignedTo:
+            id: ed2243ed-948a-4f84-a785-c9cf2d5f355e
+            name: Test User
+            email: test.user@gov.ab.ca
+          assignedBy:
+            id: 3f0c7a2e-1b4d-4c8e-9a6f-2d5b8e1c7a90
+            name: Test Supervisor
+        createdOn: '2026-03-02T15:30:00.000Z'
+        startedOn: '2026-03-02T16:10:00.000Z'
+        endedOn: null
     TaskAssignment:
       type: object
-      description: Tasks are assigned to users for completion, by the task manager.  The assignment property identifies these individuals.
+      nullable: true
+      readOnly: true
+      description: >
+        Tasks are assigned to users for completion. The assignment identifies who the task is assigned to, and who
+        assigned it. assignedTo is null when the task was unassigned.
       properties:
         assignedTo:
           type: object
-          description: Identifies the user to which the task has been assigned by ID, name, or email address.
+          nullable: true
+          description: Identifies the user to which the task has been assigned by ID, name, and email address.
           properties:
             id:
               type: string
-              example: cedea364-7c33-40f6-97fc-fba37330d68a
+              example: ed2243ed-948a-4f84-a785-c9cf2d5f355e
             name:
               type: string
-              example: Bob Bing
+              example: Test User
             email:
               type: string
-              example: bobbing@gmail.com
+              example: test.user@gov.ab.ca
         assignedBy:
           type: object
-          description: Identifies the user that assigned the task by ID, or name.
+          description: Identifies the user that assigned the task by ID, and name.
           properties:
             id:
               type: string
-              example: cedea364-7c33-40f6-97fc-fba37330d68a
+              example: 3f0c7a2e-1b4d-4c8e-9a6f-2d5b8e1c7a90
             name:
               type: string
-              example: Bob Bing
+              example: Test Supervisor
         assignedOn:
           type: string
           format: date-time
-          description: Date then task was assigned
+          description: Date the task was assigned
+    TaskResults:
+      type: object
+      description: A page of tasks.
+      properties:
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Task'
+        page:
+          type: object
+          properties:
+            after:
+              type: string
+              description: Cursor representing the set of data returned.
+            next:
+              type: string
+              description: Cursor representing the next set of data to be returned. Not set on the last page.
+            size:
+              type: number
+              description: The number of tasks returned by the query.
+      example:
+        results:
+          - urn: urn:ads:platform:task-service:v1:/tasks/f3a3bc74-494e-4bb5-b5f3-d29a34edd275
+            id: f3a3bc74-494e-4bb5-b5f3-d29a34edd275
+            name: process-application-123
+            description: Process application 123
+            queue:
+              namespace: support
+              name: intake-processing
+            definition: null
+            recordId: f669be59-bd38-4ca4-8749-19248060fc63
+            context:
+              application: intake
+            data: {}
+            priority: Normal
+            status: Pending
+            assignment: null
+            createdOn: '2026-03-02T15:30:00.000Z'
+            startedOn: null
+            endedOn: null
+        page:
+          after: MTA=
+          next: MjA=
+          size: 10
+    TaskUpdate:
+      type: object
+      description: Fields to update. Fields that are not included are left unchanged.
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 50
+          description: New name for the task.
+        description:
+          type: string
+          description: New description for the task.
+        context:
+          type: object
+          description: New task context. Replaces the existing context.
+          additionalProperties:
+            oneOf:
+              - type: string
+              - type: number
+              - type: boolean
+        data:
+          type: object
+          description: Application-defined JSON object to further define the task. Replaces the existing data.
+        priority:
+          type: integer
+          enum: [1, 2, 3]
+          description: New priority for the task as a number, where 1 is Normal, 2 is High, and 3 is Urgent.
+      example:
+        name: process-application-123
+        description: Process application 123 (resubmitted)
+        context:
+          application: intake
+        priority: 2
+    TaskData:
+      type: object
+      description: Application-defined data to set on the task. Replaces the existing data.
+      example:
+        decision: approved
+        notes: All documents received.
+    TaskDeleteResult:
+      type: object
+      properties:
+        deleted:
+          type: boolean
+          description: Indicates whether the task was deleted.
+      example:
+        deleted: true
+    TaskOperation:
+      oneOf:
+        - $ref: '#/components/schemas/AssignTask'
+        - $ref: '#/components/schemas/SetTaskPriority'
+        - $ref: '#/components/schemas/StartTask'
+        - $ref: '#/components/schemas/CompleteTask'
+        - $ref: '#/components/schemas/CancelTask'
+      discriminator:
+        propertyName: operation
+        mapping:
+          assign: '#/components/schemas/AssignTask'
+          set-priority: '#/components/schemas/SetTaskPriority'
+          start: '#/components/schemas/StartTask'
+          complete: '#/components/schemas/CompleteTask'
+          cancel: '#/components/schemas/CancelTask'
     AssignTask:
       type: object
-      description: Used when assigning a task to a user
+      description: >
+        Assigns the task to a user, or unassigns it when assignTo is omitted or null. Completed or cancelled tasks
+        cannot be assigned.
       properties:
         operation:
           type: string
           enum: [assign]
         assignTo:
           type: object
+          nullable: true
           properties:
             id:
               type: string
-              example: cedea364-7c33-40f6-97fc-fba37330d68a
+              example: ed2243ed-948a-4f84-a785-c9cf2d5f355e
             name:
               type: string
-              example: Bob Bing
+              example: Test User
             email:
               type: string
-              example: bobbing@gmail.ca
-      required: [operation, assignTo]
+              example: test.user@gov.ab.ca
+      required: [operation]
     SetTaskPriority:
       type: object
       description: Used when setting a task's priority.
@@ -134,11 +376,12 @@ components:
           type: string
           enum: [set-priority]
         priority:
-          type: number
+          type: string
+          enum: [Normal, High, Urgent]
       required: [operation, priority]
     StartTask:
       type: object
-      description: Used to set the time that the user began working on the task.
+      description: Starts a Pending task, changing its status to In Progress.
       properties:
         operation:
           type: string
@@ -146,7 +389,7 @@ components:
       required: [operation]
     CompleteTask:
       type: object
-      description: Used to set the time that the user completed the task.
+      description: Completes an In Progress task.
       properties:
         operation:
           type: string
@@ -154,222 +397,247 @@ components:
       required: [operation]
     CancelTask:
       type: object
-      description: Used to cancel, or invalidate, the task.
+      description: Cancels a Pending or In Progress task.
       properties:
         operation:
           type: string
           enum: [cancel]
         reason:
           type: string
-          description: Indicates why the task was cancelled.
+          description: Indicates why the task was cancelled. Included in the task-cancelled event.
       required: [operation]
+  examples:
+    AssignTaskExample:
+      summary: Assign the task to a user
+      value:
+        operation: assign
+        assignTo:
+          id: ed2243ed-948a-4f84-a785-c9cf2d5f355e
+          name: Test User
+          email: test.user@gov.ab.ca
+    UnassignTaskExample:
+      summary: Unassign the task
+      value:
+        operation: assign
+        assignTo: null
+    SetTaskPriorityExample:
+      summary: Set the priority of the task
+      value:
+        operation: set-priority
+        priority: Urgent
+    StartTaskExample:
+      summary: Start the task
+      value:
+        operation: start
+    CompleteTaskExample:
+      summary: Complete the task
+      value:
+        operation: complete
+    CancelTaskExample:
+      summary: Cancel the task
+      value:
+        operation: cancel
+        reason: Application was withdrawn by the applicant.
 
 /task/v1/tasks:
   get:
     tags:
       - Task
-    description: Retrieves tasks defined for for the tenant
+    description: >
+      Retrieves tasks of the tenant across queues, ordered with the highest priority first and, within each priority,
+      oldest first. Requires the task-admin or task-reader role in the tenant. Core users with the export-service
+      export-job role (urn:ads:platform:export-service:export-job) can also retrieve tasks, using the tenantId
+      parameter. Responds 400 without a tenant context.
     parameters:
-      - name: top
-        description: Number of task definitions to return in a page.
-        example: 10
-        in: query
-        required: false
-        schema:
-          type: number
-      - name: after
-        description: Cursor for retrieving additional pages.  Use the _page.next_ value returned in the previous call to page sequentially through the data.
-        example: Mw==
+      - $ref: '#/components/parameters/TaskTenantId'
+      - $ref: '#/components/parameters/TaskTop'
+      - $ref: '#/components/parameters/TaskAfter'
+      - name: criteria
+        description: >
+          JSON-encoded criteria to filter the tasks by. Must be valid JSON. Supported properties are queue
+          (namespace and name), definition (namespace and name), context (tasks whose context contains these values),
+          and notEnded (true to exclude completed and cancelled tasks).
         in: query
         required: false
         schema:
           type: string
+        example: '{"queue":{"namespace":"support","name":"intake-processing"},"notEnded":true}'
     responses:
       200:
         description: Request completed successfully.
         content:
           application/json:
             schema:
-              type: object
-              description: The set of tasks matching the query.
-              properties:
-                results:
-                  type: array
-                  items:
-                    $ref: "#/components/schemas/Task"
-                page:
-                  type: object
-                  properties:
-                    after:
-                      type: string
-                      description: cursor representing the set of data returned.
-                      example: Mw==
-                    next:
-                      type: string
-                      description: cursor representing the next set of data to be returned.
-                      example: Ng==
-                    size:
-                      type: number
-                      description: The number of tasks returned by the query.
-                      example: 10
+              $ref: '#/components/schemas/TaskResults'
+      400:
+        $ref: '#/components/responses/TaskBadRequest'
+      401:
+        $ref: '#/components/responses/TaskUnauthorized'
+      403:
+        $ref: '#/components/responses/TaskForbidden'
 
 /task/v1/tasks/{id}:
   get:
     tags:
       - Task
-    description: Retrieves a specified task.
+    description: >
+      Retrieves a specified task. Requires the task-admin or task-reader role, or one of the worker or assigner roles
+      of the task's queue. Core users with one of those roles can retrieve the task using the tenantId parameter, as
+      can the directory-service resource-resolver role (urn:ads:platform:directory-service:resource-resolver).
+      Tasks of other tenants respond 404. Responds 400 without a tenant context.
     parameters:
-      - name: id
-        description: ID of the task.
-        in: path
-        required: true
-        schema:
-          type: string
+      - $ref: '#/components/parameters/TaskTenantId'
+      - $ref: '#/components/parameters/TaskId'
     responses:
       200:
         description: Request completed successfully.
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/Task"
+              $ref: '#/components/schemas/Task'
+      400:
+        $ref: '#/components/responses/TaskBadRequest'
+      401:
+        $ref: '#/components/responses/TaskUnauthorized'
+      403:
+        $ref: '#/components/responses/TaskForbidden'
       404:
-        description: Task not found.
+        $ref: '#/components/responses/TaskNotFound'
   patch:
     tags:
       - Task
-    description: Updates a specified task
+    description: >
+      Updates a specified task. Requires the task-admin role, or the task-writer role together with a role that grants
+      access to the task (task-reader, or a worker or assigner role of the queue), in the tenant of the task; core users
+      can't update tasks. Tasks of other tenants respond 404.
     parameters:
-      - name: id
-        description: ID of the task.
-        in: path
-        required: true
-        schema:
-          type: string
+      - $ref: '#/components/parameters/TaskTenantId'
+      - $ref: '#/components/parameters/TaskId'
     requestBody:
       required: true
       content:
         application/json:
           schema:
-            type: object
-            properties:
-              name:
-                type: string
-                description: New name for the task
-                example: Signature-required
-              description:
-                type: string
-                description: New description for the task
-                example: Please sign IRC number 42
-              context:
-                type: object
-                description: New task context
-                example: {}
-                additionalProperties:
-                  oneOf:
-                    - type: string
-                    - type: number
-                    - type: boolean
-              data:
-                type: object
-                description: Application-defined JSON object to further define the task.
-                example: {}
+            $ref: '#/components/schemas/TaskUpdate'
     responses:
       200:
         description: Request completed successfully.
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/Task"
+              $ref: '#/components/schemas/Task'
+      400:
+        $ref: '#/components/responses/TaskBadRequest'
+      401:
+        $ref: '#/components/responses/TaskUnauthorized'
+      403:
+        $ref: '#/components/responses/TaskForbidden'
       404:
-        description: Task not found.
+        $ref: '#/components/responses/TaskNotFound'
   post:
     tags:
       - Task
-    description: Executes a task operation.
+    description: >
+      Executes a task operation. The user must be able to access the task (the task-admin or task-reader role, or a
+      worker or assigner role of the queue). Further roles depend on the operation, and are held in the tenant of the
+      task:
+      assign requires the task-admin role or an assigner role of the queue, except that a user with a worker role can
+      assign the task to themselves; set-priority requires the task-admin or task-writer role or an assigner role;
+      start and complete require a worker role of the queue, and the task must be unassigned or assigned to the user;
+      cancel is allowed for any user who can access the task, that is with the task-admin or task-reader role or a
+      worker or assigner role of the queue (core users with those roles included). Tasks of other tenants respond 404. Responds 400 for an unrecognized operation, or when the task's status doesn't
+      allow the operation.
     parameters:
-      - name: id
-        description: ID of the task.
-        in: path
-        required: true
-        schema:
-          type: string
+      - $ref: '#/components/parameters/TaskTenantId'
+      - $ref: '#/components/parameters/TaskId'
     requestBody:
       required: true
       content:
         application/json:
           schema:
-            oneOf:
-              - $ref: "#/components/schemas/AssignTask"
-              - $ref: "#/components/schemas/SetTaskPriority"
-              - $ref: "#/components/schemas/StartTask"
-              - $ref: "#/components/schemas/CompleteTask"
-              - $ref: "#/components/schemas/CancelTask"
-            discriminator:
-              propertyName: operation
-              mapping:
-                assign: "#/components/schemas/AssignTask"
-                set-priority: "#/components/schemas/SetTaskPriority"
-                start: "#/components/schemas/StartTask"
-                complete: "#/components/schemas/CompleteTask"
-                cancel: "#/components/schemas/CancelTask"
+            $ref: '#/components/schemas/TaskOperation'
+          examples:
+            assign:
+              $ref: '#/components/examples/AssignTaskExample'
+            unassign:
+              $ref: '#/components/examples/UnassignTaskExample'
+            set-priority:
+              $ref: '#/components/examples/SetTaskPriorityExample'
+            start:
+              $ref: '#/components/examples/StartTaskExample'
+            complete:
+              $ref: '#/components/examples/CompleteTaskExample'
+            cancel:
+              $ref: '#/components/examples/CancelTaskExample'
     responses:
       200:
         description: Request completed successfully.
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/Task"
+              $ref: '#/components/schemas/Task'
+      400:
+        $ref: '#/components/responses/TaskBadRequest'
+      401:
+        $ref: '#/components/responses/TaskUnauthorized'
+      403:
+        $ref: '#/components/responses/TaskForbidden'
       404:
-        description: Task not found.
+        $ref: '#/components/responses/TaskNotFound'
   delete:
     tags:
       - Task
-    description: Deletes a task.
+    description: >
+      Deletes a task. Requires the task-admin role in the tenant of the task; core users can't delete tasks. Tasks of
+      other tenants respond 404.
     parameters:
-      - name: id
-        description: ID of the task.
-        in: path
-        required: true
-        schema:
-          type: string
+      - $ref: '#/components/parameters/TaskTenantId'
+      - $ref: '#/components/parameters/TaskId'
     responses:
       200:
         description: Request completed successfully.
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                deleted:
-                  type: boolean
+              $ref: '#/components/schemas/TaskDeleteResult'
+      400:
+        $ref: '#/components/responses/TaskBadRequest'
+      401:
+        $ref: '#/components/responses/TaskUnauthorized'
+      403:
+        $ref: '#/components/responses/TaskForbidden'
       404:
-        description: Task not found.
+        $ref: '#/components/responses/TaskNotFound'
 
 /task/v1/tasks/{id}/data:
   patch:
     tags:
       - Task
-    description: Updates the data of a specified task.
+    description: >
+      Replaces the data of a specified task. The task must be In Progress. Requires a worker role of the task's queue in
+      the tenant of the task, and the task must be unassigned or assigned to the user. Tasks of other tenants respond
+      404.
     parameters:
-      - name: id
-        description: ID of the task.
-        in: path
-        required: true
-        schema:
-          type: string
+      - $ref: '#/components/parameters/TaskTenantId'
+      - $ref: '#/components/parameters/TaskId'
     requestBody:
       required: true
       content:
         application/json:
           schema:
-            type: object
-            description: Data to set on the task.
+            $ref: '#/components/schemas/TaskData'
     responses:
       200:
         description: Request completed successfully.
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/Task"
+              $ref: '#/components/schemas/Task'
+      400:
+        $ref: '#/components/responses/TaskBadRequest'
+      401:
+        $ref: '#/components/responses/TaskUnauthorized'
+      403:
+        $ref: '#/components/responses/TaskForbidden'
       404:
-        description: Task not found.
+        $ref: '#/components/responses/TaskNotFound'

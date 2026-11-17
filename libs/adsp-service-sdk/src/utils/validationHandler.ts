@@ -35,7 +35,7 @@ export function createValidationHandler<T>(
       const isProd = process.env.NODE_ENV === 'production';
       const message = isProd
         ? 'Validation failed'
-        : `Validation failed: ${result.error.errors.map((e) => `${e.path.join('.') || '(root)'} - ${e.message}`).join('; ')}`;
+        : `Validation failed: ${result.error.issues.map((e) => `${e.path.join('.') || '(root)'} - ${e.message}`).join('; ')}`;
       next(new ValidationFailedError(message));
     } else {
       next();

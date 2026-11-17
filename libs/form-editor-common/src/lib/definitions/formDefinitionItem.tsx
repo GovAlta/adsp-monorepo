@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { FormDefinition } from '@store/form/model';
 import {
   OverflowWrap,
@@ -19,7 +19,7 @@ import { isValidUrl } from '@lib/validation/urlUtil';
 import { fetchFormResourceTags, openEditorForDefinition } from '@store/form/action';
 import { GoabBadge, GoabCircularProgress } from '@abgov/react-components';
 import { EntryDetail } from '../styled-components';
-import { UpdateSearchCriteriaAndFetchEvents, fetchCalendars } from '@store/calendar/actions';
+import { UpdateSearchCriteriaAndFetchEvents } from '@store/calendar/actions';
 interface FormDefinitionItemProps {
   formDefinition: FormDefinition;
   baseResourceFormUrn: string;
@@ -146,13 +146,6 @@ export const FormDefinitionItem = ({
 
   const formLink = useSelector((state: RootState) => selectFormAppLink(state, formDefinition?.id));
   const resourceTags = useSelector((state: RootState) => selectFormResourceTags(state, formDefinition?.id));
-  const formIntakeLoaded = useSelector((state: RootState) => !!state.calendarService?.coreCalendars?.['form-intake']);
-
-  useEffect(() => {
-    if (!formIntakeLoaded) {
-      dispatch(fetchCalendars());
-    }
-  }, [dispatch, formIntakeLoaded]);
 
   return (
     <>

@@ -1,4 +1,4 @@
-import { AdspId, TenantService, UnauthorizedUserError, adspId } from '@abgov/adsp-service-sdk';
+import { AdspId, AuditService, TenantService, UnauthorizedUserError, adspId } from '@abgov/adsp-service-sdk';
 import { InvalidOperationError, UnauthorizedError, WorkQueueService } from '@core-services/core-common';
 import { Logger } from 'winston';
 import { Request, Response } from 'express';
@@ -12,6 +12,7 @@ import {
   sendFeedback,
   readValues,
   getSites,
+  readSummary,
 } from './router';
 import { ServiceRoles } from './roles';
 import { ValueService } from './value';
@@ -39,6 +40,7 @@ describe('router', () => {
   const valueServiceMock = {
     writeValue: jest.fn(),
     readValues: jest.fn(),
+    readSummary: jest.fn(),
   };
 
   const feedbackSiteServiceMock = {
@@ -48,12 +50,21 @@ describe('router', () => {
     countTenantSites: jest.fn(),
   };
 
+  const auditServiceMock = {
+    record: jest.fn(),
+    query: jest.fn(),
+    flush: jest.fn(),
+    droppedEventCount: 0,
+  };
+
   beforeEach(() => {
+    auditServiceMock.record.mockReset();
     tenantServiceMock.getTenant.mockReset();
     tenantServiceMock.getTenantByName.mockReset();
     queueServiceMock.enqueue.mockReset();
     valueServiceMock.writeValue.mockReset();
     valueServiceMock.readValues.mockReset();
+    valueServiceMock.readSummary.mockReset();
     feedbackSiteServiceMock.getAllSites.mockReset();
     feedbackSiteServiceMock.countAllSites.mockReset();
     feedbackSiteServiceMock.getTenantSites.mockReset();
@@ -68,6 +79,7 @@ describe('router', () => {
         queueService: queueServiceMock as unknown as WorkQueueService<FeedbackWorkItem>,
         valueService: valueServiceMock,
         feedbackSiteService: feedbackSiteServiceMock,
+        auditService: auditServiceMock as unknown as AuditService,
       });
       expect(router).toBeTruthy();
     });
@@ -77,7 +89,7 @@ describe('router', () => {
     it('can create handler', () => {
       const handler = resolveFeedbackContext(
         tenantServiceMock as unknown as TenantService,
-        jest.fn() as unknown as RateLimitRequestHandler
+        jest.fn() as unknown as RateLimitRequestHandler,
       );
       expect(handler).toBeTruthy();
     });
@@ -96,7 +108,7 @@ describe('router', () => {
       tenantServiceMock.getTenant.mockResolvedValueOnce({ id: tenantId });
       const handler = resolveFeedbackContext(
         tenantServiceMock as unknown as TenantService,
-        jest.fn() as unknown as RateLimitRequestHandler
+        jest.fn() as unknown as RateLimitRequestHandler,
       );
       await handler(req as Request, res as Response, next);
       expect(next).toHaveBeenCalledWith();
@@ -118,7 +130,7 @@ describe('router', () => {
       tenantServiceMock.getTenantByName.mockResolvedValueOnce({ id: tenantId });
       const handler = resolveFeedbackContext(
         tenantServiceMock as unknown as TenantService,
-        jest.fn() as unknown as RateLimitRequestHandler
+        jest.fn() as unknown as RateLimitRequestHandler,
       );
       await handler(req as Request, res as Response, next);
       expect(next).toHaveBeenCalledWith();
@@ -139,7 +151,7 @@ describe('router', () => {
 
       const handler = resolveFeedbackContext(
         tenantServiceMock as unknown as TenantService,
-        jest.fn() as unknown as RateLimitRequestHandler
+        jest.fn() as unknown as RateLimitRequestHandler,
       );
       await handler(req as Request, res as Response, next);
       expect(next).toHaveBeenCalledWith();
@@ -158,7 +170,7 @@ describe('router', () => {
 
       const handler = resolveFeedbackContext(
         tenantServiceMock as unknown as TenantService,
-        jest.fn() as unknown as RateLimitRequestHandler
+        jest.fn() as unknown as RateLimitRequestHandler,
       );
       await handler(req as Request, res as Response, next);
       expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedUserError));
@@ -176,7 +188,7 @@ describe('router', () => {
       tenantServiceMock.getTenant.mockResolvedValueOnce({ id: tenantId });
       const handler = resolveFeedbackContext(
         tenantServiceMock as unknown as TenantService,
-        jest.fn() as unknown as RateLimitRequestHandler
+        jest.fn() as unknown as RateLimitRequestHandler,
       );
       await handler(req as Request, res as Response, next);
       expect(next).toHaveBeenCalledWith(expect.any(InvalidOperationError));
@@ -196,7 +208,7 @@ describe('router', () => {
       tenantServiceMock.getTenant.mockResolvedValueOnce({ id: tenantId });
       const handler = resolveFeedbackContext(
         tenantServiceMock as unknown as TenantService,
-        rateLimitHandler as unknown as RateLimitRequestHandler
+        rateLimitHandler as unknown as RateLimitRequestHandler,
       );
       await handler(req as Request, res as Response, next);
       expect(rateLimitHandler).toHaveBeenCalledWith(req, res, next);
@@ -205,7 +217,11 @@ describe('router', () => {
 
   describe('sendFeedback', () => {
     it('can create handler', () => {
-      const handler = sendFeedback(loggerMock, queueServiceMock as unknown as WorkQueueService<FeedbackWorkItem>);
+      const handler = sendFeedback(
+        loggerMock,
+        queueServiceMock as unknown as WorkQueueService<FeedbackWorkItem>,
+        auditServiceMock as unknown as AuditService,
+      );
       expect(handler).toBeTruthy();
     });
 
@@ -228,7 +244,11 @@ describe('router', () => {
       req.getConfiguration.mockResolvedValueOnce({ sites: { 'http://test.org': { url: 'http://test.org' } } });
       queueServiceMock.enqueue.mockResolvedValueOnce(undefined);
 
-      const handler = sendFeedback(loggerMock, queueServiceMock as unknown as WorkQueueService<FeedbackWorkItem>);
+      const handler = sendFeedback(
+        loggerMock,
+        queueServiceMock as unknown as WorkQueueService<FeedbackWorkItem>,
+        auditServiceMock as unknown as AuditService,
+      );
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ sent: true }));
       expect(queueServiceMock.enqueue).toHaveBeenCalledWith(
@@ -237,7 +257,7 @@ describe('router', () => {
           timestamp: expect.any(String),
           digest: expect.any(String),
           feedback: expect.objectContaining(req.body),
-        })
+        }),
       );
     });
 
@@ -261,7 +281,11 @@ describe('router', () => {
       });
       queueServiceMock.enqueue.mockResolvedValueOnce(undefined);
 
-      const handler = sendFeedback(loggerMock, queueServiceMock as unknown as WorkQueueService<FeedbackWorkItem>);
+      const handler = sendFeedback(
+        loggerMock,
+        queueServiceMock as unknown as WorkQueueService<FeedbackWorkItem>,
+        auditServiceMock as unknown as AuditService,
+      );
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ sent: true }));
       expect(queueServiceMock.enqueue).toHaveBeenCalledWith(
@@ -270,7 +294,7 @@ describe('router', () => {
           timestamp: expect.any(String),
           digest: expect.any(String),
           feedback: expect.objectContaining(req.body),
-        })
+        }),
       );
     });
 
@@ -293,7 +317,11 @@ describe('router', () => {
       req.getConfiguration.mockResolvedValueOnce({ sites: {} });
       queueServiceMock.enqueue.mockResolvedValueOnce(undefined);
 
-      const handler = sendFeedback(loggerMock, queueServiceMock as unknown as WorkQueueService<FeedbackWorkItem>);
+      const handler = sendFeedback(
+        loggerMock,
+        queueServiceMock as unknown as WorkQueueService<FeedbackWorkItem>,
+        auditServiceMock as unknown as AuditService,
+      );
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(next).toHaveBeenCalledWith(expect.any(InvalidOperationError));
       expect(res.json).not.toHaveBeenCalled();
@@ -318,7 +346,11 @@ describe('router', () => {
       req.getConfiguration.mockResolvedValueOnce({ sites: { 'http://test.org': { url: 'http://test.org' } } });
       queueServiceMock.enqueue.mockResolvedValueOnce(undefined);
 
-      const handler = sendFeedback(loggerMock, queueServiceMock as unknown as WorkQueueService<FeedbackWorkItem>);
+      const handler = sendFeedback(
+        loggerMock,
+        queueServiceMock as unknown as WorkQueueService<FeedbackWorkItem>,
+        auditServiceMock as unknown as AuditService,
+      );
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedError));
       expect(res.json).not.toHaveBeenCalled();
@@ -346,7 +378,11 @@ describe('router', () => {
       });
       queueServiceMock.enqueue.mockResolvedValueOnce(undefined);
 
-      const handler = sendFeedback(loggerMock, queueServiceMock as unknown as WorkQueueService<FeedbackWorkItem>);
+      const handler = sendFeedback(
+        loggerMock,
+        queueServiceMock as unknown as WorkQueueService<FeedbackWorkItem>,
+        auditServiceMock as unknown as AuditService,
+      );
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(next).toHaveBeenCalledWith(expect.any(InvalidOperationError));
       expect(res.json).not.toHaveBeenCalled();
@@ -505,6 +541,59 @@ describe('router', () => {
     });
   });
 
+  describe('getFeedbackSummary', () => {
+    it('reads a tenant-scoped summary with the requested filters', async () => {
+      const req = {
+        tenant: { id: tenantId },
+        user: { tenantId, id: 'tester', roles: [ServiceRoles.FeedbackReader] },
+        query: {
+          site: 'http://test.org',
+          start: '2025-06-01T00:00:00.000Z',
+          end: '2025-06-30T23:59:59.999Z',
+        },
+      };
+      const res = { json: jest.fn() };
+      const next = jest.fn();
+      const summary = {
+        totalResponses: 12,
+        averageRating: 3.8,
+        responsesWithComments: 5,
+        responsesWithIssues: 2,
+      };
+      valueServiceMock.readSummary.mockResolvedValueOnce(summary);
+
+      const handler = readSummary(valueServiceMock as unknown as ValueService);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      expect(valueServiceMock.readSummary).toHaveBeenCalledWith(tenantId, {
+        site: 'http://test.org',
+        start: '2025-06-01T00:00:00.000Z',
+        end: '2025-06-30T23:59:59.999Z',
+      });
+      expect(res.json).toHaveBeenCalledWith(summary);
+    });
+
+    it('reads a summary for a user without the feedback reader role', async () => {
+      const req = {
+        tenant: { id: tenantId },
+        user: { tenantId, id: 'tester', roles: [] },
+        query: { site: 'http://test.org' },
+      };
+      const res = { json: jest.fn() };
+      const next = jest.fn();
+
+      const handler = readSummary(valueServiceMock as unknown as ValueService);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      expect(valueServiceMock.readSummary).toHaveBeenCalledWith(tenantId, {
+        site: 'http://test.org',
+        start: undefined,
+        end: undefined,
+      });
+      expect(next).not.toHaveBeenCalled();
+    });
+  });
+
   describe('get feedback sites', () => {
     it('can get feedback sites', async () => {
       const req = {
@@ -602,7 +691,7 @@ describe('router', () => {
           after: undefined,
           start: undefined,
           end: undefined,
-        })
+        }),
       );
       expect(res.json).toHaveBeenCalledWith(['feedback-for-another-tenant']);
     });

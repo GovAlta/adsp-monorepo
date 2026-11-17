@@ -1,4 +1,4 @@
-import { countTerms, scoreByTermFrequency, tokenize } from './textSearch';
+import { countTerms, queryTerms, scoreByTermFrequency, tokenize } from './textSearch';
 
 describe('tokenize', () => {
   it('lowercases and splits on non-alphanumeric characters', () => {
@@ -31,5 +31,30 @@ describe('scoreByTermFrequency', () => {
     const counts = countTerms(['event']);
 
     expect(scoreByTermFrequency(['missing'], counts)).toBe(0);
+  });
+});
+
+describe('queryTerms', () => {
+  it('drops stop words', () => {
+    expect(queryTerms('how do I send an event')).toEqual(['send', 'event']);
+  });
+
+  it('is empty when the query is only stop words', () => {
+    expect(queryTerms('how do i')).toEqual([]);
+  });
+
+  it('adds aliases after the term they expand', () => {
+    expect(queryTerms('websocket')).toEqual(['websocket', 'socket', 'push', 'stream']);
+  });
+
+  it('lists each term once when aliases overlap', () => {
+    expect(queryTerms('auth authentication')).toEqual([
+      'auth',
+      'authentication',
+      'authorization',
+      'keycloak',
+      'login',
+      'access',
+    ]);
   });
 });

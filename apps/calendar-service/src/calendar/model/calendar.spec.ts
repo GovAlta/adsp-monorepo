@@ -523,6 +523,18 @@ describe('CalendarEntity', () => {
         expect(endsBefore.map((r) => r.start.toISODate())).toEqual(['2026-10-06', '2026-10-20']);
         expect(activeOn.map((r) => r.start.toISODate())).toEqual(['2026-10-27']);
       });
+
+      it('can apply overlap criteria to occurrences', async () => {
+        const series = createSeries();
+        repositoryMock.getCalendarEventsInRange.mockResolvedValueOnce([series]);
+
+        const result = await calendarEntity.getEventsInRange(reader, from, to, {
+          endsAfter: DateTime.fromISO('2026-10-20T10:30', { zone }),
+          startsBefore: DateTime.fromISO('2026-10-27T10:30', { zone }),
+        });
+
+        expect(result.map((r) => r.start.toISODate())).toEqual(['2026-10-20', '2026-10-27']);
+      });
     });
   });
 

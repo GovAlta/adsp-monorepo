@@ -35,6 +35,22 @@ parameters:
     description: Host for the route.
     displayName: Route Host
     value: ""
+  - name: CPU_LIMIT
+    description: CPU limit for the API container.
+    displayName: CPU Limit
+    value: '1'
+  - name: MEMORY_LIMIT
+    description: Memory limit for the API container.
+    displayName: Memory Limit
+    value: '2Gi'
+  - name: CPU_REQUEST
+    description: CPU request for the API container.
+    displayName: CPU Request
+    value: '250m'
+  - name: MEMORY_REQUEST
+    description: Memory request for the API container.
+    displayName: Memory Request
+    value: '512Mi'
 objects:
   # Service Objects
 
@@ -125,11 +141,11 @@ objects:
                   protocol: TCP
               resources:
                 limits:
-                  cpu: "1"
-                  memory: 2Gi
+                  cpu: ${CPU_LIMIT}
+                  memory: ${MEMORY_LIMIT}
                 requests:
-                  cpu: 250m
-                  memory: 512Mi
+                  cpu: ${CPU_REQUEST}
+                  memory: ${MEMORY_REQUEST}
               readinessProbe:
                 httpGet:
                   path: /health

@@ -52,6 +52,30 @@ def test_access_filter():
         assert request_user.email == "test@test.co"
 
 
+def test_access_filter_service_account_without_username():
+    app = Flask(__name__)
+    with patch(
+        "adsp_service_flask_sdk.filter.decode"
+    ) as mock_decode, app.test_request_context():
+        token_issuer = Mock(_TokenIssuer)
+        token_issuer.tenant = None
+        issuer_cache = Mock(IssuerCache)
+        issuer_cache.get_issuer.return_value = token_issuer
+
+        mock_decode.return_value = {
+            "iss": "https://access-service/auth/realms/test",
+            "sub": "svc",
+            "client_id": "urn:ads:test:gateway",
+        }
+        filter = AccessRequestFilter(
+            AdspId.parse("urn:ads:platform:test-service"),
+            issuer_cache,
+            lambda _: "abc123",
+        )
+        filter.filter()
+        assert request_user.name == "service-account-urn:ads:test:gateway"
+
+
 def test_access_filter_no_token():
     app = Flask(__name__)
     with patch(

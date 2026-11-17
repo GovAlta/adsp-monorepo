@@ -7,11 +7,13 @@ import { createNoticeRouter } from './router/notice';
 import {
   TenantService,
   EventService,
+  AuditService,
   TokenProvider,
   ServiceDirectory,
   AdspId,
   ConfigurationService,
 } from '@abgov/adsp-service-sdk';
+export * from './audit';
 export * from './model';
 export * from './repository';
 export * from './types';
@@ -20,6 +22,7 @@ interface HealthMiddlewareProps extends Repositories {
   logger: Logger;
   authenticate: RequestHandler;
   eventService: EventService;
+  auditService: AuditService;
   tenantService: TenantService;
   tokenProvider: TokenProvider;
   directory: ServiceDirectory;

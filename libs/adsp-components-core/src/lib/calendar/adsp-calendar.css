@@ -1,5 +1,5 @@
 /*
- * AdspGoACalendar wraps FullCalendar's "classic" theme (skeleton.css + theme.css, imported by the component).
+ * ADSPCalendar wraps FullCalendar's "classic" theme (skeleton.css + theme.css, imported by the component).
  * The classic theme reads all of its colors from --fc-classic-* custom properties, so aliasing them here applies
  * ADSP tokens without needing FullCalendar's own color palette stylesheet.
  */

@@ -2,6 +2,7 @@ import { Application } from 'express';
 import { Logger } from 'winston';
 import {
   AdspId,
+  AuditService,
   ConfigurationService,
   EventService,
   TenantService,
@@ -15,6 +16,7 @@ import { FileStorageProvider } from './storage';
 import { ScanService } from './scan';
 import { WorkQueueService } from '@core-services/core-common';
 
+export * from './audit';
 export * from './types';
 export * from './repository';
 export * from './model';
@@ -28,6 +30,7 @@ interface FileMiddlewareProps extends Repositories {
   serviceId: AdspId;
   logger: Logger;
   eventService: EventService;
+  auditService: AuditService;
   storageProvider: FileStorageProvider;
   queueService: WorkQueueService<FileServiceWorkItem>;
   tenantService: TenantService;

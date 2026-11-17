@@ -107,7 +107,7 @@ const completeServiceVariables = [
     name: 'SharePoint',
     link: 'services/sharepoint',
     description:
-      'The SharePoint service allows developers to connect to a SharePoint List, so that they can read, create, and update its data.',
+      'The SharePoint service pushes data to SharePoint lists owned by your team.',
     beta: false,
     alpha: true,
   },

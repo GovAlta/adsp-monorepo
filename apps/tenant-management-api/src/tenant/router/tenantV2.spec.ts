@@ -5,7 +5,15 @@ import { Logger } from 'winston';
 import { Tenant, TenantEntity } from '../models';
 import { TenantServiceRoles } from '../roles';
 import { RealmService } from '../services/realm';
-import { createTenant, createTenantV2Router, deleteTenant, getTenant, getTenants, updateTenantName } from './tenantV2';
+import {
+  createTenant,
+  createTenantV2Router,
+  deleteTenant,
+  getTenant,
+  getTenants,
+  restoreTenant,
+  updateTenantName,
+} from './tenantV2';
 
 describe('createTenantV2Router', () => {
   const repositoryMock = {
@@ -17,6 +25,8 @@ describe('createTenantV2Router', () => {
 
   const realmServiceMock = {
     createRealm: jest.fn(),
+    disableRealm: jest.fn(),
+    enableRealm: jest.fn(),
     deleteRealm: jest.fn(),
     deleteUserIdp: jest.fn(),
     findUserId: jest.fn(),
@@ -50,6 +60,9 @@ describe('createTenantV2Router', () => {
     realm: 'test-realm',
     adminEmail: 'tester@test.co',
   };
+  const archivedTenant: Tenant = { ...tenant, status: 'archived', deletedAt: new Date() };
+  const purgeUser = { id: 'user-1', name: 'Tester', isCore: true, roles: [TenantServiceRoles.TenantPurge] };
+  const adminUser = { id: 'user-1', name: 'Tester', isCore: true, roles: [TenantServiceRoles.TenantServiceAdmin] };
 
   beforeEach(() => {
     repositoryMock.find.mockReset();
@@ -58,6 +71,8 @@ describe('createTenantV2Router', () => {
     repositoryMock.delete.mockReset();
 
     realmServiceMock.createRealm.mockReset();
+    realmServiceMock.disableRealm.mockReset();
+    realmServiceMock.enableRealm.mockReset();
     realmServiceMock.deleteRealm.mockReset();
     realmServiceMock.deleteUserIdp.mockReset();
     realmServiceMock.findUserId.mockReset();
@@ -206,6 +221,92 @@ describe('createTenantV2Router', () => {
       expect(repositoryMock.find).toHaveBeenCalledWith(expect.objectContaining({ idEquals: 'tenant-321' }));
     });
 
+    it('can get archived tenants as tenant-service-admin', async () => {
+      const req = { query: { status: 'archived' }, user: adminUser };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+      const handler = getTenants(loggerMock, repositoryMock);
+
+      repositoryMock.find.mockResolvedValueOnce([new TenantEntity(repositoryMock, archivedTenant)]);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(repositoryMock.find).toHaveBeenCalledWith(expect.objectContaining({ statusEquals: 'archived' }));
+      expect(res.send).toHaveBeenCalledWith(
+        expect.objectContaining({
+          results: [expect.objectContaining({ status: 'archived', deletedAt: archivedTenant.deletedAt })],
+        }),
+      );
+    });
+
+    it('can reject archived tenants for non-admin', async () => {
+      const req = { query: { status: 'archived' }, user: { isCore: true, roles: [] } };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+      const handler = getTenants(loggerMock, repositoryMock);
+
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedError));
+      expect(repositoryMock.find).not.toHaveBeenCalled();
+    });
+
+    it('can reject archived tenants for anonymous', async () => {
+      const req = { query: { status: 'archived' } };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+      const handler = getTenants(loggerMock, repositoryMock);
+
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedError));
+    });
+
+    it('can get active tenants as tenant-service-admin', async () => {
+      const req = { query: { status: 'active' }, user: adminUser };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+      const handler = getTenants(loggerMock, repositoryMock);
+
+      repositoryMock.find.mockResolvedValueOnce([new TenantEntity(repositoryMock, tenant)]);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(repositoryMock.find).toHaveBeenCalledWith(expect.objectContaining({ statusEquals: 'active' }));
+      expect(res.send).toHaveBeenCalledWith(
+        expect.objectContaining({ results: [expect.objectContaining({ name: tenant.name })] }),
+      );
+    });
+
+    it('can reject active status filter for non-admin', async () => {
+      const req = { query: { status: 'active' }, user: { isCore: true, roles: [] } };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+      const handler = getTenants(loggerMock, repositoryMock);
+
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedError));
+      expect(repositoryMock.find).not.toHaveBeenCalled();
+    });
+
+    it('can reject active status filter for anonymous', async () => {
+      const req = { query: { status: 'active' } };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+      const handler = getTenants(loggerMock, repositoryMock);
+
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedError));
+      expect(repositoryMock.find).not.toHaveBeenCalled();
+    });
+
+    it('can limit default results to active tenants', async () => {
+      const req = { query: {}, user: { isCore: true } };
+      const res = { send: jest.fn() };
+      const handler = getTenants(loggerMock, repositoryMock);
+
+      repositoryMock.find.mockResolvedValueOnce([]);
+      await handler(req as unknown as Request, res as unknown as Response, jest.fn());
+      expect(repositoryMock.find).toHaveBeenCalledWith(expect.objectContaining({ activeOnly: true }));
+      expect(repositoryMock.find).toHaveBeenCalledWith(
+        expect.not.objectContaining({ statusEquals: expect.anything() }),
+      );
+    });
+
     it('can call next for error', async () => {
       const req = {
         query: {},
@@ -320,6 +421,29 @@ describe('createTenantV2Router', () => {
       expect(next).toHaveBeenCalledWith(expect.any(Error));
     });
 
+    it('can throw not found for an archived tenant of a tenant user', async () => {
+      const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
+      const req = { params: { id: 'test' }, user: { isCore: false, tenantId } };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+      const handler = getTenant(loggerMock, repositoryMock);
+
+      repositoryMock.get.mockResolvedValueOnce(new TenantEntity(repositoryMock, archivedTenant));
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(res.send).not.toHaveBeenCalled();
+      expect(next).toHaveBeenCalledWith(expect.any(NotFoundError));
+    });
+
+    it('can get an archived tenant as core user', async () => {
+      const req = { params: { id: 'test' }, user: { isCore: true } };
+      const res = { send: jest.fn() };
+      const handler = getTenant(loggerMock, repositoryMock);
+
+      repositoryMock.get.mockResolvedValueOnce(new TenantEntity(repositoryMock, archivedTenant));
+      await handler(req as unknown as Request, res as unknown as Response, jest.fn());
+      expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ status: 'archived' }));
+    });
+
     it('can throw not found for a deleted/unknown tenant', async () => {
       const req = {
         params: { id: 'tenant-a' },
@@ -344,10 +468,110 @@ describe('createTenantV2Router', () => {
       expect(handler).toBeTruthy();
     });
 
-    it('can delete tenant', async () => {
+    it('can archive tenant', async () => {
+      const req = { params: { id: 'tenant-a' }, query: {}, user: adminUser };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+      const handler = deleteTenant(realmServiceMock, repositoryMock, eventServiceMock, auditServiceMock);
+
+      const entity = new TenantEntity(repositoryMock, tenant);
+      repositoryMock.get.mockResolvedValueOnce(entity);
+      repositoryMock.save.mockImplementationOnce((e) => Promise.resolve(e));
+      realmServiceMock.disableRealm.mockResolvedValueOnce(undefined);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      expect(next).not.toHaveBeenCalled();
+      expect(realmServiceMock.disableRealm).toHaveBeenCalledWith(expect.objectContaining({ realm: tenant.realm }));
+      expect(realmServiceMock.deleteRealm).not.toHaveBeenCalled();
+      expect(repositoryMock.delete).not.toHaveBeenCalled();
+      expect(repositoryMock.save).toHaveBeenCalledWith(
+        expect.objectContaining({ status: 'archived', deletedAt: expect.any(Date) }),
+      );
+      expect(res.send).toHaveBeenCalledWith(
+        expect.objectContaining({ id: tenantUrn, status: 'archived', deletedAt: expect.any(Date) }),
+      );
+      expect(eventServiceMock.send).toHaveBeenCalledWith(expect.objectContaining({ name: 'tenant-archived' }));
+      expect(auditServiceMock.record).toHaveBeenCalledWith(
+        expect.objectContaining({ name: 'tenant.archived' }),
+        tenantAudit({ id: tenantUrn, name: tenant.name }),
+      );
+    });
+
+    it('can leave an archived tenant unchanged when archived again', async () => {
+      const req = { params: { id: 'tenant-a' }, query: {}, user: adminUser };
+      const res = { send: jest.fn() };
+      const handler = deleteTenant(realmServiceMock, repositoryMock, eventServiceMock, auditServiceMock);
+
+      repositoryMock.get.mockResolvedValueOnce(new TenantEntity(repositoryMock, archivedTenant));
+      await handler(req as unknown as Request, res as unknown as Response, jest.fn());
+
+      expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ status: 'archived' }));
+      expect(realmServiceMock.disableRealm).not.toHaveBeenCalled();
+      expect(repositoryMock.save).not.toHaveBeenCalled();
+      expect(eventServiceMock.send).not.toHaveBeenCalled();
+    });
+
+    it('can reject archive of a provisioning tenant', async () => {
+      const req = { params: { id: 'tenant-a' }, query: {}, user: adminUser };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+      const handler = deleteTenant(realmServiceMock, repositoryMock, eventServiceMock, auditServiceMock);
+
+      repositoryMock.get.mockResolvedValueOnce(new TenantEntity(repositoryMock, { ...tenant, status: 'provisioning' }));
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      expect(next).toHaveBeenCalledWith(expect.any(InvalidOperationError));
+      expect(realmServiceMock.disableRealm).not.toHaveBeenCalled();
+    });
+
+    it('can not archive when the realm cannot be disabled', async () => {
+      const req = { params: { id: 'tenant-a' }, query: {}, user: adminUser };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+      const handler = deleteTenant(realmServiceMock, repositoryMock, eventServiceMock, auditServiceMock);
+
+      const error = new Error('Keycloak unavailable');
+      repositoryMock.get.mockResolvedValueOnce(new TenantEntity(repositoryMock, tenant));
+      realmServiceMock.disableRealm.mockRejectedValueOnce(error);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      expect(next).toHaveBeenCalledWith(error);
+      expect(repositoryMock.save).not.toHaveBeenCalled();
+      expect(eventServiceMock.send).not.toHaveBeenCalled();
+    });
+
+    it('can reject purge without the tenant-purge role', async () => {
+      const req = { params: { id: 'tenant-a' }, query: { purge: 'true' }, user: adminUser };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+      const handler = deleteTenant(realmServiceMock, repositoryMock, eventServiceMock, auditServiceMock);
+
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedUserError));
+      expect(repositoryMock.get).not.toHaveBeenCalled();
+      expect(realmServiceMock.deleteRealm).not.toHaveBeenCalled();
+    });
+
+    it('can reject purge of a tenant that is not archived', async () => {
+      const req = { params: { id: 'tenant-a' }, query: { purge: 'true' }, user: purgeUser };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+      const handler = deleteTenant(realmServiceMock, repositoryMock, eventServiceMock, auditServiceMock);
+
+      repositoryMock.get.mockResolvedValueOnce(new TenantEntity(repositoryMock, tenant));
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      expect(next).toHaveBeenCalledWith(expect.any(InvalidOperationError));
+      expect(realmServiceMock.deleteRealm).not.toHaveBeenCalled();
+      expect(repositoryMock.delete).not.toHaveBeenCalled();
+    });
+
+    it('can purge an archived tenant', async () => {
       const req = {
         params: { id: 'tenant-a' },
-        user: { isCore: true },
+        query: { purge: 'true' },
+        user: purgeUser,
       };
       const res = {
         send: jest.fn(),
@@ -355,7 +579,7 @@ describe('createTenantV2Router', () => {
       const next = jest.fn();
       const handler = deleteTenant(realmServiceMock, repositoryMock, eventServiceMock, auditServiceMock);
 
-      const entity = new TenantEntity(repositoryMock, tenant);
+      const entity = new TenantEntity(repositoryMock, archivedTenant);
       repositoryMock.get.mockResolvedValueOnce(entity);
       repositoryMock.delete.mockResolvedValueOnce(true);
       realmServiceMock.deleteRealm.mockResolvedValueOnce(true);
@@ -383,7 +607,8 @@ describe('createTenantV2Router', () => {
     it('can record deletion before the realm and tenant are removed', async () => {
       const req = {
         params: { id: 'tenant-a' },
-        user: { isCore: true },
+        query: { purge: 'true' },
+        user: purgeUser,
       };
       const res = {
         send: jest.fn(),
@@ -391,7 +616,7 @@ describe('createTenantV2Router', () => {
       const next = jest.fn();
       const handler = deleteTenant(realmServiceMock, repositoryMock, eventServiceMock, auditServiceMock);
 
-      const entity = new TenantEntity(repositoryMock, tenant);
+      const entity = new TenantEntity(repositoryMock, archivedTenant);
       repositoryMock.get.mockResolvedValueOnce(entity);
       repositoryMock.delete.mockResolvedValueOnce(true);
       realmServiceMock.deleteRealm.mockResolvedValueOnce(true);
@@ -405,7 +630,8 @@ describe('createTenantV2Router', () => {
     it('can record failure for partial deletion', async () => {
       const req = {
         params: { id: 'tenant-a' },
-        user: { isCore: true },
+        query: { purge: 'true' },
+        user: purgeUser,
       };
       const res = {
         send: jest.fn(),
@@ -413,7 +639,7 @@ describe('createTenantV2Router', () => {
       const next = jest.fn();
       const handler = deleteTenant(realmServiceMock, repositoryMock, eventServiceMock, auditServiceMock);
 
-      const entity = new TenantEntity(repositoryMock, tenant);
+      const entity = new TenantEntity(repositoryMock, archivedTenant);
       repositoryMock.get.mockResolvedValueOnce(entity);
       repositoryMock.delete.mockResolvedValueOnce(true);
       realmServiceMock.deleteRealm.mockResolvedValueOnce(false);
@@ -436,7 +662,8 @@ describe('createTenantV2Router', () => {
     it('can record error and call next when deletion throws', async () => {
       const req = {
         params: { id: 'tenant-a' },
-        user: { isCore: true },
+        query: { purge: 'true' },
+        user: purgeUser,
       };
       const res = {
         send: jest.fn(),
@@ -444,7 +671,7 @@ describe('createTenantV2Router', () => {
       const next = jest.fn();
       const handler = deleteTenant(realmServiceMock, repositoryMock, eventServiceMock, auditServiceMock);
 
-      const entity = new TenantEntity(repositoryMock, tenant);
+      const entity = new TenantEntity(repositoryMock, archivedTenant);
       repositoryMock.get.mockResolvedValueOnce(entity);
       const error = new Error('Keycloak unavailable');
       realmServiceMock.deleteRealm.mockRejectedValueOnce(error);
@@ -494,6 +721,7 @@ describe('createTenantV2Router', () => {
     it('can call next with not found', async () => {
       const req = {
         params: { id: 'tenant-a' },
+        query: {},
         user: { isCore: true },
       };
       const res = {
@@ -506,6 +734,72 @@ describe('createTenantV2Router', () => {
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(next).toHaveBeenCalledWith(expect.any(NotFoundError));
       expect(res.send).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('restoreTenant', () => {
+    const createHandler = () =>
+      restoreTenant(loggerMock, realmServiceMock, repositoryMock, eventServiceMock, auditServiceMock);
+
+    it('can restore an archived tenant', async () => {
+      const req = { params: { id: 'tenant-a' }, user: adminUser };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+
+      repositoryMock.get.mockResolvedValueOnce(new TenantEntity(repositoryMock, archivedTenant));
+      repositoryMock.save.mockImplementationOnce((e) => Promise.resolve(e));
+      realmServiceMock.enableRealm.mockResolvedValueOnce(undefined);
+      await createHandler()(req as unknown as Request, res as unknown as Response, next);
+
+      expect(next).not.toHaveBeenCalled();
+      expect(realmServiceMock.enableRealm).toHaveBeenCalledWith(expect.objectContaining({ realm: tenant.realm }));
+      expect(repositoryMock.save).toHaveBeenCalledWith(expect.objectContaining({ status: 'active', deletedAt: null }));
+      expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ id: tenantUrn, status: 'active' }));
+      expect(res.send).toHaveBeenCalledWith(expect.not.objectContaining({ deletedAt: expect.anything() }));
+      expect(eventServiceMock.send).toHaveBeenCalledWith(expect.objectContaining({ name: 'tenant-restored' }));
+      expect(auditServiceMock.record).toHaveBeenCalledWith(
+        expect.objectContaining({ name: 'tenant.restored' }),
+        tenantAudit({ id: tenantUrn, name: tenant.name }),
+      );
+    });
+
+    it('can reject restore of a tenant that is not archived', async () => {
+      const req = { params: { id: 'tenant-a' }, user: adminUser };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+
+      repositoryMock.get.mockResolvedValueOnce(new TenantEntity(repositoryMock, tenant));
+      await createHandler()(req as unknown as Request, res as unknown as Response, next);
+
+      expect(next).toHaveBeenCalledWith(expect.any(InvalidOperationError));
+      expect(realmServiceMock.enableRealm).not.toHaveBeenCalled();
+      expect(repositoryMock.save).not.toHaveBeenCalled();
+    });
+
+    it('can call next with not found', async () => {
+      const req = { params: { id: 'tenant-a' }, user: adminUser };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+
+      repositoryMock.get.mockResolvedValueOnce(null);
+      await createHandler()(req as unknown as Request, res as unknown as Response, next);
+
+      expect(next).toHaveBeenCalledWith(expect.any(NotFoundError));
+    });
+
+    it('can keep the tenant archived when the realm cannot be enabled', async () => {
+      const req = { params: { id: 'tenant-a' }, user: adminUser };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+
+      const error = new Error('Keycloak unavailable');
+      repositoryMock.get.mockResolvedValueOnce(new TenantEntity(repositoryMock, archivedTenant));
+      realmServiceMock.enableRealm.mockRejectedValueOnce(error);
+      await createHandler()(req as unknown as Request, res as unknown as Response, next);
+
+      expect(next).toHaveBeenCalledWith(error);
+      expect(repositoryMock.save).not.toHaveBeenCalled();
+      expect(eventServiceMock.send).not.toHaveBeenCalled();
     });
   });
 

@@ -162,6 +162,7 @@ describe('createRealmClient', () => {
         value: {
           issuer: 'https://access.adsp-dev.gov.ab.ca/auth/realms/realm-1',
           endpoints: {
+            openIdConfiguration: 'https://access.adsp-dev.gov.ab.ca/auth/realms/realm-1/.well-known/openid-configuration',
             authorization: 'https://access.adsp-dev.gov.ab.ca/auth/realms/realm-1/protocol/openid-connect/auth',
             token: 'https://access.adsp-dev.gov.ab.ca/auth/realms/realm-1/protocol/openid-connect/token',
             userInfo: 'https://access.adsp-dev.gov.ab.ca/auth/realms/realm-1/protocol/openid-connect/userinfo',

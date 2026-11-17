@@ -2,7 +2,7 @@ import React, { useContext, useEffect, useMemo, useState } from 'react';
 import _ from 'lodash';
 import { CellProps, WithClassname, ControlProps, isStringControl, RankedTester, rankWith } from '@jsonforms/core';
 import { withJsonFormsControlProps } from '@jsonforms/react';
-import { GoabInput, GoabDropdown, GoabDropdownItem } from '@abgov/react-components-ds1';
+import { GoabInput, GoabDropdownItem } from '@abgov/react-components-ds1';
 import { WithInputProps } from './type';
 import { GoAInputBaseControl } from './InputBaseControl';
 import { JsonFormRegisterProvider, RegisterDataType } from '../../Context/register';
@@ -28,6 +28,7 @@ import {
   GoabInputOnKeyPressDetail,
 } from '@abgov/ui-components-common';
 import { useDebounce } from '../../util/useDebounce';
+import { FluidDropdown } from '../../Components/FluidDropdown';
 
 export type GoAInputTextProps = CellProps & WithClassname & WithInputProps;
 
@@ -198,7 +199,7 @@ export const InnerGoAInputText = (props: GoAInputTextProps): JSX.Element => {
   return (
     <div>
       {mergedOptions.length > 1 ? (
-        <GoabDropdown
+        <FluidDropdown
           name={`jsonforms-${path}-dropdown`}
           value={data}
           disabled={!enabled}
@@ -212,7 +213,7 @@ export const InnerGoAInputText = (props: GoAInputTextProps): JSX.Element => {
           {mergedOptions.map((item) => (
             <GoabDropdownItem key={item.label} label={item.label} value={item.value ? item.value : ''} />
           ))}
-        </GoabDropdown>
+        </FluidDropdown>
       ) : (
         <GoabInput
           key={`${mask ?? ''}:${inPlace}`}

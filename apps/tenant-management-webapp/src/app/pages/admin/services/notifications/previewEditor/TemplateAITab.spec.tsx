@@ -95,6 +95,7 @@ function makeBaseProps(overrides: Partial<React.ComponentProps<typeof TemplateAI
     onDraftChange: jest.fn(),
     onProposal: jest.fn(),
     onApply: jest.fn(),
+    onReset: jest.fn(),
     ...overrides,
   };
 }

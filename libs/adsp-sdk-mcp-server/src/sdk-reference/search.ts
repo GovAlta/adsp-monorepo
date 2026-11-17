@@ -1,4 +1,4 @@
-import { countTerms, scoreByTermFrequency, tokenize } from '../search/textSearch';
+import { countTerms, queryTerms, scoreByTermFrequency, tokenize } from '../search/textSearch';
 import { SDK_REFERENCE, SdkSymbolDoc } from './reference';
 
 function scoreNameMatch(name: string, normalizedQuery: string): number {
@@ -29,7 +29,7 @@ export function searchSdkReference(query: string, limit = 5): SdkSymbolDoc[] {
     return [];
   }
 
-  const terms = tokenize(query);
+  const terms = queryTerms(query);
 
   return SDK_REFERENCE.map((symbol) => ({ symbol, score: scoreSymbol(symbol, normalizedQuery, terms) }))
     .filter(({ score }) => score > 0)

@@ -31,12 +31,13 @@ import { ResourceTagFilterCriteria, ResourceTagResult, Service, Tag, ResourceTag
 import { renderNoItem } from '@components/NoItem';
 import { FormDefinitionsTable } from './definitionsList';
 import { Center, IndicatorWithDelay, PageIndicator } from '@components/Indicator';
-import { defaultFormDefinition } from '@store/form/model';
+import { defaultFormDefinition, FormDefinition } from '@store/form/model';
 import { DeleteModal } from '@components/DeleteModal';
 import { AddEditFormDefinition } from './addEditFormDefinition';
 import { LoadMoreWrapper, SearchRow, SearchInputWrapper } from './style-components';
 import { getConfigurationDefinitions } from '@store/configuration/action';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { fetchCalendars } from '@store/calendar/actions';
+import { useNavigate } from 'react-router-dom';
 import { AddRemoveResourceTagModal } from './addRemoveResourceTagModal';
 import { GoabDropdownOnChangeDetail } from '@abgov/ui-components-common';
 
@@ -96,6 +97,7 @@ export const FormDefinitions = ({
 
   const tags = useSelector((state: RootState) => state.form.formResourceTag.tags || []);
   const tagsLoading = useSelector((state: RootState) => state.form.formResourceTag.tagsLoading);
+  const formIntakeLoaded = useSelector((state: RootState) => !!state.calendarService?.coreCalendars?.['form-intake']);
 
   const selectConfigurationHost = (state: RootState) => {
     return (state?.directory?.directory?.filter(
@@ -118,6 +120,9 @@ export const FormDefinitions = ({
   useEffect(() => {
     document.body.style.overflow = 'unset';
     dispatch(getConfigurationDefinitions());
+    if (!formIntakeLoaded) {
+      dispatch(fetchCalendars());
+    }
     if (!tags || tags?.length === 0) {
       dispatch(fetchAllTags());
     }
@@ -329,7 +334,7 @@ export const FormDefinitions = ({
             {Object.keys(filteredDefinitions || {}).length > 0 ? (
               <>
                 <FormDefinitionsTable
-                  definitions={filteredDefinitions}
+                  definitions={filteredDefinitions as Record<string, FormDefinition>}
                   baseResourceFormUrn={BASE_FORM_CONFIG_URN}
                   onDelete={(formDefinition) => {
                     setShowDeleteConfirmation(true);

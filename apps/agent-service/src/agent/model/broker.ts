@@ -1,4 +1,13 @@
-import { isAllowedUser, UnauthorizedUserError, AdspId, type User, EventService } from '@abgov/adsp-service-sdk';
+import {
+  isAllowedUser,
+  UnauthorizedUserError,
+  AdspId,
+  type AuditAction,
+  type AuditEventStatus,
+  type AuditService,
+  type User,
+  EventService,
+} from '@abgov/adsp-service-sdk';
 import { InvalidOperationError } from '@core-services/core-common';
 import type { Agent, AgentExecutionOptions, ToolsInput } from '@mastra/core/agent';
 import type { CoreUserMessage } from '@mastra/core/llm';
@@ -7,8 +16,18 @@ import { Logger } from 'winston';
 import { environment } from '../../environments/environment';
 import type { IFileServiceClient } from '../clients';
 import { AgentConfiguration } from '../configuration';
-import { BrokerInputProcessor } from '../types';
+import { BrokerInputProcessor, THREAD_ID_KEY } from '../types';
 import { threadCreated, workspaceCreated, workspaceCreationFailed } from '../events';
+import {
+  AgentMessageSentAuditAction,
+  AgentResponseCompletedAuditAction,
+  type AgentResponseResult,
+  describeMessage,
+  ThreadDeletedAuditAction,
+  toAgentAuditDetails,
+  toResponseAuditOutcome,
+  toThreadAuditDetails,
+} from '../audit';
 import {
   clearThreadWorkspace,
   ManagedWorkspace,
@@ -19,9 +38,18 @@ import {
   WorkspaceUpdateRequest,
   WorkspaceUpdateResult,
 } from '../workspace';
-import { getAgentExecutionLimits } from './executionLimits';
+import { ACCESS_SERVICE_AGENT_ID, getAgentExecutionLimits } from './executionLimits';
 import { AgentModelConfiguration, getAgentProviderOptions } from './modelConfiguration';
 import { abortExecution, STREAM_ERROR_CODES } from './streamAbort';
+import {
+  ConversationStatus,
+  getConversationStatus,
+  MemoryStatus,
+  MessageHistory,
+  USAGE_RECORDER_KEY,
+  UsageRecorder,
+  usesObservationalMemory,
+} from './conversationUsage';
 import { deleteThreadAndWorkspace } from './threadDeletion';
 
 type ThreadMetadataRecord = {
@@ -46,6 +74,8 @@ type ThreadMemoryAccessor = {
     metadata: Record<string, unknown>;
   }) => Promise<unknown>;
   saveThread?: (args: { thread: ThreadMetadataRecord }) => Promise<unknown>;
+  getMergedThreadConfig?: () => { lastMessages?: number | false; observationalMemory?: unknown };
+  recall?: (args: { threadId: string; resourceId?: string; perPage?: number }) => Promise<{ total: number }>;
 };
 
 type AgentWithOptionalMemory<TAgentId extends string = string, TTools extends ToolsInput = ToolsInput> = Agent<
@@ -59,6 +89,8 @@ export class AgentBroker<TAgentId extends string = string, TTools extends ToolsI
   private userRoles: string[];
   private limits: { timeoutMs?: number; maxSteps?: number };
   private readonly threadTtlMs = Math.max(environment.AGENT_THREAD_TTL_MINUTES, 1) * 60 * 1000;
+  // Abort signals of streamed replies, so the code of an abort can be recorded once the stream is consumed.
+  private readonly responseAbortSignals = new WeakMap<object, AbortSignal>();
   public get Agent() {
     return this.agent;
   }
@@ -73,6 +105,7 @@ export class AgentBroker<TAgentId extends string = string, TTools extends ToolsI
     private eventService?: EventService,
     private agentId?: string,
     private modelConfig?: AgentModelConfiguration,
+    private auditService?: AuditService,
   ) {
     this.userRoles = userRoles || [];
     this.limits = { maxSteps, timeoutMs };
@@ -147,6 +180,7 @@ export class AgentBroker<TAgentId extends string = string, TTools extends ToolsI
     requestContext.set('agentId', this.agentId);
     requestContext.set(MASTRA_THREAD_ID_KEY, threadId);
     requestContext.set(MASTRA_RESOURCE_ID_KEY, user.id);
+    requestContext.set(THREAD_ID_KEY, threadId);
 
     return requestContext;
   }
@@ -168,13 +202,78 @@ export class AgentBroker<TAgentId extends string = string, TTools extends ToolsI
     const requestContext = this.buildRequestContext(user, threadId, context);
     await this.updateThreadExpiry(user, threadId);
 
+    // Described before the input processors, which can replace attachment parts in place.
+    const message = describeMessage(input);
+
     // This is necessarily because normal Mastra input processors run after message normalization.
     // For example, assets already downloaded, so we cannot use an input processor to download files with a credential.
     for (const inputProcessor of this.inputProcessors) {
       await inputProcessor.processInput(requestContext, input);
     }
 
+    this.recordAgentAudit(AgentMessageSentAuditAction, user, threadId, message);
+
     return requestContext;
+  }
+
+  private recordAgentAudit(
+    action: AuditAction,
+    user: User,
+    threadId: string,
+    metadata: Record<string, unknown>,
+    status: AuditEventStatus = 'success',
+  ): void {
+    if (this.auditService && this.agentId) {
+      void this.auditService.record(action, {
+        ...toAgentAuditDetails(this.tenantId, user, { id: this.agentId, name: this.agent.name }, threadId, metadata),
+        status,
+      });
+    }
+  }
+
+  private recordResponse(
+    user: User,
+    threadId: string,
+    { text, output, error, tripwire, abortReason }: AgentResponseResult & { output?: unknown; abortReason?: unknown },
+  ): void {
+    const { status, metadata } = toResponseAuditOutcome({ error, tripwire }, abortReason);
+    this.recordAgentAudit(
+      AgentResponseCompletedAuditAction,
+      user,
+      threadId,
+      {
+        responseLength: typeof text === 'string' ? text.length : 0,
+        hasStructuredOutput: output !== undefined && output !== null,
+        ...metadata,
+      },
+      status,
+    );
+  }
+
+  /**
+   * Records that a streamed reply to the user finished, once its stream is consumed, or that it failed with an error.
+   * Only the length of the reply and whether it has structured output are recorded, never their content.
+   */
+  public async recordResponseCompleted(
+    user: User,
+    threadId: string,
+    result: AgentResponseResult | undefined,
+    { output, error }: { output?: unknown; error?: unknown } = {},
+  ): Promise<void> {
+    let text: unknown;
+    try {
+      text = await result?.text;
+    } catch {
+      text = undefined;
+    }
+
+    this.recordResponse(user, threadId, {
+      text,
+      output,
+      error: error ?? result?.error,
+      tripwire: result?.tripwire,
+      abortReason: result ? this.responseAbortSignals.get(result)?.reason : undefined,
+    });
   }
 
   private async updateThreadExpiry(user: User, threadId: string): Promise<void> {
@@ -366,6 +465,13 @@ export class AgentBroker<TAgentId extends string = string, TTools extends ToolsI
       { tenantId, userId: user.id, threadId },
     );
 
+    if (this.auditService) {
+      void this.auditService.record(
+        ThreadDeletedAuditAction,
+        toThreadAuditDetails(this.tenantId, user, this.agentId, threadId),
+      );
+    }
+
     return true;
   }
 
@@ -385,15 +491,69 @@ export class AgentBroker<TAgentId extends string = string, TTools extends ToolsI
     }
   }
 
+  /**
+   * Streams the agent's reply. A usage recorder, when given, collects model calls that tools make outside the agent's
+   * own usage; it is set after the client context so a client cannot supply its own.
+   */
   public async stream(
     user: User,
     threadId: string,
     input: CoreUserMessage | CoreUserMessage[],
     context: Record<string, unknown> = {},
+    usageRecorder?: UsageRecorder,
   ) {
     const requestContext = await this.prepareAgentRequest(user, threadId, input, context);
+    if (usageRecorder) {
+      requestContext.set(USAGE_RECORDER_KEY, usageRecorder);
+    }
 
-    return this.agent.stream(input, this.getExecutionOptions(requestContext, user, threadId, true));
+    const options = this.getExecutionOptions(requestContext, user, threadId, true);
+    try {
+      const result = await this.agent.stream(input, options);
+      if (typeof result === 'object' && result !== null && options.abortSignal) {
+        this.responseAbortSignals.set(result, options.abortSignal);
+      }
+      return result;
+    } catch (err) {
+      this.recordResponse(user, threadId, { error: err, abortReason: options.abortSignal?.reason });
+      throw err;
+    }
+  }
+
+  /**
+   * Whether the user's conversation has grown long enough that the agent may miss earlier details, after a reply that
+   * took up contextTokens of the model's context window.
+   */
+  public async getConversationStatus(
+    user: User,
+    threadId: string,
+    { contextTokens, memoryStatus }: { contextTokens: number; memoryStatus?: MemoryStatus },
+  ): Promise<ConversationStatus> {
+    return getConversationStatus({
+      contextTokens,
+      contextWindowTokens: environment.AGENT_MODEL_CONTEXT_TOKENS,
+      memoryStatus,
+      history: await this.getMessageHistory(user, threadId),
+      longConversationTokens:
+        this.agentId === ACCESS_SERVICE_AGENT_ID ? environment.AGENT_ACCESS_LONG_CONVERSATION_TOKENS : 0,
+    });
+  }
+
+  // Observational memory reports on itself in the stream. Without it, the agent reads only the most recent
+  // lastMessages, so older messages drop out once the thread holds more than that.
+  private async getMessageHistory(user: User, threadId: string): Promise<MessageHistory | undefined> {
+    const memory = await this.agent.getMemory?.();
+    const config = memory?.getMergedThreadConfig?.();
+    if (
+      !memory?.recall ||
+      typeof config?.lastMessages !== 'number' ||
+      usesObservationalMemory(config.observationalMemory)
+    ) {
+      return undefined;
+    }
+
+    const { total } = await memory.recall({ threadId, resourceId: user.id, perPage: 1 });
+    return { storedMessages: total, lastMessages: config.lastMessages };
   }
 
   public async generate(
@@ -404,7 +564,21 @@ export class AgentBroker<TAgentId extends string = string, TTools extends ToolsI
   ) {
     const requestContext = await this.prepareAgentRequest(user, threadId, input, context);
 
-    return this.agent.generate(input, this.getExecutionOptions(requestContext, user, threadId));
+    const options = this.getExecutionOptions(requestContext, user, threadId);
+    try {
+      const result = await this.agent.generate(input, options);
+      this.recordResponse(user, threadId, {
+        text: result?.text,
+        output: result?.object,
+        error: result?.error,
+        tripwire: result?.tripwire,
+        abortReason: options.abortSignal?.reason,
+      });
+      return result;
+    } catch (err) {
+      this.recordResponse(user, threadId, { error: err, abortReason: options.abortSignal?.reason });
+      throw err;
+    }
   }
 }
 

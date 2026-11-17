@@ -1,10 +1,23 @@
 import { AxiosError } from 'axios';
 import * as HttpStatusCodes from 'http-status-codes';
+import { END } from 'redux-saga';
 import { expectSaga } from 'redux-saga-test-plan';
 import { getAccessToken } from '@store/tenant/sagas';
 import { registerSectionLoader, resetSectionLoaders } from '@pages/admin/reports/registry/serviceReportRegistry';
-import { loadReportSectionFailure, loadReportSectionSuccess } from './actions';
-import { loadReportSection, REPORT_SECTION_LOAD_ERROR } from './sagas';
+import {
+  loadReportSection as requestReportSection,
+  loadReportSectionFailure,
+  loadReportSectionSuccess,
+} from './actions';
+import { loadReportSection, REPORT_SECTION_LOAD_ERROR, watchServiceReportsSagas } from './sagas';
+
+const deferred = <T>() => {
+  let resolve!: (value: T) => void;
+  const promise = new Promise<T>((complete) => {
+    resolve = complete;
+  });
+  return { promise, resolve };
+};
 
 const unauthorized = (): AxiosError => {
   const err = new AxiosError(`Request failed with status code ${HttpStatusCodes.UNAUTHORIZED}`);
@@ -26,6 +39,44 @@ const criteria = {
 const storeState = {
   serviceReports: { criteria, sections: {} },
   config: { serviceUrls: {} },
+};
+
+const runSameSectionReplacement = async () => {
+  const started = [deferred<void>(), deferred<void>()];
+  const latestSucceeded = deferred<void>();
+  const requests: { signal: AbortSignal; response: ReturnType<typeof deferred<unknown>> }[] = [];
+  const actions: { type: string; data?: unknown }[] = [];
+  registerSectionLoader('pdf', 'summary', ({ signal }) => {
+    const response = deferred<unknown>();
+    requests.push({ signal, response });
+    started[requests.length - 1].resolve();
+    return response.promise;
+  });
+  const saga = expectSaga(watchServiceReportsSagas)
+    .withReducer((state = storeState, action) => {
+      actions.push(action);
+      if (action.type === 'serviceReports/LOAD_REPORT_SECTION_SUCCESS') {
+        latestSucceeded.resolve();
+      }
+      return state;
+    }, storeState)
+    .provide({
+      call(effect, next) {
+        return effect.fn === getAccessToken ? 'token-1' : next();
+      },
+    });
+
+  const execution = saga.run(false);
+  saga.dispatch(requestReportSection('pdf', 'summary'));
+  await started[0].promise;
+  saga.dispatch(requestReportSection('pdf', 'summary'));
+  await started[1].promise;
+  requests[1].response.resolve({ pdfGenerated: 8 });
+  await latestSucceeded.promise;
+  saga.dispatch(END);
+  await execution;
+
+  return { actions, requests };
 };
 
 describe('loadReportSection saga', () => {
@@ -221,5 +272,81 @@ describe('loadReportSection saga', () => {
     expect(success).toEqual(
       loadReportSectionSuccess('pdf', 'summary', 'pdf|last30Days|2026-08-12|2026-09-10', { pdfGenerated: 4 })
     );
+  });
+});
+
+describe('watchServiceReportsSagas', () => {
+  afterEach(() => {
+    resetSectionLoaders();
+  });
+
+  it('aborts the earlier request when the same section is requested again', async () => {
+    const { requests } = await runSameSectionReplacement();
+
+    expect(requests[0].signal.aborted).toBe(true);
+  });
+
+  it('only stores the latest result', async () => {
+    const { actions } = await runSameSectionReplacement();
+
+    expect(actions.filter(({ type }) => type === 'serviceReports/LOAD_REPORT_SECTION_SUCCESS')).toEqual([
+      expect.objectContaining({ data: { pdfGenerated: 8 } }),
+    ]);
+  });
+
+  it('does not report cancellation as an error', async () => {
+    const { actions } = await runSameSectionReplacement();
+
+    expect(actions.some(({ type }) => type === 'serviceReports/LOAD_REPORT_SECTION_FAILURE')).toBe(false);
+  });
+
+  it('does not cancel requests for different sections', async () => {
+    const summaryStarted = deferred<void>();
+    const insightsStarted = deferred<void>();
+    const allSucceeded = deferred<void>();
+    const summaryResponse = deferred<unknown>();
+    const insightsResponse = deferred<unknown>();
+    let summarySignal: AbortSignal | undefined;
+    let insightsSignal: AbortSignal | undefined;
+    let successCount = 0;
+    registerSectionLoader('pdf', 'summary', ({ signal }) => {
+      summarySignal = signal;
+      summaryStarted.resolve();
+      return summaryResponse.promise;
+    });
+    registerSectionLoader('pdf', 'insights', ({ signal }) => {
+      insightsSignal = signal;
+      insightsStarted.resolve();
+      return insightsResponse.promise;
+    });
+    const saga = expectSaga(watchServiceReportsSagas)
+      .withReducer((state = storeState, nextAction) => {
+        if (nextAction.type === 'serviceReports/LOAD_REPORT_SECTION_SUCCESS') {
+          successCount += 1;
+          if (successCount === 2) {
+            allSucceeded.resolve();
+          }
+        }
+        return state;
+      }, storeState)
+      .provide({
+        call(effect, next) {
+          return effect.fn === getAccessToken ? 'token-1' : next();
+        },
+      });
+
+    const execution = saga.run(false);
+    saga.dispatch(requestReportSection('pdf', 'summary'));
+    await summaryStarted.promise;
+    saga.dispatch(requestReportSection('pdf', 'insights'));
+    await insightsStarted.promise;
+    summaryResponse.resolve({ pdfGenerated: 4 });
+    insightsResponse.resolve({ anomalies: [] });
+    await allSucceeded.promise;
+    saga.dispatch(END);
+    await execution;
+
+    expect(summarySignal?.aborted).toBe(false);
+    expect(insightsSignal?.aborted).toBe(false);
   });
 });
