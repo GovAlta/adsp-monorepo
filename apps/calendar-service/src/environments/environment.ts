@@ -22,6 +22,8 @@ export const environment = envalid.cleanEnv(
     LOG_LEVEL: envalid.str({ default: 'debug' }),
     PORT: envalid.num({ default: 3341 }),
     TRUSTED_PROXY: envalid.str({ default: 'uniquelocal' }),
+    // Unset falls back to the SDK AUDIT_ENABLED variable, which defaults to on.
+    CALENDAR_AUDIT_ENABLED: envalid.bool({ default: undefined }),
   },
   {
     reporter: ({ errors }) => {

@@ -25,11 +25,13 @@ describe('KeycloakRealmService', () => {
     realms: {
       create: jest.fn(),
       findOne: jest.fn(),
+      update: jest.fn(),
       del: jest.fn(),
     },
     clients: {
       create: jest.fn(),
       find: jest.fn(),
+      update: jest.fn(),
       findRole: jest.fn(),
       listRoles: jest.fn(),
       del: jest.fn(),
@@ -91,6 +93,8 @@ describe('KeycloakRealmService', () => {
 
     // Delete
     keycloakClientMock.realms.del.mockReset();
+    keycloakClientMock.realms.update.mockReset();
+    keycloakClientMock.clients.update.mockReset();
     keycloakClientMock.clients.find.mockReset();
     keycloakClientMock.clients.del.mockReset();
   });
@@ -161,6 +165,48 @@ describe('KeycloakRealmService', () => {
       expect(keycloakClientMock.realms.del).toHaveBeenCalledWith(expect.objectContaining({ realm: tenant.realm }));
       expect(keycloakClientMock.clients.find).toHaveBeenCalledWith(expect.objectContaining({ realm: 'core' }));
       expect(keycloakClientMock.clients.del).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('disableRealm and enableRealm', () => {
+    const service = new KeycloakRealmServiceImpl(loggerMock, 'https://access-service', 'core', () =>
+      Promise.resolve(keycloakClientMock as unknown as KeycloakAdminClient),
+    );
+
+    it.each([
+      ['disableRealm', false],
+      ['enableRealm', true],
+    ] as const)('can %s and its broker client', async (method, enabled) => {
+      keycloakClientMock.clients.find.mockResolvedValueOnce([{ id: 'broker-123', clientId: brokerClientId }]);
+
+      await service[method](tenant);
+
+      expect(keycloakClientMock.realms.update).toHaveBeenCalledWith({ realm: tenant.realm }, { enabled });
+      expect(keycloakClientMock.clients.update).toHaveBeenCalledWith({ realm: 'core', id: 'broker-123' }, { enabled });
+      expect(keycloakClientMock.realms.del).not.toHaveBeenCalled();
+      expect(keycloakClientMock.clients.del).not.toHaveBeenCalled();
+    });
+
+    it('can handle broker client not found', async () => {
+      keycloakClientMock.clients.find.mockResolvedValueOnce([]);
+
+      await service.disableRealm(tenant);
+
+      expect(keycloakClientMock.realms.update).toHaveBeenCalledWith({ realm: tenant.realm }, { enabled: false });
+      expect(keycloakClientMock.clients.update).not.toHaveBeenCalled();
+    });
+
+    it('can do nothing for no realm', async () => {
+      await service.disableRealm({ ...tenant, realm: null });
+
+      expect(keycloakClientMock.realms.update).not.toHaveBeenCalled();
+    });
+
+    it('can throw for realm update error', async () => {
+      keycloakClientMock.realms.update.mockRejectedValueOnce(new Error('oh noes!'));
+
+      await expect(service.disableRealm(tenant)).rejects.toThrow('oh noes!');
+      expect(keycloakClientMock.clients.update).not.toHaveBeenCalled();
     });
   });
 

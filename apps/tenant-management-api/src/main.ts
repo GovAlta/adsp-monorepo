@@ -16,6 +16,8 @@ import {
   TenantAuditActions,
   TenantCreatedDefinition,
   TenantDeletedDefinition,
+  TenantArchivedDefinition,
+  TenantRestoredDefinition,
   configurationSchema,
   applyTenantMiddleware,
   TenantServiceImpl,
@@ -52,7 +54,7 @@ async function initializeApp(): Promise<express.Application> {
           schema: configurationSchema,
         },
         configurationConverter: (c) => Object.entries(c).map(([k, v]) => ({ serviceId: AdspId.parse(k), ...v })),
-        events: [TenantCreatedDefinition, TenantDeletedDefinition],
+        events: [TenantCreatedDefinition, TenantDeletedDefinition, TenantArchivedDefinition, TenantRestoredDefinition],
         auditActions: TenantAuditActions,
         roles: [
           // Note: Tenant Admin role is a special composite role.
@@ -63,6 +65,10 @@ async function initializeApp(): Promise<express.Application> {
           {
             role: TenantServiceRoles.PlatformService,
             description: 'Service role for backend services for reading tenants.',
+          },
+          {
+            role: TenantServiceRoles.TenantPurge,
+            description: 'Role for purging tenant data.',
           },
         ],
       },

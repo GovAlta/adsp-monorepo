@@ -33,6 +33,26 @@ export const TenantDeletedAuditAction: AuditAction = {
   description: 'A tenant is permanently removed.',
 };
 
+export const TenantArchivedAuditAction: AuditAction = {
+  name: 'tenant.archived',
+  version: 1,
+  category: AuditCategories.Administrative,
+  severity: AuditSeverities.Warning,
+  retentionClass: BuiltInRetentionClasses.Compliance,
+  resourceType: TENANT_RESOURCE_TYPE,
+  description: 'A tenant is archived and its realm disabled.',
+};
+
+export const TenantRestoredAuditAction: AuditAction = {
+  name: 'tenant.restored',
+  version: 1,
+  category: AuditCategories.Administrative,
+  severity: AuditSeverities.Warning,
+  retentionClass: BuiltInRetentionClasses.Compliance,
+  resourceType: TENANT_RESOURCE_TYPE,
+  description: 'An archived tenant is restored and its realm enabled.',
+};
+
 export const TenantUpdatedAuditAction: AuditAction = {
   name: 'tenant.updated',
   version: 1,
@@ -47,6 +67,8 @@ export const TenantUpdatedAuditAction: AuditAction = {
 export const TenantAuditActions: AuditAction[] = [
   TenantCreatedAuditAction,
   TenantDeletedAuditAction,
+  TenantArchivedAuditAction,
+  TenantRestoredAuditAction,
   TenantUpdatedAuditAction,
 ];
 

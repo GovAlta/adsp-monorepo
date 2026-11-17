@@ -86,13 +86,20 @@ components:
         status:
           type: string
           readOnly: true
-          enum: [provisioning, active]
-          description: Status of the tenant; a new tenant is provisioning until its realm has been created.
+          enum: [provisioning, active, archived]
+          description: >
+            Status of the tenant; a new tenant is provisioning until its realm has been created. An archived tenant has
+            its realm disabled.
           example: active
         adminEmail:
           type: string
           description: Email of the tenant administrator. Not included for anonymous requests.
           example: test.admin@gov.ab.ca
+        deletedAt:
+          type: string
+          format: date-time
+          readOnly: true
+          description: Time the tenant was archived. Only included for an archived tenant.
       example:
         id: urn:ads:platform:tenant-service:v2:/tenants/61f2e3a8c9b1d2e3f4a5b6c7
         name: Test Tenant
@@ -248,23 +255,23 @@ components:
       - Tenant service
     description: >
       Deprecated; use DELETE /api/tenant/v2/tenants/{id}, after looking up the tenant ID with
-      GET /api/tenant/v2/tenants?realm={realm}. Deletes the tenant with the given realm, and the realm. Requires the
-      core realm tenant-service-admin role.
+      GET /api/tenant/v2/tenants?realm={realm}. Archives the tenant with the given realm and disables the realm; the
+      tenant is not deleted. Requires the core realm tenant-service-admin role.
     parameters:
       - in: query
         name: realm
         required: true
-        description: Realm of the tenant to delete.
+        description: Realm of the tenant to archive.
         schema:
           type: string
         example: 2f6c8f1e-3b7a-4d5c-9e8f-1a2b3c4d5e6f
     responses:
       200:
-        description: Tenant deletion completed. success is false if the realm or the tenant record wasn't deleted.
+        description: The archived tenant.
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TenantDeleteResult'
+              $ref: '#/components/schemas/Tenant'
       400:
         $ref: '#/components/responses/TenantV1BadRequest'
       401:
@@ -606,9 +613,13 @@ components:
     tags:
       - Tenant service
     description: >
-      Search for active tenants; tenants that are still provisioning are not included. No role is required.
-      Authenticated tenant users only find their own tenant; authenticated core users, including service accounts,
-      can find any tenant.
+      Search for active tenants; tenants that are still provisioning or archived are not included. No role is
+      required. Authenticated tenant users only find their own tenant; authenticated core users, including service
+      accounts, can find any tenant.
+
+
+      Archived tenants are only returned when status is archived, which requires the core realm tenant-service-admin
+      role.
 
 
       Anonymous requests (without a valid bearer token) are allowed if they include the name or realm criteria, and
@@ -640,6 +651,12 @@ components:
           format: email
         description: Email of the tenant administrator. Anonymous requests must also include name or realm.
         example: test.admin@gov.ab.ca
+      - in: query
+        name: status
+        schema:
+          type: string
+          enum: [active, archived]
+        description: Status of the tenants to find. Archived requires the core realm tenant-service-admin role.
     responses:
       200:
         description: Matching tenants.
@@ -682,7 +699,9 @@ components:
       400:
         $ref: '#/components/responses/TenantBadRequest'
       401:
-        description: Anonymous request does not include name or realm criteria.
+        description: >
+          Anonymous request does not include name or realm criteria, or the request for archived tenants is not from
+          a core tenant-service-admin.
         content:
           application/json:
             schema:
@@ -885,15 +904,83 @@ components:
     tags:
       - Tenant service
     description: >
-      Deletes a tenant and its realm. Requires the core realm tenant-service-admin role, which can delete any
-      tenant; tenant users are rejected.
+      Archives a tenant: its realm is disabled, so users can no longer sign in, and the tenant and realm are
+      retained. Archiving an archived tenant has no effect. Use the restore endpoint to recover an archived tenant. Requires the core realm tenant-service-admin
+      role, which can archive any tenant; tenant users are rejected.
+
+
+      Set purge to true to permanently delete an archived tenant and its realm. Purge also requires the core realm
+      tenant-purge role and responds 400 if the tenant is not archived.
+    parameters:
+      - in: query
+        name: purge
+        schema:
+          type: string
+          enum: ['true', 'false']
+          default: 'false'
+        description: Permanently delete the archived tenant and its realm.
     responses:
       200:
-        description: Tenant deletion completed. success is false if the realm or the tenant record wasn't deleted.
+        description: >
+          The archived tenant, or for purge the result of the deletion. success is false if the realm or the tenant
+          record wasn't deleted.
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TenantDeleteResult'
+              oneOf:
+                - $ref: '#/components/schemas/Tenant'
+                - $ref: '#/components/schemas/TenantDeleteResult'
+      400:
+        description: Request is invalid, for example the tenant is not archived for purge, or is still provisioning.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TenantError'
+            example:
+              errorMessage: Tenant must be archived before it can be purged.
+      401:
+        $ref: '#/components/responses/TenantUnauthorized'
+      403:
+        description: Purge was requested without the core realm tenant-purge role.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TenantError'
+            example:
+              errorMessage: 'User Test User (ID: 3d1c5e7a-9b2f-4c6d-8e0a-1f3b5d7c9e2a) not permitted to purge tenant.'
+      404:
+        $ref: '#/components/responses/TenantNotFound'
+
+/api/tenant/v2/tenants/{id}/restore:
+  parameters:
+    - in: path
+      name: id
+      required: true
+      description: ID of the tenant, without the URN prefix.
+      schema:
+        type: string
+      example: 61f2e3a8c9b1d2e3f4a5b6c7
+  post:
+    tags:
+      - Tenant service
+    description: >
+      Restores an archived tenant: its realm is enabled again and its status is active. Requires the core realm
+      tenant-service-admin role; tenant users are rejected.
+    responses:
+      200:
+        description: The restored tenant.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Tenant'
+      400:
+        description: The tenant is not archived.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TenantError'
+            example:
+              errorMessage: Only an archived tenant can be restored.
       401:
         $ref: '#/components/responses/TenantUnauthorized'
       404:

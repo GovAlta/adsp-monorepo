@@ -1,4 +1,5 @@
 import { AdspId, adspId } from '@abgov/adsp-service-sdk';
+import { NotFoundError } from '@core-services/core-common';
 import { TenantRepository } from '../../repository';
 import { getTenant, getTenants } from './get';
 
@@ -26,6 +27,12 @@ describe('get', () => {
       expect(result).toMatchObject({ name: tenant.name, realm: tenant.realm, id: expect.any(AdspId) });
       expect(repositoryMock.get).toHaveBeenCalledWith('tenant-123');
     });
+
+    it('can reject an archived tenant', async () => {
+      const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/tenant-123`;
+      repositoryMock.get.mockResolvedValueOnce({ id: 'tenant-123', name: 'tenant', status: 'archived' });
+      await expect(getTenant(repositoryMock as unknown as TenantRepository, tenantId)).rejects.toThrow(NotFoundError);
+    });
   });
 
   describe('getTenants', () => {
@@ -38,7 +45,7 @@ describe('get', () => {
       repositoryMock.find.mockResolvedValueOnce([tenant]);
       const result = await getTenants(repositoryMock as unknown as TenantRepository);
       expect(result).toContainEqual({ name: tenant.name, realm: tenant.realm, id: expect.any(AdspId) });
-      expect(repositoryMock.find).toHaveBeenCalledWith(undefined);
+      expect(repositoryMock.find).toHaveBeenCalledWith({ excludeArchived: true });
     });
 
     it('can get tenants with criteria', async () => {
@@ -51,7 +58,7 @@ describe('get', () => {
       repositoryMock.find.mockResolvedValueOnce([tenant]);
       const result = await getTenants(repositoryMock as unknown as TenantRepository, criteria);
       expect(result).toContainEqual({ name: tenant.name, realm: tenant.realm, id: expect.any(AdspId) });
-      expect(repositoryMock.find).toHaveBeenCalledWith(criteria);
+      expect(repositoryMock.find).toHaveBeenCalledWith({ ...criteria, excludeArchived: true });
     });
   });
 });
