@@ -66,6 +66,10 @@ async function initializeApp(): Promise<express.Application> {
             role: TenantServiceRoles.PlatformService,
             description: 'Service role for backend services for reading tenants.',
           },
+          {
+            role: TenantServiceRoles.TenantPurge,
+            description: 'Role for purging tenant data.',
+          },
         ],
       },
       { logger },
