@@ -277,6 +277,9 @@ export function deleteTenant(
         return;
       }
 
+      // Another level of check to ensure the user executing the delete is sure they want to delete permanently.
+      // Also archiving enforces adding audits and events to the audit and event services
+      // for troubleshooting and auditing purposes.
       if (entity.status !== 'archived') {
         throw new InvalidOperationError('Tenant must be archived before it can be purged.');
       }
