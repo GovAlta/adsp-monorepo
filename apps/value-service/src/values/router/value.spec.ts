@@ -294,6 +294,30 @@ describe('event router', () => {
         expect.objectContaining({ names: ['test-created', 'test-updated'] }),
       );
     });
+
+    it('rejects a period that is not a timestamp', async () => {
+      const repository = { countDistinct: jest.fn() };
+      const req = {
+        tenant: { id: tenantId },
+        user: reader,
+        query: {
+          namespace: 'test-service',
+          contextKey: 'testId',
+          intervalMin: 'not-a-date',
+          intervalMax: '2026-11-01T00:00:00.000Z',
+        },
+      };
+      const next = jest.fn();
+
+      await countDistinctEventResources(repository as never, sources)(
+        req as unknown as Request,
+        { send: jest.fn() } as unknown as Response,
+        next,
+      );
+
+      expect(next).toHaveBeenCalledWith(expect.any(InvalidOperationError));
+      expect(repository.countDistinct).not.toHaveBeenCalled();
+    });
   });
 
   describe('runServiceMetricRollup', () => {
