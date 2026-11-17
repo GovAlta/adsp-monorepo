@@ -47,6 +47,22 @@ All endpoints are under `https://event-service.adsp.alberta.ca/event/v1`. See th
 
 Event service has no endpoints for reading event log entries. The event log is stored in the [value service](value-service.md) and is searched with the value API (see [Search the event log](#search-the-event-log)).
 
+## Audit actions
+
+Event service records changes to tenant event definitions made through its definitions API (`POST /event/v1/definitions`, `PATCH` and `DELETE /event/v1/definitions/{namespace}/{name}`, used by the tenant management app) in the `event-service` namespace of the [audit service](audit-service.md). Records are written to the tenant of the request with the user or service account that made the change as the actor, the definition as the resource (`{ type: 'event-definition', id: '<namespace>:<name>' }`), and the `namespace` and `name` in the metadata.
+
+| action                   | category       | severity | retention class | recorded when                                                                                                                                                                                                                                                          |
+| :----------------------- | :------------- | :------- | :-------------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| event-definition.created | administrative | info     | compliance      | An event definition is created. `namespaceCreated` in the metadata indicates whether its namespace was new.                                                                                                                                                            |
+| event-definition.updated | administrative | info     | compliance      | An event definition is updated. `changedFields` in the metadata lists the definition properties that changed, e.g. `description` and `payloadSchema`. The change set captures only those properties before and after the update, and is left out when nothing changed. |
+| event-definition.deleted | administrative | warning  | compliance      | An event definition is deleted. `namespaceDeleted` in the metadata indicates whether the namespace was removed because no definitions remained. The change set captures the deleted definition as `before`.                                                            |
+
+Change sets are not captured for `event-definition.created`, since the new definition is the current configuration. A change set over the 16 KiB audit service limit is left out and `changeSetOmitted: true` is set in the metadata instead. Requests that are rejected or fail (unauthorized, not found, invalid payload schema, configuration errors) are not recorded.
+
+Sending domain events (`POST /event/v1/events`) and reading or querying definitions and the event log are not audited; sent events are recorded in the [event log](#event-log). Event definitions written directly to the [configuration service](configuration-service.md) under `platform:event-service`, including platform definitions registered by services on startup, bypass the event service and are not recorded here.
+
+Audit failures are logged and do not prevent the definition change. The event service account requires the `audit-writer` role of `urn:ads:platform:audit-service`. Set `AUDIT_ENABLED=false` on event service to turn recording off, which also stops the [access service audit](#access-service-audit) records; see [turn audit recording off](audit-service.md#turn-audit-recording-off).
+
 ## Concepts
 
 ### Event
