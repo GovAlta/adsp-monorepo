@@ -5,7 +5,7 @@ import { performance } from 'perf_hooks';
 import { ApiSpecsRepository } from './api-specs/apiSpecsRepository';
 import { loadCapabilityCatalog } from './capabilities/catalog';
 import { DocsRepository } from './docs/docsRepository';
-import { SERVER_INSTRUCTIONS } from './instructions';
+import { OFFLINE_ENDPOINT_INSTRUCTIONS, SERVER_INSTRUCTIONS } from './instructions';
 import { getMetrics, ToolErrorType } from './metrics';
 import { createApiTools } from './tools/registerApiTools';
 import { createConfigurationSchemaTools } from './tools/registerConfigurationSchemaTool';
@@ -102,7 +102,10 @@ export function createAdspMcpServer(options: CreateAdspMcpServerOptions = {}): S
   // args with zod as a plain value (see tools/*.ts), never passing a schema through the SDK's type machinery.
   const server = new Server(
     { name: 'adsp-sdk-mcp-server', version: readPackageVersion() },
-    { capabilities: { tools: {} }, instructions: SERVER_INSTRUCTIONS },
+    {
+      capabilities: { tools: {} },
+      instructions: options.offlineToolsOnly ? OFFLINE_ENDPOINT_INSTRUCTIONS : SERVER_INSTRUCTIONS,
+    },
   );
 
   server.setRequestHandler(ListToolsRequestSchema, async () => ({
@@ -118,6 +121,10 @@ export function createAdspMcpServer(options: CreateAdspMcpServerOptions = {}): S
   server.setRequestHandler(CallToolRequestSchema, async (request, extra) => {
     const started = performance.now();
     const tool = toolsByName.get(request.params.name);
+    if (!tool && loaded.toolsByName.has(request.params.name)) {
+      getMetrics().recordToolCall(request.params.name, secondsSince(started), 'tool_error');
+      return { isError: true, content: [{ type: 'text', text: liveToolNeedsSignIn(request.params.name) }] };
+    }
     if (!tool) {
       // The label is fixed so client-supplied names can't create new metric series.
       getMetrics().recordToolCall('unknown', secondsSince(started), 'unknown_tool');
@@ -147,6 +154,13 @@ export function createAdspMcpServer(options: CreateAdspMcpServerOptions = {}): S
   });
 
   return server;
+}
+
+function liveToolNeedsSignIn(name: string): string {
+  return (
+    `${name} reads the live platform, so it needs a sign-in. Connect to /mcp/<tenant realm> on this server and ` +
+    'sign in, or run the server locally with npx @abgov/adsp-sdk-mcp-server.'
+  );
 }
 
 function toolErrorType(result: CallToolResult): ToolErrorType | undefined {

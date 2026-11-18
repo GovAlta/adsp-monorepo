@@ -118,7 +118,7 @@ on two endpoints, with a liveness check at `GET /health` and a readiness check a
 
 | Endpoint | Sign-in | Tools |
 |---|---|---|
-| `POST /mcp` | Never asked for; a token sent here is ignored | The 10 tools that answer from bundled content. `list_service_roles` and `get_service_configuration_schema` aren't listed, and calling them answers `Unknown tool` |
+| `POST /mcp` | Never asked for; a token sent here is ignored | The 10 tools that answer from bundled content. `list_service_roles` and `get_service_configuration_schema` aren't listed, and calling them answers with an error saying to sign in at `/mcp/<tenant realm>` |
 | `POST /mcp/<tenant realm>` | Required for that tenant realm (see [Signing in](#signing-in)) | All 12 |
 
 Without the three sign-in settings below, the server serves only `/mcp`. There is no way to call the live tools
@@ -133,7 +133,7 @@ without signing in: anyone who can't sign in, and needs them, runs the server lo
 | `ADSP_ACCESS_SERVICE_URL` | unset | Keycloak base URL. A realm's issuer is `<url>/auth/realms/<realm>` and its signing keys are read from there |
 | `ADSP_DIRECTORY_SERVICE_URL` | unset | Directory service the live tools use to find ADSP services. Set all three sign-in settings to serve `/mcp/<tenant realm>` |
 | `CORS_ORIGIN` | unset | Comma-separated browser origins allowed to call `/mcp` and `/mcp/<tenant realm>`, for example `https://a.example,https://b.example`. Unset allows none; `*` allows any (not for hosted use) |
-| `MCP_MAX_IN_FLIGHT` | `64` | `POST /mcp` and signed-in `POST /mcp/<tenant realm>` requests handled at once per process, counted together |
+| `MCP_MAX_IN_FLIGHT` | `64` | Requests handled at once per process, on each endpoint: `POST /mcp`, and signed-in `POST /mcp/<tenant realm>`. Each endpoint has its own slots, so requests without a token can't take the ones signed-in callers need |
 | `MCP_IN_FLIGHT_WAIT_MS` | `1000` | How long a request waits for a free slot before getting `503`. Also how long a live tool waits for a free upstream slot |
 | `MCP_RATE_LIMIT_PER_MINUTE` | `1200` | `POST /mcp` and `POST /mcp/<tenant realm>` requests allowed per client IP per minute, per process, counted together. `0` turns the limit off |
 | `MCP_LIVE_TOOL_MAX_CONCURRENT` | `8` | Live-tool calls to ADSP running at once per process, across both live tools |
@@ -156,9 +156,9 @@ serve any request and an idle client never loses its session. `GET` and `DELETE`
 
 #### Signing in
 
-The server is an OAuth protected resource. Each tenant realm is its own authorization server, so the realm is part
-of the URL: a client connects to `<MCP_PUBLIC_URL>/mcp/<tenant realm>` and signs in to that realm with the public
-client `adsp-mcp` (PKCE, no secret).
+`/mcp/<tenant realm>` is an OAuth protected resource; plain `/mcp` never asks for a sign-in.
+Each tenant realm is its own authorization server, so the realm is part of the URL: a client connects to
+`<MCP_PUBLIC_URL>/mcp/<tenant realm>` and signs in to that realm with the public client `adsp-mcp` (PKCE, no secret).
 
 - A request without a token gets `401` with
   `WWW-Authenticate: Bearer resource_metadata="<MCP_PUBLIC_URL>/.well-known/oauth-protected-resource/mcp/<realm>"`.
@@ -234,7 +234,7 @@ JSON-RPC error body (`code: -32000`) and is counted in `mcp.requests.rejected`.
 3. **Sign-in.** A realm name that isn't letters, digits, `-` and `_` (up to 64) gets `404`, a missing or invalid
    token `401`, and unavailable signing keys `503` (see [Signing in](#signing-in)). Requests that fail here never take
    an in-flight slot.
-4. **In-flight cap.** With `MCP_MAX_IN_FLIGHT` requests already running, a request waits up to
+4. **In-flight cap.** With `MCP_MAX_IN_FLIGHT` requests already running on the same endpoint, a request waits up to
    `MCP_IN_FLIGHT_WAIT_MS` for a slot, so a short burst completes. A request still waiting after that, or arriving
    when as many requests are already waiting as `MCP_MAX_IN_FLIGHT`, gets `503` with `Retry-After: 1`
    (`Server busy`). Requests already running are never affected. A request is admitted before its body arrives, so

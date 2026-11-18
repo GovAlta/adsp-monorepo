@@ -43,10 +43,12 @@ export interface ToolDefinition {
 }
 
 export function isOfflineTool(tool: ToolDefinition | LiveToolDefinition): tool is ToolDefinition {
-  return 'openWorldHint' in tool.annotations && tool.annotations.openWorldHint === false;
+  return !('kind' in tool);
 }
 
 export interface LiveToolDefinition {
+  /** Required, not inferred from annotations, because plain /mcp serves every tool that lacks it without sign-in. */
+  kind: 'live';
   name: string;
   description: string;
   inputSchema: JsonSchemaObject;

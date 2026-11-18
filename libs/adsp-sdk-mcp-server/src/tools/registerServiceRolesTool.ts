@@ -72,6 +72,7 @@ always need explicit assignment regardless of that flag.
 export function createServiceRolesTools(): LiveToolDefinition[] {
   return [
     {
+      kind: 'live',
       name: 'list_service_roles',
       annotations: LIVE_TOOL_ANNOTATIONS,
       description:

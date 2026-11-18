@@ -16,9 +16,29 @@ import {
 } from './fixtures/httpTestKit';
 import { FIXTURE_DOCS_ROOT, TOOL_CONTRACT } from './fixtures/toolContract';
 import { callForContract } from './fixtures/toolContract';
-import { createMcpHttpApp } from './http';
+import { createMcpHttpApp, createMcpHttpServer } from './http';
+import { SERVER_INSTRUCTIONS } from './instructions';
+import { AddressInfo, connect } from 'net';
 
 const PUBLIC_URL = 'https://mcp.example.test';
+const OFFLINE_TOOL_NAMES = [
+  'find_adsp_services',
+  'search_adsp_docs',
+  'list_adsp_docs',
+  'read_adsp_doc',
+  'search_sdk_reference',
+  'get_platform_quickstart',
+  'get_adsp_mcp_server_info',
+  'list_service_apis',
+  'search_service_endpoints',
+  'read_service_endpoint',
+];
+const INITIALIZE_REQUEST = {
+  jsonrpc: '2.0',
+  id: 1,
+  method: 'initialize',
+  params: { protocolVersion: '2025-06-18', capabilities: {}, clientInfo: { name: 'test-client', version: '0.0.1' } },
+};
 const ALLOWED = 'http://allowed.test';
 
 beforeAll(startTestAuth);
@@ -161,10 +181,7 @@ describe('plain /mcp', () => {
     const response = await postMcp(plain, TOOLS_LIST_REQUEST, { authorization: '' });
 
     expect(response.status).toBe(200);
-    const names = await listedToolNames(response);
-    expect(names).toHaveLength(10);
-    expect(names).not.toEqual(expect.arrayContaining(['list_service_roles']));
-    expect(names).not.toEqual(expect.arrayContaining(['get_service_configuration_schema']));
+    expect(await listedToolNames(response)).toEqual(OFFLINE_TOOL_NAMES);
   });
 
   it('still lists only the offline tools when a token is sent', async () => {
@@ -172,22 +189,76 @@ describe('plain /mcp', () => {
 
     const response = await postMcp(plain, TOOLS_LIST_REQUEST);
 
-    expect(await listedToolNames(response)).toHaveLength(10);
+    expect(await listedToolNames(response)).toEqual(OFFLINE_TOOL_NAMES);
   });
 
-  it('refuses to call a live tool', async () => {
+  it.each(['list_service_roles', 'get_service_configuration_schema'])(
+    'refuses to call %s and says where it is served',
+    async (name) => {
+      const { plain } = await start();
+
+      const response = await postMcp(
+        plain,
+        { jsonrpc: '2.0', id: 3, method: 'tools/call', params: { name, arguments: {} } },
+        { authorization: '' }
+      );
+
+      const { result } = await response.json();
+      expect(result.isError).toBe(true);
+      expect(result.content[0].text).toMatch(/sign in/i);
+      expect(result.content[0].text).toContain('/mcp/<tenant realm>');
+    }
+  );
+
+  it('tells the model where the live tools are instead of asking for a CLI login', async () => {
+    const { plain, endpoint } = await start();
+
+    const open = (await (await postMcp(plain, INITIALIZE_REQUEST, { authorization: '' })).json()).result;
+    const signedIn = (await (await postMcp(endpoint, INITIALIZE_REQUEST)).json()).result;
+
+    expect(open.instructions).not.toContain('adsp-cli login');
+    expect(open.instructions).toContain('/mcp/<tenant realm>');
+    expect(signedIn.instructions).toBe(SERVER_INSTRUCTIONS);
+  });
+
+  it('answers a CORS preflight', async () => {
     const { plain } = await start();
 
-    const response = await postMcp(
-      plain,
-      { jsonrpc: '2.0', id: 3, method: 'tools/call', params: { name: 'list_service_roles', arguments: {} } },
-      { authorization: '' }
-    );
+    const preflight = await fetch(plain, { method: 'OPTIONS', headers: { origin: ALLOWED } });
 
-    expect((await response.json()).result).toEqual({
-      isError: true,
-      content: [{ type: 'text', text: 'Unknown tool: list_service_roles' }],
+    expect(preflight.status).toBe(204);
+    expect(preflight.headers.get('access-control-allow-origin')).toBe(ALLOWED);
+  });
+
+  it('keeps its in-flight slots apart from signed-in requests', async () => {
+    const app = createMcpHttpApp({
+      docsRoot: FIXTURE_DOCS_ROOT,
+      config: testConfig({ auth: testAuth().hostedAuth(PUBLIC_URL), maxInFlight: 1, inFlightWaitMs: 0, rateLimitPerMinute: 0 }),
     });
+    const httpServer = createMcpHttpServer(app);
+    await new Promise<void>((resolveListening) => httpServer.listen(0, '127.0.0.1', resolveListening));
+    const { port } = httpServer.address() as AddressInfo;
+    const base = `http://127.0.0.1:${port}`;
+    const stalled = connect(port, '127.0.0.1');
+    stalled.on('error', () => undefined);
+
+    try {
+      stalled.write(
+        'POST /mcp HTTP/1.1\r\nHost: 127.0.0.1\r\nContent-Type: application/json\r\n' +
+          'Accept: application/json, text/event-stream\r\nContent-Length: 100\r\n\r\n{"jsonrpc":'
+      );
+      await new Promise((resolveTick) => setTimeout(resolveTick, 50));
+
+      const openBusy = await postMcp(new URL('/mcp', base), TOOLS_LIST_REQUEST, { authorization: '' });
+      const signedIn = await postMcp(new URL(`/mcp/${TEST_REALM}`, base), TOOLS_LIST_REQUEST);
+
+      expect(openBusy.status).toBe(503);
+      expect(signedIn.status).toBe(200);
+    } finally {
+      stalled.destroy();
+      httpServer.closeAllConnections();
+      await new Promise((resolveClosed) => httpServer.close(resolveClosed));
+    }
   });
 
   it('answers an offline tool call without a token', async () => {
@@ -237,7 +308,7 @@ describe('plain /mcp', () => {
     const realm = await postMcp(running.endpoint, TOOLS_LIST_REQUEST);
     const metadata = await fetch(new URL(`/.well-known/oauth-protected-resource/mcp/${TEST_REALM}`, plain));
 
-    expect(await listedToolNames(open)).toHaveLength(10);
+    expect(await listedToolNames(open)).toEqual(OFFLINE_TOOL_NAMES);
     expect(realm.status).toBe(404);
     expect(metadata.status).toBe(404);
   });

@@ -50,6 +50,7 @@ function describeError(err: unknown, signedInCaller: boolean): string {
 export function createConfigurationSchemaTools(): LiveToolDefinition[] {
   return [
     {
+      kind: 'live',
       name: 'get_service_configuration_schema',
       annotations: LIVE_TOOL_ANNOTATIONS,
       description:

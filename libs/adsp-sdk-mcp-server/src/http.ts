@@ -115,14 +115,18 @@ export function createMcpHttpApp({
   const corsAndOrigin = createCorsAndOriginGuard(config.corsOrigins);
   // Shared by both endpoints, so a client can't double its budget by spreading requests across them.
   const rateLimit = createRateLimit(config.rateLimitPerMinute);
-  const inFlightGate = createInFlightGate(
-    new Semaphore(config.maxInFlight, { maxWaiters: config.maxInFlight }),
-    config.inFlightWaitMs
-  );
+  // One cap per endpoint, so requests without a token can never take the slots signed-in callers need.
+  const createEndpointInFlightGate = () =>
+    createInFlightGate(new Semaphore(config.maxInFlight, { maxWaiters: config.maxInFlight }), config.inFlightWaitMs);
 
   app.use('/mcp', corsAndOrigin);
   // Never asks for a token, so clients that can't sign in still get the bundled content; live tools aren't listed.
-  app.post('/mcp', rateLimit, inFlightGate, createStatelessPostHandler({ ...serverOptions, offlineToolsOnly: true }));
+  app.post(
+    '/mcp',
+    rateLimit,
+    createEndpointInFlightGate(),
+    createStatelessPostHandler({ ...serverOptions, offlineToolsOnly: true })
+  );
   app.get('/mcp', methodNotAllowed);
   app.delete('/mcp', methodNotAllowed);
 
@@ -145,7 +149,7 @@ export function createMcpHttpApp({
     rateLimit,
     // Before the gate, so requests without a valid token never hold an in-flight slot.
     createAuthMiddleware({ verifier, publicUrl }),
-    inFlightGate,
+    createEndpointInFlightGate(),
     createStatelessPostHandler({ ...serverOptions, hostedAuth: { directoryServiceUrl } })
   );
   app.get('/mcp/:tenantRealm', methodNotAllowed);
