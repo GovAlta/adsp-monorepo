@@ -79,14 +79,6 @@ export function createMcpHttpApp({
   lifecycle = createLifecycle(),
   ...serverOptions
 }: McpHttpAppOptions = {}): express.Express {
-  if (!config.auth) {
-    throw new Error(
-      'HTTP mode needs MCP_PUBLIC_URL, ADSP_ACCESS_SERVICE_URL and ADSP_DIRECTORY_SERVICE_URL so callers can sign in.'
-    );
-  }
-  const { publicUrl, accessServiceUrl, directoryServiceUrl } = config.auth;
-  const verifier = createTokenVerifier({ accessServiceUrl });
-
   loadAdspMcpTools(serverOptions);
   configureLiveToolLimit({ maxConcurrent: config.liveToolMaxConcurrent, waitMs: config.inFlightWaitMs });
 
@@ -121,18 +113,39 @@ export function createMcpHttpApp({
   });
 
   const corsAndOrigin = createCorsAndOriginGuard(config.corsOrigins);
+  // Shared by both endpoints, so a client can't double its budget by spreading requests across them.
+  const rateLimit = createRateLimit(config.rateLimitPerMinute);
+  const inFlightGate = createInFlightGate(
+    new Semaphore(config.maxInFlight, { maxWaiters: config.maxInFlight }),
+    config.inFlightWaitMs
+  );
+
+  app.use('/mcp', corsAndOrigin);
+  // Never asks for a token, so clients that can't sign in still get the bundled content; live tools aren't listed.
+  app.post('/mcp', rateLimit, inFlightGate, createStatelessPostHandler({ ...serverOptions, offlineToolsOnly: true }));
+  app.get('/mcp', methodNotAllowed);
+  app.delete('/mcp', methodNotAllowed);
+
+  if (!config.auth) {
+    console.error(
+      '[adsp-sdk-mcp-server] MCP_PUBLIC_URL, ADSP_ACCESS_SERVICE_URL and ADSP_DIRECTORY_SERVICE_URL are not set, so only /mcp is served.'
+    );
+    return app;
+  }
+
+  const { publicUrl, accessServiceUrl, directoryServiceUrl } = config.auth;
+  const verifier = createTokenVerifier({ accessServiceUrl });
   const metadataPath = '/.well-known/oauth-protected-resource/mcp/:tenantRealm';
   app.use(metadataPath, corsAndOrigin);
   app.get(metadataPath, createProtectedResourceMetadataHandler({ publicUrl, accessServiceUrl }));
 
-  // Each tenant realm is its own issuer, so the endpoint names the realm; there is no shared, unauthenticated /mcp.
-  app.use('/mcp/:tenantRealm', corsAndOrigin);
+  // Each tenant realm is its own issuer, so the signed-in endpoint names the realm.
   app.post(
     '/mcp/:tenantRealm',
-    createRateLimit(config.rateLimitPerMinute),
+    rateLimit,
     // Before the gate, so requests without a valid token never hold an in-flight slot.
     createAuthMiddleware({ verifier, publicUrl }),
-    createInFlightGate(new Semaphore(config.maxInFlight, { maxWaiters: config.maxInFlight }), config.inFlightWaitMs),
+    inFlightGate,
     createStatelessPostHandler({ ...serverOptions, hostedAuth: { directoryServiceUrl } })
   );
   app.get('/mcp/:tenantRealm', methodNotAllowed);

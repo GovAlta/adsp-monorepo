@@ -114,21 +114,28 @@ Add it to your MCP client's server config, run via `npx`:
 ### HTTP transport
 
 To host the server instead of running it per user, start it with `MCP_TRANSPORT=http`. It serves Streamable HTTP
-at `POST /mcp/<tenant realm>`, with a liveness check at `GET /health` and a readiness check at `GET /ready`. Every
-request needs a sign-in for that tenant realm (see [Signing in](#signing-in)). There is no plain `/mcp` endpoint and
-no way to turn sign-in off: anyone who can't sign in runs the server locally over stdio, as in [Usage](#usage).
+on two endpoints, with a liveness check at `GET /health` and a readiness check at `GET /ready`:
+
+| Endpoint | Sign-in | Tools |
+|---|---|---|
+| `POST /mcp` | Never asked for; a token sent here is ignored | The 10 tools that answer from bundled content. `list_service_roles` and `get_service_configuration_schema` aren't listed, and calling them answers `Unknown tool` |
+| `POST /mcp/<tenant realm>` | Required for that tenant realm (see [Signing in](#signing-in)) | All 12 |
+
+Without the three sign-in settings below, the server serves only `/mcp`. There is no way to call the live tools
+without signing in: anyone who can't sign in, and needs them, runs the server locally over stdio, as in
+[Usage](#usage).
 
 | Variable | Default | Purpose |
 |---|---|---|
 | `MCP_TRANSPORT` | `stdio` | `http` to serve HTTP |
 | `PORT` | `3000` | Port to listen on |
-| `MCP_PUBLIC_URL` | required | The server's external base URL, for example `https://adsp-sdk-mcp.example`. Used in the sign-in metadata and the `WWW-Authenticate` header, never taken from request headers |
-| `ADSP_ACCESS_SERVICE_URL` | required | Keycloak base URL. A realm's issuer is `<url>/auth/realms/<realm>` and its signing keys are read from there |
-| `ADSP_DIRECTORY_SERVICE_URL` | required | Directory service the live tools use to find ADSP services |
-| `CORS_ORIGIN` | unset | Comma-separated browser origins allowed to call `/mcp/<tenant realm>`, for example `https://a.example,https://b.example`. Unset allows none; `*` allows any (not for hosted use) |
-| `MCP_MAX_IN_FLIGHT` | `64` | Signed-in `POST /mcp/<tenant realm>` requests handled at once per process |
+| `MCP_PUBLIC_URL` | unset | The server's external base URL, for example `https://adsp-sdk-mcp.example`. Used in the sign-in metadata and the `WWW-Authenticate` header, never taken from request headers |
+| `ADSP_ACCESS_SERVICE_URL` | unset | Keycloak base URL. A realm's issuer is `<url>/auth/realms/<realm>` and its signing keys are read from there |
+| `ADSP_DIRECTORY_SERVICE_URL` | unset | Directory service the live tools use to find ADSP services. Set all three sign-in settings to serve `/mcp/<tenant realm>` |
+| `CORS_ORIGIN` | unset | Comma-separated browser origins allowed to call `/mcp` and `/mcp/<tenant realm>`, for example `https://a.example,https://b.example`. Unset allows none; `*` allows any (not for hosted use) |
+| `MCP_MAX_IN_FLIGHT` | `64` | `POST /mcp` and signed-in `POST /mcp/<tenant realm>` requests handled at once per process, counted together |
 | `MCP_IN_FLIGHT_WAIT_MS` | `1000` | How long a request waits for a free slot before getting `503`. Also how long a live tool waits for a free upstream slot |
-| `MCP_RATE_LIMIT_PER_MINUTE` | `1200` | `POST /mcp/<tenant realm>` requests allowed per client IP per minute, per process. `0` turns the limit off |
+| `MCP_RATE_LIMIT_PER_MINUTE` | `1200` | `POST /mcp` and `POST /mcp/<tenant realm>` requests allowed per client IP per minute, per process, counted together. `0` turns the limit off |
 | `MCP_LIVE_TOOL_MAX_CONCURRENT` | `8` | Live-tool calls to ADSP running at once per process, across both live tools |
 | `MCP_SHUTDOWN_DELAY_MS` | `5000` | After a shutdown signal, how long to keep serving with `/ready` failing, so the router stops sending traffic first |
 | `MCP_SHUTDOWN_TIMEOUT_MS` | `30000` | Hard deadline from the signal to exit, even if a request is still running. Must be longer than the delay |
@@ -136,13 +143,13 @@ no way to turn sign-in off: anyone who can't sign in runs the server locally ove
 | `OTEL_EXPORTER_OTLP_ENDPOINT` | unset | OTLP/HTTP collector base URL. When set, metrics are exported to `<endpoint>/v1/metrics` |
 | `OTEL_METRIC_EXPORT_INTERVAL` | `60000` | Metric export interval, in milliseconds |
 
-An invalid value for one of the `MCP_*` numbers, `*` mixed with origins in `CORS_ORIGIN`, a missing sign-in setting,
-or a sign-in URL that isn't `https` (plain `http` is allowed only for `localhost` and `127.0.0.1`) stops the server at
+An invalid value for one of the `MCP_*` numbers, `*` mixed with origins in `CORS_ORIGIN`, some but not all of the
+three sign-in settings, or a sign-in URL that isn't `https` (plain `http` is allowed only for `localhost` and `127.0.0.1`) stops the server at
 startup with an error naming the variable.
 
-HTTP mode is stateless: each `POST /mcp/<tenant realm>` gets its own MCP server, the response is JSON (the server
+HTTP mode is stateless: each `POST` to either endpoint gets its own MCP server, the response is JSON (the server
 never streams), and nothing is kept between requests. The response carries no `Mcp-Session-Id`, so any replica can
-serve any request and an idle client never loses its session. `GET` and `DELETE` on `/mcp/<tenant realm>` return
+serve any request and an idle client never loses its session. `GET` and `DELETE` on both endpoints return
 `405` with `Allow: POST`, because there is no stream to open and no session to delete.
 
 `SESSION_TTL_MINUTES` has been removed and is ignored: there are no sessions to expire.
@@ -214,7 +221,8 @@ than it takes the router to stop sending traffic to a pod that fails readiness.
 
 #### Overload guards
 
-`POST /mcp/<tenant realm>` passes these checks in order. `GET /health` skips all of them. Every rejection is a
+`POST /mcp` and `POST /mcp/<tenant realm>` pass these checks in order, and `POST /mcp` skips the sign-in step.
+`GET /health` skips all of them. Every rejection is a
 JSON-RPC error body (`code: -32000`) and is counted in `mcp.requests.rejected`.
 
 1. **Origin.** A request with an `Origin` header not in `CORS_ORIGIN` gets `403` (`Origin not allowed`), as the MCP
@@ -263,9 +271,9 @@ OpenTelemetry SDK isn't loaded. Stdio mode never exports metrics.
 
 | Name | Kind | Unit | Labels | Meaning |
 |---|---|---|---|---|
-| `mcp.requests.in_flight` | UpDownCounter | `{request}` | none | `POST /mcp/<tenant realm>` requests admitted by the in-flight cap and not yet answered (waiting requests aren't counted) |
+| `mcp.requests.in_flight` | UpDownCounter | `{request}` | none | `POST /mcp` and `POST /mcp/<tenant realm>` requests admitted by the in-flight cap and not yet answered (waiting requests aren't counted) |
 | `mcp.requests.rejected` | Counter | `{request}` | `reason` | Requests or tool calls refused by an overload guard or by sign-in |
-| `mcp.request.duration` | Histogram | `s` | `mcp.method.name`, and `http.response.status_code` or `error.type=aborted` | Time to answer a `POST /mcp/<tenant realm>` request that passed sign-in, or until the client disconnected |
+| `mcp.request.duration` | Histogram | `s` | `mcp.method.name`, and `http.response.status_code` or `error.type=aborted` | Time to answer a `POST /mcp` request, or a `POST /mcp/<tenant realm>` request that passed sign-in, or until the client disconnected |
 | `mcp.tool.duration` | Histogram | `s` | `mcp.tool.name`, `error.type` (absent on success) | Time to run a tool call |
 | `mcp.live_tool.upstream.errors` | Counter | `{error}` | `mcp.tool.name`, `error.type` | Failed ADSP calls from `list_service_roles` and `get_service_configuration_schema` |
 | `nodejs.eventloop.delay.p50`, `.p99`, `.max` | Gauge | `s` | none | Event-loop delay since the previous export |

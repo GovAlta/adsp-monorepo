@@ -42,6 +42,10 @@ export interface ToolDefinition {
   handler: (args: Record<string, unknown>, context?: ToolCallContext) => Promise<CallToolResult> | CallToolResult;
 }
 
+export function isOfflineTool(tool: ToolDefinition | LiveToolDefinition): tool is ToolDefinition {
+  return 'openWorldHint' in tool.annotations && tool.annotations.openWorldHint === false;
+}
+
 export interface LiveToolDefinition {
   name: string;
   description: string;

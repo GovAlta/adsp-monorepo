@@ -16,7 +16,7 @@ import { createQuickstartTool } from './tools/registerQuickstartTool';
 import { createServiceRolesTools } from './tools/registerServiceRolesTool';
 import { createSdkTools } from './tools/registerSdkTools';
 import { createServerInfoTool } from './tools/registerServerInfoTool';
-import { CallerSignIn, LiveToolDefinition, ToolDefinition } from './tools/types';
+import { CallerSignIn, isOfflineTool, LiveToolDefinition, ToolDefinition } from './tools/types';
 import { readPackageVersion } from './version';
 
 export interface CreateAdspMcpServerOptions {
@@ -28,11 +28,15 @@ export interface CreateAdspMcpServerOptions {
   hostedAuth?: { directoryServiceUrl: string };
   /** The capability catalog find_adsp_services ranks. Defaults to the one bundled with the package. */
   capabilitiesPath?: string;
+  /** Serve only the tools that answer from bundled content, for callers that haven't signed in. */
+  offlineToolsOnly?: boolean;
 }
 
 export interface AdspMcpTools {
   tools: (ToolDefinition | LiveToolDefinition)[];
   toolsByName: Map<string, ToolDefinition | LiveToolDefinition>;
+  offlineTools: ToolDefinition[];
+  offlineToolsByName: Map<string, ToolDefinition>;
 }
 
 // Compiled output places this file under dist/.../src/, while the docs asset copy lands one level up at dist/.../assets/docs.
@@ -70,14 +74,23 @@ export function loadAdspMcpTools(options: CreateAdspMcpServerOptions = {}): Adsp
     ...createServerInfoTool(docs),
     ...createApiTools(lazy(() => new ApiSpecsRepository(apiSpecsRoot))),
   ];
-  const loaded = { tools, toolsByName: new Map(tools.map((tool) => [tool.name, tool])) };
+  const offlineTools = tools.filter(isOfflineTool);
+  const loaded = {
+    tools,
+    toolsByName: new Map(tools.map((tool) => [tool.name, tool])),
+    offlineTools,
+    offlineToolsByName: new Map(offlineTools.map((tool) => [tool.name, tool])),
+  };
   toolsByRoots.set(cacheKey, loaded);
   getMetrics().recordDocsIndexBuild(secondsSince(started));
   return loaded;
 }
 
 export function createAdspMcpServer(options: CreateAdspMcpServerOptions = {}): Server {
-  const { tools, toolsByName } = loadAdspMcpTools(options);
+  const loaded = loadAdspMcpTools(options);
+  const { tools, toolsByName } = options.offlineToolsOnly
+    ? { tools: loaded.offlineTools, toolsByName: loaded.offlineToolsByName }
+    : loaded;
 
   // Deliberately using the low-level Server (McpServer is recommended for typical cases) rather than an oversight:
   // this workspace hoists multiple physical copies of zod (root zod@3.x plus nested zod@4.x/3.x under unrelated
