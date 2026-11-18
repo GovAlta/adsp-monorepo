@@ -1,5 +1,6 @@
 import { NotFoundError } from '@core-services/core-common';
 import { connect, disconnect, createMockData } from '@core-services/core-common/mongo';
+import { connection } from 'mongoose';
 import { Logger } from 'winston';
 import { TenantEntity } from '../tenant';
 import { MongoTenantRepository } from './tenant';
@@ -158,6 +159,23 @@ describe('Mongo: Tenant', () => {
 
     it('can find archived tenants', async () => {
       expect(names(await repo.find({ statusEquals: 'archived' }))).toEqual(['Archived', 'Newly archived']);
+    });
+
+    it('can find tenants with status active', async () => {
+      expect(names(await repo.find({ statusEquals: 'active' }))).toEqual(['Active']);
+    });
+
+    it('can find a legacy tenant with no stored status as active', async () => {
+      const { insertedId } = await connection.collection('tenants').insertOne({
+        name: 'Legacy',
+        realm: 'realm-l',
+        adminEmail: 'l@example.ca',
+      });
+
+      const results = await repo.find({ statusEquals: 'active' });
+      await repo.delete(`${insertedId}`);
+
+      expect(results.map((result) => result.name)).toContain('Legacy');
     });
 
     it('can find archived tenants deleted before a date', async () => {

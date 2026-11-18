@@ -99,16 +99,18 @@ async function initializeApp(): Promise<express.Application> {
     configurationHandler,
   });
 
-  scheduleTenantPurgeJob({
-    serviceId,
-    logger,
-    tenantRepository: repositories.tenantRepository,
-    realmService,
-    eventService,
-    auditService,
-    retentionDays: environment.TENANT_RETENTION_DAYS,
-    cron: environment.TENANT_PURGE_SCHEDULE,
-  });
+  if (environment.TENANT_PURGE_ENABLED) {
+    scheduleTenantPurgeJob({
+      serviceId,
+      logger,
+      tenantRepository: repositories.tenantRepository,
+      realmService,
+      eventService,
+      auditService,
+      retentionDays: environment.TENANT_RETENTION_DAYS,
+      cron: environment.TENANT_PURGE_SCHEDULE,
+    });
+  }
 
   const errorHandler = createErrorHandler(logger);
   app.use(errorHandler);

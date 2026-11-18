@@ -69,7 +69,10 @@ export class MongoTenantRepository implements TenantRepository {
         query.name = { $regex: `^${escapeRegExp(criteria.nameEquals)}$`, $options: 'i' };
       }
 
-      if (criteria.statusEquals) {
+      if (criteria.statusEquals === 'active') {
+        // Tenants created before status existed have no stored value; fromDoc treats them as active.
+        query.status = { $in: ['active', null] };
+      } else if (criteria.statusEquals) {
         query.status = criteria.statusEquals;
       } else if (criteria.activeOnly) {
         query.status = { $nin: ['provisioning', 'archived'] };
