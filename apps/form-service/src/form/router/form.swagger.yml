@@ -1037,11 +1037,20 @@ components:
     parameters:
       - $ref: '#/components/parameters/FormDefinitionIdPath'
       - name: version
-        description: Revision of the form definition to retrieve. Defaults to the active revision.
+        description: >
+          Revision of the form definition to retrieve. Defaults to the active revision, or the latest revision if none
+          is set as active. Use `latest` to read the latest revision, which can include changes that are not active
+          yet; this requires the form-service admin role, always reads from configuration service, and doesn't include
+          the scheduled intake (`intake` is null).
         in: query
         required: false
         schema:
-          type: number
+          oneOf:
+            - type: integer
+              minimum: 0
+            - type: string
+              enum: [latest]
+        example: latest
       - name: tenantId
         description: >
           ID of the tenant of the definition. Required for anonymous requests and core users; ignored for tenant
@@ -1447,9 +1456,9 @@ components:
     description: >
       Submits a request for access to a restricted form. Requires the `form-access-requester` role
       (`urn:ads:platform:form-service:form-access-requester`) or the `form-admin` role; core users with either role must
-      set `tenantId`. The form
-      definition must have registration enabled, otherwise the request responds 400. The registration is created with
-      status `pending`. Only one pending registration is allowed per email address and form.
+      set `tenantId`. If the form definition doesn't have registration enabled yet, the request enables it by setting
+      `registration.enabled` to true in the latest revision of the definition. The registration is created with status
+      `pending`. Only one pending registration is allowed per email address and form.
     parameters:
       - $ref: '#/components/parameters/FormDefinitionIdPath'
       - $ref: '#/components/parameters/FormTenantId'
@@ -1468,14 +1477,14 @@ components:
               $ref: '#/components/schemas/FormRegistrationSubmitted'
       400:
         description: >
-          Request is invalid, the answers don't match the registration questions, the form definition doesn't accept
-          access requests, or the request has no tenant context.
+          Request is invalid, the answers don't match the registration questions, or the request has no tenant
+          context.
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/FormError'
             example:
-              errorMessage: Form definition 'medical-intake' does not accept registrations.
+              errorMessage: 'Validation failed with error(s): email (body) - Invalid value'
       401:
         $ref: '#/components/responses/FormUnauthorized'
       403:
@@ -1528,6 +1537,27 @@ components:
           application/json:
             schema:
               $ref: '#/components/schemas/FormRegistrationPage'
+      400:
+        $ref: '#/components/responses/FormBadRequest'
+      401:
+        $ref: '#/components/responses/FormUnauthorized'
+      403:
+        $ref: '#/components/responses/FormForbidden'
+      404:
+        $ref: '#/components/responses/FormDefinitionNotFound'
+  delete:
+    tags:
+      - Form registration
+    description: >
+      Removes the registration settings from the latest revision of a form definition, so the form no longer accepts
+      access requests. Existing access requests are kept. Requires the `form-admin` role; core users with the role must
+      set `tenantId`. A definition without registration settings also responds 204.
+    parameters:
+      - $ref: '#/components/parameters/FormDefinitionIdPath'
+      - $ref: '#/components/parameters/FormTenantId'
+    responses:
+      204:
+        description: Successfully removed the registration settings.
       400:
         $ref: '#/components/responses/FormBadRequest'
       401:

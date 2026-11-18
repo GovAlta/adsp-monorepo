@@ -2,6 +2,7 @@
 import {
   AdspId,
   AuditService,
+  ConfigurationService,
   EventService,
   ServiceDirectory,
   TenantService,
@@ -41,6 +42,7 @@ interface FormMiddlewareProps extends Repositories {
   logger: Logger;
   directory: ServiceDirectory;
   tokenProvider: TokenProvider;
+  configurationService: ConfigurationService;
   eventService: EventService;
   auditService: AuditService;
   tenantService: TenantService;
@@ -62,6 +64,7 @@ export const applyFormMiddleware = (
     formRepository: repository,
     directory,
     tokenProvider,
+    configurationService,
     eventService,
     auditService,
     tenantService,
@@ -82,6 +85,7 @@ export const applyFormMiddleware = (
   const definitionRouter = createFormDefinitionRouter({
     directory,
     tokenProvider,
+    configurationService,
     tenantService,
     calendarService,
     logger,

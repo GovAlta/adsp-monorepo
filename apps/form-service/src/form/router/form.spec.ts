@@ -20,7 +20,7 @@ import {
   updateFormSubmissionDisposition,
   validateCriteria,
 } from './form';
-import { getFormDefinitions } from './definition';
+import { assertCanReadLatestDefinition, getFormDefinitions } from './definition';
 
 jest.mock('axios');
 const axiosMock = axios as jest.Mocked<typeof axios>;
@@ -382,7 +382,7 @@ describe('form router', () => {
 
   describe('getFormDefinition', () => {
     it('can create handler', () => {
-      const handler = getFormDefinition(tenantServiceMock, calendarServiceMock);
+      const handler = getFormDefinition(tenantServiceMock, calendarServiceMock, directoryMock, tokenProviderMock);
       expect(handler).toBeTruthy();
     });
 
@@ -405,7 +405,7 @@ describe('form router', () => {
       const next = jest.fn();
 
       req.getServiceConfiguration.mockResolvedValueOnce([definitionWithFileUrnSchema]);
-      const handler = getFormDefinition(tenantServiceMock, calendarServiceMock);
+      const handler = getFormDefinition(tenantServiceMock, calendarServiceMock, directoryMock, tokenProviderMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(req.getServiceConfiguration).toHaveBeenCalledWith('test', tenantId);
@@ -431,7 +431,7 @@ describe('form router', () => {
       const next = jest.fn();
 
       req.getServiceConfiguration.mockResolvedValueOnce([definitionWithFileUrnSchema]);
-      const handler = getFormDefinition(tenantServiceMock, calendarServiceMock);
+      const handler = getFormDefinition(tenantServiceMock, calendarServiceMock, directoryMock, tokenProviderMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(req.getServiceConfiguration).toHaveBeenCalled();
@@ -458,7 +458,7 @@ describe('form router', () => {
 
       req.getServiceConfiguration.mockResolvedValueOnce([]);
       expect(res.send).not.toHaveBeenCalled();
-      const handler = getFormDefinition(tenantServiceMock, calendarServiceMock);
+      const handler = getFormDefinition(tenantServiceMock, calendarServiceMock, directoryMock, tokenProviderMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(req.getServiceConfiguration).toHaveBeenCalled();
@@ -476,7 +476,7 @@ describe('form router', () => {
       };
       const res = { send: jest.fn() };
       const next = jest.fn();
-      const handler = getFormDefinition(tenantServiceMock, calendarServiceMock);
+      const handler = getFormDefinition(tenantServiceMock, calendarServiceMock, directoryMock, tokenProviderMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(next).toHaveBeenCalledWith(expect.any(InvalidOperationError));
     });
@@ -510,7 +510,7 @@ describe('form router', () => {
 
       tenantServiceMock.getTenant.mockResolvedValueOnce({ id: tenantId });
       req.getServiceConfiguration.mockResolvedValueOnce([definition]);
-      const handler = getFormDefinition(tenantServiceMock, calendarServiceMock);
+      const handler = getFormDefinition(tenantServiceMock, calendarServiceMock, directoryMock, tokenProviderMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(req.getServiceConfiguration).toHaveBeenCalledWith('test', tenantId);
@@ -529,12 +529,108 @@ describe('form router', () => {
 
       tenantServiceMock.getTenant.mockResolvedValueOnce({ id: tenantId });
       req.getServiceConfiguration.mockResolvedValueOnce([definition]);
-      const handler = getFormDefinition(tenantServiceMock, calendarServiceMock);
+      const handler = getFormDefinition(tenantServiceMock, calendarServiceMock, directoryMock, tokenProviderMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(req.getServiceConfiguration).toHaveBeenCalledWith('test', tenantId);
       expect(res.send).not.toHaveBeenCalled();
       expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedUserError));
+    });
+
+    describe('with version=latest', () => {
+      const latestRequest = (roles: string[]) => ({
+        user: { tenantId, id: 'tester', roles },
+        params: { definitionId: 'test' },
+        query: { version: 'latest' },
+        getServiceConfiguration: jest.fn(),
+        getServiceConfigurationRevision: jest.fn(),
+        tenant: { id: tenantId },
+      });
+
+      beforeEach(() => {
+        axiosMock.get.mockReset();
+        directoryMock.getServiceUrl.mockResolvedValue(new URL('http://configuration-service'));
+      });
+
+      it('reads the latest revision from configuration service', async () => {
+        const latest = { id: 'test', name: 'Latest name', registration: { enabled: true } };
+        axiosMock.get.mockResolvedValueOnce({
+          data: { latest: { revision: 4, configuration: latest }, active: { revision: 2 } },
+        });
+        const req = latestRequest([FormServiceRoles.Admin]);
+        const res = { send: jest.fn() };
+        const next = jest.fn();
+
+        const handler = getFormDefinition(tenantServiceMock, calendarServiceMock, directoryMock, tokenProviderMock);
+        await handler(req as unknown as Request, res as unknown as Response, next);
+
+        expect(axiosMock.get).toHaveBeenCalledWith(
+          'http://configuration-service/v2/configuration/form-service/test',
+          expect.objectContaining({ params: { tenantId: tenantId.toString() } }),
+        );
+        expect(req.getServiceConfiguration).not.toHaveBeenCalled();
+        expect(res.send).toHaveBeenCalledWith(
+          expect.objectContaining({ id: 'test', revision: 4, name: 'Latest name', registration: { enabled: true } }),
+        );
+        expect(next).not.toHaveBeenCalled();
+      });
+
+      it('does not read the scheduled intake', async () => {
+        axiosMock.get.mockResolvedValueOnce({
+          data: { latest: { revision: 1, configuration: { id: 'test', name: 'Test', scheduledIntakes: true } } },
+        });
+        const res = { send: jest.fn() };
+
+        const handler = getFormDefinition(tenantServiceMock, calendarServiceMock, directoryMock, tokenProviderMock);
+        await handler(
+          latestRequest([FormServiceRoles.Admin]) as unknown as Request,
+          res as unknown as Response,
+          jest.fn(),
+        );
+
+        expect(calendarServiceMock.getScheduledIntake).not.toHaveBeenCalled();
+        expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ scheduledIntakes: true, intake: null }));
+      });
+
+      describe('assertCanReadLatestDefinition', () => {
+        const runMiddleware = (req: Record<string, unknown>) => {
+          const next = jest.fn();
+          assertCanReadLatestDefinition(req as unknown as Request, {} as Response, next);
+          return next;
+        };
+
+        it('allows the form-service admin role', () => {
+          const next = runMiddleware(latestRequest([FormServiceRoles.Admin]));
+          expect(next).toHaveBeenCalledWith();
+        });
+
+        it.each([
+          ['a user without form-admin', { user: { tenantId, id: 'tester', roles: ['test-applicant'] } }],
+          ['an anonymous request', { user: undefined }],
+        ])('rejects %s', (_case, override) => {
+          const next = runMiddleware({ ...latestRequest([]), ...override });
+          expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedUserError));
+        });
+
+        it('does not check roles for other versions', () => {
+          const next = runMiddleware({ ...latestRequest(['test-applicant']), query: { version: '2' } });
+          expect(next).toHaveBeenCalledWith();
+        });
+      });
+
+      it('can call next with not found when the definition has no latest revision', async () => {
+        axiosMock.get.mockResolvedValueOnce({ data: {} });
+        const next = jest.fn();
+
+        const handler = getFormDefinition(tenantServiceMock, calendarServiceMock, directoryMock, tokenProviderMock);
+        await handler(
+          latestRequest([FormServiceRoles.Admin]) as unknown as Request,
+          { send: jest.fn() } as unknown as Response,
+          next,
+        );
+
+        expect(next).toHaveBeenCalledWith(expect.any(NotFoundError));
+      });
     });
   });
 
