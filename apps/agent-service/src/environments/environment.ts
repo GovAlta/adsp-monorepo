@@ -76,6 +76,8 @@ export const environment = envalid.cleanEnv(
     LOG_LEVEL: envalid.str({ default: 'debug' }),
     PORT: envalid.num({ default: 3380 }),
     TRUSTED_PROXY: envalid.str({ default: 'uniquelocal' }),
+    // Unset follows AUDIT_ENABLED; false turns audit recording off for this service.
+    AGENT_AUDIT_ENABLED: envalid.bool({ default: undefined }),
   },
   {
     reporter: ({ errors }) => {

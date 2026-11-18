@@ -13,12 +13,13 @@ import {
   ServiceMetricsValueDefinition,
 } from '@abgov/adsp-service-sdk';
 import type { User } from '@abgov/adsp-service-sdk';
-import { createLogger, createErrorHandler } from '@core-services/core-common';
+import { createLogger, createErrorHandler, createShutdownHandler } from '@core-services/core-common';
 import { environment } from './environments/environment';
 import {
   applyTaskMiddleware,
   configurationSchema,
   QueueEntity,
+  TaskAuditActions,
   TaskServiceConfiguration,
   TaskServiceRoles,
   TaskAssignedDefinition,
@@ -36,7 +37,7 @@ import { createCommentService } from './comment';
 
 const logger = createLogger('task-service', environment.LOG_LEVEL);
 
-const initializeApp = async (): Promise<express.Application> => {
+const initializeApp = async () => {
   const app = express();
 
   app.use(compression());
@@ -57,6 +58,7 @@ const initializeApp = async (): Promise<express.Application> => {
   const serviceId = AdspId.parse(environment.CLIENT_ID);
   const accessServiceUrl = new URL(environment.KEYCLOAK_ROOT_URL);
   const {
+    auditService,
     coreStrategy,
     configurationHandler,
     directory,
@@ -67,6 +69,7 @@ const initializeApp = async (): Promise<express.Application> => {
     tokenProvider,
     healthCheck,
     traceHandler,
+    shutdownTelemetry,
   } = await initializePlatform(
     {
       serviceId,
@@ -194,6 +197,8 @@ const initializeApp = async (): Promise<express.Application> => {
       tracing: environment.OTEL_EXPORTER_OTLP_ENDPOINT,
       metrics: environment.OTEL_EXPORTER_OTLP_ENDPOINT,
       values: [ServiceMetricsValueDefinition],
+      auditActions: TaskAuditActions,
+      audit: { enabled: environment.TASK_AUDIT_ENABLED },
     },
     { logger },
   );
@@ -235,6 +240,7 @@ const initializeApp = async (): Promise<express.Application> => {
     tokenProvider,
     taskRepository: repositories.taskRepository,
     eventService,
+    auditService,
     commentService,
   });
 
@@ -265,14 +271,25 @@ const initializeApp = async (): Promise<express.Application> => {
   const errorHandler = createErrorHandler(logger);
   app.use(errorHandler);
 
-  return app;
+  return { app, auditService, shutdownTelemetry };
 };
 
-initializeApp().then((app) => {
+initializeApp().then(({ app, auditService, shutdownTelemetry }) => {
   const port = environment.PORT || 3341;
 
   const server = app.listen(port, () => {
     logger.info(`Listening at http://localhost:${port}`);
   });
   server.on('error', (err) => logger.error(`Error encountered in server: ${err}`));
+
+  // Stop accepting requests, then deliver any pending audit events before the process exits.
+  const shutdown = createShutdownHandler({
+    serviceName: 'Task service',
+    server,
+    auditService,
+    shutdownTelemetry,
+    logger,
+  });
+  process.once('SIGTERM', shutdown);
+  process.once('SIGINT', shutdown);
 });

@@ -41,6 +41,20 @@ const renderMenu = (selectedDefinition: string = null) => render(menu(selectedDe
 const menuLinks = (baseElement: Element) => Array.from(baseElement.querySelectorAll('goa-side-menu a'));
 
 describe('NavigationMenu', () => {
+  it('uses the default text color for accessible side-menu link contrast', () => {
+    // Arrange
+    const { baseElement } = renderMenu();
+
+    // Act
+    const currentLink = baseElement.querySelector('goa-side-menu a') as HTMLElement;
+    currentLink.classList.add('current');
+
+    // Assert
+    expect(getComputedStyle(currentLink).getPropertyValue('--goa-color-text-secondary')).toBe(
+      'var(--goa-color-text-default)',
+    );
+  });
+
   it('should show only the definitions item when no definition is selected', () => {
     const { baseElement } = renderMenu();
 

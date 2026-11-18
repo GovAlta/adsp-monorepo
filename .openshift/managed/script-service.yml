@@ -35,6 +35,22 @@ parameters:
     description: Host for the route.
     displayName: Route Host
     value: ""
+  - name: CPU_LIMIT
+    description: CPU limit for the API container.
+    displayName: CPU Limit
+    value: '300m'
+  - name: MEMORY_LIMIT
+    description: Memory limit for the API container.
+    displayName: Memory Limit
+    value: '500Mi'
+  - name: CPU_REQUEST
+    description: CPU request for the API container.
+    displayName: CPU Request
+    value: '200m'
+  - name: MEMORY_REQUEST
+    description: Memory request for the API container.
+    displayName: Memory Request
+    value: '300Mi'
 objects:
   # Service Objects
 
@@ -115,11 +131,11 @@ objects:
                   protocol: TCP
               resources:
                 limits:
-                  cpu: 300m
-                  memory: 500Mi
+                  cpu: ${CPU_LIMIT}
+                  memory: ${MEMORY_LIMIT}
                 requests:
-                  cpu: 200m
-                  memory: 300Mi
+                  cpu: ${CPU_REQUEST}
+                  memory: ${MEMORY_REQUEST}
               terminationMessagePath: /dev/termination-log
               terminationMessagePolicy: File
               readinessProbe:

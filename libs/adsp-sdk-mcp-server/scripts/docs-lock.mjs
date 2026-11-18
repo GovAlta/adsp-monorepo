@@ -9,7 +9,7 @@ import { fileURLToPath } from 'url';
 const LIB_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const DOCS_ROOT = resolve(LIB_ROOT, '../../docs');
 const LOCK_PATH = join(LIB_ROOT, 'src/docs/docs-lock.json');
-const UPDATE_COMMAND = 'npx nx run adsp-sdk-mcp-server:update-docs-lock';
+const UPDATE_COMMAND = 'npx nx run adsp-sdk-mcp-server:sync-content';
 
 // Same files as the build's `docs/**/*.md` asset glob, which skips dot directories.
 function listMarkdown(dir) {

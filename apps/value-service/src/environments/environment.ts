@@ -30,6 +30,8 @@ export const environment = envalid.cleanEnv(
     // clean-code-ignore: RULE-19 — envalid declarations, exercised through the modules that read them.
     METRIC_INTERVAL_ROLLUP_MAX_CHUNK_HOURS: envalid.num({ default: 7 * 24 }),
     METRIC_INTERVAL_ROLLUP_STATEMENT_TIMEOUT_MS: envalid.num({ default: 600000 }), // clean-code-ignore: RULE-19
+    // Bounds a distinct count's event log read for history the backfill has not reached yet.
+    EVENT_RESOURCE_READ_STATEMENT_TIMEOUT_MS: envalid.num({ default: 60000 }), // clean-code-ignore: RULE-19
     DB_POOL_MAX: envalid.num({ default: 10 }),
   },
   {

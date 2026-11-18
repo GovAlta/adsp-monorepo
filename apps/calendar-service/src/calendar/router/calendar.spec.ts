@@ -1,4 +1,10 @@
-import { adspId, ConfigurationService, TokenProvider, UnauthorizedUserError } from '@abgov/adsp-service-sdk';
+import {
+  adspId,
+  AuditService,
+  ConfigurationService,
+  TokenProvider,
+  UnauthorizedUserError,
+} from '@abgov/adsp-service-sdk';
 import { InvalidOperationError, NotFoundError } from '@core-services/core-common';
 import axios from 'axios';
 import { Request, Response } from 'express';
@@ -77,6 +83,10 @@ describe('calendar router', () => {
     send: jest.fn(),
   };
 
+  const auditServiceMock = {
+    record: jest.fn(),
+  };
+  const auditProps = { auditService: auditServiceMock as unknown as AuditService, logger: loggerMock };
   const directoryMock = {
     getServiceUrl: jest.fn(() => Promise.resolve(new URL('https://calendar-service'))),
     getResourceUrl: jest.fn(),
@@ -124,7 +134,7 @@ describe('calendar router', () => {
       serve: jest.fn((res) => res.send(data)),
     }));
     directoryMock.getServiceUrl.mockResolvedValue(new URL('https://calendar-service'));
-    repositoryMock.getCalendarEvents.mockReset();
+    auditServiceMock.record.mockResolvedValue({ status: 'recorded', eventId: 'audit-1' });
     repositoryMock.getCalendarEventsInRange.mockReset();
     repositoryMock.getCalendarEvent.mockReset();
     repositoryMock.getEventAttendees.mockReset();
@@ -147,6 +157,7 @@ describe('calendar router', () => {
       serviceId: adspId`urn:ads:platform:calendar-service`,
       repository: repositoryMock,
       eventService: eventServiceMock,
+      auditService: auditServiceMock as unknown as AuditService,
       directory: directoryMock,
       tenantService: tenantServiceMock,
       tokenProvider: tokenProviderMock as unknown as TokenProvider,
@@ -435,6 +446,8 @@ describe('calendar router', () => {
             isPublic: false,
             startsAfter: '2020-03-05',
             endsBefore: '2020-05-01',
+            startsBefore: '2020-04-01',
+            endsAfter: '2020-03-01',
           }),
         },
         calendar: entity,
@@ -460,6 +473,12 @@ describe('calendar router', () => {
       );
       expect(repositoryMock.getCalendarEvents.mock.calls[0][3].endsBefore.valueOf()).toBe(
         DateTime.fromISO('2020-05-01T00:00:00', { zone: calendarTimeZone }).valueOf(),
+      );
+      expect(repositoryMock.getCalendarEvents.mock.calls[0][3].startsBefore.valueOf()).toBe(
+        DateTime.fromISO('2020-04-01T00:00:00', { zone: calendarTimeZone }).valueOf(),
+      );
+      expect(repositoryMock.getCalendarEvents.mock.calls[0][3].endsAfter.valueOf()).toBe(
+        DateTime.fromISO('2020-03-01T00:00:00', { zone: calendarTimeZone }).valueOf(),
       );
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ name: calendar.displayName }));
     });
@@ -901,6 +920,8 @@ describe('calendar router', () => {
             isPublic: false,
             startsAfter: '2020-03-05',
             endsBefore: '2020-05-01',
+            startsBefore: '2020-04-01',
+            endsAfter: '2020-03-01',
           }),
         },
         calendar: entity,
@@ -926,6 +947,12 @@ describe('calendar router', () => {
       );
       expect(repositoryMock.getCalendarEvents.mock.calls[0][3].endsBefore.valueOf()).toBe(
         DateTime.fromISO('2020-05-01T00:00:00', { zone: calendarTimeZone }).valueOf(),
+      );
+      expect(repositoryMock.getCalendarEvents.mock.calls[0][3].startsBefore.valueOf()).toBe(
+        DateTime.fromISO('2020-04-01T00:00:00', { zone: calendarTimeZone }).valueOf(),
+      );
+      expect(repositoryMock.getCalendarEvents.mock.calls[0][3].endsAfter.valueOf()).toBe(
+        DateTime.fromISO('2020-03-01T00:00:00', { zone: calendarTimeZone }).valueOf(),
       );
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ page: result.page }));
     });
@@ -1039,7 +1066,7 @@ describe('calendar router', () => {
 
   describe('createCalendarEvent', () => {
     it('can create handler', () => {
-      const handler = createCalendarEvent(apiId, eventServiceMock);
+      const handler = createCalendarEvent(apiId, eventServiceMock, auditProps);
       expect(handler).toBeTruthy();
     });
 
@@ -1062,7 +1089,7 @@ describe('calendar router', () => {
 
       repositoryMock.save.mockImplementationOnce((entity) => Promise.resolve({ ...entity, id: 1 }));
 
-      const handler = createCalendarEvent(apiId, eventServiceMock);
+      const handler = createCalendarEvent(apiId, eventServiceMock, auditProps);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ name: 'test', description: 'Test 1 2 3' }));
       expect(res.send.mock.calls[0][0].start.valueOf()).toBe(DateTime.fromISO('2020-03-05T13:30:45-07:00').valueOf());
@@ -1095,7 +1122,7 @@ describe('calendar router', () => {
 
       repositoryMock.save.mockImplementationOnce((entity) => Promise.resolve({ ...entity, id: 1 }));
 
-      const handler = createCalendarEvent(apiId, eventServiceMock);
+      const handler = createCalendarEvent(apiId, eventServiceMock, auditProps);
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       const created = res.send.mock.calls[0][0];
@@ -1127,7 +1154,7 @@ describe('calendar router', () => {
       };
       const next = jest.fn();
 
-      const handler = createCalendarEvent(apiId, eventServiceMock);
+      const handler = createCalendarEvent(apiId, eventServiceMock, auditProps);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(res.send).not.toBeCalled();
       expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedUserError));
@@ -1159,7 +1186,7 @@ describe('calendar router', () => {
 
       repositoryMock.save.mockImplementationOnce((entity) => Promise.resolve(entity));
 
-      const handler = createCalendarEvent(apiId, eventServiceMock);
+      const handler = createCalendarEvent(apiId, eventServiceMock, auditProps);
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       const recurrence = { frequency: 'weekly', interval: 1, daysOfWeek: ['TU'], end: { until: '2026-12-15' } };
@@ -1193,7 +1220,7 @@ describe('calendar router', () => {
       };
       const next = jest.fn();
 
-      const handler = createCalendarEvent(apiId, eventServiceMock);
+      const handler = createCalendarEvent(apiId, eventServiceMock, auditProps);
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(repositoryMock.save).not.toHaveBeenCalled();
@@ -1260,7 +1287,7 @@ describe('calendar router', () => {
 
   describe('updateCalendarEvent', () => {
     it('can create handler', () => {
-      const handler = updateCalendarEvent(apiId, eventServiceMock);
+      const handler = updateCalendarEvent(apiId, eventServiceMock, auditProps);
       expect(handler).toBeTruthy();
     });
 
@@ -1285,7 +1312,7 @@ describe('calendar router', () => {
 
       repositoryMock.save.mockImplementationOnce((entity) => Promise.resolve(entity));
 
-      const handler = updateCalendarEvent(apiId, eventServiceMock);
+      const handler = updateCalendarEvent(apiId, eventServiceMock, auditProps);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ name: 'test 2' }));
       expect(res.send.mock.calls[0][0].start.valueOf()).toBe(DateTime.fromISO('2020-03-05T11:00:00-07:00').valueOf());
@@ -1316,7 +1343,7 @@ describe('calendar router', () => {
 
       repositoryMock.save.mockImplementationOnce((entity) => Promise.resolve(entity));
 
-      const handler = updateCalendarEvent(apiId, eventServiceMock);
+      const handler = updateCalendarEvent(apiId, eventServiceMock, auditProps);
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       const updated = res.send.mock.calls[0][0];
@@ -1343,7 +1370,7 @@ describe('calendar router', () => {
       };
       const next = jest.fn();
 
-      const handler = updateCalendarEvent(apiId, eventServiceMock);
+      const handler = updateCalendarEvent(apiId, eventServiceMock, auditProps);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(repositoryMock.save).not.toHaveBeenCalled();
       expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedUserError));
@@ -1370,7 +1397,7 @@ describe('calendar router', () => {
 
       repositoryMock.save.mockImplementationOnce((entity) => Promise.resolve(entity));
 
-      const handler = updateCalendarEvent(apiId, eventServiceMock);
+      const handler = updateCalendarEvent(apiId, eventServiceMock, auditProps);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(res.send).toHaveBeenCalledWith(
         expect.objectContaining({ name: calendarEvent.name, description: calendarEvent.description }),
@@ -1382,7 +1409,7 @@ describe('calendar router', () => {
 
   describe('deleteCalendarEvent', () => {
     it('can create handler', () => {
-      const handler = deleteCalendarEvent(eventServiceMock);
+      const handler = deleteCalendarEvent(eventServiceMock, auditProps);
       expect(handler).toBeTruthy();
     });
 
@@ -1407,10 +1434,18 @@ describe('calendar router', () => {
 
       repositoryMock.delete.mockResolvedValueOnce(true);
 
-      const handler = deleteCalendarEvent(eventServiceMock);
+      const handler = deleteCalendarEvent(eventServiceMock, auditProps);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ deleted: true }));
       expect(res.send.mock.calls[0][0]).toMatchSnapshot();
+      expect(auditServiceMock.record).toHaveBeenCalledWith(
+        expect.objectContaining({ name: 'event.deleted', severity: 'warning' }),
+        expect.objectContaining({
+          tenantId,
+          resource: { type: 'event', id: '12', name: 'test' },
+          metadata: expect.objectContaining({ calendarName: 'test', eventName: 'test' }),
+        }),
+      );
     });
 
     it('can call next with unauthorized', async () => {
@@ -1432,9 +1467,10 @@ describe('calendar router', () => {
       };
       const next = jest.fn();
 
-      const handler = deleteCalendarEvent(eventServiceMock);
+      const handler = deleteCalendarEvent(eventServiceMock, auditProps);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(repositoryMock.delete).not.toHaveBeenCalled();
+      expect(auditServiceMock.record).not.toHaveBeenCalled();
       expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedUserError));
     });
   });
@@ -1461,7 +1497,7 @@ describe('calendar router', () => {
 
       repositoryMock.save.mockImplementationOnce((entity) => Promise.resolve(entity));
 
-      const handler = updateCalendarEvent(apiId, eventServiceMock);
+      const handler = updateCalendarEvent(apiId, eventServiceMock, auditProps);
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(res.send).toHaveBeenCalledWith(
@@ -1499,7 +1535,7 @@ describe('calendar router', () => {
 
       repositoryMock.save.mockImplementationOnce((entity) => Promise.resolve(entity));
 
-      const handler = updateCalendarEvent(apiId, eventServiceMock);
+      const handler = updateCalendarEvent(apiId, eventServiceMock, auditProps);
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(res.send.mock.calls[0][0]).not.toHaveProperty('recurrence');
@@ -1523,7 +1559,7 @@ describe('calendar router', () => {
     };
 
     it('can create handler', () => {
-      const handler = deleteCalendarEventOccurrence(eventServiceMock);
+      const handler = deleteCalendarEventOccurrence(eventServiceMock, auditProps);
       expect(handler).toBeTruthy();
     });
 
@@ -1536,7 +1572,7 @@ describe('calendar router', () => {
 
       repositoryMock.saveExclusion.mockResolvedValueOnce(true);
 
-      const handler = deleteCalendarEventOccurrence(eventServiceMock);
+      const handler = deleteCalendarEventOccurrence(eventServiceMock, auditProps);
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(repositoryMock.saveExclusion).toHaveBeenCalledWith(req.event, 20261013);
@@ -1549,6 +1585,11 @@ describe('calendar router', () => {
           }),
         }),
       );
+      expect(auditServiceMock.record).toHaveBeenCalledTimes(1);
+      expect(auditServiceMock.record).toHaveBeenCalledWith(
+        expect.objectContaining({ name: 'event.occurrence-cancelled' }),
+        expect.objectContaining({ resource: expect.objectContaining({ type: 'event', id: '42' }) }),
+      );
     });
 
     it('can cancel occurrence by recurrence ID in another offset', async () => {
@@ -1560,7 +1601,7 @@ describe('calendar router', () => {
 
       repositoryMock.saveExclusion.mockResolvedValueOnce(true);
 
-      const handler = deleteCalendarEventOccurrence(eventServiceMock);
+      const handler = deleteCalendarEventOccurrence(eventServiceMock, auditProps);
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(repositoryMock.saveExclusion).toHaveBeenCalledWith(req.event, 20261103);
@@ -1576,7 +1617,7 @@ describe('calendar router', () => {
 
       repositoryMock.saveExclusion.mockResolvedValueOnce(false);
 
-      const handler = deleteCalendarEventOccurrence(eventServiceMock);
+      const handler = deleteCalendarEventOccurrence(eventServiceMock, auditProps);
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(res.send).toHaveBeenCalledWith({ deleted: false });
@@ -1590,7 +1631,7 @@ describe('calendar router', () => {
       };
       const next = jest.fn();
 
-      const handler = deleteCalendarEventOccurrence(eventServiceMock);
+      const handler = deleteCalendarEventOccurrence(eventServiceMock, auditProps);
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(res.send).not.toHaveBeenCalled();
@@ -1604,7 +1645,7 @@ describe('calendar router', () => {
       };
       const next = jest.fn();
 
-      const handler = deleteCalendarEventOccurrence(eventServiceMock);
+      const handler = deleteCalendarEventOccurrence(eventServiceMock, auditProps);
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(next).toHaveBeenCalledWith(expect.any(InvalidOperationError));
@@ -1617,7 +1658,7 @@ describe('calendar router', () => {
       };
       const next = jest.fn();
 
-      const handler = deleteCalendarEventOccurrence(eventServiceMock);
+      const handler = deleteCalendarEventOccurrence(eventServiceMock, auditProps);
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(repositoryMock.saveExclusion).not.toHaveBeenCalled();
@@ -1678,7 +1719,7 @@ describe('calendar router', () => {
 
   describe('addEventAttendee', () => {
     it('can create handler', () => {
-      const handler = addEventAttendee(eventServiceMock);
+      const handler = addEventAttendee(eventServiceMock, auditProps);
       expect(handler).toBeTruthy();
     });
 
@@ -1703,10 +1744,15 @@ describe('calendar router', () => {
 
       repositoryMock.saveAttendee.mockImplementationOnce((_, attendee) => Promise.resolve(attendee));
 
-      const handler = addEventAttendee(eventServiceMock);
+      const handler = addEventAttendee(eventServiceMock, auditProps);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining(req.body));
       expect(res.send.mock.calls[0][0]).toMatchSnapshot();
+      expect(auditServiceMock.record).toHaveBeenCalledWith(
+        expect.objectContaining({ name: 'attendee.added', category: 'data-access' }),
+        expect.objectContaining({ metadata: expect.objectContaining({ attendeeName: 'tester' }) }),
+      );
+      expect(JSON.stringify(auditServiceMock.record.mock.calls[0][1].metadata)).not.toContain('tester@test.co');
     });
 
     it('can call next with unauthorized', async () => {
@@ -1728,7 +1774,7 @@ describe('calendar router', () => {
       };
       const next = jest.fn();
 
-      const handler = addEventAttendee(eventServiceMock);
+      const handler = addEventAttendee(eventServiceMock, auditProps);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedUserError));
     });
@@ -1794,7 +1840,7 @@ describe('calendar router', () => {
 
   describe('deleteEventAttendee', () => {
     it('can create handler', () => {
-      const handler = deleteEventAttendee(eventServiceMock);
+      const handler = deleteEventAttendee(eventServiceMock, auditProps);
       expect(handler).toBeTruthy();
     });
 
@@ -1817,11 +1863,36 @@ describe('calendar router', () => {
       const next = jest.fn();
 
       repositoryMock.deleteAttendee.mockResolvedValueOnce(true);
+      repositoryMock.getEventAttendees.mockResolvedValueOnce([{ id: 23, name: 'tester', email: 'tester@test.co' }]);
 
-      const handler = deleteEventAttendee(eventServiceMock);
+      const handler = deleteEventAttendee(eventServiceMock, auditProps);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ deleted: true }));
       expect(res.send.mock.calls[0][0]).toMatchSnapshot();
+    });
+
+    it('can audit attendee removal without email', async () => {
+      const calendarEntity = new CalendarEntity(repositoryMock, tenantId, calendar);
+      const entity = new CalendarEventEntity(repositoryMock, calendarEntity, calendarEvent);
+      const req = {
+        user: { tenantId, roles: ['test-updater', 'test-reader'] },
+        params: { attendeeId: '23' },
+        query: {},
+        calendar: calendarEntity,
+        event: entity,
+      };
+      const res = { send: jest.fn() };
+
+      repositoryMock.deleteAttendee.mockResolvedValueOnce(true);
+      repositoryMock.getEventAttendees.mockResolvedValueOnce([{ id: 23, name: 'tester', email: 'tester@test.co' }]);
+
+      const handler = deleteEventAttendee(eventServiceMock, auditProps);
+      await handler(req as unknown as Request, res as unknown as Response, jest.fn());
+      expect(auditServiceMock.record).toHaveBeenCalledWith(
+        expect.objectContaining({ name: 'attendee.removed', category: 'data-access' }),
+        expect.objectContaining({ metadata: expect.objectContaining({ attendeeName: 'tester' }) }),
+      );
+      expect(JSON.stringify(auditServiceMock.record.mock.calls[0][1].metadata)).not.toContain('tester@test.co');
     });
 
     it('can call next with unauthorized', async () => {
@@ -1842,7 +1913,7 @@ describe('calendar router', () => {
       };
       const next = jest.fn();
 
-      const handler = deleteEventAttendee(eventServiceMock);
+      const handler = deleteEventAttendee(eventServiceMock, auditProps);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedUserError));
     });

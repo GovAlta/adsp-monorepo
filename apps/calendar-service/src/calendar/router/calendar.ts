@@ -1,6 +1,7 @@
 import {
   adspId,
   AdspId,
+  AuditService,
   ConfigurationService,
   EventService,
   ServiceDirectory,
@@ -16,6 +17,17 @@ import { DateTime } from 'luxon';
 import { Logger } from 'winston';
 import { environment } from '../../environments/environment';
 import { parseCalendarDateTime as parseServiceDateTime } from '../../utils';
+import {
+  AttendeeAddedAuditAction,
+  AttendeeRemovedAuditAction,
+  EventCreatedAuditAction,
+  EventDeletedAuditAction,
+  EventOccurrenceCancelledAuditAction,
+  EventUpdatedAuditAction,
+  recordCalendarAudit,
+  toAttendeeAuditDetails,
+  toEventAuditDetails,
+} from '../audit';
 import { calendarEventCreated, calendarEventDeleted, calendarEventUpdated } from '../events';
 import { CalendarEntity, CalendarEventEntity, CalendarEventOccurrence, isEventOccurrence } from '../model';
 import { CalendarRepository } from '../repository';
@@ -25,11 +37,17 @@ import { mapCalendar } from './mapper';
 
 export { getCalendars } from './definition';
 
+interface AuditProps {
+  auditService: AuditService;
+  logger: Logger;
+}
+
 interface DateRouterProps {
   serviceId: AdspId;
   logger: Logger;
   repository: CalendarRepository;
   eventService: EventService;
+  auditService: AuditService;
   directory: ServiceDirectory;
   tenantService: TenantService;
   tokenProvider: TokenProvider;
@@ -145,6 +163,12 @@ export const exportCalendar =
       if (criteria?.endsBefore) {
         criteria.endsBefore = parseServiceDateTime(criteria.endsBefore, 'criteria.endsBefore');
       }
+      if (criteria?.startsBefore) {
+        criteria.startsBefore = parseServiceDateTime(criteria.startsBefore, 'criteria.startsBefore');
+      }
+      if (criteria?.endsAfter) {
+        criteria.endsAfter = parseServiceDateTime(criteria.endsAfter, 'criteria.endsAfter');
+      }
 
       const { results } = await calendar.getEvents(user, top, after as string, criteria);
       if (includeAttendees === 'true') {
@@ -207,6 +231,12 @@ export function getCalendarEvents(apiId: AdspId): RequestHandler {
       if (criteria?.endsBefore) {
         criteria.endsBefore = parseServiceDateTime(criteria.endsBefore, 'criteria.endsBefore');
       }
+      if (criteria?.startsBefore) {
+        criteria.startsBefore = parseServiceDateTime(criteria.startsBefore, 'criteria.startsBefore');
+      }
+      if (criteria?.endsAfter) {
+        criteria.endsAfter = parseServiceDateTime(criteria.endsAfter, 'criteria.endsAfter');
+      }
       if (criteria?.activeOn) {
         criteria.activeOn = parseServiceDateTime(criteria.activeOn, 'criteria.activeOn');
       }
@@ -268,7 +298,7 @@ export function getCalendarEvents(apiId: AdspId): RequestHandler {
 }
 
 export const createCalendarEvent =
-  (apiId: AdspId, eventService: EventService): RequestHandler =>
+  (apiId: AdspId, eventService: EventService, { auditService, logger }: AuditProps): RequestHandler =>
   async (req, res, next) => {
     try {
       const user = req.user;
@@ -283,6 +313,7 @@ export const createCalendarEvent =
       const entity = await calendar.createEvent(user, event);
       res.send(mapCalendarEvent(apiId, entity));
       eventService.send(calendarEventCreated(user, entity));
+      recordCalendarAudit(auditService, logger, EventCreatedAuditAction, () => toEventAuditDetails(user, entity));
     } catch (err) {
       next(err);
     }
@@ -327,7 +358,7 @@ export function retrieveCalendarEvent(apiId: AdspId): RequestHandler {
 }
 
 export const updateCalendarEvent =
-  (apiId: AdspId, eventService: EventService): RequestHandler =>
+  (apiId: AdspId, eventService: EventService, { auditService, logger }: AuditProps): RequestHandler =>
   async (req, res, next) => {
     try {
       const user = req.user;
@@ -342,13 +373,18 @@ export const updateCalendarEvent =
 
       res.send(mapCalendarEvent(apiId, result));
       eventService.send(calendarEventUpdated(user, update, result));
+      recordCalendarAudit(auditService, logger, EventUpdatedAuditAction, () =>
+        toEventAuditDetails(user, result, {
+          updatedFields: Object.keys(update).filter((key) => update[key] !== null && update[key] !== undefined),
+        }),
+      );
     } catch (err) {
       next(err);
     }
   };
 
 export const deleteCalendarEvent =
-  (eventService: EventService): RequestHandler =>
+  (eventService: EventService, { auditService, logger }: AuditProps): RequestHandler =>
   async (req, res, next) => {
     try {
       const user = req.user;
@@ -357,13 +393,16 @@ export const deleteCalendarEvent =
 
       res.send({ deleted });
       eventService.send(calendarEventDeleted(user, event));
+      if (deleted) {
+        recordCalendarAudit(auditService, logger, EventDeletedAuditAction, () => toEventAuditDetails(user, event));
+      }
     } catch (err) {
       next(err);
     }
   };
 
 export const deleteCalendarEventOccurrence =
-  (eventService: EventService): RequestHandler =>
+  (eventService: EventService, { auditService, logger }: AuditProps): RequestHandler =>
   async (req, res, next) => {
     try {
       const user = req.user;
@@ -379,6 +418,9 @@ export const deleteCalendarEventOccurrence =
       if (deleted) {
         eventService.send(
           calendarEventUpdated(user, { operation: 'exclude-occurrence', recurrenceId: recurrenceId.toISO() }, event),
+        );
+        recordCalendarAudit(auditService, logger, EventOccurrenceCancelledAuditAction, () =>
+          toEventAuditDetails(user, event, { recurrenceId: recurrenceId.toISO() }),
         );
       }
     } catch (err) {
@@ -399,7 +441,7 @@ export const getEventAttendees: RequestHandler = async (req, res, next) => {
 };
 
 export const addEventAttendee =
-  (eventService: EventService): RequestHandler =>
+  (eventService: EventService, { auditService, logger }: AuditProps): RequestHandler =>
   async (req, res, next) => {
     try {
       const user = req.user;
@@ -409,6 +451,9 @@ export const addEventAttendee =
       const result = await event.addAttendee(user, attendee);
       res.send(mapEventAttendee(result));
       eventService.send(calendarEventUpdated(user, { operation: 'add-attendee', attendee: result }, event));
+      recordCalendarAudit(auditService, logger, AttendeeAddedAuditAction, () =>
+        toAttendeeAuditDetails(user, event, result),
+      );
     } catch (err) {
       next(err);
     }
@@ -453,7 +498,7 @@ export const setEventAttendee =
   };
 
 export const deleteEventAttendee =
-  (eventService: EventService): RequestHandler =>
+  (eventService: EventService, { auditService, logger }: AuditProps): RequestHandler =>
   async (req, res, next) => {
     try {
       const user = req.user;
@@ -461,10 +506,20 @@ export const deleteEventAttendee =
       const id = parseInt(idValue);
       const event: CalendarEventEntity = req[EVENT_KEY];
 
+      // The attendee name is captured before deletion; failing to load it must not block the delete.
+      const attendee = await event
+        .loadAttendees(user)
+        .then((attendees) => attendees.find((a) => a.id === id))
+        .catch(() => undefined);
       const deleted = await event.deleteAttendee(user, id);
 
       res.send({ deleted });
       eventService.send(calendarEventUpdated(user, { operation: 'delete-attendee', attendeeId: id }, event));
+      if (deleted) {
+        recordCalendarAudit(auditService, logger, AttendeeRemovedAuditAction, () =>
+          toAttendeeAuditDetails(user, event, attendee),
+        );
+      }
     } catch (err) {
       next(err);
     }
@@ -497,9 +552,10 @@ export const calendarEventUpdateBodySchema: Schema = {
 };
 
 export const createCalendarRouter = ({
-  logger: _logger,
+  logger,
   serviceId,
   eventService,
+  auditService,
   directory,
   tenantService,
   tokenProvider,
@@ -507,6 +563,7 @@ export const createCalendarRouter = ({
   repository,
 }: DateRouterProps): Router => {
   const apiId = adspId`${serviceId}:v1`;
+  const auditProps: AuditProps = { auditService, logger };
 
   const router = Router();
 
@@ -540,8 +597,10 @@ export const createCalendarRouter = ({
   registerCalendarDefinitionRoutes(router, {
     apiId,
     serviceId,
+    logger,
     repository,
     eventService,
+    auditService,
     directory,
     tokenProvider,
     configurationService,
@@ -574,7 +633,7 @@ export const createCalendarRouter = ({
     validateNameHandler,
     validateCalendarEventHandler,
     getCalendar(tenantService),
-    createCalendarEvent(apiId, eventService),
+    createCalendarEvent(apiId, eventService, auditProps),
   );
 
   router.get(
@@ -591,14 +650,14 @@ export const createCalendarRouter = ({
     validateCalendarEventUpdateHandler,
     getCalendar(tenantService),
     getCalendarEvent,
-    updateCalendarEvent(apiId, eventService),
+    updateCalendarEvent(apiId, eventService, auditProps),
   );
   router.delete(
     '/calendars/:name/events/:id',
     validateNameAndEventIdHandler,
     getCalendar(tenantService),
     getCalendarEvent,
-    deleteCalendarEvent(eventService),
+    deleteCalendarEvent(eventService, auditProps),
   );
 
   router.delete(
@@ -607,7 +666,7 @@ export const createCalendarRouter = ({
     createValidationHandler(param('occurrence').isISO8601()),
     getCalendar(tenantService),
     getCalendarEvent,
-    deleteCalendarEventOccurrence(eventService),
+    deleteCalendarEventOccurrence(eventService, auditProps),
   );
 
   router.get(
@@ -623,7 +682,7 @@ export const createCalendarRouter = ({
     validateAttendeeHandler,
     getCalendar(tenantService),
     getCalendarEvent,
-    addEventAttendee(eventService),
+    addEventAttendee(eventService, auditProps),
   );
 
   router.get(
@@ -646,7 +705,7 @@ export const createCalendarRouter = ({
     validateNameEventIdAndAttendeeIdHandler,
     getCalendar(tenantService),
     getCalendarEvent,
-    deleteEventAttendee(eventService),
+    deleteEventAttendee(eventService, auditProps),
   );
 
   return router;

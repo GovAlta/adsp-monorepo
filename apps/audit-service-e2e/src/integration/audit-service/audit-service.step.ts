@@ -25,7 +25,24 @@ When(
       method: 'POST',
       url: `/audit/v1/${namespace}/events`,
       auth: { bearer: Cypress.env('autotest-admin-token') },
-      body: { name: action, details: { test: true, source: 'e2e-regression' } },
+      body: {
+        events: [
+          {
+            eventId: crypto.randomUUID(),
+            occurredAt: new Date().toISOString(),
+            action: action,
+            actionVersion: 1,
+            status: 'success',
+            actor: {
+              id: 'urn:ads:autotest:auto-test-client',
+              type: 'service',
+            },
+            metadata: {
+              purpose: 'UAT regression test',
+            },
+          },
+        ],
+      },
       failOnStatusCode: false,
     }).then((response) => {
       responseObj = response;

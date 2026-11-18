@@ -28,7 +28,13 @@ runs:
     - name: Apply Manifests
       shell: bash
       run: |
-        oc process -f .openshift/managed/${{ inputs.app }}.yml -p INFRA_NAMESPACE=adsp-build -p NAMESPACE=adsp-${{ inputs.to }} -p DEPLOY_TAG=${{ inputs.to }} > ${{ inputs.app }}.${{ inputs.to }}.json
+        PARAM_FILE=.openshift/environments/${{ inputs.to }}/${{ inputs.app }}.env
+        PARAM_FILE_ARGS=()
+        if [ -f "$PARAM_FILE" ]; then
+          echo "Using environment parameter overrides from $PARAM_FILE"
+          PARAM_FILE_ARGS=(--param-file "$PARAM_FILE")
+        fi
+        oc process -f .openshift/managed/${{ inputs.app }}.yml "${PARAM_FILE_ARGS[@]}" -p INFRA_NAMESPACE=adsp-build -p NAMESPACE=adsp-${{ inputs.to }} -p DEPLOY_TAG=${{ inputs.to }} > ${{ inputs.app }}.${{ inputs.to }}.json
         oc apply -f ${{ inputs.app }}.${{ inputs.to }}.json -l apply-${{ inputs.to }}=true,component!=database
     - name: Deploy ${{ inputs.to }}
       shell: bash

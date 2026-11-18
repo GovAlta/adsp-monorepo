@@ -126,6 +126,18 @@ describe('form audit', () => {
         severity: 'warning',
         retentionClass: 'standard',
       }),
+      'registration.submitted': expect.objectContaining({
+        category: 'administrative',
+        severity: 'info',
+        retentionClass: 'standard',
+        resourceType: 'registration',
+      }),
+      'registration.reviewed': expect.objectContaining({
+        category: 'administrative',
+        severity: 'info',
+        retentionClass: 'compliance',
+        resourceType: 'registration',
+      }),
     });
   });
 

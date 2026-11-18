@@ -32,12 +32,23 @@ describe('FileClient uploads', () => {
   describe('getFileType', () => {
     it('requests the File Type with the user token and maps it', async () => {
       const fetchFn = mockFetch(() =>
-        jsonResponse({ id: 'supporting-docs', name: 'Supporting documents', anonymousRead: true, readRoles: [] }),
+        jsonResponse({
+          id: 'supporting-docs',
+          name: 'Supporting documents',
+          anonymousRead: true,
+          readRoles: [],
+          allowedFileTypes: [' .PDF ', ''],
+        }),
       );
 
       const type = await createClient(fetchFn, async () => 'token-abc').getFileType('supporting docs');
 
-      expect(type).toEqual({ id: 'supporting-docs', name: 'Supporting documents', anonymousRead: true });
+      expect(type).toEqual({
+        id: 'supporting-docs',
+        name: 'Supporting documents',
+        anonymousRead: true,
+        allowedFileTypes: ['.PDF'],
+      });
       expect(fetchFn).toHaveBeenCalledWith('https://file.test/file/v1/types/supporting%20docs', {
         headers: { Authorization: 'Bearer token-abc' },
       });

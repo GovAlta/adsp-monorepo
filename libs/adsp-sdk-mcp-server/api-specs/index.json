@@ -92,7 +92,7 @@
     "urn": "urn:ads:platform:form-service",
     "name": "Form service",
     "title": "Form service",
-    "operations": 31,
+    "operations": 36,
     "file": "form-service.json"
   },
   {
@@ -156,7 +156,7 @@
     "urn": "urn:ads:platform:tenant-service",
     "name": "Tenant service",
     "title": "Tenant management service",
-    "operations": 15,
+    "operations": 16,
     "file": "tenant-management-api.json"
   },
   {
@@ -172,7 +172,7 @@
     "urn": "urn:ads:platform:value-service",
     "name": "Value service",
     "title": "Value service",
-    "operations": 13,
+    "operations": 14,
     "file": "value-service.json"
   },
   {

@@ -571,11 +571,13 @@ export function onIoConnection(logger: Logger, budget: TokenBudget = createToken
                 ...(usage ? { usage } : {}),
                 done: true,
               });
+              await aiAgent.recordResponseCompleted(user, threadId, result, { output });
               await emitConversationStatus(socket, logger, aiAgent, user, streamMeta, {
                 contextTokens: usage?.contextTokens ?? 0,
                 memoryStatus,
               });
             } catch (err) {
+              void aiAgent.recordResponseCompleted(user, threadId, result, { error: err });
               if (!emitMappedStreamError(socket, streamMeta, err)) {
                 throw err;
               }

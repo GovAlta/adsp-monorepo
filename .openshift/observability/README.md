@@ -32,6 +32,7 @@ Fastest path: deploy the whole stack with one template.
 
 ```sh
 oc process -f .openshift/observability/observability-stack.yml \
+  --param-file .openshift/environments/dev/observability-stack.env \
   -p ENVIRONMENT_NAME=dev \
   -p INFRA_NAMESPACE=core-services-infra \
   -p IMAGE_TAG=latest \
@@ -49,6 +50,10 @@ The template imports source images into ImageStreams in `INFRA_NAMESPACE` and
 deployments pull from the internal OpenShift registry to avoid direct Docker Hub pulls.
 By default, scheduled imports are disabled to minimize upstream registry requests.
 Set `IMAGE_IMPORT_SCHEDULED=true` only if you want periodic automatic refreshes.
+
+CPU and memory for each component are template parameters (for example `PROMETHEUS_CPU_LIMIT`) that
+default to the production values. `.openshift/environments/<env>/observability-stack.env` overrides them
+for dev and uat; omit `--param-file` for an environment without a file.
 
 The account applying the template must be allowed to create/update ImageStreams in
 `INFRA_NAMESPACE`.

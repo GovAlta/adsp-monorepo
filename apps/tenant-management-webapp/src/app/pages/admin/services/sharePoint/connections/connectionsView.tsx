@@ -1,94 +1,70 @@
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { RootState } from '@store/index';
+import { GoabButton } from '@abgov/react-components';
 import { PageIndicator } from '@components/Indicator';
 import { renderNoItem } from '@components/NoItem';
-import { GoabButton } from '@abgov/react-components';
+import { RootState } from '@store/index';
+import { fetchSharepointConfiguration, updateSharepointConnection } from '@store/sharePoint/actions';
+import { ButtonPadding, TabIntro } from '../styled-components';
 import { ConnectionModal } from './connectionModal';
 import { ConnectionTableComponent } from './connectionTable';
 import { DeleteConfirmationsView } from './deleteConfirmationsView';
-import { fetchSharepointConnections, updateSharepointConnection } from '@store/sharePoint/actions';
-import { ButtonPadding } from '../styled-components';
-interface AddEditConnectionProps {
-  activeEdit: boolean;
-}
-export const ConnectionsView = ({ activeEdit }: AddEditConnectionProps): JSX.Element => {
+
+export const ConnectionsView = (): JSX.Element => {
   const dispatch = useDispatch();
-  const [openEditConnection, setOpenEditConnection] = useState(false);
-  const [selectedConnectionId, setSelectedConnectionId] = useState<string | undefined>();
-  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
+  const [editId, setEditId] = useState<string | null>(null);
+  const [isAdding, setIsAdding] = useState(false);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
   const indicator = useSelector((state: RootState) => state?.session?.indicator);
+  const { connections, destinations } = useSelector((state: RootState) => state.sharepoint);
 
   useEffect(() => {
-    dispatch(fetchSharepointConnections());
+    dispatch(fetchSharepointConfiguration());
   }, [dispatch]);
 
-  const { connections } = useSelector((state: RootState) => state.sharepoint);
-
-  useEffect(() => {
-    if (activeEdit) {
-      reset();
-      setOpenEditConnection(true);
-    }
-  }, [activeEdit]);
-
-  const reset = () => {
-    setOpenEditConnection(false);
-    setSelectedConnectionId('');
-    document.body.style.overflow = 'unset';
-  };
-
-  const onEdit = (connection, tenantMode) => {
-    setSelectedConnectionId(connection.id);
-    setOpenEditConnection(true);
-  };
-
-  const onDelete = (connection) => {
-    setSelectedConnectionId(connection.id);
-    setShowDeleteConfirmation(true);
+  const closeModal = () => {
+    setIsAdding(false);
+    setEditId(null);
   };
 
   return (
     <section>
+      <TabIntro>
+        A connection is how ADSP signs in to one SharePoint site: your team's app registration (Entra tenant ID, client
+        ID and secret) and the site it can write to. Add a destination to say which list on that site data goes to.
+      </TabIntro>
       <ButtonPadding>
-        <GoabButton
-          size="compact"
-          testId="add-connection-btn"
-          onClick={() => {
-            setSelectedConnectionId(undefined);
-            setOpenEditConnection(true);
-          }}
-        >
+        <GoabButton size="compact" testId="add-connection-btn" onClick={() => setIsAdding(true)}>
           Add connection
         </GoabButton>
       </ButtonPadding>
 
-      {indicator && <PageIndicator />}
-      {!indicator.show && Object.keys(connections).length === 0 && renderNoItem('sharepoint connection')}
+      {indicator?.show && <PageIndicator />}
+      {!indicator?.show && Object.keys(connections).length === 0 && renderNoItem('sharepoint connection')}
       {Object.keys(connections).length > 0 && (
-        <div>
-          <ConnectionTableComponent connections={connections} onEdit={onEdit} onDelete={onDelete} tenantMode={true} />
-        </div>
-      )}
-
-      {openEditConnection && (
-        <ConnectionModal
-          open={openEditConnection}
-          connectionId={selectedConnectionId}
-          onCancel={() => {
-            reset();
-          }}
-          onSave={(connection) => dispatch(updateSharepointConnection(connection))}
+        <ConnectionTableComponent
+          connections={connections}
+          onEdit={(connection) => setEditId(connection.id)}
+          onDelete={(connection) => setDeleteId(connection.id)}
         />
       )}
-      {showDeleteConfirmation && (
+
+      {(isAdding || editId) && (
+        <ConnectionModal
+          open={true}
+          connectionId={editId || undefined}
+          onCancel={closeModal}
+          onSave={(connection, clientSecret) => dispatch(updateSharepointConnection(connection, clientSecret))}
+        />
+      )}
+      {deleteId && connections[deleteId] && (
         <DeleteConfirmationsView
-          connectionSite={connections[selectedConnectionId]?.siteId}
-          connectionList={connections[selectedConnectionId]?.listId}
-          connectionName={connections[selectedConnectionId]?.name}
-          connectionId={selectedConnectionId}
-          showDeleteConfig={(conf) => setShowDeleteConfirmation(conf)}
-        ></DeleteConfirmationsView>
+          connection={connections[deleteId]}
+          destinationNames={Object.values(destinations)
+            .filter((destination) => destination.connectionId === deleteId)
+            .map((destination) => destination.name)}
+          onClose={() => setDeleteId(null)}
+        />
       )}
     </section>
   );

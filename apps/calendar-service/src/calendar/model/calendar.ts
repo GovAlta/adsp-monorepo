@@ -8,11 +8,13 @@ import { CalendarEventEntity, CalendarEventInstance, CalendarEventOccurrence, is
 
 function matchesTimeCriteria(
   { start, end }: CalendarEventOccurrence,
-  { startsAfter, endsBefore, activeOn }: CalendarEventCriteria,
+  { startsAfter, endsBefore, startsBefore, endsAfter, activeOn }: CalendarEventCriteria,
 ): boolean {
   return (
     (!startsAfter || start.valueOf() >= startsAfter.valueOf()) &&
     (!endsBefore || (!!end && end.valueOf() <= endsBefore.valueOf())) &&
+    (!startsBefore || start.valueOf() <= startsBefore.valueOf()) &&
+    (!endsAfter || !end || end.valueOf() >= endsAfter.valueOf()) &&
     (!activeOn || (start.valueOf() <= activeOn.valueOf() && (!end || end.valueOf() >= activeOn.valueOf())))
   );
 }

@@ -7,6 +7,7 @@ const REASONS: FileServiceErrorReason[] = [
   'forbidden',
   'scan-pending',
   'unavailable',
+  'unsupported-format',
   'unexpected',
 ];
 
@@ -35,6 +36,7 @@ describe('getFileUploadErrorMessage', () => {
     ['unauthenticated', 'Sign in to upload files.'],
     ['forbidden', "You don't have permission to upload files here."],
     ['unavailable', "File service didn't accept this file. Check the file and try again."],
+    ['unsupported-format', "This file format isn't supported. Choose a file in one of the allowed formats."],
     ['unexpected', 'Something went wrong while uploading this file.'],
   ] as [FileServiceErrorReason, string][])('explains %s', (reason, expected) => {
     expect(getFileUploadErrorMessage(reason)).toBe(expected);

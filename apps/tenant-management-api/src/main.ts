@@ -16,10 +16,13 @@ import {
   TenantAuditActions,
   TenantCreatedDefinition,
   TenantDeletedDefinition,
+  TenantArchivedDefinition,
+  TenantRestoredDefinition,
   configurationSchema,
   applyTenantMiddleware,
   TenantServiceImpl,
   TenantServiceRoles,
+  scheduleTenantPurgeJob,
 } from './tenant';
 import { createKeycloakRealmService } from './keycloak';
 
@@ -52,7 +55,7 @@ async function initializeApp(): Promise<express.Application> {
           schema: configurationSchema,
         },
         configurationConverter: (c) => Object.entries(c).map(([k, v]) => ({ serviceId: AdspId.parse(k), ...v })),
-        events: [TenantCreatedDefinition, TenantDeletedDefinition],
+        events: [TenantCreatedDefinition, TenantDeletedDefinition, TenantArchivedDefinition, TenantRestoredDefinition],
         auditActions: TenantAuditActions,
         roles: [
           // Note: Tenant Admin role is a special composite role.
@@ -95,6 +98,19 @@ async function initializeApp(): Promise<express.Application> {
     realmService,
     configurationHandler,
   });
+
+  if (environment.TENANT_PURGE_ENABLED) {
+    scheduleTenantPurgeJob({
+      serviceId,
+      logger,
+      tenantRepository: repositories.tenantRepository,
+      realmService,
+      eventService,
+      auditService,
+      retentionDays: environment.TENANT_RETENTION_DAYS,
+      cron: environment.TENANT_PURGE_SCHEDULE,
+    });
+  }
 
   const errorHandler = createErrorHandler(logger);
   app.use(errorHandler);

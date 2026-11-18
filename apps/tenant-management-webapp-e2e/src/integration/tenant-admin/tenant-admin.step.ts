@@ -413,7 +413,7 @@ Then(
       'The notifications service provides',
       'The PDF service provides',
       'The script services provides',
-      'The SharePoint service allows',
+      'The SharePoint service pushes',
       'The status service allows',
       'The task service provides',
       'The value service provides',

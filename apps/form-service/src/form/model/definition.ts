@@ -13,6 +13,7 @@ import {
   SecurityClassificationType,
   CustomSubmissionEvent,
   ReviewConfiguration,
+  RegistrationConfiguration,
 } from '../types';
 import {
   collectFileUrnPathTemplates,
@@ -45,7 +46,9 @@ export class FormDefinitionEntity implements FormDefinition {
   includeDataInSubmission: boolean;
   registeredId?: string;
   customSubmissionEvent?: CustomSubmissionEvent;
+  sharepointConfigurationId?: string;
   reviewConfiguration: ReviewConfiguration;
+  registration: RegistrationConfiguration;
 
   private urlTemplate: HandlebarsTemplateDelegate<{ id: string }>;
   private fileUrnPathTemplates: FileUrnPathTemplate[];
@@ -83,7 +86,26 @@ export class FormDefinitionEntity implements FormDefinition {
     this.includeDataInSubmission = definition?.includeDataInSubmission || false;
     this.registeredId = definition?.registeredId || null;
     this.customSubmissionEvent = definition?.customSubmissionEvent || null;
+    this.sharepointConfigurationId = definition?.sharepointConfigurationId || null;
     this.reviewConfiguration = definition?.reviewConfiguration || { columns: [] };
+    this.registration = definition?.registration || { enabled: false };
+    this.validationService.setSchema(this.registrationSchemaKey, {
+      type: 'object',
+      ...(this.registration.dataSchema || {}),
+      additionalProperties: false,
+    });
+  }
+
+  private get registrationSchemaKey(): string {
+    return `${this.tenantId.resource}:${this.id}:registration`;
+  }
+
+  public isRegistrationEnabled(): boolean {
+    return this.registration.enabled === true;
+  }
+
+  public validateRegistrationData(data: Record<string, unknown>) {
+    return this.validationService.validate('access request', this.registrationSchemaKey, data);
   }
 
   public canAccessDefinition(user: User): boolean {

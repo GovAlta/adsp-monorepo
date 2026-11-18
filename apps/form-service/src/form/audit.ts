@@ -12,12 +12,13 @@ import {
   User,
 } from '@abgov/adsp-service-sdk';
 import { Logger } from 'winston';
-import type { FormEntity, FormSubmissionEntity } from './model';
+import type { FormEntity, FormRegistrationEntity, FormSubmissionEntity } from './model';
 import { FormServiceRoles } from './roles';
 
 const FORM_RESOURCE_TYPE = 'form';
 const SUBMISSION_RESOURCE_TYPE = 'submission';
 const DATA_REGISTER_RESOURCE_TYPE = 'data-register';
+const REGISTRATION_RESOURCE_TYPE = 'registration';
 
 export const FormCreatedAuditAction: AuditAction = {
   name: 'form.created',
@@ -160,6 +161,26 @@ export const DataRegisterDeletedAuditAction: AuditAction = {
   description: 'A data register is deleted.',
 };
 
+export const RegistrationSubmittedAuditAction: AuditAction = {
+  name: 'registration.submitted',
+  version: 1,
+  category: AuditCategories.Administrative,
+  severity: AuditSeverities.Info,
+  retentionClass: BuiltInRetentionClasses.Standard,
+  resourceType: REGISTRATION_RESOURCE_TYPE,
+  description: 'A registration requesting access to a restricted form is submitted.',
+};
+
+export const RegistrationReviewedAuditAction: AuditAction = {
+  name: 'registration.reviewed',
+  version: 1,
+  category: AuditCategories.Administrative,
+  severity: AuditSeverities.Info,
+  retentionClass: BuiltInRetentionClasses.Compliance,
+  resourceType: REGISTRATION_RESOURCE_TYPE,
+  description: 'A registration requesting access to a restricted form is approved or denied.',
+};
+
 export const FormAuditActions: AuditAction[] = [
   FormCreatedAuditAction,
   FormDataUpdatedAuditAction,
@@ -175,6 +196,8 @@ export const FormAuditActions: AuditAction[] = [
   DataRegisterCreatedAuditAction,
   DataRegisterUpdatedAuditAction,
   DataRegisterDeletedAuditAction,
+  RegistrationSubmittedAuditAction,
+  RegistrationReviewedAuditAction,
 ];
 
 /**
@@ -266,6 +289,19 @@ export function toDataRegisterAuditDetails(
     resource: { type: DATA_REGISTER_RESOURCE_TYPE, id: name, name },
     correlationId: name,
     metadata: { name, ...metadata },
+  };
+}
+
+export function toRegistrationAuditDetails(
+  user: User,
+  registration: Pick<FormRegistrationEntity, 'tenantId' | 'id' | 'formDefinitionId' | 'status'>,
+): AuditRecordDetails {
+  return {
+    tenantId: registration.tenantId,
+    actor: toAuditActor(user),
+    resource: { type: REGISTRATION_RESOURCE_TYPE, id: registration.id },
+    correlationId: registration.id,
+    metadata: { definitionId: registration.formDefinitionId, status: registration.status },
   };
 }
 

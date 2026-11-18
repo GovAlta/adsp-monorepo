@@ -1,10 +1,14 @@
 import {
   AdspId,
+  AuditService,
+  ConfigurationService,
+  EventService,
   isAllowedUser,
   TenantService,
   TokenProvider,
   ServiceDirectory,
   UnauthorizedUserError,
+  User,
   adspId,
   toKebabCase,
 } from '@abgov/adsp-service-sdk';
@@ -17,13 +21,21 @@ import {
 } from '@core-services/core-common';
 import axios from 'axios';
 import * as HttpStatusCodes from 'http-status-codes';
-import { RequestHandler, Router } from 'express';
+import { Request, RequestHandler, Router } from 'express';
 import { body, param, query } from 'express-validator';
 import { Logger } from 'winston';
-import { FormDefinitionEntity } from '../model';
-import { mapFormDefinition } from '../mapper';
+import {
+  RegistrationReviewedAuditAction,
+  RegistrationSubmittedAuditAction,
+  recordFormAudit,
+  toRegistrationAuditDetails,
+} from '../audit';
+import { registrationReviewed, registrationSubmitted } from '../events';
+import { FormDefinitionEntity, FormRegistrationEntity, normalizeEmail } from '../model';
+import { mapFormDefinition, mapRegistration } from '../mapper';
+import { FormRegistrationRepository } from '../repository';
 import { FormServiceRoles } from '../roles';
-import { FormDefinition, Intake } from '../types';
+import { FormDefinition, FormRegistrationCreate, Intake, RegistrationStatus } from '../types';
 import { CalendarService } from '../calendar';
 
 const configurationApiId = adspId`urn:ads:platform:configuration-service:v2`;
@@ -161,7 +173,41 @@ export function getFormDefinitions(directory: ServiceDirectory, tokenProvider: T
   };
 }
 
-export function getFormDefinition(tenantService: TenantService, calendarService: CalendarService): RequestHandler {
+// The latest revision can hold unpublished changes, so only administrators can read it.
+export const assertCanReadLatestDefinition: RequestHandler = (req, _res, next) => {
+  if (req.query.version === 'latest' && !isAllowedUser(req.user, req.tenant?.id, FormServiceRoles.Admin, true)) {
+    next(new UnauthorizedUserError('access latest definition revision', req.user));
+  } else {
+    next();
+  }
+};
+
+// Reads the latest revision directly, bypassing the SDK cache, which only tracks the active revision.
+async function getLatestFormDefinition(
+  directory: ServiceDirectory,
+  tokenProvider: TokenProvider,
+  tenantId: AdspId,
+  definitionId: string,
+): Promise<{ revision: number; configuration: FormDefinition }> {
+  const configurationApiUrl = await directory.getServiceUrl(configurationApiId);
+  const token = await tokenProvider.getAccessToken();
+  const { data } = await axios.get<{ latest?: { revision: number; configuration: FormDefinition } }>(
+    new URL(`v2/configuration/form-service/${encodeURIComponent(definitionId)}`, configurationApiUrl).href,
+    { headers: { Authorization: `Bearer ${token}` }, params: { tenantId: tenantId.toString() } },
+  );
+
+  if (!data?.latest?.configuration) {
+    throw new NotFoundError('form definition', definitionId);
+  }
+  return data.latest;
+}
+
+export function getFormDefinition(
+  tenantService: TenantService,
+  calendarService: CalendarService,
+  directory: ServiceDirectory,
+  tokenProvider: TokenProvider,
+): RequestHandler {
   return async (req, res, next) => {
     try {
       const user = req.user;
@@ -179,6 +225,12 @@ export function getFormDefinition(tenantService: TenantService, calendarService:
       }
 
       const { version } = req.query;
+
+      if (version === 'latest') {
+        const latest = await getLatestFormDefinition(directory, tokenProvider, req.tenant.id, definitionId);
+        res.send(mapFormDefinition(latest.configuration, latest.revision));
+        return;
+      }
 
       let definition: FormDefinitionEntity;
 
@@ -338,6 +390,11 @@ export function patchFormDefinition(directory: ServiceDirectory, tokenProvider: 
         ...(req.body.description !== undefined ? { description: req.body.description } : {}),
         ...(req.body.dataSchema !== undefined ? { dataSchema: req.body.dataSchema } : {}),
         ...(req.body.uiSchema !== undefined ? { uiSchema: req.body.uiSchema } : {}),
+        // Merged so a patch that omits the write-only accessGroup does not clear it; enabled is required by the
+        // configuration schema but absent on definitions created before registration existed.
+        ...(req.body.registration !== undefined
+          ? { registration: { enabled: false, ...existingDefinition.registration, ...req.body.registration } }
+          : {}),
         id: definitionId,
       };
 
@@ -535,6 +592,41 @@ export function patchFormDefinitionLifecycle(
   };
 }
 
+// Rewrites the latest revision, like the other definition endpoints. Returns false when update returns null.
+async function updateLatestDefinition(
+  directory: ServiceDirectory,
+  tokenProvider: TokenProvider,
+  configurationService: ConfigurationService,
+  tenantId: AdspId,
+  definitionId: string,
+  update: (existing: FormDefinition) => FormDefinition | null,
+): Promise<boolean> {
+  const configurationApiUrl = await directory.getServiceUrl(configurationApiId);
+  const token = await tokenProvider.getAccessToken();
+
+  const existingDefinition = await fetchExistingDefinition(
+    configurationApiUrl,
+    token,
+    encodeURIComponent(definitionId),
+    tenantId.toString(),
+    definitionId,
+  );
+
+  const updatedDefinition = update(existingDefinition);
+  if (!updatedDefinition) {
+    return false;
+  }
+
+  await patchConfigurationDefinition(configurationApiUrl, token, definitionId, tenantId.toString(), {
+    ...updatedDefinition,
+    id: definitionId,
+  });
+
+  // Other instances are invalidated by the configuration update events.
+  configurationService.clearCached?.(tenantId, 'form-service', definitionId);
+  return true;
+}
+
 function parseNamespacedValue(value: string): { namespace: string; name: string } {
   const [namespace, name] = value.split(':');
   return { namespace, name };
@@ -640,20 +732,240 @@ export function patchFormDefinitionSubmissionActions(
   };
 }
 
+const allowedRegistrationProperties = ['firstName', 'lastName', 'email', 'data'];
+const registrationRequesterRoles = [FormServiceRoles.RegistrationRequester, FormServiceRoles.Admin];
+const registrationReaderRoles = [
+  FormServiceRoles.RegistrationReader,
+  FormServiceRoles.RegistrationWriter,
+  FormServiceRoles.Admin,
+];
+const registrationWriterRoles = [FormServiceRoles.RegistrationWriter, FormServiceRoles.Admin];
+
+const hasOnlyProperties = (allowed: string[]) => (value: unknown) => {
+  const extra = Object.keys((value as Record<string, unknown>) ?? {}).filter((key) => !allowed.includes(key));
+  if (extra.length > 0) {
+    throw new Error(`Unsupported properties: ${extra.join(', ')}`);
+  }
+  return true;
+};
+
+const getRequiredTenantId = (req: Request): AdspId => {
+  if (!req.tenant?.id) {
+    throw new InvalidOperationError('Tenant context is required for operation.');
+  }
+  return req.tenant.id;
+};
+
+const assertAllowed = (user: User, tenantId: AdspId, roles: string | string[], operation: string): void => {
+  if (!isAllowedUser(user, tenantId, roles, true)) {
+    throw new UnauthorizedUserError(operation, user);
+  }
+};
+
+const getRequiredDefinition = async (req: Request, tenantId: AdspId): Promise<FormDefinitionEntity> => {
+  const { definitionId } = req.params;
+  const [definition] = await req.getServiceConfiguration<FormDefinitionEntity>(definitionId, tenantId);
+  if (!definition) {
+    throw new NotFoundError('form definition', definitionId);
+  }
+  return definition;
+};
+
+export function submitRegistration(
+  repository: FormRegistrationRepository,
+  eventService: EventService,
+  auditService: AuditService,
+  logger: Logger,
+  directory: ServiceDirectory,
+  tokenProvider: TokenProvider,
+  configurationService: ConfigurationService,
+): RequestHandler {
+  return async (req, res, next) => {
+    try {
+      const tenantId = getRequiredTenantId(req);
+      const user = req.user;
+      assertAllowed(user, tenantId, registrationRequesterRoles, 'submit registration');
+
+      const definition = await getRequiredDefinition(req, tenantId);
+
+      const request = req.body as FormRegistrationCreate;
+      definition.validateRegistrationData(request.data || {});
+
+      if (!definition.isRegistrationEnabled()) {
+        await updateLatestDefinition(
+          directory,
+          tokenProvider,
+          configurationService,
+          tenantId,
+          definition.id,
+          (existing) => ({ ...existing, registration: { ...existing.registration, enabled: true } }),
+        );
+        logger.info(`Registration enabled for form definition '${definition.id}' by first access request.`, {
+          context: 'definition-router',
+          tenant: tenantId.toString(),
+          user: `${user.name} (ID: ${user.id})`,
+        });
+      }
+
+      const registration = await repository.create(FormRegistrationEntity.create(tenantId, definition.id, request));
+      res.status(HttpStatusCodes.CREATED).send({
+        id: registration.id,
+        formDefinitionId: registration.formDefinitionId,
+        status: registration.status,
+        submittedAt: registration.submittedAt,
+      });
+
+      eventService.send(registrationSubmitted(registration));
+      recordFormAudit(auditService, logger, RegistrationSubmittedAuditAction, () =>
+        toRegistrationAuditDetails(user, registration),
+      );
+    } catch (err) {
+      next(err);
+    }
+  };
+}
+
+export function deleteRegistrationSettings(
+  directory: ServiceDirectory,
+  tokenProvider: TokenProvider,
+  configurationService: ConfigurationService,
+  logger: Logger,
+): RequestHandler {
+  return async (req, res, next) => {
+    try {
+      const tenantId = getRequiredTenantId(req);
+      const user = req.user;
+      assertAllowed(user, tenantId, FormServiceRoles.Admin, 'delete registration');
+
+      const { definitionId } = req.params;
+      const removed = await updateLatestDefinition(
+        directory,
+        tokenProvider,
+        configurationService,
+        tenantId,
+        definitionId,
+        ({ registration, ...existing }) => (registration ? existing : null),
+      );
+
+      if (removed) {
+        logger.info(`Registration removed from form definition '${definitionId}'.`, {
+          context: 'definition-router',
+          tenant: tenantId.toString(),
+          user: `${user.name} (ID: ${user.id})`,
+        });
+      }
+      res.status(HttpStatusCodes.NO_CONTENT).send();
+    } catch (err) {
+      next(err);
+    }
+  };
+}
+
+export function getRegistrations(repository: FormRegistrationRepository): RequestHandler {
+  return async (req, res, next) => {
+    try {
+      const tenantId = getRequiredTenantId(req);
+      assertAllowed(req.user, tenantId, registrationReaderRoles, 'get registrations');
+
+      const definition = await getRequiredDefinition(req, tenantId);
+      const { top: topValue, after, status } = req.query;
+      const top = topValue ? parseInt(topValue as string) : 10;
+
+      const { results, page } = await repository.find(top, after as string, {
+        tenantIdEquals: tenantId,
+        definitionIdEquals: definition.id,
+        statusEquals: status as RegistrationStatus,
+      });
+      res.send({ results: results.map(mapRegistration), page });
+    } catch (err) {
+      next(err);
+    }
+  };
+}
+
+export function getRegistrationByEmail(repository: FormRegistrationRepository): RequestHandler {
+  return async (req, res, next) => {
+    try {
+      const tenantId = getRequiredTenantId(req);
+      const user = req.user;
+      const email = normalizeEmail(req.params.email);
+      const isOwnRegistration = !!user?.email && normalizeEmail(user.email) === email;
+      if (!isOwnRegistration) {
+        assertAllowed(user, tenantId, registrationReaderRoles, 'get registration');
+      }
+
+      const definition = await getRequiredDefinition(req, tenantId);
+      const registration = await repository.getLatestByEmail(tenantId, definition.id, email);
+      if (!registration) {
+        throw new NotFoundError('registration', email);
+      }
+      res.send(mapRegistration(registration));
+    } catch (err) {
+      next(err);
+    }
+  };
+}
+
+export function updateRegistration(
+  repository: FormRegistrationRepository,
+  eventService: EventService,
+  auditService: AuditService,
+  logger: Logger,
+): RequestHandler {
+  return async (req, res, next) => {
+    try {
+      const tenantId = getRequiredTenantId(req);
+      const user = req.user;
+      assertAllowed(user, tenantId, registrationWriterRoles, 'update registration');
+
+      const definition = await getRequiredDefinition(req, tenantId);
+      const { requestId } = req.params;
+      const registration = await repository.get(tenantId, definition.id, requestId);
+      if (!registration) {
+        throw new NotFoundError('registration', requestId);
+      }
+
+      registration.review(user, req.body.status as RegistrationStatus);
+      const updated = await repository.updateIfPending(registration);
+      if (!updated) {
+        throw new InvalidOperationError('Registration has already been reviewed.', {
+          statusCode: HttpStatusCodes.CONFLICT,
+        });
+      }
+      res.send(mapRegistration(updated));
+
+      eventService.send(registrationReviewed(updated));
+      recordFormAudit(auditService, logger, RegistrationReviewedAuditAction, () =>
+        toRegistrationAuditDetails(user, updated),
+      );
+    } catch (err) {
+      next(err);
+    }
+  };
+}
+
 interface FormDefinitionRouterProps {
   directory: ServiceDirectory;
   tokenProvider: TokenProvider;
+  configurationService: ConfigurationService;
   tenantService: TenantService;
   calendarService: CalendarService;
   logger: Logger;
+  registrationRepository: FormRegistrationRepository;
+  eventService: EventService;
+  auditService: AuditService;
 }
 
 export function createFormDefinitionRouter({
   directory,
   tokenProvider,
+  configurationService,
   tenantService,
   calendarService,
   logger,
+  registrationRepository,
+  eventService,
+  auditService,
 }: FormDefinitionRouterProps): Router {
   const router = Router();
 
@@ -675,8 +987,12 @@ export function createFormDefinitionRouter({
     '/definitions/:definitionId',
     createValidationHandler(
       param('definitionId').isString().isLength({ min: 1, max: 50 }).matches(DEFINITION_ID_REGEX),
+      query('version')
+        .optional()
+        .matches(/^(latest|\d+)$/),
     ),
-    getFormDefinition(tenantService, calendarService),
+    assertCanReadLatestDefinition,
+    getFormDefinition(tenantService, calendarService, directory, tokenProvider),
   );
   router.put(
     '/definitions/:definitionId',
@@ -701,6 +1017,7 @@ export function createFormDefinitionRouter({
       body('description').optional().isString(),
       body('dataSchema').optional().isObject(),
       body('uiSchema').optional().isObject(),
+      body('registration').optional().isObject(),
       body('formDraftUrlTemplate')
         .optional()
         .isString()
@@ -805,6 +1122,73 @@ export function createFormDefinitionRouter({
       body('end').isISO8601().withMessage('end date is required'),
     ),
     updateIntakeSchedule(calendarService),
+  );
+
+  const registrationStatuses = Object.values(RegistrationStatus);
+
+  router.post(
+    '/definitions/:definitionId/access-requests',
+    assertAuthenticatedHandler,
+    createValidationHandler(
+      param('definitionId').isString().isLength({ min: 1, max: 50 }).matches(DEFINITION_ID_REGEX),
+      body().custom(hasOnlyProperties(allowedRegistrationProperties)),
+      body('firstName').isString().trim().isLength({ min: 1, max: 100 }),
+      body('lastName').isString().trim().isLength({ min: 1, max: 100 }),
+      body('email').isString().trim().isEmail().isLength({ max: 254 }),
+      body('data').optional().isObject(),
+    ),
+    submitRegistration(
+      registrationRepository,
+      eventService,
+      auditService,
+      logger,
+      directory,
+      tokenProvider,
+      configurationService,
+    ),
+  );
+
+  router.delete(
+    '/definitions/:definitionId/access-requests',
+    assertAuthenticatedHandler,
+    createValidationHandler(
+      param('definitionId').isString().isLength({ min: 1, max: 50 }).matches(DEFINITION_ID_REGEX),
+    ),
+    deleteRegistrationSettings(directory, tokenProvider, configurationService, logger),
+  );
+
+  router.get(
+    '/definitions/:definitionId/access-requests',
+    assertAuthenticatedHandler,
+    createValidationHandler(
+      param('definitionId').isString().isLength({ min: 1, max: 50 }).matches(DEFINITION_ID_REGEX),
+      query('top').optional().isInt({ min: 1, max: 5000 }),
+      query('after').optional().isString(),
+      query('status').optional().isIn(registrationStatuses),
+    ),
+    getRegistrations(registrationRepository),
+  );
+
+  router.get(
+    '/definitions/:definitionId/access-requests/:email',
+    assertAuthenticatedHandler,
+    createValidationHandler(
+      param('definitionId').isString().isLength({ min: 1, max: 50 }).matches(DEFINITION_ID_REGEX),
+      param('email').isEmail(),
+    ),
+    getRegistrationByEmail(registrationRepository),
+  );
+
+  router.patch(
+    '/definitions/:definitionId/access-requests/:requestId',
+    assertAuthenticatedHandler,
+    createValidationHandler(
+      param('definitionId').isString().isLength({ min: 1, max: 50 }).matches(DEFINITION_ID_REGEX),
+      param('requestId').isUUID(),
+      body().custom(hasOnlyProperties(['status'])),
+      body('status').isIn(registrationStatuses),
+    ),
+    updateRegistration(registrationRepository, eventService, auditService, logger),
   );
   return router;
 }

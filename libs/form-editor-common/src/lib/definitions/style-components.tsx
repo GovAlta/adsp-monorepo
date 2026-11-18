@@ -1,5 +1,10 @@
 import styled from 'styled-components';
 
+// clean-code-ignore: RULE-19 styled-component definitions only, no logic to test; used by PreviewSubmit, covered in PreviewSubmit.spec.tsx.
+export const PreviewSubmitRow = styled.div`
+  margin-top: var(--goa-space-l);
+`;
+
 export const FormEditorTab = styled.div`
   font-weight: var(--goa-font-weight-bold);
 `;

@@ -1,4 +1,4 @@
-import { formatFileSize } from './format';
+import { formatAllowedFileTypes, formatFileSize, isFileFormatAllowed } from './format';
 
 describe('formatFileSize', () => {
   it.each([
@@ -17,5 +17,29 @@ describe('formatFileSize', () => {
 
   it.each([[-1], [Number.NaN], [Number.POSITIVE_INFINITY]])('returns an empty string for %s', (bytes) => {
     expect(formatFileSize(bytes)).toBe('');
+  });
+});
+
+describe('isFileFormatAllowed', () => {
+  it.each([
+    ['report.pdf', [], true],
+    ['report.PDF', ['.pdf'], true],
+    ['report.pdf', [' .Pdf '], true],
+    ['clip.mp4', ['.pdf', '.docx'], false],
+    ['README', ['.pdf'], true],
+    ['archive.tar.gz', ['.gz'], true],
+  ] as [string, string[], boolean][])('%s with %p is %s', (filename, allowed, expected) => {
+    expect(isFileFormatAllowed(filename, allowed)).toBe(expected);
+  });
+});
+
+describe('formatAllowedFileTypes', () => {
+  it.each([
+    [[], ''],
+    [['.pdf'], '.pdf'],
+    [['.pdf', '.docx'], '.pdf or .docx'],
+    [['.pdf', '.docx', '.png'], '.pdf, .docx or .png'],
+  ] as [string[], string][])('formats %p as %p', (allowed, expected) => {
+    expect(formatAllowedFileTypes(allowed)).toBe(expected);
   });
 });

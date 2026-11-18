@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { DocsRepository } from '../docs/docsRepository';
 import { queryTerms } from '../search/textSearch';
-import { ToolDefinition } from './types';
+import { OFFLINE_TOOL_ANNOTATIONS, ToolDefinition } from './types';
 
 const SearchArgs = z.object({
   query: z.string(),
@@ -20,6 +20,7 @@ export function createDocsTools(docs: DocsRepository): ToolDefinition[] {
   return [
     {
       name: 'search_adsp_docs',
+      annotations: OFFLINE_TOOL_ANNOTATIONS,
       description:
         'Search ADSP platform documentation (getting started, architecture, service concepts, and tutorials) by ' +
         'keyword. Returns matching pages with a snippet; use read_adsp_doc with the returned path to read the full page.',
@@ -69,6 +70,7 @@ export function createDocsTools(docs: DocsRepository): ToolDefinition[] {
     },
     {
       name: 'list_adsp_docs',
+      annotations: OFFLINE_TOOL_ANNOTATIONS,
       description:
         'List the paths and titles of every bundled ADSP doc page, optionally only those under a path prefix ' +
         '(e.g. "services/" or "tutorials/"). Use it to browse what exists when keyword search misses; read a page ' +
@@ -101,6 +103,7 @@ export function createDocsTools(docs: DocsRepository): ToolDefinition[] {
     },
     {
       name: 'read_adsp_doc',
+      annotations: OFFLINE_TOOL_ANNOTATIONS,
       description:
         'Return the full markdown content of an ADSP doc page by its path, as returned by search_adsp_docs or ' +
         'list_adsp_docs.',

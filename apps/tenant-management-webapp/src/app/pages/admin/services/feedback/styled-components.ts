@@ -110,10 +110,6 @@ export const IconDiv = styled.div`
     margin: 0 11px;
   }
 `;
-export const ProgressWrapper = styled.div`
-  margin-left: 30%;
-`;
-
 export const URL = styled.div`
   line-break: anywhere;
 `;

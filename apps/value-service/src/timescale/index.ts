@@ -1,9 +1,18 @@
 import { retry } from '@abgov/adsp-service-sdk';
 import { knex as initKnex } from 'knex';
 import { Logger } from 'winston';
-import { MetricIntervalRollupRepository, ServiceMetricRollupRepository, ValuesRepository } from '../values';
+import {
+  EventResourceRollupRepository,
+  MetricIntervalRollupRepository,
+  ServiceMetricRollupRepository,
+  ValuesRepository,
+} from '../values';
 import { TimescaleValuesRepository } from './value';
-import { TimescaleMetricIntervalRollupRepository, TimescaleServiceMetricRollupRepository } from '../values/repository';
+import {
+  TimescaleEventResourceRollupRepository,
+  TimescaleMetricIntervalRollupRepository,
+  TimescaleServiceMetricRollupRepository,
+} from '../values/repository';
 
 interface TimescaleRepositoryProps {
   logger: Logger;
@@ -15,6 +24,7 @@ interface TimescaleRepositoryProps {
   DB_TLS: boolean;
   DB_POOL_MAX: number;
   METRIC_INTERVAL_ROLLUP_STATEMENT_TIMEOUT_MS: number;
+  EVENT_RESOURCE_READ_STATEMENT_TIMEOUT_MS?: number;
 }
 
 interface Repositories {
@@ -22,6 +32,7 @@ interface Repositories {
   valueRepository: ValuesRepository;
   serviceMetricRollupRepository: ServiceMetricRollupRepository;
   metricIntervalRollupRepository: MetricIntervalRollupRepository;
+  eventResourceRollupRepository: EventResourceRollupRepository;
 }
 
 export const createRepositories = async ({
@@ -34,6 +45,7 @@ export const createRepositories = async ({
   DB_TLS,
   DB_POOL_MAX,
   METRIC_INTERVAL_ROLLUP_STATEMENT_TIMEOUT_MS,
+  EVENT_RESOURCE_READ_STATEMENT_TIMEOUT_MS = 0,
 }: TimescaleRepositoryProps): Promise<Repositories> => {
   const knex = initKnex({
     client: 'postgresql',
@@ -86,6 +98,13 @@ export const createRepositories = async ({
     metricIntervalRollupRepository: new TimescaleMetricIntervalRollupRepository(
       knex,
       METRIC_INTERVAL_ROLLUP_STATEMENT_TIMEOUT_MS,
+    ),
+    // The resource rollup runs under the same statement timeout as the interval rollups it sits beside;
+    // its report reads have a shorter one of their own, since a person is waiting on them.
+    eventResourceRollupRepository: new TimescaleEventResourceRollupRepository(
+      knex,
+      METRIC_INTERVAL_ROLLUP_STATEMENT_TIMEOUT_MS,
+      EVENT_RESOURCE_READ_STATEMENT_TIMEOUT_MS,
     ),
   };
 };

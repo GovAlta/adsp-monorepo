@@ -48,6 +48,10 @@ interface MetricsResponse {
   [metricName: string]: MetricResult | PageInfo | undefined;
 }
 
+interface DistinctCountResponse {
+  count?: number;
+}
+
 export interface ValueClientProps {
   directory?: ServiceDirectory;
   valueServiceUrl?: string;
@@ -158,6 +162,29 @@ function appendMetrics(target: EventMetrics, page: Omit<MetricsResponse, 'page'>
   return appended;
 }
 
+/**
+ * A value-service without the distinct count endpoint answers 404, and one that does not roll up the
+ * requested resource answers 400 saying so; either way the event log is read directly instead, so
+ * the gateway can deploy ahead of value-service.
+ *
+ * Any other 400 is passed on rather than falling back: paging the event log answers the same
+ * question many times slower, so a request value-service rejected for some other reason would
+ * quietly become a report that takes half a minute instead of an error that says why.
+ */
+const NOT_ROLLED_UP_MESSAGE = 'not rolled up';
+
+function isDistinctCountUnavailable(err: unknown): boolean {
+  if (!axios.isAxiosError(err)) {
+    return false;
+  }
+  const status = err.response?.status;
+  if (status === HttpStatusCodes.NOT_FOUND) {
+    return true;
+  }
+  const message = (err.response?.data as { errorMessage?: unknown } | undefined)?.errorMessage;
+  return status === HttpStatusCodes.BAD_REQUEST && typeof message === 'string' && message.includes(NOT_ROLLED_UP_MESSAGE);
+}
+
 function rethrowValueServiceError(err: unknown): never {
   if (axios.isAxiosError(err)) {
     const status = err.response?.status;
@@ -243,6 +270,34 @@ export function createValueServiceClient({ directory, valueServiceUrl }: ValueCl
     return values;
   };
 
+  /** One request answered from value-service's daily resource rollup, or null when it cannot answer. */
+  const readDistinctCount = async (
+    base: URL,
+    token: string,
+    query: DistinctContextQuery,
+    from: string,
+    to: string
+  ): Promise<number | null> => {
+    try {
+      const response = await axios.get<DistinctCountResponse>(new URL('event-resources/distinct-count', base).href, {
+        headers: headers(token),
+        params: {
+          namespace: query.namespace,
+          contextKey: query.contextKey,
+          names: query.eventNames.join(','),
+          intervalMin: `${from}T00:00:00.000Z`,
+          intervalMax: timestampMaxExclusive(to),
+        },
+      });
+      return typeof response.data?.count === 'number' ? response.data.count : null;
+    } catch (err) {
+      if (isDistinctCountUnavailable(err)) {
+        return null;
+      }
+      rethrowValueServiceError(err);
+    }
+  };
+
   const readMetricWindow = async (
     base: URL,
     token: string,
@@ -306,6 +361,11 @@ export function createValueServiceClient({ directory, valueServiceUrl }: ValueCl
 
     async countDistinctContext(token, query, from, to) {
       const base = await resolveBase();
+      const rolledUp = await readDistinctCount(base, token, query, from, to);
+      if (rolledUp !== null) {
+        return rolledUp;
+      }
+
       const ids = new Set<string>();
       const months = splitMonths(from, to);
       const collected = await Promise.all(

@@ -1,5 +1,6 @@
 import {
   AdspId,
+  AuditService,
   ConfigurationService,
   EventService,
   ServiceDirectory,
@@ -18,12 +19,14 @@ export * from './model';
 export * from './repository';
 export * from './configuration';
 export * from './recurrence';
+export * from './audit';
 
 interface CalendarMiddlewareProps {
   serviceId: AdspId;
   logger: Logger;
   calendarRepository: CalendarRepository;
   eventService: EventService;
+  auditService: AuditService;
   directory: ServiceDirectory;
   tenantService: TenantService;
   tokenProvider: TokenProvider;

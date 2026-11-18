@@ -54,6 +54,25 @@ The feedback service processes text content of submitted feedback using the [PII
 
 Feedback service does not send or consume domain events. Received feedback is queued, processed, and then written as `feedback` values to the [value service](value-service.md) under the `feedback-service` namespace.
 
+## Audit
+
+The feedback service records audit events in the `feedback-service` namespace of the [audit service](audit-service.md). Records are written to the tenant of the feedback. All actions are version 1 and use the `feedback` resource type.
+
+| Action                          | Category    | Severity | Retention class | Recorded when                                                                                                            |
+| :------------------------------ | :---------- | :------- | :-------------- | :----------------------------------------------------------------------------------------------------------------------- |
+| `feedback.submitted`            | data-access | info     | standard        | Feedback is accepted and queued for processing.                                                                          |
+| `feedback.anonymized`           | runtime     | info     | standard        | The comment or technical issue text of feedback is anonymized and the feedback is written to the value service.          |
+| `feedback.anonymization-failed` | runtime     | warning  | security        | Anonymization of the text fails on the final attempt, so the feedback is dead lettered and not written (status `error`). |
+
+Each submission is given an ID that is used as the resource ID, so the records of the same feedback can be matched. The `correlationId` of the feedback context, when set, is recorded as the correlation ID. The metadata includes the `site`, `view` and `rating`, and `commentProvided` and `technicalIssueProvided` flags. The comment and technical issue are free text that can contain personal information, so they are never recorded; nor are the anonymized text or the PII entities that were found. `feedback.anonymization-failed` also includes the `error` message.
+
+- `feedback.submitted` uses the signed in user or service account (actor type `service`) as the actor. Anonymous feedback uses the actor `{ "id": "anonymous", "type": "user", "name": "Anonymous" }`.
+- `feedback.anonymized` and `feedback.anonymization-failed` are recorded by the processing job with the actor `{ "id": "feedback-service-job", "type": "system", "name": "Feedback service job" }`. Feedback without text is not anonymized, so it has no `feedback.anonymized` record. A failed attempt that is retried is not recorded, and a failure to write the value is logged but not recorded as an anonymization failure.
+
+Rejected feedback (for example an unknown site, or anonymous feedback to a site that does not allow it) and reading feedback, summaries and sites are not audited. Sites are configured in the configuration service, which records changes to the `platform:feedback-service` configuration, including `allowAnonymous` and `url` changes, as `configuration.updated` with a change set.
+
+Audit failures are logged and do not fail the operation; pending events are delivered before the service shuts down. The service account of feedback service needs the `audit-writer` role of `urn:ads:platform:audit-service`. Set `FEEDBACK_AUDIT_ENABLED` to `false` to turn recording off; when unset it follows the SDK `AUDIT_ENABLED` variable (on by default), and `true` forces it on. The action catalog is registered on startup either way.
+
 ## Code examples
 
 ### Configure a site

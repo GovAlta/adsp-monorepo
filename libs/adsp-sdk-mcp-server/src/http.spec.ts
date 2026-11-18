@@ -22,6 +22,7 @@ import { authHeaders, endpointFor, startTestAuth, stopTestAuth, testConfig } fro
 import { createMcpHttpApp } from './http';
 import { installMetrics } from './metrics';
 import * as quickstartModule from './tools/registerQuickstartTool';
+import { OFFLINE_TOOL_ANNOTATIONS } from './tools/types';
 import { createAdspMcpServer } from './server';
 
 beforeAll(startTestAuth);
@@ -113,6 +114,11 @@ describe('HTTP transport', () => {
 
     expect(actual).toEqual(outcome);
     expect(JSON.stringify(actual)).toBe(JSON.stringify(outcome));
+  });
+
+  it('instructions over HTTP equal the in-memory output', () => {
+    expect(client.getInstructions()).toBeDefined();
+    expect(client.getInstructions()).toBe(inMemoryClient.getInstructions());
   });
 
   it('tools/list over HTTP equals the in-memory output', async () => {
@@ -228,7 +234,7 @@ describe('stateless HTTP', () => {
     const response = await postMcp(running.endpoint, TOOLS_LIST_REQUEST);
     const body = await response.json();
 
-    expect({ status: response.status, toolCount: body.result?.tools.length }).toEqual({ status: 200, toolCount: 11 });
+    expect({ status: response.status, toolCount: body.result?.tools.length }).toEqual({ status: 200, toolCount: 12 });
   });
 
   it('ignores an Mcp-Session-Id header from an earlier stateful session', async () => {
@@ -407,6 +413,7 @@ describe('HTTP tool handler failures', () => {
         name: 'get_platform_quickstart',
         description: 'Quickstart that fails.',
         inputSchema: { type: 'object' },
+        annotations: OFFLINE_TOOL_ANNOTATIONS,
         handler: () => {
           throw new Error('handler failed');
         },

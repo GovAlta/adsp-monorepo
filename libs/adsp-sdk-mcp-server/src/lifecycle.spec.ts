@@ -15,6 +15,7 @@ import {
 import { createMcpHttpApp, createMcpHttpServer } from './http';
 import { createGracefulShutdown, createLifecycle, ServerLifecycle } from './lifecycle';
 import * as quickstartModule from './tools/registerQuickstartTool';
+import { OFFLINE_TOOL_ANNOTATIONS } from './tools/types';
 
 const QUICKSTART_CALL = {
   jsonrpc: '2.0',
@@ -71,6 +72,7 @@ describe('graceful shutdown', () => {
         name: 'get_platform_quickstart',
         description: 'Quickstart that waits for the test.',
         inputSchema: { type: 'object' },
+        annotations: OFFLINE_TOOL_ANNOTATIONS,
         handler: async () => {
           handlerCalls += 1;
           await held;

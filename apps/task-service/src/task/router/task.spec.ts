@@ -21,6 +21,8 @@ describe('task', () => {
     send: jest.fn(),
   };
 
+  const auditServiceMock = { record: jest.fn(), query: jest.fn(), flush: jest.fn(), droppedEventCount: 0 };
+
   const repositoryMock = {
     getTask: jest.fn(),
     getTasks: jest.fn(),
@@ -64,6 +66,7 @@ describe('task', () => {
     repositoryMock.save.mockClear();
     repositoryMock.delete.mockClear();
     eventServiceMock.send.mockReset();
+    auditServiceMock.record.mockReset();
   });
 
   describe('createTaskRouter', () => {
@@ -72,6 +75,7 @@ describe('task', () => {
         apiId,
         logger: loggerMock,
         eventService: eventServiceMock,
+        auditService: auditServiceMock,
         taskRepository: repositoryMock,
       });
 
@@ -367,10 +371,10 @@ describe('task', () => {
   });
 
   describe('updateTask', () => {
-    const handler = updateTask(apiId, loggerMock, eventServiceMock);
+    const handler = updateTask(apiId, loggerMock, eventServiceMock, auditServiceMock);
 
     it('can create request handler', () => {
-      const result = updateTask(apiId, loggerMock, eventServiceMock);
+      const result = updateTask(apiId, loggerMock, eventServiceMock, auditServiceMock);
       expect(result).toBeTruthy();
     });
 
@@ -449,10 +453,10 @@ describe('task', () => {
   });
 
   describe('taskOperation', () => {
-    const handler = taskOperation(apiId, loggerMock, eventServiceMock);
+    const handler = taskOperation(apiId, loggerMock, eventServiceMock, auditServiceMock);
 
     it('can create request handler', () => {
-      const result = taskOperation(apiId, loggerMock, eventServiceMock);
+      const result = taskOperation(apiId, loggerMock, eventServiceMock, auditServiceMock);
       expect(result).toBeTruthy();
     });
 
@@ -586,10 +590,10 @@ describe('task', () => {
   });
 
   describe('deleteTask', () => {
-    const handler = deleteTask(apiId, loggerMock, eventServiceMock);
+    const handler = deleteTask(apiId, loggerMock, eventServiceMock, auditServiceMock);
 
     it('can create request handler', () => {
-      const result = deleteTask(apiId, loggerMock, eventServiceMock);
+      const result = deleteTask(apiId, loggerMock, eventServiceMock, auditServiceMock);
       expect(result).toBeTruthy();
     });
 

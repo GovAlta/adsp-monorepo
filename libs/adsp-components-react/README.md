@@ -210,15 +210,15 @@ const client = useMemo(() => new FileClient({ serviceUrl, getAccessToken }), [se
 <ADSPFileUpload client={client} fileTypeId="my-file-type" recordId={application.id} onUpload={addFile} />;
 ```
 
-| Prop             | Type                                        | Description                                                                                                                                                       |
-| ---------------- | ------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `client`         | `IFileUploadClient`                         | Loads the File Type and uploads files, usually a `FileClient` from core built with the app's `getAccessToken`. Create it once or memoize it.                      |
-| `fileTypeId`     | `string`                                    | ID of the File service File Type the files are uploaded as.                                                                                                       |
-| `canUpload`      | `boolean`                                   | Whether the application lets the current user upload. `false` renders nothing and sends no request. Defaults to `true`; File service still authorizes the upload. |
-| `recordId`       | `string`                                    | Ties each uploaded file to a record in the application, such as a form submission.                                                                               |
-| `onUpload`       | `(file: FileMetadata) => void`              | Called with the file as File service stored it, once an upload succeeds.                                                                                          |
-| `themeOverrides` | `AdspComponentThemeOverrides<'fileUpload'>` | File upload tokens for this instance only.                                                                                                                        |
-| `testId`         | `string`                                    | `data-testid` on the root element; the GoA input, card and retry button get `-input`, `-card` and `-retry`.                                                       |
+| Prop             | Type                                        | Description                                                                                                                                                        |
+| ---------------- | ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `client`         | `IFileUploadClient`                         | Loads the File Type and uploads files, usually a `FileClient` from core built with the app's `getAccessToken`. Create it once or memoize it.                       |
+| `fileTypeId`     | `string`                                    | ID of the File service File Type the files are uploaded as.                                                                                                        |
+| `canUpload`      | `boolean`                                   | Whether the application lets the current user upload. `false` renders nothing and sends no request. Defaults to `true`; File service still authorizes the upload.  |
+| `recordId`       | `string`                                    | Ties each uploaded file to a record in the application, such as a form submission.                                                                                 |
+| `onUpload`       | `(file: FileMetadata) => void`              | Called with the file as File service stored it, once for each upload that succeeds.                                                                                |
+| `themeOverrides` | `AdspComponentThemeOverrides<'fileUpload'>` | File upload tokens for this instance only.                                                                                                                         |
+| `testId`         | `string`                                    | `data-testid` on the root element; the GoA input gets `-input`, and each upload's card, confirmation and retry button get `-card-N`, `-uploaded-N` and `-retry-N`. |
 
 | Token (`themeOverrides`) | Styles                         |
 | ------------------------ | ------------------------------ |
@@ -230,14 +230,15 @@ const client = useMemo(() => new FileClient({ serviceUrl, getAccessToken }), [se
 Things to know:
 
 - **Permissions.** There is no shared ADSP permission resolver yet, so the application passes `canUpload`. File service's answer to the File Type request also tells the component before any upload whether the user may use the type: a 403 shows a permission message instead of the drop area.
-- **Allowed formats.** File service File Types don't configure allowed formats or a size limit, so the component can't validate formats on the client. It only applies File service's 3 GB upload limit (the GoA input would otherwise reject anything over 5 MB). File service's answer to the upload is authoritative.
-- **One file at a time.** The drop area is hidden while a file uploads and comes back once it finishes, to upload another.
-- **Cancel and remove** only affect the component. Cancelling stops the request; removing a finished upload clears it from view but leaves the file in File service.
+- **Allowed formats.** When the File Type lists `allowedFileTypes`, the component shows them under the drop area and fails a file with another extension at once, without sending it and without offering Try again. File service still checks the content and its answer is authoritative; its own format rejection gets the same message. The component also applies File service's 3 GB upload limit (the GoA input would otherwise reject anything over 5 MB).
+- **Several files.** Every file dropped or picked is uploaded, each with its own card, and the drop area stays available for more.
+- **Progress** stops at 99% until File service answers, because File service only accepts or rejects the file once it has received all of it.
+- **Cancel** stops an upload in progress, and on a failed upload it dismisses the error. A finished upload shows a confirmation with no Remove button, because the component doesn't delete files from File service.
 - **Changing `client` or `fileTypeId`** cancels an upload in progress and starts over with the new File Type.
 
 #### `useFileUpload(client, fileTypeId, { recordId, onUpload })`
 
-The hook `ADSPFileUpload` uses. It returns `{ fileType, loading, status, selectedFile, progress, uploaded, error, ready, upload, retry, reset }`. `status` is `idle`, `uploading`, `uploaded` or `failed`. `retry` repeats whatever failed: loading the File Type or uploading the same file. Use it to build a different upload experience on the same File service behaviour.
+The hook `ADSPFileUpload` uses. It returns `{ fileType, loading, typeError, ready, uploads, uploading, upload, retry, remove, reloadType }`. `upload` takes one file or several; each becomes an entry in `uploads` with an `id`, the `file`, a `status` of `uploading`, `uploaded` or `failed`, `progress`, `uploaded` and `error`. `retry(id)` uploads a failed file again when its error is retryable, `remove(id)` cancels or dismisses one, and `reloadType()` loads the File Type again after it failed. Use it to build a different upload experience on the same File service behaviour.
 
 ## Building a component
 
