@@ -1,5 +1,5 @@
 import { EventEmitter } from 'events';
-import { postMcp, testConfig, waitFor } from './fixtures/httpTestKit';
+import { endpointFor, postMcp, startTestAuth, stopTestAuth, testConfig, waitFor } from './fixtures/httpTestKit';
 import { FIXTURE_DOCS_ROOT } from './fixtures/toolContract';
 import { startMcpHttpServer, StartedMcpHttpServer } from './hosted';
 
@@ -9,6 +9,9 @@ const SEARCH_CALL = {
   method: 'tools/call',
   params: { name: 'search_adsp_docs', arguments: { query: 'event service' } },
 };
+
+beforeAll(startTestAuth);
+afterAll(stopTestAuth);
 
 describe('startMcpHttpServer', () => {
   let started: StartedMcpHttpServer | undefined;
@@ -48,7 +51,7 @@ describe('startMcpHttpServer', () => {
   it('serves the MCP endpoint from the given docs root and reports ready', async () => {
     const base = await start();
 
-    const response = await postMcp(new URL(`${base}/mcp`), SEARCH_CALL);
+    const response = await postMcp(endpointFor(base), SEARCH_CALL);
     const body = await response.json();
 
     expect((await fetch(`${base}/ready`)).status).toBe(200);
