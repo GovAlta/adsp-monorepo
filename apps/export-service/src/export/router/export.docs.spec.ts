@@ -287,6 +287,18 @@ describe('export router documented behaviour', () => {
       expect(res.status).toBe(403);
     });
 
+    it.each(['exporter', 'plain'])('returns 404 to a %s user for a job of another tenant', async (token) => {
+      repositoryMock.get.mockResolvedValueOnce({
+        ...job(users.core),
+        tenantId: adspId`urn:ads:platform:tenant-service:v2:/tenants/7a8b9c0d1e2f3a4b5c6d7e8f`,
+      });
+
+      const res = await request(createApp()).get(`/export/v1/jobs/${jobId}`).set('Authorization', `Bearer ${token}`);
+
+      expect(res.status).toBe(404);
+      expect(res.body.errorMessage).toBe(`export job with ID '${jobId}' could not be found.`);
+    });
+
     it('returns 404 when the job does not exist or has expired', async () => {
       repositoryMock.get.mockResolvedValueOnce(null);
 

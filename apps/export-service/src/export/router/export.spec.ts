@@ -332,7 +332,7 @@ describe('export', () => {
         status: 'completed',
         result: null,
       };
-      repositoryMock.get.mockResolvedValueOnce(job);
+      repositoryMock.get.mockResolvedValueOnce({ ...job, tenantId });
 
       const handler = getExportJob(serviceId, repositoryMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
@@ -361,7 +361,7 @@ describe('export', () => {
         status: 'completed',
         result: null,
       };
-      repositoryMock.get.mockResolvedValueOnce({ ...job, createdBy: { id: 'tester' } });
+      repositoryMock.get.mockResolvedValueOnce({ ...job, tenantId, createdBy: { id: 'tester' } });
 
       const handler = getExportJob(serviceId, repositoryMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
@@ -390,7 +390,7 @@ describe('export', () => {
         status: 'completed',
         result: null,
       };
-      repositoryMock.get.mockResolvedValueOnce(job);
+      repositoryMock.get.mockResolvedValueOnce({ ...job, tenantId });
 
       const handler = getExportJob(serviceId, repositoryMock);
       await handler(req as unknown as Request, res as unknown as Response, next);

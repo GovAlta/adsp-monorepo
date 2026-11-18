@@ -35,7 +35,7 @@ components:
           example:
             errorMessage: 'User Test User (ID: 3f1b2c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d) not permitted to create export job.'
     ExportNotFound:
-      description: The export job does not exist, or it has expired.
+      description: The export job does not exist, has expired, or belongs to another tenant.
       content:
         application/json:
           schema:
@@ -283,8 +283,8 @@ components:
       after they are created or last updated.
 
 
-      The user who created the job can always retrieve it. Other users require the exporter role in the tenant of
-      their token. Core users can retrieve only the jobs they created.
+      Jobs of another tenant respond 404. In the job's tenant, the user who created it can retrieve it, and other users
+      require the exporter role in the tenant of their token. Core users can retrieve only the jobs they created.
     operationId: getJob
     parameters:
       - name: jobId

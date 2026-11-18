@@ -88,7 +88,9 @@ export function getExportJob(serviceId: AdspId, repository: JobRepository<FileRe
       const { jobId } = req.params;
 
       const job = await repository.get(jobId);
-      if (!job) {
+      // Respond 404 for another tenant's job so the caller can't confirm it exists.
+      const isOtherTenantJob = req.tenant && `${job?.tenantId}` !== `${req.tenant.id}`;
+      if (!job || isOtherTenantJob) {
         throw new NotFoundError('export job', jobId);
       }
 
