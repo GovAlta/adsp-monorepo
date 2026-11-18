@@ -116,6 +116,7 @@ const initializeApp = async (): Promise<express.Application> => {
       }),
       useLongConfigurationCacheTTL: true,
       auditActions: EventServiceAuditActions,
+      audit: { enabled: environment.EVENT_AUDIT_ENABLED },
       serviceConfigurations: [
         {
           serviceId: adspId`urn:ads:platform:audit-service`,
