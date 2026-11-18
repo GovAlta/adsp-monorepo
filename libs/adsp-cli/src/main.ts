@@ -8,7 +8,7 @@ import { deleteTenantById, findTenantByName, listTenants, Tenant } from './tenan
 const USAGE =
   'Usage: adsp <login [--realm <realm> | --tenant <name>] [--scope <name>]... [--env <dev|test|prod>] [--local] | ' +
   'login --ci --tenant <name> [--client-id <id>] [--client-secret <secret>] [--env <dev|test|prod>] | ' +
-  'status | logout | token | tenants [name] | service-roles | delete-tenant <name> | ' +
+  'status | logout | token | tenants [name] | service-roles | delete-tenant [name] | ' +
   'directory register --service <name> --url <url>>';
 
 const HELP_TEXT = `adsp-cli — CLI and client library for authenticating against ADSP and calling its live APIs.
@@ -22,9 +22,10 @@ Commands:
                           to paste the code Keycloak displays — works in Dev Spaces,
                           containers, and headless environments. Resolves a tenant realm via
                           --realm (direct), --tenant (anonymous name lookup), or neither (logs
-                          into core, then prompts you to pick a tenant — in dev/test, this
-                          prompt also offers to create a new tenant). Persists the resolved
-                          realm/environment so later commands don't need them set again.
+                          into core, then prompts you to pick a tenant — if your roles allow
+                          it, this prompt also offers to create a new tenant, in any
+                          environment). Persists the resolved realm/environment so later
+                          commands don't need them set again.
   login --ci --tenant <name> [--client-id <id>] [--client-secret <secret>] [--env <dev|test|prod>]
                           Log in non-interactively via the client credentials grant. Intended for
                           CI environments. --tenant is required. --client-id and --client-secret
@@ -39,9 +40,10 @@ Commands:
                           a cached core-realm session from a prior no-args login).
   service-roles           Print every platform service's registered RBAC role, read live from
                           tenant-service configuration.
-  delete-tenant <name>    Permanently delete a tenant and its Keycloak realm. Requires a cached
-                          core-realm session with the tenant-service-admin role. Prompts for
-                          confirmation before deleting.
+  delete-tenant [name]    Permanently delete a tenant and its Keycloak realm. Without a name,
+                          prompts you to pick one. Requires a cached core-realm session with
+                          the tenant-service-admin role. Prompts for confirmation before
+                          deleting.
   directory register --service <name> --url <url>
                           Register a service entry in the ADSP directory under the current
                           tenant's namespace (derived from the login session). Skips silently
