@@ -247,10 +247,21 @@ describe('tenant routers documented behaviour', () => {
     });
 
     describe('GET /api/tenant/v1/:id', () => {
-      it("lets any authenticated user retrieve a tenant, including one that isn't theirs", async () => {
-        const res = await request(createApp(plain)).get('/api/tenant/v1/other');
+      it('lets a tenant user retrieve their own tenant', async () => {
+        const res = await request(createApp(plain)).get('/api/tenant/v1/test');
         expect(res.status).toBe(200);
-        expect(res.body).toMatchObject({ success: true, tenant: { name: 'Other' } });
+        expect(res.body).toMatchObject({ success: true, tenant: { name: 'Test' } });
+      });
+
+      it('responds 404 to a tenant user for another tenant', async () => {
+        const res = await request(createApp(plain)).get('/api/tenant/v1/other');
+        expect(res.status).toBe(404);
+      });
+
+      it('lets a core user retrieve any tenant', async () => {
+        const res = await request(createApp(core('core-user', []))).get('/api/tenant/v1/other');
+        expect(res.status).toBe(200);
+        expect(res.body.tenant.name).toBe('Other');
       });
 
       it('responds 404 for an unknown tenant', async () => {
@@ -280,8 +291,19 @@ describe('tenant routers documented behaviour', () => {
     });
 
     describe('GET /api/tenant/v1/realm/:realm', () => {
-      it('lets any authenticated user retrieve a tenant by realm', async () => {
+      it('lets a tenant user retrieve their own tenant by realm', async () => {
+        const res = await request(createApp(plain)).get('/api/tenant/v1/realm/test-realm');
+        expect(res.status).toBe(200);
+        expect(res.body.tenant.name).toBe('Test');
+      });
+
+      it('responds 404 to a tenant user for the realm of another tenant', async () => {
         const res = await request(createApp(plain)).get('/api/tenant/v1/realm/other-realm');
+        expect(res.status).toBe(404);
+      });
+
+      it('lets a core user retrieve any tenant by realm', async () => {
+        const res = await request(createApp(core('core-user', []))).get('/api/tenant/v1/realm/other-realm');
         expect(res.status).toBe(200);
         expect(res.body.tenant.name).toBe('Other');
       });
@@ -298,11 +320,24 @@ describe('tenant routers documented behaviour', () => {
     });
 
     describe.each([
-      ['email', { email: 'admin@other.co' }, { email: 'unknown@test.co' }],
-      ['name', { name: 'Other' }, { name: 'Unknown' }],
-    ])('POST /api/tenant/v1/%s', (path, found, notFound) => {
-      it('lets any authenticated user find a tenant', async () => {
+      ['email', { email: 'admin@test.co' }, { email: 'admin@other.co' }, { email: 'unknown@test.co' }],
+      ['name', { name: 'Test' }, { name: 'Other' }, { name: 'Unknown' }],
+    ])('POST /api/tenant/v1/%s', (path, found, other, notFound) => {
+      it('lets a tenant user find their own tenant', async () => {
         const res = await request(createApp(plain)).post(`/api/tenant/v1/${path}`).send(found);
+        expect(res.status).toBe(200);
+        expect(res.body.name).toBe('Test');
+      });
+
+      it('responds 404 to a tenant user for another tenant', async () => {
+        const res = await request(createApp(plain)).post(`/api/tenant/v1/${path}`).send(other);
+        expect(res.status).toBe(404);
+      });
+
+      it('lets a core user find any tenant', async () => {
+        const res = await request(createApp(core('core-user', [])))
+          .post(`/api/tenant/v1/${path}`)
+          .send(other);
         expect(res.status).toBe(200);
         expect(res.body.name).toBe('Other');
       });
@@ -310,6 +345,18 @@ describe('tenant routers documented behaviour', () => {
       it(`responds 400 when ${path} is missing`, async () => {
         const res = await request(createApp(plain)).post(`/api/tenant/v1/${path}`).send({});
         expect(res.status).toBe(400);
+      });
+
+      it('finds the own tenant of a tenant user when another tenant also matches', async () => {
+        tenants.unshift(
+          new TenantEntity(
+            repositoryMock as never,
+            { id: 'dup', name: 'Test', realm: 'dup-realm', adminEmail: 'admin@test.co', status: 'active' } as never,
+          ),
+        );
+        const res = await request(createApp(plain)).post(`/api/tenant/v1/${path}`).send(found);
+        expect(res.status).toBe(200);
+        expect(res.body.id).toContain('/tenants/test');
       });
 
       it('responds 404 when there is no matching tenant', async () => {
@@ -331,9 +378,46 @@ describe('tenant routers documented behaviour', () => {
         expect(realmServiceMock.findUserId).toHaveBeenCalledWith('core', 'someone@test.co');
       });
 
+      it('looks up the user in the own realm of a tenant-admin', async () => {
+        const res = await request(createApp(tenantAdmin)).get(
+          '/api/tenant/v1/user/id?email=someone@test.co&realm=test-realm',
+        );
+        expect(res.status).toBe(200);
+        expect(realmServiceMock.findUserId).toHaveBeenCalledWith('test-realm', 'someone@test.co');
+      });
+
+      it('responds 403 to a tenant-admin for the realm of another tenant', async () => {
+        const res = await request(createApp(tenantAdmin)).get(
+          '/api/tenant/v1/user/id?email=someone@test.co&realm=other-realm',
+        );
+        expect(res.status).toBe(403);
+        expect(realmServiceMock.findUserId).not.toHaveBeenCalled();
+      });
+
+      it('lets a core tenant-admin look up a user in any realm', async () => {
+        const res = await request(createApp(core('core-admin', [TenantServiceRoles.TenantAdmin]))).get(
+          '/api/tenant/v1/user/id?email=someone@test.co&realm=other-realm',
+        );
+        expect(res.status).toBe(200);
+        expect(realmServiceMock.findUserId).toHaveBeenCalledWith('other-realm', 'someone@test.co');
+      });
+
       it('rejects a user without the tenant-admin role', async () => {
         const res = await request(createApp(plain)).get('/api/tenant/v1/user/id?email=someone@test.co');
         expect(res.status).toBe(401);
+      });
+
+      it('looks up the user in the core realm when realm is empty', async () => {
+        const res = await request(createApp(tenantAdmin)).get('/api/tenant/v1/user/id?email=someone@test.co&realm=');
+        expect(res.status).toBe(200);
+        expect(realmServiceMock.findUserId).toHaveBeenCalledWith('core', 'someone@test.co');
+      });
+
+      it('responds 400 when realm is not a string', async () => {
+        const res = await request(createApp(tenantAdmin)).get(
+          '/api/tenant/v1/user/id?email=someone@test.co&realm=core&realm=other-realm',
+        );
+        expect(res.status).toBe(400);
       });
 
       it('responds 400 when email is missing', async () => {
@@ -387,6 +471,20 @@ describe('tenant routers documented behaviour', () => {
         );
         expect(res.status).toBe(200);
         expect(realmServiceMock.deleteUserIdp).toHaveBeenCalledWith('user-id', 'test-realm', 'core');
+      });
+
+      it('removes the identity provider link of a core user, as the webapp does', async () => {
+        const res = await request(createApp(tenantAdmin)).delete('/api/tenant/v1/user/idp?userId=user-id&realm=core');
+        expect(res.status).toBe(200);
+        expect(realmServiceMock.deleteUserIdp).toHaveBeenCalledWith('user-id', 'core', undefined);
+      });
+
+      it('responds 403 to a tenant-admin for the realm of another tenant', async () => {
+        const res = await request(createApp(tenantAdmin)).delete(
+          '/api/tenant/v1/user/idp?userId=user-id&realm=other-realm',
+        );
+        expect(res.status).toBe(403);
+        expect(realmServiceMock.deleteUserIdp).not.toHaveBeenCalled();
       });
 
       it('responds 400 when realm is missing', async () => {
