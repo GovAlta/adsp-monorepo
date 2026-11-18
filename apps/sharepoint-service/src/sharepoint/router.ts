@@ -4,7 +4,7 @@ import { Request, RequestHandler, Router } from 'express';
 import { body, param } from 'express-validator';
 import { Logger } from 'winston';
 import { CredentialStore } from './credentials';
-import { CredentialNotSetError, DestinationDisabledError, SharePointError } from './errors';
+import { CredentialNotSetError, CredentialUnreadableError, DestinationDisabledError, SharePointError } from './errors';
 import { FilesUploadResult, MAX_FILES, SharePointFileService } from './files';
 import { GraphTokenProvider } from './graph';
 import { RowIdentityMissingError } from './mapper';
@@ -102,6 +102,9 @@ function toTestFailure(err: unknown): TestResult {
   if (err instanceof CredentialNotSetError) {
     return { ok: false, errorCode: 'credential-not-set' };
   }
+  if (err instanceof CredentialUnreadableError) {
+    return { ok: false, errorCode: 'credential-unreadable' };
+  }
   if (err instanceof RowIdentityMissingError) {
     return { ok: false, errorCode: 'row-identity-missing' };
   }
@@ -165,6 +168,14 @@ export function pushData(pusher: SharePointPusher, logger: Logger): RequestHandl
           res.status(409).send({ errorCode: 'credential-not-set' });
           return;
         }
+        if (err instanceof CredentialUnreadableError) {
+          logger.warn(
+            `Push to SharePoint destination '${destinationId}' failed: the stored credential cannot be decrypted.`,
+            logContext(tenantId),
+          );
+          res.status(409).send({ errorCode: 'credential-unreadable' });
+          return;
+        }
         if (err instanceof SharePointError) {
           logger.warn(
             `Push to SharePoint destination '${destinationId}' failed with: ${err.errorCode}.`,
@@ -209,6 +220,10 @@ export function uploadFiles(fileService: SharePointFileService, logger: Logger):
         }
         if (err instanceof CredentialNotSetError) {
           res.status(409).send({ errorCode: 'credential-not-set' });
+          return;
+        }
+        if (err instanceof CredentialUnreadableError) {
+          res.status(409).send({ errorCode: 'credential-unreadable' });
           return;
         }
         if (err instanceof SharePointError) {

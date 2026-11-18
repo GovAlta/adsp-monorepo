@@ -8,18 +8,27 @@ import {
 import { getMetrics } from '../metrics';
 import { LIVE_TOOL_ANNOTATIONS, LiveToolDefinition } from './types';
 import { withLiveToolPermit } from './liveToolLimit';
-import { classifyUpstreamError } from './upstreamErrors';
+import { CALLER_SIGN_IN_REJECTED, classifyUpstreamError } from './upstreamErrors';
 
-function describeError(err: unknown): string {
+function describeError(err: unknown, signedInCaller: boolean): string {
   if (err instanceof ServiceNotInDirectoryError) {
     return err.message;
   }
 
   if (err instanceof HttpRequestError) {
     if (err.status === 401) {
+      if (signedInCaller) {
+        return CALLER_SIGN_IN_REJECTED;
+      }
       return 'Access token was rejected (401). Run `npx @abgov/adsp-cli login` again to refresh it.';
     }
     if (err.status === 403) {
+      if (signedInCaller) {
+        return (
+          'Access denied (403) reading configuration-service schemas. This is more likely the wrong tenant realm ' +
+          'than a missing role — check the realm in your MCP server URL.'
+        );
+      }
       return (
         'Access denied (403) reading configuration-service schemas. This is more likely the wrong tenant realm ' +
         'or environment than a missing role — check ADSP_TENANT_REALM and ADSP_ENV.'
@@ -41,6 +50,7 @@ function describeError(err: unknown): string {
 export function createConfigurationSchemaTools(): LiveToolDefinition[] {
   return [
     {
+      kind: 'live',
       name: 'get_service_configuration_schema',
       annotations: LIVE_TOOL_ANNOTATIONS,
       description:
@@ -61,7 +71,8 @@ export function createConfigurationSchemaTools(): LiveToolDefinition[] {
       },
       handler: (args: { serviceId?: string }, context) =>
         withLiveToolPermit(async () => {
-          const tokenResult = await getAccessToken();
+          const caller = context?.caller;
+          const tokenResult = caller ? { status: 'ok' as const, token: caller.accessToken } : await getAccessToken();
 
           if (tokenResult.status === 'not-authenticated') {
             getMetrics().recordUpstreamError('get_service_configuration_schema', 'not_authenticated');
@@ -74,7 +85,7 @@ export function createConfigurationSchemaTools(): LiveToolDefinition[] {
           }
 
           try {
-            const directoryServiceUrl = getDirectoryServiceUrl();
+            const directoryServiceUrl = caller ? caller.directoryServiceUrl : getDirectoryServiceUrl();
             const schemas = await getServiceConfigurationSchemas(
               tokenResult.token,
               directoryServiceUrl,
@@ -85,7 +96,7 @@ export function createConfigurationSchemaTools(): LiveToolDefinition[] {
             };
           } catch (err) {
             getMetrics().recordUpstreamError('get_service_configuration_schema', classifyUpstreamError(err));
-            return { isError: true, content: [{ type: 'text', text: describeError(err) }] };
+            return { isError: true, content: [{ type: 'text', text: describeError(err, caller !== undefined) }] };
           }
         }, context?.signal),
     },

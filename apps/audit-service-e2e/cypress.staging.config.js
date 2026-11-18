@@ -35,7 +35,7 @@ module.exports = defineConfig({
     setupNodeEvents(on, config) {
       return require('./src/plugins/index.js')(on, config);
     },
-    baseUrl: 'https://audit-service.adsp-uat.apps.aro-01.int.gov.ab.ca',
+    baseUrl: 'https://audit-service-adsp-uat.apps.aro-01.int.gov.ab.ca',
     specPattern: './src/integration/**/*.feature',
     supportFile: './src/support/index.ts',
     excludeSpecPattern: '*.js',

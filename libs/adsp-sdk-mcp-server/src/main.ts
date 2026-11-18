@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
-import { readConfig } from './config';
+import { readConfig, readHostedConfig } from './config';
 import { startMcpHttpServer } from './hosted';
 import { createAdspMcpServer } from './server';
 import { configureLiveToolLimit } from './tools/liveToolLimit';
@@ -16,7 +16,7 @@ function resolveTransport(): Transport {
 
 async function main(): Promise<void> {
   const transport = resolveTransport();
-  const config = readConfig();
+  const config = transport === 'http' ? readHostedConfig() : readConfig();
   console.error(`[adsp-sdk-mcp-server] transport=${transport}`);
 
   if (transport === 'http') {

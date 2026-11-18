@@ -154,6 +154,25 @@ describe('verify router documented behaviour', () => {
       expect(res.body).toEqual({ verified: false });
     });
 
+    it('responds verified false for an empty code and does not replace the code at the key', async () => {
+      const userWithBothRoles = tenantUser([VerifyUserRoles.Generator, VerifyUserRoles.Verifier]);
+      repositoryMock.get.mockResolvedValueOnce({ key, code: 'CF4HKR', failures: 0 });
+
+      const res = await request(createApp(userWithBothRoles)).post(`/verify/v1/codes/${key}`).send({ code: '' });
+
+      expect(res.status).toBe(200);
+      expect(res.body).toEqual({ verified: false });
+      expect(repositoryMock.failed).toHaveBeenCalled();
+      expect(repositoryMock.set).not.toHaveBeenCalled();
+    });
+
+    it('returns 403 for an empty code without the code-verifier role', async () => {
+      const res = await request(createApp(generator)).post(`/verify/v1/codes/${key}`).send({ code: '' });
+
+      expect(res.status).toBe(403);
+      expect(repositoryMock.set).not.toHaveBeenCalled();
+    });
+
     it('returns 400 for a key longer than 50 characters', async () => {
       const res = await request(createApp(generator)).post(`/verify/v1/codes/${'k'.repeat(51)}`);
 

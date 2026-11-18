@@ -4,6 +4,23 @@ import '@testing-library/jest-dom';
 import { BackButton } from './BackButton';
 
 describe('BackButton', () => {
+  it('provides a 44 by 44 pixel minimum hit area without changing the visible styling', () => {
+    // Arrange
+    render(<BackButton text="Change" link={jest.fn()} showBackIcon={false} />);
+
+    // Act
+    const button = screen.getByTestId('back-button-click');
+
+    // Assert
+    expect(button).toHaveStyle({
+      background: 'none',
+      border: '0',
+      minHeight: '44px',
+      minWidth: '44px',
+      padding: '10px 0',
+    });
+  });
+
   it('should render back button with text', () => {
     const mockLink = jest.fn();
     const { container } = render(<BackButton text="Go Back" link={mockLink} />);

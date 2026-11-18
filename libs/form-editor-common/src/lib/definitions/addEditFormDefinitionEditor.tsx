@@ -92,6 +92,7 @@ import { AddEditDispositionModal } from './addEditDispositionModal';
 import { DispositionItems } from './dispositionItems';
 import { FormConfigDefinition } from './formConfigDefinition';
 import { ReviewConfigurationTab } from './reviewConfigurationTab';
+import { SharePointDestinationSelect } from './sharePointDestinationSelect';
 import { JSONFormPreviewer } from './JsonFormPreviewer';
 import { PreviewTop, PDFPreviewTemplateCore } from './PDFPreviewTemplateCore';
 import {
@@ -106,6 +107,7 @@ import {
 import { UpdateSearchCriteriaAndFetchEvents } from '@store/calendar/actions';
 import { CalendarEventDefault } from '@store/calendar/models';
 import { getEventDefinitions } from '@store/event/actions';
+import { fetchSharepointConfiguration } from '@store/sharePoint/actions';
 import { StartEndDateEditor } from './startEndDateEditor';
 import type * as monacoNS from 'monaco-editor';
 import { AgentChat, ResizableSplitPane } from '@core-services/app-common';
@@ -222,6 +224,14 @@ export function AddEditFormDefinitionEditor({
   useEffect(() => {
     dispatch(getEventDefinitions());
   }, [dispatch]);
+
+  const sharepointEnabled = useSelector((state: RootState) => state.config.featureFlags?.SharePoint === true);
+  const sharepointDestinations = useSelector((state: RootState) => state.sharepoint?.destinations);
+  useEffect(() => {
+    if (sharepointEnabled) {
+      dispatch(fetchSharepointConfiguration());
+    }
+  }, [dispatch, sharepointEnabled]);
 
   const uploadFile = (file: File, propertyId: string) => {
     const fileInfo = { file: file, type: fileTypes[0]?.id, propertyId: propertyId };
@@ -1053,6 +1063,13 @@ export function AddEditFormDefinitionEditor({
                             </GoabDropdown>
                           </div>
                         </div>
+                        {sharepointEnabled && (
+                          <SharePointDestinationSelect
+                            destinations={sharepointDestinations}
+                            value={definition.sharepointConfigurationId}
+                            onChange={(sharepointConfigurationId) => setDefinition({ sharepointConfigurationId })}
+                          />
+                        )}
                         <div style={{ background: definition.submissionRecords ? 'white' : '#f1f1f1' }}>
                           <SubmissionConfigurationPadding>
                             <LifecycleLabelRow>

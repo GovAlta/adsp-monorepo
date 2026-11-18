@@ -7,14 +7,13 @@ import {
   requireBetaTesterOrAdmin,
 } from '../../middleware/authentication';
 import { logger } from '../../middleware/logger';
-import { AdspId, AuditService, EventService } from '@abgov/adsp-service-sdk';
+import { AuditService, EventService } from '@abgov/adsp-service-sdk';
 import { TenantRepository } from '../repository';
 import { NotFoundError } from '@core-services/core-common';
 import { mapTenant } from './mappers';
 import { RealmService } from '../services/realm';
 import { createkcAdminClient } from '../../keycloak';
-import { createTenant, removeTenant } from './tenantV2';
-import { tenantDeleted } from '../events';
+import { createTenant, archiveTenant } from './tenantV2';
 import { rateLimit } from 'express-rate-limit';
 
 class CreateTenantDto {
@@ -91,7 +90,7 @@ export const createTenantRouter = ({
   async function getTenantByEmail(req, res, next) {
     try {
       const { email } = req.payload;
-      const tenant = (await tenantRepository.find({ adminEmailEquals: email }))[0];
+      const tenant = (await tenantRepository.find({ adminEmailEquals: email, excludeArchived: true }))[0];
       if (!tenant) {
         throw new NotFoundError('Tenant', email);
       }
@@ -107,7 +106,7 @@ export const createTenantRouter = ({
     try {
       const { name } = req.payload;
 
-      const tenant = (await tenantRepository.find({ nameEquals: name }))[0];
+      const tenant = (await tenantRepository.find({ nameEquals: name, excludeArchived: true }))[0];
       if (!tenant) {
         throw new NotFoundError('Tenant', name);
       }
@@ -123,7 +122,7 @@ export const createTenantRouter = ({
     const { realm } = req.payload;
 
     try {
-      const tenant = (await tenantRepository.find({ realmEquals: realm }))[0];
+      const tenant = (await tenantRepository.find({ realmEquals: realm, excludeArchived: true }))[0];
       if (!tenant) {
         throw new NotFoundError('Tenant', realm);
       }
@@ -143,7 +142,7 @@ export const createTenantRouter = ({
 
     try {
       const tenant = await tenantRepository.get(id);
-      if (!tenant) {
+      if (!tenant || tenant.status === 'archived') {
         throw new NotFoundError('Tenant', id);
       }
 
@@ -182,14 +181,8 @@ export const createTenantRouter = ({
       if (!entity) {
         throw new NotFoundError('tenant', `realm: ${realm}`);
       }
-      const tenant = mapTenant(entity);
-
-      const { deletedRealm, deletedTenant, success } = await removeTenant(entity, req.user, realmService, auditService);
-
-      if (success) {
-        eventService.send(tenantDeleted(req.user, { ...tenant, id: AdspId.parse(tenant.id) }));
-      }
-      res.send({ deletedRealm, deletedTenant, success });
+      const archived = await archiveTenant(entity, req.user, realmService, eventService, auditService);
+      res.send(mapTenant(archived));
     } catch (err) {
       next(err);
     }

@@ -3,18 +3,20 @@ import { CallToolRequestSchema, CallToolResult, ListToolsRequestSchema } from '@
 import { join, resolve } from 'path';
 import { performance } from 'perf_hooks';
 import { ApiSpecsRepository } from './api-specs/apiSpecsRepository';
+import { loadCapabilityCatalog } from './capabilities/catalog';
 import { DocsRepository } from './docs/docsRepository';
-import { SERVER_INSTRUCTIONS } from './instructions';
+import { OFFLINE_ENDPOINT_INSTRUCTIONS, SERVER_INSTRUCTIONS } from './instructions';
 import { getMetrics, ToolErrorType } from './metrics';
 import { createApiTools } from './tools/registerApiTools';
 import { createConfigurationSchemaTools } from './tools/registerConfigurationSchemaTool';
 import { isBusyResult } from './tools/liveToolLimit';
 import { createDocsTools } from './tools/registerDocsTools';
+import { createFindServicesTool } from './tools/registerFindServicesTool';
 import { createQuickstartTool } from './tools/registerQuickstartTool';
 import { createServiceRolesTools } from './tools/registerServiceRolesTool';
 import { createSdkTools } from './tools/registerSdkTools';
 import { createServerInfoTool } from './tools/registerServerInfoTool';
-import { LiveToolDefinition, ToolDefinition } from './tools/types';
+import { CallerSignIn, isOfflineTool, LiveToolDefinition, ToolDefinition } from './tools/types';
 import { readPackageVersion } from './version';
 
 export interface CreateAdspMcpServerOptions {
@@ -22,16 +24,26 @@ export interface CreateAdspMcpServerOptions {
   docsRoot?: string;
   /** Root directory of bundled OpenAPI specs. Defaults to the assets copied alongside the built package. */
   apiSpecsRoot?: string;
+  /** Hosted mode: live tools use each request's verified token and this directory, never the CLI login. */
+  hostedAuth?: { directoryServiceUrl: string };
+  /** The capability catalog find_adsp_services ranks. Defaults to the one bundled with the package. */
+  capabilitiesPath?: string;
+  /** Serve only the tools that answer from bundled content, for callers that haven't signed in. */
+  offlineToolsOnly?: boolean;
 }
 
 export interface AdspMcpTools {
   tools: (ToolDefinition | LiveToolDefinition)[];
   toolsByName: Map<string, ToolDefinition | LiveToolDefinition>;
+  offlineTools: ToolDefinition[];
+  offlineToolsByName: Map<string, ToolDefinition>;
 }
 
 // Compiled output places this file under dist/.../src/, while the docs asset copy lands one level up at dist/.../assets/docs.
 const DEFAULT_DOCS_ROOT = join(__dirname, '..', 'assets', 'docs');
 const DEFAULT_API_SPECS_ROOT = join(__dirname, '..', 'assets', 'api-specs');
+// Generated into the library's own assets/ folder, so this resolves from source as well as from the build.
+const DEFAULT_CAPABILITIES_PATH = join(__dirname, '..', 'assets', 'capabilities.json');
 
 const toolsByRoots = new Map<string, AdspMcpTools>();
 
@@ -43,7 +55,8 @@ function lazy<T>(create: () => T): () => T {
 export function loadAdspMcpTools(options: CreateAdspMcpServerOptions = {}): AdspMcpTools {
   const docsRoot = resolve(options.docsRoot ?? DEFAULT_DOCS_ROOT);
   const apiSpecsRoot = resolve(options.apiSpecsRoot ?? DEFAULT_API_SPECS_ROOT);
-  const cacheKey = `${docsRoot}\0${apiSpecsRoot}`;
+  const capabilitiesPath = resolve(options.capabilitiesPath ?? DEFAULT_CAPABILITIES_PATH);
+  const cacheKey = `${docsRoot}\0${apiSpecsRoot}\0${capabilitiesPath}`;
   const cached = toolsByRoots.get(cacheKey);
   if (cached) {
     return cached;
@@ -52,6 +65,7 @@ export function loadAdspMcpTools(options: CreateAdspMcpServerOptions = {}): Adsp
   const started = performance.now();
   const docs = new DocsRepository(docsRoot);
   const tools = [
+    ...createFindServicesTool(lazy(() => loadCapabilityCatalog(capabilitiesPath))),
     ...createDocsTools(docs),
     ...createSdkTools(),
     ...createQuickstartTool(),
@@ -60,14 +74,23 @@ export function loadAdspMcpTools(options: CreateAdspMcpServerOptions = {}): Adsp
     ...createServerInfoTool(docs),
     ...createApiTools(lazy(() => new ApiSpecsRepository(apiSpecsRoot))),
   ];
-  const loaded = { tools, toolsByName: new Map(tools.map((tool) => [tool.name, tool])) };
+  const offlineTools = tools.filter(isOfflineTool);
+  const loaded = {
+    tools,
+    toolsByName: new Map(tools.map((tool) => [tool.name, tool])),
+    offlineTools,
+    offlineToolsByName: new Map(offlineTools.map((tool) => [tool.name, tool])),
+  };
   toolsByRoots.set(cacheKey, loaded);
   getMetrics().recordDocsIndexBuild(secondsSince(started));
   return loaded;
 }
 
 export function createAdspMcpServer(options: CreateAdspMcpServerOptions = {}): Server {
-  const { tools, toolsByName } = loadAdspMcpTools(options);
+  const loaded = loadAdspMcpTools(options);
+  const { tools, toolsByName } = options.offlineToolsOnly
+    ? { tools: loaded.offlineTools, toolsByName: loaded.offlineToolsByName }
+    : loaded;
 
   // Deliberately using the low-level Server (McpServer is recommended for typical cases) rather than an oversight:
   // this workspace hoists multiple physical copies of zod (root zod@3.x plus nested zod@4.x/3.x under unrelated
@@ -79,30 +102,49 @@ export function createAdspMcpServer(options: CreateAdspMcpServerOptions = {}): S
   // args with zod as a plain value (see tools/*.ts), never passing a schema through the SDK's type machinery.
   const server = new Server(
     { name: 'adsp-sdk-mcp-server', version: readPackageVersion() },
-    { capabilities: { tools: {} }, instructions: SERVER_INSTRUCTIONS },
+    {
+      capabilities: { tools: {} },
+      instructions: options.offlineToolsOnly ? OFFLINE_ENDPOINT_INSTRUCTIONS : SERVER_INSTRUCTIONS,
+    },
   );
 
   server.setRequestHandler(ListToolsRequestSchema, async () => ({
-    tools: tools.map(({ name, description, inputSchema, annotations }) => ({
-      name,
-      description,
-      inputSchema,
-      annotations,
+    tools: tools.map((tool) => ({
+      name: tool.name,
+      description: tool.description,
+      inputSchema: tool.inputSchema,
+      ...('outputSchema' in tool && tool.outputSchema && { outputSchema: tool.outputSchema }),
+      annotations: tool.annotations,
     })),
   }));
 
   server.setRequestHandler(CallToolRequestSchema, async (request, extra) => {
     const started = performance.now();
     const tool = toolsByName.get(request.params.name);
+    if (!tool && loaded.toolsByName.has(request.params.name)) {
+      getMetrics().recordToolCall(request.params.name, secondsSince(started), 'tool_error');
+      return { isError: true, content: [{ type: 'text', text: liveToolNeedsSignIn(request.params.name) }] };
+    }
     if (!tool) {
       // The label is fixed so client-supplied names can't create new metric series.
       getMetrics().recordToolCall('unknown', secondsSince(started), 'unknown_tool');
       return { isError: true, content: [{ type: 'text', text: `Unknown tool: ${request.params.name}` }] };
     }
 
+    let caller: CallerSignIn | undefined;
+    if (options.hostedAuth) {
+      const accessToken = extra.authInfo?.token;
+      // Refused rather than falling through, so a hosted server never acts with its own CLI login.
+      if (!accessToken) {
+        getMetrics().recordToolCall(tool.name, secondsSince(started), 'tool_error');
+        return { isError: true, content: [{ type: 'text', text: 'Sign-in required. Sign in from your MCP client.' }] };
+      }
+      caller = { accessToken, directoryServiceUrl: options.hostedAuth.directoryServiceUrl };
+    }
+
     try {
       // clean-code-ignore: 2.18 — ToolDefinition.handler is documented (tools/types.ts) as a pure, side-effect-free lookup.
-      const result = await tool.handler(request.params.arguments ?? {}, { signal: extra.signal });
+      const result = await tool.handler(request.params.arguments ?? {}, { signal: extra.signal, caller });
       getMetrics().recordToolCall(tool.name, secondsSince(started), toolErrorType(result));
       return result;
     } catch (err) {
@@ -112,6 +154,13 @@ export function createAdspMcpServer(options: CreateAdspMcpServerOptions = {}): S
   });
 
   return server;
+}
+
+function liveToolNeedsSignIn(name: string): string {
+  return (
+    `${name} reads the live platform, so it needs a sign-in. Connect to /mcp/<tenant realm> on this server and ` +
+    'sign in, or run the server locally with npx @abgov/adsp-sdk-mcp-server.'
+  );
 }
 
 function toolErrorType(result: CallToolResult): ToolErrorType | undefined {

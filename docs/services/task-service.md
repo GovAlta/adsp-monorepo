@@ -142,6 +142,44 @@ all of these events to users with the task-reader or task-admin role.
 
 The task service doesn't consume events.
 
+## Audit
+
+The task service records audit events in the `task-service` namespace of the [audit service](audit-service.md), in
+addition to the domain events above. Records are written to the tenant of the task, with the user or service account
+making the request as the actor (service accounts have actor type `service`). All actions are version 1, use the
+`task` resource type, and their retention class is derived from the category.
+
+| Action                  | Category       | Severity | Retention class | Recorded when                                                                          |
+| :---------------------- | :------------- | :------- | :-------------- | :------------------------------------------------------------------------------------- |
+| `task.created`          | administrative | info     | compliance      | A task is created in a queue.                                                          |
+| `task.assigned`         | administrative | info     | compliance      | A task is assigned to someone other than the requesting user, or unassigned.           |
+| `task.self-assigned`    | administrative | info     | compliance      | A user assigns a task to themselves.                                                   |
+| `task.started`          | administrative | info     | compliance      | A task is started (Pending -> In Progress).                                            |
+| `task.completed`        | administrative | info     | compliance      | A task is completed.                                                                   |
+| `task.cancelled`        | administrative | warning  | compliance      | A task is cancelled.                                                                   |
+| `task.priority-changed` | administrative | info     | compliance      | The priority of a task changes, through the `set-priority` operation or a task update. |
+| `task.deleted`          | administrative | warning  | compliance      | A task is deleted.                                                                     |
+
+Each record uses the task ID and name as the resource, and the task's `recordId` (when set) as the correlation ID, so it
+can be matched with the audit records of the domain record (for example a form submission). The metadata includes the
+`queueNamespace`, `queueName`, `taskName` and `recordId`. In addition:
+
+- `task.assigned` and `task.self-assigned` include the `assignedTo` and `previousAssignedTo` user `id` and `name` (or
+  `null`). The assignee email is not recorded.
+- `task.cancelled` includes the `previousStatus` and `reasonProvided`. The cancellation reason is free text, so it is
+  not recorded; it remains in the `task-cancelled` event.
+- `task.priority-changed` records the priority before and after as the change set. Setting the same priority is not
+  recorded.
+
+Requests that are denied or fail validation are not recorded. Reading tasks, queues and metrics, and updating a task's
+name, description, context or data are not audited. Queues are configured in the configuration service, which records
+those changes as `configuration.updated`. The `Stopped` status is never set, so there is no audit action for it.
+
+Audit failures are logged and do not fail the operation; pending events are delivered before the service shuts down.
+The service account of task service needs the `audit-writer` role of `urn:ads:platform:audit-service`. Set
+`TASK_AUDIT_ENABLED` to `false` to turn recording off; when unset it follows the SDK `AUDIT_ENABLED` variable (on by
+default), and `true` forces it on. The action catalog is registered on startup either way.
+
 ## Code examples
 
 ### Configure a queue

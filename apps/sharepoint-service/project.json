@@ -13,6 +13,9 @@
         "webpackConfig": "apps/sharepoint-service/webpack.config.js",
         "outputPath": "dist/apps/sharepoint-service",
         "main": "apps/sharepoint-service/src/main.ts",
+        "additionalEntryPoints": [
+          { "entryName": "reencrypt", "entryPath": "apps/sharepoint-service/src/reencrypt.ts" }
+        ],
         "tsConfig": "apps/sharepoint-service/tsconfig.app.json",
         "assets": [],
         "target": "node",

@@ -135,8 +135,8 @@ export function* deleteCalendar(action: DeleteCalendarAction): SagaIterator {
 }
 
 type CriteriaParse = {
-  startsAfter?: string;
-  endsBefore?: string;
+  endsAfter?: string;
+  startsBefore?: string;
   recordId?: string;
 };
 
@@ -152,10 +152,10 @@ export function* fetchEventsByCalendar(action: FetchEventsByCalendarAction): Sag
       const criteriaParse: CriteriaParse = {};
 
       if (criteria?.startDate) {
-        criteriaParse.startsAfter = criteria.startDate;
+        criteriaParse.endsAfter = criteria.startDate;
       }
       if (criteria?.endDate) {
-        criteriaParse.endsBefore = criteria.endDate;
+        criteriaParse.startsBefore = criteria.endDate;
       }
       if (criteria?.recordId) {
         criteriaParse.recordId = criteria.recordId;
@@ -275,8 +275,8 @@ export function* exportEventsByCalendar(action: CalendarEventExportAction): Saga
 
     if (criteria) {
       params['criteria'] = JSON.stringify({
-        startsAfter: criteria.startDate,
-        endsBefore: criteria.endDate,
+        endsAfter: criteria.startDate,
+        startsBefore: criteria.endDate,
       });
     }
     if (action.top) {

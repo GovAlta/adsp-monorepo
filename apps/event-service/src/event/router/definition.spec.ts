@@ -37,6 +37,7 @@ describe('definition router', () => {
   };
   const client = clientMock as unknown as ConfigurationClient<EventConfiguration>;
   const validationServiceMock = { setSchema: jest.fn(), validate: jest.fn() };
+  const recordAudit = jest.fn();
 
   const res = {
     send: jest.fn(),
@@ -50,6 +51,7 @@ describe('definition router', () => {
   beforeEach(() => {
     Object.values(clientMock).forEach((mock) => mock.mockReset());
     validationServiceMock.setSchema.mockReset();
+    recordAudit.mockReset();
     res.send.mockReset();
     res.status.mockReset();
     res.status.mockReturnValue(res);
@@ -59,7 +61,7 @@ describe('definition router', () => {
   });
 
   it('can create router', () => {
-    expect(createDefinitionRouter({ client, validationService: validationServiceMock })).toBeTruthy();
+    expect(createDefinitionRouter({ client, validationService: validationServiceMock, recordAudit })).toBeTruthy();
   });
 
   describe('mergeDefinition', () => {
@@ -182,7 +184,7 @@ describe('definition router', () => {
   });
 
   describe('createDefinition', () => {
-    const handler = createDefinition(client, validationServiceMock);
+    const handler = createDefinition(client, validationServiceMock, recordAudit);
 
     it('creates a new definition in the tenant configuration', async () => {
       const created = { ...definition, name: 'new-event' };
@@ -277,7 +279,7 @@ describe('definition router', () => {
   });
 
   describe('updateDefinition', () => {
-    const handler = updateDefinition(client, validationServiceMock);
+    const handler = updateDefinition(client, validationServiceMock, recordAudit);
 
     it('replaces an existing definition in the tenant configuration', async () => {
       const updated = { ...definition, description: 'Updated description' };
@@ -367,7 +369,7 @@ describe('definition router', () => {
   });
 
   describe('deleteDefinition', () => {
-    const handler = deleteDefinition(client);
+    const handler = deleteDefinition(client, recordAudit);
 
     it('deletes the namespace entry when it is the last definition', async () => {
       await handler(

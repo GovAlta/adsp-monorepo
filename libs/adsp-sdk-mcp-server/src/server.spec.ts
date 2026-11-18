@@ -19,7 +19,7 @@ import {
 } from './fixtures/toolContract';
 import { createMetricsTestKit, histogramCount, MetricsTestKit } from './fixtures/metricsTestKit';
 import { installMetrics } from './metrics';
-import { SERVER_INSTRUCTIONS } from './instructions';
+import { OFFLINE_ENDPOINT_INSTRUCTIONS, SERVER_INSTRUCTIONS } from './instructions';
 import { createAdspMcpServer } from './server';
 import * as quickstartModule from './tools/registerQuickstartTool';
 import { OFFLINE_TOOL_ANNOTATIONS } from './tools/types';
@@ -209,8 +209,8 @@ describe('server instructions', () => {
     expect(client.getInstructions()).toBe(SERVER_INSTRUCTIONS);
   });
 
-  it('stay about 10 lines', () => {
-    expect(SERVER_INSTRUCTIONS.split('\n').length).toBeLessThanOrEqual(12);
+  it.each([SERVER_INSTRUCTIONS, OFFLINE_ENDPOINT_INSTRUCTIONS])('stay about 10 lines', (instructions) => {
+    expect(instructions.split('\n').length).toBeLessThanOrEqual(12);
   });
 
   it('name the login the live tools need, and where to check content freshness', () => {
@@ -220,9 +220,9 @@ describe('server instructions', () => {
     expect(SERVER_INSTRUCTIONS).toContain('get_adsp_mcp_server_info');
   });
 
-  it('do not restate any tool description', async () => {
+  it.each([SERVER_INSTRUCTIONS, OFFLINE_ENDPOINT_INSTRUCTIONS])('do not restate any tool description', async (instructions) => {
     const { tools } = await client.listTools();
-    const instructionRuns = wordRuns(SERVER_INSTRUCTIONS);
+    const instructionRuns = wordRuns(instructions);
 
     for (const { name, description } of tools) {
       const shared = [...wordRuns(description ?? '')].filter((run) => instructionRuns.has(run));

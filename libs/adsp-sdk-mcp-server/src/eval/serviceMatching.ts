@@ -1,6 +1,8 @@
 import { readFileSync } from 'fs';
 import { join } from 'path';
+import { loadCapabilityCatalog } from '../capabilities/catalog';
 import { loadAdspMcpTools } from '../server';
+import { createFindServicesTool } from '../tools/registerFindServicesTool';
 
 export interface ServiceMatchingQuery {
   query: string;
@@ -42,6 +44,19 @@ export function rankWithSearchAdspDocs(docsRoot: string): RankServices {
     // A text that is not a JSON array is the tool's "no results" message.
     const results: unknown = content.text.startsWith('[') ? JSON.parse(content.text) : [];
     return (results as { path: string }[]).map(({ path }) => serviceOfDocPath(path));
+  };
+}
+
+const BUNDLED_CAPABILITIES = join(__dirname, '..', '..', 'assets', 'capabilities.json');
+
+/** The services find_adsp_services matches to the query, in rank order. */
+export function rankWithFindAdspServices(capabilitiesPath = BUNDLED_CAPABILITIES): RankServices {
+  const [find] = createFindServicesTool(() => loadCapabilityCatalog(capabilitiesPath));
+
+  return async (query) => {
+    const result = await find.handler({ need: query });
+    const [{ matches }] = (result.structuredContent as { results: { matches: { service: string }[] }[] }).results;
+    return matches.map(({ service }) => service);
   };
 }
 

@@ -28,6 +28,7 @@ export interface FormDefinition {
   resourceTags?: FormResourceTagResult[];
   dryRun?: boolean;
   customSubmissionEvent?: CustomSubmissionEvent;
+  sharepointConfigurationId?: string | null;
   reviewConfiguration?: ReviewConfiguration;
 }
 

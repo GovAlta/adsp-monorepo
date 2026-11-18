@@ -33,6 +33,8 @@ export function validateDestination(
 
 const FAILURE_DESCRIPTIONS: Record<string, string> = {
   'credential-not-set': 'The connection has no secret. Set one on the Connections tab.',
+  'credential-unreadable':
+    "The connection's saved secret can't be read, usually because the service's encryption key changed. Enter the secret again on the Connections tab.",
   'entra:AADSTS7000215': 'The connection secret was rejected. Check the client ID and secret.',
   'entra:AADSTS7000222': 'The connection secret has expired. Ask your M365 administrator for a new one.',
   'entra:AADSTS700016': 'The client ID was not found in the Entra tenant. Check the Entra tenant ID and client ID.',

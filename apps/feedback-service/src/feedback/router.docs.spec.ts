@@ -31,6 +31,7 @@ describe('feedback router documented behaviour', () => {
   };
   const queueServiceMock = { enqueue: jest.fn(), getItems: jest.fn(), isConnected: jest.fn() };
   const valueServiceMock = { writeValue: jest.fn(), readValues: jest.fn(), readSummary: jest.fn() };
+  const auditServiceMock = { record: jest.fn(), query: jest.fn(), flush: jest.fn(), droppedEventCount: 0 };
   const feedbackSiteServiceMock = {
     getAllSites: jest.fn(),
     countAllSites: jest.fn(),
@@ -68,6 +69,7 @@ describe('feedback router documented behaviour', () => {
         queueService: queueServiceMock as never,
         valueService: valueServiceMock,
         feedbackSiteService: feedbackSiteServiceMock,
+        auditService: auditServiceMock,
       }),
     );
     app.use(createErrorHandler(loggerMock));

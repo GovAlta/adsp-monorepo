@@ -6,9 +6,16 @@ export interface JsonSchemaObject {
   required?: string[];
 }
 
+export interface CallerSignIn {
+  accessToken: string;
+  directoryServiceUrl: string;
+}
+
 export interface ToolCallContext {
   /** Aborted when the client cancels the call or disconnects. */
   signal?: AbortSignal;
+  /** Set in hosted mode: live tools act as the signed-in caller instead of the local CLI login. */
+  caller?: CallerSignIn;
 }
 
 /**
@@ -24,6 +31,8 @@ export interface ToolDefinition {
   description: string;
   inputSchema: JsonSchemaObject;
   annotations: typeof OFFLINE_TOOL_ANNOTATIONS;
+  /** JSON Schema for `structuredContent`. A tool that declares it must return `structuredContent` on success. */
+  outputSchema?: { type: 'object'; [key: string]: unknown };
   /**
    * Must be a pure lookup/computation over `args` and this tool's own read-only data (docs, SDK reference) — no
    * network calls, filesystem writes, or other external side effects. `CallToolResult.isError` on the return value
@@ -33,7 +42,13 @@ export interface ToolDefinition {
   handler: (args: Record<string, unknown>, context?: ToolCallContext) => Promise<CallToolResult> | CallToolResult;
 }
 
+export function isOfflineTool(tool: ToolDefinition | LiveToolDefinition): tool is ToolDefinition {
+  return !('kind' in tool);
+}
+
 export interface LiveToolDefinition {
+  /** Required, not inferred from annotations, because plain /mcp serves every tool that lacks it without sign-in. */
+  kind: 'live';
   name: string;
   description: string;
   inputSchema: JsonSchemaObject;

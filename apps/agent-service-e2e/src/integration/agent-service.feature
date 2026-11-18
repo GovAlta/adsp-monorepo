@@ -16,7 +16,7 @@ Feature: Agent service
     When a developer sends a request to get agent details for "AccessServiceAgent"
     Then a 200 response is returned with the agent details
 
-  @smoke-test @api @ignore
+  @smoke-test @api
   Scenario: As a developer, I can send a message to an agent and receive a response
-    When a developer sends a message to agent "AccessServiceAgent" with content "Hello, which access service environment am I connected to?"
+    When a developer sends a message to agent "AccessServiceAgent" with content "Hello, Hello, which can you do for me?"
     Then a 200 response is returned with agent message content

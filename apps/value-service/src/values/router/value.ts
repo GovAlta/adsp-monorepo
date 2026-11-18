@@ -40,11 +40,6 @@ interface ValueRouterProps {
   auditService: AuditService;
 }
 
-// Two years: a report period is at most a year, and any part the rollup has not covered yet is read
-// from the event log, so the span bounds the worst case.
-const MAX_EVENT_RESOURCE_DAYS = 731;
-const MS_PER_DAY = 24 * 60 * 60 * 1000;
-
 const mapValue = (value: Value) => {
   if (value) {
     const { tenantId: _tenantId, ...result } = value;
@@ -336,12 +331,15 @@ export function countDistinctEventResources(
 
       const from = new Date(intervalMinValue);
       const to = new Date(intervalMaxValue);
+      if (Number.isNaN(from.getTime()) || Number.isNaN(to.getTime())) {
+        throw new InvalidOperationError('intervalMin and intervalMax must be ISO 8601 timestamps.');
+      }
       if (from >= to) {
         throw new InvalidOperationError('intervalMin must be before intervalMax.');
       }
-      if (to.getTime() - from.getTime() > MAX_EVENT_RESOURCE_DAYS * MS_PER_DAY) {
-        throw new InvalidOperationError(`Period cannot be longer than ${MAX_EVENT_RESOURCE_DAYS} days.`);
-      }
+      // No cap on the span: the days coverage holds cost the same however many there are, and only
+      // what the backfill has not reached yet is read from the event log. The repository bounds that
+      // read with a statement timeout instead, since it is the actual cost a cap would guess at.
 
       const count = await repository.countDistinct({
         tenant: tenant.id.toString(),

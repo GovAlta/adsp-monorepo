@@ -5,6 +5,7 @@ import { ERROR_NOTIFICATION } from '../notifications/actions';
 import {
   DeleteCalendar,
   DeleteCalendarSuccess,
+  FetchEventsByCalendar,
   FETCH_CALENDARS_SUCCESS_ACTION,
   fetchCalendarSuccess,
   fetchCalendars,
@@ -14,7 +15,7 @@ import {
 } from './actions';
 import { fetchCalendarApi, partitionCalendars } from './api';
 import { CalendarDefinition } from './models';
-import { deleteCalendar, fetchCalendars as fetchCalendarsSaga, updateCalendar } from './sagas';
+import { deleteCalendar, fetchCalendars as fetchCalendarsSaga, fetchEventsByCalendar, updateCalendar } from './sagas';
 
 const calendarServiceUrl = 'https://calendar-service.example';
 const state = {
@@ -175,6 +176,32 @@ describe('calendar definition sagas', () => {
       })
       .put.like({ action: { type: ERROR_NOTIFICATION } })
       .not.put.actionType(UPDATE_CALENDAR_SUCCESS_ACTION)
+      .run();
+  });
+
+  it('searches events that overlap the From and To period', async () => {
+    await expectSaga(fetchEventsByCalendar, FetchEventsByCalendar('team'))
+      .withState({
+        ...state,
+        calendarService: {
+          eventSearchCriteria: { startDate: '2026-11-01T00:00:00Z', endDate: '2026-11-02T00:00:00Z' },
+        },
+      })
+      .provide({
+        call(effect, next) {
+          if (effect.fn === getAccessToken) {
+            return 'test-token';
+          }
+          if (effect.fn === axios.get) {
+            expect(JSON.parse(effect.args[1].params.criteria)).toEqual({
+              endsAfter: '2026-11-01T00:00:00Z',
+              startsBefore: '2026-11-02T00:00:00Z',
+            });
+            return { data: { results: [], page: {} } };
+          }
+          return next();
+        },
+      })
       .run();
   });
 });

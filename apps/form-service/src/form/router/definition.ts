@@ -1,6 +1,7 @@
 import {
   AdspId,
   AuditService,
+  ConfigurationService,
   EventService,
   isAllowedUser,
   TenantService,
@@ -172,7 +173,41 @@ export function getFormDefinitions(directory: ServiceDirectory, tokenProvider: T
   };
 }
 
-export function getFormDefinition(tenantService: TenantService, calendarService: CalendarService): RequestHandler {
+// The latest revision can hold unpublished changes, so only administrators can read it.
+export const assertCanReadLatestDefinition: RequestHandler = (req, _res, next) => {
+  if (req.query.version === 'latest' && !isAllowedUser(req.user, req.tenant?.id, FormServiceRoles.Admin, true)) {
+    next(new UnauthorizedUserError('access latest definition revision', req.user));
+  } else {
+    next();
+  }
+};
+
+// Reads the latest revision directly, bypassing the SDK cache, which only tracks the active revision.
+async function getLatestFormDefinition(
+  directory: ServiceDirectory,
+  tokenProvider: TokenProvider,
+  tenantId: AdspId,
+  definitionId: string,
+): Promise<{ revision: number; configuration: FormDefinition }> {
+  const configurationApiUrl = await directory.getServiceUrl(configurationApiId);
+  const token = await tokenProvider.getAccessToken();
+  const { data } = await axios.get<{ latest?: { revision: number; configuration: FormDefinition } }>(
+    new URL(`v2/configuration/form-service/${encodeURIComponent(definitionId)}`, configurationApiUrl).href,
+    { headers: { Authorization: `Bearer ${token}` }, params: { tenantId: tenantId.toString() } },
+  );
+
+  if (!data?.latest?.configuration) {
+    throw new NotFoundError('form definition', definitionId);
+  }
+  return data.latest;
+}
+
+export function getFormDefinition(
+  tenantService: TenantService,
+  calendarService: CalendarService,
+  directory: ServiceDirectory,
+  tokenProvider: TokenProvider,
+): RequestHandler {
   return async (req, res, next) => {
     try {
       const user = req.user;
@@ -190,6 +225,12 @@ export function getFormDefinition(tenantService: TenantService, calendarService:
       }
 
       const { version } = req.query;
+
+      if (version === 'latest') {
+        const latest = await getLatestFormDefinition(directory, tokenProvider, req.tenant.id, definitionId);
+        res.send(mapFormDefinition(latest.configuration, latest.revision));
+        return;
+      }
 
       let definition: FormDefinitionEntity;
 
@@ -349,6 +390,11 @@ export function patchFormDefinition(directory: ServiceDirectory, tokenProvider: 
         ...(req.body.description !== undefined ? { description: req.body.description } : {}),
         ...(req.body.dataSchema !== undefined ? { dataSchema: req.body.dataSchema } : {}),
         ...(req.body.uiSchema !== undefined ? { uiSchema: req.body.uiSchema } : {}),
+        // Merged so a patch that omits the write-only accessGroup does not clear it; enabled is required by the
+        // configuration schema but absent on definitions created before registration existed.
+        ...(req.body.registration !== undefined
+          ? { registration: { enabled: false, ...existingDefinition.registration, ...req.body.registration } }
+          : {}),
         id: definitionId,
       };
 
@@ -546,6 +592,41 @@ export function patchFormDefinitionLifecycle(
   };
 }
 
+// Rewrites the latest revision, like the other definition endpoints. Returns false when update returns null.
+async function updateLatestDefinition(
+  directory: ServiceDirectory,
+  tokenProvider: TokenProvider,
+  configurationService: ConfigurationService,
+  tenantId: AdspId,
+  definitionId: string,
+  update: (existing: FormDefinition) => FormDefinition | null,
+): Promise<boolean> {
+  const configurationApiUrl = await directory.getServiceUrl(configurationApiId);
+  const token = await tokenProvider.getAccessToken();
+
+  const existingDefinition = await fetchExistingDefinition(
+    configurationApiUrl,
+    token,
+    encodeURIComponent(definitionId),
+    tenantId.toString(),
+    definitionId,
+  );
+
+  const updatedDefinition = update(existingDefinition);
+  if (!updatedDefinition) {
+    return false;
+  }
+
+  await patchConfigurationDefinition(configurationApiUrl, token, definitionId, tenantId.toString(), {
+    ...updatedDefinition,
+    id: definitionId,
+  });
+
+  // Other instances are invalidated by the configuration update events.
+  configurationService.clearCached?.(tenantId, 'form-service', definitionId);
+  return true;
+}
+
 function parseNamespacedValue(value: string): { namespace: string; name: string } {
   const [namespace, name] = value.split(':');
   return { namespace, name };
@@ -695,6 +776,9 @@ export function submitRegistration(
   eventService: EventService,
   auditService: AuditService,
   logger: Logger,
+  directory: ServiceDirectory,
+  tokenProvider: TokenProvider,
+  configurationService: ConfigurationService,
 ): RequestHandler {
   return async (req, res, next) => {
     try {
@@ -703,12 +787,25 @@ export function submitRegistration(
       assertAllowed(user, tenantId, registrationRequesterRoles, 'submit registration');
 
       const definition = await getRequiredDefinition(req, tenantId);
-      if (!definition.isRegistrationEnabled()) {
-        throw new InvalidOperationError(`Form definition '${definition.id}' does not accept registrations.`);
-      }
 
       const request = req.body as FormRegistrationCreate;
       definition.validateRegistrationData(request.data || {});
+
+      if (!definition.isRegistrationEnabled()) {
+        await updateLatestDefinition(
+          directory,
+          tokenProvider,
+          configurationService,
+          tenantId,
+          definition.id,
+          (existing) => ({ ...existing, registration: { ...existing.registration, enabled: true } }),
+        );
+        logger.info(`Registration enabled for form definition '${definition.id}' by first access request.`, {
+          context: 'definition-router',
+          tenant: tenantId.toString(),
+          user: `${user.name} (ID: ${user.id})`,
+        });
+      }
 
       const registration = await repository.create(FormRegistrationEntity.create(tenantId, definition.id, request));
       res.status(HttpStatusCodes.CREATED).send({
@@ -722,6 +819,42 @@ export function submitRegistration(
       recordFormAudit(auditService, logger, RegistrationSubmittedAuditAction, () =>
         toRegistrationAuditDetails(user, registration),
       );
+    } catch (err) {
+      next(err);
+    }
+  };
+}
+
+export function deleteRegistrationSettings(
+  directory: ServiceDirectory,
+  tokenProvider: TokenProvider,
+  configurationService: ConfigurationService,
+  logger: Logger,
+): RequestHandler {
+  return async (req, res, next) => {
+    try {
+      const tenantId = getRequiredTenantId(req);
+      const user = req.user;
+      assertAllowed(user, tenantId, FormServiceRoles.Admin, 'delete registration');
+
+      const { definitionId } = req.params;
+      const removed = await updateLatestDefinition(
+        directory,
+        tokenProvider,
+        configurationService,
+        tenantId,
+        definitionId,
+        ({ registration, ...existing }) => (registration ? existing : null),
+      );
+
+      if (removed) {
+        logger.info(`Registration removed from form definition '${definitionId}'.`, {
+          context: 'definition-router',
+          tenant: tenantId.toString(),
+          user: `${user.name} (ID: ${user.id})`,
+        });
+      }
+      res.status(HttpStatusCodes.NO_CONTENT).send();
     } catch (err) {
       next(err);
     }
@@ -814,6 +947,7 @@ export function updateRegistration(
 interface FormDefinitionRouterProps {
   directory: ServiceDirectory;
   tokenProvider: TokenProvider;
+  configurationService: ConfigurationService;
   tenantService: TenantService;
   calendarService: CalendarService;
   logger: Logger;
@@ -825,6 +959,7 @@ interface FormDefinitionRouterProps {
 export function createFormDefinitionRouter({
   directory,
   tokenProvider,
+  configurationService,
   tenantService,
   calendarService,
   logger,
@@ -852,8 +987,12 @@ export function createFormDefinitionRouter({
     '/definitions/:definitionId',
     createValidationHandler(
       param('definitionId').isString().isLength({ min: 1, max: 50 }).matches(DEFINITION_ID_REGEX),
+      query('version')
+        .optional()
+        .matches(/^(latest|\d+)$/),
     ),
-    getFormDefinition(tenantService, calendarService),
+    assertCanReadLatestDefinition,
+    getFormDefinition(tenantService, calendarService, directory, tokenProvider),
   );
   router.put(
     '/definitions/:definitionId',
@@ -878,6 +1017,7 @@ export function createFormDefinitionRouter({
       body('description').optional().isString(),
       body('dataSchema').optional().isObject(),
       body('uiSchema').optional().isObject(),
+      body('registration').optional().isObject(),
       body('formDraftUrlTemplate')
         .optional()
         .isString()
@@ -997,7 +1137,24 @@ export function createFormDefinitionRouter({
       body('email').isString().trim().isEmail().isLength({ max: 254 }),
       body('data').optional().isObject(),
     ),
-    submitRegistration(registrationRepository, eventService, auditService, logger),
+    submitRegistration(
+      registrationRepository,
+      eventService,
+      auditService,
+      logger,
+      directory,
+      tokenProvider,
+      configurationService,
+    ),
+  );
+
+  router.delete(
+    '/definitions/:definitionId/access-requests',
+    assertAuthenticatedHandler,
+    createValidationHandler(
+      param('definitionId').isString().isLength({ min: 1, max: 50 }).matches(DEFINITION_ID_REGEX),
+    ),
+    deleteRegistrationSettings(directory, tokenProvider, configurationService, logger),
   );
 
   router.get(

@@ -1,5 +1,6 @@
 import {
   adspId,
+  AuditService,
   ConfigurationService,
   EventService,
   ServiceDirectory,
@@ -123,6 +124,7 @@ describe('calendar router documented behaviour', () => {
         logger: loggerMock,
         repository: repositoryMock as unknown as CalendarRepository,
         eventService: eventServiceMock as unknown as EventService,
+        auditService: { record: jest.fn() } as unknown as AuditService,
         directory: directoryMock as unknown as ServiceDirectory,
         tenantService: tenantServiceMock as unknown as TenantService,
         tokenProvider: tokenProviderMock as unknown as TokenProvider,
