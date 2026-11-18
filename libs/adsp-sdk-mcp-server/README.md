@@ -275,7 +275,7 @@ OpenTelemetry SDK isn't loaded. Stdio mode never exports metrics.
 
 Every label takes a value from a fixed set:
 
-- `mcp.tool.name`: one of the eleven tool names, or `unknown` for any name the server doesn't have.
+- `mcp.tool.name`: one of the twelve tool names, or `unknown` for any name the server doesn't have.
 - `mcp.method.name`: an MCP method such as `initialize`, `tools/list` or `tools/call`; `other` for any other method;
   `batch` for a JSON-RPC batch; `unparsed` when the body wasn't valid JSON-RPC or was too large.
 - `error.type` on `mcp.request.duration`: `aborted` when the client disconnected before the response was written; the
