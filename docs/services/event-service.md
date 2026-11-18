@@ -61,7 +61,9 @@ Change sets are not captured for `event-definition.created`, since the new defin
 
 Sending domain events (`POST /event/v1/events`) and reading or querying definitions and the event log are not audited; sent events are recorded in the [event log](#event-log). Event definitions written directly to the [configuration service](configuration-service.md) under `platform:event-service`, including platform definitions registered by services on startup, bypass the event service and are not recorded here.
 
-Audit failures are logged and do not prevent the definition change. The event service account requires the `audit-writer` role of `urn:ads:platform:audit-service`. Set `AUDIT_ENABLED=false` on event service to turn recording off, which also stops the [access service audit](#access-service-audit) records; see [turn audit recording off](audit-service.md#turn-audit-recording-off).
+Audit failures are logged and do not prevent the definition change. The event service account requires the `audit-writer` role of `urn:ads:platform:audit-service`.
+
+Audit recording is on by default. Set the environment variable `EVENT_AUDIT_ENABLED=false` on event service to turn off the event definition records, or `true` to turn them on regardless of the SDK `AUDIT_ENABLED` variable, which applies when `EVENT_AUDIT_ENABLED` is not set. `EVENT_AUDIT_ENABLED` does not affect the [access service audit](#access-service-audit) records, which have their own `ACCESS_AUDIT_ENABLED` variable; `AUDIT_ENABLED=false` turns off both when neither variable is set. The action catalog is still registered while recording is off, so turning it back on needs only a restart. See [turn audit recording off](audit-service.md#turn-audit-recording-off).
 
 ## Concepts
 

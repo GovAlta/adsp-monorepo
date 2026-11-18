@@ -22,6 +22,7 @@ export const environment = envalid.cleanEnv(
     TRUSTED_PROXY: envalid.str({ default: 'uniquelocal' }),
     ACCESS_AUDIT_LOGIN_FAILURES_PER_MINUTE: envalid.num({ default: 60 }),
     // Unset follows the SDK AUDIT_ENABLED variable, so a default of true would override that kill switch.
+    EVENT_AUDIT_ENABLED: envalid.bool({ default: undefined }),
     ACCESS_AUDIT_ENABLED: envalid.bool({ default: undefined }),
   },
   {
