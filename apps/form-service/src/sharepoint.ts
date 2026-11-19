@@ -5,6 +5,7 @@ import { FormEntity, FormSubmissionEntity, SharePointPushResult, SharePointServi
 
 const SHAREPOINT_SERVICE_ID = adspId`urn:ads:platform:sharepoint-service`;
 const REQUEST_TIMEOUT_MS = 70000;
+const GATEWAY_STATUSES = [502, 503, 504];
 
 interface FailureDetail {
   errorCode?: string;
@@ -38,7 +39,13 @@ function toFailure(err: unknown): SharePointPushResult {
     };
   }
 
-  return { success: false, errorCode: `http:${err.response.status}`, retryable: false };
+  // The route or a restarting pod answered instead of the service. The push may or may not have happened, which is
+  // safe to repeat when the destination updates rows by key.
+  return {
+    success: false,
+    errorCode: `http:${err.response.status}`,
+    retryable: GATEWAY_STATUSES.includes(err.response.status),
+  };
 }
 
 class SharePointServiceImpl implements SharePointService {

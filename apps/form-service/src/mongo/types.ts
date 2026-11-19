@@ -1,4 +1,4 @@
-import { Form, FormRegistration, FormSubmission } from '../form';
+import { Form, FormRegistration, FormSubmission, SharePointPush } from '../form';
 
 export type FormDoc = Omit<Form, 'definition' | 'applicant' | 'files'> & {
   tenantId: string;
@@ -19,5 +19,9 @@ export type FormSubmissionDoc = Omit<FormSubmission, 'updatedBy' | 'updated' | '
 };
 
 export type FormRegistrationDoc = Omit<FormRegistration, 'tenantId'> & {
+  tenantId: string;
+};
+
+export type SharePointPushDoc = Omit<SharePointPush, 'tenantId'> & {
   tenantId: string;
 };

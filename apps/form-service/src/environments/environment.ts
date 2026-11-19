@@ -26,6 +26,8 @@ export const environment = envalid.cleanEnv(
     TRUSTED_PROXY: envalid.str({ default: 'uniquelocal' }),
     // Unset falls back to the SDK AUDIT_ENABLED variable, which defaults to on.
     FORM_AUDIT_ENABLED: envalid.bool({ default: undefined }),
+    // Seconds to wait after each failed push to SharePoint before it is tried again.
+    SHAREPOINT_RETRY_DELAYS: envalid.str({ default: '60,300,1800,7200' }),
   },
   {
     reporter: ({ errors }) => {
