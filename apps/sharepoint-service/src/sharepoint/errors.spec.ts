@@ -43,4 +43,39 @@ describe('toSharePointError', () => {
       expect.objectContaining({ errorCode: 'unknown', retryable: false }),
     );
   });
+
+  it('keeps the HTTP status of the response', () => {
+    expect(toSharePointError(axiosError(503, { error: { code: 'serviceNotAvailable' } })).status).toBe(503);
+    expect(toSharePointError(axiosError(401, { error: 'invalid_client', error_codes: [7000215] })).status).toBe(401);
+    expect(toSharePointError(axiosError(undefined)).status).toBeUndefined();
+  });
+
+  describe('Retry-After', () => {
+    const throttled = (retryAfter: string | undefined) => {
+      const config = { headers: {} } as InternalAxiosRequestConfig;
+      const response = {
+        status: 429,
+        data: { error: { code: 'TooManyRequests' } },
+        statusText: '',
+        headers: retryAfter === undefined ? {} : { 'retry-after': retryAfter },
+        config,
+      } as AxiosResponse;
+      return toSharePointError(new AxiosError('request failed', 'ERR', config, {}, response));
+    };
+
+    it('reads a number of seconds', () => {
+      expect(throttled('2').retryAfterMs).toBe(2000);
+    });
+
+    it('reads an HTTP date', () => {
+      jest.useFakeTimers().setSystemTime(new Date('2026-11-18T10:00:00Z'));
+      expect(throttled('Wed, 18 Nov 2026 10:00:05 GMT').retryAfterMs).toBe(5000);
+      jest.useRealTimers();
+    });
+
+    it('ignores a missing or invalid value', () => {
+      expect(throttled(undefined).retryAfterMs).toBeUndefined();
+      expect(throttled('soon').retryAfterMs).toBeUndefined();
+    });
+  });
 });

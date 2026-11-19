@@ -20,6 +20,7 @@ import { ACCESS_SERVICE_AGENT_ID } from '../model/executionLimits';
 import { createAccessServiceSupervisorOptions } from '../agents/access/supervisorOptions';
 import { withContextualInstructions } from './contextualInstructions';
 import { createAuthenticatedMcpFetch, loadKnownMcpServerSecrets, normalizeMcpServerUrl } from './mcpCredentials';
+import { closeMcpClient } from './mcpSessions';
 import { withDelegationAudit, withToolAudit, type AgentToolType } from '../audit';
 
 function createAgentMemory(
@@ -449,13 +450,24 @@ export class AgentServiceConfiguration {
 
       return {};
     } finally {
-      mcpClient.disconnect().catch((err) => {
-        this.logger.debug(`Failed to disconnect MCP client for agent '${agentId}'.`, {
-          context: 'AgentServiceConfiguration',
-          tenant: tenantId?.toString(),
-          error: err instanceof Error ? err.message : String(err),
+      closeMcpClient(mcpClient, servers)
+        .then((ended) => {
+          for (const { serverId, status, error } of ended.filter(({ outcome }) => outcome === 'failed')) {
+            this.logger.debug(`Failed to end MCP session with server '${serverId}' for agent '${agentId}'.`, {
+              context: 'AgentServiceConfiguration',
+              tenant: tenantId?.toString(),
+              status,
+              error,
+            });
+          }
+        })
+        .catch((err) => {
+          this.logger.debug(`Failed to disconnect MCP client for agent '${agentId}'.`, {
+            context: 'AgentServiceConfiguration',
+            tenant: tenantId?.toString(),
+            error: err instanceof Error ? err.message : String(err),
+          });
         });
-      });
     }
   }
 }

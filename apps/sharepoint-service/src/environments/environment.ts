@@ -22,6 +22,8 @@ export const environment = envalid.cleanEnv(
     MONGO_TLS: envalid.bool({ default: false }),
     CREDENTIALS_KEY: envalid.str(),
     CREDENTIALS_KEY_VERSION: envalid.num({ default: 1 }),
+    CREDENTIALS_KEY_PREVIOUS: envalid.str({ default: '' }),
+    CREDENTIALS_KEY_PREVIOUS_VERSION: envalid.num({ default: 0 }),
     ENTRA_AUTHORITY_URL: envalid.str({ default: 'https://login.microsoftonline.com' }),
     GRAPH_URL: envalid.str({ default: 'https://graph.microsoft.com/v1.0' }),
     DEV_FILES_DIRECTORY: envalid.str({ default: '' }),

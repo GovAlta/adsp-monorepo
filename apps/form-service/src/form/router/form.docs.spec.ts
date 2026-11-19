@@ -40,6 +40,7 @@ describe('form routers documented behaviour', () => {
   };
   const directoryMock = { getServiceUrl: jest.fn(), getResourceUrl: jest.fn() };
   const tokenProviderMock = { getAccessToken: jest.fn() };
+  const configurationServiceMock = { clearCached: jest.fn() };
   const formRepositoryMock = { find: jest.fn(), get: jest.fn(), save: jest.fn(), delete: jest.fn() };
   const submissionRepositoryMock = { find: jest.fn(), get: jest.fn(), save: jest.fn(), delete: jest.fn() };
   const registrationRepositoryMock = {
@@ -169,6 +170,7 @@ describe('form routers documented behaviour', () => {
       createFormDefinitionRouter({
         directory: directoryMock as never,
         tokenProvider: tokenProviderMock,
+        configurationService: configurationServiceMock,
         tenantService: tenantService as never,
         calendarService: calendarService as never,
         logger: loggerMock,
@@ -264,9 +266,20 @@ describe('form routers documented behaviour', () => {
         expect(res.body).toMatchObject({ status: 'pending', formDefinitionId: 'restricted' });
       });
 
-      it('responds 400 when the form does not accept access requests', async () => {
+      it('enables registration in the latest revision when the form does not accept access requests yet', async () => {
+        const existing = { id: 'test', name: 'Test', anonymousApply: false, applicantRoles: [], assessorRoles: [] };
+        axiosMock.get.mockResolvedValueOnce({ status: 200, data: existing });
+
         const res = await request(createApp(requester)).post('/form/v1/definitions/test/access-requests').send(body);
-        expect(res.status).toBe(400);
+
+        expect(res.status).toBe(201);
+        expect(axiosMock.patch).toHaveBeenCalledWith(
+          expect.stringContaining('v2/configuration/form-service/test'),
+          { operation: 'REPLACE', configuration: { ...existing, registration: { enabled: true } } },
+          expect.any(Object),
+        );
+        expect(axiosMock.post).not.toHaveBeenCalled();
+        expect(configurationServiceMock.clearCached).toHaveBeenCalledWith(tenantId, 'form-service', 'test');
       });
 
       it('responds 400 for unexpected properties', async () => {
@@ -398,6 +411,7 @@ describe('form routers documented behaviour', () => {
     ['patch', '/form/v1/definitions/test/lifecycle'],
     ['patch', '/form/v1/definitions/test/submission-actions'],
     ['post', '/form/v1/definitions/restricted/access-requests'],
+    ['delete', '/form/v1/definitions/restricted/access-requests'],
     ['get', '/form/v1/definitions/restricted/access-requests'],
     ['get', '/form/v1/definitions/restricted/access-requests/test.user@gov.ab.ca'],
     ['patch', `/form/v1/definitions/restricted/access-requests/${registrationId}`],
@@ -488,6 +502,27 @@ describe('form routers documented behaviour', () => {
       const app = createApp(admin);
       const res = await request(app).get('/form/v1/definitions/test?version=2');
       expect(res.status).toBe(200);
+    });
+
+    it('reads the latest revision with version=latest', async () => {
+      axiosMock.get.mockResolvedValueOnce({
+        data: {
+          latest: { revision: 3, configuration: { id: 'test', name: 'Latest', registration: { enabled: true } } },
+        },
+      });
+      const res = await request(createApp(admin)).get('/form/v1/definitions/test?version=latest');
+      expect(res.status).toBe(200);
+      expect(res.body).toMatchObject({ revision: 3, name: 'Latest', registration: { enabled: true } });
+    });
+
+    it('responds 403 for version=latest without the form-service admin role', async () => {
+      const res = await request(createApp(applicant)).get('/form/v1/definitions/test?version=latest');
+      expect(res.status).toBe(403);
+    });
+
+    it('responds 400 for a version that is not a number or latest', async () => {
+      const res = await request(createApp(admin)).get('/form/v1/definitions/test?version=newest');
+      expect(res.status).toBe(400);
     });
 
     it('responds 404 for an unknown definition', async () => {
@@ -880,6 +915,51 @@ describe('form routers documented behaviour', () => {
     it('responds 403 without the form-service admin role', async () => {
       const res = await request(createApp(assessor)).delete('/form/v1/definitions/test');
       expect(res.status).toBe(403);
+    });
+  });
+
+  describe('DELETE /definitions/:definitionId/access-requests', () => {
+    const url = '/form/v1/definitions/restricted/access-requests';
+    const existing = {
+      id: 'restricted',
+      name: 'Restricted',
+      anonymousApply: false,
+      applicantRoles: [],
+      assessorRoles: [],
+      registration: { enabled: true, accessGroup: 'test-access' },
+    };
+    const { registration: _removed, ...withoutRegistration } = existing;
+
+    it('removes the registration settings from the latest revision', async () => {
+      axiosMock.get.mockResolvedValueOnce({ status: 200, data: existing });
+
+      const res = await request(createApp(admin)).delete(url);
+
+      expect(res.status).toBe(204);
+      expect(axiosMock.patch).toHaveBeenCalledWith(
+        expect.stringContaining('v2/configuration/form-service/restricted'),
+        { operation: 'REPLACE', configuration: withoutRegistration },
+        expect.any(Object),
+      );
+      expect(axiosMock.post).not.toHaveBeenCalled();
+      expect(configurationServiceMock.clearCached).toHaveBeenCalledWith(tenantId, 'form-service', 'restricted');
+    });
+
+    it('responds 400 for a definition ID with characters other than letters, digits, and hyphens', async () => {
+      const res = await request(createApp(admin)).delete('/form/v1/definitions/not_valid/access-requests');
+      expect(res.status).toBe(400);
+    });
+
+    it('responds 403 without the form-service admin role', async () => {
+      const res = await request(createApp(user('writer', [FormServiceRoles.RegistrationWriter]))).delete(url);
+      expect(res.status).toBe(403);
+      expect(axiosMock.patch).not.toHaveBeenCalled();
+    });
+
+    it('responds 404 for a definition that does not exist', async () => {
+      axiosMock.get.mockResolvedValueOnce({ status: 200, data: {} });
+      const res = await request(createApp(admin)).delete(url);
+      expect(res.status).toBe(404);
     });
   });
 

@@ -28,6 +28,9 @@ export const environment = envalid.cleanEnv(
     APP_ENVIRONMENT: envalid.str({ default: 'dev' }),
     TRUSTED_PROXY: envalid.str({ default: 'uniquelocal' }),
     DIRECTORY_URL: envalid.str({ default: 'https://directory-service.adsp-dev.gov.ab.ca' }),
+    TENANT_RETENTION_DAYS: envalid.num({ default: 30 }),
+    TENANT_PURGE_ENABLED: envalid.bool({ default: false }),
+    TENANT_PURGE_SCHEDULE: envalid.str({ default: '0 2 * * *' }),
   },
   {
     reporter: ({ errors }) => {

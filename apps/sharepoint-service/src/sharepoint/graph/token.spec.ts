@@ -95,5 +95,49 @@ describe('GraphTokenProvider', () => {
       errorCode: 'entra:AADSTS7000215',
       retryable: false,
     });
+    expect(axiosMock.post).toHaveBeenCalledTimes(1);
+  });
+
+  describe('when Entra is briefly unavailable', () => {
+    const settle = async <T>(promise: Promise<T>) => {
+      const settled = promise.then(
+        (value) => ({ value }),
+        (error) => ({ error }),
+      );
+      await jest.runAllTimersAsync();
+      return settled;
+    };
+
+    beforeEach(() => {
+      jest.useFakeTimers();
+      axiosMock.isAxiosError.mockReturnValue(true);
+    });
+
+    afterEach(() => {
+      jest.useRealTimers();
+    });
+
+    it('requests the token again and returns it', async () => {
+      axiosMock.post
+        .mockRejectedValueOnce({ response: { status: 503, data: { error: 'temporarily_unavailable' } } })
+        .mockRejectedValueOnce({
+          response: { status: 429, data: { error: 'too_many_requests' }, headers: { 'retry-after': '2' } },
+        })
+        .mockResolvedValueOnce(tokenResponse('token-1'));
+      const provider = new GraphTokenProvider(authorityUrl, { getSecret: async () => 'secret-1' });
+
+      expect(await settle(provider.getToken(tenantA, connection))).toEqual({ value: 'token-1' });
+      expect(axiosMock.post).toHaveBeenCalledTimes(3);
+    });
+
+    it('gives up with a retryable error when Entra keeps failing', async () => {
+      axiosMock.post.mockRejectedValue({ response: { status: 503, data: { error: 'temporarily_unavailable' } } });
+      const provider = new GraphTokenProvider(authorityUrl, { getSecret: async () => 'secret-1' });
+
+      expect(await settle(provider.getToken(tenantA, connection))).toEqual({
+        error: expect.objectContaining({ errorCode: 'entra:temporarily_unavailable', retryable: true }),
+      });
+      expect(axiosMock.post).toHaveBeenCalledTimes(4);
+    });
   });
 });

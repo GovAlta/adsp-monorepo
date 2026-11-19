@@ -164,12 +164,25 @@ function appendMetrics(target: EventMetrics, page: Omit<MetricsResponse, 'page'>
 
 /**
  * A value-service without the distinct count endpoint answers 404, and one that does not roll up the
- * requested resource answers 400; either way the event log is read directly instead, so the gateway
- * can deploy ahead of value-service.
+ * requested resource answers 400 saying so; either way the event log is read directly instead, so
+ * the gateway can deploy ahead of value-service.
+ *
+ * Any other 400 is passed on rather than falling back: paging the event log answers the same
+ * question many times slower, so a request value-service rejected for some other reason would
+ * quietly become a report that takes half a minute instead of an error that says why.
  */
+const NOT_ROLLED_UP_MESSAGE = 'not rolled up';
+
 function isDistinctCountUnavailable(err: unknown): boolean {
-  const status = axios.isAxiosError(err) ? err.response?.status : undefined;
-  return status === HttpStatusCodes.NOT_FOUND || status === HttpStatusCodes.BAD_REQUEST;
+  if (!axios.isAxiosError(err)) {
+    return false;
+  }
+  const status = err.response?.status;
+  if (status === HttpStatusCodes.NOT_FOUND) {
+    return true;
+  }
+  const message = (err.response?.data as { errorMessage?: unknown } | undefined)?.errorMessage;
+  return status === HttpStatusCodes.BAD_REQUEST && typeof message === 'string' && message.includes(NOT_ROLLED_UP_MESSAGE);
 }
 
 function rethrowValueServiceError(err: unknown): never {

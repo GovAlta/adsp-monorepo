@@ -143,4 +143,100 @@ describe('SharePointPusher', () => {
     expect(graph.createItem).toHaveBeenCalledTimes(1);
     expect(tokens.evict).not.toHaveBeenCalled();
   });
+
+  describe('retries', () => {
+    const unavailable = () => new SharePointError('graph:serviceNotAvailable', true, undefined, 503);
+    const throttled = () => new SharePointError('graph:TooManyRequests', true, undefined, 429);
+    const network = () => new SharePointError('network', true);
+    const keyed = { applicationNumber: 'A-1', amount: 1 };
+
+    const settle = async <T>(promise: Promise<T>) => {
+      const settled = promise.then(
+        (value) => ({ value }),
+        (error) => ({ error }),
+      );
+      await jest.runAllTimersAsync();
+      return settled;
+    };
+
+    beforeEach(() => {
+      jest.useFakeTimers();
+    });
+
+    afterEach(() => {
+      jest.useRealTimers();
+    });
+
+    it('repeats a row write that gets 503 and returns the result', async () => {
+      graph.findItemIdByKey.mockRejectedValueOnce(unavailable());
+
+      const result = await settle(pusher.push(tenantId, configuration, 'hr-intake', keyed));
+
+      expect(result).toEqual({ value: { itemId: 'item-new', outcome: 'created' } });
+      expect(graph.findItemIdByKey).toHaveBeenCalledTimes(2);
+      expect(graph.createItem).toHaveBeenCalledTimes(1);
+    });
+
+    it('stops within the retry budget and reports a retryable failure when SharePoint keeps failing', async () => {
+      graph.findItemIdByKey.mockRejectedValue(unavailable());
+
+      const result = await settle(pusher.push(tenantId, configuration, 'hr-intake', keyed));
+
+      expect(result).toEqual({
+        error: expect.objectContaining({ errorCode: 'graph:serviceNotAvailable', retryable: true }),
+      });
+      expect(graph.findItemIdByKey).toHaveBeenCalledTimes(4);
+      expect(graph.createItem).not.toHaveBeenCalled();
+    });
+
+    it('updates the row instead of adding a second one when a create may have succeeded', async () => {
+      graph.findItemIdByKey.mockResolvedValueOnce(null).mockResolvedValueOnce('item-9');
+      graph.createItem.mockRejectedValueOnce(network());
+
+      const result = await settle(pusher.push(tenantId, configuration, 'hr-intake', keyed));
+
+      expect(result).toEqual({ value: { itemId: 'item-9', outcome: 'updated' } });
+      expect(graph.createItem).toHaveBeenCalledTimes(1);
+      expect(graph.updateItemFields).toHaveBeenCalledWith('token-1', siteId, 'list-1', 'item-9', {
+        Amount: 1,
+        AdspItemKey: 'A-1',
+      });
+    });
+
+    it('repeats a create without a row identity when SharePoint refused it', async () => {
+      graph.createItem.mockRejectedValueOnce(throttled());
+
+      const result = await settle(pusher.push(tenantId, configuration, 'hr-log', { amount: 1 }));
+
+      expect(result).toEqual({ value: { itemId: 'item-new', outcome: 'created' } });
+      expect(graph.createItem).toHaveBeenCalledTimes(2);
+    });
+
+    it('does not repeat a create without a row identity after a lost response', async () => {
+      graph.createItem.mockRejectedValueOnce(network());
+
+      const result = await settle(pusher.push(tenantId, configuration, 'hr-log', { amount: 1 }));
+
+      expect(result).toEqual({ error: expect.objectContaining({ errorCode: 'network', retryable: true }) });
+      expect(graph.createItem).toHaveBeenCalledTimes(1);
+    });
+
+    it('does not repeat a write that SharePoint rejected', async () => {
+      graph.createItem.mockRejectedValueOnce(new SharePointError('graph:invalidRequest', false, 'Amount', 400));
+
+      const result = await settle(pusher.push(tenantId, configuration, 'hr-log', { amount: 1 }));
+
+      expect(result).toEqual({ error: expect.objectContaining({ errorCode: 'graph:invalidRequest' }) });
+      expect(graph.createItem).toHaveBeenCalledTimes(1);
+    });
+
+    it('retries a test the same way as a push', async () => {
+      graph.findItemIdByKey.mockRejectedValueOnce(unavailable());
+
+      const result = await settle(pusher.test(tenantId, configuration, 'hr-off', { applicationNumber: 'T-1' }));
+
+      expect(result).toEqual({ value: { itemId: 'item-new', outcome: 'created' } });
+      expect(graph.findItemIdByKey).toHaveBeenCalledTimes(2);
+    });
+  });
 });

@@ -5,6 +5,12 @@ export interface EncryptionKey {
   key: Buffer;
 }
 
+// New secrets are encrypted with the current key; the previous key only reads secrets not yet re-encrypted.
+export interface EncryptionKeyring {
+  current: EncryptionKey;
+  previous?: EncryptionKey;
+}
+
 export interface EncryptedSecret {
   ciphertext: string;
   iv: string;
@@ -14,12 +20,41 @@ export interface EncryptedSecret {
 
 const ALGORITHM = 'aes-256-gcm';
 
-export function parseEncryptionKey(base64: string, version: number): EncryptionKey {
+export function parseEncryptionKey(base64: string, version: number, name = 'CREDENTIALS_KEY'): EncryptionKey {
   const key = Buffer.from(base64 || '', 'base64');
   if (key.length !== 32) {
-    throw new Error('CREDENTIALS_KEY must be a base64 encoded 32 byte key.');
+    throw new Error(`${name} must be a base64 encoded 32 byte key.`);
   }
   return { version, key };
+}
+
+interface KeyringSettings {
+  CREDENTIALS_KEY: string;
+  CREDENTIALS_KEY_VERSION: number;
+  CREDENTIALS_KEY_PREVIOUS: string;
+  CREDENTIALS_KEY_PREVIOUS_VERSION: number;
+}
+
+export function parseEncryptionKeyring({
+  CREDENTIALS_KEY,
+  CREDENTIALS_KEY_VERSION,
+  CREDENTIALS_KEY_PREVIOUS,
+  CREDENTIALS_KEY_PREVIOUS_VERSION,
+}: KeyringSettings): EncryptionKeyring {
+  const current = parseEncryptionKey(CREDENTIALS_KEY, CREDENTIALS_KEY_VERSION);
+  if (!CREDENTIALS_KEY_PREVIOUS) {
+    return { current };
+  }
+  if (!CREDENTIALS_KEY_PREVIOUS_VERSION) {
+    throw new Error('CREDENTIALS_KEY_PREVIOUS_VERSION is required with CREDENTIALS_KEY_PREVIOUS.');
+  }
+  if (CREDENTIALS_KEY_PREVIOUS_VERSION === CREDENTIALS_KEY_VERSION) {
+    throw new Error('CREDENTIALS_KEY_PREVIOUS_VERSION must differ from CREDENTIALS_KEY_VERSION.');
+  }
+  return {
+    current,
+    previous: parseEncryptionKey(CREDENTIALS_KEY_PREVIOUS, CREDENTIALS_KEY_PREVIOUS_VERSION, 'CREDENTIALS_KEY_PREVIOUS'),
+  };
 }
 
 export function encryptSecret({ version, key }: EncryptionKey, aad: string, plaintext: string): EncryptedSecret {

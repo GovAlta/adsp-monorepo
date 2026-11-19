@@ -28,9 +28,9 @@ export const FeedbackSummaryLoading = (): JSX.Element => (
   </SummarySkeleton>
 );
 
-export const FeedbackSummary = ({ summary }: FeedbackSummaryProps): JSX.Element => {
+export const FeedbackSummary = ({ summary }: FeedbackSummaryProps): JSX.Element | null => {
   if (summary.totalResponses === 0) {
-    return <Summary data-testid="feedback-summary">No responses</Summary>;
+    return null;
   }
 
   return (

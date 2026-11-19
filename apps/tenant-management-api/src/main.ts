@@ -22,6 +22,7 @@ import {
   applyTenantMiddleware,
   TenantServiceImpl,
   TenantServiceRoles,
+  scheduleTenantPurgeJob,
 } from './tenant';
 import { createKeycloakRealmService } from './keycloak';
 
@@ -66,10 +67,6 @@ async function initializeApp(): Promise<express.Application> {
             role: TenantServiceRoles.PlatformService,
             description: 'Service role for backend services for reading tenants.',
           },
-          {
-            role: TenantServiceRoles.TenantPurge,
-            description: 'Role for purging tenant data.',
-          },
         ],
       },
       { logger },
@@ -101,6 +98,19 @@ async function initializeApp(): Promise<express.Application> {
     realmService,
     configurationHandler,
   });
+
+  if (environment.TENANT_PURGE_ENABLED) {
+    scheduleTenantPurgeJob({
+      serviceId,
+      logger,
+      tenantRepository: repositories.tenantRepository,
+      realmService,
+      eventService,
+      auditService,
+      retentionDays: environment.TENANT_RETENTION_DAYS,
+      cron: environment.TENANT_PURGE_SCHEDULE,
+    });
+  }
 
   const errorHandler = createErrorHandler(logger);
   app.use(errorHandler);

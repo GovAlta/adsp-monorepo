@@ -25,7 +25,7 @@ describe('FeedbackSummary', () => {
     expect(screen.getByText('Issues').tagName).toBe('STRONG');
   });
 
-  it('displays no responses for an empty result set', () => {
+  it('does not display a redundant summary for an empty result set', () => {
     render(
       <FeedbackSummary
         summary={{
@@ -37,7 +37,7 @@ describe('FeedbackSummary', () => {
       />,
     );
 
-    expect(screen.getByTestId('feedback-summary')).toHaveTextContent('No responses');
+    expect(screen.queryByTestId('feedback-summary')).not.toBeInTheDocument();
   });
 
   it('displays a text skeleton while the summary is loading', () => {

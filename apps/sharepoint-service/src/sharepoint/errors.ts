@@ -5,6 +5,8 @@ export class SharePointError extends Error {
     public readonly errorCode: string,
     public readonly retryable: boolean,
     public readonly column?: string,
+    public readonly status?: number,
+    public readonly retryAfterMs?: number,
   ) {
     super(`SharePoint request failed with: ${errorCode}`);
     Object.setPrototypeOf(this, SharePointError.prototype);
@@ -36,6 +38,18 @@ export class DestinationDisabledError extends Error {
 // Only the column name is taken from Graph's message; the rest can echo submitted values.
 const COLUMN_PATTERN = /Field '([^']+)'/;
 
+function parseRetryAfter(value: unknown): number | undefined {
+  if (typeof value !== 'string' && typeof value !== 'number') {
+    return undefined;
+  }
+  const seconds = Number(value);
+  if (Number.isFinite(seconds) && seconds >= 0) {
+    return seconds * 1000;
+  }
+  const date = Date.parse(String(value));
+  return Number.isNaN(date) ? undefined : Math.max(0, date - Date.now());
+}
+
 export function toSharePointError(err: unknown): SharePointError {
   if (err instanceof SharePointError) {
     return err;
@@ -47,16 +61,23 @@ export function toSharePointError(err: unknown): SharePointError {
     return new SharePointError('network', true);
   }
 
-  const { status, data } = err.response;
+  const { status, data, headers } = err.response;
   const retryable = status === 429 || status >= 500;
+  const retryAfterMs = parseRetryAfter(headers?.['retry-after']);
   const body = data as { error?: unknown; error_codes?: number[] } | undefined;
 
   if (typeof body?.error === 'string') {
     const [aadsts] = body.error_codes ?? [];
-    return new SharePointError(aadsts ? `entra:AADSTS${aadsts}` : `entra:${body.error}`, retryable);
+    return new SharePointError(
+      aadsts ? `entra:AADSTS${aadsts}` : `entra:${body.error}`,
+      retryable,
+      undefined,
+      status,
+      retryAfterMs,
+    );
   }
 
   const graphError = body?.error as { code?: string; message?: string } | undefined;
   const column = graphError?.message ? COLUMN_PATTERN.exec(graphError.message)?.[1] : undefined;
-  return new SharePointError(`graph:${graphError?.code ?? status}`, retryable, column);
+  return new SharePointError(`graph:${graphError?.code ?? status}`, retryable, column, status, retryAfterMs);
 }

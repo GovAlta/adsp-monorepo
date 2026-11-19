@@ -8,6 +8,7 @@ import { RealmService } from './services';
 export * from './audit';
 export * from './configuration';
 export * from './events';
+export * from './jobs';
 export * from './models';
 export * from './repository';
 export * from './roles';

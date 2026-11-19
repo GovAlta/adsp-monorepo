@@ -34,7 +34,7 @@ parameters:
   - name: ROUTE_HOST
     description: Host for the route.
     displayName: Route Host
-    value: ""
+    value: ''
   - name: CPU_LIMIT
     description: CPU limit for the API container.
     displayName: CPU Limit
@@ -62,7 +62,7 @@ objects:
       labels:
         app: tenant-management
         component: api
-        apply-infra: "true"
+        apply-infra: 'true'
       name: ${APP_NAME}
       namespace: ${INFRA_NAMESPACE}
     spec:
@@ -81,10 +81,10 @@ objects:
       labels:
         app: tenant-management
         component: api
-        apply-dev: "true"
-        apply-test: "true"
-        apply-uat: "true"
-        apply-prod: "true"
+        apply-dev: 'true'
+        apply-test: 'true'
+        apply-uat: 'true'
+        apply-prod: 'true'
       name: ${APP_NAME}
       namespace: ${NAMESPACE}
       annotations:
@@ -122,7 +122,10 @@ objects:
                     name: ${APP_NAME}
               env:
                 - name: PORT
-                  value: "3333"
+                  value: '3333'
+                # Overrides envFrom so a ConfigMap value cannot start the purge on serving pods.
+                - name: TENANT_PURGE_ENABLED
+                  value: 'false'
                 - name: MONGO_USER
                   valueFrom:
                     secretKeyRef:
@@ -195,16 +198,140 @@ objects:
           maxSurge: 25%
       revisionHistoryLimit: 10
       progressDeadlineSeconds: 600
+  - apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
+        app: tenant-management
+        component: job
+        apply-dev: 'true'
+        apply-test: 'true'
+        apply-uat: 'true'
+        apply-prod: 'true'
+      name: ${APP_NAME}-job
+      namespace: ${NAMESPACE}
+      annotations:
+        image.openshift.io/triggers: |-
+          [
+            {
+              "from": {
+                "kind": "ImageStreamTag",
+                "name": "${APP_NAME}:${DEPLOY_TAG}",
+                "namespace": "${INFRA_NAMESPACE}"
+              },
+              "fieldPath": "spec.template.spec.containers[0].image",
+              "paused": true
+            }
+          ]
+    spec:
+      # One purge scheduler, independent of API scaling; do not autoscale this Deployment.
+      replicas: 1
+      selector:
+        matchLabels:
+          app: tenant-management
+          component: job
+      template:
+        metadata:
+          labels:
+            app: tenant-management
+            component: job
+        spec:
+          containers:
+            - image: >-
+                image-registry.openshift-image-registry.svc:5000/adsp-build/${APP_NAME}@${DEPLOY_TAG}
+              envFrom:
+                - configMapRef:
+                    name: ${APP_NAME}
+                - secretRef:
+                    name: ${APP_NAME}
+              env:
+                - name: PORT
+                  value: '3333'
+                - name: TENANT_PURGE_ENABLED
+                  value: 'true'
+                - name: TENANT_RETENTION_DAYS
+                  value: '1'
+                - name: MONGO_USER
+                  valueFrom:
+                    secretKeyRef:
+                      key: database-user
+                      name: tenant-management-mongodb
+                - name: MONGO_URI
+                  valueFrom:
+                    secretKeyRef:
+                      key: database-uri
+                      name: tenant-management-mongodb
+                - name: MONGO_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      key: database-password
+                      name: tenant-management-mongodb
+                - name: MONGO_DB
+                  valueFrom:
+                    secretKeyRef:
+                      key: database-name
+                      name: tenant-management-mongodb
+                - name: MONGO_TLS
+                  valueFrom:
+                    secretKeyRef:
+                      key: database-tls
+                      name: tenant-management-mongodb
+              imagePullPolicy: IfNotPresent
+              name: ${APP_NAME}
+              ports:
+                - containerPort: 3333
+                  name: http
+                  protocol: TCP
+              resources:
+                limits:
+                  cpu: ${CPU_LIMIT}
+                  memory: ${MEMORY_LIMIT}
+                requests:
+                  cpu: ${CPU_REQUEST}
+                  memory: ${MEMORY_REQUEST}
+              terminationMessagePath: /dev/termination-log
+              terminationMessagePolicy: File
+              # The Service's component=api selector excludes this pod.
+              readinessProbe:
+                httpGet:
+                  path: /
+                  port: 3333
+                  scheme: HTTP
+                initialDelaySeconds: 2
+                timeoutSeconds: 1
+                periodSeconds: 5
+                successThreshold: 1
+                failureThreshold: 20
+              livenessProbe:
+                httpGet:
+                  path: /
+                  port: 3333
+                  scheme: HTTP
+                initialDelaySeconds: 60
+                timeoutSeconds: 2
+                periodSeconds: 60
+                successThreshold: 1
+                failureThreshold: 5
+          dnsPolicy: ClusterFirst
+          restartPolicy: Always
+          schedulerName: default-scheduler
+          securityContext: {}
+          terminationGracePeriodSeconds: 30
+      # Recreate so a rollout never overlaps two scheduler pods.
+      strategy:
+        type: Recreate
+      revisionHistoryLimit: 3
+      progressDeadlineSeconds: 600
   - apiVersion: v1
     kind: Service
     metadata:
       labels:
         app: tenant-management
         component: api
-        apply-dev: "true"
-        apply-test: "true"
-        apply-uat: "true"
-        apply-prod: "true"
+        apply-dev: 'true'
+        apply-test: 'true'
+        apply-uat: 'true'
+        apply-prod: 'true'
       name: ${APP_NAME}
       namespace: ${NAMESPACE}
     spec:
@@ -224,10 +351,10 @@ objects:
       labels:
         app: tenant-management
         component: api
-        apply-dev: "true"
-        apply-test: "true"
-        apply-uat: "true"
-        apply-prod: "true"
+        apply-dev: 'true'
+        apply-test: 'true'
+        apply-uat: 'true'
+        apply-prod: 'true'
       name: ${APP_NAME}
       namespace: ${NAMESPACE}
     spec:

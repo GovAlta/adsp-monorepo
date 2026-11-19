@@ -58,6 +58,7 @@ export const configurationSchema = {
         { type: 'null' },
       ],
     },
+    sharepointConfigurationId: { type: ['string', 'null'] },
     reviewConfiguration: {
       type: 'object',
       additionalProperties: false,

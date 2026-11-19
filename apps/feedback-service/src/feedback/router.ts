@@ -1,16 +1,31 @@
-import { AdspId, Tenant, TenantService, UnauthorizedUserError, User, isAllowedUser } from '@abgov/adsp-service-sdk';
+import {
+  AdspId,
+  AuditService,
+  Tenant,
+  TenantService,
+  UnauthorizedUserError,
+  User,
+  isAllowedUser,
+} from '@abgov/adsp-service-sdk';
 import {
   InvalidOperationError,
   UnauthorizedError,
   WorkQueueService,
   createValidationHandler,
 } from '@core-services/core-common';
+import { randomUUID } from 'crypto';
 import { RequestHandler, Router } from 'express';
 import { RateLimitRequestHandler, rateLimit } from 'express-rate-limit';
 import { checkSchema } from 'express-validator';
 import { readFile } from 'fs/promises';
 import * as hasha from 'hasha';
 import { Logger } from 'winston';
+import {
+  FeedbackSubmittedAuditAction,
+  recordFeedbackAudit,
+  toFeedbackAuditActor,
+  toFeedbackAuditDetails,
+} from './audit';
 import { FeedbackConfiguration } from './configuration';
 import { FeedbackWorkItem } from './job';
 import { ServiceRoles } from './roles';
@@ -55,7 +70,11 @@ export function resolveFeedbackContext(
   };
 }
 
-export function sendFeedback(logger: Logger, queueService: WorkQueueService<FeedbackWorkItem>): RequestHandler {
+export function sendFeedback(
+  logger: Logger,
+  queueService: WorkQueueService<FeedbackWorkItem>,
+  auditService: AuditService,
+): RequestHandler {
   return async function (req, res, next) {
     try {
       const tenantId = req.tenant.id;
@@ -86,13 +105,19 @@ export function sendFeedback(logger: Logger, queueService: WorkQueueService<Feed
       // Hash the content for duplicate detection later.
       // Perform this here so the impact is on the producer side of the job queue.
       const digest = hasha(JSON.stringify(feedback), { algorithm: 'sha256' });
+      const id = randomUUID();
 
       await queueService.enqueue({
+        id,
         tenantId: tenantId.toString(),
         timestamp: new Date().toISOString(),
         digest,
         feedback,
       });
+
+      recordFeedbackAudit(auditService, logger, FeedbackSubmittedAuditAction, () =>
+        toFeedbackAuditDetails(toFeedbackAuditActor(user), tenantId, id, feedback),
+      );
 
       logger.info(`Received and queued feedback on '${context.site}${context.view}' for processing.`, {
         context: 'FeedbackRouter',
@@ -257,6 +282,7 @@ interface RouterProps {
   queueService: WorkQueueService<FeedbackWorkItem>;
   valueService: ValueService;
   feedbackSiteService: FeedbackSiteService;
+  auditService: AuditService;
 }
 
 export async function createFeedbackRouter({
@@ -265,6 +291,7 @@ export async function createFeedbackRouter({
   queueService,
   valueService,
   feedbackSiteService,
+  auditService,
 }: RouterProps) {
   const rateLimitHandler = rateLimit({
     windowMs: 5 * 60 * 1000,
@@ -312,7 +339,7 @@ export async function createFeedbackRouter({
       ),
     ),
     resolveFeedbackContext(tenantService, rateLimitHandler),
-    sendFeedback(logger, queueService),
+    sendFeedback(logger, queueService, auditService),
   );
 
   router.get('/script/adspFeedback.js', downloadWidgetScript(loadWidgetInformation));

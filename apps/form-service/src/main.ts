@@ -67,6 +67,7 @@ import { createQueueTaskService } from './task';
 import { createCommentService } from './comment';
 import { isFormDefinition } from './utils';
 import { createPdfService } from './pdf';
+import { createSharePointService } from './sharepoint';
 import { createCalendarService } from './calendar';
 
 const logger = createLogger('form-service', environment.LOG_LEVEL);
@@ -316,6 +317,7 @@ const initializeApp = async () => {
   const commentService = await createCommentService(logger, directory, tokenProvider, SUPPORT_COMMENT_TOPIC_TYPE_ID);
   const queueTaskService = createQueueTaskService(serviceId, logger, directory, tokenProvider);
   const pdfService = createPdfService(logger, directory, tokenProvider);
+  const sharepointService = createSharePointService(logger, directory, tokenProvider);
   const calendarService = await createCalendarService(logger, directory, tokenProvider, INTAKE_CALENDAR_NAME);
 
   const repositories = await createRepositories({
@@ -354,6 +356,7 @@ const initializeApp = async () => {
     logger,
     directory,
     tokenProvider,
+    configurationService,
     eventService,
     auditService,
     tenantService,
@@ -362,6 +365,7 @@ const initializeApp = async () => {
     commentService,
     queueTaskService,
     pdfService,
+    sharepointService,
     calendarService,
   });
 

@@ -2,7 +2,7 @@ import { Application } from 'express';
 import { Logger } from 'winston';
 import { AuditService, EventService, ServiceDirectory, TokenProvider } from '@abgov/adsp-service-sdk'; // clean-code-ignore: RULE-19 — wiring only; routes are covered in router/definition.spec.ts.
 import { ConfigurationClient, ValidationService } from '@core-services/core-common';
-import { EventResourceRollupRepository, ServiceMetricRollupRepository, ValuesRepository } from './repository';
+import { EventResourceRollupRepository, ServiceMetricRollupRepository, ValuesRepository } from './repository'; // clean-code-ignore: RULE-19 — wiring only; routes are covered in router/value.spec.ts.
 import { createDefinitionRouter, createValueRouter } from './router';
 import { ValueConfiguration } from './types';
 

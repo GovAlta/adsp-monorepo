@@ -6,9 +6,16 @@ export interface JsonSchemaObject {
   required?: string[];
 }
 
+export interface CallerSignIn {
+  accessToken: string;
+  directoryServiceUrl: string;
+}
+
 export interface ToolCallContext {
   /** Aborted when the client cancels the call or disconnects. */
   signal?: AbortSignal;
+  /** Set in hosted mode: live tools act as the signed-in caller instead of the local CLI login. */
+  caller?: CallerSignIn;
 }
 
 /**
@@ -35,7 +42,13 @@ export interface ToolDefinition {
   handler: (args: Record<string, unknown>, context?: ToolCallContext) => Promise<CallToolResult> | CallToolResult;
 }
 
+export function isOfflineTool(tool: ToolDefinition | LiveToolDefinition): tool is ToolDefinition {
+  return !('kind' in tool);
+}
+
 export interface LiveToolDefinition {
+  /** Required, not inferred from annotations, because plain /mcp serves every tool that lacks it without sign-in. */
+  kind: 'live';
   name: string;
   description: string;
   inputSchema: JsonSchemaObject;

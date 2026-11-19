@@ -1,6 +1,6 @@
 import { AdspId, ServiceMetricsValueDefinition, initializePlatform, instrumentAxios } from '@abgov/adsp-service-sdk';
 import type { User } from '@abgov/adsp-service-sdk';
-import { createLogger, createErrorHandler } from '@core-services/core-common';
+import { createLogger, createErrorHandler, createShutdownHandler } from '@core-services/core-common';
 import * as express from 'express';
 import { readFile } from 'fs/promises';
 import * as passport from 'passport';
@@ -12,6 +12,7 @@ import { environment } from './environments/environment';
 import { createFeedbackQueueService } from './amqp';
 import {
   ServiceRoles,
+  FeedbackAuditActions,
   FeedbackValueDefinition,
   applyFeedbackMiddleware,
   configurationSchema,
@@ -23,7 +24,7 @@ import { createFeedbackSiteService } from './feedback/feedbackSiteService';
 
 const logger = createLogger('feedback-service', environment.LOG_LEVEL);
 
-const initializeApp = async (): Promise<express.Application> => {
+const initializeApp = async () => {
   const app = express();
 
   app.use(compression());
@@ -40,6 +41,7 @@ const initializeApp = async (): Promise<express.Application> => {
   const serviceId = AdspId.parse(environment.CLIENT_ID);
   const accessServiceUrl = new URL(environment.KEYCLOAK_ROOT_URL);
   const {
+    auditService,
     configurationHandler,
     directory,
     tenantHandler,
@@ -51,6 +53,7 @@ const initializeApp = async (): Promise<express.Application> => {
     healthCheck,
     metricsHandler,
     traceHandler,
+    shutdownTelemetry,
   } = await initializePlatform(
     {
       serviceId,
@@ -79,6 +82,8 @@ const initializeApp = async (): Promise<express.Application> => {
       directoryUrl: new URL(environment.DIRECTORY_URL),
       tracing: environment.OTEL_EXPORTER_OTLP_ENDPOINT,
       metrics: environment.OTEL_EXPORTER_OTLP_ENDPOINT,
+      auditActions: FeedbackAuditActions,
+      audit: { enabled: environment.FEEDBACK_AUDIT_ENABLED },
     },
     { logger },
   );
@@ -118,6 +123,7 @@ const initializeApp = async (): Promise<express.Application> => {
     tenantService,
     valueService,
     feedbackSiteService: feedbackSiteService,
+    auditService,
   });
 
   const swagger = JSON.parse(await readFile(`${__dirname}/swagger.json`, 'utf8'));
@@ -147,14 +153,25 @@ const initializeApp = async (): Promise<express.Application> => {
   const errorHandler = createErrorHandler(logger);
   app.use(errorHandler);
 
-  return app;
+  return { app, auditService, shutdownTelemetry };
 };
 
-initializeApp().then((app) => {
+initializeApp().then(({ app, auditService, shutdownTelemetry }) => {
   const port = environment.PORT || 3342;
 
   const server = app.listen(port, () => {
     logger.info(`Listening at http://localhost:${port}`);
   });
   server.on('error', (err) => logger.error(`Error encountered in server: ${err}`));
+
+  // Stop accepting requests, then deliver any pending audit events before the process exits.
+  const shutdown = createShutdownHandler({
+    serviceName: 'Feedback service',
+    server,
+    auditService,
+    shutdownTelemetry,
+    logger,
+  });
+  process.once('SIGTERM', shutdown);
+  process.once('SIGINT', shutdown);
 });
