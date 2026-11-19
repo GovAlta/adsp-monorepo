@@ -1,6 +1,50 @@
-import { SharepointDestination, SharepointFieldMapping } from '@store/sharePoint/actions';
+import {
+  SharepointDestination,
+  SharepointDetailFailure,
+  SharepointDetailList,
+  SharepointFieldMapping,
+} from '@store/sharePoint/actions';
 
 export const ITEM_KEY_COLUMN = 'AdspItemKey';
+
+const isComplete = (mapping: SharepointFieldMapping) => !!mapping.source && !!mapping.target;
+
+function validateDetailLists(destination: SharepointDestination): string | undefined {
+  const detailLists = destination.detailLists ?? [];
+  if (detailLists.length === 0) {
+    return undefined;
+  }
+  if (!destination.idempotencyFields?.length) {
+    return 'Detail lists need "Update existing rows" turned on.';
+  }
+  for (const list of detailLists) {
+    if (!list.listId?.trim() && !list.listName?.trim()) {
+      return 'Each detail list needs a list name or a SharePoint list ID.';
+    }
+    if (!list.dataPath.trim()) {
+      return 'Each detail list needs the path of its array in the data.';
+    }
+    if (!list.parentRefField.trim()) {
+      return 'Each detail list needs a parent reference column.';
+    }
+    const mappings = list.fieldMappings.filter((mapping) => mapping.source || mapping.target);
+    if (mappings.length === 0 || !mappings.every(isComplete)) {
+      return 'Each detail list needs at least one complete field mapping.';
+    }
+    if (mappings.some(({ target }) => target === list.parentRefField)) {
+      return `${list.parentRefField} is set by ADSP and cannot be mapped.`;
+    }
+  }
+  const paths = detailLists.map(({ dataPath }) => dataPath.trim());
+  if (new Set(paths).size !== paths.length) {
+    return 'Two detail lists use the same array path.';
+  }
+  const names = detailLists.map(({ listName }) => listName?.trim().toLowerCase()).filter(Boolean);
+  if (new Set(names).size !== names.length) {
+    return 'Two detail lists use the same list name.';
+  }
+  return undefined;
+}
 
 export function validateDestination(
   destination: SharepointDestination,
@@ -28,6 +72,11 @@ export function validateDestination(
   } else if (mappings.some((mapping) => mapping.target === ITEM_KEY_COLUMN)) {
     errors.fieldMappings = `${ITEM_KEY_COLUMN} is set by ADSP and cannot be mapped.`;
   }
+
+  const detailError = validateDetailLists(destination);
+  if (detailError) {
+    errors.detailLists = detailError;
+  }
   return errors;
 }
 
@@ -49,6 +98,8 @@ const FAILURE_DESCRIPTIONS: Record<string, string> = {
   'adsp:http-404': 'The destination or its connection was not found. Save the destination and try again.',
   'row-identity-missing':
     'The test data has no value for a row identity field. Add one, for example "_adsp": { "key": "test-1" }.',
+  'destination-not-set-up': 'A detail list is not set up yet. Use Verify setup to create it.',
+  'adsp:save-failed': 'The destination could not be saved, so it was not verified. Try saving again.',
 };
 
 export function describeTestFailure(errorCode: string, column?: string): string {
@@ -65,22 +116,87 @@ export function describeTestFailure(errorCode: string, column?: string): string 
   );
 }
 
+const itemNumbers = (indexes: number[]): string => {
+  const numbers = indexes.map((index) => String(index + 1));
+  return numbers.length > 1 ? `${numbers.slice(0, -1).join(', ')} and ${numbers[numbers.length - 1]}` : numbers[0];
+};
+
+export function describeDetailFailures(
+  failures: SharepointDetailFailure[],
+  detailLists: SharepointDetailList[] = [],
+): string[] {
+  return failures.map(({ listId, indexes, oldRowsLeft, newRowsLeft, column }) => {
+    const list = detailLists.find((candidate) => candidate.listId === listId);
+    const name = list?.listName || list?.dataPath || listId;
+    if (oldRowsLeft) {
+      return `${name}: the new rows were written, but ${oldRowsLeft} old rows could not be removed. Run the test again.`;
+    }
+    if (indexes.length === 0) {
+      return `${name}: the existing rows could not be read, so nothing was changed. Run the test again.`;
+    }
+    const items = `${indexes.length > 1 ? 'items' : 'item'} ${itemNumbers(indexes)} ${indexes.length > 1 ? 'were' : 'was'}`;
+    const left = newRowsLeft
+      ? ` ${newRowsLeft} ${newRowsLeft === 1 ? 'row' : 'rows'} from this attempt could not be removed. Run the test again.`
+      : '';
+    return `${name}: ${items} not written${column ? ` (column '${column}')` : ''}, so the rows from before are kept.${left}`;
+  });
+}
+
+type PathSegment = string | number;
+
+const segmentsOf = (path: string): PathSegment[] =>
+  path
+    .split('.')
+    .flatMap((part) => {
+      const [name, ...indexes] = part.split('[');
+      return [name, ...indexes.map((index) => Number(index.replace(']', '')))];
+    })
+    .filter((segment) => segment !== '');
+
 const setAtPath = (data: Record<string, unknown>, path: string, value: unknown) => {
-  const segments = path.split('.');
-  let current = data;
-  segments.slice(0, -1).forEach((segment) => {
-    current[segment] = (current[segment] as Record<string, unknown>) ?? {};
-    current = current[segment] as Record<string, unknown>;
+  const segments = segmentsOf(path);
+  let current = data as Record<PathSegment, unknown>;
+  segments.slice(0, -1).forEach((segment, i) => {
+    if (current[segment] === undefined || current[segment] === null) {
+      current[segment] = typeof segments[i + 1] === 'number' ? [] : {};
+    }
+    current = current[segment] as Record<PathSegment, unknown>;
   });
   current[segments[segments.length - 1]] = value;
+};
+
+const sampleValue = ({ columnType, choices }: SharepointFieldMapping): unknown => {
+  switch (columnType) {
+    case 'number':
+      return 0;
+    case 'boolean':
+      return false;
+    case 'dateTime':
+      return '2026-01-01';
+    case 'multiChoice':
+      return choices?.length ? [choices[0]] : [];
+    default:
+      return '';
+  }
+};
+
+const sampleOf = (mappings: SharepointFieldMapping[]): Record<string, unknown> => {
+  const data: Record<string, unknown> = {};
+  mappings
+    .filter((mapping) => mapping.source)
+    .forEach((mapping) => setAtPath(data, mapping.source, sampleValue(mapping)));
+  return data;
 };
 
 export function sampleTestData(
   mappings: SharepointFieldMapping[],
   idempotencyFields: string[] = [],
+  detailLists: SharepointDetailList[] = [],
 ): Record<string, unknown> {
-  const data: Record<string, unknown> = {};
-  mappings.filter((mapping) => mapping.source).forEach(({ source }) => setAtPath(data, source, ''));
+  const data = sampleOf(mappings);
+  detailLists
+    .filter((list) => list.dataPath)
+    .forEach((list) => setAtPath(data, list.dataPath, [sampleOf(list.fieldMappings)]));
   idempotencyFields.forEach((path) => setAtPath(data, path, 'test-1'));
   return data;
 }

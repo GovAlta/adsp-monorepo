@@ -130,6 +130,26 @@ describe('MongoFormSubmissionRepository', () => {
       expect(retrieved.formData).toEqual({ field1: 'updated-value' });
       expect(retrieved.submissionStatus).toBe('processed');
     });
+
+    it('should save and retrieve files nested two levels deep', async () => {
+      const submission = createSubmission({
+        formFiles: {
+          proof: adspId`urn:ads:platform:file-service:v1:/files/file-1`,
+          'applicant.address.proofOfAddress': adspId`urn:ads:platform:file-service:v1:/files/file-2`,
+          'dependents[0].contact.photoId': adspId`urn:ads:platform:file-service:v1:/files/file-3`,
+        },
+      });
+      await repo.save(submission);
+
+      const retrieved = await repo.get(tenantId, submission.id);
+      expect(
+        Object.fromEntries(Object.entries(retrieved.formFiles).map(([key, urn]) => [key, urn.toString()])),
+      ).toEqual({
+        proof: 'urn:ads:platform:file-service:v1:/files/file-1',
+        'applicant.address.proofOfAddress': 'urn:ads:platform:file-service:v1:/files/file-2',
+        'dependents[0].contact.photoId': 'urn:ads:platform:file-service:v1:/files/file-3',
+      });
+    });
   });
 
   describe('find', () => {

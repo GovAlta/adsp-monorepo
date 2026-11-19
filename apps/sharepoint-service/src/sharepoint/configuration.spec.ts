@@ -48,4 +48,71 @@ describe('configurationSchema', () => {
   it('tolerates legacy top-level keys from the alpha page', () => {
     expect(validate({ 'old-connection': { id: 'old-connection' } })).toBe(true);
   });
+
+  describe('detail lists', () => {
+    const detailList = {
+      listId: 'members',
+      dataPath: 'householdMembers',
+      parentRefField: 'ParentItemId',
+      fieldMappings: [{ source: 'name', target: 'MemberName' }],
+    };
+    const withDetailLists = (detailLists: unknown[], idempotencyFields: string[] | null = ['_adsp.key']) => ({
+      destinations: {
+        'hr-intake': { ...destination, ...(idempotencyFields ? { idempotencyFields } : {}), detailLists },
+      },
+    });
+
+    it('accepts detail lists on a destination with row identity', () => {
+      expect(validate(withDetailLists([detailList]))).toBe(true);
+    });
+
+    it('accepts a detail list that only has a name until it is set up', () => {
+      const { listId: _listId, ...unset } = detailList;
+      expect(validate(withDetailLists([{ ...unset, listName: 'Household members' }]))).toBe(true);
+    });
+
+    it('rejects a detail list with neither a list ID nor a name', () => {
+      const { listId: _listId, ...unset } = detailList;
+      expect(validate(withDetailLists([unset]))).toBe(false);
+    });
+
+    it('requires row identity when a destination has detail lists', () => {
+      expect(validate(withDetailLists([detailList], null))).toBe(false);
+      expect(validate(withDetailLists([detailList], []))).toBe(false);
+    });
+
+    it('does not require row identity for an empty list of detail lists', () => {
+      expect(validate(withDetailLists([], null))).toBe(true);
+    });
+
+    it.each(['dataPath', 'parentRefField', 'fieldMappings'])('requires %s on a detail list', (field) => {
+      const { [field]: _removed, ...rest } = detailList as Record<string, unknown>;
+      expect(validate(withDetailLists([rest]))).toBe(false);
+    });
+
+    it('rejects unknown fields on a detail list', () => {
+      expect(validate(withDetailLists([{ ...detailList, writeMode: 'append' }]))).toBe(false);
+    });
+  });
+
+  it('accepts a column type, display name and choices on a field mapping', () => {
+    const mapping = (extra: Record<string, unknown>) => ({
+      destinations: {
+        'hr-intake': { ...destination, fieldMappings: [{ source: 'a', target: 'A', ...extra }] },
+      },
+    });
+
+    for (const columnType of ['text', 'multilineText', 'number', 'dateTime', 'boolean', 'multiChoice', 'hyperlink']) {
+      expect(validate(mapping({ columnType }))).toBe(true);
+    }
+    expect(validate(mapping({ columnType: 'lookup' }))).toBe(false);
+    expect(validate(mapping({ displayName: 'First name', choices: ['Email', 'Phone'] }))).toBe(true);
+    expect(validate(mapping({ displayName: '' }))).toBe(false);
+    expect(validate(mapping({ choices: [''] }))).toBe(false);
+  });
+
+  it('accepts a folder link column', () => {
+    expect(validate({ destinations: { 'hr-intake': { ...destination, folderLinkField: 'FilesFolder' } } })).toBe(true);
+    expect(validate({ destinations: { 'hr-intake': { ...destination, folderLinkField: '' } } })).toBe(false);
+  });
 });

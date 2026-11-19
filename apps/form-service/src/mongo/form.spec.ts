@@ -304,6 +304,26 @@ describe('MongoFormRepository', () => {
       expect(result.files['supporting.document'].toString()).toBe('urn:ads:platform:file-service:v1:/files/file-1');
       expect(result.files['missing']).toBeNull();
     });
+
+    it('should save and read back files nested two levels deep', async () => {
+      await repo.save(
+        createForm({
+          id: 'form-1',
+          files: {
+            'applicant.address.proofOfAddress': adspId`urn:ads:platform:file-service:v1:/files/file-2`,
+            'dependents[0].contact.photoId': adspId`urn:ads:platform:file-service:v1:/files/file-3`,
+          },
+        }),
+      );
+
+      const result = await repo.get(tenantId, 'form-1');
+      expect(result.files['applicant.address.proofOfAddress'].toString()).toBe(
+        'urn:ads:platform:file-service:v1:/files/file-2',
+      );
+      expect(result.files['dependents[0].contact.photoId'].toString()).toBe(
+        'urn:ads:platform:file-service:v1:/files/file-3',
+      );
+    });
   });
 
   describe('delete', () => {

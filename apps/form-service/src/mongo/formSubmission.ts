@@ -199,7 +199,7 @@ export class MongoFormSubmissionRepository implements FormSubmissionRepository {
       updatedDateTime: entity.updated,
       formData: entity.formData,
       formFiles: Object.entries(entity.formFiles).reduce(
-        (fs, [key, f]) => ({ ...fs, [key.replace('.', ':')]: f?.toString() }),
+        (fs, [key, f]) => ({ ...fs, [key.replaceAll('.', ':')]: f?.toString() }),
         {} as Record<string, string>,
       ),
       disposition: entity.disposition,
@@ -230,7 +230,7 @@ export class MongoFormSubmissionRepository implements FormSubmissionRepository {
         updated: doc.updatedDateTime,
         formData: doc.formData,
         formFiles: Object.entries(doc.formFiles).reduce(
-          (fs, [key, f]) => ({ ...fs, [key.replace(':', '.')]: f ? AdspId.parse(f) : null }),
+          (fs, [key, f]) => ({ ...fs, [key.replaceAll(':', '.')]: f ? AdspId.parse(f) : null }),
           {} as Record<string, AdspId>,
         ),
         disposition: doc.disposition,

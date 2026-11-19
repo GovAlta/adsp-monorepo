@@ -12,12 +12,20 @@ import {
   DeleteSharepointDestinationAction,
   FETCH_SHAREPOINT_CONFIGURATION_ACTION,
   FETCH_SHAREPOINT_CREDENTIAL_STATUS_ACTION,
+  FETCH_SHAREPOINT_FORMS_ACTION,
   fetchSharepointConfigurationSuccess,
   FetchSharepointCredentialStatusAction,
   fetchSharepointCredentialStatusSuccess,
+  fetchSharepointFormsSuccess,
+  SET_UP_SHAREPOINT_DESTINATION_ACTION,
+  SetUpSharepointDestinationAction,
+  setUpSharepointDestinationSuccess,
   SharepointConfiguration,
   SharepointConnection,
   SharepointDestination,
+  SharepointFormChoice,
+  SharepointSetupSummary,
+  SharepointVerifyReport,
   TEST_SHAREPOINT_DESTINATION_ACTION,
   TestSharepointDestinationAction,
   testSharepointDestinationSuccess,
@@ -26,6 +34,10 @@ import {
   updateSharepointConfigurationSuccess,
   UpdateSharepointConnectionAction,
   UpdateSharepointDestinationAction,
+  VERIFY_SHAREPOINT_DESTINATION_ACTION,
+  verifySharepointDestination,
+  VerifySharepointDestinationAction,
+  verifySharepointDestinationSuccess,
 } from './actions';
 
 const CONFIGURATION_PATH = 'configuration/v2/configuration/platform/sharepoint-service';
@@ -125,20 +137,86 @@ export function* deleteSharepointConnectionSaga({ id }: DeleteSharepointConnecti
   }
 }
 
-export function* updateSharepointDestinationSaga({ payload }: UpdateSharepointDestinationAction): SagaIterator {
+export function* updateSharepointDestinationSaga({
+  payload,
+  verifyAfterSave,
+}: UpdateSharepointDestinationAction): SagaIterator {
   yield put(UpdateIndicator({ show: true, message: 'Saving...' }));
   try {
-    const destinations: Record<string, SharepointDestination> = yield select(
-      (state: RootState) => state.sharepoint.destinations,
-    );
-    yield call(patchSharepointConfiguration, {
-      operation: 'UPDATE',
-      update: { destinations: { ...destinations, [payload.id]: payload } },
-    });
+    yield call(saveDestination, payload);
+    if (verifyAfterSave) {
+      yield put(verifySharepointDestination(payload.id));
+    }
   } catch (err) {
     yield put(ErrorNotification({ error: err }));
+    if (verifyAfterSave) {
+      yield put(verifySharepointDestinationSuccess(payload.id, { errorCode: 'adsp:save-failed' }));
+    }
   } finally {
     yield put(UpdateIndicator({ show: false }));
+  }
+}
+
+function* saveDestination(destination: SharepointDestination): SagaIterator {
+  const destinations: Record<string, SharepointDestination> = yield select(
+    (state: RootState) => state.sharepoint.destinations,
+  );
+  yield call(patchSharepointConfiguration, {
+    operation: 'UPDATE',
+    update: { destinations: { ...destinations, [destination.id]: destination } },
+  });
+}
+
+const errorCodeOf = (err): string => {
+  const status = err?.response?.status;
+  return err?.response?.data?.errorCode ?? (status ? `adsp:http-${status}` : 'adsp:unreachable');
+};
+
+function* postDestinationAction(id: string, action: 'verify' | 'setup'): SagaIterator {
+  const url: string = yield select(selectSharepointApiUrl(`/destinations/${encodeURIComponent(id)}/${action}`));
+  const token: string = yield call(getAccessToken);
+  const { data } = yield call(axios.post, url, {}, { headers: { Authorization: `Bearer ${token}` } });
+  return data;
+}
+
+export function* verifySharepointDestinationSaga({ id }: VerifySharepointDestinationAction): SagaIterator {
+  try {
+    const report: SharepointVerifyReport = yield call(postDestinationAction, id, 'verify');
+    yield put(verifySharepointDestinationSuccess(id, { report }));
+  } catch (err) {
+    yield put(verifySharepointDestinationSuccess(id, { errorCode: errorCodeOf(err) }));
+  }
+}
+
+export function* setUpSharepointDestinationSaga({ id }: SetUpSharepointDestinationAction): SagaIterator {
+  try {
+    const data: SharepointSetupSummary & { report: SharepointVerifyReport } = yield call(
+      postDestinationAction,
+      id,
+      'setup',
+    );
+    const { report, ...setup } = data;
+
+    if (setup.createdLists.length) {
+      const destination: SharepointDestination = yield select((state: RootState) => state.sharepoint.destinations[id]);
+      yield call(saveDestination, {
+        ...destination,
+        detailLists: (destination.detailLists ?? []).map((list, index) => {
+          const created = setup.createdLists.find((candidate) => candidate.index === index);
+          return created ? { ...list, listId: created.listId } : list;
+        }),
+      });
+    }
+    yield put(setUpSharepointDestinationSuccess(id, { report, setup }));
+  } catch (err) {
+    const report: SharepointVerifyReport | undefined = yield select(
+      (state: RootState) => state.sharepoint.verifyResults[id]?.report,
+    );
+    if (err?.response?.data?.errorCode === 'list-name-taken') {
+      yield put(setUpSharepointDestinationSuccess(id, { report, listNameTaken: err.response.data.lists }));
+    } else {
+      yield put(setUpSharepointDestinationSuccess(id, { report, errorCode: errorCodeOf(err) }));
+    }
   }
 }
 
@@ -184,7 +262,54 @@ export function* testSharepointDestinationSaga({ id, data }: TestSharepointDesti
   }
 }
 
+interface FormDefinitionResult {
+  id: string;
+  latest?: {
+    configuration?: {
+      id?: string;
+      name?: string;
+      sharepointConfigurationId?: string | null;
+      dataSchema?: Record<string, unknown>;
+    };
+  } | null;
+}
+
+// Every form, page by page, so the picker can find any of them; Configuration Service allows 1000 per page.
+export function* fetchSharepointFormsSaga(): SagaIterator {
+  try {
+    const baseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl);
+    const token: string = yield call(getAccessToken);
+    const forms: SharepointFormChoice[] = [];
+    let after: string | undefined;
+    do {
+      const { data } = yield call(axios.get, `${baseUrl}/configuration/v2/configuration/form-service`, {
+        headers: { Authorization: `Bearer ${token}` },
+        params: { top: 1000, ...(after ? { after } : {}) },
+      });
+      for (const { id, latest } of (data?.results ?? []) as FormDefinitionResult[]) {
+        const configuration = latest?.configuration;
+        if (configuration) {
+          forms.push({
+            id: configuration.id ?? id,
+            name: configuration.name ?? id,
+            ...(configuration.sharepointConfigurationId
+              ? { sharepointConfigurationId: configuration.sharepointConfigurationId }
+              : {}),
+            dataSchema: configuration.dataSchema,
+          });
+        }
+      }
+      after = data?.page?.next;
+    } while (after);
+    yield put(fetchSharepointFormsSuccess(forms));
+  } catch (err) {
+    yield put(ErrorNotification({ error: err }));
+    yield put(fetchSharepointFormsSuccess([]));
+  }
+}
+
 export function* watchSharepointSagas(): Generator {
+  yield takeEvery(FETCH_SHAREPOINT_FORMS_ACTION, fetchSharepointFormsSaga);
   yield takeEvery(FETCH_SHAREPOINT_CONFIGURATION_ACTION, fetchSharepointConfigurationSaga);
   yield takeEvery(UPDATE_SHAREPOINT_CONNECTION_ACTION, updateSharepointConnectionSaga);
   yield takeEvery(DELETE_SHAREPOINT_CONNECTION_ACTION, deleteSharepointConnectionSaga);
@@ -192,4 +317,6 @@ export function* watchSharepointSagas(): Generator {
   yield takeEvery(DELETE_SHAREPOINT_DESTINATION_ACTION, deleteSharepointDestinationSaga);
   yield takeEvery(FETCH_SHAREPOINT_CREDENTIAL_STATUS_ACTION, fetchSharepointCredentialStatusSaga);
   yield takeEvery(TEST_SHAREPOINT_DESTINATION_ACTION, testSharepointDestinationSaga);
+  yield takeEvery(VERIFY_SHAREPOINT_DESTINATION_ACTION, verifySharepointDestinationSaga);
+  yield takeEvery(SET_UP_SHAREPOINT_DESTINATION_ACTION, setUpSharepointDestinationSaga);
 }

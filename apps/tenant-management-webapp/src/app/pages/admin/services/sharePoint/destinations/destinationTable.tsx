@@ -8,6 +8,7 @@ interface DestinationTableProps {
   destinations: Record<string, SharepointDestination>;
   connections: Record<string, SharepointConnection>;
   onTest: (destination: SharepointDestination) => void;
+  onVerify: (destination: SharepointDestination) => void;
   onEdit: (destination: SharepointDestination) => void;
   onDelete: (destination: SharepointDestination) => void;
 }
@@ -16,6 +17,7 @@ export const DestinationTableComponent: FunctionComponent<DestinationTableProps>
   destinations,
   connections,
   onTest,
+  onVerify,
   onEdit,
   onDelete,
 }) => (
@@ -45,6 +47,12 @@ export const DestinationTableComponent: FunctionComponent<DestinationTableProps>
                 title="Test"
                 testId={`destination-test-${destination.id}`}
                 onClick={() => onTest(destination)}
+              />
+              <GoAContextMenuIcon
+                type="checkmark-circle"
+                title="Verify setup"
+                testId={`destination-verify-${destination.id}`}
+                onClick={() => onVerify(destination)}
               />
               <GoAContextMenuIcon
                 type="create"

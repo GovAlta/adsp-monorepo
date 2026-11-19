@@ -6,8 +6,16 @@ import type { Request } from 'express';
 import * as request from 'supertest';
 import { Logger } from 'winston';
 import { CredentialRepository, CredentialStore, parseEncryptionKey, StoredCredential } from './credentials';
-import { CredentialNotSetError, CredentialUnreadableError, DestinationDisabledError, SharePointError } from './errors';
+import {
+  CredentialNotSetError,
+  CredentialUnreadableError,
+  DestinationDisabledError,
+  DestinationNotSetUpError,
+  DetailRowsFailedError,
+  SharePointError,
+} from './errors';
 import { SharePointFileService } from './files';
+import { ListNameTakenError, SharePointSetup } from './setup';
 import { GraphTokenProvider } from './graph';
 import { RowIdentityMissingError } from './mapper';
 import { SharePointPusher } from './push';
@@ -79,6 +87,8 @@ describe('SharePoint router', () => {
   let logger: { debug: jest.Mock; info: jest.Mock; warn: jest.Mock; error: jest.Mock };
   let pusher: { push: jest.Mock; test: jest.Mock };
   let fileService: { upload: jest.Mock };
+  let setup: { verify: jest.Mock; setUp: jest.Mock };
+  let clearConfiguration: jest.Mock;
   let tokens: { evict: jest.Mock };
   let currentUser: User;
   let app: express.Application;
@@ -90,6 +100,8 @@ describe('SharePoint router', () => {
       test: jest.fn().mockResolvedValue({ itemId: 'item-8', outcome: 'created' }),
     };
     fileService = { upload: jest.fn() };
+    setup = { verify: jest.fn(), setUp: jest.fn() };
+    clearConfiguration = jest.fn();
     tokens = { evict: jest.fn() };
     currentUser = admin;
 
@@ -113,6 +125,8 @@ describe('SharePoint router', () => {
         tokens: tokens as unknown as GraphTokenProvider,
         pusher: pusher as unknown as SharePointPusher,
         fileService: fileService as unknown as SharePointFileService,
+        setup: setup as unknown as SharePointSetup,
+        clearConfiguration,
       }),
     );
     app.use(createErrorHandler(logger as unknown as Logger));
@@ -159,7 +173,12 @@ describe('SharePoint router', () => {
 
     it("forbids core service accounts from setting, reading or deleting a tenant's secret, even with the admin role", async () => {
       await setSecret();
-      currentUser = { id: 'core-service', name: 'Core service', roles: [ServiceRoles.Admin], isCore: true } as unknown as User;
+      currentUser = {
+        id: 'core-service',
+        name: 'Core service',
+        roles: [ServiceRoles.Admin],
+        isCore: true,
+      } as unknown as User;
 
       expect((await setSecret('hr-site', 'replaced')).status).toBe(403);
       expect((await request(app).get('/sharepoint/v1/connections/hr-site/credentials')).status).toBe(403);
@@ -242,6 +261,40 @@ describe('SharePoint router', () => {
       expect(res.body).toEqual({ errorCode: 'graph:invalidRequest', retryable: false, column: 'FirstName' });
     });
 
+    it('returns the detail rows that were written', async () => {
+      const detailRows = [{ listId: 'members', rowIds: ['m-1', 'm-2'] }];
+      pusher.push.mockResolvedValueOnce({ itemId: 'item-7', outcome: 'created', detailRows });
+
+      const res = await push();
+
+      expect(res.status).toBe(200);
+      expect(res.body).toEqual({ dataId: 'item-7', outcome: 'created', date: expect.any(String), detailRows });
+    });
+
+    it('returns 502 with the main row ID and the failed items when detail rows fail', async () => {
+      const detailFailures = [{ listId: 'members', indexes: [1] }];
+      pusher.push.mockRejectedValueOnce(
+        new DetailRowsFailedError('item-7', detailFailures, 'graph:serviceNotAvailable', true),
+      );
+
+      const res = await push();
+
+      expect(res.status).toBe(502);
+      expect(res.body).toEqual({
+        errorCode: 'graph:serviceNotAvailable',
+        retryable: true,
+        dataId: 'item-7',
+        detailFailures,
+      });
+    });
+
+    it('returns 409 when a detail list is not set up yet', async () => {
+      pusher.push.mockRejectedValueOnce(new DestinationNotSetUpError('hr-intake'));
+      const res = await push();
+      expect(res.status).toBe(409);
+      expect(res.body).toEqual({ errorCode: 'destination-not-set-up' });
+    });
+
     it('returns 404 for an unknown destination', async () => {
       pusher.push.mockRejectedValueOnce(new NotFoundError('SharePoint destination', 'missing'));
       expect((await push()).status).toBe(404);
@@ -277,6 +330,18 @@ describe('SharePoint router', () => {
       });
     });
 
+    it('reads the configuration fresh, so a test right after saving uses the saved destination', async () => {
+      await runTest();
+      expect(clearConfiguration).toHaveBeenCalledWith(tenantId);
+      expect(clearConfiguration.mock.invocationCallOrder[0]).toBeLessThan(pusher.test.mock.invocationCallOrder[0]);
+    });
+
+    it('keeps using the cached configuration for pushes', async () => {
+      currentUser = writer;
+      await push();
+      expect(clearConfiguration).not.toHaveBeenCalled();
+    });
+
     it('returns the error code and column on failure', async () => {
       pusher.test.mockRejectedValueOnce(new SharePointError('graph:invalidRequest', false, 'Nope'));
       const res = await runTest();
@@ -301,10 +366,106 @@ describe('SharePoint router', () => {
       expect((await runTest()).body).toEqual({ ok: false, errorCode: 'credential-not-set' });
     });
 
+    it('shows the detail rows written', async () => {
+      const detailRows = [{ listId: 'members', rowIds: ['m-1'] }];
+      pusher.test.mockResolvedValueOnce({ itemId: 'item-8', outcome: 'created', detailRows });
+      expect((await runTest()).body).toEqual({ ok: true, outcome: 'created', detailRows });
+    });
+
+    it('reports detail rows that failed', async () => {
+      const detailFailures = [{ listId: 'members', indexes: [0], column: 'ParentItemId' }];
+      pusher.test.mockRejectedValueOnce(
+        new DetailRowsFailedError('item-8', detailFailures, 'graph:invalidRequest', false),
+      );
+      expect((await runTest()).body).toEqual({ ok: false, errorCode: 'graph:invalidRequest', detailFailures });
+    });
+
+    it('reports a detail list that is not set up yet', async () => {
+      pusher.test.mockRejectedValueOnce(new DestinationNotSetUpError('hr-intake'));
+      expect((await runTest()).body).toEqual({ ok: false, errorCode: 'destination-not-set-up' });
+    });
+
     it('forbids core writers', async () => {
       currentUser = writer;
       expect((await runTest()).status).toBe(403);
       expect(pusher.test).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('setup', () => {
+    const report = { ready: false, lists: [{ kind: 'main', listId: 'list-1', status: 'ok', columns: [] }] };
+    const verify = () => request(app).post('/sharepoint/v1/destinations/hr-intake/verify');
+    const runSetup = () => request(app).post('/sharepoint/v1/destinations/hr-intake/setup');
+
+    it('verifies a destination with configuration read fresh, not from the cache', async () => {
+      setup.verify.mockResolvedValueOnce(report);
+
+      const res = await verify();
+
+      expect(res.status).toBe(200);
+      expect(res.body).toEqual(report);
+      expect(setup.verify).toHaveBeenCalledWith(tenantId, configuration, 'hr-intake');
+      expect(clearConfiguration).toHaveBeenCalledWith(tenantId);
+      expect(clearConfiguration.mock.invocationCallOrder[0]).toBeLessThan(setup.verify.mock.invocationCallOrder[0]);
+    });
+
+    it('sets up a destination with configuration read fresh, not from the cache', async () => {
+      const result = {
+        createdLists: [],
+        createdColumns: [],
+        indexedColumns: [],
+        failures: [],
+        permissionDenied: false,
+        report,
+      };
+      setup.setUp.mockResolvedValueOnce(result);
+
+      expect((await runSetup()).body).toEqual(result);
+      expect(setup.setUp).toHaveBeenCalledWith(tenantId, configuration, 'hr-intake');
+      expect(clearConfiguration.mock.invocationCallOrder[0]).toBeLessThan(setup.setUp.mock.invocationCallOrder[0]);
+    });
+
+    it('returns 409 with the lists when a list name is already taken', async () => {
+      const lists = [{ index: 0, dataPath: 'members', listName: 'Members', listId: 'existing' }];
+      setup.setUp.mockRejectedValueOnce(new ListNameTakenError(lists));
+
+      const res = await runSetup();
+
+      expect(res.status).toBe(409);
+      expect(res.body).toEqual({ errorCode: 'list-name-taken', lists });
+    });
+
+    it.each([
+      ['credential-not-set', new CredentialNotSetError('hr-site'), 409],
+      ['credential-unreadable', new CredentialUnreadableError('hr-site'), 409],
+    ])('returns %s', async (errorCode, error, status) => {
+      setup.verify.mockRejectedValueOnce(error);
+
+      const res = await verify();
+
+      expect(res.status).toBe(status);
+      expect(res.body).toEqual({ errorCode });
+    });
+
+    it('returns 502 with the SharePoint error code', async () => {
+      setup.setUp.mockRejectedValueOnce(new SharePointError('entra:AADSTS7000215', false));
+
+      const res = await runSetup();
+
+      expect(res.status).toBe(502);
+      expect(res.body).toEqual({ errorCode: 'entra:AADSTS7000215', retryable: false });
+    });
+
+    it.each([
+      ['users without the admin role', () => reader],
+      ['core writers', () => writer],
+    ])('forbids %s', async (_case, user) => {
+      currentUser = user();
+
+      expect((await verify()).status).toBe(403);
+      expect((await runSetup()).status).toBe(403);
+      expect(setup.verify).not.toHaveBeenCalled();
+      expect(setup.setUp).not.toHaveBeenCalled();
     });
   });
 
@@ -417,6 +578,14 @@ describe('SharePoint router', () => {
 
       expect(res.status).toBe(409);
       expect(res.body).toEqual({ errorCode: 'credential-unreadable' });
+    });
+
+    it('returns 409 when a detail list is not set up yet', async () => {
+      fileService.upload.mockRejectedValueOnce(new DestinationNotSetUpError('hr-intake'));
+      const res = await upload();
+
+      expect(res.status).toBe(409);
+      expect(res.body).toEqual({ errorCode: 'destination-not-set-up' });
     });
 
     it('returns 502 with the error code when Microsoft sign-in fails', async () => {

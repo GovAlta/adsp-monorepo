@@ -1,4 +1,5 @@
 import axios from 'axios';
+import type { DetailFailure } from './types';
 
 export class SharePointError extends Error {
   constructor(
@@ -32,6 +33,26 @@ export class DestinationDisabledError extends Error {
   constructor(public readonly destinationId: string) {
     super(`SharePoint destination '${destinationId}' is disabled.`);
     Object.setPrototypeOf(this, DestinationDisabledError.prototype);
+  }
+}
+
+export class DestinationNotSetUpError extends Error {
+  constructor(public readonly destinationId: string) {
+    super(`SharePoint destination '${destinationId}' has a detail list that is not set up yet.`);
+    Object.setPrototypeOf(this, DestinationNotSetUpError.prototype);
+  }
+}
+
+// The main row was written but some detail rows were not; a retry of the whole push corrects them.
+export class DetailRowsFailedError extends SharePointError {
+  constructor(
+    public readonly dataId: string,
+    public readonly detailFailures: DetailFailure[],
+    errorCode: string,
+    retryable: boolean,
+  ) {
+    super(errorCode, retryable);
+    Object.setPrototypeOf(this, DetailRowsFailedError.prototype);
   }
 }
 

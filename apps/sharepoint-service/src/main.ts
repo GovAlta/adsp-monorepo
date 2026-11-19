@@ -23,6 +23,7 @@ import {
   ServiceRoles,
   SharePointFileService,
   SharePointPusher,
+  SharePointSetup,
 } from './sharepoint';
 
 const logger = createLogger('sharepoint-service', environment.LOG_LEVEL);
@@ -46,6 +47,7 @@ const initializeApp = async (): Promise<express.Application> => {
   const {
     coreStrategy,
     configurationHandler,
+    configurationService,
     directory,
     eventService,
     healthCheck,
@@ -62,7 +64,8 @@ const initializeApp = async (): Promise<express.Application> => {
       roles: [
         {
           role: ServiceRoles.Admin,
-          description: 'Administrator role for setting SharePoint connection credentials and testing destinations.',
+          description:
+            'Administrator role for setting SharePoint connection credentials, and for testing, verifying and setting up destinations.',
           inTenantAdmin: true,
         },
         {
@@ -101,7 +104,9 @@ const initializeApp = async (): Promise<express.Application> => {
   const { credentialRepository, isConnected } = await connectMongo({ ...environment, logger });
   const credentialStore = new CredentialStore(credentialRepository, encryptionKeys);
   const tokens = new GraphTokenProvider(environment.ENTRA_AUTHORITY_URL, credentialStore);
-  const pusher = new SharePointPusher(tokens, new GraphClient(environment.GRAPH_URL));
+  const graph = new GraphClient(environment.GRAPH_URL);
+  const pusher = new SharePointPusher(tokens, graph);
+  const setup = new SharePointSetup(tokens, graph);
 
   if (environment.DEV_FILES_DIRECTORY) {
     logger.warn(`Reading files for upload from local directory '${environment.DEV_FILES_DIRECTORY}'.`);
@@ -124,7 +129,16 @@ const initializeApp = async (): Promise<express.Application> => {
     passport.authenticate(['core', 'tenant'], { session: false }),
     tenantHandler,
     configurationHandler,
-    createSharePointRouter({ logger, credentialStore, tokens, pusher, fileService }),
+    createSharePointRouter({
+      logger,
+      credentialStore,
+      tokens,
+      pusher,
+      fileService,
+      setup,
+      clearConfiguration: (tenantId) =>
+        configurationService.clearCached?.(tenantId, serviceId.namespace, serviceId.service),
+    }),
   );
 
   app.get('/health', async (_req, res) => {
