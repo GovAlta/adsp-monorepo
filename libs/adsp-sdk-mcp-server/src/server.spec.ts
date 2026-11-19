@@ -115,7 +115,7 @@ describe('adsp-sdk-mcp-server', () => {
   it('search_adsp_docs finds a bundled doc by keyword', async () => {
     const result = await client.callTool({ name: 'search_adsp_docs', arguments: { query: 'event service' } });
     const [content] = result.content as { type: 'text'; text: string }[];
-    const results = JSON.parse(content.text);
+    const { results } = JSON.parse(content.text);
 
     expect(results[0].path).toBe('services/event-service.md');
   });
@@ -331,7 +331,7 @@ describe('shared tools', () => {
     const fromBeta = await betaClient.callTool({ name: 'search_adsp_docs', arguments: { query: 'beta' } });
 
     expect(firstText(fromAlpha)).toBe('No ADSP docs match "beta". Try other keywords, or call list_adsp_docs to browse.');
-    expect(JSON.parse(firstText(fromBeta))[0].path).toBe('services/beta-service.md');
+    expect(JSON.parse(firstText(fromBeta)).results[0].path).toBe('services/beta-service.md');
   });
 
   it('does not cache a docs root that failed to load', async () => {

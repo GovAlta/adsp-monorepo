@@ -1,6 +1,8 @@
 import { z } from 'zod';
 import { DocsRepository } from '../docs/docsRepository';
 import { queryTerms } from '../search/textSearch';
+import { jsonText, buildNext, withRelatedAndNext } from './envelope';
+import { LinkIndex } from './links';
 import { OFFLINE_TOOL_ANNOTATIONS, ToolDefinition } from './types';
 
 const SearchArgs = z.object({
@@ -16,7 +18,10 @@ const ReadArgs = z.object({
   path: z.string(),
 });
 
-export function createDocsTools(docs: DocsRepository): ToolDefinition[] {
+// A prefix matching this few pages is specific enough to point straight at one.
+const NARROW_PREFIX_PAGES = 5;
+
+export function createDocsTools(docs: DocsRepository, links: () => LinkIndex): ToolDefinition[] {
   return [
     {
       name: 'search_adsp_docs',
@@ -65,7 +70,29 @@ export function createDocsTools(docs: DocsRepository): ToolDefinition[] {
           };
         }
 
-        return { content: [{ type: 'text', text: JSON.stringify(results, null, 2) }] };
+        const index = links();
+        const withRelated = results.map((result) =>
+          withRelatedAndNext(result, index.relatedForDoc(result.path), undefined),
+        );
+        const top = withRelated[0];
+        const next = buildNext(
+          [
+            {
+              tool: 'read_adsp_doc',
+              arguments: { path: top.path },
+              why: 'Top match; read the full page.',
+            },
+            top.related?.serviceApis?.[0]
+              ? {
+                  tool: 'search_service_endpoints',
+                  arguments: { service: top.related.serviceApis[0], query },
+                  why: "Find this service's REST endpoints for the same question.",
+                }
+              : undefined,
+          ],
+          { tool: 'search_adsp_docs', arguments: args as Record<string, unknown> },
+        );
+        return jsonText(withRelatedAndNext({ results: withRelated }, undefined, next));
       },
     },
     {
@@ -98,7 +125,23 @@ export function createDocsTools(docs: DocsRepository): ToolDefinition[] {
           };
         }
 
-        return { content: [{ type: 'text', text: JSON.stringify(pages, null, 2) }] };
+        const next =
+          prefix && pages.length <= NARROW_PREFIX_PAGES
+            ? buildNext(
+                [
+                  {
+                    tool: 'read_adsp_doc',
+                    arguments: { path: pages[0].path },
+                    why:
+                      pages.length === 1
+                        ? 'Only page under this prefix; read it.'
+                        : 'First page under this prefix; read it.',
+                  },
+                ],
+                { tool: 'list_adsp_docs', arguments: args as Record<string, unknown> },
+              )
+            : undefined;
+        return jsonText(withRelatedAndNext({ results: pages }, undefined, next));
       },
     },
     {
@@ -133,7 +176,35 @@ export function createDocsTools(docs: DocsRepository): ToolDefinition[] {
           };
         }
 
-        return { content: [{ type: 'text', text: `# ${doc.title}\n\n${doc.content}` }] };
+        const related = links().relatedForDoc(path);
+        const next = buildNext(
+          [
+            related.serviceApis?.[0]
+              ? {
+                  tool: 'search_service_endpoints',
+                  arguments: { service: related.serviceApis[0], query: doc.title },
+                  why: "Find this service's REST endpoints.",
+                }
+              : undefined,
+            related.sdkSymbols?.[0]
+              ? {
+                  tool: 'search_sdk_reference',
+                  arguments: { query: related.sdkSymbols[0] },
+                  why: 'Look up the SDK symbol this page uses.',
+                }
+              : undefined,
+            related.docs?.[0]
+              ? { tool: 'read_adsp_doc', arguments: { path: related.docs[0] }, why: 'Read a page this one links to.' }
+              : undefined,
+          ],
+          { tool: 'read_adsp_doc', arguments: args as Record<string, unknown> }
+        );
+        return {
+          content: [
+            { type: 'text', text: `# ${doc.title}\n\n${doc.content}` },
+            ...jsonText(withRelatedAndNext({ path }, related, next)).content,
+          ],
+        };
       },
     },
   ];

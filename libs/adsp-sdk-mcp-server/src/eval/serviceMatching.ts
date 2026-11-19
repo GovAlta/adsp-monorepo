@@ -41,8 +41,8 @@ export function rankWithSearchAdspDocs(docsRoot: string): RankServices {
   return async (query) => {
     const result = await search.handler({ query, limit: SEARCH_LIMIT });
     const [content] = result.content as { type: string; text: string }[];
-    // A text that is not a JSON array is the tool's "no results" message.
-    const results: unknown = content.text.startsWith('[') ? JSON.parse(content.text) : [];
+    // A text that is not a JSON object is the tool's "no results" message.
+    const { results } = content.text.startsWith('{') ? JSON.parse(content.text) : { results: [] };
     return (results as { path: string }[]).map(({ path }) => serviceOfDocPath(path));
   };
 }
