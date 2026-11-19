@@ -75,7 +75,18 @@ interface ContentSet {
   label: string;
   options: CreateAdspMcpServerOptions;
   starts: ToolCall[];
+  reaches: string[];
 }
+
+const CHAINED_TOOLS = [
+  'search_adsp_docs',
+  'list_adsp_docs',
+  'read_adsp_doc',
+  'search_sdk_reference',
+  'search_service_endpoints',
+  'read_service_endpoint',
+  'find_adsp_services',
+];
 
 const CONTENT_SETS: ContentSet[] = [
   {
@@ -89,6 +100,7 @@ const CONTENT_SETS: ContentSet[] = [
       { name: 'search_service_endpoints', arguments: { query: 'upload a file' } },
       { name: 'find_adsp_services', arguments: { need: 'send a domain event' } },
     ],
+    reaches: CHAINED_TOOLS,
   },
   {
     label: 'the bundled content',
@@ -101,10 +113,11 @@ const CONTENT_SETS: ContentSet[] = [
       { name: 'search_service_endpoints', arguments: { query: 'upload a file' } },
       { name: 'find_adsp_services', arguments: { need: 'applicants attach supporting documents to an application' } },
     ],
+    reaches: CHAINED_TOOLS,
   },
 ];
 
-describe.each(CONTENT_SETS)('suggested calls and related references over $label', ({ options, starts }) => {
+describe.each(CONTENT_SETS)('suggested calls and related references over $label', ({ options, starts, reaches }) => {
   let client: Client;
   let steps: Step[];
 
@@ -120,12 +133,24 @@ describe.each(CONTENT_SETS)('suggested calls and related references over $label'
   it('every suggested call succeeds against the same server', () => {
     const startsWithoutNext = steps.filter((step) => step.depth === 0 && suggestionsOf(step).length === 0);
     const failed = steps
-      .filter(({ depth, result, envelope }) => depth > 0 && (result.isError || !envelope))
+      .filter(
+        ({ depth, result, envelope }) => depth > 0 && (result.isError || !envelope || envelope.results?.length === 0),
+      )
       .map(({ call, result }) => `${callKey(call)} -> ${texts(result)[0]}`);
 
     expect(startsWithoutNext.map(({ call }) => callKey(call))).toEqual([]);
     expect(steps.filter(({ depth }) => depth === FOLLOW_DEPTH).length).toBeGreaterThan(0);
     expect(failed).toEqual([]);
+  });
+
+  it('reaches every chained offline tool', () => {
+    const endpointReads = steps.filter(({ call }) => call.name === 'read_service_endpoint');
+
+    expect(reaches.filter((tool) => !steps.some(({ call }) => call.name === tool))).toEqual([]);
+    expect(endpointReads.length).toBeGreaterThan(0);
+    expect(
+      endpointReads.filter(({ envelope }) => !envelope?.related?.docs?.length).map(({ call }) => callKey(call)),
+    ).toEqual([]);
   });
 
   it('every related entry resolves', async () => {
