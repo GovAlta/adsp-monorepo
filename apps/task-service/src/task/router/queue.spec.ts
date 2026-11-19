@@ -486,6 +486,37 @@ describe('queue', () => {
       expect(eventServiceMock.send).toHaveBeenCalledWith(expect.objectContaining({ name: 'task-created' }));
     });
 
+    it('ignores tenantId, id and status in the request body', async () => {
+      const otherTenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/other`;
+      const req = {
+        user: { tenantId, id: 'user-1', roles: [TaskServiceRoles.TaskWriter] },
+        tenant: { id: tenantId },
+        queue,
+        body: {
+          name: 'test',
+          tenantId: otherTenantId.toString(),
+          id: 'existing-task',
+          status: TaskStatus.Completed,
+          createdOn: '2020-01-01T00:00:00Z',
+        },
+      };
+      const res = {
+        send: jest.fn(),
+      };
+      const next = jest.fn();
+
+      repositoryMock.save.mockClear();
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(next).not.toHaveBeenCalled();
+      const saved = repositoryMock.save.mock.calls[0][0];
+      expect(saved.tenantId).toBe(tenantId);
+      expect(saved.id).toBeUndefined();
+      expect(saved.status).toBe(TaskStatus.Pending);
+      expect(saved.createdOn).toBeInstanceOf(Date);
+      expect(saved.createdOn.getTime()).toBeGreaterThan(new Date('2021-01-01T00:00:00Z').getTime());
+      expect(saved.name).toBe('test');
+    });
+
     it('can call next with unauthorized user error', async () => {
       const req = {
         user: { tenantId, id: 'user-1', roles: [] },

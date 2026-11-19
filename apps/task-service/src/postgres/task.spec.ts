@@ -1,6 +1,7 @@
 import { adspId } from '@abgov/adsp-service-sdk';
+import { NotFoundError } from '@core-services/core-common';
 import { Knex } from 'knex';
-import { QueueEntity, TaskEntity, TaskPriority, TaskStatus } from '../task';
+import { QueueEntity, Task, TaskEntity, TaskPriority, TaskStatus } from '../task';
 import { PostgresTaskRepository } from './task';
 import type { TaskRecord } from './types';
 
@@ -298,6 +299,7 @@ describe('PostgresTaskRepository', () => {
         insert: jest.fn(() => queryMock),
         onConflict: jest.fn(() => queryMock),
         merge: jest.fn(() => queryMock),
+        where: jest.fn(() => queryMock),
         returning: jest.fn(),
       };
 
@@ -335,11 +337,39 @@ describe('PostgresTaskRepository', () => {
       expect(result.assignment).toBeFalsy();
     });
 
+    it('scopes the conflict merge to the entity tenant', async () => {
+      const queryMock = {
+        insert: jest.fn(() => queryMock),
+        onConflict: jest.fn(() => queryMock),
+        merge: jest.fn(() => queryMock),
+        where: jest.fn(() => queryMock),
+        returning: jest.fn(),
+      };
+
+      const knex = {
+        transaction: jest.fn((cb) => cb(knexMock)),
+      };
+      knexMock.mockReturnValueOnce(queryMock);
+      queryMock.returning.mockResolvedValueOnce([]);
+
+      const repo = new PostgresTaskRepository(knex as unknown as Knex);
+      const entity = new TaskEntity(repository, queue, {
+        tenantId,
+        id: 'other-tenant-task',
+        name: 'test-2',
+        status: TaskStatus.Pending,
+        createdOn: new Date(),
+      } as unknown as Task);
+      await expect(repo.save(entity)).rejects.toThrow(NotFoundError);
+      expect(queryMock.where).toHaveBeenCalledWith('tasks.tenant', tenantId.toString());
+    });
+
     it('can save entity with assignment', async () => {
       const queryMock = {
         insert: jest.fn(() => queryMock),
         onConflict: jest.fn(() => queryMock),
         merge: jest.fn(() => queryMock),
+        where: jest.fn(() => queryMock),
         returning: jest.fn(),
       };
 
