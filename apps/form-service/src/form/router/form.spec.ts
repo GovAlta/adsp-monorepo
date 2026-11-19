@@ -663,6 +663,33 @@ describe('form router', () => {
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ page }));
     });
 
+    it('can limit find for core user to request tenant', async () => {
+      const user = {
+        isCore: true,
+        id: 'export-job',
+        roles: [FormServiceRoles.Admin],
+      };
+      const req = {
+        user,
+        query: { criteria: JSON.stringify({ tenantIdEquals: 'other' }) },
+        tenant: { id: tenantId },
+      };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+
+      repositoryMock.find.mockResolvedValueOnce({ results: [entity], page: {} });
+
+      const handler = findForms(apiId, repositoryMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(next).not.toHaveBeenCalled();
+      expect(repositoryMock.find).toHaveBeenLastCalledWith(
+        10,
+        undefined,
+        expect.objectContaining({ tenantIdEquals: tenantId }),
+        null
+      );
+    });
+
     it('can find orphaned forms', async () => {
       const user = {
         tenantId,
