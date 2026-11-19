@@ -23,6 +23,15 @@ describe('envelope', () => {
       expect(next?.suggested_calls).toEqual([call('a', { x: 2 })]);
     });
 
+    it('treats the same arguments in another key order as the same call', () => {
+      const next = buildNext([call('a', { y: 2, x: 1 }), call('b'), call('b')], {
+        tool: 'a',
+        arguments: { x: 1, y: 2 },
+      });
+
+      expect(next?.suggested_calls.map((c) => c.tool)).toEqual(['b']);
+    });
+
     it('drops duplicate calls', () => {
       const next = buildNext([call('a', { x: 1 }), call('a', { x: 1 }), call('b')]);
 

@@ -21,6 +21,9 @@ const ReadArgs = z.object({
 // A prefix matching this few pages is specific enough to point straight at one.
 const NARROW_PREFIX_PAGES = 5;
 
+const definedOnly = (parsed: object): Record<string, unknown> =>
+  Object.fromEntries(Object.entries(parsed).filter(([, value]) => value !== undefined));
+
 export function createDocsTools(docs: DocsRepository, links: () => LinkIndex): ToolDefinition[] {
   return [
     {
@@ -44,7 +47,8 @@ export function createDocsTools(docs: DocsRepository, links: () => LinkIndex): T
         required: ['query'],
       },
       handler: (args) => {
-        const { query, limit } = SearchArgs.parse(args);
+        const parsed = SearchArgs.parse(args);
+        const { query, limit } = parsed;
         if (queryTerms(query).length === 0) {
           return {
             content: [
@@ -85,12 +89,12 @@ export function createDocsTools(docs: DocsRepository, links: () => LinkIndex): T
             top.related?.serviceApis?.[0]
               ? {
                   tool: 'search_service_endpoints',
-                  arguments: { service: top.related.serviceApis[0], query },
+                  arguments: { query, service: top.related.serviceApis[0] },
                   why: "Find this service's REST endpoints for the same question.",
                 }
               : undefined,
           ],
-          { tool: 'search_adsp_docs', arguments: args as Record<string, unknown> },
+          { tool: 'search_adsp_docs', arguments: definedOnly(parsed) },
         );
         return jsonText(withRelatedAndNext({ results: withRelated }, undefined, next));
       },
@@ -112,7 +116,8 @@ export function createDocsTools(docs: DocsRepository, links: () => LinkIndex): T
         },
       },
       handler: (args) => {
-        const { prefix } = ListArgs.parse(args);
+        const parsed = ListArgs.parse(args);
+        const { prefix } = parsed;
         const pages = docs.list().filter(({ path }) => !prefix || path.startsWith(prefix));
         if (pages.length === 0) {
           return {
@@ -138,7 +143,7 @@ export function createDocsTools(docs: DocsRepository, links: () => LinkIndex): T
                         : 'First page under this prefix; read it.',
                   },
                 ],
-                { tool: 'list_adsp_docs', arguments: args as Record<string, unknown> },
+                { tool: 'list_adsp_docs', arguments: definedOnly(parsed) },
               )
             : undefined;
         return jsonText(withRelatedAndNext({ results: pages }, undefined, next));
@@ -161,7 +166,8 @@ export function createDocsTools(docs: DocsRepository, links: () => LinkIndex): T
         required: ['path'],
       },
       handler: (args) => {
-        const { path } = ReadArgs.parse(args);
+        const parsed = ReadArgs.parse(args);
+        const { path } = parsed;
         const doc = docs.read(path);
         if (!doc) {
           // clean-code-ignore: 2.18 — isError is the standard MCP CallToolResult field for a handled failure, not a hidden side effect.
@@ -182,7 +188,7 @@ export function createDocsTools(docs: DocsRepository, links: () => LinkIndex): T
             related.serviceApis?.[0]
               ? {
                   tool: 'search_service_endpoints',
-                  arguments: { service: related.serviceApis[0], query: doc.title },
+                  arguments: { query: doc.title, service: related.serviceApis[0] },
                   why: "Find this service's REST endpoints.",
                 }
               : undefined,
@@ -197,7 +203,7 @@ export function createDocsTools(docs: DocsRepository, links: () => LinkIndex): T
               ? { tool: 'read_adsp_doc', arguments: { path: related.docs[0] }, why: 'Read a page this one links to.' }
               : undefined,
           ],
-          { tool: 'read_adsp_doc', arguments: args as Record<string, unknown> }
+          { tool: 'read_adsp_doc', arguments: definedOnly(parsed) },
         );
         return {
           content: [

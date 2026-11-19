@@ -20,15 +20,15 @@ export const MAX_SUGGESTED_CALLS = 3;
 const LIVE_TOOL_NAMES = new Set(
   [...createServiceRolesTools(), ...createConfigurationSchemaTools()]
     .filter((tool) => !isOfflineTool(tool))
-    .map((tool) => tool.name)
+    .map((tool) => tool.name),
 );
 
 const callKey = (call: { tool: string; arguments: Record<string, unknown> }) =>
-  `${call.tool}:${JSON.stringify(call.arguments)}`;
+  `${call.tool}:${JSON.stringify(call.arguments, Object.keys(call.arguments).sort())}`;
 
 export function buildNext(
   calls: (SuggestedCall | undefined)[],
-  current?: { tool: string; arguments: Record<string, unknown> }
+  current?: { tool: string; arguments: Record<string, unknown> },
 ): Next | undefined {
   const seen = new Set<string>(current ? [callKey(current)] : []);
   const suggested: SuggestedCall[] = [];
@@ -45,7 +45,7 @@ export function buildNext(
 export function withRelatedAndNext<T extends object>(
   value: T,
   related: Related | undefined,
-  next: Next | undefined
+  next: Next | undefined,
 ): T & { related?: Related; next?: Next } {
   return {
     ...value,

@@ -66,7 +66,7 @@ describe('docs tools', () => {
 
       expect(JSON.parse(textOf(result)).next.suggested_calls[1]).toMatchObject({
         tool: 'search_service_endpoints',
-        arguments: { service: 'file-service', query: 'file upload' },
+        arguments: { query: 'file upload', service: 'file-service' },
       });
     });
 
@@ -75,7 +75,7 @@ describe('docs tools', () => {
       const links = stubLinks({ 'services/event-service.md': { serviceApis: ['event-service'] } });
       const result = await tool('search_adsp_docs', links).handler({ query });
 
-      expect(JSON.parse(textOf(result)).next.suggested_calls[1].arguments).toEqual({ service: 'event-service', query });
+      expect(JSON.parse(textOf(result)).next.suggested_calls[1].arguments).toEqual({ query, service: 'event-service' });
     });
 
     it('keeps the no-match and common-words texts unchanged', async () => {
@@ -140,7 +140,7 @@ describe('docs tools', () => {
       expect(
         second.next.suggested_calls.map((c: { tool: string; arguments: unknown }) => [c.tool, c.arguments]),
       ).toEqual([
-        ['search_service_endpoints', { service: 'file-service', query: 'File service' }],
+        ['search_service_endpoints', { query: 'File service', service: 'file-service' }],
         ['search_sdk_reference', { query: 'FileService' }],
         ['read_adsp_doc', { path: 'tutorials/files.md' }],
       ]);
