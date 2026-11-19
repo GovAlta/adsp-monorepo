@@ -47,6 +47,7 @@ export class QueueEntity implements Queue {
     }
 
     return await repository.getTasks({ [`${this.namespace}:${this.name}`]: this }, top, after, {
+      tenantId: this.tenantId,
       queue: { namespace: this.namespace, name: this.name },
       notEnded: true,
     });

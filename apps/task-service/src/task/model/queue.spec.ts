@@ -191,15 +191,51 @@ describe('QueueEntity', () => {
         { id: 'test', tenantId, roles: ['task-worker'] } as User,
         repositoryMock,
         10,
-        null
+        null,
       );
       expect(result).toBe(page);
       expect(repositoryMock.getTasks).toHaveBeenCalledWith(
         expect.objectContaining({ [`${entity.namespace}:${entity.name}`]: entity }),
         10,
         null,
-        expect.objectContaining({ queue: { namespace: entity.namespace, name: entity.name }, notEnded: true })
+        expect.objectContaining({
+          tenantId,
+          queue: { namespace: entity.namespace, name: entity.name },
+          notEnded: true,
+        }),
       );
+    });
+
+    it('scopes tasks to the queue tenant when tenants share a queue ID', async () => {
+      const otherTenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/other`;
+      const queueA = new QueueEntity({
+        tenantId,
+        namespace: 'support',
+        name: 'intake',
+        context: {},
+        workerRoles: ['task-worker'],
+        assignerRoles: [],
+      });
+      const queueB = new QueueEntity({
+        tenantId: otherTenantId,
+        namespace: 'support',
+        name: 'intake',
+        context: {},
+        workerRoles: ['task-worker'],
+        assignerRoles: [],
+      });
+
+      repositoryMock.getTasks.mockResolvedValue({ results: [], page: {} });
+      await queueA.getTasks({ id: 'a', tenantId, roles: ['task-worker'] } as User, repositoryMock, 10, null);
+      await queueB.getTasks(
+        { id: 'b', tenantId: otherTenantId, roles: ['task-worker'] } as User,
+        repositoryMock,
+        10,
+        null,
+      );
+
+      expect(repositoryMock.getTasks.mock.calls[0][3].tenantId).toBe(tenantId);
+      expect(repositoryMock.getTasks.mock.calls[1][3].tenantId).toBe(otherTenantId);
     });
 
     it('can throw for user without access', async () => {
@@ -213,7 +249,7 @@ describe('QueueEntity', () => {
       });
 
       await expect(
-        entity.getTasks({ id: 'test', tenantId, name: 'test', roles: [] } as User, repositoryMock, 10, null)
+        entity.getTasks({ id: 'test', tenantId, name: 'test', roles: [] } as User, repositoryMock, 10, null),
       ).rejects.toThrow(/User test \(ID: test\) not permitted to access queued tasks./);
     });
   });
