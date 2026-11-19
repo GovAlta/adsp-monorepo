@@ -213,6 +213,11 @@ describe('server instructions', () => {
     expect(instructions.split('\n').length).toBeLessThanOrEqual(12);
   });
 
+  it.each([SERVER_INSTRUCTIONS, OFFLINE_ENDPOINT_INSTRUCTIONS])('explain next and related', (instructions) => {
+    expect(instructions).toContain('next.suggested_calls');
+    expect(instructions).toContain('related');
+  });
+
   it('name the login the live tools need, and where to check content freshness', () => {
     expect(SERVER_INSTRUCTIONS).toContain('npx @abgov/adsp-cli login');
     expect(SERVER_INSTRUCTIONS).toContain('list_service_roles');
