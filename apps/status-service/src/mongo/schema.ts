@@ -38,6 +38,9 @@ export const endpointStatusEntrySchema = new Schema({
   },
 });
 
+// Serves deleting all of an application's entries.
+endpointStatusEntrySchema.index({ tenantId: 1, applicationId: 1 });
+
 export const serviceStatusApplicationSchema = new Schema(
   {
     appKey: {

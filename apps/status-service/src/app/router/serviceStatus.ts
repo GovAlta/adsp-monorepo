@@ -285,6 +285,11 @@ export const deleteApplication =
         toApplicationAuditDetails(appKey, app.name, { url: app.url }),
       );
       res.sendStatus(204);
+
+      // Cleanup of the application's data can be slow, so it does not hold up the response.
+      applicationRepo.deleteAppData(appKey, user).catch((err) => {
+        logger.error(`Failed to clean up data of deleted application ${appKey}: ${err}`);
+      });
     } catch (err) {
       logger.error(`Failed to delete application: ${err.message}`);
       next(err);
