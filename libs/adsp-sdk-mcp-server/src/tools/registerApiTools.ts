@@ -27,6 +27,24 @@ function toolError(message: string): CallToolResult {
   return { isError: true, content: [{ type: 'text', text: message }] };
 }
 
+export type EndpointQuery = (service: string, query: string) => string | undefined;
+
+function findsEndpoints(apis: ApiSpecsRepository, query: string, service: ApiServiceSummary): boolean {
+  return queryTerms(query).length > 0 && apis.search(query, { service, limit: 1 }).length > 0;
+}
+
+/**
+ * The query a search_service_endpoints suggestion should carry: the given one when that search finds endpoints, else
+ * the service's name when it does, else undefined.
+ */
+export function createEndpointQuery(loadApis: () => ApiSpecsRepository): EndpointQuery {
+  return (serviceName, query) => {
+    const apis = loadApis();
+    const service = apis.findService(serviceName);
+    return service && [query, service.name].find((candidate) => findsEndpoints(apis, candidate, service));
+  };
+}
+
 function unknownService(name: string, apis: ApiSpecsRepository): CallToolResult {
   const known = apis
     .list()

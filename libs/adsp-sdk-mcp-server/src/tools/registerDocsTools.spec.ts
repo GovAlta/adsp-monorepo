@@ -37,8 +37,14 @@ describe('docs tools', () => {
 
   afterAll(() => rmSync(root, { recursive: true, force: true }));
 
+  let endpointQuery: jest.Mock<string | undefined, [string, string]>;
+
+  beforeEach(() => {
+    endpointQuery = jest.fn((_service: string, query: string) => query);
+  });
+
   const tool = (name: string, links: LinkIndex = stubLinks()) =>
-    createDocsTools(docs, () => links).find((t) => t.name === name);
+    createDocsTools(docs, () => links, endpointQuery).find((t) => t.name === name);
   const textOf = (result: { content: unknown[] }, index = 0) => (result.content[index] as { text: string }).text;
 
   describe('search_adsp_docs', () => {
@@ -91,6 +97,35 @@ describe('docs tools', () => {
       const result = await tool('search_adsp_docs', links).handler({ query });
 
       expect(JSON.parse(textOf(result)).next.suggested_calls[1].arguments).toEqual({ query, service: 'event-service' });
+    });
+
+    it('suggests the endpoint search with the query that finds endpoints', async () => {
+      endpointQuery.mockReturnValue('File service');
+      const links = stubLinks({ 'services/file-service.md': { serviceApis: ['file-service'] } });
+      const result = await tool('search_adsp_docs', links).handler({ query: 'file upload' });
+
+      expect(endpointQuery).toHaveBeenCalledWith('file-service', 'file upload');
+      expect(JSON.parse(textOf(result)).next.suggested_calls[1]).toEqual({
+        tool: 'search_service_endpoints',
+        arguments: { query: 'File service', service: 'file-service' },
+        why: "Find this service's REST endpoints.",
+      });
+    });
+
+    it('drops the endpoint search when no query finds endpoints', async () => {
+      endpointQuery.mockReturnValue(undefined);
+      const links = stubLinks({ 'services/file-service.md': { serviceApis: ['file-service'] } });
+      const result = await tool('search_adsp_docs', links).handler({ query: 'file upload' });
+
+      expect(JSON.parse(textOf(result)).next.suggested_calls.map(({ tool }: { tool: string }) => tool)).toEqual([
+        'read_adsp_doc',
+      ]);
+    });
+
+    it('does not search endpoints when the top page has no service API', async () => {
+      await tool('search_adsp_docs').handler({ query: 'file upload' });
+
+      expect(endpointQuery).not.toHaveBeenCalled();
     });
 
     it('keeps the no-match and common-words texts unchanged', async () => {
@@ -167,6 +202,26 @@ describe('docs tools', () => {
         ['search_sdk_reference', { query: 'FileService' }],
         ['read_adsp_doc', { path: 'tutorials/files.md' }],
       ]);
+    });
+
+    it('suggests the endpoint search with the query that finds endpoints, or drops it', async () => {
+      const links = stubLinks({ 'services/file-service.md': { serviceApis: ['file-service'] } });
+      const suggested = async () =>
+        JSON.parse(textOf(await tool('read_adsp_doc', links).handler({ path: 'services/file-service.md' }), 1)).next
+          ?.suggested_calls;
+
+      endpointQuery.mockReturnValue('File');
+      expect(await suggested()).toEqual([
+        {
+          tool: 'search_service_endpoints',
+          arguments: { query: 'File', service: 'file-service' },
+          why: "Find this service's REST endpoints.",
+        },
+      ]);
+      expect(endpointQuery).toHaveBeenCalledWith('file-service', 'File service');
+
+      endpointQuery.mockReturnValue(undefined);
+      expect(await suggested()).toBeUndefined();
     });
 
     it('gives only the path when nothing is related', async () => {

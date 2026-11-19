@@ -23,6 +23,7 @@ describe('find_adsp_services', () => {
   let loads: number;
   let tool: ReturnType<typeof createFindServicesTool>[number];
   let index: LinkIndex;
+  let endpointQuery: jest.Mock<string | undefined, [string, string]>;
 
   const create = () =>
     createFindServicesTool(
@@ -31,11 +32,13 @@ describe('find_adsp_services', () => {
         return loadCapabilityCatalog(CATALOG_PATH);
       },
       () => index,
+      endpointQuery,
     )[0];
 
   beforeEach(() => {
     loads = 0;
     index = linkIndex();
+    endpointQuery = jest.fn((_service: string, query: string) => query);
     tool = create();
   });
 
@@ -152,6 +155,28 @@ describe('find_adsp_services', () => {
 
     index = linkIndex({ hasDoc: () => false, hasServiceApi: () => false });
     expect(await tool.handler({ need: 'upload file' })).not.toHaveProperty('structuredContent.next');
+  });
+
+  it('suggests the endpoint search with the query that finds endpoints', async () => {
+    endpointQuery.mockReturnValue('File service');
+    const output = await tool.handler({ need: 'upload file' });
+
+    expect(endpointQuery).toHaveBeenCalledWith('file-service', 'upload file');
+    expect(nextOf(output)?.suggested_calls[1].arguments).toEqual({ query: 'File service', service: 'file-service' });
+  });
+
+  it('drops the endpoint search when no query finds endpoints', async () => {
+    endpointQuery.mockReturnValue(undefined);
+    const output = await tool.handler({ need: 'upload file' });
+
+    expect(nextOf(output)?.suggested_calls.map(({ tool }) => tool)).toEqual(['read_adsp_doc']);
+  });
+
+  it('does not search endpoints for a service with no API', async () => {
+    index = linkIndex({ hasServiceApi: () => false });
+    await tool.handler({ need: 'upload file' });
+
+    expect(endpointQuery).not.toHaveBeenCalled();
   });
 
   it('declares next in the output schema and keeps structuredContent valid against it', async () => {

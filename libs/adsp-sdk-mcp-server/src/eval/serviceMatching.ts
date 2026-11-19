@@ -54,6 +54,7 @@ export function rankWithFindAdspServices(capabilitiesPath = BUNDLED_CAPABILITIES
   const [find] = createFindServicesTool(
     () => loadCapabilityCatalog(capabilitiesPath),
     () => ({ hasDoc: () => false, hasServiceApi: () => false }), // ranking ignores next
+    () => undefined,
   );
 
   return async (query) => {

@@ -3,6 +3,7 @@ import { CapabilityCatalog } from '../capabilities/catalog';
 import { NeedResult, ServiceFinder, ServiceMatch } from '../capabilities/findServices';
 import { buildNext, definedOnly, Next } from './envelope';
 import { LinkIndex } from './links';
+import type { EndpointQuery } from './registerApiTools';
 import { OFFLINE_TOOL_ANNOTATIONS, ToolDefinition } from './types';
 
 const MAX_NEEDS = 50;
@@ -141,21 +142,19 @@ function formatResult({ need, matches, ask, fitQuestions, noMatch }: NeedResult,
 function suggestNext(
   results: NeedResult[],
   links: FindServicesLinks,
+  endpointQuery: EndpointQuery,
   current: Record<string, unknown>,
 ): Next | undefined {
   for (const { need, matches } of results) {
     const strong = matches.find(({ fit }) => fit === 'strong');
     if (strong) {
       const { id, doc } = strong.service;
+      const query = links.hasServiceApi(id) ? endpointQuery(id, need) : undefined;
       return buildNext(
         [
           links.hasDoc(doc) ? { tool: 'read_adsp_doc', arguments: { path: doc }, why: 'Read its guide.' } : undefined,
-          links.hasServiceApi(id)
-            ? {
-                tool: 'search_service_endpoints',
-                arguments: { query: need, service: id },
-                why: 'Find its REST endpoints.',
-              }
+          query
+            ? { tool: 'search_service_endpoints', arguments: { query, service: id }, why: 'Find its REST endpoints.' }
             : undefined,
         ],
         { tool: 'find_adsp_services', arguments: current },
@@ -168,6 +167,7 @@ function suggestNext(
 export function createFindServicesTool(
   catalog: () => CapabilityCatalog,
   links: () => FindServicesLinks,
+  endpointQuery: EndpointQuery,
 ): ToolDefinition[] {
   let finder: ServiceFinder | undefined;
 
@@ -214,7 +214,7 @@ export function createFindServicesTool(
         const { need, needs, response_format: format = 'concise' } = parsed.data;
         const current = (finder ??= new ServiceFinder(catalog()));
         const found = (needs ?? [need as string]).map((text) => current.find(text));
-        const next = suggestNext(found, links(), definedOnly(parsed.data));
+        const next = suggestNext(found, links(), endpointQuery, definedOnly(parsed.data));
         const structuredContent = {
           results: found.map((result) => formatResult(result, format)),
           ...(next && { next }),

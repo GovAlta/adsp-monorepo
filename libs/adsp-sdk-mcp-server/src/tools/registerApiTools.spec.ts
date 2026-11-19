@@ -1,7 +1,9 @@
+import { mkdtempSync, rmSync, writeFileSync } from 'fs';
+import { tmpdir } from 'os';
 import { join } from 'path';
 import { ApiSpecsRepository } from '../api-specs/apiSpecsRepository';
 import { LinkIndex } from './links';
-import { createApiTools } from './registerApiTools';
+import { createApiTools, createEndpointQuery } from './registerApiTools';
 
 const FIXTURE_ROOT = join(__dirname, '../fixtures/api-specs');
 
@@ -149,5 +151,47 @@ describe('API tools', () => {
       isError: true,
       text: 'demo-service has no GET /demo/v1/nope. Its endpoints: GET /demo/v1/files, POST /demo/v1/files, POST /demo/v1/events.',
     });
+  });
+});
+
+describe('createEndpointQuery', () => {
+  let emptyRoot: string;
+
+  beforeAll(() => {
+    emptyRoot = mkdtempSync(join(tmpdir(), 'api-specs-'));
+    const service = { app: 'empty-service', urn: 'urn:ads:platform:empty-service', name: 'Empty service' };
+    writeFileSync(join(emptyRoot, 'index.json'), JSON.stringify([{ ...service, operations: 0, file: 'empty.json' }]));
+    writeFileSync(join(emptyRoot, 'empty.json'), JSON.stringify({ openapi: '3.0.0', paths: {} }));
+  });
+
+  afterAll(() => rmSync(emptyRoot, { recursive: true, force: true }));
+
+  const endpointQuery = createEndpointQuery(() => new ApiSpecsRepository(FIXTURE_ROOT));
+
+  it('does not load the specs until asked', () => {
+    const load = jest.fn(() => new ApiSpecsRepository(FIXTURE_ROOT));
+    createEndpointQuery(load);
+
+    expect(load).not.toHaveBeenCalled();
+  });
+
+  it('keeps a query that finds endpoints', () => {
+    expect(endpointQuery('demo-service', 'send event')).toBe('send event');
+  });
+
+  it("falls back to the service's name when the query finds nothing or has only common words", async () => {
+    const { call } = setup();
+
+    expect(endpointQuery('demo-service', 'kubernetes')).toBe('Demo service');
+    expect(endpointQuery('demo-service', 'how do i')).toBe('Demo service');
+    const body = JSON.parse(
+      (await call('search_service_endpoints', { query: 'Demo service', service: 'demo-service' })).text,
+    );
+    expect(body.results.length).toBeGreaterThan(0);
+  });
+
+  it('gives nothing when even the service name finds nothing, or the service is unknown', () => {
+    expect(createEndpointQuery(() => new ApiSpecsRepository(emptyRoot))('empty-service', 'kubernetes')).toBeUndefined();
+    expect(endpointQuery('nope', 'send event')).toBeUndefined();
   });
 });

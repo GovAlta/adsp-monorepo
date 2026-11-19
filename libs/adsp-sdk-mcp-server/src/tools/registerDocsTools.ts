@@ -3,6 +3,7 @@ import { DocsRepository } from '../docs/docsRepository';
 import { queryTerms } from '../search/textSearch';
 import { jsonText, buildNext, definedOnly, Next, withRelatedAndNext } from './envelope';
 import { LinkIndex } from './links';
+import type { EndpointQuery } from './registerApiTools';
 import { OFFLINE_TOOL_ANNOTATIONS, ToolDefinition } from './types';
 
 const SearchArgs = z.object({
@@ -30,7 +31,11 @@ function listText(pages: object[], next: Next | undefined): string {
   return `{\n  "results": [\n${entries}\n  ]${nextText}\n}`;
 }
 
-export function createDocsTools(docs: DocsRepository, links: () => LinkIndex): ToolDefinition[] {
+export function createDocsTools(
+  docs: DocsRepository,
+  links: () => LinkIndex,
+  endpointQuery: EndpointQuery,
+): ToolDefinition[] {
   return [
     {
       name: 'search_adsp_docs',
@@ -86,6 +91,8 @@ export function createDocsTools(docs: DocsRepository, links: () => LinkIndex): T
           return withRelatedAndNext(result, related, undefined);
         });
         const top = withRelated[0];
+        const service = top.related?.serviceApis?.[0];
+        const endpointSearch = service && endpointQuery(service, query);
         const next = buildNext(
           [
             {
@@ -93,11 +100,14 @@ export function createDocsTools(docs: DocsRepository, links: () => LinkIndex): T
               arguments: { path: top.path },
               why: 'Top match; read the full page.',
             },
-            top.related?.serviceApis?.[0]
+            endpointSearch
               ? {
                   tool: 'search_service_endpoints',
-                  arguments: { query, service: top.related.serviceApis[0] },
-                  why: "Find this service's REST endpoints for the same question.",
+                  arguments: { query: endpointSearch, service },
+                  why:
+                    endpointSearch === query
+                      ? "Find this service's REST endpoints for the same question."
+                      : "Find this service's REST endpoints.",
                 }
               : undefined,
           ],
@@ -190,12 +200,14 @@ export function createDocsTools(docs: DocsRepository, links: () => LinkIndex): T
         }
 
         const related = links().relatedForDoc(path);
+        const service = related.serviceApis?.[0];
+        const endpointSearch = service && endpointQuery(service, doc.title);
         const next = buildNext(
           [
-            related.serviceApis?.[0]
+            endpointSearch
               ? {
                   tool: 'search_service_endpoints',
-                  arguments: { query: doc.title, service: related.serviceApis[0] },
+                  arguments: { query: endpointSearch, service },
                   why: "Find this service's REST endpoints.",
                 }
               : undefined,

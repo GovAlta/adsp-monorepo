@@ -9,7 +9,7 @@ import { SDK_REFERENCE } from './sdk-reference/reference';
 import { OFFLINE_ENDPOINT_INSTRUCTIONS, SERVER_INSTRUCTIONS } from './instructions';
 import { getMetrics, ToolErrorType } from './metrics';
 import { buildLinkIndex } from './tools/links';
-import { createApiTools } from './tools/registerApiTools';
+import { createApiTools, createEndpointQuery } from './tools/registerApiTools';
 import { createConfigurationSchemaTools } from './tools/registerConfigurationSchemaTool';
 import { isBusyResult } from './tools/liveToolLimit';
 import { createDocsTools } from './tools/registerDocsTools';
@@ -66,6 +66,8 @@ export function loadAdspMcpTools(options: CreateAdspMcpServerOptions = {}): Adsp
 
   const started = performance.now();
   const docs = new DocsRepository(docsRoot);
+  const apis = lazy(() => new ApiSpecsRepository(apiSpecsRoot));
+  const endpointQuery = createEndpointQuery(apis);
   const links = lazy(() =>
     buildLinkIndex({ docs, sdkSymbols: SDK_REFERENCE, apiServices: () => readApiServiceIndex(apiSpecsRoot) }),
   );
@@ -73,17 +75,15 @@ export function loadAdspMcpTools(options: CreateAdspMcpServerOptions = {}): Adsp
     ...createFindServicesTool(
       lazy(() => loadCapabilityCatalog(capabilitiesPath)),
       links,
+      endpointQuery,
     ),
-    ...createDocsTools(docs, links),
+    ...createDocsTools(docs, links, endpointQuery),
     ...createSdkTools(links),
     ...createQuickstartTool(),
     ...createServiceRolesTools(),
     ...createConfigurationSchemaTools(),
     ...createServerInfoTool(docs),
-    ...createApiTools(
-      lazy(() => new ApiSpecsRepository(apiSpecsRoot)),
-      links,
-    ),
+    ...createApiTools(apis, links),
   ];
   const offlineTools = tools.filter(isOfflineTool);
   const loaded = {

@@ -1,6 +1,7 @@
 import type { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { join } from 'path';
+import { loadServiceMatchingQueries } from './eval/serviceMatching';
 import { connectInMemoryClient, FIXTURE_DOCS_ROOT, ToolCall } from './fixtures/toolContract';
 import { createAdspMcpServer, CreateAdspMcpServerOptions, loadAdspMcpTools } from './server';
 import { SuggestedCall } from './tools/envelope';
@@ -75,6 +76,8 @@ interface ContentSet {
   label: string;
   options: CreateAdspMcpServerOptions;
   starts: ToolCall[];
+  // Free-text starts that may have nothing to suggest, but whatever they suggest must succeed.
+  probes?: ToolCall[];
   reaches: string[];
 }
 
@@ -86,6 +89,17 @@ const CHAINED_TOOLS = [
   'search_service_endpoints',
   'read_service_endpoint',
   'find_adsp_services',
+];
+
+const NEEDS = loadServiceMatchingQueries().map(({ query }) => query);
+const SHORT_QUERIES = [
+  'pdf',
+  'calendar',
+  'comment',
+  'task queue',
+  'configuration',
+  'how do tenants log in',
+  'live updates',
 ];
 
 const CONTENT_SETS: ContentSet[] = [
@@ -113,17 +127,22 @@ const CONTENT_SETS: ContentSet[] = [
       { name: 'search_service_endpoints', arguments: { query: 'upload a file' } },
       { name: 'find_adsp_services', arguments: { need: 'applicants attach supporting documents to an application' } },
     ],
+    probes: [
+      ...NEEDS.map((need) => ({ name: 'find_adsp_services', arguments: { need } })),
+      ...[...NEEDS, ...SHORT_QUERIES].map((query) => ({ name: 'search_adsp_docs', arguments: { query } })),
+    ],
     reaches: CHAINED_TOOLS,
   },
 ];
 
-describe.each(CONTENT_SETS)('suggested calls and related references over $label', ({ options, starts, reaches }) => {
+describe.each(CONTENT_SETS)('suggested calls and related references over $label', (contentSet) => {
+  const { options, starts, probes = [], reaches } = contentSet;
   let client: Client;
   let steps: Step[];
 
   beforeAll(async () => {
     client = await connectInMemoryClient(createAdspMcpServer(options));
-    steps = await walk(client, starts);
+    steps = await walk(client, [...starts, ...probes]);
   });
 
   afterAll(async () => {
@@ -131,7 +150,10 @@ describe.each(CONTENT_SETS)('suggested calls and related references over $label'
   });
 
   it('every suggested call succeeds against the same server', () => {
-    const startsWithoutNext = steps.filter((step) => step.depth === 0 && suggestionsOf(step).length === 0);
+    const startKeys = new Set(starts.map(callKey));
+    const startsWithoutNext = steps.filter(
+      (step) => startKeys.has(callKey(step.call)) && suggestionsOf(step).length === 0,
+    );
     const failed = steps
       .filter(
         ({ depth, result, envelope }) => depth > 0 && (result.isError || !envelope || envelope.results?.length === 0),
