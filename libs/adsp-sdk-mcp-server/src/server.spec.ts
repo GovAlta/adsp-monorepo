@@ -142,7 +142,7 @@ describe('adsp-sdk-mcp-server', () => {
       arguments: { query: 'initializePlatform' },
     });
     const [content] = result.content as { type: 'text'; text: string }[];
-    const results = JSON.parse(content.text);
+    const { results } = JSON.parse(content.text);
 
     expect(results[0].name).toBe('initializePlatform');
   });

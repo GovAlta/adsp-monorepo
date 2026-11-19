@@ -72,7 +72,7 @@ export function loadAdspMcpTools(options: CreateAdspMcpServerOptions = {}): Adsp
   const tools = [
     ...createFindServicesTool(lazy(() => loadCapabilityCatalog(capabilitiesPath))),
     ...createDocsTools(docs, links),
-    ...createSdkTools(),
+    ...createSdkTools(links),
     ...createQuickstartTool(),
     ...createServiceRolesTools(),
     ...createConfigurationSchemaTools(),

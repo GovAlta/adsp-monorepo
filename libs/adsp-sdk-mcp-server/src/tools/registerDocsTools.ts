@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { DocsRepository } from '../docs/docsRepository';
 import { queryTerms } from '../search/textSearch';
-import { jsonText, buildNext, withRelatedAndNext } from './envelope';
+import { jsonText, buildNext, definedOnly, withRelatedAndNext } from './envelope';
 import { LinkIndex } from './links';
 import { OFFLINE_TOOL_ANNOTATIONS, ToolDefinition } from './types';
 
@@ -20,9 +20,6 @@ const ReadArgs = z.object({
 
 // A prefix matching this few pages is specific enough to point straight at one.
 const NARROW_PREFIX_PAGES = 5;
-
-const definedOnly = (parsed: object): Record<string, unknown> =>
-  Object.fromEntries(Object.entries(parsed).filter(([, value]) => value !== undefined));
 
 export function createDocsTools(docs: DocsRepository, links: () => LinkIndex): ToolDefinition[] {
   return [

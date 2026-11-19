@@ -26,6 +26,9 @@ const LIVE_TOOL_NAMES = new Set(
 const callKey = (call: { tool: string; arguments: Record<string, unknown> }) =>
   `${call.tool}:${JSON.stringify(call.arguments, Object.keys(call.arguments).sort())}`;
 
+export const definedOnly = (parsed: object): Record<string, unknown> =>
+  Object.fromEntries(Object.entries(parsed).filter(([, value]) => value !== undefined));
+
 export function buildNext(
   calls: (SuggestedCall | undefined)[],
   current?: { tool: string; arguments: Record<string, unknown> },
