@@ -70,7 +70,10 @@ export function loadAdspMcpTools(options: CreateAdspMcpServerOptions = {}): Adsp
     buildLinkIndex({ docs, sdkSymbols: SDK_REFERENCE, apiServices: () => readApiServiceIndex(apiSpecsRoot) }),
   );
   const tools = [
-    ...createFindServicesTool(lazy(() => loadCapabilityCatalog(capabilitiesPath))),
+    ...createFindServicesTool(
+      lazy(() => loadCapabilityCatalog(capabilitiesPath)),
+      links,
+    ),
     ...createDocsTools(docs, links),
     ...createSdkTools(links),
     ...createQuickstartTool(),

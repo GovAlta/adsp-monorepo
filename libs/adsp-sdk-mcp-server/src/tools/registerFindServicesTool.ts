@@ -1,6 +1,8 @@
 import { z } from 'zod';
 import { CapabilityCatalog } from '../capabilities/catalog';
 import { NeedResult, ServiceFinder, ServiceMatch } from '../capabilities/findServices';
+import { buildNext, Next } from './envelope';
+import { LinkIndex } from './links';
 import { OFFLINE_TOOL_ANNOTATIONS, ToolDefinition } from './types';
 
 const MAX_NEEDS = 50;
@@ -12,6 +14,8 @@ const FindArgs = z
     response_format: z.enum(['concise', 'detailed']).optional(),
   })
   .refine(({ need, needs }) => Boolean(need) !== Boolean(needs), { message: 'Pass exactly one of need or needs.' });
+
+export type FindServicesLinks = Pick<LinkIndex, 'hasDoc' | 'hasServiceApi'>;
 
 type ResponseFormat = 'concise' | 'detailed';
 
@@ -71,13 +75,36 @@ export const FIND_SERVICES_OUTPUT_SCHEMA = {
             properties: {
               need: { type: 'string' },
               reason: { type: 'string' },
-              knownGap: { type: 'object', properties: KNOWN_GAP_PROPERTIES, required: ['requirement', 'reason', 'suggestedApproach'] },
+              knownGap: {
+                type: 'object',
+                properties: KNOWN_GAP_PROPERTIES,
+                required: ['requirement', 'reason', 'suggestedApproach'],
+              },
             },
             required: ['need', 'reason'],
           },
         },
         required: ['need', 'ask', 'fitQuestions', 'matches'],
       },
+    },
+    next: {
+      type: 'object',
+      description: 'Calls worth making next.',
+      properties: {
+        suggested_calls: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              tool: { type: 'string' },
+              arguments: { type: 'object' },
+              why: { type: 'string' },
+            },
+            required: ['tool', 'arguments', 'why'],
+          },
+        },
+      },
+      required: ['suggested_calls'],
     },
   },
   required: ['results'],
@@ -111,7 +138,32 @@ function formatResult({ need, matches, ask, fitQuestions, noMatch }: NeedResult,
   };
 }
 
-export function createFindServicesTool(catalog: () => CapabilityCatalog): ToolDefinition[] {
+function suggestNext(results: NeedResult[], links: FindServicesLinks): Next | undefined {
+  for (const { need, matches } of results) {
+    const strong = matches.find(({ fit }) => fit === 'strong');
+    if (strong) {
+      const { id, doc } = strong.service;
+      return buildNext([
+        links.hasDoc(doc)
+          ? { tool: 'read_adsp_doc', arguments: { path: doc }, why: "Read the best-fitting service's guide." }
+          : undefined,
+        links.hasServiceApi(id)
+          ? {
+              tool: 'search_service_endpoints',
+              arguments: { query: need, service: id },
+              why: "Find that service's REST endpoints for this need.",
+            }
+          : undefined,
+      ]);
+    }
+  }
+  return undefined;
+}
+
+export function createFindServicesTool(
+  catalog: () => CapabilityCatalog,
+  links: () => FindServicesLinks,
+): ToolDefinition[] {
   let finder: ServiceFinder | undefined;
 
   return [
@@ -148,13 +200,20 @@ export function createFindServicesTool(catalog: () => CapabilityCatalog): ToolDe
       handler: (args) => {
         const parsed = FindArgs.safeParse(args);
         if (!parsed.success) {
-          return { isError: true, content: [{ type: 'text', text: parsed.error.issues.map(({ message }) => message).join(' ') }] };
+          return {
+            isError: true,
+            content: [{ type: 'text', text: parsed.error.issues.map(({ message }) => message).join(' ') }],
+          };
         }
 
         const { need, needs, response_format: format = 'concise' } = parsed.data;
         const current = (finder ??= new ServiceFinder(catalog()));
-        const results = (needs ?? [need as string]).map((text) => formatResult(current.find(text), format));
-        const structuredContent = { results };
+        const found = (needs ?? [need as string]).map((text) => current.find(text));
+        const next = suggestNext(found, links());
+        const structuredContent = {
+          results: found.map((result) => formatResult(result, format)),
+          ...(next && { next }),
+        };
         return { structuredContent, content: [{ type: 'text', text: JSON.stringify(structuredContent, null, 2) }] };
       },
     },

@@ -51,7 +51,10 @@ const BUNDLED_CAPABILITIES = join(__dirname, '..', '..', 'assets', 'capabilities
 
 /** The services find_adsp_services matches to the query, in rank order. */
 export function rankWithFindAdspServices(capabilitiesPath = BUNDLED_CAPABILITIES): RankServices {
-  const [find] = createFindServicesTool(() => loadCapabilityCatalog(capabilitiesPath));
+  const [find] = createFindServicesTool(
+    () => loadCapabilityCatalog(capabilitiesPath),
+    () => ({ hasDoc: () => false, hasServiceApi: () => false }), // ranking ignores next
+  );
 
   return async (query) => {
     const result = await find.handler({ need: query });
