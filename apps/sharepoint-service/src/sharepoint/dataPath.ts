@@ -56,7 +56,8 @@ export function setValueAtPath(data: Record<string, unknown>, path: string, valu
   let current: unknown = data;
   segments.forEach((segment, index) => {
     const key = keyIn(current, segment);
-    if (key === null) {
+    // assertDataPath already rejects these; checked again beside the assignments so the guard stays with them.
+    if (key === null || key === '__proto__' || key === 'constructor' || key === 'prototype') {
       throw new InvalidOperationError(`Cannot set a value at data path '${path}'.`);
     }
     const container = current as Record<PathSegment, unknown>;

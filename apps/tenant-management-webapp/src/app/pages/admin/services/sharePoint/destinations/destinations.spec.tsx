@@ -183,6 +183,26 @@ describe('sampleTestData', () => {
     });
   });
 
+  it('reads list positions written with brackets or with dots', () => {
+    expect(
+      sampleTestData([
+        { source: 'dependents[0].name', target: 'First' },
+        { source: 'dependents.1.name', target: 'Second' },
+      ]),
+    ).toEqual({ dependents: [{ name: '' }, { name: '' }] });
+  });
+
+  it('skips mapping sources that would change object prototypes', () => {
+    const sample = sampleTestData([
+      { source: '__proto__.polluted', target: 'A' },
+      { source: 'constructor.prototype.polluted', target: 'B' },
+      { source: 'name', target: 'Name' },
+    ]);
+
+    expect(sample).toEqual({ name: '' });
+    expect(({} as Record<string, unknown>).polluted).toBeUndefined();
+  });
+
   it('uses a sample value of each column type and one item for each detail list', () => {
     expect(
       sampleTestData(

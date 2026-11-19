@@ -145,16 +145,16 @@ export function describeDetailFailures(
 type PathSegment = string | number;
 
 const segmentsOf = (path: string): PathSegment[] =>
-  path
-    .split('.')
-    .flatMap((part) => {
-      const [name, ...indexes] = part.split('[');
-      return [name, ...indexes.map((index) => Number(index.replace(']', '')))];
-    })
-    .filter((segment) => segment !== '');
+  (path.match(/[^.[\]]+/g) ?? []).map((segment) => (/^\d+$/.test(segment) ? Number(segment) : segment));
+
+const isUnsafeSegment = (segment: PathSegment) =>
+  segment === '__proto__' || segment === 'constructor' || segment === 'prototype';
 
 const setAtPath = (data: Record<string, unknown>, path: string, value: unknown) => {
   const segments = segmentsOf(path);
+  if (segments.length === 0 || segments.some(isUnsafeSegment)) {
+    return;
+  }
   let current = data as Record<PathSegment, unknown>;
   segments.slice(0, -1).forEach((segment, i) => {
     if (current[segment] === undefined || current[segment] === null) {
