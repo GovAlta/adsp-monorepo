@@ -3,6 +3,7 @@ import { NotFoundError } from '@core-services/core-common';
 import { DestinationDisabledError, SharePointError } from './errors';
 import { GraphClient, GraphTokenProvider } from './graph';
 import { ITEM_KEY_COLUMN, itemKeyFor, mapFields } from './mapper';
+import { isRefused, isTransient, withRetry } from './retry';
 import { PushResult, SharePointConfiguration, SharePointConnection, SharePointDestination } from './types';
 
 const REJECTED_TOKEN_CODE = 'graph:InvalidAuthenticationToken';
@@ -61,6 +62,21 @@ export class SharePointPusher {
     data: Record<string, unknown>,
   ): Promise<PushResult> {
     const fields = mapFields(destination.fieldMappings, data, key);
+    // With a key, a repeat looks the row up again, so a create that actually succeeded becomes an update.
+    // Without one, a create is only repeated when SharePoint refused it, since the row may already exist after a timeout.
+    return withRetry(
+      () => this.writeRefreshingToken(tenantId, connection, destination, key, fields),
+      key === null ? isRefused : isTransient,
+    );
+  }
+
+  private async writeRefreshingToken(
+    tenantId: AdspId,
+    connection: SharePointConnection,
+    destination: SharePointDestination,
+    key: string | null,
+    fields: Record<string, unknown>,
+  ): Promise<PushResult> {
     try {
       return await this.write(tenantId, connection, destination, key, fields);
     } catch (err) {

@@ -9,6 +9,7 @@ import { FilesUploadResult, MAX_FILES, SharePointFileService } from './files';
 import { GraphTokenProvider } from './graph';
 import { RowIdentityMissingError } from './mapper';
 import { SharePointPusher } from './push';
+import { withRetryScope } from './retry';
 import { ServiceRoles } from './roles';
 import { PushResult, SharePointConfiguration, TestResult } from './types';
 
@@ -124,7 +125,9 @@ export function testDestination(pusher: SharePointPusher, logger: Logger): Reque
 
       let result: TestResult;
       try {
-        const { outcome } = await pusher.test(tenantId, configuration, destinationId, req.body);
+        const { outcome } = await withRetryScope(logger, logContext(tenantId), () =>
+          pusher.test(tenantId, configuration, destinationId, req.body),
+        );
         result = { ok: true, outcome };
       } catch (err) {
         result = toTestFailure(err);
@@ -150,7 +153,9 @@ export function pushData(pusher: SharePointPusher, logger: Logger): RequestHandl
 
       let result: PushResult;
       try {
-        result = await pusher.push(tenantId, configuration, destinationId, req.body);
+        result = await withRetryScope(logger, logContext(tenantId), () =>
+          pusher.push(tenantId, configuration, destinationId, req.body),
+        );
       } catch (err) {
         if (err instanceof DestinationDisabledError) {
           logger.warn(
@@ -212,7 +217,9 @@ export function uploadFiles(fileService: SharePointFileService, logger: Logger):
 
       let result: FilesUploadResult;
       try {
-        result = await fileService.upload(tenantId, configuration, destinationId, req.body);
+        result = await withRetryScope(logger, logContext(tenantId), () =>
+          fileService.upload(tenantId, configuration, destinationId, req.body),
+        );
       } catch (err) {
         if (err instanceof DestinationDisabledError) {
           res.status(409).send({ errorCode: 'destination-disabled' });

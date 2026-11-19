@@ -1,7 +1,8 @@
 import axios from 'axios';
 import { Readable } from 'stream';
 import { SharePointError, toSharePointError } from '../errors';
-import { readChunks } from './chunker';
+import { requestWithRetry } from '../retry';
+import { readAll, readChunks } from './chunker';
 
 export const SIMPLE_UPLOAD_LIMIT = 4 * 1024 * 1024;
 export const DEFAULT_CHUNK_SIZE = 5 * 1024 * 1024;
@@ -64,18 +65,28 @@ export class GraphFileClient {
   }
 
   private async simpleUpload(token: string, path: string, size: number, stream: Readable): Promise<UploadedFile> {
-    const { data } = await axios.put<DriveItem>(`${path}/content`, stream, {
-      headers: { ...this.headers(token), 'Content-Type': 'application/octet-stream', 'Content-Length': size },
-      maxBodyLength: Infinity,
-    });
+    // Read into memory (4 MB at most) so a failed request can be sent again; a used stream can't be replayed.
+    const content = await readAll(stream);
+    if (content.length !== size) {
+      throw new SharePointError('file:size-mismatch', false);
+    }
+
+    const { data } = await requestWithRetry(() =>
+      axios.put<DriveItem>(`${path}/content`, content, {
+        headers: { ...this.headers(token), 'Content-Type': 'application/octet-stream', 'Content-Length': size },
+        maxBodyLength: Infinity,
+      }),
+    );
     return toUploadedFile(data);
   }
 
   private async sessionUpload(token: string, path: string, size: number, stream: Readable): Promise<UploadedFile> {
-    const { data: session } = await axios.post<{ uploadUrl: string }>(
-      `${path}/createUploadSession`,
-      { item: { '@microsoft.graph.conflictBehavior': 'replace' } },
-      { headers: this.headers(token) },
+    const { data: session } = await requestWithRetry(() =>
+      axios.post<{ uploadUrl: string }>(
+        `${path}/createUploadSession`,
+        { item: { '@microsoft.graph.conflictBehavior': 'replace' } },
+        { headers: this.headers(token) },
+      ),
     );
 
     try {
@@ -83,14 +94,17 @@ export class GraphFileClient {
       let item: DriveItem | undefined;
       for await (const chunk of readChunks(stream, this.chunkSize)) {
         const end = offset + chunk.length - 1;
-        const response = await axios.put<DriveItem>(session.uploadUrl, chunk, {
-          headers: {
-            'Content-Type': 'application/octet-stream',
-            'Content-Length': chunk.length,
-            'Content-Range': `bytes ${offset}-${end}/${size}`,
-          },
-          maxBodyLength: Infinity,
-        });
+        // Only the failed chunk is sent again, the session and the chunks before it are kept.
+        const response = await requestWithRetry(() =>
+          axios.put<DriveItem>(session.uploadUrl, chunk, {
+            headers: {
+              'Content-Type': 'application/octet-stream',
+              'Content-Length': chunk.length,
+              'Content-Range': `bytes ${offset}-${end}/${size}`,
+            },
+            maxBodyLength: Infinity,
+          }),
+        );
         offset = end + 1;
         if (response.status === 200 || response.status === 201) {
           item = response.data;
