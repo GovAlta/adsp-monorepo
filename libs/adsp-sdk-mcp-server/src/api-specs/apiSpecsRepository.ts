@@ -118,13 +118,25 @@ function toSummary({ service, method, path, summary, deprecated, access }: ApiEn
   return { service, method, path, summary, deprecated, access };
 }
 
+/** The services listed in api-specs/index.json; empty when the folder has none (test servers, source checkouts). */
+export function readApiServiceIndex(apiSpecsRoot: string): ApiServiceSummary[] {
+  try {
+    return JSON.parse(readFileSync(join(apiSpecsRoot, 'index.json'), 'utf8'));
+  } catch (err) {
+    if ((err as NodeJS.ErrnoException).code === 'ENOENT') {
+      return [];
+    }
+    throw err;
+  }
+}
+
 /** The bundled OpenAPI specs (api-specs/), indexed for listing, keyword search and reading one endpoint. */
 export class ApiSpecsRepository {
   private readonly services: ApiServiceSummary[];
   private readonly operations: IndexedOperation[];
 
   constructor(apiSpecsRoot: string) {
-    this.services = JSON.parse(readFileSync(join(apiSpecsRoot, 'index.json'), 'utf8'));
+    this.services = readApiServiceIndex(apiSpecsRoot);
     this.operations = this.services.flatMap((service) =>
       indexOperations(service, JSON.parse(readFileSync(join(apiSpecsRoot, service.file), 'utf8'))),
     );

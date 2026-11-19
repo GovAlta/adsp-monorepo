@@ -1,5 +1,5 @@
 import { join } from 'path';
-import { ApiSpecsRepository } from './apiSpecsRepository';
+import { ApiSpecsRepository, readApiServiceIndex } from './apiSpecsRepository';
 
 const FIXTURE_ROOT = join(__dirname, '../fixtures/api-specs');
 const BUNDLED_ROOT = join(__dirname, '../../api-specs');
@@ -86,5 +86,11 @@ describe('ApiSpecsRepository over the bundled specs', () => {
         expect(repo.read(service, method, path)).toBeDefined();
       }
     }
+  });
+});
+
+describe('readApiServiceIndex', () => {
+  it('returns [] when the index file is missing', () => {
+    expect(readApiServiceIndex(join(__dirname, 'no-such-folder'))).toEqual([]);
   });
 });
