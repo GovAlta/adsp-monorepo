@@ -59,6 +59,9 @@ import {
   FormAuditActions,
   RegistrationSubmittedDefinition,
   RegistrationReviewedDefinition,
+  SharePointPushFailedDefinition,
+  createSharePointRetryService,
+  parseRetryDelays,
 } from './form';
 import { closeRepositories, createRepositories } from './mongo';
 import { createNotificationService } from './notification';
@@ -175,6 +178,7 @@ const initializeApp = async () => {
         FormMessageForwardedDefinition,
         RegistrationSubmittedDefinition,
         RegistrationReviewedDefinition,
+        SharePointPushFailedDefinition,
       ],
       eventStreams: [SubmittedFormPdfUpdatesStream, FormQuestionUpdatesStream],
       auditActions: FormAuditActions,
@@ -317,7 +321,7 @@ const initializeApp = async () => {
   const commentService = await createCommentService(logger, directory, tokenProvider, SUPPORT_COMMENT_TOPIC_TYPE_ID);
   const queueTaskService = createQueueTaskService(serviceId, logger, directory, tokenProvider);
   const pdfService = createPdfService(logger, directory, tokenProvider);
-  const sharepointService = createSharePointService(logger, directory, tokenProvider);
+  const sharepointClient = createSharePointService(logger, directory, tokenProvider);
   const calendarService = await createCalendarService(logger, directory, tokenProvider, INTAKE_CALENDAR_NAME);
 
   const repositories = await createRepositories({
@@ -325,6 +329,17 @@ const initializeApp = async () => {
     logger,
     configurationService,
     notificationService,
+  });
+
+  const sharepointService = createSharePointRetryService({
+    apiId: adspId`${serviceId}:v1`,
+    logger,
+    client: sharepointClient,
+    repository: repositories.sharepointPushRepository,
+    formRepository: repositories.formRepository,
+    submissionRepository: repositories.formSubmissionRepository,
+    eventService,
+    retryDelaysSeconds: parseRetryDelays(environment.SHAREPOINT_RETRY_DELAYS),
   });
 
   // Messages are posted straight to the comment service, so form message notifications are driven

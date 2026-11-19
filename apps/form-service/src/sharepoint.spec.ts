@@ -213,6 +213,15 @@ describe('sharepoint', () => {
       expect(JSON.stringify(result)).not.toContain('secret detail');
     });
 
+    it.each([502, 503, 504])(
+      'reports a %i from the gateway, with no error from the service, as retryable',
+      async (status) => {
+        axiosMock.post.mockRejectedValueOnce(axiosError({ status, data: '<html>gateway</html>' }));
+
+        expect(await service.push(aForm())).toEqual({ success: false, errorCode: `http:${status}`, retryable: true });
+      },
+    );
+
     it('reports a network error as retryable', async () => {
       axiosMock.post.mockRejectedValueOnce(axiosError());
 

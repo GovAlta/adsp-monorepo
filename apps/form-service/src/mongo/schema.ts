@@ -230,3 +230,19 @@ export const formRegistrationSchema = new Schema(
 formRegistrationSchema.index({ tenantId: 1, id: 1 }, { unique: true });
 formRegistrationSchema.index({ tenantId: 1, formDefinitionId: 1, status: 1 });
 formRegistrationSchema.index({ tenantId: 1, formDefinitionId: 1, email: 1 });
+
+// One record per push that has not finished. It is removed when the push succeeds or is given up.
+export const sharePointPushSchema = new Schema(
+  {
+    id: { type: String, required: true },
+    tenantId: { type: String, required: true },
+    formId: { type: String, required: true },
+    submissionId: { type: String, required: false },
+    attempts: { type: Number, required: true },
+    nextAttemptAt: { type: Date, required: true, index: true },
+    lastErrorCode: { type: String, required: false },
+  },
+  { _id: false },
+);
+
+sharePointPushSchema.index({ id: 1 }, { unique: true });
