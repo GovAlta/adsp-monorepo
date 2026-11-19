@@ -96,7 +96,7 @@
           "content": [
             {
               "type": "text",
-              "text": "{\n  \"results\": [\n    {\n      \"path\": \"services/event-service.md\",\n      \"title\": \"Event service\",\n      \"snippet\": \"The event service lets a service send a domain event. Each event is routed over RabbitMQ and kept in the event log. Use the directory to find the event service API…\",\n      \"score\": 18\n    },\n    {\n      \"path\": \"services/demo-service.md\",\n      \"title\": \"Demo service files\",\n      \"snippet\": \"The demo service lets a tenant upload a file and list its files. Call `initializeService` to register with the platform. After each upload it sends a domain event through the [event service](event-service.md).\",\n      \"score\": 11,\n      \"related\": {\n        \"docs\": [\n          \"services/event-service.md\"\n        ],\n        \"sdkSymbols\": [\n          \"initializeService\"\n        ]\n      }\n    },\n    {\n      \"path\": \"services/directory-service.md\",\n      \"title\": \"Directory service\",\n      \"snippet\": \"The directory service maps a service URN to its URL, so a client can find a service without a hardcoded endpoint.\",\n      \"score\": 8\n    }\n  ],\n  \"next\": {\n    \"suggested_calls\": [\n      {\n        \"tool\": \"read_adsp_doc\",\n        \"arguments\": {\n          \"path\": \"services/event-service.md\"\n        },\n        \"why\": \"Top match; read the full page.\"\n      }\n    ]\n  }\n}"
+              "text": "{\n  \"results\": [\n    {\n      \"path\": \"services/event-service.md\",\n      \"title\": \"Event service\",\n      \"snippet\": \"The event service lets a service send a domain event. Each event is routed over RabbitMQ and kept in the event log. Use the directory to find the event service API…\",\n      \"score\": 18\n    },\n    {\n      \"path\": \"services/demo-service.md\",\n      \"title\": \"Demo service files\",\n      \"snippet\": \"The demo service lets a tenant upload a file and list its files. Call `initializeService` to register with the platform. After each upload it sends a domain event through the [event service](event-service.md).\",\n      \"score\": 11\n    },\n    {\n      \"path\": \"services/directory-service.md\",\n      \"title\": \"Directory service\",\n      \"snippet\": \"The directory service maps a service URN to its URL, so a client can find a service without a hardcoded endpoint.\",\n      \"score\": 8\n    }\n  ],\n  \"next\": {\n    \"suggested_calls\": [\n      {\n        \"tool\": \"read_adsp_doc\",\n        \"arguments\": {\n          \"path\": \"services/event-service.md\"\n        },\n        \"why\": \"Top match; read the full page.\"\n      }\n    ]\n  }\n}"
             }
           ]
         }
@@ -167,7 +167,7 @@
           "content": [
             {
               "type": "text",
-              "text": "{\n  \"results\": [\n    {\n      \"path\": \"services/demo-service.md\",\n      \"title\": \"Demo service files\"\n    },\n    {\n      \"path\": \"services/directory-service.md\",\n      \"title\": \"Directory service\"\n    },\n    {\n      \"path\": \"services/event-service.md\",\n      \"title\": \"Event service\"\n    }\n  ]\n}"
+              "text": "{\n  \"results\": [\n    {\"path\":\"services/demo-service.md\",\"title\":\"Demo service files\"},\n    {\"path\":\"services/directory-service.md\",\"title\":\"Directory service\"},\n    {\"path\":\"services/event-service.md\",\"title\":\"Event service\"}\n  ]\n}"
             }
           ]
         }
@@ -185,7 +185,7 @@
           "content": [
             {
               "type": "text",
-              "text": "{\n  \"results\": [\n    {\n      \"path\": \"services/event-service.md\",\n      \"title\": \"Event service\"\n    }\n  ],\n  \"next\": {\n    \"suggested_calls\": [\n      {\n        \"tool\": \"read_adsp_doc\",\n        \"arguments\": {\n          \"path\": \"services/event-service.md\"\n        },\n        \"why\": \"Only page under this prefix; read it.\"\n      }\n    ]\n  }\n}"
+              "text": "{\n  \"results\": [\n    {\"path\":\"services/event-service.md\",\"title\":\"Event service\"}\n  ],\n  \"next\": {\n    \"suggested_calls\": [\n      {\n        \"tool\": \"read_adsp_doc\",\n        \"arguments\": {\n          \"path\": \"services/event-service.md\"\n        },\n        \"why\": \"Only page under this prefix; read it.\"\n      }\n    ]\n  }\n}"
             }
           ]
         }

@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { DocsRepository } from '../docs/docsRepository';
 import { queryTerms } from '../search/textSearch';
-import { jsonText, buildNext, definedOnly, withRelatedAndNext } from './envelope';
+import { jsonText, buildNext, definedOnly, Next, withRelatedAndNext } from './envelope';
 import { LinkIndex } from './links';
 import { OFFLINE_TOOL_ANNOTATIONS, ToolDefinition } from './types';
 
@@ -20,6 +20,15 @@ const ReadArgs = z.object({
 
 // A prefix matching this few pages is specific enough to point straight at one.
 const NARROW_PREFIX_PAGES = 5;
+
+// Related references on every hit would grow a default search by more than half.
+const RELATED_RESULTS = 1;
+
+function listText(pages: object[], next: Next | undefined): string {
+  const entries = pages.map((page) => `    ${JSON.stringify(page)}`).join(',\n');
+  const nextText = next ? `,\n  "next": ${JSON.stringify(next, null, 2).replace(/\n/g, '\n  ')}` : '';
+  return `{\n  "results": [\n${entries}\n  ]${nextText}\n}`;
+}
 
 export function createDocsTools(docs: DocsRepository, links: () => LinkIndex): ToolDefinition[] {
   return [
@@ -72,9 +81,10 @@ export function createDocsTools(docs: DocsRepository, links: () => LinkIndex): T
         }
 
         const index = links();
-        const withRelated = results.map((result) =>
-          withRelatedAndNext(result, index.relatedForDoc(result.path), undefined),
-        );
+        const withRelated = results.map((result, position) => {
+          const related = position < RELATED_RESULTS ? index.relatedForDoc(result.path) : undefined;
+          return withRelatedAndNext(result, related, undefined);
+        });
         const top = withRelated[0];
         const next = buildNext(
           [
@@ -143,7 +153,7 @@ export function createDocsTools(docs: DocsRepository, links: () => LinkIndex): T
                 { tool: 'list_adsp_docs', arguments: definedOnly(parsed) },
               )
             : undefined;
-        return jsonText(withRelatedAndNext({ results: pages }, undefined, next));
+        return { content: [{ type: 'text', text: listText(pages, next) }] };
       },
     },
     {

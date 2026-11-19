@@ -60,6 +60,21 @@ describe('docs tools', () => {
       });
     });
 
+    it('adds related to the top result only', async () => {
+      const links = stubLinks({
+        'services/file-service.md': { serviceApis: ['file-service'] },
+        'services/event-service.md': { serviceApis: ['event-service'] },
+        'tutorials/files.md': { serviceApis: ['file-service'] },
+      });
+      const result = await tool('search_adsp_docs', links).handler({ query: 'file service event tutorial upload' });
+      const { results } = JSON.parse(textOf(result));
+
+      expect(results.length).toBeGreaterThan(2);
+      expect(results.map((entry: { related?: unknown }) => entry.related !== undefined)).toEqual(
+        results.map((_: unknown, position: number) => position < 1),
+      );
+    });
+
     it('suggests the endpoint search for a service page', async () => {
       const links = stubLinks({ 'services/file-service.md': { serviceApis: ['file-service'] } });
       const result = await tool('search_adsp_docs', links).handler({ query: 'file upload' });
@@ -107,6 +122,14 @@ describe('docs tools', () => {
           ],
         },
       });
+    });
+
+    it('prints one page per line so the wrapper adds little to a long list', async () => {
+      const text = textOf(await tool('list_adsp_docs').handler({}));
+
+      expect(text).toContain('{"path":"services/event-service.md","title":"Event service"}');
+      expect(text.split('\n')).toHaveLength(7);
+      expect(JSON.parse(text).results).toHaveLength(3);
     });
 
     it('does not suggest a page for an unfiltered list', async () => {

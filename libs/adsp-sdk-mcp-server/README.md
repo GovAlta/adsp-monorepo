@@ -9,14 +9,16 @@ It bundles the ADSP documentation site content, the OpenAPI specs of ADSP servic
 
 - `find_adsp_services` — match a product need, in the user's own words, to the ADSP services that provide it, so an
   agent reuses a platform service instead of building one. See [Matching needs to services](#matching-needs-to-services).
+  Returns `next`.
 - `search_adsp_docs` — keyword search across ADSP platform docs (getting started, architecture, service concepts,
   tutorials). Common words people use that the docs don't, such as `websocket` or `auth`, also search for the
-  docs' own terms (`src/search/aliases.ts`).
+  docs' own terms (`src/search/aliases.ts`). Returns `related` (on the top result) and `next`.
 - `list_adsp_docs` — list the path and title of every bundled doc page, optionally under a path prefix such as
-  `services/`, for browsing when keyword search misses.
-- `read_adsp_doc` — read the full content of a doc page found via search or the list.
+  `services/`, for browsing when keyword search misses. Returns `next` for a prefix that matches five pages or fewer.
+- `read_adsp_doc` — read the full content of a doc page found via search or the list. Returns `related` and `next`
+  in a second block.
 - `search_sdk_reference` — search `@abgov/adsp-service-sdk` by symbol name, module, or keyword; returns full symbol
-  details (kind, description, option/return shape, example, deprecated flag).
+  details (kind, description, option/return shape, example, deprecated flag). Returns `related` and `next`.
 - `get_platform_quickstart` — the canonical `initializeService` usage pattern (the common case for a tenant service
   built on top of ADSP) and a capabilities summary, for the most common question: how to start using ADSP from a
   Node service.
@@ -30,10 +32,10 @@ It bundles the ADSP documentation site content, the OpenAPI specs of ADSP servic
   that an answer may be stale.
 - `list_service_apis` — the ADSP services that publish a REST API, with URN and operation count.
 - `search_service_endpoints` — keyword search over those services' endpoints (path, summary, tags, description),
-  optionally within one service.
+  optionally within one service. Returns `related` and `next`.
 - `read_service_endpoint` — one endpoint as its service's OpenAPI spec defines it: description, parameters, request
   body and responses with schema references inlined. `access` quotes the description's sentences about roles,
-  tenancy and anonymous access; structured role metadata is planned (CS-5731).
+  tenancy and anonymous access; structured role metadata is planned (CS-5731). Returns `related` and `next`.
 
 ### Matching needs to services
 
@@ -95,6 +97,108 @@ The SDK has two entry points for two different kinds of service: `initializeServ
 primary audience for this package — product teams building on top of ADSP) and `initializePlatform` for cross-tenant
 platform services (the ones that live in this monorepo, e.g. `directory-service`, `configuration-service`). Content
 here is weighted toward `initializeService` accordingly.
+
+### Response format
+
+The offline tools point at the next useful call, so an agent follows from one answer to the next instead of
+guessing a tool or an argument. Their JSON carries two extra fields:
+
+| Field     | Meaning                                                                                                                                                                                                                               |
+| --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `related` | Things connected to what the tool returned, each capped at three: `docs` (doc page paths), `sdkSymbols` (SDK symbol names) and `serviceApis` (service names that `search_service_endpoints` takes as `service`). Left out when empty. |
+| `next`    | `suggested_calls`: up to three ready-to-make calls, each with `tool`, `arguments` and `why`. Never repeats the call just made. Left out when nothing useful follows.                                                                  |
+
+Every name in `related` and every call in `next` exists in the bundled content, and `next` never names a tool that
+needs sign-in (`list_service_roles` and `get_service_configuration_schema`), so a signed-out client can follow all of
+it. The tools keep every field they returned before. Where a tool used to return a bare list, such as
+`list_adsp_docs`, the list is now under `results`.
+
+`search_adsp_docs` adds `related` to its top result and `next` beside `results`:
+
+```json
+{
+  "results": [
+    {
+      "path": "services/event-service.md",
+      "title": "Event service",
+      "snippet": "…",
+      "score": 184,
+      "related": {
+        "docs": ["services/value-service.md"],
+        "sdkSymbols": ["initializePlatform"],
+        "serviceApis": ["event-service"]
+      }
+    }
+  ],
+  "next": {
+    "suggested_calls": [
+      {
+        "tool": "read_adsp_doc",
+        "arguments": { "path": "services/event-service.md" },
+        "why": "Top match; read the full page."
+      },
+      {
+        "tool": "search_service_endpoints",
+        "arguments": {
+          "query": "send a domain event",
+          "service": "event-service"
+        },
+        "why": "Find this service's REST endpoints for the same question."
+      }
+    ]
+  }
+}
+```
+
+`read_adsp_doc` returns the page markdown as the first block, unchanged, then a JSON block with `path`, `related`
+and `next`:
+
+```json
+{
+  "path": "services/event-service.md",
+  "related": {
+    "docs": ["services/value-service.md"],
+    "sdkSymbols": ["initializePlatform"],
+    "serviceApis": ["event-service"]
+  },
+  "next": {
+    "suggested_calls": [
+      {
+        "tool": "search_service_endpoints",
+        "arguments": { "query": "Event service", "service": "event-service" },
+        "why": "Find this service's REST endpoints."
+      }
+    ]
+  }
+}
+```
+
+`search_sdk_reference` puts `related` on each symbol (`seeAlso` symbols and the doc pages that name it).
+`search_service_endpoints` and `read_service_endpoint` put `related.docs` (the service's doc page) beside the result and
+suggest `read_service_endpoint` or `read_adsp_doc`. `find_adsp_services` adds `next` beside `results` (and in its
+`structuredContent`), when a need has a strong match:
+
+```json
+{
+  "results": [
+    {
+      "need": "…",
+      "ask": false,
+      "fitQuestions": [],
+      "matches": [{ "service": "file-service", "fit": "strong", "reason": "…" }]
+    }
+  ],
+  "next": {
+    "suggested_calls": [
+      {
+        "tool": "read_adsp_doc",
+        "arguments": { "path": "services/file-service.md" },
+        "why": "Read its guide."
+      }
+    ]
+  }
+}
+```
 
 ## Usage
 

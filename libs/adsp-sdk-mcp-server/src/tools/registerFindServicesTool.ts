@@ -150,13 +150,13 @@ function suggestNext(
       return buildNext(
         [
           links.hasDoc(doc)
-            ? { tool: 'read_adsp_doc', arguments: { path: doc }, why: "Read the best-fitting service's guide." }
+            ? { tool: 'read_adsp_doc', arguments: { path: doc }, why: "Read its guide." }
             : undefined,
           links.hasServiceApi(id)
             ? {
                 tool: 'search_service_endpoints',
                 arguments: { query: need, service: id },
-                why: "Find that service's REST endpoints for this need.",
+                why: "Find its REST endpoints.",
               }
             : undefined,
         ],
