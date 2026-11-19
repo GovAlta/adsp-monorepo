@@ -3,13 +3,14 @@ const mockEnvironment = {
   MODEL_URL: 'https://models.test/openai/v1',
   MODEL_API_KEY: 'model-key',
   AGENT_ACCESS_MAX_OUTPUT_TOKENS: 1000,
+  AGENT_NOTIFICATION_MAX_OUTPUT_TOKENS: 6000,
 };
 
 jest.mock('../../environments/environment', () => ({ environment: mockEnvironment }));
 
 import type { LanguageModelV3 } from '@ai-sdk/provider';
 import { getAgentModelConfiguration, getAgentProviderOptions } from './modelConfiguration';
-import { ACCESS_SERVICE_AGENT_ID } from './executionLimits';
+import { ACCESS_SERVICE_AGENT_ID, NOTIFICATION_TEMPLATE_AGENT_ID } from './executionLimits';
 
 const PROMPT = [
   { role: 'user' as const, content: [{ type: 'text' as const, text: 'Which clients are in the realm?' }] },
@@ -112,6 +113,25 @@ describe('getAgentProviderOptions', () => {
 
     // Assert
     expect(options).toEqual({ openai: { max_completion_tokens: 1000 } });
+  });
+
+  it('limits notification template agent replies, which can hold a whole email body', () => {
+    // Act
+    const options = getAgentProviderOptions(NOTIFICATION_TEMPLATE_AGENT_ID);
+
+    // Assert
+    expect(options).toEqual({ openai: { max_completion_tokens: 6000 } });
+  });
+
+  it('leaves the notification template reply limit to model settings without an OpenAI-compatible endpoint', () => {
+    // Arrange
+    mockEnvironment.MODEL_URL = '';
+
+    // Act
+    const options = getAgentProviderOptions(NOTIFICATION_TEMPLATE_AGENT_ID);
+
+    // Assert
+    expect(options).toBeUndefined();
   });
 
   it('leaves the reply limit to model settings without an OpenAI-compatible endpoint', () => {

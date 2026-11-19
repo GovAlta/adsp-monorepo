@@ -12,6 +12,54 @@ interface NotificationTemplateToolsProps {
   logger: Logger;
 }
 
+export const NOTIFICATION_PROPOSAL_TOOL = 'emailNotificationGenerateTool';
+const PROPOSAL_FIELDS = ['subject', 'title', 'subtitle', 'body'] as const;
+const SAVED_PREFIX = 'Saved and applied in the editor:';
+
+interface ProposalOutput {
+  subject?: string;
+  title?: string;
+  subtitle?: string;
+  body?: string;
+  saved: boolean;
+  reason?: string;
+}
+
+function isProposalOutput(output: unknown): output is ProposalOutput {
+  return typeof output === 'object' && output !== null && typeof (output as ProposalOutput).saved === 'boolean';
+}
+
+/**
+ * The tool's result as the model sees it. The editor applies the proposal from the full result, and the model already
+ * has the proposal in its own tool call, so it only needs to know which fields changed and whether they were saved.
+ * A value that is not a tool result, such as Mastra's error for input that failed validation, is passed on as JSON so
+ * the model can correct its call.
+ */
+export function describeProposalOutput(output: unknown): { type: 'text'; value: string } {
+  if (!isProposalOutput(output)) {
+    return { type: 'text', value: JSON.stringify(output) };
+  }
+  const fields = PROPOSAL_FIELDS.filter((field) => typeof output[field] === 'string').join(', ') || 'no fields';
+  return {
+    type: 'text',
+    value: output.saved
+      ? `${SAVED_PREFIX} ${fields}.`
+      : `Not saved: ${output.reason || 'unknown reason'} The proposal (${fields}) is in the editor, but the template is not stored.`,
+  };
+}
+
+/** Whether a tool result, as the model or the tool sees it, is a proposal that was saved. */
+export function isSavedProposalOutput(output: unknown): boolean {
+  if (isProposalOutput(output)) {
+    return output.saved;
+  }
+  const { type, value } = (output ?? {}) as { type?: string; value?: unknown };
+  if (type === 'text' && typeof value === 'string') {
+    return value.startsWith(SAVED_PREFIX);
+  }
+  return type === 'json' && isProposalOutput(value) && value.saved;
+}
+
 export async function createNotificationTemplateTools({
   directory,
   tokenProvider,
@@ -33,6 +81,7 @@ export async function createNotificationTemplateTools({
       subtitle: z.string().optional().describe('The proposed email subtitle.'),
       body: z.string().optional().describe('The proposed email body HTML content.'),
     }),
+    toModelOutput: describeProposalOutput,
     execute: async (input, context: ToolExecutionContext) => {
       const proposal = Object.fromEntries(Object.entries(input).filter(([, v]) => v !== undefined));
 

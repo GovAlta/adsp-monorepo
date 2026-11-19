@@ -3,6 +3,9 @@ import { environment } from '../../environments/environment';
 export const FORM_GENERATION_AGENT_ID = 'formGenerationAgent';
 export const ACCESS_SERVICE_AGENT_ID = 'AccessServiceAgent';
 export const ACCESS_SERVICE_AGENT_MAX_STEPS = 6;
+export const NOTIFICATION_TEMPLATE_AGENT_ID = 'notificationEmailTemplateAgent';
+// A proposal, a retry after a rejected tool input, and a written reply.
+export const NOTIFICATION_TEMPLATE_AGENT_MAX_STEPS = 3;
 
 export interface AgentExecutionLimits {
   timeoutMs: number;
