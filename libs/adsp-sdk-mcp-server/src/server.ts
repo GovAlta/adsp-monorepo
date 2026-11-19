@@ -77,7 +77,10 @@ export function loadAdspMcpTools(options: CreateAdspMcpServerOptions = {}): Adsp
     ...createServiceRolesTools(),
     ...createConfigurationSchemaTools(),
     ...createServerInfoTool(docs),
-    ...createApiTools(lazy(() => new ApiSpecsRepository(apiSpecsRoot))),
+    ...createApiTools(
+      lazy(() => new ApiSpecsRepository(apiSpecsRoot)),
+      links,
+    ),
   ];
   const offlineTools = tools.filter(isOfflineTool);
   const loaded = {
