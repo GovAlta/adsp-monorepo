@@ -1,0 +1,171 @@
+name: Monitoring configuration
+
+# Applies .openshift/monitoring (alert rules and AlertmanagerConfig) to adsp-<env>.
+# Pushes to main apply dev, then uat after Staging-gate approval. Prod is applied only by a manual
+# run on main, following promote.yml. See .openshift/monitoring/README.md.
+
+on:
+  pull_request:
+    paths:
+      - '.openshift/monitoring/**'
+      - '.github/workflows/monitoring.yml'
+  push:
+    branches: [main]
+    paths:
+      - '.openshift/monitoring/**'
+      - '.github/workflows/monitoring.yml'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Environment to apply (main branch only)
+        type: choice
+        required: true
+        options: [dev, uat, prod]
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 5
+    outputs:
+      dev: ${{ steps.select.outputs.dev }}
+      uat: ${{ steps.select.outputs.uat }}
+      prod: ${{ steps.select.outputs.prod }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Render templates for every environment
+        run: |
+          for target in dev uat prod; do
+            .openshift/monitoring/render.sh "$target" > /dev/null
+            echo "$target rendered"
+          done
+      - name: Select environments
+        id: select
+        env:
+          BEFORE: ${{ github.event.before }}
+          TARGET: ${{ inputs.environment }}
+        run: |
+          set -euo pipefail
+          dev=false; uat=false; prod=false
+          if [[ "$GITHUB_EVENT_NAME" == workflow_dispatch ]]; then
+            [[ "$GITHUB_REF" == refs/heads/main ]] || { echo "::error::Apply only from main"; exit 1; }
+            case "$TARGET" in
+              dev|uat|prod) declare "$TARGET=true" ;;
+              *) echo "::error::Invalid environment"; exit 1 ;;
+            esac
+          elif [[ "$GITHUB_EVENT_NAME" == push ]]; then
+            if [[ "$BEFORE" =~ ^0+$ ]]; then
+              changed=.github/workflows/monitoring.yml
+            else
+              changed=$(git diff --name-only --no-renames "$BEFORE" "$GITHUB_SHA")
+            fi
+            shared='^(\.openshift/monitoring/(rules/[^/]+\.yaml|alertmanager-config\.yaml|render\.sh)|\.github/workflows/monitoring\.yml)$'
+            if grep -Eq "$shared" <<< "$changed"; then
+              dev=true; uat=true; prod=true
+            fi
+            for target in dev uat prod; do
+              if grep -qx ".openshift/monitoring/params/$target.env" <<< "$changed"; then
+                declare "$target=true"
+              fi
+            done
+            if [[ "$prod" == true ]]; then
+              echo "::notice::Prod is affected; apply it with a manual run of this workflow on main."
+              prod=false
+            fi
+          fi
+          printf 'dev=%s\nuat=%s\nprod=%s\n' "$dev" "$uat" "$prod" >> "$GITHUB_OUTPUT"
+
+  dev:
+    needs: validate
+    if: needs.validate.outputs.dev == 'true'
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    environment:
+      name: Dev
+    concurrency:
+      group: monitoring-dev
+      cancel-in-progress: false
+    steps: &apply-monitoring
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - name: Oc login
+        uses: redhat-actions/oc-login@v1
+        with:
+          openshift_server_url: ${{ secrets.ARO_SERVER }}
+          openshift_token: ${{ secrets.ARO_TOKEN }}
+          namespace: adsp-${{ github.job }}
+          insecure_skip_tls_verify: true
+      - name: Render and dry-run
+        env:
+          TARGET: ${{ github.job }}
+        run: |
+          set -euo pipefail
+          .openshift/monitoring/render.sh "$TARGET" > "$RUNNER_TEMP/monitoring.json"
+          oc apply -n "adsp-$TARGET" --dry-run=server --validate=strict -f "$RUNNER_TEMP/monitoring.json"
+      # The AlertmanagerConfig is dropped by the operator, email included, if this Secret is missing.
+      # Server-side apply avoids copying the webhook into a last-applied-configuration annotation.
+      - name: Update Slack webhook Secret
+        env:
+          NAMESPACE: adsp-${{ github.job }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        run: |
+          set -euo pipefail
+          SLACK_WEBHOOK_URL=${SLACK_WEBHOOK_URL//[$'\r\n\t ']/}
+          [[ "$SLACK_WEBHOOK_URL" == https://hooks.slack.com/services/* ]] || {
+            echo "::error::Environment secret SLACK_WEBHOOK_URL is missing or is not a Slack webhook URL"
+            exit 1
+          }
+          jq -n '{
+            apiVersion: "v1", kind: "Secret", type: "Opaque",
+            metadata: {name: "adsp-alerts-slack", namespace: env.NAMESPACE, labels: {app: "adsp-monitoring"}},
+            data: {"webhook-url": (env.SLACK_WEBHOOK_URL | @base64)}
+          }' | oc apply --server-side --force-conflicts --field-manager=adsp-monitoring -f - > /dev/null
+          echo "Secret adsp-alerts-slack updated in $NAMESPACE"
+      - name: Apply
+        env:
+          TARGET: ${{ github.job }}
+        run: |
+          set -euo pipefail
+          oc apply -n "adsp-$TARGET" --validate=strict -f "$RUNNER_TEMP/monitoring.json"
+          echo "Applied. Notification delivery still needs to be verified; see .openshift/monitoring/README.md."
+
+  uat-approval:
+    needs: [validate, dev]
+    if: >-
+      !cancelled() && needs.validate.result == 'success' && needs.validate.outputs.uat == 'true' &&
+      (needs.dev.result == 'success' || needs.dev.result == 'skipped')
+    runs-on: ubuntu-22.04
+    environment:
+      name: Staging-gate
+    steps:
+      - run: echo "UAT monitoring configuration approved"
+
+  uat:
+    needs: [validate, uat-approval]
+    if: ${{ !cancelled() && needs.uat-approval.result == 'success' }}
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    environment:
+      name: Staging
+    concurrency:
+      group: monitoring-uat
+      cancel-in-progress: false
+    steps: *apply-monitoring
+
+  prod:
+    needs: validate
+    if: github.event_name == 'workflow_dispatch' && needs.validate.outputs.prod == 'true'
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    environment:
+      name: Production
+    concurrency:
+      group: monitoring-prod
+      cancel-in-progress: false
+    steps: *apply-monitoring
