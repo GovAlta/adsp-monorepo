@@ -20,6 +20,10 @@ describe('searchSdkReference', () => {
     expect(results[0]).toMatchObject({ name, module: 'audit' });
   });
 
+  it.each(['AdspId', 'adspId'])('ranks the exact-case name %s first among names differing only in case', (name) => {
+    expect(searchSdkReference(name)[0].name).toBe(name);
+  });
+
   it('is case-insensitive on symbol name', () => {
     const results = searchSdkReference('ADSPID');
 

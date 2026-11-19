@@ -132,3 +132,44 @@ describe('buildLinkIndex', () => {
     expect(apiServices).not.toHaveBeenCalled();
   });
 });
+
+describe('buildLinkIndex with one-word symbol names', () => {
+  const PAGES: Record<string, string> = {
+    'guides/prose.md': '# Prose\n\nTenant users sign in to the Tenant admin.\n',
+    'guides/span.md': '# Span\n\nTenant users call initializeService, then pass a `Tenant`.\n',
+    'guides/fence.md': '# Fence\n\n```typescript\nconst tenant: Tenant = await getTenant();\n```\n',
+  };
+  let docsRoot: string;
+  let links: LinkIndex;
+
+  beforeAll(() => {
+    docsRoot = mkdtempSync(join(tmpdir(), 'links-'));
+    mkdirSync(join(docsRoot, 'guides'));
+    for (const [path, content] of Object.entries(PAGES)) {
+      writeFileSync(join(docsRoot, path), content);
+    }
+    links = buildLinkIndex({
+      docs: new DocsRepository(docsRoot),
+      sdkSymbols: [symbol('Tenant'), symbol('initializeService')],
+      apiServices: () => [],
+    });
+  });
+
+  afterAll(() => rmSync(docsRoot, { recursive: true, force: true }));
+
+  it('does not match a one-word name in prose', () => {
+    expect(links.relatedForDoc('guides/prose.md')).toEqual({});
+  });
+
+  it('matches a one-word name in a code span, ordered by where the code names it', () => {
+    expect(links.relatedForDoc('guides/span.md').sdkSymbols).toEqual(['initializeService', 'Tenant']);
+  });
+
+  it('matches a one-word name in a fenced code block', () => {
+    expect(links.relatedForDoc('guides/fence.md').sdkSymbols).toEqual(['Tenant']);
+  });
+
+  it('relates a one-word symbol only to the pages that name it in code', () => {
+    expect([...(links.relatedForSymbol('Tenant').docs ?? [])].sort()).toEqual(['guides/fence.md', 'guides/span.md']);
+  });
+});

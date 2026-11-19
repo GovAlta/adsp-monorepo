@@ -26,6 +26,9 @@ export interface LinkSources {
 export const RELATED_CAP = 3;
 
 const MIN_SYMBOL_NAME_LENGTH = 6;
+// One-word names such as Tenant or Stream are also plain English, so only code naming them counts.
+const ONE_WORD_NAME = /^[A-Z][a-z]+$/;
+const CODE = /^[ \t]*(`{3,}|~{3,})[^\n]*\n[\s\S]*?^[ \t]*\1|(`+)[^`]+?\2/gm;
 const MARKDOWN_LINK = /\]\(([^)\s]+)/g;
 const SITE_LINK = /^\/adsp-monorepo\/(.+)\.html$/;
 const SERVICE_PAGE = /^services\/(.+)\.md$/;
@@ -42,6 +45,15 @@ function resolveLink(fromPath: string, target: string): string | undefined {
     return `${site[1]}.md`;
   }
   return posix.normalize(posix.join(posix.dirname(fromPath), withoutAnchor));
+}
+
+// Code stays at its own index, so first-appearance order holds across prose and code matches.
+function codeOnly(content: string): string {
+  let code = '';
+  for (const match of content.matchAll(CODE)) {
+    code += ' '.repeat((match.index ?? 0) - code.length) + match[0];
+  }
+  return code;
 }
 
 function escapeRegExp(text: string): string {
@@ -73,6 +85,7 @@ export function buildLinkIndex({ docs, sdkSymbols, apiServices }: LinkSources): 
     const symbolNames = sdkSymbols.filter(({ name }) => name.length >= MIN_SYMBOL_NAME_LENGTH).map(({ name }) => name);
     const symbolPatterns = symbolNames.map((name) => ({
       name,
+      inCodeOnly: ONE_WORD_NAME.test(name),
       pattern: new RegExp(`(?<![\\w$])${escapeRegExp(name)}(?![\\w$])`),
     }));
     const knownSymbols = new Set(sdkSymbols.map(({ name }) => name));
@@ -83,13 +96,14 @@ export function buildLinkIndex({ docs, sdkSymbols, apiServices }: LinkSources): 
 
     for (const { path } of docs.list()) {
       const content = docs.read(path)?.content ?? '';
+      const code = codeOnly(content);
 
       const linked = [...content.matchAll(MARKDOWN_LINK)]
         .map(([, target]) => resolveLink(path, target))
         .filter((resolved): resolved is string => !!resolved && resolved !== path && docPaths.has(resolved));
 
       const named = symbolPatterns
-        .map(({ name, pattern }) => ({ name, index: content.search(pattern) }))
+        .map(({ name, inCodeOnly, pattern }) => ({ name, index: (inCodeOnly ? code : content).search(pattern) }))
         .filter(({ index }) => index >= 0)
         .sort((a, b) => a.index - b.index)
         .map(({ name }) => name);
