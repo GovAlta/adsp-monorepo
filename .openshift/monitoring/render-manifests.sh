@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Renders rules/*.yaml then alertmanager-config.yaml for one environment into a single List on
 # stdout, and refuses objects of an unexpected kind or outside that environment's namespace.
-# Usage: render.sh <dev|uat|prod>
+# Usage: render-manifests.sh <dev|uat|prod>
 set -euo pipefail
 
 environment=${1:-}

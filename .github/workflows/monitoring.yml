@@ -41,7 +41,7 @@ jobs:
       - name: Render templates for every environment
         run: |
           for target in dev uat prod; do
-            .openshift/monitoring/render.sh "$target" > /dev/null
+            .openshift/monitoring/render-manifests.sh "$target" > /dev/null
             echo "$target rendered"
           done
       - name: Select environments
@@ -64,7 +64,7 @@ jobs:
             else
               changed=$(git diff --name-only --no-renames "$BEFORE" "$GITHUB_SHA")
             fi
-            shared='^(\.openshift/monitoring/(rules/[^/]+\.yaml|alertmanager-config\.yaml|render\.sh)|\.github/workflows/monitoring\.yml)$'
+            shared='^(\.openshift/monitoring/(rules/[^/]+\.yaml|alertmanager-config\.yaml|render-manifests\.sh)|\.github/workflows/monitoring\.yml)$'
             if grep -Eq "$shared" <<< "$changed"; then
               dev=true; uat=true; prod=true
             fi
@@ -106,7 +106,7 @@ jobs:
           TARGET: ${{ github.job }}
         run: |
           set -euo pipefail
-          .openshift/monitoring/render.sh "$TARGET" > "$RUNNER_TEMP/monitoring.json"
+          .openshift/monitoring/render-manifests.sh "$TARGET" > "$RUNNER_TEMP/monitoring.json"
           oc apply -n "adsp-$TARGET" --dry-run=server --validate=strict -f "$RUNNER_TEMP/monitoring.json"
       # The AlertmanagerConfig is dropped by the operator, email included, if this Secret is missing.
       # Server-side apply avoids copying the webhook into a last-applied-configuration annotation.

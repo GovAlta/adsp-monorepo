@@ -9,7 +9,7 @@ of each environment.
 ├── rules/<service>.yaml        # Alert rules, one OpenShift Template per service
 ├── alertmanager-config.yaml    # AlertmanagerConfig alertmanager-<namespace> (email + Slack)
 ├── params/<env>.env            # Parameters shared by every template, per environment
-└── render.sh                   # Renders one environment; used by CI and locally
+└── render-manifests.sh         # Renders one environment; used by CI and locally
 ```
 
 Every file is an OpenShift Template processed with `params/<env>.env`, so the same rule or
@@ -88,7 +88,7 @@ The **Monitoring configuration** workflow (`.github/workflows/monitoring.yml`):
 Each run renders, performs a server-side dry-run, updates the Slack Secret, then applies. Changes
 to this README alone do not deploy.
 
-Render locally with `.openshift/monitoring/render.sh dev` (requires `oc` and `jq`).
+Render locally with `.openshift/monitoring/render-manifests.sh dev` (requires `oc` and `jq`).
 
 ## Verification and rollback
 
