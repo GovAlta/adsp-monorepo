@@ -264,6 +264,11 @@ describe('tenant routers documented behaviour', () => {
         expect(res.body.tenant.name).toBe('Other');
       });
 
+      it('responds 404 to a tenant user without a tenant ID', async () => {
+        const res = await request(createApp(user('no-tenant', [], { tenantId: undefined }))).get('/api/tenant/v1/test');
+        expect(res.status).toBe(404);
+      });
+
       it('responds 404 for an unknown tenant', async () => {
         const res = await request(createApp(plain)).get('/api/tenant/v1/unknown');
         expect(res.status).toBe(404);
@@ -306,6 +311,11 @@ describe('tenant routers documented behaviour', () => {
         const res = await request(createApp(core('core-user', []))).get('/api/tenant/v1/realm/other-realm');
         expect(res.status).toBe(200);
         expect(res.body.tenant.name).toBe('Other');
+      });
+
+      it('responds 404 to a tenant user without a tenant ID', async () => {
+        const res = await request(createApp(user('no-tenant', [], { tenantId: undefined }))).get('/api/tenant/v1/realm/test-realm');
+        expect(res.status).toBe(404);
       });
 
       it('responds 404 for an unknown realm', async () => {
@@ -357,6 +367,11 @@ describe('tenant routers documented behaviour', () => {
         const res = await request(createApp(plain)).post(`/api/tenant/v1/${path}`).send(found);
         expect(res.status).toBe(200);
         expect(res.body.id).toContain('/tenants/test');
+      });
+
+      it('responds 404 to a tenant user without a tenant ID', async () => {
+        const res = await request(createApp(user('no-tenant', [], { tenantId: undefined }))).post(`/api/tenant/v1/${path}`).send(found);
+        expect(res.status).toBe(404);
       });
 
       it('responds 404 when there is no matching tenant', async () => {

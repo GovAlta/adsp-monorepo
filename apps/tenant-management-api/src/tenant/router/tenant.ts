@@ -10,6 +10,7 @@ import { logger } from '../../middleware/logger';
 import { adspId, AuditService, EventService, UnauthorizedUserError, User } from '@abgov/adsp-service-sdk';
 import { TenantRepository } from '../repository';
 import { TenantEntity } from '../models';
+import { TenantCriteria } from '../types';
 import { NotFoundError } from '@core-services/core-common';
 import { mapTenant } from './mappers';
 import { RealmService } from '../services/realm';
@@ -101,9 +102,22 @@ const assertRealmAccess = (user: User, realm: string, action: string): void => {
   }
 };
 
-// Limits a tenant lookup to the caller's own tenant, unless the caller is a core user.
-const ownTenantCriteria = (user: User): { idEquals?: string } =>
-  user.isCore ? {} : { idEquals: user.tenantId?.resource.replace('/tenants/', '') ?? '' };
+// Finds the first matching tenant, limited to the caller's own tenant unless the caller is a core user.
+// A tenant user without a tenant ID matches nothing: an empty idEquals would be ignored by the repository.
+const findAccessibleTenant = async (
+  tenantRepository: TenantRepository,
+  user: User,
+  criteria: TenantCriteria,
+): Promise<TenantEntity | undefined> => {
+  if (!user.isCore) {
+    const ownTenantId = user.tenantId?.resource.replace('/tenants/', '');
+    if (!ownTenantId) {
+      return undefined;
+    }
+    criteria = { ...criteria, idEquals: ownTenantId };
+  }
+  return (await tenantRepository.find({ ...criteria, excludeArchived: true }))[0];
+};
 
 export const createTenantRouter = ({
   tenantRepository,
@@ -116,9 +130,7 @@ export const createTenantRouter = ({
   async function getTenantByEmail(req, res, next) {
     try {
       const { email } = req.payload;
-      const tenant = (
-        await tenantRepository.find({ ...ownTenantCriteria(req.user), adminEmailEquals: email, excludeArchived: true })
-      )[0];
+      const tenant = await findAccessibleTenant(tenantRepository, req.user, { adminEmailEquals: email });
       if (!tenant) {
         throw new NotFoundError('Tenant', email);
       }
@@ -134,9 +146,7 @@ export const createTenantRouter = ({
     try {
       const { name } = req.payload;
 
-      const tenant = (
-        await tenantRepository.find({ ...ownTenantCriteria(req.user), nameEquals: name, excludeArchived: true })
-      )[0];
+      const tenant = await findAccessibleTenant(tenantRepository, req.user, { nameEquals: name });
       if (!tenant) {
         throw new NotFoundError('Tenant', name);
       }
@@ -152,9 +162,7 @@ export const createTenantRouter = ({
     const { realm } = req.payload;
 
     try {
-      const tenant = (
-        await tenantRepository.find({ ...ownTenantCriteria(req.user), realmEquals: realm, excludeArchived: true })
-      )[0];
+      const tenant = await findAccessibleTenant(tenantRepository, req.user, { realmEquals: realm });
       if (!tenant) {
         throw new NotFoundError('Tenant', realm);
       }
