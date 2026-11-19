@@ -12,6 +12,7 @@ import {
   KeycloakCheckSSOAction,
   TenantLoginAction,
   KeycloakCheckSSOWithLogOutAction,
+  FetchRealmRolesFailed,
   FetchRealmRolesSuccess,
   UpdateAccessTokenAction,
   CHECK_IS_TENANT_ADMIN,
@@ -291,6 +292,7 @@ export function* fetchRealmRoles(): SagaIterator {
         show: false,
       }),
     );
+    yield put(FetchRealmRolesFailed());
     yield put(ErrorNotification({ message: 'Failed to fetch realm roles', error: e }));
   }
 }

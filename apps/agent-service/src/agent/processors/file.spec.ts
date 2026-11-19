@@ -108,4 +108,33 @@ describe('FileServiceDownloadProcessor', () => {
     expect(text).toContain('page-1');
     expect((message.content as Array<{ type: string }>).some((part) => part.type === 'image')).toBe(false);
   });
+
+  it('keeps only the start of a long document for the notification template agent', async () => {
+    extractMock.mockResolvedValue({ text: `${'a'.repeat(16000)}${'b'.repeat(500)}`, pageCount: 9 });
+    const processor = new FileServiceDownloadProcessor(logger as never, directory as never, tokenProvider as never);
+
+    const result = await processor.processInput(requestContext('notificationEmailTemplateAgent') as never, {
+      role: 'user',
+      content: [{ type: 'file', data: fileUrn, mimeType: 'application/pdf' }],
+    });
+    const message = Array.isArray(result) ? result[0] : result;
+    const text = (message.content as Array<{ type: string; text?: string }>).map((part) => part.text).join('\n');
+
+    expect(text).toContain('a'.repeat(16000));
+    expect(text).not.toContain('b');
+    expect(text).toContain('[Only the first 16000 characters are shown.]');
+  });
+
+  it('keeps the whole document for other agents', async () => {
+    extractMock.mockResolvedValue({ text: `${'a'.repeat(16000)}${'b'.repeat(500)}`, pageCount: 9 });
+    const processor = new FileServiceDownloadProcessor(logger as never, directory as never, tokenProvider as never);
+
+    const result = await processor.processInput(requestContext('pdfFormAnalysisAgent') as never, {
+      role: 'user',
+      content: [{ type: 'file', data: fileUrn, mimeType: 'application/pdf' }],
+    });
+    const message = Array.isArray(result) ? result[0] : result;
+
+    expect(JSON.stringify(message.content)).toContain('b'.repeat(500));
+  });
 });

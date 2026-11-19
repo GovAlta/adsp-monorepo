@@ -21,6 +21,18 @@ Pushes data, such as form submissions, to SharePoint lists owned by tenant teams
 | `POST /destinations/{id}/files` `{ submissionId, files: [{ field, fileId }], data? }` | `sharepoint-writer` (core service accounts with `?tenantId=`). Tenant admins check destinations with Test instead | Reads each file from File Service by file ID or `urn:ads:platform:file-service` URN (any other URN is rejected), uploads it to the site's default Documents library under `{submissionId}/{filename}`, then writes `data` as a list row with each file's link set at its `field`. Up to 20 files per request, uploaded 3 at a time. The link is a Hyperlink value unless the destination's field mapping for that field sets `linkFormat: "text"`, which writes the plain URL. The row is written only when every file uploaded, so a retry of the whole request is safe: files are overwritten by path, and the row is updated when its key matches. Without `data`, only the files are uploaded. Returns `{ files: [{ field, fileId, status, id, name, url, size } or { field, fileId, status: "failed", errorCode, retryable }], row?: { written, dataId, outcome } or { written: false, errorCode, retryable } }`; `row` is missing when `data` was not sent or a file failed. 200 when everything succeeds, 502 when any file fails or the row can't be written, 409 `destination-disabled`, `credential-not-set` or `credential-unreadable`, 404 unknown destination or connection, 400 invalid request, more than 20 files, or data missing a row identity field |
 Error codes are `entra:AADSTS<code>`, `graph:<code>`, `file:<code>`, `network` or `unknown`. The `file:` codes are `invalid-reference`, `not-found`, `access-denied`, `not-ready` (File Service has not finished scanning the file, so retry), `unavailable` and `size-mismatch`. Payload values never appear in responses or logs.
 
+## Retries
+
+Throttling and brief outages shouldn't fail a push, so the service retries Graph and Entra calls that fail with 429, 503, 504 or a network error. It never retries other 4xx errors (for example `invalidRequest`, `accessDenied` or a rejected or expired secret), since they need a configuration change.
+
+- Up to 3 retries per call, with exponential backoff and jitter (about 1, 2 and 4 seconds). A `Retry-After` sent by Graph or Entra is used instead of the backoff.
+- All retries in one request share a waiting budget of 20 seconds, and no retry starts once the request is 40 seconds old, so a request stays inside the 60 second route timeout. When the budget runs out, the last error is returned with `retryable: true`.
+- This covers the token request, the key lookup, row create and row update, a simple file upload, creating an upload session, and each chunk of a session upload. Only the failed chunk is sent again, and the session is deleted only when the upload is given up. A file of up to 4 MB is read into memory before it is sent, so it can be sent again.
+- A destination with a row key repeats the lookup before it writes again, so a create that actually succeeded becomes an update. A destination without one repeats a create only when Graph refused it (429 or 503), never after a timeout or lost response, because the row may already exist.
+- Test uses the same logic. Each retry is logged with its number and the error code only.
+
+Retries that outlast one request, for example a long outage, are the caller's to make using the `retryable` flag.
+
 ## Domain events
 
 The service registers two events (namespace `sharepoint-service`) and sends one per file in a `/files` request. They carry no file names, links or form data. `correlationId` is the submission ID, and the context holds `destinationId` and `submissionId`.
@@ -88,7 +100,7 @@ Invoke-RestMethod -Method Post http://localhost:3399/_mock/faults -ContentType a
 Invoke-RestMethod -Method Post http://localhost:3399/_mock/reset
 ```
 
-`kind` is `throttle` (429 with `Retry-After`) or `unavailable` (503).
+`kind` is `throttle` (429 with `Retry-After: 2`) or `unavailable` (503). Each fault is used up by one Graph request, so `count` is the number of failed requests in a row. The mock server has no file endpoints, so file upload retries are covered by unit tests only.
 
 ## SharePoint prerequisites (site owner)
 

@@ -22,6 +22,7 @@ export const TENANT_LOGOUT = 'TENANT_LOGOUT';
 export const UPDATE_TENANT_CREATED = 'UPDATE_TENANT_CREATED';
 export const FETCH_REALM_ROLES = 'FETCH_REALM_ROLES';
 export const FETCH_REALM_ROLES_SUCCESS = 'FETCH_REALM_ROLES_SUCCESS';
+export const FETCH_REALM_ROLES_FAILED = 'FETCH_REALM_ROLES_FAILED';
 export const UPDATE_ACCESS_TOKEN = 'UPDATE_ACCESS_TOKEN';
 export const DELETE_USER_IDP = 'DELETE_USER_IDP';
 export const FETCH_USER_IDP_INFO = 'FETCH_USER_IDP_INFO';
@@ -130,6 +131,10 @@ interface FetchRealmRolesSuccessAction {
   payload: Role[];
 }
 
+interface FetchRealmRolesFailedAction {
+  type: typeof FETCH_REALM_ROLES_FAILED;
+}
+
 export interface FetchUserIdpInfoAction {
   type: typeof FETCH_USER_IDP_INFO;
   email: string;
@@ -156,6 +161,7 @@ export type ActionType =
   | KeycloakCheckSSOAction
   | FetchRealmRolesAction
   | FetchRealmRolesSuccessAction
+  | FetchRealmRolesFailedAction
   | UpdateAccessTokenAction
   | UpdateTenantCreatedAction
   | DeleteUserIdpAction
@@ -253,6 +259,10 @@ export const FetchRealmRoles = (): FetchRealmRolesAction => ({
 export const FetchRealmRolesSuccess = (roles: Role[]): FetchRealmRolesSuccessAction => ({
   type: 'FETCH_REALM_ROLES_SUCCESS',
   payload: roles,
+});
+
+export const FetchRealmRolesFailed = (): FetchRealmRolesFailedAction => ({
+  type: 'FETCH_REALM_ROLES_FAILED',
 });
 
 export const UpdateAccessToken = (): UpdateAccessTokenAction => ({

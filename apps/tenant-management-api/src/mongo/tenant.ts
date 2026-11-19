@@ -7,6 +7,14 @@ import { TenantCriteria } from '../tenant/types';
 import { tenantSchema } from './schema';
 import { escapeRegExp } from 'lodash';
 
+// Criteria values go into the query as-is, so an object such as { $ne: null } would act as an operator.
+function asQueryString(value: unknown, criterion: string): string {
+  if (typeof value !== 'string') {
+    throw new InvalidOperationError(`Tenant criterion ${criterion} must be a string.`);
+  }
+  return value;
+}
+
 export class MongoTenantRepository implements TenantRepository {
   private tenantModel: Model<Doc<Tenant> & Document>;
 
@@ -57,16 +65,16 @@ export class MongoTenantRepository implements TenantRepository {
       }
 
       if (criteria.adminEmailEquals) {
-        query.adminEmail = criteria.adminEmailEquals;
+        query.adminEmail = asQueryString(criteria.adminEmailEquals, 'adminEmailEquals');
       }
 
       if (criteria.realmEquals) {
-        query.realm = criteria.realmEquals;
+        query.realm = asQueryString(criteria.realmEquals, 'realmEquals');
       }
 
       if (criteria.nameEquals) {
         // The name is matched as a whole, ignoring case, and is not a pattern.
-        query.name = { $regex: `^${escapeRegExp(criteria.nameEquals)}$`, $options: 'i' };
+        query.name = { $regex: `^${escapeRegExp(asQueryString(criteria.nameEquals, 'nameEquals'))}$`, $options: 'i' };
       }
 
       if (criteria.statusEquals === 'active') {

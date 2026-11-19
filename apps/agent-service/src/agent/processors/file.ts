@@ -3,7 +3,7 @@ import { convertUint8ArrayToBase64, FilePart, ImagePart, TextPart } from '@ai-sd
 import type { CoreUserMessage } from '@mastra/core/llm';
 import type { RequestContext } from '@mastra/core/request-context';
 import { Logger } from 'winston';
-import { FORM_GENERATION_AGENT_ID } from '../model/executionLimits';
+import { FORM_GENERATION_AGENT_ID, NOTIFICATION_TEMPLATE_AGENT_ID } from '../model/executionLimits';
 import { BrokerInputProcessor, SOURCE_DOCUMENTS_KEY } from '../types';
 import { createFileServiceClient, FileTypeInfo } from '../clients';
 import { documentCacheKey, getCachedDocumentExtract } from '../utils/documentCache';
@@ -14,7 +14,12 @@ import {
   DocumentExtractResult,
   isExtractableDocument,
 } from '../utils/documentParser';
-import { FORM_GENERATION_MAX_PAGE_IMAGES, isLargeFormDocument } from '../utils/documentSize';
+import {
+  DOCUMENT_EXTRACT_CHAR_CAP,
+  FORM_GENERATION_MAX_PAGE_IMAGES,
+  isLargeFormDocument,
+  truncateText,
+} from '../utils/documentSize';
 
 // Rendered on its own line so no punctuation is adjacent to the URN token that precedes it.
 function formatStorageNote(typeInfo: FileTypeInfo | null): string {
@@ -201,7 +206,12 @@ export class FileServiceDownloadProcessor implements BrokerInputProcessor {
         ];
       }
 
-      return buildExtractedDocumentParts(extracted, filename, urn, storageNote);
+      return buildExtractedDocumentParts(
+        agentId === NOTIFICATION_TEMPLATE_AGENT_ID ? capDocumentText(extracted) : extracted,
+        filename,
+        urn,
+        storageNote,
+      );
     } catch (err) {
       this.logger.warn(
         `Failed to extract text from document '${filename}': ${err instanceof Error ? err.message : String(err)}`,
@@ -264,6 +274,20 @@ function buildExtractedDocumentParts(
   }
 
   return undefined;
+}
+
+/**
+ * Keeps the start of a long document, as the document tool does, for an agent that only needs an attachment's gist:
+ * the extracted text stays in the thread and goes to the model again with later messages.
+ */
+function capDocumentText(extracted: DocumentExtractResult | null): DocumentExtractResult | null {
+  if (!extracted?.text) {
+    return extracted;
+  }
+  const capped = truncateText(extracted.text, DOCUMENT_EXTRACT_CHAR_CAP);
+  return capped.truncated
+    ? { ...extracted, text: `${capped.text}\n\n[Only the first ${DOCUMENT_EXTRACT_CHAR_CAP} characters are shown.]` }
+    : extracted;
 }
 
 function buildTextDocumentParts(

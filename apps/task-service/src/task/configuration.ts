@@ -1,3 +1,7 @@
+import type { AdspId } from '@abgov/adsp-service-sdk';
+import { QueueEntity } from './model';
+import type { Queue, TaskServiceConfiguration } from './types';
+
 export const configurationSchema = {
   type: 'object',
   properties: {
@@ -61,3 +65,15 @@ export const configurationSchema = {
     },
   },
 };
+
+export function convertConfiguration(
+  { queues }: { queues?: Record<string, Queue> },
+  tenantId?: AdspId,
+): TaskServiceConfiguration {
+  return {
+    queues: Object.entries(queues || {}).reduce(
+      (qs, [k, q]) => ({ ...qs, [k]: new QueueEntity({ ...q, tenantId: tenantId ?? q.tenantId }) }),
+      {},
+    ),
+  };
+}

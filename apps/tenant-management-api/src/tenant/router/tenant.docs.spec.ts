@@ -373,6 +373,16 @@ describe('tenant routers documented behaviour', () => {
         const res = await request(createApp(user('no-tenant', [], { tenantId: undefined }))).post(`/api/tenant/v1/${path}`).send(found);
         expect(res.status).toBe(404);
       });
+      it.each([{ $ne: null }, { $regex: '.*' }, ['admin@other.co'], ''])(
+        `responds 400 when ${path} is not a non-empty string (%j)`,
+        async (value) => {
+          const res = await request(createApp(plain))
+            .post(`/api/tenant/v1/${path}`)
+            .send({ [path]: value });
+          expect(res.status).toBe(400);
+          expect(res.body.adminEmail).toBeUndefined();
+        },
+      );
 
       it('responds 404 when there is no matching tenant', async () => {
         const res = await request(createApp(plain)).post(`/api/tenant/v1/${path}`).send(notFound);

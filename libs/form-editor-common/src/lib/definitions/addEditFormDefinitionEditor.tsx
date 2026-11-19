@@ -92,6 +92,7 @@ import { AddEditDispositionModal } from './addEditDispositionModal';
 import { DispositionItems } from './dispositionItems';
 import { FormConfigDefinition } from './formConfigDefinition';
 import { ReviewConfigurationTab } from './reviewConfigurationTab';
+import { areRolesUnavailable, ROLES_UNAVAILABLE_REASON } from './rolesAvailability';
 import { SharePointDestinationSelect } from './sharePointDestinationSelect';
 import { JSONFormPreviewer } from './JsonFormPreviewer';
 import { PreviewTop, PDFPreviewTemplateCore } from './PDFPreviewTemplateCore';
@@ -280,6 +281,12 @@ export function AddEditFormDefinitionEditor({
       formServiceApiUrl: state.config?.serviceUrls?.formServiceApiUrl,
     }),
   );
+
+  const realmRolesFailed = useSelector((state: RootState) => state.tenant?.realmRolesFailed); // clean-code-ignore: RULE-19 — role availability is tested in rolesAvailability.spec.ts.
+  const serviceRolesFailed = useSelector(
+    (state: RootState) => state.session.indicator?.details[FETCH_KEYCLOAK_SERVICE_ROLES] === ActionState.error,
+  );
+  const rolesUnavailable = areRolesUnavailable(realmRolesFailed, serviceRolesFailed);
 
   const [dataEditorLocation, setDataEditorLocation] = useState<number>(0);
   const [uiEditorLocation, setUiEditorLocation] = useState<number>(0);
@@ -708,7 +715,13 @@ export function AddEditFormDefinitionEditor({
                       </div>
                     </Tab>
                   )}
-                  <Tab label="Roles" data-testid="form-roles-tab" isTightContent={true}>
+                  <Tab
+                    label="Roles"
+                    data-testid="form-roles-tab"
+                    isTightContent={true}
+                    disabled={rolesUnavailable}
+                    disabledReason={ROLES_UNAVAILABLE_REASON}
+                  >
                     <BorderBottom>
                       <AddToggleButtonPadding>
                         <GoabButtonGroup alignment="start">

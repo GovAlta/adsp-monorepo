@@ -35,4 +35,14 @@ describe('createInputProcessors', () => {
     expect(processors).toHaveLength(1);
     expect(processors[0]).toBeInstanceOf(PromptInjectionDetector);
   });
+
+  it('shortens earlier template proposals for the notification template agent', () => {
+    const requestContext = new RequestContext<Record<string, unknown>>();
+    requestContext.set('agentId', 'notificationEmailTemplateAgent');
+
+    const processors = createInputProcessors({ logger, requestContext });
+
+    expect(processors.map((processor) => processor.id)).toEqual(['notification-template-history', undefined]);
+    expect(processors[1]).toBeInstanceOf(PromptInjectionDetector);
+  });
 });

@@ -189,6 +189,20 @@ export const convertToSuggestion = (event: EventDefinition, hasAddress: boolean)
   return hasAddress ? eventSuggestion : [...eventSuggestion, ...subscriberEvents];
 };
 
+/**
+ * Lists every variable of the suggestions as a full Handlebars path, such as event.payload.form.definition.name, for
+ * the AI template agent, which needs the paths rather than the top-level names the editor starts from.
+ */
+export const toVariablePaths = (suggestions: Partial<EditorSuggestion>[] = [], parent = ''): string[] =>
+  suggestions.flatMap((suggestion) => {
+    const name = (suggestion.insertText || suggestion.label || '').trim();
+    if (!name) {
+      return [];
+    }
+    const path = parent ? `${parent}.${name}` : name;
+    return suggestion.children?.length ? toVariablePaths(suggestion.children, path) : [path];
+  });
+
 export const getElementSuggestion = (element) => {
   const suggest = [];
 

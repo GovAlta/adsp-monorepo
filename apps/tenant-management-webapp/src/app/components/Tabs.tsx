@@ -48,6 +48,8 @@ function Tabs(props: TabsProps): JSX.Element {
                 testId={testId}
                 style={props.style}
                 active={activeTabIndex === index}
+                disabled={child.props?.disabled}
+                title={child.props?.disabledReason}
                 onSelect={() => selectTab(index)}
               >
                 {child.props?.label}
@@ -73,6 +75,8 @@ interface TabProps {
   style?: React.CSSProperties;
   isTightContent?: boolean;
   className?: string;
+  disabled?: boolean;
+  disabledReason?: string;
 }
 
 function Tab(props: TabProps & { children: ReactNode }): JSX.Element {
@@ -96,19 +100,27 @@ export { Tabs, Tab };
 interface TabItemProps {
   onSelect: () => void;
   active?: boolean;
+  disabled?: boolean;
+  title?: string;
   style?: React.CSSProperties;
   testId?: string;
 }
 
 function TabItem(props: TabItemProps & { children: ReactNode }) {
   function selectTab() {
-    props.onSelect();
+    if (!props.disabled) {
+      props.onSelect();
+    }
   }
+
+  const classNames = [props.active && 'active', props.disabled && 'disabled'].filter(Boolean).join(' ');
 
   return (
     <SCTab
       data-testid={props?.testId}
-      className={props.active ? 'active' : undefined}
+      className={classNames || undefined}
+      aria-disabled={props.disabled || undefined}
+      title={props.disabled ? props.title : undefined}
       style={props.style}
       onClick={() => selectTab()}
     >
@@ -158,6 +170,12 @@ const SCTab = styled.div`
   &.active {
     border-bottom: 4px solid var(--color-primary);
     padding-bottom: 0;
+  }
+
+  &.disabled {
+    color: var(--goa-color-greyscale-400, #adadad);
+    cursor: not-allowed;
+    background-color: transparent;
   }
 `;
 

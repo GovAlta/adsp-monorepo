@@ -1,6 +1,7 @@
 import { AdspId } from '@abgov/adsp-service-sdk';
 import axios from 'axios';
 import { CredentialNotSetError, toSharePointError } from '../errors';
+import { requestWithRetry } from '../retry';
 import { SharePointConnection } from '../types';
 
 const GRAPH_SCOPE = 'https://graph.microsoft.com/.default';
@@ -36,15 +37,17 @@ export class GraphTokenProvider {
     }
 
     try {
-      const { data } = await axios.post<{ access_token: string; expires_in: number }>(
-        new URL(`/${encodeURIComponent(connection.entraTenantId)}/oauth2/v2.0/token`, this.authorityUrl).href,
-        new URLSearchParams({
-          grant_type: 'client_credentials',
-          client_id: connection.clientId,
-          client_secret: secret,
-          scope: GRAPH_SCOPE,
-        }).toString(),
-        { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } },
+      const { data } = await requestWithRetry(() =>
+        axios.post<{ access_token: string; expires_in: number }>(
+          new URL(`/${encodeURIComponent(connection.entraTenantId)}/oauth2/v2.0/token`, this.authorityUrl).href,
+          new URLSearchParams({
+            grant_type: 'client_credentials',
+            client_id: connection.clientId,
+            client_secret: secret,
+            scope: GRAPH_SCOPE,
+          }).toString(),
+          { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } },
+        ),
       );
       this.cache.set(key, {
         token: data.access_token,

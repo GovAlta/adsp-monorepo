@@ -9,6 +9,7 @@ import {
 } from '../styled-components';
 import { useNavigate, useParams } from 'react-router-dom';
 import { AddEditFormDefinitionEditor } from './addEditFormDefinitionEditor';
+import { canShowFormEditor } from './rolesAvailability';
 import { TabletMessage } from '@components/TabletMessage';
 import { useDispatch, useSelector } from 'react-redux';
 import { openEditorForDefinition } from '@store/form/action';
@@ -25,6 +26,7 @@ export const FormDefinitionEditor = (): JSX.Element => {
 
   const selectedId = useSelector((state: RootState) => state.form.editor.selectedId);
   const realmRoles = useSelector((state: RootState) => state.tenant.realmRoles);
+  const realmRolesFailed = useSelector((state: RootState) => state.tenant.realmRolesFailed);
   const fileTypes = useSelector((state: RootState) => state.fileService.fileTypes);
 
   const { id } = useParams<{ id: string }>();
@@ -65,7 +67,13 @@ export const FormDefinitionEditor = (): JSX.Element => {
 
           <HideTablet>
             <FormTemplateEditorContainer>
-              {definition?.id && realmRoles && queueTasks && fileTypes ? (
+              {canShowFormEditor({
+                definitionId: definition?.id,
+                realmRoles,
+                realmRolesFailed,
+                queueTasks,
+                fileTypes,
+              }) ? (
                 <AddEditFormDefinitionEditor
                   key={id}
                   definition={definition}

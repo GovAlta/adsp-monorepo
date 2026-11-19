@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { IsDefined, IsOptional, IsString } from 'class-validator';
+import { IsDefined, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import validationMiddleware from '../../middleware/requestValidator';
 import {
   requireTenantServiceAdmin,
@@ -28,21 +28,29 @@ class GetTenantDto {
 }
 class DeleteTenantDto {
   @IsDefined()
+  @IsString()
+  @IsNotEmpty()
   realm: string;
 }
 class TenantByEmailDto {
   @IsDefined()
-  email;
+  @IsString()
+  @IsNotEmpty()
+  email: string;
 }
 
 class TenantByNameDto {
   @IsDefined()
-  name;
+  @IsString()
+  @IsNotEmpty()
+  name: string;
 }
 
 class TenantByRealmDto {
   @IsDefined()
-  realm;
+  @IsString()
+  @IsNotEmpty()
+  realm: string;
 }
 
 class FindUserIdByEmailDto {

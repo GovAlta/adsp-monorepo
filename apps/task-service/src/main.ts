@@ -18,9 +18,8 @@ import { environment } from './environments/environment';
 import {
   applyTaskMiddleware,
   configurationSchema,
-  QueueEntity,
+  convertConfiguration,
   TaskAuditActions,
-  TaskServiceConfiguration,
   TaskServiceRoles,
   TaskAssignedDefinition,
   TaskCancelledDefinition,
@@ -186,9 +185,7 @@ const initializeApp = async () => {
         schema: configurationSchema,
         description: 'Task queues where tasks are created for processing by workers.',
       },
-      configurationConverter: ({ queues }: TaskServiceConfiguration) => ({
-        queues: Object.entries(queues || {}).reduce((qs, [k, q]) => ({ ...qs, [k]: new QueueEntity(q) }), {}),
-      }),
+      configurationConverter: convertConfiguration,
       enableConfigurationInvalidation: true,
       useLongConfigurationCacheTTL: true,
       clientSecret: environment.CLIENT_SECRET,
