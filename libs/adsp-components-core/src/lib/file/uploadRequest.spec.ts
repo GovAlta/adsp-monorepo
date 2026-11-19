@@ -80,6 +80,18 @@ describe('sendUpload', () => {
     await expect(result).rejects.toMatchObject({ name: 'FileServiceError', reason, status });
   });
 
+  it.each([
+    ['with a token', 'token-1', 'forbidden'],
+    ['without a token', undefined, 'unauthenticated'],
+  ])('rejects a 401 %s as %s', async (_label, token, reason) => {
+    const xhr = new FakeXhr();
+
+    const result = request(xhr, { token });
+    xhr.respond(401, { errorMessage: 'User not authorized to create file.' });
+
+    await expect(result).rejects.toMatchObject({ name: 'FileServiceError', reason, status: 401 });
+  });
+
   it("includes File service's error message in the error", async () => {
     const xhr = new FakeXhr();
 
