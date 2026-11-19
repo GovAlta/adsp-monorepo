@@ -12,7 +12,9 @@ components:
       example: urn:ads:platform:tenant-service:v2:/tenants/61f2e3a8c9b1d2e3f4a5b6c7
   responses:
     ExportBadRequest:
-      description: Request is invalid, for example a path or body parameter failed validation.
+      description: >
+        Request is invalid, for example a path or body parameter failed validation, or a core user did not set
+        `tenantId`.
       content:
         application/json:
           schema:
@@ -201,7 +203,8 @@ components:
 
       Requires the exporter role, or one of the exporter roles configured for the resource's service or API in the
       `sources` of the export service configuration. The role is checked in the tenant of the request; core users with
-      the role must set `tenantId`. The job is created in that tenant and the export file is uploaded to it.
+      the role must set `tenantId`, and the request responds 400 without it. The job is created in that tenant and the
+      export file is uploaded to it.
     parameters:
       - $ref: '#/components/parameters/ExportTenantId'
     requestBody:
@@ -284,9 +287,11 @@ components:
 
 
       Jobs of another tenant respond 404. In the job's tenant, the user who created it can retrieve it, and other users
-      require the exporter role in the tenant of their token. Core users can retrieve only the jobs they created.
+      require the exporter role in the job's tenant. Core users must set `tenantId`, and the request responds 400
+      without it; core users with the exporter role can retrieve any job of that tenant.
     operationId: getJob
     parameters:
+      - $ref: '#/components/parameters/ExportTenantId'
       - name: jobId
         description: ID of job to retrieve.
         in: path
