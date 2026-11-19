@@ -118,10 +118,14 @@ function toSummary({ service, method, path, summary, deprecated, access }: ApiEn
   return { service, method, path, summary, deprecated, access };
 }
 
+function loadApiServiceIndex(apiSpecsRoot: string): ApiServiceSummary[] {
+  return JSON.parse(readFileSync(join(apiSpecsRoot, 'index.json'), 'utf8'));
+}
+
 /** The services listed in api-specs/index.json; empty when the folder has none (test servers, source checkouts). */
 export function readApiServiceIndex(apiSpecsRoot: string): ApiServiceSummary[] {
   try {
-    return JSON.parse(readFileSync(join(apiSpecsRoot, 'index.json'), 'utf8'));
+    return loadApiServiceIndex(apiSpecsRoot);
   } catch (err) {
     if ((err as NodeJS.ErrnoException).code === 'ENOENT') {
       return [];
@@ -136,7 +140,7 @@ export class ApiSpecsRepository {
   private readonly operations: IndexedOperation[];
 
   constructor(apiSpecsRoot: string) {
-    this.services = readApiServiceIndex(apiSpecsRoot);
+    this.services = loadApiServiceIndex(apiSpecsRoot);
     this.operations = this.services.flatMap((service) =>
       indexOperations(service, JSON.parse(readFileSync(join(apiSpecsRoot, service.file), 'utf8'))),
     );
