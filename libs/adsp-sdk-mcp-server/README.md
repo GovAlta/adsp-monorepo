@@ -30,7 +30,7 @@ It bundles the ADSP documentation site content, the OpenAPI specs of ADSP servic
 - `get_adsp_mcp_server_info` — this server's version and where its bundled content came from: the docs source
   commit, the `@abgov/adsp-service-sdk` version the SDK reference matches, and the release time. Lets an agent warn
   that an answer may be stale.
-- `list_service_apis` — the ADSP services that publish a REST API, with URN and operation count.
+- `list_service_apis` — the ADSP services that publish a REST API, with URN and operation count, under `results`.
 - `search_service_endpoints` — keyword search over those services' endpoints (path, summary, tags, description),
   optionally within one service. Returns `related` and `next`.
 - `read_service_endpoint` — one endpoint as its service's OpenAPI spec defines it: description, parameters, request
@@ -110,8 +110,10 @@ guessing a tool or an argument. Their JSON carries two extra fields:
 
 Every name in `related` and every call in `next` exists in the bundled content, and `next` never names a tool that
 needs sign-in (`list_service_roles` and `get_service_configuration_schema`), so a signed-out client can follow all of
-it. The tools keep every field they returned before. Where a tool used to return a bare list, such as
-`list_adsp_docs`, the list is now under `results`.
+it. The tools keep every field they returned before. These tools used to return a bare array and now return
+`{ "results": [...] }`: `search_adsp_docs`, `list_adsp_docs`, `search_sdk_reference`, `list_service_apis` and
+`search_service_endpoints`. Examples below are abridged (long text shortened, later entries left out); the fields shown
+are real.
 
 `search_adsp_docs` adds `related` to its top result and `next` beside `results`:
 
@@ -124,8 +126,12 @@ it. The tools keep every field they returned before. Where a tool used to return
       "snippet": "…",
       "score": 184,
       "related": {
-        "docs": ["services/value-service.md"],
-        "sdkSymbols": ["initializePlatform"],
+        "docs": [
+          "services/value-service.md",
+          "services/audit-service.md",
+          "services/configuration-service.md"
+        ],
+        "sdkSymbols": ["Tenant", "initializePlatform"],
         "serviceApis": ["event-service"]
       }
     }
@@ -150,6 +156,26 @@ it. The tools keep every field they returned before. Where a tool used to return
 }
 ```
 
+`list_adsp_docs` wraps the list in `results`, one page per line. For a prefix that matches five pages or fewer it
+adds `next` (`list_adsp_docs` with `prefix: "services/event"`):
+
+```json
+{
+  "results": [
+    { "path": "services/event-service.md", "title": "Event service" }
+  ],
+  "next": {
+    "suggested_calls": [
+      {
+        "tool": "read_adsp_doc",
+        "arguments": { "path": "services/event-service.md" },
+        "why": "Only page under this prefix; read it."
+      }
+    ]
+  }
+}
+```
+
 `read_adsp_doc` returns the page markdown as the first block, unchanged, then a JSON block with `path`, `related`
 and `next`:
 
@@ -157,8 +183,12 @@ and `next`:
 {
   "path": "services/event-service.md",
   "related": {
-    "docs": ["services/value-service.md"],
-    "sdkSymbols": ["initializePlatform"],
+    "docs": [
+      "services/value-service.md",
+      "services/audit-service.md",
+      "services/configuration-service.md"
+    ],
+    "sdkSymbols": ["Tenant", "initializePlatform"],
     "serviceApis": ["event-service"]
   },
   "next": {
@@ -167,16 +197,124 @@ and `next`:
         "tool": "search_service_endpoints",
         "arguments": { "query": "Event service", "service": "event-service" },
         "why": "Find this service's REST endpoints."
+      },
+      {
+        "tool": "search_sdk_reference",
+        "arguments": { "query": "Tenant" },
+        "why": "Look up the SDK symbol this page uses."
+      },
+      {
+        "tool": "read_adsp_doc",
+        "arguments": { "path": "services/value-service.md" },
+        "why": "Read a page this one links to."
       }
     ]
   }
 }
 ```
 
-`search_sdk_reference` puts `related` on each symbol (`seeAlso` symbols and the doc pages that name it).
-`search_service_endpoints` and `read_service_endpoint` put `related.docs` (the service's doc page) beside the result and
-suggest `read_service_endpoint` or `read_adsp_doc`. `find_adsp_services` adds `next` beside `results` (and in its
-`structuredContent`), when a need has a strong match:
+`search_sdk_reference` puts `related` (`seeAlso` symbols and the doc pages that name the symbol) on each symbol, and
+`next` beside `results` (`initializeService`, with `summary`, `details` and `example` left out):
+
+```json
+{
+  "results": [
+    {
+      "name": "initializeService",
+      "kind": "function",
+      "module": "initialize",
+      "seeAlso": ["initializePlatform", "ServiceRegistration"],
+      "related": {
+        "sdkSymbols": ["initializePlatform", "ServiceRegistration"],
+        "docs": ["platform/platform-node-sdk.md", "services/audit-service.md"]
+      }
+    }
+  ],
+  "next": {
+    "suggested_calls": [
+      {
+        "tool": "read_adsp_doc",
+        "arguments": { "path": "platform/platform-node-sdk.md" },
+        "why": "Read a page that uses this symbol."
+      },
+      {
+        "tool": "search_sdk_reference",
+        "arguments": { "query": "initializePlatform" },
+        "why": "Look up a related SDK symbol."
+      }
+    ]
+  }
+}
+```
+
+`list_service_apis` returns `{ "results": [...] }` with one entry per service and no `related` or `next`:
+
+```json
+{
+  "results": [
+    {
+      "service": "agent-service",
+      "urn": "urn:ads:platform:agent-service",
+      "name": "Agent service",
+      "operations": 6
+    }
+  ]
+}
+```
+
+`search_service_endpoints` puts a single `related.docs` beside `results` (the doc pages of the services in the results,
+up to three), not on each result, and suggests reading the top endpoint (`query: "upload a file"`):
+
+```json
+{
+  "results": [
+    {
+      "service": "file-service",
+      "method": "POST",
+      "path": "/file/v1/files",
+      "deprecated": false,
+      "access": [
+        "Requires an authenticated user with one of the file type's updateRoles, or the file-service-admin role; otherwise the request responds 401."
+      ]
+    }
+  ],
+  "related": { "docs": ["services/file-service.md"] },
+  "next": {
+    "suggested_calls": [
+      {
+        "tool": "read_service_endpoint",
+        "arguments": {
+          "service": "file-service",
+          "method": "POST",
+          "path": "/file/v1/files"
+        },
+        "why": "Read the top endpoint's parameters and schemas."
+      }
+    ]
+  }
+}
+```
+
+`read_service_endpoint` keeps the endpoint's own fields (`service`, `serviceUrn`, `method`, `path`, `deprecated`,
+`access`, `description`, `tags`, `parameters`, `requestBody`, `responses`, `security`) and adds `related` and `next`
+at the top level (`POST /file/v1/files` on `file-service`):
+
+```json
+{
+  "related": { "docs": ["services/file-service.md"] },
+  "next": {
+    "suggested_calls": [
+      {
+        "tool": "read_adsp_doc",
+        "arguments": { "path": "services/file-service.md" },
+        "why": "Read this service's documentation."
+      }
+    ]
+  }
+}
+```
+
+`find_adsp_services` adds `next` beside `results` (and in its `structuredContent`), when a need has a strong match:
 
 ```json
 {

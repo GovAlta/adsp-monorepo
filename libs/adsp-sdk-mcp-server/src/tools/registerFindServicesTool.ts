@@ -149,14 +149,12 @@ function suggestNext(
       const { id, doc } = strong.service;
       return buildNext(
         [
-          links.hasDoc(doc)
-            ? { tool: 'read_adsp_doc', arguments: { path: doc }, why: "Read its guide." }
-            : undefined,
+          links.hasDoc(doc) ? { tool: 'read_adsp_doc', arguments: { path: doc }, why: 'Read its guide.' } : undefined,
           links.hasServiceApi(id)
             ? {
                 tool: 'search_service_endpoints',
                 arguments: { query: need, service: id },
-                why: "Find its REST endpoints.",
+                why: 'Find its REST endpoints.',
               }
             : undefined,
         ],

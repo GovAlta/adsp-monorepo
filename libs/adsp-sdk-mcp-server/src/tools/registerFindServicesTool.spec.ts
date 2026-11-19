@@ -118,6 +118,15 @@ describe('find_adsp_services', () => {
     expect(JSON.parse((output.content[0] as { text: string }).text)).toEqual(output.structuredContent);
   });
 
+  it('explains each suggestion in a few words', async () => {
+    const output = await tool.handler({ need: 'upload file' });
+
+    expect(nextOf(output)?.suggested_calls.map(({ why }) => why)).toEqual([
+      'Read its guide.',
+      'Find its REST endpoints.',
+    ]);
+  });
+
   it('uses the first strong match when several needs are passed', async () => {
     const output = await tool.handler({ needs: ['blockchain ledger', 'upload file', 'send an email'] });
 
