@@ -6,13 +6,26 @@ export interface SharePointConnection {
   siteId: string;
 }
 
+export type ColumnType = 'text' | 'multilineText' | 'number' | 'dateTime' | 'boolean' | 'multiChoice' | 'hyperlink';
+
 export interface FieldMapping {
   source: string;
   target: string;
   linkFormat?: LinkFormat;
+  columnType?: ColumnType;
+  displayName?: string;
+  choices?: string[];
 }
 
 export type LinkFormat = 'hyperlink' | 'text';
+
+export interface DetailList {
+  listId?: string;
+  listName?: string;
+  dataPath: string;
+  parentRefField: string;
+  fieldMappings: FieldMapping[];
+}
 
 export interface SharePointDestination {
   id: string;
@@ -22,6 +35,8 @@ export interface SharePointDestination {
   fieldMappings: FieldMapping[];
   idempotencyFields?: string[];
   enabled?: boolean;
+  folderLinkField?: string;
+  detailLists?: DetailList[];
 }
 
 export interface SharePointConfiguration {
@@ -31,9 +46,25 @@ export interface SharePointConfiguration {
 
 export type PushOutcome = 'created' | 'updated';
 
+export interface DetailRows {
+  listId: string;
+  rowIds: string[];
+}
+
+export interface DetailFailure {
+  listId: string;
+  indexes: number[];
+  oldRowsLeft?: number;
+  newRowsLeft?: number;
+  column?: string;
+}
+
 export interface PushResult {
   itemId: string;
   outcome: PushOutcome;
+  detailRows?: DetailRows[];
 }
 
-export type TestResult = { ok: true; outcome: PushOutcome } | { ok: false; errorCode: string; column?: string };
+export type TestResult =
+  | { ok: true; outcome: PushOutcome; detailRows?: DetailRows[] }
+  | { ok: false; errorCode: string; column?: string; detailFailures?: DetailFailure[] };

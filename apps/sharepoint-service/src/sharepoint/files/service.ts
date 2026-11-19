@@ -1,15 +1,32 @@
 import { AdspId } from '@abgov/adsp-service-sdk';
 import type { DomainEvent, EventService } from '@abgov/adsp-service-sdk';
 import { InvalidOperationError, NotFoundError } from '@core-services/core-common';
-import { DestinationDisabledError, SharePointError, toSharePointError } from '../errors';
+import { runLimited } from '../concurrency';
+import { setValueAtPath } from '../dataPath';
+import { DestinationDisabledError, DetailRowsFailedError, SharePointError, toSharePointError } from '../errors';
 import { GraphFileClient, GraphTokenProvider } from '../graph';
 import { itemKeyFor } from '../mapper';
 import { sanitizePathSegment } from '../filename';
-import { SharePointPusher } from '../push';
-import { PushOutcome, SharePointConfiguration, SharePointConnection, SharePointDestination } from '../types';
-import { assertDataPath, setValueAtPath } from './dataPath';
+import { PushOptions, SharePointPusher } from '../push';
+import {
+  DetailFailure,
+  DetailRows,
+  FieldMapping,
+  LinkFormat,
+  PushOutcome,
+  SharePointConfiguration,
+  SharePointConnection,
+  SharePointDestination,
+} from '../types';
+import { withToken } from '../withToken';
 import { fileUploaded, fileUploadFailed } from './events';
 import { FileContent, FileSource } from './source';
+
+interface RowTarget {
+  destination: SharePointDestination;
+  connection: SharePointConnection;
+  folder: string;
+}
 
 export interface FileRequest {
   field: string;
@@ -43,8 +60,8 @@ export interface FailedFileResult {
 export type FileResult = UploadedFileResult | FailedFileResult;
 
 export type RowResult =
-  | { written: true; dataId: string; outcome: PushOutcome }
-  | { written: false; errorCode: string; retryable: boolean };
+  | { written: true; dataId: string; outcome: PushOutcome; detailRows?: DetailRows[] }
+  | { written: false; errorCode: string; retryable: boolean; dataId?: string; detailFailures?: DetailFailure[] };
 
 export interface FilesUploadResult {
   files: FileResult[];
@@ -76,18 +93,45 @@ function assertFileCount(count: number): void {
   }
 }
 
-async function runLimited<T, R>(items: T[], limit: number, task: (item: T) => Promise<R>): Promise<R[]> {
+// Placing a placeholder at each file's path checks every path fits the data before anything is uploaded.
+function prepareRowData(
+  destination: SharePointDestination,
+  data: Record<string, unknown>,
+  files: FileRequest[],
+): Record<string, unknown> {
+  itemKeyFor(destination.idempotencyFields, data);
+  const copy = JSON.parse(JSON.stringify(data)) as Record<string, unknown>;
+  files.forEach(({ field }) => setValueAtPath(copy, field, null));
+  return copy;
+}
+
+async function runFileTasks<T, R>(items: T[], limit: number, task: (item: T) => Promise<R>): Promise<R[]> {
   assertFileCount(items.length);
-  const results: R[] = [];
-  let next = 0;
-  const workers = Array.from({ length: Math.min(Math.max(limit, 1), MAX_FILES) }, async () => {
-    while (next < items.length) {
-      const index = next++;
-      results[index] = await task(items[index]);
+  return runLimited(items, Math.min(limit, MAX_FILES), task);
+}
+
+const escapeRegExp = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+const linkFormatOf = ({ columnType, linkFormat }: FieldMapping): LinkFormat | undefined => {
+  if (!columnType) {
+    return linkFormat;
+  }
+  return columnType === 'text' || columnType === 'multilineText' ? 'text' : 'hyperlink';
+};
+
+function linkFormatFor(destination: SharePointDestination, field: string): LinkFormat | undefined {
+  const direct = destination.fieldMappings.find(({ source }) => source === field);
+  if (direct) {
+    return linkFormatOf(direct);
+  }
+  for (const list of destination.detailLists ?? []) {
+    const relative = new RegExp(`^${escapeRegExp(list.dataPath)}(?:\\[\\d+\\]|\\.\\d+)\\.(.+)$`).exec(field)?.[1];
+    const mapping = relative && list.fieldMappings.find(({ source }) => source === relative);
+    if (mapping) {
+      return linkFormatOf(mapping);
     }
-  });
-  await Promise.all(workers);
-  return results;
+  }
+  return undefined;
 }
 
 function uniqueName(name: string, used: Set<string>): string {
@@ -153,35 +197,34 @@ export class SharePointFileService {
       throw new DestinationDisabledError(destinationId);
     }
     assertFileCount(request.files.length);
-    if (request.data) {
-      request.files.forEach(({ field }) => assertDataPath(field));
-      itemKeyFor(destination.idempotencyFields, request.data);
-    }
+    const data = request.data && prepareRowData(destination, request.data, request.files);
 
     await this.tokens.getToken(tenantId, connection);
     const folder = sanitizePathSegment(request.submissionId, 'submission');
     const names = new NameAssigner(request.files.length);
 
-    const files = await runLimited(
+    const files = await runFileTasks(
       request.files.map((file, index) => ({ file, index })),
       this.concurrency,
       ({ file, index }) =>
         this.uploadOne(tenantId, connection, folder, file, index, names, destinationId, request.submissionId),
     );
 
-    if (!request.data || files.some(({ status }) => status === 'failed')) {
+    if (!data || files.some(({ status }) => status === 'failed')) {
       return { files };
     }
 
-    const data = JSON.parse(JSON.stringify(request.data)) as Record<string, unknown>;
     files.forEach((file) => {
       if (file.status === 'uploaded') {
-        const format = destination.fieldMappings.find(({ source }) => source === file.field)?.linkFormat;
+        const format = linkFormatFor(destination, file.field);
         setValueAtPath(data, file.field, format === 'text' ? file.url : { Url: file.url, Description: file.name });
       }
     });
 
-    return { files, row: await this.writeRow(tenantId, configuration, destinationId, data) };
+    return {
+      files,
+      row: await this.writeRow(tenantId, configuration, destinationId, { destination, connection, folder }, data),
+    };
   }
 
   private async uploadOne(
@@ -266,12 +309,32 @@ export class SharePointFileService {
     tenantId: AdspId,
     configuration: SharePointConfiguration | undefined,
     destinationId: string,
+    { destination, connection, folder }: RowTarget,
     data: Record<string, unknown>,
   ): Promise<RowResult> {
     try {
-      const { itemId, outcome } = await this.pusher.push(tenantId, configuration, destinationId, data);
-      return { written: true, dataId: itemId, outcome };
+      const options: PushOptions = {};
+      if (destination.folderLinkField) {
+        options.folderLink = {
+          Url: await withToken(this.tokens, tenantId, connection, (token) =>
+            this.graph.getFolderUrl(token, connection.siteId, folder),
+          ),
+          Description: folder,
+        };
+      }
+      const { itemId, outcome, detailRows } = await this.pusher.push(
+        tenantId,
+        configuration,
+        destinationId,
+        data,
+        options,
+      );
+      return { written: true, dataId: itemId, outcome, ...(detailRows ? { detailRows } : {}) };
     } catch (err) {
+      if (err instanceof DetailRowsFailedError) {
+        const { errorCode, retryable, dataId, detailFailures } = err;
+        return { written: false, errorCode, retryable, dataId, detailFailures };
+      }
       if (err instanceof SharePointError) {
         return { written: false, errorCode: err.errorCode, retryable: err.retryable };
       }

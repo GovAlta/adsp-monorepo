@@ -348,4 +348,29 @@ describe('GraphFileClient', () => {
       expect(axiosMock.delete).toHaveBeenCalledWith(uploadUrl);
     });
   });
+
+  describe('folder link', () => {
+    it('returns the web address of the folder, asking only for it', async () => {
+      axiosMock.get.mockResolvedValueOnce({ data: { webUrl: 'https://sp.example/Shared%20Documents/sub%201' } });
+
+      expect(await client.getFolderUrl('token-1', siteId, 'sub 1')).toBe(
+        'https://sp.example/Shared%20Documents/sub%201',
+      );
+      expect(axiosMock.get).toHaveBeenCalledWith(`https://graph.example/v1.0/sites/${siteId}/drive/root:/sub%201`, {
+        headers: { Authorization: 'Bearer token-1' },
+        params: { $select: 'webUrl' },
+      });
+    });
+
+    it('reports a Graph error', async () => {
+      axiosMock.isAxiosError.mockReturnValue(true);
+      axiosMock.get.mockRejectedValueOnce({
+        response: { status: 404, data: { error: { code: 'itemNotFound', message: 'Not found' } } },
+      });
+
+      await expect(client.getFolderUrl('token-1', siteId, 'sub-1')).rejects.toMatchObject({
+        errorCode: 'graph:itemNotFound',
+      });
+    });
+  });
 });

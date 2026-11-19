@@ -1,5 +1,6 @@
 export * from './configuration';
 export * from './credentials';
+export * from './dataPath';
 export * from './errors';
 export * from './files';
 export * from './filename';
@@ -8,4 +9,5 @@ export * from './mapper';
 export * from './push';
 export * from './roles';
 export * from './router';
+export * from './setup';
 export * from './types';

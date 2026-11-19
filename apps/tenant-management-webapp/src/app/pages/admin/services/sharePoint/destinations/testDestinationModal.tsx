@@ -12,7 +12,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@store/index';
 import { SharepointDestination, testSharepointDestination } from '@store/sharePoint/actions';
 import { ADSP_KEY_FIELD } from '@store/sharePoint/model';
-import { describeTestFailure, sampleTestData } from './destinationHelpers';
+import { describeDetailFailures, describeTestFailure, sampleTestData } from './destinationHelpers';
 
 const SAMPLE_HELP =
   "Fill in each value using the column's type: numbers without quotes, dates like 2026-11-05, and true or false for yes/no.";
@@ -27,11 +27,19 @@ export const TestDestinationModal = ({ destination, onClose }: TestDestinationMo
   const dispatch = useDispatch();
   const result = useSelector((state: RootState) => state.sharepoint.testResults[destination.id]);
   const [text, setText] = useState(() =>
-    JSON.stringify(sampleTestData(destination.fieldMappings, destination.idempotencyFields), null, 2),
+    JSON.stringify(
+      sampleTestData(destination.fieldMappings, destination.idempotencyFields, destination.detailLists),
+      null,
+      2,
+    ),
   );
   const [parseError, setParseError] = useState<string>();
   const [hasRun, setHasRun] = useState(false);
   const updatesRows = !!destination.idempotencyFields?.includes(ADSP_KEY_FIELD);
+  const detailListName = (listId: string) => {
+    const list = destination.detailLists?.find((candidate) => candidate.listId === listId);
+    return list?.listName || list?.dataPath || listId;
+  };
 
   const run = () => {
     try {
@@ -91,11 +99,22 @@ export const TestDestinationModal = ({ destination, onClose }: TestDestinationMo
           {result.outcome === 'updated'
             ? 'The test data updated the existing row with this key.'
             : 'The test data was added to the list as a new row.'}
+          {result.detailRows?.map(({ listId, rowIds }) => (
+            <div key={listId}>
+              {detailListName(listId)}: {rowIds.length} {rowIds.length === 1 ? 'row' : 'rows'} written.
+            </div>
+          ))}
         </GoabCallout>
       )}
       {hasRun && result && result.ok === false && (
         <GoabCallout type="emergency" heading="Test failed">
-          {describeTestFailure(result.errorCode, result.column)}
+          {result.detailFailures
+            ? 'The main row was written, but some detail lists were not fully updated.'
+            : describeTestFailure(result.errorCode, result.column)}
+          {result.detailFailures &&
+            describeDetailFailures(result.detailFailures, destination.detailLists).map((line) => (
+              <div key={line}>{line}</div>
+            ))}
         </GoabCallout>
       )}
     </GoabModal>

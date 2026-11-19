@@ -1,19 +1,29 @@
 import { AdspId, isAllowedUser, UnauthorizedUserError } from '@abgov/adsp-service-sdk';
 import { createValidationHandler, InvalidOperationError, NotFoundError } from '@core-services/core-common';
-import { Request, RequestHandler, Router } from 'express';
+import { Request, RequestHandler, Response, Router } from 'express';
 import { body, param } from 'express-validator';
 import { Logger } from 'winston';
 import { CredentialStore } from './credentials';
-import { CredentialNotSetError, CredentialUnreadableError, DestinationDisabledError, SharePointError } from './errors';
+import {
+  CredentialNotSetError,
+  CredentialUnreadableError,
+  DestinationDisabledError,
+  DestinationNotSetUpError,
+  DetailRowsFailedError,
+  SharePointError,
+} from './errors';
 import { FilesUploadResult, MAX_FILES, SharePointFileService } from './files';
 import { GraphTokenProvider } from './graph';
 import { RowIdentityMissingError } from './mapper';
 import { SharePointPusher } from './push';
 import { withRetryScope } from './retry';
 import { ServiceRoles } from './roles';
+import { ListNameTakenError, SharePointSetup } from './setup';
 import { PushResult, SharePointConfiguration, TestResult } from './types';
 
 const ID_PATTERN = /^[a-zA-Z0-9-_]{1,50}$/;
+
+type ClearConfiguration = (tenantId: AdspId) => void;
 
 function assertRole(req: Request, operation: string, roles: string[], allowCore = false): void {
   if (!isAllowedUser(req.user, req.tenant?.id, roles, allowCore)) {
@@ -106,8 +116,14 @@ function toTestFailure(err: unknown): TestResult {
   if (err instanceof CredentialUnreadableError) {
     return { ok: false, errorCode: 'credential-unreadable' };
   }
+  if (err instanceof DestinationNotSetUpError) {
+    return { ok: false, errorCode: 'destination-not-set-up' };
+  }
   if (err instanceof RowIdentityMissingError) {
     return { ok: false, errorCode: 'row-identity-missing' };
+  }
+  if (err instanceof DetailRowsFailedError) {
+    return { ok: false, errorCode: err.errorCode, detailFailures: err.detailFailures };
   }
   if (err instanceof SharePointError) {
     return { ok: false, errorCode: err.errorCode, ...(err.column ? { column: err.column } : {}) };
@@ -115,20 +131,25 @@ function toTestFailure(err: unknown): TestResult {
   throw err;
 }
 
-export function testDestination(pusher: SharePointPusher, logger: Logger): RequestHandler {
+export function testDestination(
+  pusher: SharePointPusher,
+  logger: Logger,
+  clearConfiguration: ClearConfiguration = noCacheClear,
+): RequestHandler {
   return async (req, res, next) => {
     try {
       assertRole(req, 'test SharePoint destination', [ServiceRoles.Admin]);
       const tenantId = requireTenant(req);
       const { destinationId } = req.params;
+      clearConfiguration(tenantId);
       const configuration = await getTenantConfiguration(req);
 
       let result: TestResult;
       try {
-        const { outcome } = await withRetryScope(logger, logContext(tenantId), () =>
+        const { outcome, detailRows } = await withRetryScope(logger, logContext(tenantId), () =>
           pusher.test(tenantId, configuration, destinationId, req.body),
         );
-        result = { ok: true, outcome };
+        result = { ok: true, outcome, ...(detailRows ? { detailRows } : {}) };
       } catch (err) {
         result = toTestFailure(err);
       }
@@ -181,6 +202,27 @@ export function pushData(pusher: SharePointPusher, logger: Logger): RequestHandl
           res.status(409).send({ errorCode: 'credential-unreadable' });
           return;
         }
+        if (err instanceof DestinationNotSetUpError) {
+          logger.warn(
+            `Push to SharePoint destination '${destinationId}' refused: a detail list is not set up.`,
+            logContext(tenantId),
+          );
+          res.status(409).send({ errorCode: 'destination-not-set-up' });
+          return;
+        }
+        if (err instanceof DetailRowsFailedError) {
+          logger.warn(
+            `Push to SharePoint destination '${destinationId}' wrote item '${err.dataId}' but some detail rows failed with: ${err.errorCode}.`,
+            logContext(tenantId),
+          );
+          res.status(502).send({
+            errorCode: err.errorCode,
+            retryable: err.retryable,
+            dataId: err.dataId,
+            detailFailures: err.detailFailures,
+          });
+          return;
+        }
         if (err instanceof SharePointError) {
           logger.warn(
             `Push to SharePoint destination '${destinationId}' failed with: ${err.errorCode}.`,
@@ -200,7 +242,12 @@ export function pushData(pusher: SharePointPusher, logger: Logger): RequestHandl
         `Pushed item '${result.itemId}' (${result.outcome}) to SharePoint destination '${destinationId}'.`,
         logContext(tenantId),
       );
-      res.send({ dataId: result.itemId, outcome: result.outcome, date: new Date().toISOString() });
+      res.send({
+        dataId: result.itemId,
+        outcome: result.outcome,
+        date: new Date().toISOString(),
+        ...(result.detailRows ? { detailRows: result.detailRows } : {}),
+      });
     } catch (err) {
       next(err);
     }
@@ -231,6 +278,10 @@ export function uploadFiles(fileService: SharePointFileService, logger: Logger):
         }
         if (err instanceof CredentialUnreadableError) {
           res.status(409).send({ errorCode: 'credential-unreadable' });
+          return;
+        }
+        if (err instanceof DestinationNotSetUpError) {
+          res.status(409).send({ errorCode: 'destination-not-set-up' });
           return;
         }
         if (err instanceof SharePointError) {
@@ -270,6 +321,94 @@ interface SharePointRouterProps {
   tokens: GraphTokenProvider;
   pusher: SharePointPusher;
   fileService: SharePointFileService;
+  setup: SharePointSetup;
+  // Admin actions run right after a configuration save, before the cached copy is invalidated.
+  clearConfiguration?: ClearConfiguration;
+}
+
+const noCacheClear = () => undefined;
+
+function sendSetupFailure(err: unknown, res: Response): boolean {
+  if (err instanceof CredentialNotSetError) {
+    res.status(409).send({ errorCode: 'credential-not-set' });
+    return true;
+  }
+  if (err instanceof CredentialUnreadableError) {
+    res.status(409).send({ errorCode: 'credential-unreadable' });
+    return true;
+  }
+  if (err instanceof ListNameTakenError) {
+    res.status(409).send({ errorCode: 'list-name-taken', lists: err.lists });
+    return true;
+  }
+  if (err instanceof SharePointError) {
+    res.status(502).send({ errorCode: err.errorCode, retryable: err.retryable });
+    return true;
+  }
+  return false;
+}
+
+export function verifyDestination(
+  setup: SharePointSetup,
+  logger: Logger,
+  clearConfiguration: ClearConfiguration = noCacheClear,
+): RequestHandler {
+  return async (req, res, next) => {
+    try {
+      assertRole(req, 'verify SharePoint destination', [ServiceRoles.Admin]);
+      const tenantId = requireTenant(req);
+      clearConfiguration(tenantId);
+      const configuration = await getTenantConfiguration(req);
+      try {
+        res.send(
+          await withRetryScope(logger, logContext(tenantId), () =>
+            setup.verify(tenantId, configuration, req.params.destinationId),
+          ),
+        );
+      } catch (err) {
+        if (!sendSetupFailure(err, res)) {
+          throw err;
+        }
+      }
+    } catch (err) {
+      next(err);
+    }
+  };
+}
+
+export function setUpDestination(
+  setup: SharePointSetup,
+  logger: Logger,
+  clearConfiguration: ClearConfiguration = noCacheClear,
+): RequestHandler {
+  return async (req, res, next) => {
+    try {
+      assertRole(req, 'set up SharePoint destination', [ServiceRoles.Admin]);
+      const tenantId = requireTenant(req);
+      const { destinationId } = req.params;
+      clearConfiguration(tenantId);
+      const configuration = await getTenantConfiguration(req);
+      try {
+        const result = await withRetryScope(logger, logContext(tenantId), () =>
+          setup.setUp(tenantId, configuration, destinationId),
+        );
+        logger.info(
+          `Set up SharePoint destination '${destinationId}' by ${req.user.name} (ID: ${req.user.id}): ` +
+            `${result.createdLists.length} lists, ${result.createdColumns.length} columns, ` +
+            `${result.indexedColumns.length} indexes, ${result.failures.length} failures` +
+            `${result.permissionDenied ? ', the app is not allowed to change lists or columns' : ''}.`,
+          logContext(tenantId),
+        );
+        res.send(result);
+      } catch (err) {
+        if (!sendSetupFailure(err, res)) {
+          throw err;
+        }
+      }
+    } catch (err) {
+      next(err);
+    }
+  };
 }
 
 export function createSharePointRouter({
@@ -278,6 +417,8 @@ export function createSharePointRouter({
   tokens,
   pusher,
   fileService,
+  setup,
+  clearConfiguration = noCacheClear,
 }: SharePointRouterProps): Router {
   const router = Router();
   const connectionId = () => param('connectionId').matches(ID_PATTERN);
@@ -301,7 +442,7 @@ export function createSharePointRouter({
   router.post(
     '/destinations/:destinationId/test',
     createValidationHandler(destinationId(), body().isObject()),
-    testDestination(pusher, logger),
+    testDestination(pusher, logger, clearConfiguration),
   );
   router.post(
     '/destinations/:destinationId/data',
@@ -319,6 +460,16 @@ export function createSharePointRouter({
       body('data').optional().isObject(),
     ),
     uploadFiles(fileService, logger),
+  );
+  router.post(
+    '/destinations/:destinationId/verify',
+    createValidationHandler(destinationId()),
+    verifyDestination(setup, logger, clearConfiguration),
+  );
+  router.post(
+    '/destinations/:destinationId/setup',
+    createValidationHandler(destinationId()),
+    setUpDestination(setup, logger, clearConfiguration),
   );
 
   return router;

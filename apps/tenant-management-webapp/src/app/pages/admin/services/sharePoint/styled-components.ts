@@ -96,10 +96,53 @@ export const SiteIdParts = styled.dl`
 
 export const MappingGrid = styled.div`
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 0.8fr) auto;
   gap: var(--goa-space-s) var(--goa-space-m);
   align-items: center;
   margin-bottom: var(--goa-space-s);
+`;
+
+export const DetailListBox = styled.div`
+  border: 1px solid var(--goa-color-greyscale-200);
+  border-radius: var(--goa-border-radius-m);
+  padding: var(--goa-space-m);
+  margin-bottom: var(--goa-space-m);
+`;
+
+export const FieldPair = styled.div`
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--goa-space-m);
+  margin-bottom: var(--goa-space-l);
+`;
+
+export const DetailListHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--goa-space-s);
+  font-weight: var(--goa-font-weight-bold);
+`;
+
+export const VerifyList = styled.section`
+  margin-bottom: var(--goa-space-l);
+
+  h3 {
+    margin: 0 0 var(--goa-space-xs) 0;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  th,
+  td {
+    text-align: left;
+    padding: var(--goa-space-2xs) var(--goa-space-xs);
+    border-bottom: 1px solid var(--goa-color-greyscale-200);
+    vertical-align: top;
+  }
 `;
 
 export const MappingHeading = styled.span`

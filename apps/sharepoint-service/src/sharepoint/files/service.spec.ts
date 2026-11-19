@@ -1,7 +1,7 @@
 import { adspId } from '@abgov/adsp-service-sdk';
 import type { EventService } from '@abgov/adsp-service-sdk';
 import { Readable } from 'stream';
-import { CredentialNotSetError, DestinationDisabledError, SharePointError } from '../errors';
+import { CredentialNotSetError, DestinationDisabledError, DetailRowsFailedError, SharePointError } from '../errors';
 import { GraphFileClient, GraphTokenProvider } from '../graph';
 import { RowIdentityMissingError } from '../mapper';
 import { SharePointPusher } from '../push';
@@ -50,14 +50,43 @@ const configuration: SharePointConfiguration = {
       ],
       idempotencyFields: ['_adsp.key'],
     },
+    'typed-links': {
+      id: 'typed-links',
+      name: 'Typed links',
+      connectionId: 'hr-site',
+      listId: 'list-1',
+      fieldMappings: [
+        { source: 'proofOfIdentity', target: 'ProofOfIdentity', columnType: 'text' },
+        { source: 'statement', target: 'Statement', columnType: 'hyperlink', linkFormat: 'text' },
+        { source: 'notes', target: 'Notes', columnType: 'multilineText', linkFormat: 'hyperlink' },
+      ],
+      idempotencyFields: ['_adsp.key'],
+    },
     orphan: { id: 'orphan', name: 'Orphan', connectionId: 'missing', listId: 'list-1', fieldMappings: [] },
+    household: {
+      id: 'household',
+      name: 'Household',
+      connectionId: 'hr-site',
+      listId: 'list-1',
+      fieldMappings: [{ source: 'applicant.firstName', target: 'FirstName' }],
+      idempotencyFields: ['_adsp.key'],
+      folderLinkField: 'FilesFolder',
+      detailLists: [
+        {
+          listId: 'members',
+          dataPath: 'dependents',
+          parentRefField: 'ParentItemId',
+          fieldMappings: [{ source: 'birthCertificate', target: 'BirthCertificate', linkFormat: 'text' }],
+        },
+      ],
+    },
   },
 };
 
 describe('SharePointFileService', () => {
   const connection = configuration.connections['hr-site'];
   let tokens: { getToken: jest.Mock; evict: jest.Mock };
-  let graph: { uploadFile: jest.Mock };
+  let graph: { uploadFile: jest.Mock; getFolderUrl: jest.Mock };
   let source: { open: jest.Mock };
   let pusher: { push: jest.Mock };
   let eventService: { send: jest.Mock };
@@ -84,6 +113,7 @@ describe('SharePointFileService', () => {
         webUrl: `https://sp.example/${folder}/${name}`,
         size,
       })),
+      getFolderUrl: jest.fn().mockImplementation(async (_t, _s, folder) => `https://sp.example/${folder}`),
     };
     source = { open: jest.fn().mockImplementation(async (_tenant, fileId) => openAs(`${fileId}.pdf`)) };
     pusher = { push: jest.fn().mockResolvedValue({ itemId: 'row-1', outcome: 'created' }) };
@@ -453,10 +483,16 @@ describe('SharePointFileService', () => {
     it('writes the row with a Hyperlink value for each uploaded file', async () => {
       const result = await service.upload(tenantId, configuration, 'hr-intake', request({ data }));
 
-      expect(pusher.push).toHaveBeenCalledWith(tenantId, configuration, 'hr-intake', {
-        ...data,
-        proofOfIdentity: { Url: 'https://sp.example/submission-1/proof.pdf', Description: 'proof.pdf' },
-      });
+      expect(pusher.push).toHaveBeenCalledWith(
+        tenantId,
+        configuration,
+        'hr-intake',
+        {
+          ...data,
+          proofOfIdentity: { Url: 'https://sp.example/submission-1/proof.pdf', Description: 'proof.pdf' },
+        },
+        {},
+      );
       expect(result.row).toEqual({ written: true, dataId: 'row-1', outcome: 'created' });
     });
 
@@ -482,6 +518,24 @@ describe('SharePointFileService', () => {
       });
     });
 
+    it('chooses the link format from the column type, ahead of the older link format setting', async () => {
+      const files = [
+        { field: 'proofOfIdentity', fileId: 'proof' },
+        { field: 'statement', fileId: 'statement' },
+        { field: 'notes', fileId: 'notes' },
+      ];
+
+      await service.upload(tenantId, configuration, 'typed-links', request({ data, files }));
+
+      const written = pusher.push.mock.calls[0][3];
+      expect(written.proofOfIdentity).toBe('https://sp.example/submission-1/proof.pdf');
+      expect(written.statement).toEqual({
+        Url: 'https://sp.example/submission-1/statement.pdf',
+        Description: 'statement.pdf',
+      });
+      expect(written.notes).toBe('https://sp.example/submission-1/notes.pdf');
+    });
+
     it('sets the link at a nested data path', async () => {
       const files = [{ field: 'applicant.documents.proof', fileId: 'proof' }];
 
@@ -491,6 +545,64 @@ describe('SharePointFileService', () => {
         firstName: 'Ada',
         documents: { proof: 'https://sp.example/submission-1/proof.pdf' },
       });
+    });
+
+    it('sets the link on the item of a repeating section that the file belongs to', async () => {
+      const withDependents = { ...data, dependents: [{ name: 'Bo' }, { name: 'Cy', birthCertificate: 'urn:file' }] };
+      const files = [{ field: 'dependents[1].birthCertificate', fileId: 'certificate' }];
+
+      await service.upload(tenantId, configuration, 'hr-intake', request({ data: withDependents, files }));
+
+      expect(pusher.push.mock.calls[0][3].dependents).toEqual([
+        { name: 'Bo' },
+        {
+          name: 'Cy',
+          birthCertificate: {
+            Url: 'https://sp.example/submission-1/certificate.pdf',
+            Description: 'certificate.pdf',
+          },
+        },
+      ]);
+    });
+
+    it('sets the link of each file in a multi-file field, as the forms app names them', async () => {
+      const withDocuments = { ...data, supportingDocuments: ['urn:a', 'urn:b'] };
+      const files = [
+        { field: 'supportingDocuments.0', fileId: 'first' },
+        { field: 'supportingDocuments.1', fileId: 'second' },
+      ];
+
+      await service.upload(tenantId, configuration, 'hr-intake', request({ data: withDocuments, files }));
+
+      expect(pusher.push.mock.calls[0][3].supportingDocuments).toEqual([
+        { Url: 'https://sp.example/submission-1/first.pdf', Description: 'first.pdf' },
+        { Url: 'https://sp.example/submission-1/second.pdf', Description: 'second.pdf' },
+      ]);
+    });
+
+    it("rejects a file whose path can't fit the data before uploading anything", async () => {
+      const withApplicant = { ...data, applicant: 'Ada' };
+      const files = [
+        { field: 'proofOfIdentity', fileId: 'proof' },
+        { field: 'applicant.statement', fileId: 'statement' },
+      ];
+
+      await expect(
+        service.upload(tenantId, configuration, 'hr-intake', request({ data: withApplicant, files })),
+      ).rejects.toThrow("Cannot set a value at data path 'applicant.statement'.");
+
+      expect(source.open).not.toHaveBeenCalled();
+      expect(tokens.getToken).not.toHaveBeenCalled();
+    });
+
+    it("sets the link of a file whose entry is missing from an older form's data", async () => {
+      const files = [{ field: 'supportingDocuments.0', fileId: 'first' }];
+
+      await service.upload(tenantId, configuration, 'hr-intake', request({ data, files }));
+
+      expect(pusher.push.mock.calls[0][3].supportingDocuments).toEqual([
+        { Url: 'https://sp.example/submission-1/first.pdf', Description: 'first.pdf' },
+      ]);
     });
 
     it('does not change the data it was given', async () => {
@@ -560,6 +672,119 @@ describe('SharePointFileService', () => {
       ).rejects.toThrow('Invalid data path');
 
       expect(source.open).not.toHaveBeenCalled();
+    });
+
+    describe('detail lists and the folder link', () => {
+      const householdData = { ...data, dependents: [{ name: 'Bo' }, { name: 'Cy' }] };
+      const certificate = [{ field: 'dependents[1].birthCertificate', fileId: 'certificate' }];
+
+      it("writes a file's link in the format of its detail list mapping", async () => {
+        await service.upload(
+          tenantId,
+          configuration,
+          'household',
+          request({ data: householdData, files: certificate }),
+        );
+
+        expect(pusher.push.mock.calls[0][3].dependents[1].birthCertificate).toBe(
+          'https://sp.example/submission-1/certificate.pdf',
+        );
+      });
+
+      it('uses the detail list mapping for a file at the path the forms app gives it', async () => {
+        await service.upload(
+          tenantId,
+          configuration,
+          'household',
+          request({ data: householdData, files: [{ field: 'dependents.1.birthCertificate', fileId: 'certificate' }] }),
+        );
+
+        expect(pusher.push.mock.calls[0][3].dependents[1].birthCertificate).toBe(
+          'https://sp.example/submission-1/certificate.pdf',
+        );
+      });
+
+      it("passes a link to the submission's folder when the destination has a folder link column", async () => {
+        await service.upload(
+          tenantId,
+          configuration,
+          'household',
+          request({ data: householdData, files: certificate }),
+        );
+
+        expect(graph.getFolderUrl).toHaveBeenCalledWith('token-1', connection.siteId, 'submission-1');
+        expect(pusher.push.mock.calls[0][4]).toEqual({
+          folderLink: { Url: 'https://sp.example/submission-1', Description: 'submission-1' },
+        });
+      });
+
+      it('does not look up the folder for a destination without a folder link column', async () => {
+        await service.upload(tenantId, configuration, 'hr-intake', request({ data }));
+
+        expect(graph.getFolderUrl).not.toHaveBeenCalled();
+      });
+
+      it('gets a new token and looks up the folder again when the cached token is rejected', async () => {
+        graph.getFolderUrl.mockRejectedValueOnce(new SharePointError('graph:InvalidAuthenticationToken', false));
+
+        await service.upload(
+          tenantId,
+          configuration,
+          'household',
+          request({ data: householdData, files: certificate }),
+        );
+
+        expect(tokens.evict).toHaveBeenCalledWith(tenantId, 'hr-site');
+        expect(graph.getFolderUrl).toHaveBeenCalledTimes(2);
+        expect(pusher.push).toHaveBeenCalled();
+      });
+
+      it('reports a folder that cannot be looked up as a row that was not written', async () => {
+        graph.getFolderUrl.mockRejectedValueOnce(new SharePointError('graph:serviceNotAvailable', true));
+
+        const result = await service.upload(
+          tenantId,
+          configuration,
+          'household',
+          request({ data: householdData, files: certificate }),
+        );
+
+        expect(pusher.push).not.toHaveBeenCalled();
+        expect(result.row).toEqual({ written: false, errorCode: 'graph:serviceNotAvailable', retryable: true });
+      });
+
+      it('returns the detail rows that were written', async () => {
+        pusher.push.mockResolvedValueOnce({
+          itemId: 'row-1',
+          outcome: 'created',
+          detailRows: [{ listId: 'members', rowIds: ['m-1', 'm-2'] }],
+        });
+
+        const result = await service.upload(tenantId, configuration, 'household', request({ data: householdData }));
+
+        expect(result.row).toEqual({
+          written: true,
+          dataId: 'row-1',
+          outcome: 'created',
+          detailRows: [{ listId: 'members', rowIds: ['m-1', 'm-2'] }],
+        });
+      });
+
+      it('reports detail rows that failed, with the main row ID, as a row that was not written', async () => {
+        pusher.push.mockRejectedValueOnce(
+          new DetailRowsFailedError('row-1', [{ listId: 'members', indexes: [1] }], 'graph:serviceNotAvailable', true),
+        );
+
+        const result = await service.upload(tenantId, configuration, 'household', request({ data: householdData }));
+
+        expect(result.row).toEqual({
+          written: false,
+          errorCode: 'graph:serviceNotAvailable',
+          retryable: true,
+          dataId: 'row-1',
+          detailFailures: [{ listId: 'members', indexes: [1] }],
+        });
+      });
     });
   });
 
