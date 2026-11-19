@@ -33,7 +33,7 @@ describe('GraphFileClient', () => {
 
       expect(result).toEqual(driveItem);
       expect(axiosMock.put).toHaveBeenCalledTimes(1);
-      expect(axiosMock.put).toHaveBeenCalledWith(`${itemPath}/content`, stream, {
+      expect(axiosMock.put).toHaveBeenCalledWith(`${itemPath}/content`, Buffer.alloc(1024 * 1024, 7), {
         headers: {
           Authorization: 'Bearer token-1',
           'Content-Type': 'application/octet-stream',
@@ -47,7 +47,14 @@ describe('GraphFileClient', () => {
     it('uses the single PUT for a file of exactly 4 MB', async () => {
       axiosMock.put.mockResolvedValueOnce({ status: 200, data: driveItem });
 
-      await client.uploadFile('token-1', siteId, 'sub-1', 'proof.pdf', SIMPLE_UPLOAD_LIMIT, streamOf(1));
+      await client.uploadFile(
+        'token-1',
+        siteId,
+        'sub-1',
+        'proof.pdf',
+        SIMPLE_UPLOAD_LIMIT,
+        streamOf(SIMPLE_UPLOAD_LIMIT),
+      );
 
       expect(axiosMock.put).toHaveBeenCalledTimes(1);
       expect(axiosMock.post).not.toHaveBeenCalled();
@@ -150,12 +157,12 @@ describe('GraphFileClient', () => {
       axiosMock.isAxiosError.mockReturnValue(true);
       axiosMock.post.mockResolvedValueOnce({ data: { uploadUrl } });
       axiosMock.put.mockResolvedValueOnce({ status: 202, data: {} }).mockRejectedValueOnce({
-        response: { status: 503, data: { error: { code: 'serviceNotAvailable', message: 'Try later' } } },
+        response: { status: 500, data: { error: { code: 'generalException', message: 'Try later' } } },
       });
       const stream = streamOf(size);
 
       await expect(client.uploadFile('token-1', siteId, 'sub-1', 'proof.pdf', size, stream)).rejects.toMatchObject({
-        errorCode: 'graph:serviceNotAvailable',
+        errorCode: 'graph:generalException',
         retryable: true,
       });
       expect(axiosMock.put).toHaveBeenCalledTimes(2);
@@ -196,6 +203,149 @@ describe('GraphFileClient', () => {
       ).rejects.toMatchObject({ errorCode: 'graph:accessDenied' });
       expect(axiosMock.put).not.toHaveBeenCalled();
       expect(axiosMock.delete).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('when Graph is briefly unavailable', () => {
+    const mebibyte = 1024 * 1024;
+    const graphFailure = (status: number, code: string, headers: Record<string, string> = {}) => ({
+      response: { status, headers, data: { error: { code, message: 'Try later' } } },
+    });
+    const unavailable = () => graphFailure(503, 'serviceNotAvailable');
+
+    const settle = async <T>(promise: Promise<T>) => {
+      const settled = promise.then(
+        (value) => ({ value }),
+        (error) => ({ error }),
+      );
+      await jest.runAllTimersAsync();
+      return settled;
+    };
+
+    beforeEach(() => {
+      jest.useFakeTimers();
+      axiosMock.isAxiosError.mockReturnValue(true);
+    });
+
+    afterEach(() => {
+      jest.useRealTimers();
+    });
+
+    it('sends the same content again after a simple upload fails with 503', async () => {
+      axiosMock.put.mockRejectedValueOnce(unavailable()).mockResolvedValueOnce({ status: 201, data: driveItem });
+
+      const result = await settle(client.uploadFile('token-1', siteId, 'sub-1', 'proof.pdf', 10, streamOf(10)));
+
+      expect(result).toEqual({ value: driveItem });
+      expect(axiosMock.put).toHaveBeenCalledTimes(2);
+      expect(axiosMock.put.mock.calls[1][1]).toEqual(axiosMock.put.mock.calls[0][1]);
+      expect(axiosMock.put.mock.calls[1][1]).toEqual(Buffer.alloc(10, 7));
+    });
+
+    it('waits for Retry-After when a simple upload is throttled', async () => {
+      const start = Date.now();
+      const calledAt: number[] = [];
+      axiosMock.put
+        .mockImplementationOnce(async () => {
+          calledAt.push(Date.now() - start);
+          throw graphFailure(429, 'TooManyRequests', { 'retry-after': '2' });
+        })
+        .mockImplementationOnce(async () => {
+          calledAt.push(Date.now() - start);
+          return { status: 201, data: driveItem };
+        });
+
+      await settle(client.uploadFile('token-1', siteId, 'sub-1', 'proof.pdf', 10, streamOf(10)));
+
+      expect(calledAt).toEqual([0, 2000]);
+    });
+
+    it('stops with a retryable error when a simple upload keeps failing', async () => {
+      axiosMock.put.mockRejectedValue(unavailable());
+
+      const result = await settle(client.uploadFile('token-1', siteId, 'sub-1', 'proof.pdf', 10, streamOf(10)));
+
+      expect(result).toEqual({
+        error: expect.objectContaining({ errorCode: 'graph:serviceNotAvailable', retryable: true }),
+      });
+      expect(axiosMock.put).toHaveBeenCalledTimes(4);
+    });
+
+    it('does not send a simple upload again when Graph rejects it', async () => {
+      axiosMock.put.mockRejectedValueOnce(graphFailure(403, 'accessDenied'));
+
+      const result = await settle(client.uploadFile('token-1', siteId, 'sub-1', 'proof.pdf', 10, streamOf(10)));
+
+      expect(result).toEqual({ error: expect.objectContaining({ errorCode: 'graph:accessDenied' }) });
+      expect(axiosMock.put).toHaveBeenCalledTimes(1);
+    });
+
+    it('fails without calling Graph when the file is not the declared size', async () => {
+      const result = await settle(client.uploadFile('token-1', siteId, 'sub-1', 'proof.pdf', 20, streamOf(10)));
+
+      expect(result).toEqual({ error: expect.objectContaining({ errorCode: 'file:size-mismatch', retryable: false }) });
+      expect(axiosMock.put).not.toHaveBeenCalled();
+    });
+
+    it('reports the file as unavailable when its stream fails while being read', async () => {
+      const broken = new Readable({
+        read() {
+          this.destroy(new Error('connection reset'));
+        },
+      });
+
+      const result = await settle(client.uploadFile('token-1', siteId, 'sub-1', 'proof.pdf', 10, broken));
+
+      expect(result).toEqual({ error: expect.objectContaining({ errorCode: 'file:unavailable', retryable: true }) });
+      expect(axiosMock.put).not.toHaveBeenCalled();
+    });
+
+    it('creates the upload session again when creating it fails with 503', async () => {
+      axiosMock.post.mockRejectedValueOnce(unavailable()).mockResolvedValueOnce({ data: { uploadUrl } });
+      axiosMock.put.mockResolvedValueOnce({ status: 201, data: driveItem });
+      const size = 5 * mebibyte;
+
+      const result = await settle(client.uploadFile('token-1', siteId, 'sub-1', 'proof.pdf', size, streamOf(size)));
+
+      expect(result).toEqual({ value: driveItem });
+      expect(axiosMock.post).toHaveBeenCalledTimes(2);
+    });
+
+    it('sends only the failed chunk again and keeps the session', async () => {
+      const size = 12 * mebibyte;
+      axiosMock.post.mockResolvedValueOnce({ data: { uploadUrl } });
+      axiosMock.put
+        .mockResolvedValueOnce({ status: 202, data: {} })
+        .mockRejectedValueOnce(unavailable())
+        .mockResolvedValueOnce({ status: 202, data: {} })
+        .mockResolvedValueOnce({ status: 201, data: driveItem });
+
+      const result = await settle(client.uploadFile('token-1', siteId, 'sub-1', 'proof.pdf', size, streamOf(size)));
+
+      expect(result).toEqual({ value: driveItem });
+      expect(axiosMock.post).toHaveBeenCalledTimes(1);
+      const ranges = axiosMock.put.mock.calls.map((call) => headersOf(call)['Content-Range']);
+      expect(ranges).toEqual([
+        `bytes 0-${5 * mebibyte - 1}/${size}`,
+        `bytes ${5 * mebibyte}-${10 * mebibyte - 1}/${size}`,
+        `bytes ${5 * mebibyte}-${10 * mebibyte - 1}/${size}`,
+        `bytes ${10 * mebibyte}-${size - 1}/${size}`,
+      ]);
+      expect(axiosMock.delete).not.toHaveBeenCalled();
+    });
+
+    it('cancels the session when a chunk keeps failing', async () => {
+      const size = 12 * mebibyte;
+      axiosMock.post.mockResolvedValueOnce({ data: { uploadUrl } });
+      axiosMock.put.mockResolvedValueOnce({ status: 202, data: {} }).mockRejectedValue(unavailable());
+
+      const result = await settle(client.uploadFile('token-1', siteId, 'sub-1', 'proof.pdf', size, streamOf(size)));
+
+      expect(result).toEqual({
+        error: expect.objectContaining({ errorCode: 'graph:serviceNotAvailable', retryable: true }),
+      });
+      expect(axiosMock.put).toHaveBeenCalledTimes(5);
+      expect(axiosMock.delete).toHaveBeenCalledWith(uploadUrl);
     });
   });
 });

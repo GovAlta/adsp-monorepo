@@ -1,4 +1,17 @@
 import { Readable } from 'stream';
+import { SharePointError } from '../errors';
+
+export async function readAll(stream: Readable): Promise<Buffer> {
+  const parts: Buffer[] = [];
+  try {
+    for await (const part of stream) {
+      parts.push(Buffer.isBuffer(part) ? part : Buffer.from(part));
+    }
+  } catch {
+    throw new SharePointError('file:unavailable', true);
+  }
+  return Buffer.concat(parts);
+}
 
 export async function* readChunks(stream: Readable, chunkSize: number): AsyncGenerator<Buffer> {
   let pending: Buffer[] = [];
