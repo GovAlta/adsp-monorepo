@@ -156,6 +156,7 @@ describe('find_adsp_services', () => {
     expect(FIND_SERVICES_OUTPUT_SCHEMA.required).toEqual(['results']);
 
     const actual = nextOf(await tool.handler({ need: 'upload file' }));
+    expect(actual).toBeDefined();
     for (const call of actual?.suggested_calls ?? []) {
       expect(Object.keys(call).sort()).toEqual(['arguments', 'tool', 'why']);
       expect(typeof call.why).toBe('string');

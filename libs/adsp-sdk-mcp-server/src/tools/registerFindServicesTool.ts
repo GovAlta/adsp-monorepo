@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { CapabilityCatalog } from '../capabilities/catalog';
 import { NeedResult, ServiceFinder, ServiceMatch } from '../capabilities/findServices';
-import { buildNext, Next } from './envelope';
+import { buildNext, definedOnly, Next } from './envelope';
 import { LinkIndex } from './links';
 import { OFFLINE_TOOL_ANNOTATIONS, ToolDefinition } from './types';
 
@@ -138,23 +138,30 @@ function formatResult({ need, matches, ask, fitQuestions, noMatch }: NeedResult,
   };
 }
 
-function suggestNext(results: NeedResult[], links: FindServicesLinks): Next | undefined {
+function suggestNext(
+  results: NeedResult[],
+  links: FindServicesLinks,
+  current: Record<string, unknown>,
+): Next | undefined {
   for (const { need, matches } of results) {
     const strong = matches.find(({ fit }) => fit === 'strong');
     if (strong) {
       const { id, doc } = strong.service;
-      return buildNext([
-        links.hasDoc(doc)
-          ? { tool: 'read_adsp_doc', arguments: { path: doc }, why: "Read the best-fitting service's guide." }
-          : undefined,
-        links.hasServiceApi(id)
-          ? {
-              tool: 'search_service_endpoints',
-              arguments: { query: need, service: id },
-              why: "Find that service's REST endpoints for this need.",
-            }
-          : undefined,
-      ]);
+      return buildNext(
+        [
+          links.hasDoc(doc)
+            ? { tool: 'read_adsp_doc', arguments: { path: doc }, why: "Read the best-fitting service's guide." }
+            : undefined,
+          links.hasServiceApi(id)
+            ? {
+                tool: 'search_service_endpoints',
+                arguments: { query: need, service: id },
+                why: "Find that service's REST endpoints for this need.",
+              }
+            : undefined,
+        ],
+        { tool: 'find_adsp_services', arguments: current },
+      );
     }
   }
   return undefined;
@@ -209,7 +216,7 @@ export function createFindServicesTool(
         const { need, needs, response_format: format = 'concise' } = parsed.data;
         const current = (finder ??= new ServiceFinder(catalog()));
         const found = (needs ?? [need as string]).map((text) => current.find(text));
-        const next = suggestNext(found, links());
+        const next = suggestNext(found, links(), definedOnly(parsed.data));
         const structuredContent = {
           results: found.map((result) => formatResult(result, format)),
           ...(next && { next }),
