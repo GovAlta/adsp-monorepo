@@ -110,7 +110,9 @@ guessing a tool or an argument. Their JSON carries two extra fields:
 
 Every name in `related` and every call in `next` exists in the bundled content, and `next` never names a tool that
 needs sign-in (`list_service_roles` and `get_service_configuration_schema`), so a signed-out client can follow all of
-it. The tools keep every field they returned before. These tools used to return a bare array and now return
+it. A suggested `search_service_endpoints` call carries the question asked (or the page title) when that search
+finds endpoints, else the service's name, and is left out when neither finds any. A one-word SDK name such as
+`Tenant` counts as named by a page only inside its code. The tools keep every field they returned before. These tools used to return a bare array and now return
 `{ "results": [...] }`: `search_adsp_docs`, `list_adsp_docs`, `search_sdk_reference`, `list_service_apis` and
 `search_service_endpoints`. Examples below are abridged (long text shortened, later entries left out); the fields shown
 are real.
@@ -131,7 +133,7 @@ are real.
           "services/audit-service.md",
           "services/configuration-service.md"
         ],
-        "sdkSymbols": ["Tenant", "initializePlatform"],
+        "sdkSymbols": ["initializePlatform"],
         "serviceApis": ["event-service"]
       }
     }
@@ -188,7 +190,7 @@ and `next`:
       "services/audit-service.md",
       "services/configuration-service.md"
     ],
-    "sdkSymbols": ["Tenant", "initializePlatform"],
+    "sdkSymbols": ["initializePlatform"],
     "serviceApis": ["event-service"]
   },
   "next": {
@@ -200,7 +202,7 @@ and `next`:
       },
       {
         "tool": "search_sdk_reference",
-        "arguments": { "query": "Tenant" },
+        "arguments": { "query": "initializePlatform" },
         "why": "Look up the SDK symbol this page uses."
       },
       {
@@ -332,6 +334,14 @@ at the top level (`POST /file/v1/files` on `file-service`):
         "tool": "read_adsp_doc",
         "arguments": { "path": "services/file-service.md" },
         "why": "Read its guide."
+      },
+      {
+        "tool": "search_service_endpoints",
+        "arguments": {
+          "query": "applicants attach supporting documents to an application",
+          "service": "file-service"
+        },
+        "why": "Find its REST endpoints."
       }
     ]
   }
