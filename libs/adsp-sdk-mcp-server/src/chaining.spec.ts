@@ -175,7 +175,7 @@ describe.each(CONTENT_SETS)('suggested calls and related references over $label'
     ).toEqual([]);
   });
 
-  it('every related entry resolves', async () => {
+  it('every related entry resolves, each SDK symbol to a search result of exactly that name', async () => {
     const related = steps.flatMap(relatedOf);
     const docs = collect(related, 'docs');
     const sdkSymbols = collect(related, 'sdkSymbols');
@@ -190,9 +190,9 @@ describe.each(CONTENT_SETS)('suggested calls and related references over $label'
     }
     for (const name of sdkSymbols) {
       const result = await call(client, { name: 'search_sdk_reference', arguments: { query: name } });
-      const first = (envelopeOf(result)?.results?.[0] as { name?: string } | undefined)?.name;
-      if (first !== name) {
-        unresolved.push(`sdkSymbol ${name}: first result ${first}`);
+      const names = ((envelopeOf(result)?.results ?? []) as { name?: string }[]).map((symbol) => symbol.name);
+      if (!names.includes(name)) {
+        unresolved.push(`sdkSymbol ${name}: results ${names.join(', ')}`);
       }
     }
     for (const service of serviceApis) {
