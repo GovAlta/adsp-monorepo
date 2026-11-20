@@ -487,6 +487,17 @@ components:
               type: string
             urn:
               type: string
+            disposition:
+              type: object
+              nullable: true
+              description: Decision recorded on the submission by an assessor, or null if no decision is made yet. The disposition reason is not included.
+              properties:
+                status:
+                  type: string
+                  description: Disposition state the assessor selected.
+                date:
+                  type: string
+                  format: date-time
       example:
         urn: urn:ads:platform:form-service:v1:/forms/5f1e2d3c-4b5a-4f6e-8d7c-9b0a1c2d3e4f
         id: 5f1e2d3c-4b5a-4f6e-8d7c-9b0a1c2d3e4f

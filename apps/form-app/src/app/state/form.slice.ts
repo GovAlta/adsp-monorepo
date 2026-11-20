@@ -36,6 +36,11 @@ interface SerializableFormDefinition {
   };
 }
 
+export interface SubmissionDisposition {
+  status: string;
+  date: string;
+}
+
 interface SerializableForm {
   definition: { id: string; name: string; description: string };
   id: string;
@@ -48,6 +53,7 @@ interface SerializableForm {
   submission?: {
     id: string;
     urn: string;
+    disposition?: SubmissionDisposition | null;
   };
   jobId?: string;
   error?: string;
