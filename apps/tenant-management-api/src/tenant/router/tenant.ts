@@ -20,6 +20,7 @@ import { rateLimit } from 'express-rate-limit';
 
 class CreateTenantDto {
   @IsDefined()
+  @IsString()
   name: string;
 }
 class GetTenantDto {

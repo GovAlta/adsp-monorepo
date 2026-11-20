@@ -17,6 +17,10 @@ export const validateEmailInDB = async (logger: Logger, repository: TenantReposi
 export const validateName = async (logger: Logger, repository: TenantRepository, name: string): Promise<void> => {
   logger.debug(`Validate - is the tenant name valid and unique?`, LOG_CONTEXT);
 
+  if (typeof name !== 'string') {
+    throw new InvalidValueError('Tenant name', 'Enter a tenant name.');
+  }
+
   const invalidChars = [
     '!',
     '*',
