@@ -895,12 +895,15 @@ export function createPlannerRouter({
       body('status').optional().isIn(SOLUTION_STATUSES),
       body('problemStatement').optional().isString(),
       body('concepts').optional().isArray(),
+      body('concepts.*').optional().isObject(),
       body('concepts.*.type')
         .optional()
         .isIn([...CONCEPT_TYPES]),
       body('concepts.*.name').optional().isString().notEmpty(),
       body('decisions').optional().isArray(),
+      body('decisions.*').optional().isObject(),
       body('questions').optional().isArray(),
+      body('questions.*').optional().isObject(),
       body('checkpoint').optional().isBoolean(),
     ),
     solutionFor('update'),

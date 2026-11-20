@@ -1197,8 +1197,17 @@ describe('planner router routes', () => {
       ['non-array concepts', { concepts: 'actor' }],
       ['unknown concept type', { concepts: [{ type: 'bogus', name: 'x' }] }],
       ['empty concept name', { concepts: [{ type: 'actor', name: '' }] }],
+      ['null concept', { concepts: [null] }],
+      ['non-object concept', { concepts: ['actor'] }],
+      ['array concept', { concepts: [[]] }],
       ['non-array decisions', { decisions: 'x' }],
+      ['null decision', { decisions: [null] }],
+      ['non-object decision', { decisions: ['x'] }],
+      ['array decision', { decisions: [[]] }],
       ['non-array questions', { questions: 'x' }],
+      ['null question', { questions: [null] }],
+      ['non-object question', { questions: ['x'] }],
+      ['array question', { questions: [[]] }],
     ])('returns 400 for %s', async (_label, body) => {
       const res = await patch(body);
 
