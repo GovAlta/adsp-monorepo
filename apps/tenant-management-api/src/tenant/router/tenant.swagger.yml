@@ -134,6 +134,65 @@ components:
         deletedRealm: true
         deletedTenant: true
         success: true
+    TenantRealmClientBackfillResult:
+      type: object
+      properties:
+        dryRun:
+          type: boolean
+        summary:
+          type: object
+          description: Number of realms with each status.
+          properties:
+            added:
+              type: integer
+            present:
+              type: integer
+            wouldAdd:
+              type: integer
+            failed:
+              type: integer
+        results:
+          type: array
+          items:
+            type: object
+            properties:
+              tenantId:
+                type: string
+                description: URN of the tenant.
+              name:
+                type: string
+              realm:
+                type: string
+              status:
+                type: string
+                enum: [added, present, wouldAdd, failed]
+                description: >
+                  added: the client was added. present: the realm already had the client and was not changed.
+                  wouldAdd: a dry run found the realm doesn't have the client. failed: see reason.
+              reason:
+                type: string
+                description: Why the realm failed. Only included for failed.
+      example:
+        dryRun: false
+        summary:
+          added: 1
+          present: 1
+          wouldAdd: 0
+          failed: 1
+        results:
+          - tenantId: urn:ads:platform:tenant-service:v2:/tenants/61f2e3a8c9b1d2e3f4a5b6c7
+            name: Test Tenant
+            realm: 2f6c8f1e-3b7a-4d5c-9e8f-1a2b3c4d5e6f
+            status: added
+          - tenantId: urn:ads:platform:tenant-service:v2:/tenants/72a3f4b9d0c2e3f4a5b6c7d8
+            name: Other Tenant
+            realm: 3a7d9e2f-4c8b-5e6d-0f9a-2b3c4d5e6f7a
+            status: present
+          - tenantId: urn:ads:platform:tenant-service:v2:/tenants/83b4a5c0e1d3f4a5b6c7d8e9
+            name: Old Tenant
+            realm: old-tenant
+            status: failed
+            reason: Request failed with status code 403
     TenantRealmRole:
       type: object
       properties:
@@ -1002,3 +1061,44 @@ components:
         $ref: '#/components/responses/TenantUnauthorized'
       404:
         $ref: '#/components/responses/TenantNotFound'
+
+/api/tenant/v2/realms/adsp-mcp-client:
+  post:
+    tags:
+      - Tenant service
+    description: >
+      Adds the adsp-mcp client, used to sign in to the hosted ADSP SDK MCP server, to the realm of each active and
+      archived tenant that doesn't have it. The client is configured as it is for a new tenant realm. A realm that
+      already has the client is left unchanged, so the operation can be run again after a failure. Realms are
+      processed one at a time, and a failure in one realm doesn't stop the others. Requires the core realm
+      tenant-service-admin role; tenant users, including tenant administrators, are rejected. Rate limited.
+    parameters:
+      - in: query
+        name: dryRun
+        schema:
+          type: string
+          enum: ['true', 'false']
+          default: 'false'
+        description: Report the realms that would change without changing them.
+      - in: query
+        name: realm
+        schema:
+          type: string
+          minLength: 1
+          maxLength: 50
+        description: Only process the tenant with this realm, for example to retry a realm that failed.
+    responses:
+      200:
+        description: >
+          The result for each realm. The response is 200 even if some realms failed; check the failed count in the
+          summary.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TenantRealmClientBackfillResult'
+      400:
+        $ref: '#/components/responses/TenantBadRequest'
+      401:
+        $ref: '#/components/responses/TenantUnauthorized'
+      429:
+        $ref: '#/components/responses/TenantTooManyRequests'

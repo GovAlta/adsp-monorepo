@@ -556,6 +556,130 @@ describe('KeycloakRealmService', () => {
       );
     });
   });
+
+  describe('addAdspMcpClient', () => {
+    const createkcAdminClient = jest.fn(() => Promise.resolve(keycloakClientMock as unknown as KeycloakAdminClient));
+    const service = new KeycloakRealmServiceImpl(loggerMock, 'https://access-service', 'core', createkcAdminClient);
+    const realm = 'existing-realm';
+
+    beforeEach(() => {
+      createkcAdminClient.mockClear();
+    });
+
+    // Resolves every client and role by name, so scope mapping calls can be compared across realm creation and backfill.
+    function fakeRealmClients(hasAdspMcp: boolean) {
+      let adspMcpExists = hasAdspMcp;
+      keycloakClientMock.clients.find.mockImplementation(({ clientId }) =>
+        Promise.resolve(clientId === 'adsp-mcp' && !adspMcpExists ? [] : [{ id: `${clientId}-id` }]),
+      );
+      keycloakClientMock.clients.create.mockImplementation(({ id, clientId }) => {
+        if (clientId === 'adsp-mcp') {
+          adspMcpExists = true;
+        }
+        return Promise.resolve({ id });
+      });
+      keycloakClientMock.clients.findRole.mockImplementation(({ roleName }) =>
+        Promise.resolve({ id: `${roleName}-id`, name: roleName }),
+      );
+    }
+
+    const adspMcpScopeMappings = () =>
+      keycloakClientMock.clients.addClientScopeMappings.mock.calls
+        .filter(([target]) => target.id === 'adsp-mcp-id')
+        .map(([{ client: source }, roles]) => [source, roles]);
+
+    it('can add the client as createRealm configures it for a new realm', async () => {
+      fakeRealmClients(true);
+      keycloakClientMock.clientScopes.findOneByName.mockResolvedValue({ id: 'adsp-cli-admin-scope-id' });
+      keycloakClientMock.clients.getServiceAccountUser.mockResolvedValue({ id: 'ci-user-id' });
+      keycloakClientMock.clients.listRoles.mockResolvedValue([]);
+      keycloakClientMock.users.create.mockResolvedValue({ id: 'admin-user-id' });
+      keycloakClientMock.realms.findOne.mockResolvedValue({});
+      axiosMock.get.mockResolvedValueOnce({ data: [] });
+
+      await service.createRealm([], { realm: 'new-realm', adminEmail: 'admin@gov.ab.ca', name: 'New' });
+      const { id: _newId, ...newRealmClient } = keycloakClientMock.realms.create.mock.calls[0][0].clients.find(
+        (c: { clientId: string }) => c.clientId === 'adsp-mcp',
+      );
+      const newRealmScopeMappings = adspMcpScopeMappings();
+
+      keycloakClientMock.clients.create.mockReset();
+      keycloakClientMock.clients.addClientScopeMappings.mockReset();
+      fakeRealmClients(false);
+
+      await expect(service.addAdspMcpClient(realm, false)).resolves.toBe('added');
+
+      const [[{ id: _backfillId, realm: createdIn, ...backfilledClient }]] =
+        keycloakClientMock.clients.create.mock.calls;
+      expect(createdIn).toBe(realm);
+      expect(backfilledClient).toEqual(newRealmClient);
+      expect(newRealmScopeMappings).toHaveLength(1);
+      expect(adspMcpScopeMappings()).toEqual(newRealmScopeMappings);
+    });
+
+    it('can grant configuration-admin to the added client', async () => {
+      fakeRealmClients(false);
+
+      await expect(service.addAdspMcpClient(realm, false)).resolves.toBe('added');
+
+      expect(keycloakClientMock.clients.addClientScopeMappings).toHaveBeenCalledWith(
+        { realm, id: 'adsp-mcp-id', client: 'urn:ads:platform:configuration-service-id' },
+        [{ id: 'configuration-admin-id', name: 'configuration-admin' }],
+      );
+      expect(createkcAdminClient).toHaveBeenCalledTimes(1);
+    });
+
+    it('can leave a realm that already has the client unchanged', async () => {
+      fakeRealmClients(true);
+
+      await expect(service.addAdspMcpClient(realm, false)).resolves.toBe('present');
+
+      expect(keycloakClientMock.clients.create).not.toHaveBeenCalled();
+      expect(keycloakClientMock.clients.addClientScopeMappings).not.toHaveBeenCalled();
+    });
+
+    it('can preview without changing the realm', async () => {
+      fakeRealmClients(false);
+
+      await expect(service.addAdspMcpClient(realm, true)).resolves.toBe('wouldAdd');
+
+      expect(keycloakClientMock.clients.create).not.toHaveBeenCalled();
+      expect(keycloakClientMock.clients.addClientScopeMappings).not.toHaveBeenCalled();
+    });
+
+    it('can report a realm that already has the client in a dry run', async () => {
+      fakeRealmClients(true);
+
+      await expect(service.addAdspMcpClient(realm, true)).resolves.toBe('present');
+    });
+
+    it('can remove the added client and throw when the scope mapping fails', async () => {
+      fakeRealmClients(false);
+      keycloakClientMock.clients.addClientScopeMappings.mockRejectedValueOnce(new Error('oh noes!'));
+
+      await expect(service.addAdspMcpClient(realm, false)).rejects.toThrow('oh noes!');
+
+      const [[{ id }]] = keycloakClientMock.clients.create.mock.calls;
+      expect(keycloakClientMock.clients.del).toHaveBeenCalledWith({ realm, id });
+    });
+
+    it('can throw the scope mapping error when removing the added client also fails', async () => {
+      fakeRealmClients(false);
+      keycloakClientMock.clients.addClientScopeMappings.mockRejectedValueOnce(new Error('oh noes!'));
+      keycloakClientMock.clients.del.mockRejectedValueOnce(new Error('not again!'));
+
+      await expect(service.addAdspMcpClient(realm, false)).rejects.toThrow('oh noes!');
+      expect(loggerMock.error).toHaveBeenCalledWith(expect.stringContaining('not again!'), expect.any(Object));
+    });
+
+    it('can throw when the client cannot be created', async () => {
+      fakeRealmClients(false);
+      keycloakClientMock.clients.create.mockRejectedValueOnce(new Error('oh noes!'));
+
+      await expect(service.addAdspMcpClient(realm, false)).rejects.toThrow('oh noes!');
+      expect(keycloakClientMock.clients.del).not.toHaveBeenCalled();
+    });
+  });
   describe('manage user Idp', () => {
     const service = new KeycloakRealmServiceImpl(loggerMock, 'https://access-service', 'core', () =>
       Promise.resolve(keycloakClientMock as unknown as KeycloakAdminClient),

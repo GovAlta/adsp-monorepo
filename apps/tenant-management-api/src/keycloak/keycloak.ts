@@ -8,7 +8,7 @@ import axios from 'axios';
 import * as util from 'util';
 import { v4 as uuidv4 } from 'uuid';
 import { Logger } from 'winston';
-import { RealmService, ServiceClient, Tenant, TenantServiceRoles } from '../tenant';
+import { RealmClientBackfillStatus, RealmService, ServiceClient, Tenant, TenantServiceRoles } from '../tenant';
 import {
   ADSP_CLI_ADMIN_CLIENT_SCOPE_NAME,
   ADSP_CLI_CI_CLIENT_ID,
@@ -549,6 +549,39 @@ export class KeycloakRealmServiceImpl implements RealmService {
     await this.grantCiClientServiceAccountRoles(client, realm);
 
     await this.validateRealmCreation(client, realm);
+  }
+
+  async addAdspMcpClient(realm: string, dryRun: boolean): Promise<RealmClientBackfillStatus> {
+    // A new admin client per realm, since a backfill across every realm can outlast one access token.
+    const client = await this.createAdminClient();
+
+    const [existing] = await client.clients.find({ realm, clientId: ADSP_MCP_CLIENT_ID });
+    if (existing) {
+      return 'present';
+    }
+    if (dryRun) {
+      return 'wouldAdd';
+    }
+
+    const config = createAdspMcpPublicClientConfig(uuidv4());
+    await client.clients.create({ realm, ...config });
+    try {
+      await this.grantClientScopeMappings(client, realm, ADSP_MCP_CLIENT_ID, ADSP_MCP_CLIENT_SCOPE_MAPPINGS);
+    } catch (err) {
+      // Removed so that a re-run retries the realm instead of skipping it as present.
+      try {
+        await client.clients.del({ realm, id: config.id });
+      } catch (delErr) {
+        this.logger.error(
+          `Failed to remove partially added '${ADSP_MCP_CLIENT_ID}' client from realm '${realm}': ${delErr.message}`,
+          LOG_CONTEXT,
+        );
+      }
+      throw err;
+    }
+
+    this.logger.info(`Added '${ADSP_MCP_CLIENT_ID}' client to realm '${realm}'.`, LOG_CONTEXT);
+    return 'added';
   }
 
   private async deleteKeycloakRealm(kcClient: KeycloakAdminClient, realm: string): Promise<boolean> {

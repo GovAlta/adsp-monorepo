@@ -16,6 +16,7 @@ import {
   TenantArchivedAuditAction,
   TenantCreatedAuditAction,
   TenantDeletedAuditAction,
+  TenantRealmClientAddedAuditAction,
   TenantRestoredAuditAction,
   TenantUpdatedAuditAction,
   toTenantAuditDetails,
@@ -24,7 +25,7 @@ import { tenantArchived, tenantCreated, tenantDeleted, tenantNameUpdated, tenant
 import { Tenant, TenantEntity } from '../models';
 import { TenantRepository } from '../repository';
 import { TenantServiceRoles } from '../roles';
-import { RealmService } from '../services/realm';
+import { RealmClientBackfillStatus, RealmService } from '../services/realm';
 import { ServiceClient, TenantCriteria } from '../types';
 import { mapTenant } from './mappers';
 import { validateEmailInDB, validateName } from './utils';
@@ -333,6 +334,79 @@ export function restoreTenant(
   };
 }
 
+const ADSP_MCP_CLIENT_ID = 'adsp-mcp';
+
+export interface RealmClientBackfillResult {
+  tenantId: string;
+  name: string;
+  realm: string;
+  status: RealmClientBackfillStatus | 'failed';
+  reason?: string;
+}
+
+/**
+ * Adds the adsp-mcp client to the realm of every active and archived tenant that lacks it, one realm at a time.
+ * A failure is reported for its realm and does not stop the others.
+ */
+export function backfillAdspMcpClient(
+  logger: Logger,
+  repository: TenantRepository,
+  realmService: RealmService,
+  auditService: AuditService,
+): RequestHandler {
+  return async (req, res, next) => {
+    try {
+      const user = req.user;
+      const dryRun = req.query.dryRun === 'true';
+      const { realm } = req.query;
+
+      const entities = await repository.find(realm ? { realmEquals: `${realm}` } : {});
+      const results: RealmClientBackfillResult[] = [];
+      for (const entity of entities.filter((e) => e.realm && e.status !== 'provisioning')) {
+        const tenant = mapTenant(entity);
+        const result = { tenantId: tenant.id, name: tenant.name, realm: tenant.realm };
+        try {
+          const status = await realmService.addAdspMcpClient(entity.realm, dryRun);
+          results.push({ ...result, status });
+          if (status === 'added') {
+            void auditService.record(
+              TenantRealmClientAddedAuditAction,
+              toTenantAuditDetails(user, tenant, { metadata: { clientId: ADSP_MCP_CLIENT_ID } }),
+            );
+          }
+        } catch (err) {
+          logger.error(
+            `Failed to add '${ADSP_MCP_CLIENT_ID}' client to realm '${entity.realm}': ${err.message}`,
+            LOG_CONTEXT,
+          );
+          results.push({ ...result, status: 'failed', reason: err.message });
+          if (!dryRun) {
+            void auditService.record(
+              TenantRealmClientAddedAuditAction,
+              toTenantAuditDetails(user, tenant, {
+                status: 'failure',
+                metadata: { clientId: ADSP_MCP_CLIENT_ID, error: err.message },
+              }),
+            );
+          }
+        }
+      }
+
+      const summary = { added: 0, present: 0, wouldAdd: 0, failed: 0 };
+      results.forEach(({ status }) => summary[status]++);
+      logger.info(
+        `${dryRun ? 'Previewed' : 'Ran'} '${ADSP_MCP_CLIENT_ID}' client backfill: ${JSON.stringify(summary)}`,
+        LOG_CONTEXT,
+      );
+
+      res.send({ dryRun, summary, results });
+    } catch (err) {
+      logger.error(`Failed to backfill '${ADSP_MCP_CLIENT_ID}' client with error: ${err.message}`, LOG_CONTEXT);
+      next(err);
+    }
+  };
+}
+
 async function provisionRealm(
   entity: TenantEntity,
   clients: ServiceClient[],
@@ -518,6 +592,7 @@ export const createTenantV2Router = ({
   );
 
   router.get('/tenants/:id', assertAuthenticatedHandler, getTenant(logger, tenantRepository));
+
   router.delete(
     '/tenants/:id',
     rateLimitHandler,
@@ -563,6 +638,30 @@ export const createTenantV2Router = ({
       ),
     ),
     updateTenantName(logger, tenantRepository, eventService, auditService),
+  );
+
+  router.post(
+    '/realms/adsp-mcp-client',
+    rateLimitHandler,
+    assertAuthenticatedHandler,
+    requireTenantServiceAdmin,
+    createValidationHandler(
+      ...checkSchema(
+        {
+          dryRun: {
+            optional: true,
+            isIn: { options: [['true', 'false']] },
+          },
+          realm: {
+            optional: true,
+            isString: true,
+            isLength: { options: { min: 1, max: 50 } },
+          },
+        },
+        ['query'],
+      ),
+    ),
+    backfillAdspMcpClient(logger, tenantRepository, realmService, auditService),
   );
 
   return router;
