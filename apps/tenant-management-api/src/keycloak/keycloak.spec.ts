@@ -575,6 +575,13 @@ describe('KeycloakRealmService', () => {
       expect(id).toBe(null);
     });
 
+    it('can throw and log when the keycloak lookup fails', async () => {
+      const email = 'mock-test@gov.ab.ca';
+      axiosMock.get.mockRejectedValueOnce(new Error('realm not found'));
+      await expect(service.findUserId('mock-realm', email)).rejects.toThrow('Failed to find user id in mock-realm.');
+      expect(loggerMock.error).toHaveBeenCalledWith(expect.stringContaining('realm not found'));
+    });
+
     it('can delete IdP', async () => {
       axiosMock.get.mockResolvedValueOnce({ data: null });
       await service.deleteUserIdp('mock-user-id', 'core');
