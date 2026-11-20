@@ -1,0 +1,140 @@
+apiVersion: template.openshift.io/v1
+kind: Template
+metadata:
+  name: adsp-alertmanager-config
+  annotations:
+    description: >-
+      Routes alerts raised in an adsp-<env> namespace to the ADSP team by email and Slack.
+      See .openshift/monitoring/README.md.
+parameters:
+  - name: NAMESPACE
+    description: Target namespace, e.g. adsp-dev.
+    required: true
+  - name: ENV_LABEL
+    description: Environment tag shown in notification titles, e.g. DEV.
+    required: true
+  - name: EMAIL_TO
+    description: Team distribution list.
+    required: true
+  - name: EMAIL_FROM
+    value: aro-01.alerting@gov.ab.ca
+  - name: SMTP_SMARTHOST
+    value: smtp.gov.ab.ca:25
+  - name: SMTP_REQUIRE_TLS
+    description: Whether STARTTLS is required on the SMTP relay.
+    value: 'true'
+  - name: SLACK_CHANNEL
+    description: >-
+      Slack channel name without the leading # (param files treat # as a comment).
+      Informational only; the webhook in Secret adsp-alerts-slack decides the channel.
+    required: true
+  - name: CONSOLE_URL
+    value: https://console-openshift-console.apps.aro-01.int.gov.ab.ca
+  - name: RUNBOOK_BASE_URL
+    description: Fallback link for alerts without a runbook_url annotation.
+    value: https://github.com/GovAlta/adsp-monorepo/blob/main/.openshift/monitoring/README.md#runbooks
+objects:
+  - apiVersion: monitoring.coreos.com/v1beta1
+    kind: AlertmanagerConfig
+    metadata:
+      name: alertmanager-${NAMESPACE}
+      namespace: ${NAMESPACE}
+      labels:
+        app: adsp-monitoring
+    spec:
+      # The operator adds a namespace="${NAMESPACE}" matcher to this route and the inhibit rule,
+      # so alerts from other namespaces are never routed or inhibited here.
+      route:
+        receiver: adsp-team
+        groupBy: ['alertname', 'service', 'kubernetes_pod_name']
+        groupWait: 30s
+        groupInterval: 5m
+        repeatInterval: 4h
+        routes:
+          - receiver: 'null'
+            matchers:
+              - name: severity
+                matchType: '='
+                value: info
+          - receiver: adsp-team
+            matchers:
+              - name: severity
+                matchType: '='
+                value: critical
+            groupWait: 0s
+            groupInterval: 1m
+            repeatInterval: 30m
+          - receiver: adsp-team
+            matchers:
+              - name: severity
+                matchType: '=~'
+                value: 'error|warning'
+            groupWait: 1m
+            groupInterval: 5m
+            repeatInterval: 2h
+      inhibitRules:
+        - sourceMatch:
+            - name: severity
+              matchType: '='
+              value: critical
+          targetMatch:
+            - name: severity
+              matchType: '=~'
+              value: 'error|warning'
+          equal: ['service', 'kubernetes_pod_name']
+      receivers:
+        - name: 'null'
+        - name: adsp-team
+          emailConfigs:
+            - to: ${EMAIL_TO}
+              from: ${EMAIL_FROM}
+              smarthost: ${SMTP_SMARTHOST}
+              requireTLS: '${{SMTP_REQUIRE_TLS}}'
+              sendResolved: true
+              headers:
+                - key: Subject
+                  value: '[{{ .Status | toUpper }}] [${ENV_LABEL}] {{ .CommonLabels.alertname }}{{ if .CommonLabels.service }} - {{ .CommonLabels.service }}{{ end }}'
+              html: |
+                {{ range .Alerts -}}
+                <table role="presentation" cellpadding="0" cellspacing="0" style="margin-bottom:16px;font-family:Arial,sans-serif;font-size:14px">
+                <tr><td style="border-left:4px solid {{ if eq .Status "resolved" }}#2eb886{{ else if eq .Labels.severity "critical" }}#a30200{{ else if eq .Labels.severity "error" }}#e8590c{{ else if eq .Labels.severity "warning" }}#daa038{{ else }}#439fe0{{ end }};padding-left:12px">
+                <p style="font-size:16px"><b>[{{ .Status | toUpper }}] [${ENV_LABEL}] {{ .Labels.alertname }}</b></p>
+                {{ if .Annotations.summary }}<p>{{ .Annotations.summary }}</p>{{ end }}
+                <p>{{ if eq .Status "resolved" }}Alert condition is no longer firing.{{ else }}{{ .Annotations.description }}{{ end }}</p>
+                <table role="presentation" cellpadding="2" cellspacing="0">
+                <tr><td><b>Service</b></td><td>{{ or .Labels.service "-" }}</td></tr>
+                <tr><td><b>Namespace</b></td><td>${NAMESPACE}</td></tr>
+                <tr><td><b>Pod</b></td><td>{{ or .Labels.kubernetes_pod_name "-" }}</td></tr>
+                <tr><td><b>Container</b></td><td>{{ or .Labels.kubernetes_container_name "-" }}</td></tr>
+                <tr><td><b>Severity</b></td><td>{{ or .Labels.severity "-" }}</td></tr>
+                <tr><td><b>Started</b></td><td>{{ .StartsAt.UTC.Format "2006-01-02 15:04:05 MST" }}</td></tr>
+                {{ if eq .Status "resolved" }}<tr><td><b>Ended</b></td><td>{{ .EndsAt.UTC.Format "2006-01-02 15:04:05 MST" }}</td></tr>{{ end }}
+                </table>
+                <p>
+                {{ if .Labels.kubernetes_pod_name }}<a href="${CONSOLE_URL}/k8s/ns/${NAMESPACE}/pods/{{ .Labels.kubernetes_pod_name }}/logs">Pod logs</a> |
+                <a href="${CONSOLE_URL}/monitoring/logs?tenant=application&q={{ printf "{kubernetes_namespace_name=\"${NAMESPACE}\", kubernetes_pod_name=\"%s\"}" .Labels.kubernetes_pod_name }}">Search logs</a> |
+                {{ end }}<a href="{{ or .Annotations.runbook_url "${RUNBOOK_BASE_URL}" }}">Runbook</a> |
+                <a href="${CONSOLE_URL}/dev-monitoring/ns/${NAMESPACE}/alerts">Alerts in console</a>
+                </p>
+                </td></tr>
+                </table>
+                {{ end }}
+          slackConfigs:
+            - apiURL:
+                name: adsp-alerts-slack
+                key: webhook-url
+              channel: '#${SLACK_CHANNEL}'
+              sendResolved: true
+              title: '[{{ .Status | toUpper }}] [${ENV_LABEL}] {{ .CommonLabels.alertname }}{{ if .CommonLabels.service }} - {{ .CommonLabels.service }}{{ end }}'
+              titleLink: '${CONSOLE_URL}/dev-monitoring/ns/${NAMESPACE}/alerts'
+              color: '{{ if eq .Status "resolved" }}good{{ else if eq .CommonLabels.severity "critical" }}danger{{ else if eq .CommonLabels.severity "error" }}#e8590c{{ else if eq .CommonLabels.severity "warning" }}warning{{ else }}#439fe0{{ end }}'
+              text: |
+                {{ range .Alerts -}}
+                *{{ .Labels.alertname }}*{{ if .Annotations.summary }} - {{ .Annotations.summary }}{{ end }}
+                {{ if eq .Status "resolved" }}Alert condition is no longer firing.{{ else }}{{ .Annotations.description }}{{ end }}
+                *Service:* {{ or .Labels.service "-" }}   *Severity:* {{ or .Labels.severity "-" }}
+                *Pod:* {{ or .Labels.kubernetes_pod_name "-" }}   *Container:* {{ or .Labels.kubernetes_container_name "-" }}
+                *Started:* {{ .StartsAt.UTC.Format "2006-01-02 15:04:05 MST" }}{{ if eq .Status "resolved" }}   *Ended:* {{ .EndsAt.UTC.Format "2006-01-02 15:04:05 MST" }}{{ end }}
+                {{ if .Labels.kubernetes_pod_name }}<${CONSOLE_URL}/k8s/ns/${NAMESPACE}/pods/{{ .Labels.kubernetes_pod_name }}/logs|Pod logs> | <${CONSOLE_URL}/monitoring/logs?tenant=application&q={{ printf "{kubernetes_namespace_name=\"${NAMESPACE}\", kubernetes_pod_name=\"%s\"}" .Labels.kubernetes_pod_name | urlquery }}|Search logs> | {{ end }}<{{ or .Annotations.runbook_url "${RUNBOOK_BASE_URL}" }}|Runbook>
+
+                {{ end }}
