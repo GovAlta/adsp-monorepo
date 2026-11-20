@@ -253,6 +253,22 @@ describe('stream router documented behaviour', () => {
       expect(res.status).toBe(400);
     });
 
+    it('returns 403 before sending event-stream headers to a user without a subscriber role', async () => {
+      const res = await request(createApp(tenantUser([]))).get('/stream/v1/streams/application-health');
+
+      expect(res.status).toBe(403);
+      expect(res.headers['content-type']).toMatch(/^application\/json/);
+      expect(res.body).toEqual({ errorMessage: expect.any(String) });
+    });
+
+    it('returns 403 for an anonymous caller on a private stream', async () => {
+      tenantServiceMock.getTenantByName.mockResolvedValueOnce({ id: tenantId, name: 'My Tenant' });
+
+      const res = await request(createApp(null)).get('/stream/v1/streams/application-health?tenant=my-tenant');
+
+      expect(res.status).toBe(403);
+    });
+
     it('returns 404 for a stream that is not configured', async () => {
       const res = await request(createApp(tenantUser([PushServiceRoles.StreamListener]))).get(
         '/stream/v1/streams/application-updates',
