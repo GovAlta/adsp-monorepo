@@ -8,8 +8,9 @@ import { MessageType, NotificationItem } from '@store/notifications/models';
 
 const mockStore = configureStore([]);
 
-function renderBanner(notification: NotificationItem) {
+function renderBanner(notification: NotificationItem, config = {}) {
   const store = mockStore({
+    config,
     notifications: { notifications: [notification], services: {} },
     tenant: { name: 'Autotest' },
   });
@@ -56,6 +57,14 @@ describe('NotificationBanner', () => {
     expect(href).toMatch(/^mailto:adsp@gov\.ab\.ca\?subject=/);
     expect(decodeURIComponent(href)).toContain("We couldn't reach the calendar-service.");
     expect(decodeURIComponent(href)).toContain('Result: No response: Network Error (ERR_NETWORK)');
+  });
+
+  it('sends the support email to the address set in config', () => {
+    renderBanner(failure, { supportEmail: 'support@example.gov.ab.ca' });
+
+    const href = screen.getByRole('link', { name: 'Email these details to support', hidden: true }).getAttribute('href');
+
+    expect(href).toMatch(/^mailto:support@example\.gov\.ab\.ca\?subject=/);
   });
 
   it('has no support details when there is nothing to report', () => {

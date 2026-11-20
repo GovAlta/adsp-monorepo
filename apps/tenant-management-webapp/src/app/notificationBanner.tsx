@@ -5,7 +5,7 @@ import { GoabNotification } from '@abgov/react-components';
 import { DismissNotification } from '@store/notifications/actions';
 import { MessageType } from '@store/notifications/models';
 import { formatSupportDetails, SupportDetails } from '@store/notifications/errors';
-import { SUPPORT_EMAIL } from '@components/SupportLinks';
+import { selectSupportEmail } from '@store/config/selectors';
 import styled from 'styled-components';
 
 export function NotificationBanner(): JSX.Element {
@@ -13,6 +13,7 @@ export function NotificationBanner(): JSX.Element {
     (state: RootState) => state.notifications.notifications[state.notifications.notifications.length - 1],
   );
   const tenantName = useSelector((state: RootState) => state.tenant?.name);
+  const supportEmail = useSelector(selectSupportEmail);
 
   const dispatch = useDispatch();
 
@@ -38,6 +39,7 @@ export function NotificationBanner(): JSX.Element {
             {latestNotification.details && (
               <SupportDetailsSection
                 message={latestNotification.message}
+                supportEmail={supportEmail}
                 details={{ ...latestNotification.details, tenant: tenantName || undefined }}
               />
             )}
@@ -50,10 +52,11 @@ export function NotificationBanner(): JSX.Element {
 
 interface SupportDetailsSectionProps {
   message: string;
+  supportEmail: string;
   details: SupportDetails;
 }
 
-function SupportDetailsSection({ message, details }: SupportDetailsSectionProps): JSX.Element {
+function SupportDetailsSection({ message, supportEmail, details }: SupportDetailsSectionProps): JSX.Element {
   const text = formatSupportDetails(details);
   const subject = encodeURIComponent('Tenant admin error');
   const body = encodeURIComponent(`${message}\n\n${text}`);
@@ -62,7 +65,7 @@ function SupportDetailsSection({ message, details }: SupportDetailsSectionProps)
     <details>
       <summary>Details for support</summary>
       <pre data-testid="support-details-text">{text}</pre>
-      <a href={`mailto:${SUPPORT_EMAIL}?subject=${subject}&body=${body}`}>Email these details to support</a>
+      <a href={`mailto:${supportEmail}?subject=${subject}&body=${body}`}>Email these details to support</a>
     </details>
   );
 }

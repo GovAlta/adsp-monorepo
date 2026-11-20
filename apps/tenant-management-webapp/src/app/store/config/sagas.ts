@@ -22,6 +22,7 @@ export function* fetchConfig(): SagaIterator {
 
       const tenantWebConfig: Record<string, unknown> = {
         directory: entryMapping,
+        supportEmail: data.supportEmail,
         keycloakApi: {
           ...data.keycloakApi,
           url: getKeycloakUrl(data),
