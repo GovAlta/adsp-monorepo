@@ -6,6 +6,7 @@ import { Tenant, TenantEntity } from '../models';
 import { TenantServiceRoles } from '../roles';
 import { RealmService } from '../services/realm';
 import {
+  backfillAdspMcpClient,
   createTenant,
   createTenantV2Router,
   deleteTenant,
@@ -25,6 +26,7 @@ describe('createTenantV2Router', () => {
 
   const realmServiceMock = {
     createRealm: jest.fn(),
+    addAdspMcpClient: jest.fn(),
     disableRealm: jest.fn(),
     enableRealm: jest.fn(),
     deleteRealm: jest.fn(),
@@ -71,6 +73,7 @@ describe('createTenantV2Router', () => {
     repositoryMock.delete.mockReset();
 
     realmServiceMock.createRealm.mockReset();
+    realmServiceMock.addAdspMcpClient.mockReset();
     realmServiceMock.disableRealm.mockReset();
     realmServiceMock.enableRealm.mockReset();
     realmServiceMock.deleteRealm.mockReset();
@@ -800,6 +803,131 @@ describe('createTenantV2Router', () => {
       expect(next).toHaveBeenCalledWith(error);
       expect(repositoryMock.save).not.toHaveBeenCalled();
       expect(eventServiceMock.send).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('backfillAdspMcpClient', () => {
+    const createHandler = () => backfillAdspMcpClient(loggerMock, repositoryMock, realmServiceMock, auditServiceMock);
+    const entity = (id: string, overrides: Partial<Tenant> = {}) =>
+      new TenantEntity(repositoryMock, { ...tenant, id, name: id, realm: `${id}-realm`, ...overrides });
+    const run = async (query: Record<string, string> = {}) => {
+      const req = { query, user: adminUser };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+      await createHandler()(req as unknown as Request, res as unknown as Response, next);
+      expect(next).not.toHaveBeenCalled();
+      return res.send.mock.calls[0][0];
+    };
+
+    it('can add the client to active and archived tenant realms and skip provisioning tenants', async () => {
+      repositoryMock.find.mockResolvedValueOnce([
+        entity('a'),
+        entity('b', { status: 'archived', deletedAt: new Date() }),
+        entity('c', { status: 'provisioning' }),
+      ]);
+      realmServiceMock.addAdspMcpClient.mockResolvedValue('added');
+
+      const body = await run();
+
+      expect(repositoryMock.find).toHaveBeenCalledWith({});
+      expect(realmServiceMock.addAdspMcpClient).toHaveBeenCalledTimes(2);
+      expect(realmServiceMock.addAdspMcpClient).toHaveBeenCalledWith('a-realm', false);
+      expect(realmServiceMock.addAdspMcpClient).toHaveBeenCalledWith('b-realm', false);
+      expect(body).toEqual({
+        dryRun: false,
+        summary: { added: 2, present: 0, wouldAdd: 0, failed: 0 },
+        results: [
+          { tenantId: 'urn:ads:platform:tenant-service:v2:/tenants/a', name: 'a', realm: 'a-realm', status: 'added' },
+          { tenantId: 'urn:ads:platform:tenant-service:v2:/tenants/b', name: 'b', realm: 'b-realm', status: 'added' },
+        ],
+      });
+      expect(auditServiceMock.record).toHaveBeenCalledTimes(2);
+      expect(auditServiceMock.record).toHaveBeenCalledWith(
+        expect.objectContaining({ name: 'tenant.realm-client-added' }),
+        tenantAudit(
+          { id: 'urn:ads:platform:tenant-service:v2:/tenants/b', name: 'b' },
+          { metadata: expect.objectContaining({ clientId: 'adsp-mcp', realm: 'b-realm' }) },
+        ),
+      );
+    });
+
+    it('can report realms that already have the client without auditing them', async () => {
+      repositoryMock.find.mockResolvedValueOnce([entity('a')]);
+      realmServiceMock.addAdspMcpClient.mockResolvedValueOnce('present');
+
+      const body = await run();
+
+      expect(body.summary).toEqual({ added: 0, present: 1, wouldAdd: 0, failed: 0 });
+      expect(body.results[0].status).toBe('present');
+      expect(auditServiceMock.record).not.toHaveBeenCalled();
+    });
+
+    it('can preview in a dry run', async () => {
+      repositoryMock.find.mockResolvedValueOnce([entity('a'), entity('b')]);
+      realmServiceMock.addAdspMcpClient.mockResolvedValueOnce('wouldAdd').mockResolvedValueOnce('present');
+
+      const body = await run({ dryRun: 'true' });
+
+      expect(realmServiceMock.addAdspMcpClient).toHaveBeenCalledWith('a-realm', true);
+      expect(body.dryRun).toBe(true);
+      expect(body.summary).toEqual({ added: 0, present: 1, wouldAdd: 1, failed: 0 });
+      expect(auditServiceMock.record).not.toHaveBeenCalled();
+    });
+
+    it('can continue past a failed realm and report the reason', async () => {
+      repositoryMock.find.mockResolvedValueOnce([entity('a'), entity('b')]);
+      realmServiceMock.addAdspMcpClient
+        .mockRejectedValueOnce(new Error('Request failed with status code 403'))
+        .mockResolvedValueOnce('added');
+
+      const body = await run();
+
+      expect(body.summary).toEqual({ added: 1, present: 0, wouldAdd: 0, failed: 1 });
+      expect(body.results[0]).toMatchObject({
+        realm: 'a-realm',
+        status: 'failed',
+        reason: 'Request failed with status code 403',
+      });
+      expect(body.results[1]).toMatchObject({ realm: 'b-realm', status: 'added' });
+      expect(auditServiceMock.record).toHaveBeenCalledWith(
+        expect.objectContaining({ name: 'tenant.realm-client-added' }),
+        tenantAudit(
+          { id: 'urn:ads:platform:tenant-service:v2:/tenants/a' },
+          { status: 'failure', metadata: expect.objectContaining({ error: 'Request failed with status code 403' }) },
+        ),
+      );
+    });
+
+    it('can report a failed realm in a dry run without auditing it', async () => {
+      repositoryMock.find.mockResolvedValueOnce([entity('a')]);
+      realmServiceMock.addAdspMcpClient.mockRejectedValueOnce(new Error('oh noes!'));
+
+      const body = await run({ dryRun: 'true' });
+
+      expect(body.summary.failed).toBe(1);
+      expect(auditServiceMock.record).not.toHaveBeenCalled();
+    });
+
+    it('can limit the backfill to one realm', async () => {
+      repositoryMock.find.mockResolvedValueOnce([entity('a')]);
+      realmServiceMock.addAdspMcpClient.mockResolvedValueOnce('added');
+
+      await run({ realm: 'a-realm' });
+
+      expect(repositoryMock.find).toHaveBeenCalledWith({ realmEquals: 'a-realm' });
+    });
+
+    it('can call next when tenants cannot be found', async () => {
+      const req = { query: {}, user: adminUser };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+      const error = new Error('oh noes!');
+      repositoryMock.find.mockRejectedValueOnce(error);
+
+      await createHandler()(req as unknown as Request, res as unknown as Response, next);
+
+      expect(next).toHaveBeenCalledWith(error);
+      expect(res.send).not.toHaveBeenCalled();
     });
   });
 

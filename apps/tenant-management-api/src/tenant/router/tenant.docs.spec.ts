@@ -34,6 +34,7 @@ describe('tenant routers documented behaviour', () => {
   const repositoryMock = { find: jest.fn(), get: jest.fn(), save: jest.fn(), delete: jest.fn() };
   const realmServiceMock = {
     createRealm: jest.fn(),
+    addAdspMcpClient: jest.fn(),
     disableRealm: jest.fn(),
     enableRealm: jest.fn(),
     deleteRealm: jest.fn(),
@@ -171,6 +172,7 @@ describe('tenant routers documented behaviour', () => {
     });
     repositoryMock.delete.mockResolvedValue(true);
     realmServiceMock.createRealm.mockResolvedValue(undefined);
+    realmServiceMock.addAdspMcpClient.mockResolvedValue('added');
     realmServiceMock.disableRealm.mockResolvedValue(undefined);
     realmServiceMock.enableRealm.mockResolvedValue(undefined);
     realmServiceMock.deleteRealm.mockResolvedValue(true);
@@ -314,7 +316,9 @@ describe('tenant routers documented behaviour', () => {
       });
 
       it('responds 404 to a tenant user without a tenant ID', async () => {
-        const res = await request(createApp(user('no-tenant', [], { tenantId: undefined }))).get('/api/tenant/v1/realm/test-realm');
+        const res = await request(createApp(user('no-tenant', [], { tenantId: undefined }))).get(
+          '/api/tenant/v1/realm/test-realm',
+        );
         expect(res.status).toBe(404);
       });
 
@@ -370,7 +374,9 @@ describe('tenant routers documented behaviour', () => {
       });
 
       it('responds 404 to a tenant user without a tenant ID', async () => {
-        const res = await request(createApp(user('no-tenant', [], { tenantId: undefined }))).post(`/api/tenant/v1/${path}`).send(found);
+        const res = await request(createApp(user('no-tenant', [], { tenantId: undefined })))
+          .post(`/api/tenant/v1/${path}`)
+          .send(found);
         expect(res.status).toBe(404);
       });
       it.each([{ $ne: null }, { $regex: '.*' }, ['admin@other.co'], ''])(
@@ -815,6 +821,64 @@ describe('tenant routers documented behaviour', () => {
       it('responds 401 without a bearer token', async () => {
         const res = await request(createApp(null)).post('/api/tenant/v2/tenants/other/restore');
         expect(res.status).toBe(401);
+      });
+    });
+
+    describe('POST /api/tenant/v2/realms/adsp-mcp-client', () => {
+      it('allows a core tenant-service-admin to add the client to every tenant realm', async () => {
+        tenants[1].archive();
+        const res = await request(createApp(serviceAdmin)).post('/api/tenant/v2/realms/adsp-mcp-client');
+        expect(res.status).toBe(200);
+        expect(res.body).toMatchObject({
+          dryRun: false,
+          summary: { added: 2, present: 0, wouldAdd: 0, failed: 0 },
+          results: [
+            { realm: 'test-realm', status: 'added' },
+            { realm: 'other-realm', status: 'added' },
+          ],
+        });
+      });
+
+      it('previews a dry run', async () => {
+        realmServiceMock.addAdspMcpClient.mockResolvedValue('wouldAdd');
+        const res = await request(createApp(serviceAdmin)).post(
+          '/api/tenant/v2/realms/adsp-mcp-client?dryRun=true&realm=other-realm',
+        );
+        expect(res.status).toBe(200);
+        expect(res.body).toMatchObject({ dryRun: true, results: [{ realm: 'other-realm', status: 'wouldAdd' }] });
+        expect(realmServiceMock.addAdspMcpClient).toHaveBeenCalledWith('other-realm', true);
+      });
+
+      it('responds 200 and reports a failed realm', async () => {
+        realmServiceMock.addAdspMcpClient.mockRejectedValueOnce(new Error('oh noes!'));
+        const res = await request(createApp(serviceAdmin)).post('/api/tenant/v2/realms/adsp-mcp-client');
+        expect(res.status).toBe(200);
+        expect(res.body.summary).toEqual({ added: 1, present: 0, wouldAdd: 0, failed: 1 });
+        expect(res.body.results[0]).toMatchObject({ status: 'failed', reason: 'oh noes!' });
+      });
+
+      it('responds 400 for an invalid dryRun value', async () => {
+        const res = await request(createApp(serviceAdmin)).post('/api/tenant/v2/realms/adsp-mcp-client?dryRun=maybe');
+        expect(res.status).toBe(400);
+        expect(realmServiceMock.addAdspMcpClient).not.toHaveBeenCalled();
+      });
+
+      it('rejects a tenant-admin', async () => {
+        const res = await request(createApp(tenantAdmin)).post('/api/tenant/v2/realms/adsp-mcp-client');
+        expect(res.status).toBe(401);
+        expect(realmServiceMock.addAdspMcpClient).not.toHaveBeenCalled();
+      });
+
+      it('responds 401 without a bearer token', async () => {
+        const res = await request(createApp(null)).post('/api/tenant/v2/realms/adsp-mcp-client');
+        expect(res.status).toBe(401);
+      });
+
+      it('responds 429 when the rate limit is exceeded', async () => {
+        const res = await exhaustRateLimit(createRateLimitedApp(serviceAdmin), (agent) =>
+          agent.post('/api/tenant/v2/realms/adsp-mcp-client?dryRun=true'),
+        );
+        expect(res.status).toBe(429);
       });
     });
   });

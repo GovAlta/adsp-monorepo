@@ -64,12 +64,23 @@ export const TenantUpdatedAuditAction: AuditAction = {
   description: 'Tenant metadata is updated.',
 };
 
+export const TenantRealmClientAddedAuditAction: AuditAction = {
+  name: 'tenant.realm-client-added',
+  version: 1,
+  category: AuditCategories.Administrative,
+  severity: AuditSeverities.Warning,
+  retentionClass: BuiltInRetentionClasses.Compliance,
+  resourceType: TENANT_RESOURCE_TYPE,
+  description: 'A platform client is added to the realm of an existing tenant.',
+};
+
 export const TenantAuditActions: AuditAction[] = [
   TenantCreatedAuditAction,
   TenantDeletedAuditAction,
   TenantArchivedAuditAction,
   TenantRestoredAuditAction,
   TenantUpdatedAuditAction,
+  TenantRealmClientAddedAuditAction,
 ];
 
 export interface AuditedTenant {

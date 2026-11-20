@@ -40,12 +40,12 @@ It bundles the ADSP documentation site content, the OpenAPI specs of ADSP servic
 `find_adsp_services` takes one `need`, or several requirement lines as `needs`, and returns `structuredContent` that
 matches the tool's `outputSchema`, with the same JSON as text. For each need:
 
-| Field | Meaning |
-|---|---|
-| `matches` | Up to five services, best first. Each has `service`, `fit` (`strong`, `partial` or `weak`) and `reason`, the catalog sentence that best explains the match. With `response_format: "detailed"`, each also has `name`, `dependsOn`, `registration`, `doc`, `fitQuestions`, `risks` and `specialist`. |
-| `ask` | `true` when no match is strong, or more than one is. The agent should ask the user instead of choosing. |
-| `fitQuestions` | What to ask when `ask` is `true`: each candidate's fit questions, or what the service is for. |
-| `noMatch` | Present when no service fits the need, or when the need hits a gap a planner pattern records, such as fee payment. A known gap carries the pattern's `reason` and `suggestedApproach`. |
+| Field          | Meaning                                                                                                                                                                                                                                                                                             |
+| -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `matches`      | Up to five services, best first. Each has `service`, `fit` (`strong`, `partial` or `weak`) and `reason`, the catalog sentence that best explains the match. With `response_format: "detailed"`, each also has `name`, `dependsOn`, `registration`, `doc`, `fitQuestions`, `risks` and `specialist`. |
+| `ask`          | `true` when no match is strong, or more than one is. The agent should ask the user instead of choosing.                                                                                                                                                                                             |
+| `fitQuestions` | What to ask when `ask` is `true`: each candidate's fit questions, or what the service is for.                                                                                                                                                                                                       |
+| `noMatch`      | Present when no service fits the need, or when the need hits a gap a planner pattern records, such as fee payment. A known gap carries the pattern's `reason` and `suggestedApproach`.                                                                                                              |
 
 `registration` says how a service built with `@abgov/adsp-service-sdk` sets the service up: `fields` lists the
 `ServiceRegistration` fields the SDK writes to it (`fileTypes` for file-service), and `serviceConfigurations` is the
@@ -116,32 +116,32 @@ Add it to your MCP client's server config, run via `npx`:
 To host the server instead of running it per user, start it with `MCP_TRANSPORT=http`. It serves Streamable HTTP
 on two endpoints, with a liveness check at `GET /health` and a readiness check at `GET /ready`:
 
-| Endpoint | Sign-in | Tools |
-|---|---|---|
-| `POST /mcp` | Never asked for; a token sent here is ignored | The 10 tools that answer from bundled content. `list_service_roles` and `get_service_configuration_schema` aren't listed, and calling them answers with an error saying to sign in at `/mcp/<tenant realm>` |
-| `POST /mcp/<tenant realm>` | Required for that tenant realm (see [Signing in](#signing-in)) | All 12 |
+| Endpoint                   | Sign-in                                                        | Tools                                                                                                                                                                                                       |
+| -------------------------- | -------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `POST /mcp`                | Never asked for; a token sent here is ignored                  | The 10 tools that answer from bundled content. `list_service_roles` and `get_service_configuration_schema` aren't listed, and calling them answers with an error saying to sign in at `/mcp/<tenant realm>` |
+| `POST /mcp/<tenant realm>` | Required for that tenant realm (see [Signing in](#signing-in)) | All 12                                                                                                                                                                                                      |
 
 Without the three sign-in settings below, the server serves only `/mcp`. There is no way to call the live tools
 without signing in: anyone who can't sign in, and needs them, runs the server locally over stdio, as in
 [Usage](#usage).
 
-| Variable | Default | Purpose |
-|---|---|---|
-| `MCP_TRANSPORT` | `stdio` | `http` to serve HTTP |
-| `PORT` | `3000` | Port to listen on |
-| `MCP_PUBLIC_URL` | unset | The server's external base URL, for example `https://adsp-sdk-mcp.example`. Used in the sign-in metadata and the `WWW-Authenticate` header, never taken from request headers |
-| `ADSP_ACCESS_SERVICE_URL` | unset | Keycloak base URL. A realm's issuer is `<url>/auth/realms/<realm>` and its signing keys are read from there |
-| `ADSP_DIRECTORY_SERVICE_URL` | unset | Directory service the live tools use to find ADSP services. Set all three sign-in settings to serve `/mcp/<tenant realm>` |
-| `CORS_ORIGIN` | unset | Comma-separated browser origins allowed to call `/mcp` and `/mcp/<tenant realm>`, for example `https://a.example,https://b.example`. Unset allows none; `*` allows any (not for hosted use) |
-| `MCP_MAX_IN_FLIGHT` | `64` | Requests handled at once per process, on each endpoint: `POST /mcp`, and signed-in `POST /mcp/<tenant realm>`. Each endpoint has its own slots, so requests without a token can't take the ones signed-in callers need |
-| `MCP_IN_FLIGHT_WAIT_MS` | `1000` | How long a request waits for a free slot before getting `503`. Also how long a live tool waits for a free upstream slot |
-| `MCP_RATE_LIMIT_PER_MINUTE` | `1200` | `POST /mcp` and `POST /mcp/<tenant realm>` requests allowed per client IP per minute, per process, counted together. `0` turns the limit off |
-| `MCP_LIVE_TOOL_MAX_CONCURRENT` | `8` | Live-tool calls to ADSP running at once per process, across both live tools |
-| `MCP_SHUTDOWN_DELAY_MS` | `5000` | After a shutdown signal, how long to keep serving with `/ready` failing, so the router stops sending traffic first |
-| `MCP_SHUTDOWN_TIMEOUT_MS` | `30000` | Hard deadline from the signal to exit, even if a request is still running. Must be longer than the delay |
-| `TRUSTED_PROXY` | `uniquelocal` | Express [`trust proxy`](https://expressjs.com/en/guide/behind-proxies.html) setting, so the client IP comes from the router's `X-Forwarded-For` |
-| `OTEL_EXPORTER_OTLP_ENDPOINT` | unset | OTLP/HTTP collector base URL. When set, metrics are exported to `<endpoint>/v1/metrics` |
-| `OTEL_METRIC_EXPORT_INTERVAL` | `60000` | Metric export interval, in milliseconds |
+| Variable                       | Default       | Purpose                                                                                                                                                                                                                |
+| ------------------------------ | ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `MCP_TRANSPORT`                | `stdio`       | `http` to serve HTTP                                                                                                                                                                                                   |
+| `PORT`                         | `3000`        | Port to listen on                                                                                                                                                                                                      |
+| `MCP_PUBLIC_URL`               | unset         | The server's external base URL, for example `https://adsp-sdk-mcp.example`. Used in the sign-in metadata and the `WWW-Authenticate` header, never taken from request headers                                           |
+| `ADSP_ACCESS_SERVICE_URL`      | unset         | Keycloak base URL. A realm's issuer is `<url>/auth/realms/<realm>` and its signing keys are read from there                                                                                                            |
+| `ADSP_DIRECTORY_SERVICE_URL`   | unset         | Directory service the live tools use to find ADSP services. Set all three sign-in settings to serve `/mcp/<tenant realm>`                                                                                              |
+| `CORS_ORIGIN`                  | unset         | Comma-separated browser origins allowed to call `/mcp` and `/mcp/<tenant realm>`, for example `https://a.example,https://b.example`. Unset allows none; `*` allows any (not for hosted use)                            |
+| `MCP_MAX_IN_FLIGHT`            | `64`          | Requests handled at once per process, on each endpoint: `POST /mcp`, and signed-in `POST /mcp/<tenant realm>`. Each endpoint has its own slots, so requests without a token can't take the ones signed-in callers need |
+| `MCP_IN_FLIGHT_WAIT_MS`        | `1000`        | How long a request waits for a free slot before getting `503`. Also how long a live tool waits for a free upstream slot                                                                                                |
+| `MCP_RATE_LIMIT_PER_MINUTE`    | `1200`        | `POST /mcp` and `POST /mcp/<tenant realm>` requests allowed per client IP per minute, per process, counted together. `0` turns the limit off                                                                           |
+| `MCP_LIVE_TOOL_MAX_CONCURRENT` | `8`           | Live-tool calls to ADSP running at once per process, across both live tools                                                                                                                                            |
+| `MCP_SHUTDOWN_DELAY_MS`        | `5000`        | After a shutdown signal, how long to keep serving with `/ready` failing, so the router stops sending traffic first                                                                                                     |
+| `MCP_SHUTDOWN_TIMEOUT_MS`      | `30000`       | Hard deadline from the signal to exit, even if a request is still running. Must be longer than the delay                                                                                                               |
+| `TRUSTED_PROXY`                | `uniquelocal` | Express [`trust proxy`](https://expressjs.com/en/guide/behind-proxies.html) setting, so the client IP comes from the router's `X-Forwarded-For`                                                                        |
+| `OTEL_EXPORTER_OTLP_ENDPOINT`  | unset         | OTLP/HTTP collector base URL. When set, metrics are exported to `<endpoint>/v1/metrics`                                                                                                                                |
+| `OTEL_METRIC_EXPORT_INTERVAL`  | `60000`       | Metric export interval, in milliseconds                                                                                                                                                                                |
 
 An invalid value for one of the `MCP_*` numbers, `*` mixed with origins in `CORS_ORIGIN`, some but not all of the
 three sign-in settings, or a sign-in URL that isn't `https` (plain `http` is allowed only for `localhost` and `127.0.0.1`) stops the server at
@@ -184,8 +184,9 @@ with the caller's token and `ADSP_DIRECTORY_SERVICE_URL`. The host needs no `ads
 `ADSP_CLIENT_SECRET`. If ADSP rejects the token, the tool answers "Your sign-in was rejected or has expired. Sign in
 again from your MCP client." The tool descriptions still mention `adsp-cli login`, which applies only to stdio.
 
-A realm can sign in only if it has the `adsp-mcp` client. New tenant realms get it when they're created; existing
-realms need it added.
+A realm can sign in only if it has the `adsp-mcp` client. New tenant realms get it when they're created; a platform
+administrator adds it to existing realms with the tenant service, see
+[Add the adsp-mcp client to existing realms](../../docs/services/tenant-service.md#add-the-adsp-mcp-client-to-existing-realms).
 
 Connecting each supported client, with `<url>` standing for `<MCP_PUBLIC_URL>/mcp/<tenant realm>`:
 
@@ -255,10 +256,10 @@ Things to know when sizing and tuning these:
   deployment shows which client IPs reach the pod.
 - **Clients don't retry.** Measured locally with `MCP_MAX_IN_FLIGHT=2` and both slots held:
 
-  | Client | Over the cap for longer than `MCP_IN_FLIGHT_WAIT_MS` | Over the cap briefly (`MCP_IN_FLIGHT_WAIT_MS=3000`, slots freed after 0.5 s) |
-  |---|---|---|
-  | `@modelcontextprotocol/sdk` 1.32.1 | `connect()` throws `StreamableHTTPError` (code 503) after the wait. One request, no retry, `Retry-After` ignored | Connects and calls the tool after about 0.5 s |
-  | `@mastra/mcp` 1.8.1 | Logs `MCP_CLIENT_GET_TOOLS_FAILED` and `listTools()` returns no tools from this server, without throwing. One request, no retry | Lists all tools and calls one after about 0.5 s |
+  | Client                             | Over the cap for longer than `MCP_IN_FLIGHT_WAIT_MS`                                                                            | Over the cap briefly (`MCP_IN_FLIGHT_WAIT_MS=3000`, slots freed after 0.5 s) |
+  | ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+  | `@modelcontextprotocol/sdk` 1.32.1 | `connect()` throws `StreamableHTTPError` (code 503) after the wait. One request, no retry, `Retry-After` ignored                | Connects and calls the tool after about 0.5 s                                |
+  | `@mastra/mcp` 1.8.1                | Logs `MCP_CLIENT_GET_TOOLS_FAILED` and `listTools()` returns no tools from this server, without throwing. One request, no retry | Lists all tools and calls one after about 0.5 s                              |
 
   So a `503` becomes a failed tool call, or an agent turn with no ADSP tools at all. Size `MCP_MAX_IN_FLIGHT` and
   the replica count so it stays rare, and watch `mcp.requests.rejected`.
@@ -269,17 +270,17 @@ In HTTP mode with `OTEL_EXPORTER_OTLP_ENDPOINT` set, the server exports these Op
 `adsp-sdk-mcp-server`, resource `service.name=adsp-sdk-mcp-server`). With no endpoint, nothing is created and the
 OpenTelemetry SDK isn't loaded. Stdio mode never exports metrics.
 
-| Name | Kind | Unit | Labels | Meaning |
-|---|---|---|---|---|
-| `mcp.requests.in_flight` | UpDownCounter | `{request}` | none | `POST /mcp` and `POST /mcp/<tenant realm>` requests admitted by the in-flight cap and not yet answered (waiting requests aren't counted) |
-| `mcp.requests.rejected` | Counter | `{request}` | `reason` | Requests or tool calls refused by an overload guard or by sign-in |
-| `mcp.request.duration` | Histogram | `s` | `mcp.method.name`, and `http.response.status_code` or `error.type=aborted` | Time to answer a `POST /mcp` request, or a `POST /mcp/<tenant realm>` request that passed sign-in, or until the client disconnected |
-| `mcp.tool.duration` | Histogram | `s` | `mcp.tool.name`, `error.type` (absent on success) | Time to run a tool call |
-| `mcp.live_tool.upstream.errors` | Counter | `{error}` | `mcp.tool.name`, `error.type` | Failed ADSP calls from `list_service_roles` and `get_service_configuration_schema` |
-| `nodejs.eventloop.delay.p50`, `.p99`, `.max` | Gauge | `s` | none | Event-loop delay since the previous export |
-| `v8js.memory.heap.used` | Gauge | `By` | none | V8 heap in use |
-| `process.memory.usage` | Gauge | `By` | none | Resident set size |
-| `mcp.docs_index.build.duration` | Histogram | `s` | none | Time to build the docs index, once per process at startup |
+| Name                                         | Kind          | Unit        | Labels                                                                     | Meaning                                                                                                                                  |
+| -------------------------------------------- | ------------- | ----------- | -------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `mcp.requests.in_flight`                     | UpDownCounter | `{request}` | none                                                                       | `POST /mcp` and `POST /mcp/<tenant realm>` requests admitted by the in-flight cap and not yet answered (waiting requests aren't counted) |
+| `mcp.requests.rejected`                      | Counter       | `{request}` | `reason`                                                                   | Requests or tool calls refused by an overload guard or by sign-in                                                                        |
+| `mcp.request.duration`                       | Histogram     | `s`         | `mcp.method.name`, and `http.response.status_code` or `error.type=aborted` | Time to answer a `POST /mcp` request, or a `POST /mcp/<tenant realm>` request that passed sign-in, or until the client disconnected      |
+| `mcp.tool.duration`                          | Histogram     | `s`         | `mcp.tool.name`, `error.type` (absent on success)                          | Time to run a tool call                                                                                                                  |
+| `mcp.live_tool.upstream.errors`              | Counter       | `{error}`   | `mcp.tool.name`, `error.type`                                              | Failed ADSP calls from `list_service_roles` and `get_service_configuration_schema`                                                       |
+| `nodejs.eventloop.delay.p50`, `.p99`, `.max` | Gauge         | `s`         | none                                                                       | Event-loop delay since the previous export                                                                                               |
+| `v8js.memory.heap.used`                      | Gauge         | `By`        | none                                                                       | V8 heap in use                                                                                                                           |
+| `process.memory.usage`                       | Gauge         | `By`        | none                                                                       | Resident set size                                                                                                                        |
+| `mcp.docs_index.build.duration`              | Histogram     | `s`         | none                                                                       | Time to build the docs index, once per process at startup                                                                                |
 
 Every label takes a value from a fixed set:
 

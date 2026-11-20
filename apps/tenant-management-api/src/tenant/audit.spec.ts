@@ -46,6 +46,11 @@ describe('tenant audit', () => {
           severity: 'warning',
           retentionClass: 'compliance',
         }),
+        'tenant.realm-client-added': expect.objectContaining({
+          category: 'administrative',
+          severity: 'warning',
+          retentionClass: 'compliance',
+        }),
       });
     });
   });

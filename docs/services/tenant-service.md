@@ -21,11 +21,11 @@ client `urn:ads:platform:tenant-service`
 
 Tenant service also checks two core realm roles. They are realm roles of the `core` realm, not client roles, and are not registered by tenant service:
 
-| name                 | description                                                                                                                                                                     |
-| :------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| tenant-service-admin | Platform administrator role. Allows creating tenants for any administrator or with an existing realm, renaming tenants, and archiving, restoring, and listing archived tenants. |
-| tenant-purge         | Allows a `tenant-service-admin` to permanently delete (purge) an archived tenant.                                                                                               |
-| beta-tester          | Allows a core user to create a tenant with a new realm, with themselves as the administrator.                                                                                   |
+| name                 | description                                                                                                                                                                                                                 |
+| :------------------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| tenant-service-admin | Platform administrator role. Allows creating tenants for any administrator or with an existing realm, renaming tenants, archiving, restoring, and listing archived tenants, and adding platform clients to existing realms. |
+| tenant-purge         | Allows a `tenant-service-admin` to permanently delete (purge) an archived tenant.                                                                                                                                           |
+| beta-tester          | Allows a core user to create a tenant with a new realm, with themselves as the administrator.                                                                                                                               |
 
 No API operation checks the `platform-service` role: any authenticated core user or service account can read tenants. Services usually read tenants through the `tenantService` of the [Node.js SDK](../platform/platform-node-sdk.md) instead of calling the API.
 
@@ -44,14 +44,15 @@ Search results only include `active` tenants. A tenant that is still `provisioni
 
 All endpoints are under `https://tenant-service.adsp.alberta.ca`. See the [API documentation](https://api.adsp.alberta.ca) for request and response schemas. Role checks in this API respond `401`, not `403`, when the user lacks the role.
 
-| Endpoint                                   | Purpose                                                                                                          | Required role                                                                 |
-| :----------------------------------------- | :--------------------------------------------------------------------------------------------------------------- | :---------------------------------------------------------------------------- |
-| `GET /api/tenant/v2/tenants`               | Search for tenants by name, realm, or administrator email. `status=archived` finds archived tenants.             | None; anonymous with `name` or `realm`. Archived: core `tenant-service-admin` |
-| `POST /api/tenant/v2/tenants`              | Create a tenant.                                                                                                 | core `beta-tester` or `tenant-service-admin`                                  |
-| `GET /api/tenant/v2/tenants/{id}`          | Retrieve a tenant.                                                                                               | Any authenticated user; tenant users only their own tenant                    |
-| `PATCH /api/tenant/v2/tenants/{id}/name`   | Rename a tenant. Rate limited.                                                                                   | core `tenant-service-admin`                                                   |
-| `DELETE /api/tenant/v2/tenants/{id}`       | Archive a tenant and disable its realm. With `?purge=true`, permanently delete an archived tenant and its realm. | core `tenant-service-admin`; purge also requires core `tenant-purge`          |
-| `POST /api/tenant/v2/tenants/{id}/restore` | Restore an archived tenant and enable its realm.                                                                 | core `tenant-service-admin`                                                   |
+| Endpoint                                     | Purpose                                                                                                                                                           | Required role                                                                 |
+| :------------------------------------------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------- | :---------------------------------------------------------------------------- |
+| `GET /api/tenant/v2/tenants`                 | Search for tenants by name, realm, or administrator email. `status=archived` finds archived tenants.                                                              | None; anonymous with `name` or `realm`. Archived: core `tenant-service-admin` |
+| `POST /api/tenant/v2/tenants`                | Create a tenant.                                                                                                                                                  | core `beta-tester` or `tenant-service-admin`                                  |
+| `GET /api/tenant/v2/tenants/{id}`            | Retrieve a tenant.                                                                                                                                                | Any authenticated user; tenant users only their own tenant                    |
+| `PATCH /api/tenant/v2/tenants/{id}/name`     | Rename a tenant. Rate limited.                                                                                                                                    | core `tenant-service-admin`                                                   |
+| `DELETE /api/tenant/v2/tenants/{id}`         | Archive a tenant and disable its realm. With `?purge=true`, permanently delete an archived tenant and its realm.                                                  | core `tenant-service-admin`; purge also requires core `tenant-purge`          |
+| `POST /api/tenant/v2/tenants/{id}/restore`   | Restore an archived tenant and enable its realm.                                                                                                                  | core `tenant-service-admin`                                                   |
+| `POST /api/tenant/v2/realms/adsp-mcp-client` | Add the `adsp-mcp` client to existing tenant realms. See [Add the adsp-mcp client to existing realms](#add-the-adsp-mcp-client-to-existing-realms). Rate limited. | core `tenant-service-admin`                                                   |
 
 The following `/api/tenant/v1` endpoints are deprecated. They are documented in the API documentation so that existing callers can find their replacements:
 
@@ -89,6 +90,37 @@ A user can be the administrator of only one tenant, unless a `tenant-service-adm
 
 Each tenant has its own Keycloak realm, which signs the access tokens of the tenant's users and service accounts. Platform services read the token issuer to work out which tenant a request is for. A new realm is created when a tenant is created, with the administrator given the `tenant-admin` role and clients for the platform apps and services. A `tenant-service-admin` can instead associate a tenant with an existing realm. Archiving a tenant disables its realm, so users can no longer sign in, but doesn't delete it. A realm is only deleted when its tenant is purged.
 
+### Add the adsp-mcp client to existing realms
+
+The `adsp-mcp` client lets developers sign in to the hosted ADSP SDK MCP server at `/mcp/<tenant realm>`. New realms get it when they are created. Realms created before it existed need it added with `POST /api/tenant/v2/realms/adsp-mcp-client`, run once in each environment (dev, test, prod) when the hosted MCP server is released there.
+
+The operation processes the realm of every `active` and `archived` tenant, one realm at a time. Tenants that are still `provisioning` are skipped. For each realm it reports one of:
+
+- `added`: the client was added, configured as it is for a new realm, and a `tenant.realm-client-added` audit event was recorded.
+- `present`: the realm already had the client, and it was left unchanged.
+- `wouldAdd`: a dry run found that the realm doesn't have the client.
+- `failed`: the realm couldn't be changed; `reason` says why. Other realms are still processed. If the client was created but its scope mappings could not be granted, it is removed again so a re-run retries the realm.
+
+To run it in an environment, with an access token from the `core` realm for a user with the `tenant-service-admin` role:
+
+1. Preview the change. Check that `summary.failed` is 0 and that the `wouldAdd` realms are the ones you expect.
+
+   ```bash
+   curl -X POST -H "Authorization: Bearer $TOKEN" "$TENANT_SERVICE_URL/api/tenant/v2/realms/adsp-mcp-client?dryRun=true"
+   ```
+
+2. Run the backfill and keep the response as the record of the run.
+
+   ```bash
+   curl -X POST -H "Authorization: Bearer $TOKEN" "$TENANT_SERVICE_URL/api/tenant/v2/realms/adsp-mcp-client"
+   ```
+
+3. For each `failed` realm, fix the cause in the `reason` and retry only that realm by adding `&realm=<realm>` (or `?realm=<realm>`). A `403` usually means the tenant service's realm admin client (`KEYCLOAK_TENANT_REALM_ADMIN_CLIENT_ID`) can't manage clients in that realm, for example a realm that wasn't created by tenant service.
+4. Run the dry run again. Every realm should be `present`, and none `wouldAdd` or `failed`.
+5. Sign in to the hosted MCP server at `/mcp/<tenant realm>` as a user of an existing tenant and check that `list_service_roles` succeeds.
+
+The operation doesn't change the `core` realm.
+
 ## Events
 
 Tenant service sends the following domain events under the `tenant-service` namespace. It doesn't consume events.
@@ -104,13 +136,14 @@ Tenant service sends the following domain events under the `tenant-service` name
 
 Tenant service records audit events in the `tenant-service` namespace of the [audit service](audit-service.md). Records are written to the affected tenant, with the tenant as the resource (`{ type: 'tenant', id: <tenant URN> }`) and the tenant name and realm in the metadata.
 
-| action          | category       | severity | retention class | recorded when                                                                                                                              |
-| :-------------- | :------------- | :------- | :-------------- | :----------------------------------------------------------------------------------------------------------------------------------------- |
-| tenant.created  | administrative | info     | compliance      | A tenant is created with an existing realm, or a new realm is provisioned for it. A failed provisioning is recorded with `failure` status. |
-| tenant.deleted  | administrative | critical | compliance      | A tenant is permanently deleted (purged).                                                                                                  |
-| tenant.archived | administrative | warning  | compliance      | A tenant is archived and its realm disabled.                                                                                               |
-| tenant.restored | administrative | warning  | compliance      | An archived tenant is restored and its realm enabled.                                                                                      |
-| tenant.updated  | administrative | info     | compliance      | A tenant is renamed. The change set captures the name before and after.                                                                    |
+| action                    | category       | severity | retention class | recorded when                                                                                                                                                                                         |
+| :------------------------ | :------------- | :------- | :-------------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| tenant.created            | administrative | info     | compliance      | A tenant is created with an existing realm, or a new realm is provisioned for it. A failed provisioning is recorded with `failure` status.                                                            |
+| tenant.deleted            | administrative | critical | compliance      | A tenant is permanently deleted (purged).                                                                                                                                                             |
+| tenant.archived           | administrative | warning  | compliance      | A tenant is archived and its realm disabled.                                                                                                                                                          |
+| tenant.restored           | administrative | warning  | compliance      | An archived tenant is restored and its realm enabled.                                                                                                                                                 |
+| tenant.updated            | administrative | info     | compliance      | A tenant is renamed. The change set captures the name before and after.                                                                                                                               |
+| tenant.realm-client-added | administrative | warning  | compliance      | A platform client is added to the realm of an existing tenant. The metadata includes the `clientId`. A realm that fails is recorded with `failure` status and the `error`; a dry run records nothing. |
 
 Because the audit service resolves the tenant of each event, `tenant.deleted` is recorded before the realm and tenant are removed. If the removal does not fully succeed, a further `tenant.deleted` event is recorded with `failure` or `error` status; it cannot be stored if the tenant record itself was already removed.
 
