@@ -92,6 +92,17 @@ describe('createTenantRouter', () => {
     expect(res.status).toBe(200);
     expect(realmServiceMock.deleteUserIdp).toHaveBeenCalledWith('u', 'other-realm', undefined);
   });
+
+  it.each([
+    ['/name', 'name'],
+    ['/email', 'email'],
+  ])('rejects an operator object in a tenant lookup on %s', async (path, field) => {
+    const res = await request(app(coreUser))
+      .post(path)
+      .send({ [field]: { $ne: null } });
+    expect(res.status).toBe(400);
+    expect(repositoryMock.find).not.toHaveBeenCalled();
+  });
 });
 
 describe('tenant router lookups', () => {
