@@ -24,6 +24,7 @@ import * as HttpStatusCodes from 'http-status-codes';
 import { Request, RequestHandler, Router } from 'express';
 import { body, param, query } from 'express-validator';
 import { Logger } from 'winston';
+import { getRequiredTenantId } from './tenant';
 import {
   RegistrationReviewedAuditAction,
   RegistrationSubmittedAuditAction,
@@ -641,7 +642,7 @@ export function updateIntakeSchedule(calendarService: CalendarService): RequestH
   return async (req, res, next) => {
     try {
       const user = req.user;
-      const tenantId = req.tenant?.id;
+      const tenantId = getRequiredTenantId(req);
       const { start, end, name, calendarEventId } = req.body;
       const { definitionId } = req.params;
 
@@ -649,7 +650,7 @@ export function updateIntakeSchedule(calendarService: CalendarService): RequestH
         throw new UnauthorizedUserError('update schedule intake', user);
       }
 
-      const [definition] = await req.getServiceConfiguration<FormDefinitionEntity>(definitionId, req.tenant.id);
+      const [definition] = await req.getServiceConfiguration<FormDefinitionEntity>(definitionId, tenantId);
       if (!definition) {
         throw new InvalidOperationError(`Form definition not found`);
       }
@@ -747,13 +748,6 @@ const hasOnlyProperties = (allowed: string[]) => (value: unknown) => {
     throw new Error(`Unsupported properties: ${extra.join(', ')}`);
   }
   return true;
-};
-
-const getRequiredTenantId = (req: Request): AdspId => {
-  if (!req.tenant?.id) {
-    throw new InvalidOperationError('Tenant context is required for operation.');
-  }
-  return req.tenant.id;
 };
 
 const assertAllowed = (user: User, tenantId: AdspId, roles: string | string[], operation: string): void => {
