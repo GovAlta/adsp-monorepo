@@ -102,6 +102,7 @@ describe('adsp-sdk-mcp-server', () => {
         'read_adsp_doc',
         'search_sdk_reference',
         'get_platform_quickstart',
+        'diagnose_adsp_error',
         'list_service_roles',
         'get_service_configuration_schema',
         'get_adsp_mcp_server_info',

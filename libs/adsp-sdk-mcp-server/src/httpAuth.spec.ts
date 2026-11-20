@@ -28,6 +28,7 @@ const OFFLINE_TOOL_NAMES = [
   'read_adsp_doc',
   'search_sdk_reference',
   'get_platform_quickstart',
+  'diagnose_adsp_error',
   'get_adsp_mcp_server_info',
   'list_service_apis',
   'search_service_endpoints',
@@ -81,7 +82,7 @@ describe('HTTP sign-in', () => {
     const response = await postMcp(endpoint, TOOLS_LIST_REQUEST);
 
     expect(response.status).toBe(200);
-    expect((await response.json()).result.tools).toHaveLength(12);
+    expect((await response.json()).result.tools).toHaveLength(13);
   });
 
   it('rejects a token for another realm', async () => {

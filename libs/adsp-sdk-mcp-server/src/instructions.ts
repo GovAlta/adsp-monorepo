@@ -9,6 +9,7 @@ const TOOL_CHOICE = [
   '  has ask set, put its fitQuestions to the user rather than picking a service yourself. noMatch: no service fits.',
   '- Platform concepts or how-tos: search_adsp_docs, then read_adsp_doc. Browse services/ with list_adsp_docs.',
   '- Writing a Node service: get_platform_quickstart first, then search_sdk_reference for a specific symbol.',
+  '- An error from your service calling ADSP (a 401, 403, missing configuration or tenant): diagnose_adsp_error.',
   "- Calling a service's REST API: search_service_endpoints, then read_service_endpoint.",
 ];
 

@@ -9,6 +9,7 @@ import { OFFLINE_ENDPOINT_INSTRUCTIONS, SERVER_INSTRUCTIONS } from './instructio
 import { getMetrics, ToolErrorType } from './metrics';
 import { createApiTools } from './tools/registerApiTools';
 import { createConfigurationSchemaTools } from './tools/registerConfigurationSchemaTool';
+import { createDiagnoseTool } from './tools/registerDiagnoseTool';
 import { isBusyResult } from './tools/liveToolLimit';
 import { createDocsTools } from './tools/registerDocsTools';
 import { createFindServicesTool } from './tools/registerFindServicesTool';
@@ -64,15 +65,17 @@ export function loadAdspMcpTools(options: CreateAdspMcpServerOptions = {}): Adsp
 
   const started = performance.now();
   const docs = new DocsRepository(docsRoot);
+  const apis = lazy(() => new ApiSpecsRepository(apiSpecsRoot));
   const tools = [
     ...createFindServicesTool(lazy(() => loadCapabilityCatalog(capabilitiesPath))),
     ...createDocsTools(docs),
     ...createSdkTools(),
     ...createQuickstartTool(),
+    ...createDiagnoseTool(apis),
     ...createServiceRolesTools(),
     ...createConfigurationSchemaTools(),
     ...createServerInfoTool(docs),
-    ...createApiTools(lazy(() => new ApiSpecsRepository(apiSpecsRoot))),
+    ...createApiTools(apis),
   ];
   const offlineTools = tools.filter(isOfflineTool);
   const loaded = {
