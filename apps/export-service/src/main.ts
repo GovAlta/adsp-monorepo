@@ -17,14 +17,13 @@ import { promisify } from 'util';
 import { environment } from './environments/environment';
 import {
   applyExportMiddleware,
+  combineConfiguration, // clean-code-ignore: RULE-19 service bootstrap; combineConfiguration is covered by configuration.spec.ts
   configurationSchema,
-  ConfigurationValue,
   ExportCompletedDefinition,
   ExportFailedDefinition,
   ExportFileType,
   ExportGenerationUpdatesStream,
   ExportQueuedDefinition,
-  ExportServiceConfiguration,
   ExportServiceWorkItem,
   ServiceRoles,
 } from './export';
@@ -78,9 +77,7 @@ const initializeApp = async (): Promise<express.Application> => {
         schema: configurationSchema,
         description: 'Optional configuration of export sources to permit export by additional roles.',
       },
-      combineConfiguration: function (config: ConfigurationValue, coreConfig: ConfigurationValue, tenantId: AdspId) {
-        return new ExportServiceConfiguration({ ...config, ...coreConfig }, tenantId);
-      },
+      combineConfiguration,
       useLongConfigurationCacheTTL: true,
       events: [ExportQueuedDefinition, ExportCompletedDefinition, ExportFailedDefinition],
       eventStreams: [ExportGenerationUpdatesStream],
