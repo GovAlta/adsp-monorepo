@@ -1,4 +1,4 @@
-import { createPdfConfigurationTools } from './pdfConfiguration';
+import { createPdfConfigurationTools, unwrapDataVariables } from './pdfConfiguration';
 import axios from 'axios';
 
 jest.mock('axios');
@@ -173,5 +173,88 @@ describe('createPdfConfigurationTools', () => {
       expect(patched.footer).toBe('');
       expect(patched.additionalStyles).toBe('');
     });
+
+    describe('with long data URIs and comments', () => {
+      const logo = `data:image/svg+xml,${'%3Cpath/%3E'.repeat(30)}`;
+      const note = ` ${'Puppeteer sets the footer height from the page margins. '.repeat(5)}`;
+
+      beforeEach(() => {
+        mockedAxios.get.mockResolvedValue({
+          data: {
+            latest: {
+              configuration: {
+                'test-template': {
+                  ...savedConfiguration,
+                  footer: `<!--${note}--><img src="${logo}"> Page <span class="pageNumber"></span>`,
+                },
+              },
+            },
+          },
+        });
+      });
+
+      it('puts back the content of the placeholders the agent copied', async () => {
+        await tools.pdfConfigurationUpdateTool.execute(
+          {
+            footer:
+              '<!--[[elided-comment-1]]--><img src="[[elided-asset-2]]"> {{data.name}} - Page <span class="pageNumber"></span>',
+          },
+          { requestContext: mockRequestContext } as never,
+        );
+
+        expect(getPatchedTemplate().footer).toBe(
+          `<!--${note}--><img src="${logo}"> {{data.name}} - Page <span class="pageNumber"></span>`,
+        );
+      });
+
+      it('rejects a placeholder that stands for nothing without saving', async () => {
+        await expect(
+          tools.pdfConfigurationUpdateTool.execute({ footer: '<img src="[[elided-asset-9]]">' }, {
+            requestContext: mockRequestContext,
+          } as never),
+        ).rejects.toThrow(/Configuration was NOT saved[\s\S]*\[\[elided-asset-9\]\] does not stand for anything/);
+
+        expect(mockedAxios.patch).not.toHaveBeenCalled();
+      });
+
+      it('shows the model the template with placeholders', () => {
+        const output = tools.pdfConfigurationRetrievalTool.toModelOutput?.({
+          ...savedConfiguration,
+          footer: `<img src="${logo}">`,
+        } as never) as { type: string; value: string };
+
+        expect(output.type).toBe('text');
+        expect(output.value).toContain('=== footer ===\n<img src="[[elided-asset-1]]">');
+        expect(output.value).not.toContain('%3Cpath');
+      });
+    });
+
+    it('tells the model only that the save worked; the editor reads the full result from the stream', () => {
+      const output = tools.pdfConfigurationUpdateTool.toModelOutput?.({
+        ...savedConfiguration,
+        id: 'test-template',
+      } as never);
+
+      expect(output).toEqual({ type: 'text', value: 'Saved. The editor now shows the updated template.' });
+    });
+
+    it('saves variables wrapped in a data object at the root, where the template reads them', async () => {
+      await tools.pdfConfigurationUpdateTool.execute(
+        { template: '<p>{{data.applicant}}</p>', variables: '{"data": {"applicant": "Jane"}}' },
+        { requestContext: mockRequestContext } as never,
+      );
+
+      expect(JSON.parse(getPatchedTemplate().variables as string)).toEqual({ applicant: 'Jane' });
+    });
+  });
+});
+
+describe('unwrapDataVariables', () => {
+  it('keeps root-level variables, invalid JSON and a data variable the template reads', () => {
+    expect(unwrapDataVariables('{"data": {"a": 1}, "b": 2}', [''])).toBe('{"data": {"a": 1}, "b": 2}');
+    expect(unwrapDataVariables('{"data": [1]}', [''])).toBe('{"data": [1]}');
+    expect(unwrapDataVariables('{"data": {', [''])).toBe('{"data": {');
+    expect(unwrapDataVariables('{"data": {"a": 1}}', ['{{data.data.a}}'])).toBe('{"data": {"a": 1}}');
+    expect(unwrapDataVariables(undefined, [''])).toBeUndefined();
   });
 });
