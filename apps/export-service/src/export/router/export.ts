@@ -1,4 +1,4 @@
-import { AdspId, assertAdspId, EventService, isAllowedUser, UnauthorizedUserError } from '@abgov/adsp-service-sdk';
+import { AdspId, EventService, isAllowedUser, UnauthorizedUserError } from '@abgov/adsp-service-sdk';
 import {
   createValidationHandler,
   InvalidOperationError,
@@ -30,7 +30,9 @@ export function createExportJob(
       const { fileType, filename, format, formatOptions, resourceId: resourceIdValue, params, resultsPath } = req.body;
       const resourceId = AdspId.parse(resourceIdValue);
 
-      assertAdspId(resourceId, 'Value of resourceId must be a valid ADSP URN for an API resource.', 'resource');
+      if (resourceId.type !== 'resource') {
+        throw new InvalidOperationError('Value of resourceId must be a valid ADSP URN for an API resource.');
+      }
 
       const configuration = await req.getServiceConfiguration<ExportServiceConfiguration, ExportServiceConfiguration>(
         null,
