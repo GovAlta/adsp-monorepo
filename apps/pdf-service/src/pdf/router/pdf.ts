@@ -320,6 +320,10 @@ export function generatePdf(
         throw new UnauthorizedUserError('generate pdf', user);
       }
 
+      if (!tenantId) {
+        throw new InvalidOperationError('Tenant context is required to generate a PDF; specify tenantId.');
+      }
+
       if (fileType) {
         const typeExists = await fileService.typeExists(tenantId, fileType);
         if (!typeExists) {

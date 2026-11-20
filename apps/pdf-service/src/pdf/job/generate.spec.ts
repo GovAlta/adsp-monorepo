@@ -342,6 +342,33 @@ describe('generate', () => {
       });
     });
 
+    it('fails the job and sends failed event for an invalid tenant ID', async () => {
+      const item: PdfServiceWorkItem = {
+        tenantId: 'undefined',
+        work: 'generate',
+        jobId: uuid(),
+        timestamp: new Date(),
+        templateId: 'test-template',
+        fileType: GENERATED_PDF,
+        recordId: 'my-domain-record-1',
+        data: {},
+        context: {},
+        filename: 'test.pdf',
+        requestedBy: {
+          id: 'tester',
+          name: 'Testy McTester',
+        },
+      };
+
+      repositoryMock.update.mockRejectedValueOnce(new Error('cannot parse stored tenant'));
+      const done = jest.fn();
+      await job(item, false, done);
+      expect(done).toHaveBeenCalledWith(expect.any(Error));
+      expect(configurationServiceMock.getConfiguration).not.toHaveBeenCalled();
+      expect(repositoryMock.update).toHaveBeenCalledWith(item.jobId, 'failed');
+      expect(eventServiceMock.send).toHaveBeenCalledWith(expect.objectContaining({ name: PDF_GENERATION_FAILED }));
+    });
+
     it('can skip send failed event if retrying', (done) => {
       const item: PdfServiceWorkItem = {
         tenantId: `${tenantId}`,
