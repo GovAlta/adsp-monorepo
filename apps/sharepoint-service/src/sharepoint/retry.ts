@@ -91,12 +91,15 @@ export async function withRetry<T>(operation: () => Promise<T>, shouldRetry: (er
   }
 }
 
-export function requestWithRetry<T>(request: () => Promise<T>): Promise<T> {
+export function requestWithRetry<T>(
+  request: () => Promise<T>,
+  shouldRetry: (err: unknown) => boolean = isTransient,
+): Promise<T> {
   return withRetry(async () => {
     try {
       return await request();
     } catch (err) {
       throw toSharePointError(err);
     }
-  }, isTransient);
+  }, shouldRetry);
 }

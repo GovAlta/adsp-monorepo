@@ -34,6 +34,60 @@ describe('mapFields', () => {
   it('leaves the key column out when there is no key', () => {
     expect(mapFields([{ source: 'amount', target: 'Amount' }], { amount: 1 }, null)).toEqual({ Amount: 1 });
   });
+
+  it('maps values inside arrays', () => {
+    const fields = mapFields(
+      [{ source: 'dependents[1].name', target: 'SecondDependent' }],
+      { dependents: [{ name: 'Bo' }, { name: 'Cy' }] },
+      null,
+    );
+    expect(fields).toEqual({ SecondDependent: 'Cy' });
+  });
+
+  it('marks a multi-select answer as a collection so it fills a Choice (multiple) column', () => {
+    const fields = mapFields(
+      [{ source: 'contactMethods', target: 'ContactMethods' }],
+      {
+        contactMethods: ['Email', 'Phone'],
+      },
+      null,
+    );
+    expect(fields).toEqual({
+      'ContactMethods@odata.type': 'Collection(Edm.String)',
+      ContactMethods: ['Email', 'Phone'],
+    });
+  });
+
+  it('sends numbers in a multi-select answer as text', () => {
+    expect(mapFields([{ source: 'years', target: 'Years' }], { years: [2025, 2026] }, null).Years).toEqual([
+      '2025',
+      '2026',
+    ]);
+  });
+
+  it('sends an empty multi-select answer so a re-push clears the column', () => {
+    expect(mapFields([{ source: 'contactMethods', target: 'ContactMethods' }], { contactMethods: [] }, null)).toEqual({
+      'ContactMethods@odata.type': 'Collection(Edm.String)',
+      ContactMethods: [],
+    });
+  });
+
+  it('does not mark a single value or an array of objects as a collection', () => {
+    const fields = mapFields(
+      [
+        { source: 'name', target: 'Name' },
+        { source: 'dependents', target: 'Dependents' },
+      ],
+      { name: 'Ada', dependents: [{ name: 'Bo' }] },
+      null,
+    );
+    expect(fields).toEqual({ Name: 'Ada', Dependents: [{ name: 'Bo' }] });
+  });
+
+  it('does not let a multi-select mapping change the key column', () => {
+    const fields = mapFields([{ source: 'tags', target: ITEM_KEY_COLUMN }], { tags: ['a'] }, 'real-key');
+    expect(fields).toEqual({ [ITEM_KEY_COLUMN]: 'real-key' });
+  });
 });
 
 describe('itemKeyFor', () => {
@@ -51,6 +105,10 @@ describe('itemKeyFor', () => {
     expect(itemKeyFor(['_adsp.key'], { amount: 1, _adsp: { key: 'submission-1', formId: 'form-1' } })).toBe(
       'submission-1',
     );
+  });
+
+  it('reads a key field inside an array', () => {
+    expect(itemKeyFor(['applications[0].number'], { applications: [{ number: 'A-12' }] })).toBe('A-12');
   });
 
   it('rejects data missing a configured field', () => {

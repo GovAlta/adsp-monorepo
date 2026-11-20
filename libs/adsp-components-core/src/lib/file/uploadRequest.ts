@@ -46,7 +46,7 @@ export function sendUpload({ xhr, url, token, body, onProgress, signal }: Upload
             reject(toStatusError(xhr.status, undefined, 'File upload'));
           }
         } else {
-          reject(toStatusError(xhr.status, xhr.responseText, 'File upload'));
+          reject(toStatusError(xhr.status, xhr.responseText, 'File upload', !!token));
         }
       });
     xhr.onerror = () => settle(() => reject(new TypeError('File upload failed: network error.')));

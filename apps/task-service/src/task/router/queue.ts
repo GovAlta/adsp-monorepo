@@ -308,7 +308,7 @@ export function createTask(
     try {
       const user = req.user;
       const tenantId = req.tenant.id;
-      const { priority, ...task } = req.body;
+      const { name, description, recordId, context, data, definition, priority } = req.body;
 
       const queue: QueueEntity = req[QUEUE_KEY];
 
@@ -319,9 +319,14 @@ export function createTask(
       });
 
       const entity = await TaskEntity.create(user, repository, queue, {
+        name,
+        description,
+        recordId,
+        context,
+        data,
+        definition,
         tenantId,
-        priority: priority ? TaskPriority[priority] : null,
-        ...task,
+        priority: priority ? TaskPriority[priority as keyof typeof TaskPriority] : null,
       });
 
       const result = mapTask(apiId, entity);

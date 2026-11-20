@@ -36,7 +36,7 @@ Tenant service manages the tenants themselves, so it doesn't use the `tenantId` 
 - **Tenant users and service accounts** (with a token from a tenant realm) only find and retrieve their own tenant. `GET /api/tenant/v2/tenants` returns only their tenant, and `GET /api/tenant/v2/tenants/{id}` responds `403` for any other tenant ID.
 - **Core users and service accounts** (with a token from the `core` realm) can find and retrieve any tenant. Creating, renaming, archiving, and restoring tenants require a core user with the roles above; tenant users are rejected even if they hold a role with the same name.
 - **Anonymous requests** can search `GET /api/tenant/v2/tenants` by `name` or `realm`. Results don't include the administrator email. This is how applications resolve a tenant name to its realm before a user signs in.
-- **Deprecated v1 lookups** (`GET /api/tenant/v1/{id}`, `GET /api/tenant/v1/realm/{realm}`, `POST /api/tenant/v1/email`, `POST /api/tenant/v1/name`) are available to any authenticated user and aren't limited to the user's own tenant. Use the v2 endpoints instead.
+- **Deprecated v1 lookups** (`GET /api/tenant/v1/{id}`, `GET /api/tenant/v1/realm/{realm}`, `POST /api/tenant/v1/email`, `POST /api/tenant/v1/name`) follow the same rule: tenant users only find their own tenant and get `404` for any other. Use the v2 endpoints instead.
 
 Search results only include `active` tenants. A tenant that is still `provisioning` can be retrieved by ID, but isn't found by search.
 

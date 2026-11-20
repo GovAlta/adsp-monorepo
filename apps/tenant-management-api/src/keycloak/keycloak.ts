@@ -681,7 +681,9 @@ export class KeycloakRealmServiceImpl implements RealmService {
 
   async deleteUserIdp(userId: string, realm, idpName = 'goa-ad') {
     const client = await this.createAdminClient();
-    const deleteGoAIdPUrl = `${this.keycloakRootUrl}/auth/admin/realms/${realm}/users/${userId}/federated-identity/${idpName}`;
+    const deleteGoAIdPUrl = `${this.keycloakRootUrl}/auth/admin/realms/${encodeURIComponent(realm)}/users/${encodeURIComponent(
+      userId,
+    )}/federated-identity/${encodeURIComponent(idpName)}`;
     const headers = {
       Authorization: `Bearer ${client.accessToken}`,
     };

@@ -1,4 +1,5 @@
-import { NotFoundError } from '@core-services/core-common';
+import { InvalidOperationError, NotFoundError } from '@core-services/core-common';
+import { TenantCriteria } from '../tenant/types';
 import { connect, disconnect, createMockData } from '@core-services/core-common/mongo';
 import { connection } from 'mongoose';
 import { Logger } from 'winston';
@@ -37,6 +38,17 @@ describe('Mongo: Tenant', () => {
     const missingId = '507f1f77bcf86cd799439011';
     await expect(repo.get(missingId)).rejects.toThrow(NotFoundError);
     await expect(repo.get(missingId)).rejects.toThrow(missingId);
+  });
+
+  describe('find with a non-string criterion', () => {
+    it.each(['adminEmailEquals', 'nameEquals', 'realmEquals'])(
+      'rejects an operator object for %s instead of querying with it',
+      async (criterion) => {
+        await expect(repo.find({ [criterion]: { $ne: null } } as unknown as TenantCriteria)).rejects.toThrow(
+          InvalidOperationError,
+        );
+      },
+    );
   });
 
   describe('find by name', () => {

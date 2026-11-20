@@ -1,5 +1,5 @@
 import { randomUUID } from 'crypto';
-import { MockAppRegistration, MockList, MockSeed, MockSite } from './seed';
+import { MockAppRegistration, MockColumn, MockList, MockSeed, MockSite } from './seed';
 
 export interface MockItem {
   id: string;
@@ -22,14 +22,18 @@ export class MockState {
   private items = new Map<string, MockItem[]>();
   private nextItemId = 1;
   private fault: { kind: FaultKind; remaining: number } | null = null;
+  private seed: MockSeed;
 
-  constructor(private seed: MockSeed) {}
+  constructor(private initialSeed: MockSeed) {
+    this.seed = structuredClone(initialSeed);
+  }
 
   reset(): void {
     this.tokens.clear();
     this.items.clear();
     this.nextItemId = 1;
     this.fault = null;
+    this.seed = structuredClone(this.initialSeed);
   }
 
   findApp(tenantId: string, clientId: string): MockAppRegistration | undefined {
@@ -49,6 +53,20 @@ export class MockState {
 
   findSite(siteId: string): MockSite | undefined {
     return this.seed.sites.find((site) => site.siteId === siteId);
+  }
+
+  createList(site: MockSite, displayName: string): MockList {
+    const list: MockList = {
+      listId: randomUUID(),
+      displayName,
+      columns: [{ name: 'Title', displayName: 'Title', type: 'text', required: true }],
+    };
+    site.lists.push(list);
+    return list;
+  }
+
+  addColumn(list: MockList, column: MockColumn): void {
+    list.columns.push(column);
   }
 
   listItems(listId: string): MockItem[] {
@@ -75,6 +93,13 @@ export class MockState {
     item.fields = { ...item.fields, ...fields };
     item.lastModifiedDateTime = new Date().toISOString();
     return item;
+  }
+
+  deleteItem(listId: string, itemId: string): boolean {
+    const items = this.listItems(listId);
+    const remaining = items.filter((candidate) => candidate.id !== itemId);
+    this.items.set(listId, remaining);
+    return remaining.length < items.length;
   }
 
   setFault(kind: FaultKind, count: number): void {

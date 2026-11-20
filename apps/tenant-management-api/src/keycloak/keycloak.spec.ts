@@ -581,6 +581,12 @@ describe('KeycloakRealmService', () => {
       await service.deleteUserIdp('mock-user-id', 'core', 'core');
     });
 
+    it('encodes the path segments of the IdP delete URL', async () => {
+      await service.deleteUserIdp('../../other/users/x', 'core', 'a/b');
+      const [url] = axiosMock.delete.mock.calls[axiosMock.delete.mock.calls.length - 1];
+      expect(url).toContain('/realms/core/users/..%2F..%2Fother%2Fusers%2Fx/federated-identity/a%2Fb');
+    });
+
     it('can check user Idp in core', async () => {
       axiosMock.get.mockResolvedValueOnce({
         data: [

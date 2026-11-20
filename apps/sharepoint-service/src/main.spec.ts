@@ -23,7 +23,13 @@ jest.mock('passport', () => ({
   authenticate: jest.fn(),
 }));
 jest.mock('@abgov/adsp-service-sdk', () => ({
-  AdspId: { parse: jest.fn((value: string) => value) },
+  AdspId: {
+    parse: jest.fn((value: string) => ({
+      namespace: value.split(':')[2],
+      service: value.split(':')[3],
+      toString: () => value,
+    })),
+  },
   initializePlatform: mockInitializePlatform,
   instrumentAxios: jest.fn(),
   ServiceMetricsValueDefinition: { name: 'service-metrics' },
@@ -47,16 +53,19 @@ jest.mock('./sharepoint', () => ({
   LocalFileSource: mockLocalFileSource,
   SharePointFileService: mockSharePointFileService,
   SharePointPusher: jest.fn(),
+  SharePointSetup: jest.fn(),
   parseEncryptionKeyring: jest.fn(() => ({ current: { version: 1, key: Buffer.alloc(32) } })),
 }));
 
 describe('main', () => {
   const healthCheck = jest.fn();
+  const clearCached = jest.fn();
   const platform = {
     coreStrategy: 'core-strategy',
     tenantStrategy: 'tenant-strategy',
     tenantHandler: 'tenant-handler',
     configurationHandler: 'configuration-handler',
+    configurationService: { clearCached },
     directory: 'directory',
     eventService: 'event-service',
     tokenProvider: 'token-provider',
@@ -116,6 +125,15 @@ describe('main', () => {
     expect(mount).toEqual(
       expect.arrayContaining(['metrics-handler', 'tenant-handler', 'configuration-handler', 'sharepoint-router']),
     );
+  });
+
+  it('lets the router clear the cached configuration of this service for a tenant', async () => {
+    await startMain();
+    const [{ clearConfiguration }] = mockCreateSharePointRouter.mock.calls[0];
+
+    clearConfiguration('tenant-1');
+
+    expect(clearCached).toHaveBeenCalledWith('tenant-1', 'platform', 'sharepoint-service');
   });
 
   it('reports health from the platform and the database without calling Microsoft Graph', async () => {

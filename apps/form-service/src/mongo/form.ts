@@ -171,7 +171,7 @@ export class MongoFormRepository implements FormRepository {
       hash: entity.hash,
       data: entity.data,
       files: Object.entries(entity.files).reduce(
-        (fs, [key, f]) => ({ ...fs, [key.replace('.', ':')]: f?.toString() }),
+        (fs, [key, f]) => ({ ...fs, [key.replaceAll('.', ':')]: f?.toString() }),
         {},
       ),
       dryRun: entity.dryRun,
@@ -210,7 +210,7 @@ export class MongoFormRepository implements FormRepository {
         data: doc.data,
         securityClassification: doc.securityClassification,
         files: Object.entries(doc.files).reduce(
-          (fs, [key, f]) => ({ ...fs, [key.replace(':', '.')]: f ? AdspId.parse(f) : null }),
+          (fs, [key, f]) => ({ ...fs, [key.replaceAll(':', '.')]: f ? AdspId.parse(f) : null }),
           {},
         ),
         dryRun: doc.dryRun,

@@ -4,8 +4,9 @@ import type { RequestContext } from '@mastra/core/request-context';
 import { Logger } from 'winston';
 import { getAgentModelConfiguration, getAgentModelId } from '../model/modelConfiguration';
 import { withUsageRecording } from '../model/usageRecordingModel';
-import { ACCESS_SERVICE_AGENT_ID } from '../model/executionLimits';
+import { ACCESS_SERVICE_AGENT_ID, NOTIFICATION_TEMPLATE_AGENT_ID } from '../model/executionLimits';
 import { createAccessHistoryProcessor } from './accessHistory';
+import { createNotificationHistoryProcessor } from './notificationHistory';
 import { BrokerInputProcessor } from '../types';
 import { FileServiceDownloadProcessor } from './file';
 
@@ -20,6 +21,8 @@ export function createInputProcessors({ requestContext }: InputProcessorProps): 
 
   if (agentId === ACCESS_SERVICE_AGENT_ID) {
     processors.push(createAccessHistoryProcessor());
+  } else if (agentId === NOTIFICATION_TEMPLATE_AGENT_ID) {
+    processors.push(createNotificationHistoryProcessor());
   }
 
   processors.push(

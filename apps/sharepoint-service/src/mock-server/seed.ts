@@ -1,9 +1,13 @@
-export type ColumnType = 'text' | 'number' | 'dateTime' | 'boolean';
+export type ColumnType = 'text' | 'multilineText' | 'number' | 'dateTime' | 'boolean' | 'multiChoice' | 'hyperlink';
+
+export type MockRole = 'read' | 'write' | 'owner' | 'fullcontrol';
 
 export interface MockColumn {
   name: string;
   type: ColumnType;
   indexed?: boolean;
+  displayName?: string;
+  required?: boolean;
 }
 
 export interface MockList {
@@ -15,7 +19,7 @@ export interface MockList {
 export interface MockSite {
   siteId: string;
   displayName: string;
-  grants: { clientId: string; role: 'read' | 'write' }[];
+  grants: { clientId: string; role: MockRole }[];
   lists: MockList[];
 }
 
@@ -43,6 +47,13 @@ export const UNGRANTED_SITE_ID =
 export const DEMO_LIST_ID = 'b57f7a62-4c3b-4c89-9d1a-1cb7a5e56d9f';
 export const UNGRANTED_LIST_ID = 'd3c1a2b4-5e6f-4a7b-8c9d-0e1f2a3b4c5d';
 export const NO_KEY_LIST_ID = 'e4f5a6b7-8c9d-4e0f-9a1b-2c3d4e5f6a7b';
+export const DEMO_DETAIL_LIST_ID = 'f6a7b8c9-0d1e-4f2a-8b3c-4d5e6f7a8b9c';
+
+const memberColumns: MockColumn[] = [
+  { name: 'ParentItemId', type: 'text', indexed: true },
+  { name: 'MemberName', type: 'text' },
+  { name: 'Age', type: 'number' },
+];
 
 const logColumns: MockColumn[] = [
   { name: 'FirstName', type: 'text' },
@@ -56,6 +67,7 @@ const intakeColumns: MockColumn[] = [
   { name: 'Amount', type: 'number' },
   { name: 'SubmittedOn', type: 'dateTime' },
   { name: 'Consent', type: 'boolean' },
+  { name: 'ContactMethods', type: 'multiChoice' },
 ];
 
 export const defaultSeed: MockSeed = {
@@ -78,11 +90,13 @@ export const defaultSeed: MockSeed = {
       siteId: DEMO_SITE_ID,
       displayName: 'HR intake site',
       grants: [
-        { clientId: DEMO_CLIENT_ID, role: 'write' },
+        // Matches what the admin request process grants today; see the OSP-806 permission check.
+        { clientId: DEMO_CLIENT_ID, role: 'fullcontrol' },
         { clientId: EXPIRED_CLIENT_ID, role: 'write' },
       ],
       lists: [
         { listId: DEMO_LIST_ID, displayName: 'Intake', columns: intakeColumns },
+        { listId: DEMO_DETAIL_LIST_ID, displayName: 'Household members (detail list)', columns: memberColumns },
         { listId: NO_KEY_LIST_ID, displayName: 'Log (no AdspItemKey)', columns: logColumns },
       ],
     },

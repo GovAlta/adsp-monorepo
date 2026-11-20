@@ -93,10 +93,19 @@ function getErrorMessage(body: string | undefined): string | undefined {
   }
 }
 
-export function toStatusError(status: number, body: string | undefined, operation: string): FileServiceError {
+// File service answers 401, not 403, when a signed-in user lacks the role to create a file
+// (see FileEntity.create in apps/file-service/src/file/model/file.ts), so a 401 on a request
+// that carried a token means the user is not permitted, not that they need to sign in.
+export function toStatusError(
+  status: number,
+  body: string | undefined,
+  operation: string,
+  authenticated = false,
+): FileServiceError {
   const errorMessage = getErrorMessage(body);
+  const reason = status === 401 && authenticated ? 'forbidden' : toErrorReason(status, errorMessage);
   return new FileServiceError(
-    toErrorReason(status, errorMessage),
+    reason,
     `${operation} failed with status ${status}${errorMessage ? `: ${errorMessage}` : '.'}`,
     status,
   );

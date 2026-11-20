@@ -81,7 +81,7 @@ Built-in tools include:
 - `formDataRetrievalTool` and `formDataUpdateTool`: Retrieve and update form data
 - `fileDownloadTool`, `fileCopyTool`, and `documentExtractTool`: Download, copy, and extract text from files in the file service
 - `dataRegisterListTool`, `dataRegisterGetTool`, `dataRegisterCreateTool`, and `dataRegisterUpdateTool`: Manage data registers
-- `emailNotificationGenerateTool`: Generates notification email templates
+- `emailNotificationGenerateTool`: Proposes notification email template changes and saves them to the notification type
 - `searchAdspDocsTool`, `readAdspDocTool`, and `searchAdspSdkReferenceTool`: Search the ADSP documentation and SDK reference
 
 Custom API tools can be configured to call external APIs on behalf of the agent.
@@ -373,6 +373,30 @@ socket.on('stream', ({ chunk }) => {
 ```bash
 curl -H "Authorization: Bearer $TOKEN" "$AGENT_SERVICE_URL/agent/v1/access/guide/token-expiry"
 ```
+
+#### Notification email template agent
+
+`notificationEmailTemplateAgent` writes and edits the email template of a notification type event from the template editor in the tenant admin app. The editor sends its state with each message as `context`:
+
+| Field                 | Meaning                                                                                              |
+| --------------------- | ---------------------------------------------------------------------------------------------------- |
+| `emailTemplate`       | The email template in the editor (`subject`, `title`, `subtitle`, `body`), including unsaved changes |
+| `handlebarsVariables` | Variables the template may use, as full paths such as `event.payload.form.definition.name`           |
+| `notificationType`    | The event as `namespace:name`                                                                        |
+| `notificationTypeId`  | The notification type; `emailNotificationGenerateTool` saves proposals to this type's event          |
+
+Each model call gets the agent's instructions followed by this context as text; a body longer than 30,000 characters is cut off with a note not to rebuild it. To keep each call small:
+
+- The model gets a one-line summary of each `emailNotificationGenerateTool` result (the fields saved, or why the save failed); the client still gets the full proposal in the `tool-result` chunk.
+- When the model says what it changed in the same response as a proposal that was saved, the reply ends there. Otherwise the next call writes the reply without the template rules, the editor context or the tool.
+- Bodies proposed in earlier turns are replaced with a short note in later requests, since the editor sends the current template with every message. Attachments and pasted content from turns before the previous one are replaced too. The thread keeps every message.
+- Text extracted from an attached document is cut off at 16,000 characters.
+- It keeps its own short history without observational memory, and makes at most 3 model calls per message.
+
+| Variable                               | Default | Meaning                                                           |
+| -------------------------------------- | ------- | ----------------------------------------------------------------- |
+| `AGENT_NOTIFICATION_LAST_MESSAGES`     | `8`     | Messages of the thread the agent reads                            |
+| `AGENT_NOTIFICATION_MAX_OUTPUT_TOKENS` | `6000`  | Longest reply the model may write in one call, including the body |
 
 ### Delete a thread
 

@@ -16,6 +16,7 @@ export interface Tenant {
   isTenantAdmin: boolean;
   isTenantCreated: boolean;
   realmRoles: Role[];
+  realmRolesFailed?: boolean;
   loginSucceeded?: boolean;
   adminInTenants: TenantBasicInfo[];
 }
@@ -28,6 +29,7 @@ export const TENANT_INIT: Tenant = {
   isTenantAdmin: null,
   isTenantCreated: null,
   realmRoles: null,
+  realmRolesFailed: false,
   loginSucceeded: null,
   adminInTenants: [],
 };

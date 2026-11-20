@@ -37,12 +37,25 @@ export class GraphFileClient {
   }
 
   private itemPath(siteId: string, folder: string, filename: string): string {
-    const root = `${this.graphUrl.replace(/\/$/, '')}/sites/${encodeSegment(siteId)}/drive/root:`;
-    return `${root}/${encodeURIComponent(folder)}/${encodeURIComponent(filename)}:`;
+    return `${this.folderPath(siteId, folder)}/${encodeURIComponent(filename)}:`;
+  }
+
+  private folderPath(siteId: string, folder: string): string {
+    return `${this.graphUrl.replace(/\/$/, '')}/sites/${encodeSegment(siteId)}/drive/root:/${encodeURIComponent(folder)}`;
   }
 
   private headers(token: string) {
     return { Authorization: `Bearer ${token}` };
+  }
+
+  async getFolderUrl(token: string, siteId: string, folder: string): Promise<string> {
+    const { data } = await requestWithRetry(() =>
+      axios.get<{ webUrl: string }>(this.folderPath(siteId, folder), {
+        headers: this.headers(token),
+        params: { $select: 'webUrl' },
+      }),
+    );
+    return data.webUrl;
   }
 
   async uploadFile(

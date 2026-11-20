@@ -8,12 +8,15 @@ import { RootState } from '@store/index';
 import {
   deleteSharepointDestination,
   fetchSharepointConfiguration,
+  fetchSharepointForms,
+  SharepointDestination,
   updateSharepointDestination,
 } from '@store/sharePoint/actions';
 import { ButtonPadding, TabIntro } from '../styled-components';
 import { DestinationModal } from './destinationModal';
 import { DestinationTableComponent } from './destinationTable';
 import { TestDestinationModal } from './testDestinationModal';
+import { VerifySetupModal } from './verifySetupModal';
 
 export const DestinationsView = (): JSX.Element => {
   const dispatch = useDispatch();
@@ -23,17 +26,21 @@ export const DestinationsView = (): JSX.Element => {
   const [editId, setEditId] = useState<string | null>(null);
   const [testId, setTestId] = useState<string | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  // Kept as a copy so a destination that was only just saved can be verified before the store has it.
+  const [verifying, setVerifying] = useState<SharepointDestination | null>(null);
   const hasConnections = Object.keys(connections).length > 0;
 
   useEffect(() => {
     dispatch(fetchSharepointConfiguration());
+    dispatch(fetchSharepointForms());
   }, [dispatch]);
 
   return (
     <section>
       <TabIntro>
         A destination is where data lands: one list on a connection's site, plus how fields in the data map to the
-        list's columns. Form definitions pick a destination on their Lifecycle tab. Use Test to write a sample row
+        list's columns. Repeating sections can go to detail lists. Form definitions pick a destination on their
+        Lifecycle tab. Use Verify setup to check and create the lists and columns, then Test to write a sample row
         before any real submissions arrive.
       </TabIntro>
       <ButtonPadding>
@@ -55,6 +62,7 @@ export const DestinationsView = (): JSX.Element => {
           destinations={destinations}
           connections={connections}
           onTest={(destination) => setTestId(destination.id)}
+          onVerify={(destination) => setVerifying(destination)}
           onEdit={(destination) => setEditId(destination.id)}
           onDelete={(destination) => setDeleteId(destination.id)}
         />
@@ -67,11 +75,17 @@ export const DestinationsView = (): JSX.Element => {
             setIsAdding(false);
             setEditId(null);
           }}
-          onSave={(destination) => dispatch(updateSharepointDestination(destination))}
+          onSave={(destination) => {
+            dispatch(updateSharepointDestination(destination, true));
+            setVerifying(destination);
+          }}
         />
       )}
       {testId && destinations[testId] && (
         <TestDestinationModal destination={destinations[testId]} onClose={() => setTestId(null)} />
+      )}
+      {verifying && (
+        <VerifySetupModal destination={destinations[verifying.id] ?? verifying} onClose={() => setVerifying(null)} />
       )}
       {deleteId && destinations[deleteId] && (
         <DeleteModal

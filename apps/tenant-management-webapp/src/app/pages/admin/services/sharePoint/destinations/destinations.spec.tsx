@@ -4,7 +4,8 @@ import configureStore from 'redux-mock-store';
 import { act, render } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { SESSION_INIT } from '@store/session/models';
-import { describeTestFailure, sampleTestData, validateDestination } from './destinationHelpers';
+import { SharepointDetailList } from '@store/sharePoint/actions';
+import { describeDetailFailures, describeTestFailure, sampleTestData, validateDestination } from './destinationHelpers';
 import { DestinationsView } from './destinationsView';
 import { DestinationModal } from './destinationModal';
 import { TestDestinationModal } from './testDestinationModal';
@@ -46,6 +47,64 @@ describe('validateDestination', () => {
         .fieldMappings,
     ).toBe('AdspItemKey is set by ADSP and cannot be mapped.');
   });
+
+  describe('detail lists', () => {
+    const detailList = {
+      listName: 'Household members',
+      dataPath: 'householdMembers',
+      parentRefField: 'ParentItemId',
+      fieldMappings: [{ source: 'name', target: 'MemberName' }],
+    };
+    const withDetail = (overrides: Partial<SharepointDetailList> = {}, others: SharepointDetailList[] = []) => ({
+      ...destination,
+      idempotencyFields: ['_adsp.key'],
+      detailLists: [{ ...detailList, ...overrides }, ...others],
+    });
+
+    it('accepts a detail list with a name or a list ID', () => {
+      expect(validateDestination(withDetail(), [], true)).toEqual({});
+      expect(validateDestination(withDetail({ listName: undefined, listId: 'list-2' }), [], true)).toEqual({});
+    });
+
+    it.each([
+      [{ listName: undefined }, 'Each detail list needs a list name or a SharePoint list ID.'],
+      [{ dataPath: '' }, 'Each detail list needs the path of its array in the data.'],
+      [{ parentRefField: '' }, 'Each detail list needs a parent reference column.'],
+      [{ fieldMappings: [] }, 'Each detail list needs at least one complete field mapping.'],
+      [
+        { fieldMappings: [{ source: 'name', target: '' }] },
+        'Each detail list needs at least one complete field mapping.',
+      ],
+      [
+        { fieldMappings: [{ source: 'x', target: 'ParentItemId' }] },
+        'ParentItemId is set by ADSP and cannot be mapped.',
+      ],
+    ])('rejects an incomplete detail list', (overrides: Partial<SharepointDetailList>, message) => {
+      expect(validateDestination(withDetail(overrides), [], true).detailLists).toBe(message);
+    });
+
+    it('rejects two detail lists for the same array', () => {
+      expect(validateDestination(withDetail({}, [{ ...detailList, listName: 'Again' }]), [], true).detailLists).toBe(
+        'Two detail lists use the same array path.',
+      );
+    });
+
+    it('rejects two detail lists with the same list name', () => {
+      expect(
+        validateDestination(
+          withDetail({}, [{ ...detailList, dataPath: 'pets', listName: ' household members' }]),
+          [],
+          true,
+        ).detailLists,
+      ).toBe('Two detail lists use the same list name.');
+    });
+
+    it('needs row identity for detail lists', () => {
+      expect(validateDestination({ ...withDetail(), idempotencyFields: [] }, [], true).detailLists).toBe(
+        'Detail lists need "Update existing rows" turned on.',
+      );
+    });
+  });
 });
 
 describe('describeTestFailure', () => {
@@ -71,6 +130,40 @@ describe('describeTestFailure', () => {
     );
     expect(describeTestFailure('row-identity-missing')).toMatch(/row identity/);
   });
+
+  it('explains a detail list that is not set up yet and a refused setup', () => {
+    expect(describeTestFailure('destination-not-set-up')).toMatch(/Verify setup/);
+    expect(describeTestFailure('adsp:save-failed')).toMatch(/could not be saved/);
+  });
+});
+
+describe('describeDetailFailures', () => {
+  it('names the detail list and the items that were not written', () => {
+    const lists = [
+      {
+        listId: 'l2',
+        listName: 'Household members',
+        dataPath: 'householdMembers',
+        parentRefField: 'P',
+        fieldMappings: [],
+      },
+    ];
+    expect(describeDetailFailures([{ listId: 'l2', indexes: [0, 2] }], lists)).toEqual([
+      'Household members: items 1 and 3 were not written, so the rows from before are kept.',
+    ]);
+    expect(describeDetailFailures([{ listId: 'l2', indexes: [], oldRowsLeft: 2 }], lists)).toEqual([
+      'Household members: the new rows were written, but 2 old rows could not be removed. Run the test again.',
+    ]);
+    expect(describeDetailFailures([{ listId: 'l2', indexes: [1], newRowsLeft: 1 }], lists)).toEqual([
+      'Household members: item 2 was not written, so the rows from before are kept. 1 row from this attempt could not be removed. Run the test again.',
+    ]);
+    expect(describeDetailFailures([{ listId: 'other', indexes: [1], column: 'Age' }], lists)).toEqual([
+      "other: item 2 was not written (column 'Age'), so the rows from before are kept.",
+    ]);
+    expect(describeDetailFailures([{ listId: 'l2', indexes: [] }], lists)).toEqual([
+      'Household members: the existing rows could not be read, so nothing was changed. Run the test again.',
+    ]);
+  });
 });
 
 describe('sampleTestData', () => {
@@ -87,6 +180,61 @@ describe('sampleTestData', () => {
     expect(sampleTestData([{ source: 'amount', target: 'Amount' }], ['_adsp.key'])).toEqual({
       amount: '',
       _adsp: { key: 'test-1' },
+    });
+  });
+
+  it('reads list positions written with brackets or with dots', () => {
+    expect(
+      sampleTestData([
+        { source: 'dependents[0].name', target: 'First' },
+        { source: 'dependents.1.name', target: 'Second' },
+      ]),
+    ).toEqual({ dependents: [{ name: '' }, { name: '' }] });
+  });
+
+  it('skips mapping sources that would change object prototypes', () => {
+    const sample = sampleTestData([
+      { source: '__proto__.polluted', target: 'A' },
+      { source: 'constructor.prototype.polluted', target: 'B' },
+      { source: 'name', target: 'Name' },
+    ]);
+
+    expect(sample).toEqual({ name: '' });
+    expect(({} as Record<string, unknown>).polluted).toBeUndefined();
+  });
+
+  it('uses a sample value of each column type and one item for each detail list', () => {
+    expect(
+      sampleTestData(
+        [
+          { source: 'income', target: 'Income', columnType: 'number' },
+          { source: 'consent', target: 'Consent', columnType: 'boolean' },
+          {
+            source: 'contactMethods',
+            target: 'ContactMethods',
+            columnType: 'multiChoice',
+            choices: ['Email', 'Phone'],
+          },
+          { source: 'dependents[0].name', target: 'FirstDependent' },
+        ],
+        [],
+        [
+          {
+            dataPath: 'household.members',
+            parentRefField: 'ParentItemId',
+            fieldMappings: [
+              { source: 'name', target: 'MemberName' },
+              { source: 'birthDate', target: 'BirthDate', columnType: 'dateTime' },
+            ],
+          },
+        ],
+      ),
+    ).toEqual({
+      income: 0,
+      consent: false,
+      contactMethods: ['Email'],
+      dependents: [{ name: '' }],
+      household: { members: [{ name: '', birthDate: '2026-01-01' }] },
     });
   });
 });
@@ -189,13 +337,16 @@ describe('DestinationModal', () => {
     expect(onSave).toHaveBeenCalledWith(expect.objectContaining({ idempotencyFields: ['_adsp.key'] }));
   });
 
-  it('explains the destination ID, field mappings and enabled flag in info bubbles', () => {
+  it('explains the destination ID, generation, mappings, folder link, detail lists and enabled flag in info bubbles', () => {
     const hints = Array.from(renderModal(undefined).querySelectorAll('goa-tooltip')).map((tooltip) =>
       tooltip.getAttribute('content'),
     );
     expect(hints).toEqual([
       'Callers use this ID to push data to this destination.',
+      "Optional. Fills in the mappings, detail lists and column types below from a form's data schema.",
       'Map a form data path to a SharePoint column, for example applicant.name.first to FirstName.',
+      'A Hyperlink column on the main list that links to the folder of files uploaded with each submission.',
+      'For repeating sections. Each section is a sub list with each section item as a row in the sub list.',
       'Disable pushing data to destination. Test actions can still push data.',
     ]);
   });
@@ -227,9 +378,7 @@ describe('TestDestinationModal', () => {
     ['updated', 'The test data updated the existing row with this key.'],
   ])('says whether the test %s a row', (outcome, message) => {
     const { baseElement } = render(
-      <Provider
-        store={configureStore([])({ sharepoint: { testResults: { 'hr-intake': { ok: true, outcome } } } })}
-      >
+      <Provider store={configureStore([])({ sharepoint: { testResults: { 'hr-intake': { ok: true, outcome } } } })}>
         <TestDestinationModal destination={destination} onClose={jest.fn()} />
       </Provider>,
     );

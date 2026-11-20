@@ -291,9 +291,8 @@ components:
     tags:
       - Tenant service
     description: >
-      Deprecated; use GET /api/tenant/v2/tenants/{id}, which limits tenant users to their own tenant. Retrieves a
-      tenant by ID. Available to any authenticated user of any tenant or the core realm, and not limited to the
-      user's own tenant; no role is required.
+      Deprecated; use GET /api/tenant/v2/tenants/{id}. Retrieves a tenant by ID. No role is required. Tenant users
+      can only retrieve their own tenant, and get 404 for any other tenant; core users can retrieve any tenant.
     parameters:
       - in: path
         name: id
@@ -351,9 +350,9 @@ components:
     tags:
       - Tenant service
     description: >
-      Deprecated; use GET /api/tenant/v2/tenants?realm={realm}, which limits tenant users to their own tenant.
-      Retrieves a tenant by realm. Available to any authenticated user of any tenant or the core realm; no role is
-      required.
+      Deprecated; use GET /api/tenant/v2/tenants?realm={realm}. Retrieves a tenant by realm. No role is required.
+      Tenant users can only retrieve their own tenant, and get 404 for any other realm; core users can retrieve any
+      tenant.
     parameters:
       - in: path
         name: realm
@@ -380,9 +379,9 @@ components:
     tags:
       - Tenant service
     description: >
-      Deprecated; use GET /api/tenant/v2/tenants?adminEmail={email}, which limits tenant users to their own tenant.
-      Retrieves the tenant with the given administrator email. Available to any authenticated user of any tenant
-      or the core realm; no role is required.
+      Deprecated; use GET /api/tenant/v2/tenants?adminEmail={email}. Retrieves the tenant with the given
+      administrator email. No role is required. Tenant users can only retrieve their own tenant, and get 404 for
+      any other tenant; core users can retrieve any tenant.
     requestBody:
       required: true
       content:
@@ -416,9 +415,9 @@ components:
     tags:
       - Tenant service
     description: >
-      Deprecated; use GET /api/tenant/v2/tenants?name={name}, which limits tenant users to their own tenant.
-      Retrieves the tenant with the given name, ignoring case. Available to any authenticated user of any tenant or
-      the core realm; no role is required.
+      Deprecated; use GET /api/tenant/v2/tenants?name={name}. Retrieves the tenant with the given name, ignoring
+      case. No role is required. Tenant users can only retrieve their own tenant, and get 404 for any other tenant;
+      core users can retrieve any tenant.
     requestBody:
       required: true
       content:
@@ -452,7 +451,8 @@ components:
       - Tenant service
     description: >
       Internal endpoint used by the tenant admin webapp. Looks up the ID of the user with the given email in a
-      realm, which defaults to the core realm. Requires the tenant-admin role and is rate limited.
+      realm, which defaults to the core realm. Requires the tenant-admin role and is rate limited. Tenant users can
+      only look up users in their own realm or the core realm; core users can use any realm.
     parameters:
       - in: query
         name: email
@@ -485,6 +485,14 @@ components:
         $ref: '#/components/responses/TenantV1BadRequest'
       401:
         $ref: '#/components/responses/TenantUnauthorized'
+      403:
+        description: Tenant user is not permitted to use the realm of another tenant.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TenantError'
+            example:
+              errorMessage: 'User Test User (ID: 3d1c5e7a-9b2f-4c6d-8e0a-1f3b5d7c9e2a) not permitted to find user.'
       429:
         $ref: '#/components/responses/TenantTooManyRequests'
 
@@ -549,7 +557,8 @@ components:
       - Tenant service
     description: >
       Internal endpoint used by the tenant admin webapp. Removes the link between a user and an identity provider
-      in a realm. Requires the tenant-admin role and is rate limited.
+      in a realm. Requires the tenant-admin role and is rate limited. Tenant users can only act on their own realm
+      or the core realm; core users can use any realm.
     parameters:
       - in: query
         name: userId
@@ -605,6 +614,14 @@ components:
                     failed with status code 404
       401:
         $ref: '#/components/responses/TenantUnauthorized'
+      403:
+        description: Tenant user is not permitted to use the realm of another tenant.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TenantError'
+            example:
+              errorMessage: 'User Test User (ID: 3d1c5e7a-9b2f-4c6d-8e0a-1f3b5d7c9e2a) not permitted to delete user identity provider link.'
       429:
         $ref: '#/components/responses/TenantTooManyRequests'
 

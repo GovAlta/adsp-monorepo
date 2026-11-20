@@ -1,5 +1,5 @@
 import { AdspId } from '@abgov/adsp-service-sdk';
-import { decodeAfter, encodeNext, Results } from '@core-services/core-common';
+import { decodeAfter, encodeNext, NotFoundError, Results } from '@core-services/core-common';
 import { Knex } from 'knex';
 import { TaskRepository, TaskCriteria, TaskEntity, QueueEntity, TaskMetrics, TaskStatus, TaskPriority } from '../task';
 import { TaskAggregationResult, TaskRecord } from './types';
@@ -226,7 +226,12 @@ export class PostgresTaskRepository implements TaskRepository {
         })
         .onConflict('id')
         .merge()
+        .where('tasks.tenant', entity.tenantId.toString())
         .returning('*');
+
+      if (!row) {
+        throw new NotFoundError('task', entity.id);
+      }
 
       return row;
     });

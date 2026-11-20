@@ -2,6 +2,8 @@ import { MockState } from './state';
 
 const ENTITIES: Record<string, string> = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
 const escapeHtml = (value: unknown): string => String(value ?? '').replace(/[&<>"']/g, (c) => ENTITIES[c]);
+const cellText = (value: unknown): string =>
+  escapeHtml(value !== null && typeof value === 'object' ? JSON.stringify(value) : value);
 
 export function renderViewer(state: MockState): string {
   const { apps, sites } = state.snapshot();
@@ -20,7 +22,7 @@ export function renderViewer(state: MockState): string {
           const rows = list.items
             .map(
               (item) =>
-                `<tr>${headers.map((h) => `<td>${escapeHtml(h === 'id' ? item.id : item.fields[h])}</td>`).join('')}</tr>`,
+                `<tr>${headers.map((h) => `<td>${h === 'id' ? escapeHtml(item.id) : cellText(item.fields[h])}</td>`).join('')}</tr>`,
             )
             .join('');
           return `<h3>${escapeHtml(list.displayName)} <small>${escapeHtml(list.listId)}</small></h3>

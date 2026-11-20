@@ -179,9 +179,9 @@ export function findForms(apiId: AdspId, repository: FormRepository): RequestHan
         criteria.statusEquals = FormStatus.Submitted;
       }
 
-      if (user.tenantId) {
-        criteria.tenantIdEquals = user.tenantId;
-      }
+      // Always scope to the request tenant; for core users (e.g. the export job account) the SDK
+      // tenant handler resolves it from the tenantId query parameter.
+      criteria.tenantIdEquals = tenantId;
 
       const { results, page } = await repository.find(top, after as string, criteria, getResultsSort(req.query));
 
