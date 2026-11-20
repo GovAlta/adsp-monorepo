@@ -47,6 +47,13 @@ describe('utils', () => {
       expect(repositoryMock.find).toHaveBeenCalledWith(expect.objectContaining({ nameEquals: name }));
     });
 
+    it.each([123, undefined])('can throw for non-string name %p', async (name) => {
+      await expect(
+        validateName(loggerMock as Logger, repositoryMock as unknown as TenantRepository, name as unknown as string)
+      ).rejects.toThrow(InvalidValueError);
+      expect(repositoryMock.find).not.toHaveBeenCalled();
+    });
+
     it('can throw for duplicate name', async () => {
       const name = 'My tenant';
       repositoryMock.find.mockResolvedValueOnce([{ name }]);
