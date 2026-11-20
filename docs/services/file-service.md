@@ -53,6 +53,8 @@ File types are configured through the [configuration service](configuration-serv
 
 File type represents a category of files with specific access roles. For example, a 'Supporting Documents' file type may allow `applicant` role to upload files and `assessor` role to download the files. File types are configured in the [configuration service](configuration-service.md) under the `platform:file-service` namespace and name.
 
+Each file type is a configuration entry with the settings below. They control who can upload and read files of the type, which files it accepts, and how long files are kept. See [Configure a file type](#configure-a-file-type) for an example.
+
 | setting                  | effect                                                                                                                                                                                                  |
 | :----------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `readRoles`              | Users with one of these roles can read the metadata of and download any file of the type.                                                                                                               |
