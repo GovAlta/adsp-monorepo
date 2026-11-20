@@ -20,7 +20,7 @@ import { createFormRouter, createFormDefinitionRouter, createRegisterRouter } fr
 import { QueueTaskService } from '../task';
 import { CommentService } from './comment';
 import { PdfService } from './pdf';
-import { SharePointService } from './sharepoint';
+import { SharePointRetryService } from './sharepoint';
 import { CalendarService } from './calendar';
 
 export * from './roles';
@@ -34,6 +34,7 @@ export * from './events';
 export * from './notifications';
 export * from './pdf';
 export * from './sharepoint';
+export * from './sharepointRetry';
 export * from './calendar';
 export * from './jobs/messageNotification';
 
@@ -52,7 +53,7 @@ interface FormMiddlewareProps extends Repositories {
   queueTaskService: QueueTaskService;
   formSubmissionRepository: FormSubmissionRepository;
   pdfService: PdfService;
-  sharepointService?: SharePointService;
+  sharepointService?: SharePointRetryService;
   calendarService: CalendarService;
 }
 
@@ -80,7 +81,16 @@ export const applyFormMiddleware = (
   }: FormMiddlewareProps,
 ): Application => {
   const apiId = adspId`${serviceId}:v1`;
-  scheduleFormJobs({ apiId, logger, repository, eventService, auditService, fileService, notificationService });
+  scheduleFormJobs({
+    apiId,
+    logger,
+    repository,
+    eventService,
+    auditService,
+    fileService,
+    notificationService,
+    sharepointService,
+  });
 
   const definitionRouter = createFormDefinitionRouter({
     directory,

@@ -238,7 +238,8 @@ export function createSharePointMockApp(state: MockState): express.Application {
     if (site.lists.some((list) => list.displayName === displayName)) {
       return graphError(res, 409, 'nameAlreadyExists', 'A list with that name already exists.');
     }
-    const list = state.createList(site, displayName);
+    const template = req.body?.list?.template === 'documentLibrary' ? 'documentLibrary' : undefined;
+    const list = state.createList(site, displayName, template);
     res.status(201).json({ id: list.listId, displayName: list.displayName });
   });
 
@@ -246,6 +247,18 @@ export function createSharePointMockApp(state: MockState): express.Application {
     const list = resolveList(req, res, 'read');
     if (list) {
       res.json({ value: list.columns.map(columnJson) });
+    }
+  });
+
+  // Like Graph, an ordinary list's drive comes back empty rather than as an error.
+  graph.get('/sites/:siteId/lists/:listId/drive', (req, res) => {
+    const list = resolveList(req, res, 'read');
+    if (list) {
+      res.json(
+        list.template === 'documentLibrary'
+          ? { id: `drive-${list.listId}`, driveType: 'documentLibrary', name: list.displayName }
+          : {},
+      );
     }
   });
 

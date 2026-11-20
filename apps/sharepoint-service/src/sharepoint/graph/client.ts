@@ -244,12 +244,17 @@ export class GraphClient {
   }
 
   // Creates are only repeated when SharePoint refused them; after a timeout the list may already exist.
-  async createList(token: string, siteId: string, displayName: string): Promise<string> {
+  async createList(
+    token: string,
+    siteId: string,
+    displayName: string,
+    template: 'genericList' | 'documentLibrary' = 'genericList',
+  ): Promise<string> {
     const { data } = await requestWithRetry(
       () =>
         axios.post<{ id: string }>(
           `${this.siteUrl(siteId)}/lists`,
-          { displayName, list: { template: 'genericList' } },
+          { displayName, list: { template } },
           { headers: this.writeHeaders(token) },
         ),
       isRefused,

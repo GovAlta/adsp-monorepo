@@ -1,4 +1,5 @@
 import { AjvValidationService } from '@core-services/core-common';
+import { adspId } from '@abgov/adsp-service-sdk';
 import { Logger } from 'winston';
 import {
   FormCreatedDefinition,
@@ -11,6 +12,9 @@ import {
   SubmissionDispositionedDefinition,
   formSchema,
   SubmissionDeletedDefinition,
+  SharePointPushFailedDefinition,
+  sharePointPushFailed,
+  SHAREPOINT_PUSH_FAILED,
 } from './events';
 
 describe('events', () => {
@@ -79,5 +83,39 @@ describe('events', () => {
     const service = new AjvValidationService(logger as unknown as Logger);
     service.setSchema('payload', { $ref: 'http://json-schema.org/draft-07/schema#' });
     service.validate('test', 'payload', formSchema);
+  });
+
+  it('sharepoint-push-failed is valid json schema', () => {
+    const service = new AjvValidationService(logger as unknown as Logger);
+    service.setSchema('payload', { $ref: 'http://json-schema.org/draft-07/schema#' });
+    service.validate('test', 'payload', SharePointPushFailedDefinition.payloadSchema);
+  });
+
+  it('sharepoint-push-failed carries identifiers and the error code only', () => {
+    const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
+    const timestamp = new Date('2026-11-19T12:00:00Z');
+
+    const event = sharePointPushFailed(
+      adspId`urn:ads:platform:form-service:v1`,
+      { id: 'push-1', tenantId, formId: 'form-1', submissionId: 'submission-1', attempts: 5, nextAttemptAt: timestamp },
+      'hr-intake',
+      'entra:AADSTS7000222',
+      timestamp,
+    );
+
+    expect(event).toEqual({
+      name: SHAREPOINT_PUSH_FAILED,
+      timestamp,
+      tenantId,
+      correlationId: 'urn:ads:platform:form-service:v1:/forms/form-1',
+      context: { formId: 'form-1', destinationId: 'hr-intake' },
+      payload: {
+        formId: 'form-1',
+        submissionId: 'submission-1',
+        destinationId: 'hr-intake',
+        errorCode: 'entra:AADSTS7000222',
+        attempts: 5,
+      },
+    });
   });
 });

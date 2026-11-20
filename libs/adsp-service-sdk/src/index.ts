@@ -50,6 +50,7 @@ export type {
 export type { GoAErrorExtra } from './utils';
 export type { ServiceDirectory } from './directory';
 export type { Tenant, TenantService } from './tenant';
+export { getRequestedTenant } from './tenant'; // clean-code-ignore: RULE-19 re-export only; covered by tenant/index.spec.ts and requestedTenant.spec.ts
 export type { ConfigurationService } from './configuration';
 export type {
   DomainEvent,

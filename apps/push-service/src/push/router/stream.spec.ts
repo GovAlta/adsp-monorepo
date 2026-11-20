@@ -4,7 +4,7 @@ import { Request, Response } from 'express';
 import { Observable, of } from 'rxjs';
 import { Namespace, Socket } from 'socket.io';
 import { Logger } from 'winston';
-import { getStream, getStreams, subscribeBySse, mapStreamItem } from './stream';
+import { getStream, getStreams, subscribeBySse, mapStreamItem, parseCriteria } from './stream';
 import { StreamEntity, StreamItem, WebhookEntity } from '../model';
 import { createStreamRouter, onIoConnection } from './stream';
 import { Subject } from 'rxjs';
@@ -581,7 +581,43 @@ describe('stream router', () => {
     });
   });
 
+  describe('parseCriteria', () => {
+    it('returns empty criteria when not provided', () => {
+      expect(parseCriteria(undefined)).toEqual({});
+    });
+
+    it('parses criteria object', () => {
+      expect(parseCriteria('{"correlationId":"321"}')).toEqual({ correlationId: '321' });
+    });
+
+    it.each(['notjson', '123', 'null', '[]', '"text"'])('throws invalid operation for %s', (value) => {
+      expect(() => parseCriteria(value)).toThrow(InvalidOperationError);
+    });
+
+    it('throws invalid operation for repeated criteria', () => {
+      expect(() => parseCriteria(['{"a":1', '"b":2}'])).toThrow(InvalidOperationError);
+    });
+  });
+
   describe('subscribeBySse', () => {
+    it('calls next with invalid operation for invalid criteria', async () => {
+      const req = {
+        tenantId,
+        user: { isCore: true, id: 'tester', roles: ['test-subscriber'] } as User,
+        params: { stream: 'test' },
+        query: { criteria: 'notjson' },
+        stream,
+        getConfiguration: jest.fn(),
+      };
+      const res = { set: jest.fn(), flushHeaders: jest.fn(), on: jest.fn() };
+      const next = jest.fn();
+
+      const handler = subscribeBySse(loggerMock, of());
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(next).toHaveBeenCalledWith(expect.any(InvalidOperationError));
+      expect(res.flushHeaders).not.toHaveBeenCalled();
+    });
+
     it('can create handler', () => {
       const handler = subscribeBySse(loggerMock, of());
       expect(handler).toBeTruthy();
@@ -873,6 +909,23 @@ describe('stream router', () => {
         }),
       );
       listener(socket as unknown as Socket);
+    });
+
+    it('emits error and disconnects for invalid criteria', async () => {
+      const req = {
+        tenantId,
+        user: { isCore: true, id: 'tester', roles: ['test-subscriber'] } as User,
+        params: { stream: 'test' },
+        query: { criteria: 'notjson' },
+        stream,
+        getConfiguration: jest.fn(),
+      };
+      const socket = { request: req, emit: jest.fn(), disconnect: jest.fn(), on: jest.fn() };
+
+      const listener = onIoConnection(loggerMock, of());
+      await listener(socket as unknown as Socket);
+      expect(socket.emit).toHaveBeenCalledWith('error', { message: 'criteria must be valid JSON.' });
+      expect(socket.disconnect).toHaveBeenCalledWith(true);
     });
 
     it('can handle disconnect', (done) => {

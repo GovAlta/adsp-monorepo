@@ -22,6 +22,7 @@ import { RequestHandler, Router } from 'express';
 import { body, checkSchema, param, query } from 'express-validator';
 import validator from 'validator';
 import { Logger } from 'winston';
+import { getRequiredTenantId } from './tenant';
 import { FileService } from '../../file';
 import { NotificationService } from '../../notification';
 import { QueueTaskService } from '../../task';
@@ -145,7 +146,7 @@ export function findForms(apiId: AdspId, repository: FormRepository): RequestHan
       const end = startBenchmark(req, 'operation-handler-time');
 
       const user = req.user;
-      const tenantId = req.tenant.id;
+      const tenantId = getRequiredTenantId(req);
       const { top: topValue, after, criteria: criteriaValue, includeData: includeDataValue } = req.query;
       const top = topValue ? parseInt(topValue as string) : 10;
       const includeData = includeDataValue === 'true';
@@ -179,9 +180,9 @@ export function findForms(apiId: AdspId, repository: FormRepository): RequestHan
         criteria.statusEquals = FormStatus.Submitted;
       }
 
-      if (user.tenantId) {
-        criteria.tenantIdEquals = user.tenantId;
-      }
+      // Always scope to the request tenant; for core users (e.g. the export job account) the SDK
+      // tenant handler resolves it from the tenantId query parameter.
+      criteria.tenantIdEquals = tenantId;
 
       const { results, page } = await repository.find(top, after as string, criteria, getResultsSort(req.query));
 
@@ -202,7 +203,7 @@ export function findSubmissions(apiId: AdspId, repository: FormSubmissionReposit
       const end = startBenchmark(req, 'operation-handler-time');
 
       const user = req.user;
-      const tenantId = req.tenant.id;
+      const tenantId = getRequiredTenantId(req);
 
       const { criteria: criteriaValue, top: topValue, after } = req.query;
       const top = topValue ? parseInt(topValue as string) : 100;
@@ -252,7 +253,7 @@ export function findFormSubmissions(
       const end = startBenchmark(req, 'operation-handler-time');
 
       const user = req.user;
-      const tenantId = req.tenant.id;
+      const tenantId = getRequiredTenantId(req);
       const { formId } = req.params;
 
       const { criteria: criteriaValue, top: topValue, after } = req.query;
@@ -480,7 +481,7 @@ export function getForm(repository: FormRepository): RequestHandler {
       const user = req.user;
       const { formId } = req.params;
 
-      const form = await repository.get(req.tenant.id, formId);
+      const form = await repository.get(getRequiredTenantId(req), formId);
       if (!form) {
         throw new NotFoundError('form', formId);
       }
@@ -506,7 +507,7 @@ export function getFormSubmission(apiId: AdspId, submissionRepository: FormSubmi
       const { formId, submissionId } = req.params;
       const user = req.user;
 
-      const formSubmission = await submissionRepository.get(req.tenant.id, submissionId, formId);
+      const formSubmission = await submissionRepository.get(getRequiredTenantId(req), submissionId, formId);
       if (!formSubmission) {
         throw new NotFoundError('Form Submission', submissionId);
       }
@@ -535,14 +536,14 @@ export function deleteFormSubmission(
       const end = startBenchmark(req, 'get-entity-time');
       const { formId, submissionId } = req.params;
       const user = req.user;
-      const tenant = req.tenant;
+      const tenantId = getRequiredTenantId(req);
 
-      if (!isAllowedUser(user, tenant.id, FormServiceRoles.Admin, true)) {
+      if (!isAllowedUser(user, tenantId, FormServiceRoles.Admin, true)) {
         throw new UnauthorizedUserError('delete form submission', user);
       }
 
       let deleted = false;
-      const formSubmission = await submissionRepository.get(tenant.id, submissionId, formId);
+      const formSubmission = await submissionRepository.get(tenantId, submissionId, formId);
       if (formSubmission) {
         deleted = await submissionRepository.delete(formSubmission);
       }

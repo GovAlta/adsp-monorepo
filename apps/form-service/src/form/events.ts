@@ -4,6 +4,7 @@ import { mapForm } from './mapper';
 import { SUBMITTED_FORM } from './pdf';
 import { FormServiceRoles } from './roles';
 import { SUPPORT_COMMENT_TOPIC_TYPE_ID } from './comment';
+import { SharePointPush } from './sharepoint';
 
 export const FORM_CREATED = 'form-created';
 export const FORM_DELETED = 'form-deleted';
@@ -23,6 +24,8 @@ export const SUBMISSION_DELETED = 'submission-deleted';
 
 export const REGISTRATION_SUBMITTED = 'registration-submitted';
 export const REGISTRATION_REVIEWED = 'registration-reviewed';
+
+export const SHAREPOINT_PUSH_FAILED = 'sharepoint-push-failed';
 
 const userInfoSchema = {
   type: 'object',
@@ -763,5 +766,49 @@ export function formMessageForwarded(
     correlationId: messageCorrelationId(apiId, form),
     context: messageContext(form),
     payload: { form: mapMessageForm(apiId, form, formAdminUrl), recipientEmail, message },
+  };
+}
+
+export const SharePointPushFailedDefinition: DomainEventDefinition = {
+  name: SHAREPOINT_PUSH_FAILED,
+  description:
+    'Signalled once when a submitted form could not be pushed to its SharePoint destination, after the retries ' +
+    'ran out or the failure could not be fixed by retrying. It carries identifiers and the error code only.',
+  payloadSchema: {
+    type: 'object',
+    properties: {
+      formId: { type: 'string' },
+      submissionId: { type: ['string', 'null'] },
+      destinationId: { type: 'string', description: 'The SharePoint destination of the form definition.' },
+      errorCode: {
+        type: 'string',
+        description: 'Why the push failed, for example entra:AADSTS7000222 or graph:accessDenied.',
+        examples: ['entra:AADSTS7000222'],
+      },
+      attempts: { type: 'number', description: 'The number of times the push was attempted.' },
+    },
+  },
+};
+
+export function sharePointPushFailed(
+  apiId: AdspId,
+  push: SharePointPush,
+  destinationId: string,
+  errorCode: string,
+  timestamp: Date,
+): DomainEvent {
+  return {
+    name: SHAREPOINT_PUSH_FAILED,
+    timestamp,
+    tenantId: push.tenantId,
+    correlationId: `${apiId}:/forms/${push.formId}`,
+    context: { formId: push.formId, destinationId },
+    payload: {
+      formId: push.formId,
+      submissionId: push.submissionId ?? null,
+      destinationId,
+      errorCode,
+      attempts: push.attempts,
+    },
   };
 }
