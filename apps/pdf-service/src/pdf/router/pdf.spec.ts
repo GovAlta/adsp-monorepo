@@ -684,7 +684,7 @@ describe('pdf', () => {
       expect(res.json).not.toHaveBeenCalled();
     });
 
-    it('calls next when tenant is missing', async () => {
+    it('calls next with InvalidOperationError when tenant is missing', async () => {
       const req = {
         user: { tenantId, id: 'test', name: 'tester', roles: [ServiceRoles.Admin] },
         params: { templateId: 'test' },
@@ -700,7 +700,7 @@ describe('pdf', () => {
         next,
       );
 
-      expect(next).toHaveBeenCalledWith(expect.any(TypeError));
+      expect(next).toHaveBeenCalledWith(expect.any(InvalidOperationError));
       expect(res.status).not.toHaveBeenCalled();
     });
   });
@@ -842,7 +842,7 @@ describe('pdf', () => {
       expect(res.status).not.toHaveBeenCalled();
     });
 
-    it('calls next when tenant is missing', async () => {
+    it('calls next with InvalidOperationError when tenant is missing', async () => {
       const req = {
         user: { tenantId, id: 'test', name: 'tester', roles: [ServiceRoles.Admin] },
         params: { templateId: 'test' },
@@ -859,7 +859,7 @@ describe('pdf', () => {
         next,
       );
 
-      expect(next).toHaveBeenCalledWith(expect.any(TypeError));
+      expect(next).toHaveBeenCalledWith(expect.any(InvalidOperationError));
       expect(res.status).not.toHaveBeenCalled();
     });
   });
