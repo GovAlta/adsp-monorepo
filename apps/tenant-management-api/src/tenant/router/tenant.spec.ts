@@ -93,6 +93,22 @@ describe('createTenantRouter', () => {
     expect(realmServiceMock.deleteUserIdp).toHaveBeenCalledWith('u', 'other-realm', undefined);
   });
 
+  describe('create tenant', () => {
+    const betaTester = { ...coreUser, roles: [TenantServiceRoles.BetaTester] } as unknown as User;
+
+    it('responds 400 to a non-string tenant name', async () => {
+      const res = await request(app(betaTester)).post('/').send({ name: 123 });
+      expect(res.status).toBe(400);
+      expect(repositoryMock.find).not.toHaveBeenCalled();
+    });
+
+    it('responds 400 to a tenant name sent only in the query string', async () => {
+      const res = await request(app(betaTester)).post('/?name=Test').send({});
+      expect(res.status).toBe(400);
+      expect(repositoryMock.find).not.toHaveBeenCalled();
+    });
+  });
+
   it.each([
     ['/name', 'name'],
     ['/email', 'email'],
