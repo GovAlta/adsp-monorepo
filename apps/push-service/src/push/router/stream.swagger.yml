@@ -276,5 +276,12 @@ components:
 
       400:
         $ref: '#/components/responses/PushBadRequest'
+      403:
+        description: >
+          The caller is not allowed to subscribe to the stream. Returned before any server-sent event headers are sent.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PushError'
       404:
         $ref: '#/components/responses/PushNotFound'

@@ -115,4 +115,22 @@ describe('configurationSchema', () => {
     expect(validate({ destinations: { 'hr-intake': { ...destination, folderLinkField: 'FilesFolder' } } })).toBe(true);
     expect(validate({ destinations: { 'hr-intake': { ...destination, folderLinkField: '' } } })).toBe(false);
   });
+
+  it('accepts a document library for uploaded files', () => {
+    const withLibrary = (documentFilesLibraryId: string) => ({
+      destinations: { 'hr-intake': { ...destination, documentFilesLibraryId } },
+    });
+
+    expect(validate(withLibrary('5f566623-1a2b-4c3d-8e9f-0a1b2c3d4e5f'))).toBe(true);
+    expect(validate(withLibrary(''))).toBe(false);
+  });
+
+  it('accepts the name of a document library for setup to create', () => {
+    const withLibraryName = (documentFilesLibraryName: string) => ({
+      destinations: { 'hr-intake': { ...destination, documentFilesLibraryName } },
+    });
+
+    expect(validate(withLibraryName('Applicant documents'))).toBe(true);
+    expect(validate(withLibraryName(''))).toBe(false);
+  });
 });

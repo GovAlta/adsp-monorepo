@@ -60,6 +60,28 @@ describe('export', () => {
   });
 
   describe('createExportJob', () => {
+    it('can call next with invalid operation without a tenant context', async () => {
+      const req = {
+        user: { id: 'core', isCore: true, roles: [ServiceRoles.Exporter] },
+        body: { resourceId: 'urn:ads:platform:task-service:v1:/tasks', format: 'csv' },
+      };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+
+      const handler = createExportJob(
+        serviceId,
+        loggerMock,
+        eventServiceMock,
+        fileServiceMock,
+        queueServiceMock,
+        repositoryMock,
+      );
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      expect(repositoryMock.create).not.toHaveBeenCalled();
+      expect(next).toHaveBeenCalledWith(expect.any(InvalidOperationError));
+    });
+
     it('can create handler', () => {
       const handler = createExportJob(
         serviceId,
@@ -343,6 +365,18 @@ describe('export', () => {
   });
 
   describe('getExportJob', () => {
+    it('can call next with invalid operation without a tenant context', async () => {
+      const req = { user: { id: 'core', isCore: true, roles: [ServiceRoles.Exporter] }, params: { jobId: '123' } };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+
+      const handler = getExportJob(serviceId, repositoryMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      expect(repositoryMock.get).not.toHaveBeenCalled();
+      expect(next).toHaveBeenCalledWith(expect.any(InvalidOperationError));
+    });
+
     it('can create handler', () => {
       const handler = getExportJob(serviceId, repositoryMock);
       expect(handler).toBeTruthy();

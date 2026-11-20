@@ -133,6 +133,7 @@ function toTestFailure(err: unknown): TestResult {
 
 export function testDestination(
   pusher: SharePointPusher,
+  fileService: SharePointFileService,
   logger: Logger,
   clearConfiguration: ClearConfiguration = noCacheClear,
 ): RequestHandler {
@@ -146,9 +147,10 @@ export function testDestination(
 
       let result: TestResult;
       try {
-        const { outcome, detailRows } = await withRetryScope(logger, logContext(tenantId), () =>
-          pusher.test(tenantId, configuration, destinationId, req.body),
-        );
+        const { outcome, detailRows } = await withRetryScope(logger, logContext(tenantId), async () => {
+          await fileService.checkDocumentLibrary(tenantId, configuration, destinationId);
+          return pusher.test(tenantId, configuration, destinationId, req.body);
+        });
         result = { ok: true, outcome, ...(detailRows ? { detailRows } : {}) };
       } catch (err) {
         result = toTestFailure(err);
@@ -442,7 +444,7 @@ export function createSharePointRouter({
   router.post(
     '/destinations/:destinationId/test',
     createValidationHandler(destinationId(), body().isObject()),
-    testDestination(pusher, logger, clearConfiguration),
+    testDestination(pusher, fileService, logger, clearConfiguration),
   );
   router.post(
     '/destinations/:destinationId/data',

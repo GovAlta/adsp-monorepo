@@ -6,7 +6,7 @@ import {
   WorkQueueService,
 } from '@core-services/core-common';
 import { FileResult, FileService, JobRepository, mapJob } from '@core-services/job-common';
-import { RequestHandler, Router } from 'express';
+import { Request, RequestHandler, Router } from 'express';
 import { Logger } from 'winston';
 import { ExportServiceWorkItem } from '../job';
 import { ServiceRoles } from '../roles';
@@ -14,6 +14,14 @@ import { EXPORT_FILE } from '../fileTypes';
 import { exportQueued } from '../events';
 import { body, param } from 'express-validator';
 import { ExportServiceConfiguration } from '../configuration';
+
+const TENANT_REQUIRED = 'Tenant context is required. Core users must set the tenantId query parameter.';
+
+function assertTenantContext(tenant: Request['tenant']): void {
+  if (!tenant) {
+    throw new InvalidOperationError(TENANT_REQUIRED);
+  }
+}
 
 export function createExportJob(
   serviceId: AdspId,
@@ -26,6 +34,7 @@ export function createExportJob(
   return async (req, res, next) => {
     try {
       const user = req.user;
+      assertTenantContext(req.tenant);
       const tenantId = req.tenant.id;
       const { fileType, filename, format, formatOptions, resourceId: resourceIdValue, params, resultsPath } = req.body;
       const resourceId = AdspId.parse(resourceIdValue);
@@ -89,15 +98,16 @@ export function getExportJob(serviceId: AdspId, repository: JobRepository<FileRe
     try {
       const user = req.user;
       const { jobId } = req.params;
+      assertTenantContext(req.tenant);
 
       const job = await repository.get(jobId);
       // Respond 404 for another tenant's job so the caller can't confirm it exists.
-      const isOtherTenantJob = req.tenant && `${job?.tenantId}` !== `${req.tenant.id}`;
-      if (!job || isOtherTenantJob) {
+      if (!job || `${job.tenantId}` !== `${req.tenant.id}`) {
         throw new NotFoundError('export job', jobId);
       }
 
-      if (user?.id !== job?.createdBy?.id && !isAllowedUser(user, req.tenant.id, ServiceRoles.Exporter)) {
+      // Core users with the exporter role can read the jobs of the tenantId tenant, as they can create them.
+      if (user?.id !== job.createdBy?.id && !isAllowedUser(user, req.tenant.id, ServiceRoles.Exporter, true)) {
         throw new UnauthorizedUserError('get export job', user);
       }
 

@@ -14,7 +14,7 @@ describe('createAnonymousTenantHandler', () => {
     getTenantByName: jest.fn(),
     getTenantByRealm: jest.fn(),
   };
-  const tenantId = AdspId.parse('urn:ads:platform:tenant-service:v2:/tenants/test');
+  const tenantId = AdspId.parse('urn:ads:platform:tenant-service:v2:/tenants/61f2e3a8c9b1d2e3f4a5b6c7');
   const res = {} as Response;
 
   beforeEach(() => {
@@ -87,4 +87,14 @@ describe('createAnonymousTenantHandler', () => {
     expect(tenantServiceMock.getTenant).not.toHaveBeenCalled();
     expect(next).toHaveBeenCalledWith();
   });
+  it('can reject anonymous tenantId that is not a tenant resource', async () => {
+    const req = { query: { tenantId: 'urn:ads:platform:tenant-service' } } as unknown as Request;
+    const next = jest.fn();
+
+    await createAnonymousTenantHandler(tenantServiceMock)(req, res, next);
+
+    expect(next).toHaveBeenCalledWith(expect.any(AdspIdFormatError));
+    expect(tenantServiceMock.getTenant).not.toHaveBeenCalled();
+  });
+
 });

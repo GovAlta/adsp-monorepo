@@ -3,8 +3,15 @@ import type { DomainEvent, EventService } from '@abgov/adsp-service-sdk';
 import { InvalidOperationError, NotFoundError } from '@core-services/core-common';
 import { runLimited } from '../concurrency';
 import { setValueAtPath } from '../dataPath';
-import { DestinationDisabledError, DetailRowsFailedError, SharePointError, toSharePointError } from '../errors';
+import {
+  DestinationDisabledError,
+  DestinationNotSetUpError,
+  DetailRowsFailedError,
+  SharePointError,
+  toSharePointError,
+} from '../errors';
 import { GraphFileClient, GraphTokenProvider } from '../graph';
+import { LibraryDriveResolver } from '../libraryDrives';
 import { itemKeyFor } from '../mapper';
 import { sanitizePathSegment } from '../filename';
 import { PushOptions, SharePointPusher } from '../push';
@@ -22,10 +29,15 @@ import { withToken } from '../withToken';
 import { fileUploaded, fileUploadFailed } from './events';
 import { FileContent, FileSource } from './source';
 
-interface RowTarget {
-  destination: SharePointDestination;
+// Where a submission's files go: its folder, in the destination's document library or the site's default one.
+interface UploadTarget {
   connection: SharePointConnection;
   folder: string;
+  driveId?: string;
+}
+
+interface RowTarget extends UploadTarget {
+  destination: SharePointDestination;
 }
 
 export interface FileRequest {
@@ -91,6 +103,14 @@ function assertFileCount(count: number): void {
   if (count > MAX_FILES) {
     throw new InvalidOperationError(`A request can have at most ${MAX_FILES} files.`);
   }
+}
+
+// A library that is named but not created yet must not fall back to the site's Documents library.
+function documentLibraryIdOf(destination: SharePointDestination): string | undefined {
+  if (destination.documentFilesLibraryName && !destination.documentFilesLibraryId) {
+    throw new DestinationNotSetUpError(destination.id);
+  }
+  return destination.documentFilesLibraryId;
 }
 
 // Placing a placeholder at each file's path checks every path fits the data before anything is uploaded.
@@ -175,6 +195,7 @@ export class SharePointFileService {
     private source: FileSource,
     private pusher: SharePointPusher,
     private eventService: EventService,
+    private drives: LibraryDriveResolver,
     private concurrency: number = DEFAULT_CONCURRENCY,
   ) {}
 
@@ -197,18 +218,25 @@ export class SharePointFileService {
       throw new DestinationDisabledError(destinationId);
     }
     assertFileCount(request.files.length);
+    const libraryId = documentLibraryIdOf(destination);
     const data = request.data && prepareRowData(destination, request.data, request.files);
 
     await this.tokens.getToken(tenantId, connection);
-    const folder = sanitizePathSegment(request.submissionId, 'submission');
+    const target: UploadTarget = {
+      connection,
+      folder: sanitizePathSegment(request.submissionId, 'submission'),
+      driveId: await this.drives.driveFor(tenantId, connection, libraryId),
+    };
     const names = new NameAssigner(request.files.length);
 
     const files = await runFileTasks(
       request.files.map((file, index) => ({ file, index })),
       this.concurrency,
-      ({ file, index }) =>
-        this.uploadOne(tenantId, connection, folder, file, index, names, destinationId, request.submissionId),
+      ({ file, index }) => this.uploadOne(tenantId, target, file, index, names, destinationId, request.submissionId),
     );
+    if (libraryId && files.some((file) => file.status === 'failed' && file.errorCode === 'graph:itemNotFound')) {
+      this.drives.evict(tenantId, connection, libraryId);
+    }
 
     if (!data || files.some(({ status }) => status === 'failed')) {
       return { files };
@@ -223,14 +251,23 @@ export class SharePointFileService {
 
     return {
       files,
-      row: await this.writeRow(tenantId, configuration, destinationId, { destination, connection, folder }, data),
+      row: await this.writeRow(tenantId, configuration, destinationId, { ...target, destination }, data),
     };
+  }
+
+  // Lets Test report a library that can't be used, since Test writes a row but uploads no files.
+  async checkDocumentLibrary(
+    tenantId: AdspId,
+    configuration: SharePointConfiguration | undefined,
+    destinationId: string,
+  ): Promise<void> {
+    const { destination, connection } = resolveDestination(configuration, destinationId);
+    await this.drives.driveFor(tenantId, connection, documentLibraryIdOf(destination), { fresh: true });
   }
 
   private async uploadOne(
     tenantId: AdspId,
-    connection: SharePointConnection,
-    folder: string,
+    target: UploadTarget,
     file: FileRequest,
     index: number,
     names: NameAssigner,
@@ -252,7 +289,7 @@ export class SharePointFileService {
       if (!content || name === null) {
         throw openError;
       }
-      const uploaded = await this.uploadWithRetry(tenantId, connection, folder, file, name, content);
+      const uploaded = await this.uploadWithRetry(tenantId, target, file, name, content);
       this.signal(fileUploaded(eventRequest, uploaded.id, uploaded.size));
       return {
         field: file.field,
@@ -278,8 +315,7 @@ export class SharePointFileService {
 
   private async uploadWithRetry(
     tenantId: AdspId,
-    connection: SharePointConnection,
-    folder: string,
+    { connection, folder, driveId }: UploadTarget,
     file: FileRequest,
     name: string,
     content: FileContent,
@@ -292,6 +328,7 @@ export class SharePointFileService {
         name,
         source.size,
         source.stream,
+        driveId,
       );
 
     try {
@@ -309,7 +346,7 @@ export class SharePointFileService {
     tenantId: AdspId,
     configuration: SharePointConfiguration | undefined,
     destinationId: string,
-    { destination, connection, folder }: RowTarget,
+    { destination, connection, folder, driveId }: RowTarget,
     data: Record<string, unknown>,
   ): Promise<RowResult> {
     try {
@@ -317,7 +354,7 @@ export class SharePointFileService {
       if (destination.folderLinkField) {
         options.folderLink = {
           Url: await withToken(this.tokens, tenantId, connection, (token) =>
-            this.graph.getFolderUrl(token, connection.siteId, folder),
+            this.graph.getFolderUrl(token, connection.siteId, folder, driveId),
           ),
           Description: folder,
         };
