@@ -303,6 +303,39 @@ describe('export', () => {
       expect(res.send).not.toHaveBeenCalled();
       expect(next).toHaveBeenCalledWith(expect.any(InvalidOperationError));
     });
+
+    it('can call next with invalid operation for a resourceId that is not an API resource', async () => {
+      const req = {
+        user: { tenantId, id: 'tester', name: 'Tester', roles: [ServiceRoles.Exporter] },
+        tenant: {
+          id: tenantId,
+        },
+        body: {
+          format: 'csv',
+          resourceId: 'urn:ads:platform:test-service:v1',
+        },
+        getServiceConfiguration: jest.fn(),
+      };
+
+      const res = {
+        send: jest.fn(),
+      };
+
+      const next = jest.fn();
+
+      const handler = createExportJob(
+        serviceId,
+        loggerMock,
+        eventServiceMock,
+        fileServiceMock,
+        queueServiceMock,
+        repositoryMock
+      );
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(res.send).not.toHaveBeenCalled();
+      expect(req.getServiceConfiguration).not.toHaveBeenCalled();
+      expect(next).toHaveBeenCalledWith(expect.any(InvalidOperationError));
+    });
   });
 
   describe('getExportJob', () => {
