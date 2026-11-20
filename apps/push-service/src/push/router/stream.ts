@@ -128,6 +128,9 @@ export function subscribeBySse(logger: Logger, events: Observable<DomainEvent>):
       const entity: StreamEntity = req[STREAM_KEY];
 
       entity.connect(events);
+      // Get the events before sending headers, so access errors are returned as an error response instead of a dropped stream.
+      const items = entity.getEvents(user, criteria);
+
       res.set({
         'Content-Type': 'text/event-stream',
         'Cache-Control': 'no-cache',
@@ -135,7 +138,7 @@ export function subscribeBySse(logger: Logger, events: Observable<DomainEvent>):
       });
       res.flushHeaders();
 
-      const sub = entity.getEvents(user, criteria).subscribe((next) => {
+      const sub = items.subscribe((next) => {
         res.write(`data: ${JSON.stringify(mapStreamItem(next))}\n\n`);
         res.flush();
       });
