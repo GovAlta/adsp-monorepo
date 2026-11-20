@@ -5,7 +5,7 @@ An MCP (Model Context Protocol) server that gives an AI coding assistant grounde
 (`@abgov/adsp-service-sdk`), instead of guessing.
 
 It bundles the ADSP documentation site content, the OpenAPI specs of ADSP services, and a curated reference of every
-`@abgov/adsp-service-sdk` export, and exposes them over stdio via twelve tools:
+`@abgov/adsp-service-sdk` export, and exposes them over stdio via thirteen tools:
 
 - `find_adsp_services` — match a product need, in the user's own words, to the ADSP services that provide it, so an
   agent reuses a platform service instead of building one. See [Matching needs to services](#matching-needs-to-services).
@@ -20,6 +20,9 @@ It bundles the ADSP documentation site content, the OpenAPI specs of ADSP servic
 - `get_platform_quickstart` — the canonical `initializeService` usage pattern (the common case for a tenant service
   built on top of ADSP) and a capabilities summary, for the most common question: how to start using ADSP from a
   Node service.
+- `get_app_quickstart` — the same for a browser app (for example React): signing users in through token-handler,
+  real-time updates from push-service, the Tenant Admin set-up both need, and which parts run in the browser. See
+  [Building a browser app](#building-a-browser-app).
 - `list_service_roles` — **live: talks to a real ADSP environment**, not bundled/offline data. Reads every platform
   service's registered RBAC role from tenant-service configuration, so an agent can pick a least-privileged role
   instead of defaulting to an admin role.
@@ -34,6 +37,25 @@ It bundles the ADSP documentation site content, the OpenAPI specs of ADSP servic
 - `read_service_endpoint` — one endpoint as its service's OpenAPI spec defines it: description, parameters, request
   body and responses with schema references inlined. `access` quotes the description's sentences about roles,
   tenancy and anonymous access; structured role metadata is planned (CS-5731).
+
+### Building a browser app
+
+`get_app_quickstart` is for a team building a browser app on ADSP rather than a Node service, so an agent asked "how
+do I sign my app's users in?" gets token-handler instead of the service-to-service client credentials flow. It covers:
+
+- a table of what runs where: the browser, the app's reverse proxy, token-handler, push-service, an optional backend
+  service, and the one-time Tenant Admin set-up;
+- signing in with token-handler: configuring and registering the client, the reverse proxy, the browser's sign-in,
+  session, API and sign-out paths, and CSRF. It names OpenID Connect in the browser as the alternative, for apps that
+  need the user's token in the browser;
+- real-time updates: registering a stream with `eventStreams` first, then subscribing with `socket.io-client`, and who
+  may subscribe. An app that signs in through token-handler holds no token, so it can use public streams only;
+- `samples/chat-app` and `samples/chat-service` as the worked example. chat-app signs in with OpenID Connect in the
+  browser, not token-handler, because it subscribes to a stream that isn't public.
+
+It gives no UI component or design guidance: it points to the GoA design-system MCP server (`goa-design-system`).
+`src/tools/registerAppQuickstartTool.spec.ts` fails if a doc page, sample file, token-handler configuration field or
+stream field it names no longer exists.
 
 ### Matching needs to services
 
@@ -118,8 +140,8 @@ on two endpoints, with a liveness check at `GET /health` and a readiness check a
 
 | Endpoint | Sign-in | Tools |
 |---|---|---|
-| `POST /mcp` | Never asked for; a token sent here is ignored | The 10 tools that answer from bundled content. `list_service_roles` and `get_service_configuration_schema` aren't listed, and calling them answers with an error saying to sign in at `/mcp/<tenant realm>` |
-| `POST /mcp/<tenant realm>` | Required for that tenant realm (see [Signing in](#signing-in)) | All 12 |
+| `POST /mcp` | Never asked for; a token sent here is ignored | The 11 tools that answer from bundled content. `list_service_roles` and `get_service_configuration_schema` aren't listed, and calling them answers with an error saying to sign in at `/mcp/<tenant realm>` |
+| `POST /mcp/<tenant realm>` | Required for that tenant realm (see [Signing in](#signing-in)) | All 13 |
 
 Without the three sign-in settings below, the server serves only `/mcp`. There is no way to call the live tools
 without signing in: anyone who can't sign in, and needs them, runs the server locally over stdio, as in
@@ -283,7 +305,7 @@ OpenTelemetry SDK isn't loaded. Stdio mode never exports metrics.
 
 Every label takes a value from a fixed set:
 
-- `mcp.tool.name`: one of the twelve tool names, or `unknown` for any name the server doesn't have.
+- `mcp.tool.name`: one of the thirteen tool names, or `unknown` for any name the server doesn't have.
 - `mcp.method.name`: an MCP method such as `initialize`, `tools/list` or `tools/call`; `other` for any other method;
   `batch` for a JSON-RPC batch; `unparsed` when the body wasn't valid JSON-RPC or was too large.
 - `error.type` on `mcp.request.duration`: `aborted` when the client disconnected before the response was written; the

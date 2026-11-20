@@ -8,7 +8,7 @@ const TOOL_CHOICE = [
   '- Before designing or building any capability of an ADSP app, call find_adsp_services with the need. If a result',
   '  has ask set, put its fitQuestions to the user rather than picking a service yourself. noMatch: no service fits.',
   '- Platform concepts or how-tos: search_adsp_docs, then read_adsp_doc. Browse services/ with list_adsp_docs.',
-  '- Writing a Node service: get_platform_quickstart first, then search_sdk_reference for a specific symbol.',
+  '- Writing a Node service: get_platform_quickstart first, then search_sdk_reference. A browser app: get_app_quickstart.',
   "- Calling a service's REST API: search_service_endpoints, then read_service_endpoint.",
 ];
 

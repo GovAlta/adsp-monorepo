@@ -102,6 +102,7 @@ describe('adsp-sdk-mcp-server', () => {
         'read_adsp_doc',
         'search_sdk_reference',
         'get_platform_quickstart',
+        'get_app_quickstart',
         'list_service_roles',
         'get_service_configuration_schema',
         'get_adsp_mcp_server_info',
@@ -211,6 +212,10 @@ describe('server instructions', () => {
 
   it.each([SERVER_INSTRUCTIONS, OFFLINE_ENDPOINT_INSTRUCTIONS])('stay about 10 lines', (instructions) => {
     expect(instructions.split('\n').length).toBeLessThanOrEqual(12);
+  });
+
+  it.each([SERVER_INSTRUCTIONS, OFFLINE_ENDPOINT_INSTRUCTIONS])('point browser apps at get_app_quickstart', (instructions) => {
+    expect(instructions).toContain('get_app_quickstart');
   });
 
   it('name the login the live tools need, and where to check content freshness', () => {
