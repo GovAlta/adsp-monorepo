@@ -1,3 +1,4 @@
+import { renderQuickstartKeycloakSection } from '../diagnostics/keycloakSteps';
 import { OFFLINE_TOOL_ANNOTATIONS, ToolDefinition } from './types';
 
 const QUICKSTART = `# Getting started with @abgov/adsp-service-sdk (Node)
@@ -103,33 +104,7 @@ the service's URN (e.g. \`urn:ads:platform:form-service\`) — it returns the li
 that service, which is exactly the shape required here. Use \`search_sdk_reference\` for the full
 \`ServiceRegistration\` type and the \`NamedConfiguration\` variant.
 
-## 4. Keycloak setup for service-to-service calls
-
-When your service makes HTTP requests to another ADSP service (e.g. uploads files via file-service, sends
-notifications via notification-service), **two Keycloak changes are required on your service's client** — one
-is NOT enough:
-
-### Step 1 — Add an audience mapper
-
-Every ADSP service validates that its own URN appears in the \`aud\` (audience) claim of the incoming token.
-Your service's token will not carry that URN by default, so every call will be rejected with 401 unless you
-add an audience mapper.
-
-In Keycloak admin console: **Clients → {your-client-id} → Client Scopes → {your-client-id}-dedicated →
-Add mapper → By configuration → Audience** → set "Included Client Audience" to the target service's URN
-(e.g. \`urn:ads:platform:file-service\`). Repeat for each service you call.
-
-### Step 2 — Assign the service account role
-
-Your service's token must also carry the role the target service requires for the operation. Use
-\`list_service_roles\` to find the least-privileged role, then assign it.
-
-In Keycloak admin console: **Clients → {your-client-id} → Service Account Roles → Client Roles** → select
-the target service's URN from the dropdown → assign the role (e.g. \`file-service-user\`). Repeat for each
-service you call.
-
-Both steps are always required. The audience mapper makes your token acceptable to the target service; the
-role controls what that service will permit your service account to do.
+${renderQuickstartKeycloakSection()}
 
 ## 5. Next steps
 
