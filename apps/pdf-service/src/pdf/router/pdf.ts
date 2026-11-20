@@ -104,6 +104,14 @@ export function getTemplate(templateIn: 'params' | 'body'): RequestHandler {
 
 const toTemplateId = (name: string): string => name.trim().toLowerCase().replace(/\s+/g, '-');
 
+// Core users act on the tenant in the tenantId query parameter; template writes need one.
+function requireTenantId(tenantId: AdspId | undefined, operation: string): AdspId {
+  if (!tenantId) {
+    throw new InvalidOperationError(`Tenant context is required to ${operation}; core users must set tenantId.`);
+  }
+  return tenantId;
+}
+
 // clean-code-ignore: 2.3 2.10
 const createPdfTemplatePatch = (
   id: string,
@@ -163,6 +171,7 @@ export function createPdfTemplate(
         // clean-code-ignore: 2.4
         throw new UnauthorizedUserError('create pdf template', user);
       }
+      const tenant = requireTenantId(tenantId, 'create pdf template');
       const { name, description = '', template = '', header, footer, additionalStyles, variables } = req.body;
       const id = toTemplateId(name);
       const [configuration] = await req.getConfiguration<Record<string, PdfTemplateEntity>>();
@@ -184,11 +193,11 @@ export function createPdfTemplate(
         variables,
       );
 
-      await savePdfTemplate(directory, tokenProvider, req.tenant.id.toString(), patch);
+      await savePdfTemplate(directory, tokenProvider, tenant.toString(), patch);
 
       void auditService.record(
         PdfTemplateCreatedAuditAction,
-        toPdfTemplateAuditDetails(toAuditActor(user), req.tenant.id, patch.update[id]),
+        toPdfTemplateAuditDetails(toAuditActor(user), tenant, patch.update[id]),
       );
 
       res.status(HttpStatusCodes.CREATED).json(patch.update[id]);
@@ -230,6 +239,7 @@ export function updatePdfTemplate(
         // clean-code-ignore: 2.4
         throw new UnauthorizedUserError('update pdf template', user);
       }
+      const tenant = requireTenantId(tenantId, 'update pdf template');
 
       const template: PdfTemplateEntity = req[TEMPLATE];
       const { name, description, template: templateBody, header, footer, additionalStyles, variables } = req.body;
@@ -250,11 +260,11 @@ export function updatePdfTemplate(
         update: { [template.id]: updated },
       };
 
-      await savePdfTemplate(directory, tokenProvider, req.tenant.id.toString(), patch);
+      await savePdfTemplate(directory, tokenProvider, tenant.toString(), patch);
 
       void auditService.record(
         PdfTemplateUpdatedAuditAction,
-        toPdfTemplateAuditDetails(toAuditActor(user), req.tenant.id, updated, {
+        toPdfTemplateAuditDetails(toAuditActor(user), tenant, updated, {
           changedFields: changedTemplateFields(template, updated),
         }),
       );
@@ -281,14 +291,15 @@ export function deletePdfTemplate(
         // clean-code-ignore: 2.4
         throw new UnauthorizedUserError('delete pdf template', user);
       }
+      const tenant = requireTenantId(tenantId, 'delete pdf template');
 
       const { templateId } = req.params;
       const template: PdfTemplateEntity | undefined = req[TEMPLATE];
-      await deletePdfTemplateFromConfig(directory, tokenProvider, req.tenant.id.toString(), templateId);
+      await deletePdfTemplateFromConfig(directory, tokenProvider, tenant.toString(), templateId);
 
       void auditService.record(
         PdfTemplateDeletedAuditAction,
-        toPdfTemplateAuditDetails(toAuditActor(user), req.tenant.id, { id: templateId, name: template?.name }),
+        toPdfTemplateAuditDetails(toAuditActor(user), tenant, { id: templateId, name: template?.name }),
       );
 
       res.status(HttpStatusCodes.NO_CONTENT).send();
