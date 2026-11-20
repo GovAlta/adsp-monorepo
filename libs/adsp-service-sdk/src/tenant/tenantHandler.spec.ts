@@ -1,5 +1,5 @@
 import type { Request, Response } from 'express';
-import { adspId } from '../utils';
+import { adspId, AdspIdFormatError } from '../utils';
 import { createTenantHandler } from './tenantHandler';
 
 describe('createTenantHandler', () => {
@@ -41,7 +41,7 @@ describe('createTenantHandler', () => {
   it('can set request tenant from query', (done) => {
     const handler = createTenantHandler(serviceMock);
 
-    const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
+    const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/61f2e3a8c9b1d2e3f4a5b6c7`;
     const tenant = { id: tenantId, name: 'test', realm: 'test' };
 
     const req: Request = { user: { isCore: true }, query: { tenantId: tenantId.toString() } } as unknown as Request;
@@ -110,6 +110,16 @@ describe('createTenantHandler', () => {
     serviceMock.getTenant.mockRejectedValueOnce(new Error('Something went terribly wrong.'));
     handler(req, {} as unknown as Response, (err: unknown) => {
       expect(err).toBeTruthy();
+      done();
+    });
+  });
+
+  it('can return format error for core user tenantId that is not a tenant URN', (done) => {
+    const handler = createTenantHandler(serviceMock);
+    const req = { user: { isCore: true }, query: { tenantId: 'urn:ads:platform:tenant-service' } } as unknown as Request;
+    handler(req, {} as unknown as Response, (err: unknown) => {
+      expect(err).toBeInstanceOf(AdspIdFormatError);
+      expect(serviceMock.getTenant).not.toHaveBeenCalled();
       done();
     });
   });
