@@ -86,7 +86,7 @@ Example:
       1. Open the pod logs and read the first error after the start time.
       2. Check whether form-service restarted or was deployed in the last hour.
       3. If submissions are failing, follow Mitigate in the runbook.
-    runbook_url: https://goa-dio.atlassian.net/wiki/spaces/ADSPA/pages/<id>/FormServiceErrorLogs
+    runbook_url: https://goa-dio.atlassian.net/wiki/spaces/ADSPA/pages/<id>
 ```
 
 Never put raw log messages or other unbounded values in labels.
@@ -95,8 +95,9 @@ Never put raw log messages or other unbounded values in labels.
 
 Runbooks live in Confluence under
 [ADSPA / Runbook](https://goa-dio.atlassian.net/wiki/spaces/ADSPA/folder/5203099686/Runbook),
-one page per alert, named after the alert. Write the page before the rule is merged and set the
-rule's `runbook_url` to it. Each page covers:
+one page per alert, named `<AlertName> - <service>`. Copy the
+[Runbook template](https://goa-dio.atlassian.net/wiki/spaces/ADSPA/pages/5227315672), write the page
+before the rule is merged, and set the rule's `runbook_url` to it. Each page covers:
 
 - **Meaning**: what the alert detects and why it matters.
 - **Impact**: who or what is affected, and how badly.
