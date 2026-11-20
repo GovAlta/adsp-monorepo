@@ -62,3 +62,19 @@ export function describeKeycloakFix(targetUrn?: string): string[] {
     oneLine(BOTH_STEPS_REQUIRED),
   ];
 }
+
+const onCallerClient = (consolePath: string) =>
+  oneLine(consolePath).replace(/\{your-client-id\}/g, '{caller-client-id}');
+
+/** The same two steps when your own endpoint rejected a caller: they go on the caller's client, aimed at you. */
+export function describeCallerKeycloakFix(): string[] {
+  return [
+    `Step 1 — ${AUDIENCE_MAPPER_STEP.title}. The caller's token must carry your service's URN in \`aud\`, or your ` +
+      `endpoint rejects it with 401. In Keycloak admin console: **${onCallerClient(AUDIENCE_MAPPER_STEP.consolePath)}** ` +
+      `→ set "Included Client Audience" to your service's URN.`,
+    `Step 2 — ${SERVICE_ACCOUNT_ROLE_STEP.title}. The caller's token must also carry the role your endpoint checks. ` +
+      `In Keycloak admin console: **${onCallerClient(SERVICE_ACCOUNT_ROLE_STEP.consolePath)}** → select your ` +
+      "service's URN from the dropdown → assign that role.",
+    oneLine(BOTH_STEPS_REQUIRED),
+  ];
+}

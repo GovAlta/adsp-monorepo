@@ -175,3 +175,60 @@ describe('diagnose', () => {
     );
   });
 });
+
+describe('diagnose, after the final review', () => {
+  it('names only the caller and your service when your endpoint returned the 401', () => {
+    const fix = fixText('my endpoint returns 401 when file-service calls it');
+
+    expect(fix).toContain('{caller-client-id}');
+    expect(fix).toContain("your service's URN");
+    expect(fix).not.toContain('{your-client-id}');
+    expect(fix).not.toContain('urn:ads:platform:file-service');
+  });
+
+  it.each([
+    ['403 even though the access token looks fine', 'token-request-failed'],
+    ['my service account token lacks the role', 'token-request-failed'],
+    ['how do I get an access token for the user', 'token-request-failed'],
+    ['the event payload is empty and undefined', 'configuration-undefined'],
+  ])('does not count generic or overlapping keywords: %s', (symptom, wrongId) => {
+    expect(diagnose(symptom, SERVICES).map(({ id }) => id)).not.toContain(wrongId);
+  });
+
+  it('keeps a weak 403 when only a generic token word is around it', () => {
+    expect(diagnose('403 even though the access token looks fine', SERVICES)[0]?.id).toBe('service-call-403');
+  });
+
+  it('reads a 401 from Keycloak while getting a token as the token request failing', () => {
+    expect(diagnose('401 from keycloak when getting token', SERVICES)[0].id).toBe('token-request-failed');
+  });
+
+  it('starts the tenant diagnosis with initializeService, which never sets req.tenant', () => {
+    const [top] = diagnose('req.tenant is undefined', SERVICES);
+
+    expect(top.causes[0].cause).toContain('initializeService');
+    expect(top.causes[0].fix).toContain('req.user.tenantId');
+    expect(top.causes.slice(1).some(({ cause }) => cause.includes('initializePlatform'))).toBe(true);
+  });
+
+  it('points a failed registration at the error and the configured-service role', () => {
+    const [top] = diagnose(
+      'Error encountered during service registration. AxiosError: Request failed with status code 403',
+      SERVICES,
+    );
+
+    expect(top.id).toBe('configuration-undefined');
+    expect(top.causes[0].cause).toMatch(/failed/i);
+    expect(top.causes[0].fix).toContain('configured-service');
+  });
+
+  it('does not read stack-trace line numbers as status codes', () => {
+    const trace = [
+      'Error: Failed to find directory entry for urn:ads:platform:pdf-service:v1',
+      '    at ServiceDirectoryImpl.getServiceUrl (serviceDirectory.js:403:15)',
+      '    at generatePdf (pdf.ts:401:9)',
+    ].join('\n');
+
+    expect(diagnose(trace, SERVICES).map(({ id }) => id)).toEqual(['directory-lookup-failed']);
+  });
+});

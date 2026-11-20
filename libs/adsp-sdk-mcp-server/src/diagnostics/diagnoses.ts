@@ -1,4 +1,4 @@
-import { describeKeycloakFix } from './keycloakSteps';
+import { describeCallerKeycloakFix, describeKeycloakFix } from './keycloakSteps';
 
 export type MatchLevel = 'exact' | 'strong' | 'weak';
 
@@ -38,6 +38,10 @@ export interface DiagnosisRule {
   messageFragments: string[];
   statusCodes: number[];
   keywords: string[];
+  /** Words too common to count on their own: they add to the score only next to one of `keywords`. */
+  genericKeywords?: string[];
+  /** The status code counts only next to one of `keywords`, e.g. a 401 that came from the token endpoint. */
+  statusNeedsKeyword?: boolean;
   sources: string[];
   build(signals: SymptomSignals): Omit<Diagnosis, 'id' | 'match' | 'symptom' | 'sources'>;
 }
@@ -61,12 +65,31 @@ const TOKEN_CHECK =
 function keycloakFix({ ownEndpoint, target }: SymptomSignals): string {
   if (ownEndpoint) {
     return [
-      "Your endpoint returned this to a caller, so the changes go on the caller's Keycloak client, and the target " +
-        "service is yours: use your service's URN.",
-      ...describeKeycloakFix(),
+      "Your endpoint returned this to a caller, so the changes go on the caller's Keycloak client, aimed at your service.",
+      ...describeCallerKeycloakFix(),
     ].join(' ');
   }
   return describeKeycloakFix(target?.urn).join(' ');
+}
+
+const REGISTRATION_ERROR = 'Error encountered during service registration';
+
+// When the registration error itself is in the symptom, "it failed" is the likelier cause than "it never ran".
+function orderRegistrationCauses(text: string) {
+  const neverRegistered = {
+    cause:
+      "The configuration schema was never registered: `configuration` isn't passed in the `initializeService` options.",
+    fix: 'Pass `configuration` (with its `configurationSchema`) in the `initializeService` options, so the SDK registers it at startup.',
+  };
+  const registrationFailed = {
+    cause: `Registration ran at startup but failed. The SDK logs "${REGISTRATION_ERROR}" followed by the reason.`,
+    fix:
+      'Read the error after that message. A 401 or 403 there usually means your service account lacks ' +
+      '`configured-service` on `urn:ads:platform:configuration-service`, which registration needs.',
+  };
+  return text.toLowerCase().includes(REGISTRATION_ERROR.toLowerCase())
+    ? [registrationFailed, neverRegistered]
+    : [neverRegistered, registrationFailed];
 }
 
 const BOTH_CHANGES = 'Make both changes above: this cause is fixed by the same two steps, never by one of them alone.';
@@ -127,26 +150,12 @@ export const DIAGNOSIS_RULES: DiagnosisRule[] = [
       'received no value',
     ],
     statusCodes: [],
-    keywords: [
-      'getconfiguration',
-      'configuration',
-      'configurationschema',
-      'undefined',
-      'empty',
-      'registration',
-      'registered',
-    ],
+    keywords: ['getconfiguration', 'configuration', 'configurationschema', 'registration', 'registered'],
+    genericKeywords: ['undefined', 'empty', 'null'],
     sources: ['platform/platform-node-sdk.md'],
-    build: ({ target }) => ({
+    build: ({ target, text }) => ({
       causes: [
-        {
-          cause:
-            'The configuration schema was never registered at startup. If registration failed, the SDK logs ' +
-            '"Error encountered during service registration".',
-          fix:
-            'Pass `configuration` (with its `configurationSchema`) in the `initializeService` options, so the SDK ' +
-            'registers it at startup, and check the startup log for that error.',
-        },
+        ...orderRegistrationCauses(text),
         {
           cause:
             "Your service's account can't read configuration. The SDK logs \"Error encountered in request for " +
@@ -160,7 +169,9 @@ export const DIAGNOSIS_RULES: DiagnosisRule[] = [
           fix: 'Save a configuration value for the tenant, or handle the empty case in your code.',
         },
         {
-          cause: 'The request has no tenant, so there is no tenant configuration to read.',
+          cause:
+            'With `initializePlatform`, the request has no tenant, so there is no tenant configuration to read. ' +
+            "(With `initializeService`, `req.getConfiguration()` always reads your service's own tenant.)",
           fix: 'Make sure `req.tenant` is set: mount `tenantHandler` after `passport.authenticate`.',
         },
       ],
@@ -181,12 +192,23 @@ export const DIAGNOSIS_RULES: DiagnosisRule[] = [
     symptom: '`req.tenant` is undefined: the tenant was not resolved for a request',
     messageFragments: ['Cannot find tenant associated with iss'],
     statusCodes: [],
-    keywords: ['req.tenant', 'tenant', 'tenancy', 'tenanthandler', 'tenantid', 'undefined', 'not resolved', 'iss'],
+    keywords: ['req.tenant', 'tenancy', 'tenanthandler', 'tenantid', 'not resolved'],
+    genericKeywords: ['tenant', 'undefined', 'iss'],
     sources: ['platform/platform-node-sdk.md'],
     build: () => ({
       causes: [
         {
-          cause: "`tenantHandler` runs before `passport.authenticate`, or isn't mounted, so it never sees a user.",
+          cause:
+            'Your service uses `initializeService`, which never sets `req.tenant`: the tenant handler is only part ' +
+            'of `initializePlatform`.',
+          fix:
+            "Use `req.user.tenantId` for the caller's tenant. `req.getConfiguration()` already reads your service's " +
+            'own tenant.',
+        },
+        {
+          cause:
+            "With `initializePlatform`, `tenantHandler` runs before `passport.authenticate`, or isn't mounted, so it " +
+            'never sees a user.',
           fix: 'Mount `tenantHandler` after `passport.authenticate(...)` on the routes that need a tenant.',
         },
         {
@@ -196,7 +218,7 @@ export const DIAGNOSIS_RULES: DiagnosisRule[] = [
           fix: "Use a token issued by the tenant's own realm.",
         },
         {
-          cause: "The caller is a core service account and didn't say which tenant.",
+          cause: "With `initializePlatform`, the caller is a core service account and didn't say which tenant.",
           fix: 'Pass `?tenantId=<tenant URN>`. The handler reads it only for core users.',
         },
       ],
@@ -214,7 +236,8 @@ export const DIAGNOSIS_RULES: DiagnosisRule[] = [
       'Error encountered retrieving directory',
     ],
     statusCodes: [],
-    keywords: ['directory', 'getserviceurl', 'service url', 'directory entry', 'lookup', 'urn'],
+    keywords: ['directory', 'getserviceurl', 'service url', 'directory entry'],
+    genericKeywords: ['lookup', 'urn', 'not found'],
     sources: ['platform/platform-node-sdk.md', 'services/directory-service.md'],
     build: () => ({
       causes: [
@@ -249,7 +272,8 @@ export const DIAGNOSIS_RULES: DiagnosisRule[] = [
     id: 'token-request-failed',
     symptom: "The SDK can't get its own access token",
     messageFragments: ['Error encountered retrieving access token'],
-    statusCodes: [],
+    statusCodes: [401],
+    statusNeedsKeyword: true,
     keywords: [
       'access token',
       'client secret',
@@ -257,9 +281,13 @@ export const DIAGNOSIS_RULES: DiagnosisRule[] = [
       'client credentials',
       'invalid_client',
       'unauthorized_client',
-      'service account',
-      'token',
+      'token endpoint',
+      'keycloak',
+      'getting token',
+      'getting a token',
+      'get a token',
     ],
+    genericKeywords: ['token', 'service account'],
     sources: ['platform/platform-node-sdk.md', 'getting-started.md'],
     build: () => ({
       causes: [

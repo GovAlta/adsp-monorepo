@@ -3,9 +3,10 @@ import { Diagnosis, DIAGNOSIS_RULES, DiagnosisRule, MatchLevel, SymptomSignals }
 
 const MAX_DIAGNOSES = 3;
 const LEVEL_RANK: Record<MatchLevel, number> = { exact: 3, strong: 2, weak: 1 };
+// A code right after ":" is a stack-trace line or column number, not a status.
 const STATUS_WORDS: [RegExp, number][] = [
-  [/(?<![0-9])401(?![0-9])|\bunauthori[sz]ed\b(?!_)/g, 401],
-  [/(?<![0-9])403(?![0-9])|\bforbidden\b/g, 403],
+  [/(?<![0-9:])401(?![0-9])|\bunauthori[sz]ed\b(?!_)/g, 401],
+  [/(?<![0-9:])403(?![0-9])|\bforbidden\b/g, 403],
 ];
 const URN_PATTERN = /urn:ads:platform:([a-z0-9-]+)/gi;
 const OUTBOUND_PATTERN = /\b(calling|calls? to|requests? to|from)\b/;
@@ -77,9 +78,17 @@ function score(
   signals: SymptomSignals,
 ): Scored | undefined {
   const fragments = rule.messageFragments.filter((fragment) => lower.includes(fragment.toLowerCase())).length;
-  const status = rule.statusCodes.some((code) => signals.statusCodes.includes(code));
+  const hits = (terms: string[] = []) => terms.filter((term) => wholeTerm(term).test(keywords));
+  const specific = hits(rule.keywords);
+  const generic = hits(rule.genericKeywords);
+  // A word inside a longer matched phrase ("token" in "access token") is the same signal, so it counts once.
+  const counted = (list: string[]) =>
+    list.filter((term) => ![...specific, ...generic].some((other) => other !== term && other.includes(term))).length;
+  const keywordHits = specific.length > 0 ? counted(specific) + counted(generic) : 0;
+  const status =
+    rule.statusCodes.some((code) => signals.statusCodes.includes(code)) &&
+    (!rule.statusNeedsKeyword || keywordHits > 0);
   const context = signals.outboundContext || signals.ownEndpoint;
-  const keywordHits = rule.keywords.filter((keyword) => wholeTerm(keyword).test(keywords)).length;
   const total = fragments + (status ? 1 : 0) + (status && context ? 1 : 0) + keywordHits;
 
   let level: MatchLevel | undefined;
