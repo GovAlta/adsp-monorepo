@@ -9,14 +9,16 @@ It bundles the ADSP documentation site content, the OpenAPI specs of ADSP servic
 
 - `find_adsp_services` — match a product need, in the user's own words, to the ADSP services that provide it, so an
   agent reuses a platform service instead of building one. See [Matching needs to services](#matching-needs-to-services).
+  Returns `next`.
 - `search_adsp_docs` — keyword search across ADSP platform docs (getting started, architecture, service concepts,
   tutorials). Common words people use that the docs don't, such as `websocket` or `auth`, also search for the
-  docs' own terms (`src/search/aliases.ts`).
+  docs' own terms (`src/search/aliases.ts`). Returns `related` (on the top result) and `next`.
 - `list_adsp_docs` — list the path and title of every bundled doc page, optionally under a path prefix such as
-  `services/`, for browsing when keyword search misses.
-- `read_adsp_doc` — read the full content of a doc page found via search or the list.
+  `services/`, for browsing when keyword search misses. Returns `next` for a prefix that matches five pages or fewer.
+- `read_adsp_doc` — read the full content of a doc page found via search or the list. Returns `related` and `next`
+  in a second block.
 - `search_sdk_reference` — search `@abgov/adsp-service-sdk` by symbol name, module, or keyword; returns full symbol
-  details (kind, description, option/return shape, example, deprecated flag).
+  details (kind, description, option/return shape, example, deprecated flag). Returns `related` and `next`.
 - `get_platform_quickstart` — the canonical `initializeService` usage pattern (the common case for a tenant service
   built on top of ADSP) and a capabilities summary, for the most common question: how to start using ADSP from a
   Node service.
@@ -28,12 +30,12 @@ It bundles the ADSP documentation site content, the OpenAPI specs of ADSP servic
 - `get_adsp_mcp_server_info` — this server's version and where its bundled content came from: the docs source
   commit, the `@abgov/adsp-service-sdk` version the SDK reference matches, and the release time. Lets an agent warn
   that an answer may be stale.
-- `list_service_apis` — the ADSP services that publish a REST API, with URN and operation count.
+- `list_service_apis` — the ADSP services that publish a REST API, with URN and operation count, under `results`.
 - `search_service_endpoints` — keyword search over those services' endpoints (path, summary, tags, description),
-  optionally within one service.
+  optionally within one service. Returns `related` and `next`.
 - `read_service_endpoint` — one endpoint as its service's OpenAPI spec defines it: description, parameters, request
   body and responses with schema references inlined. `access` quotes the description's sentences about roles,
-  tenancy and anonymous access; structured role metadata is planned (CS-5731).
+  tenancy and anonymous access; structured role metadata is planned (CS-5731). Returns `related` and `next`.
 
 ### Matching needs to services
 
@@ -95,6 +97,256 @@ The SDK has two entry points for two different kinds of service: `initializeServ
 primary audience for this package — product teams building on top of ADSP) and `initializePlatform` for cross-tenant
 platform services (the ones that live in this monorepo, e.g. `directory-service`, `configuration-service`). Content
 here is weighted toward `initializeService` accordingly.
+
+### Response format
+
+The offline tools point at the next useful call, so an agent follows from one answer to the next instead of
+guessing a tool or an argument. Their JSON carries two extra fields:
+
+| Field     | Meaning                                                                                                                                                                                                                               |
+| --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `related` | Things connected to what the tool returned, each capped at three: `docs` (doc page paths), `sdkSymbols` (SDK symbol names) and `serviceApis` (service names that `search_service_endpoints` takes as `service`). Left out when empty. |
+| `next`    | `suggested_calls`: up to three ready-to-make calls, each with `tool`, `arguments` and `why`. Never repeats the call just made. Left out when nothing useful follows.                                                                  |
+
+Every name in `related` and every call in `next` exists in the bundled content, and `next` never names a tool that
+needs sign-in (`list_service_roles` and `get_service_configuration_schema`), so a signed-out client can follow all of
+it. A suggested `search_service_endpoints` call carries the question asked (or the page title) when that search
+finds endpoints, else the service's name, and is left out when neither finds any. A one-word SDK name such as
+`Tenant` counts as named by a page only inside its code. The tools keep every field they returned before. These tools used to return a bare array and now return
+`{ "results": [...] }`: `search_adsp_docs`, `list_adsp_docs`, `search_sdk_reference`, `list_service_apis` and
+`search_service_endpoints`. Examples below are abridged (long text shortened, later entries left out); the fields shown
+are real.
+
+`search_adsp_docs` adds `related` to its top result and `next` beside `results`:
+
+```json
+{
+  "results": [
+    {
+      "path": "services/event-service.md",
+      "title": "Event service",
+      "snippet": "…",
+      "score": 184,
+      "related": {
+        "docs": [
+          "services/value-service.md",
+          "services/audit-service.md",
+          "services/configuration-service.md"
+        ],
+        "sdkSymbols": ["initializePlatform"],
+        "serviceApis": ["event-service"]
+      }
+    }
+  ],
+  "next": {
+    "suggested_calls": [
+      {
+        "tool": "read_adsp_doc",
+        "arguments": { "path": "services/event-service.md" },
+        "why": "Top match; read the full page."
+      },
+      {
+        "tool": "search_service_endpoints",
+        "arguments": {
+          "query": "send a domain event",
+          "service": "event-service"
+        },
+        "why": "Find this service's REST endpoints for the same question."
+      }
+    ]
+  }
+}
+```
+
+`list_adsp_docs` wraps the list in `results`, one page per line. For a prefix that matches five pages or fewer it
+adds `next` (`list_adsp_docs` with `prefix: "services/event"`):
+
+```json
+{
+  "results": [
+    { "path": "services/event-service.md", "title": "Event service" }
+  ],
+  "next": {
+    "suggested_calls": [
+      {
+        "tool": "read_adsp_doc",
+        "arguments": { "path": "services/event-service.md" },
+        "why": "Only page under this prefix; read it."
+      }
+    ]
+  }
+}
+```
+
+`read_adsp_doc` returns the page markdown as the first block, unchanged, then a JSON block with `path`, `related`
+and `next`:
+
+```json
+{
+  "path": "services/event-service.md",
+  "related": {
+    "docs": [
+      "services/value-service.md",
+      "services/audit-service.md",
+      "services/configuration-service.md"
+    ],
+    "sdkSymbols": ["initializePlatform"],
+    "serviceApis": ["event-service"]
+  },
+  "next": {
+    "suggested_calls": [
+      {
+        "tool": "search_service_endpoints",
+        "arguments": { "query": "Event service", "service": "event-service" },
+        "why": "Find this service's REST endpoints."
+      },
+      {
+        "tool": "search_sdk_reference",
+        "arguments": { "query": "initializePlatform" },
+        "why": "Look up the SDK symbol this page uses."
+      },
+      {
+        "tool": "read_adsp_doc",
+        "arguments": { "path": "services/value-service.md" },
+        "why": "Read a page this one links to."
+      }
+    ]
+  }
+}
+```
+
+`search_sdk_reference` puts `related` (`seeAlso` symbols and the doc pages that name the symbol) on each symbol, and
+`next` beside `results` (`initializeService`, with `summary`, `details` and `example` left out):
+
+```json
+{
+  "results": [
+    {
+      "name": "initializeService",
+      "kind": "function",
+      "module": "initialize",
+      "seeAlso": ["initializePlatform", "ServiceRegistration"],
+      "related": {
+        "sdkSymbols": ["initializePlatform", "ServiceRegistration"],
+        "docs": ["platform/platform-node-sdk.md", "services/audit-service.md"]
+      }
+    }
+  ],
+  "next": {
+    "suggested_calls": [
+      {
+        "tool": "read_adsp_doc",
+        "arguments": { "path": "platform/platform-node-sdk.md" },
+        "why": "Read a page that uses this symbol."
+      },
+      {
+        "tool": "search_sdk_reference",
+        "arguments": { "query": "initializePlatform" },
+        "why": "Look up a related SDK symbol."
+      }
+    ]
+  }
+}
+```
+
+`list_service_apis` returns `{ "results": [...] }` with one entry per service and no `related` or `next`:
+
+```json
+{
+  "results": [
+    {
+      "service": "agent-service",
+      "urn": "urn:ads:platform:agent-service",
+      "name": "Agent service",
+      "operations": 6
+    }
+  ]
+}
+```
+
+`search_service_endpoints` puts a single `related.docs` beside `results` (the doc pages of the services in the results,
+up to three), not on each result, and suggests reading the top endpoint (`query: "upload a file"`):
+
+```json
+{
+  "results": [
+    {
+      "service": "file-service",
+      "method": "POST",
+      "path": "/file/v1/files",
+      "deprecated": false,
+      "access": [
+        "Requires an authenticated user with one of the file type's updateRoles, or the file-service-admin role; otherwise the request responds 401."
+      ]
+    }
+  ],
+  "related": { "docs": ["services/file-service.md"] },
+  "next": {
+    "suggested_calls": [
+      {
+        "tool": "read_service_endpoint",
+        "arguments": {
+          "service": "file-service",
+          "method": "POST",
+          "path": "/file/v1/files"
+        },
+        "why": "Read the top endpoint's parameters and schemas."
+      }
+    ]
+  }
+}
+```
+
+`read_service_endpoint` keeps the endpoint's own fields (`service`, `serviceUrn`, `method`, `path`, `deprecated`,
+`access`, `description`, `tags`, `parameters`, `requestBody`, `responses`, `security`) and adds `related` and `next`
+at the top level (`POST /file/v1/files` on `file-service`):
+
+```json
+{
+  "related": { "docs": ["services/file-service.md"] },
+  "next": {
+    "suggested_calls": [
+      {
+        "tool": "read_adsp_doc",
+        "arguments": { "path": "services/file-service.md" },
+        "why": "Read this service's documentation."
+      }
+    ]
+  }
+}
+```
+
+`find_adsp_services` adds `next` beside `results` (and in its `structuredContent`), when a need has a strong match:
+
+```json
+{
+  "results": [
+    {
+      "need": "…",
+      "ask": false,
+      "fitQuestions": [],
+      "matches": [{ "service": "file-service", "fit": "strong", "reason": "…" }]
+    }
+  ],
+  "next": {
+    "suggested_calls": [
+      {
+        "tool": "read_adsp_doc",
+        "arguments": { "path": "services/file-service.md" },
+        "why": "Read its guide."
+      },
+      {
+        "tool": "search_service_endpoints",
+        "arguments": {
+          "query": "applicants attach supporting documents to an application",
+          "service": "file-service"
+        },
+        "why": "Find its REST endpoints."
+      }
+    ]
+  }
+}
+```
 
 ## Usage
 
