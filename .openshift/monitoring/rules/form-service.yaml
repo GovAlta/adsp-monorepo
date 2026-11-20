@@ -1,0 +1,69 @@
+# DRAFT: These rules are not production-ready. DEV confirmed that Loki wraps the application log
+# in JSON and serializes Winston's ANSI level colours in the message field. Before deployment,
+# confirm the stream labels and values below, validate the Critical regex against DEV logs, and
+# confirm the LokiStack spec.rules selectors; this resource may need matching metadata labels.
+apiVersion: template.openshift.io/v1
+kind: Template
+metadata:
+  name: form-service-log-alerts
+  annotations:
+    description: >-
+      Draft Loki log-level alerts for form-service. The Critical query, Loki stream labels and
+      LokiStack rule selectors require DEV verification before deployment.
+parameters:
+  - name: NAMESPACE
+    description: Target namespace, e.g. adsp-dev.
+    required: true
+objects:
+  - apiVersion: loki.grafana.com/v1
+    kind: AlertingRule
+    metadata:
+      name: form-service-log-alerts
+      namespace: ${NAMESPACE}
+      # Add only the metadata labels required by LokiStack spec.rules.selector after DEV verification.
+    spec:
+      tenantID: application
+      groups:
+        - name: form-service-log-alerts
+          interval: 30s
+          rules:
+            - alert: ADSPLogCritical
+              expr: |
+                sum by (kubernetes_pod_name, kubernetes_container_name) (
+                  count_over_time(
+                    {kubernetes_namespace_name="${NAMESPACE}", kubernetes_container_name="form-service"}
+                      |~ `"message":"\\u001b\[31m(critical|alert|fatal|emergency)\\u001b\[39m:` [1m]
+                  )
+                ) > 0
+              for: 0s
+              labels:
+                service: form-service
+                namespace: ${NAMESPACE}
+                severity: critical
+              annotations:
+                summary: Critical form-service log detected
+                description: >-
+                  Form service emitted {{ $value }} critical, alert, fatal, or emergency-level
+                  log(s) in the last minute for pod {{ $labels.kubernetes_pod_name }} and container
+                  {{ $labels.kubernetes_container_name }}.
+                runbook_url: https://github.com/GovAlta/adsp-monorepo/blob/main/.openshift/monitoring/README.md#runbooks
+            - alert: ADSPLogError
+              expr: |
+                sum by (kubernetes_pod_name, kubernetes_container_name) (
+                  count_over_time(
+                    {kubernetes_namespace_name="${NAMESPACE}", kubernetes_container_name="form-service"}
+                      |= `"message":"\u001b[31merror\u001b[39m:` [1m]
+                  )
+                ) > 0
+              for: 30s
+              labels:
+                service: form-service
+                namespace: ${NAMESPACE}
+                severity: warning
+              annotations:
+                summary: Sustained form-service error logs detected
+                description: >-
+                  Form service emitted {{ $value }} error-level log(s) in the last minute for pod
+                  {{ $labels.kubernetes_pod_name }} and container
+                  {{ $labels.kubernetes_container_name }}; the condition persisted for 30 seconds.
+                runbook_url: https://github.com/GovAlta/adsp-monorepo/blob/main/.openshift/monitoring/README.md#runbooks
