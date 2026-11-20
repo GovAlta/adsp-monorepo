@@ -55,11 +55,13 @@ export class MockState {
     return this.seed.sites.find((site) => site.siteId === siteId);
   }
 
-  createList(site: MockSite, displayName: string): MockList {
+  createList(site: MockSite, displayName: string, template?: MockList['template']): MockList {
     const list: MockList = {
       listId: randomUUID(),
       displayName,
-      columns: [{ name: 'Title', displayName: 'Title', type: 'text', required: true }],
+      columns:
+        template === 'documentLibrary' ? [] : [{ name: 'Title', displayName: 'Title', type: 'text', required: true }],
+      ...(template ? { template } : {}),
     };
     site.lists.push(list);
     return list;

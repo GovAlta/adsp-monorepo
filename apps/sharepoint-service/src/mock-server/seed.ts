@@ -14,6 +14,7 @@ export interface MockList {
   listId: string;
   displayName: string;
   columns: MockColumn[];
+  template?: 'documentLibrary';
 }
 
 export interface MockSite {
@@ -48,6 +49,7 @@ export const DEMO_LIST_ID = 'b57f7a62-4c3b-4c89-9d1a-1cb7a5e56d9f';
 export const UNGRANTED_LIST_ID = 'd3c1a2b4-5e6f-4a7b-8c9d-0e1f2a3b4c5d';
 export const NO_KEY_LIST_ID = 'e4f5a6b7-8c9d-4e0f-9a1b-2c3d4e5f6a7b';
 export const DEMO_DETAIL_LIST_ID = 'f6a7b8c9-0d1e-4f2a-8b3c-4d5e6f7a8b9c';
+export const DEMO_LIBRARY_ID = 'a7b8c9d0-1e2f-4a3b-8c4d-5e6f7a8b9c0d';
 
 const memberColumns: MockColumn[] = [
   { name: 'ParentItemId', type: 'text', indexed: true },
@@ -98,6 +100,7 @@ export const defaultSeed: MockSeed = {
         { listId: DEMO_LIST_ID, displayName: 'Intake', columns: intakeColumns },
         { listId: DEMO_DETAIL_LIST_ID, displayName: 'Household members (detail list)', columns: memberColumns },
         { listId: NO_KEY_LIST_ID, displayName: 'Log (no AdspItemKey)', columns: logColumns },
+        { listId: DEMO_LIBRARY_ID, displayName: 'Applicant documents', columns: [], template: 'documentLibrary' },
       ],
     },
     {

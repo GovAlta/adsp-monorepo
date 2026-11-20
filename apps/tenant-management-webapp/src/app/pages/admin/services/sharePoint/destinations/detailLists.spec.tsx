@@ -108,6 +108,24 @@ describe('DestinationModal with detail lists', () => {
     );
   });
 
+  it('saves a trimmed document library name and ID, and leaves them out when empty', () => {
+    const { modal, onSave } = renderModal();
+
+    fire(modal.querySelector('[name="destination-library-name"]'), { value: ' Applicant documents ' });
+    fire(modal.querySelector('[name="destination-library-id"]'), { value: ' library-1 ' });
+    click(modal, 'destination-modal-save');
+    fire(modal.querySelector('[name="destination-library-name"]'), { value: '  ' });
+    fire(modal.querySelector('[name="destination-library-id"]'), { value: '  ' });
+    click(modal, 'destination-modal-save');
+
+    expect(onSave.mock.calls[0][0]).toMatchObject({
+      documentFilesLibraryName: 'Applicant documents',
+      documentFilesLibraryId: 'library-1',
+    });
+    expect(onSave.mock.calls[1][0]).not.toHaveProperty('documentFilesLibraryName');
+    expect(onSave.mock.calls[1][0]).not.toHaveProperty('documentFilesLibraryId');
+  });
+
   it('lists forms linked to the destination first', () => {
     const store = storeWith({
       forms: [{ ...formDefinition, id: 'aaa', name: 'Another form', sharepointConfigurationId: null }, formDefinition],
@@ -322,6 +340,42 @@ describe('VerifySetupModal', () => {
     expect(store.getActions()).toContainEqual(setUpSharepointDestination('household'));
   });
 
+  it.each([
+    ['ok', 'Ready'],
+    ['notFound', 'Not found on the site. Check the document library ID.'],
+    ['notADocumentLibrary', 'This is a list, not a document library. Use the ID of a document library.'],
+  ])('shows the document library status %s', (status, text) => {
+    const { modal } = renderVerify({
+      loading: false,
+      report: { ready: status === 'ok', lists: [], documentLibrary: { libraryId: 'library-1', status } },
+    });
+
+    const library = modal.querySelector('[data-testid="verify-document-library"]');
+    expect(library).toHaveTextContent('Document library');
+    expect(library).toHaveTextContent(text);
+  });
+
+  it.each([
+    ['notFound', 'Not found on the site. Check the document library ID.'],
+    ['notADocumentLibrary', 'This is a list, not a document library. Use the ID of a document library.'],
+  ])('says at the top that the document library is %s', (status, text) => {
+    const { modal } = renderVerify({
+      loading: false,
+      report: { ...report, ready: false, documentLibrary: { libraryId: 'library-1', status } },
+    });
+
+    expect(modal.querySelector('goa-callout[testid="verify-setup-library"]')).toHaveTextContent(text);
+  });
+
+  it('shows no document library warning when the library is ready', () => {
+    const { modal } = renderVerify({
+      loading: false,
+      report: { ready: true, lists: [], documentLibrary: { libraryId: 'library-1', status: 'ok' } },
+    });
+
+    expect(modal.querySelector('goa-callout[testid="verify-setup-library"]')).toBeNull();
+  });
+
   it('has nothing to set up when the destination is ready', () => {
     const { modal } = renderVerify({ loading: false, report: { ready: true, lists: [] } });
 
@@ -407,6 +461,45 @@ describe('VerifySetupModal', () => {
       'Index the AdspItemKey column of the main list.',
       "Create a list named 'Pets' with these columns: ParentItemId (Text, indexed), PetName (Text). Then enter its ID on the destination.",
     ]);
+  });
+
+  describe('a named document library not created yet', () => {
+    const libraryReport = {
+      ready: false,
+      lists: [],
+      documentLibrary: { libraryName: 'Applicant documents', status: 'notCreated' as const },
+    };
+
+    it('shows the library by name, offers setup and adds no warning banner', () => {
+      const { modal } = renderVerify({ loading: false, report: libraryReport });
+
+      expect(modal.querySelector('[data-testid="verify-document-library"]')).toHaveTextContent('Applicant documents');
+      expect(modal.querySelector('[data-testid="verify-document-library"]')).toHaveTextContent('Not created yet.');
+      expect(modal.querySelector('goa-button[testid="verify-setup-run"]')).not.toHaveAttribute('disabled');
+      expect(modal.querySelector('goa-callout[testid="verify-setup-library"]')).toBeNull();
+    });
+
+    it('asks the site owner to create the library when the app cannot', () => {
+      expect(manualSteps(libraryReport)).toEqual([
+        "Create a document library named 'Applicant documents'. Then enter its ID as the document library ID on the destination.",
+      ]);
+    });
+
+    it('says setup created the library', () => {
+      const setup = {
+        createdLists: [],
+        createdLibrary: { libraryName: 'Applicant documents', libraryId: 'new-library' },
+        createdColumns: [],
+        indexedColumns: [],
+        failures: [],
+        permissionDenied: false,
+      };
+      const { modal } = renderVerify({ loading: false, report: libraryReport, setup });
+
+      expect(modal.querySelector('goa-callout[testid="verify-setup-done"]')).toHaveTextContent(
+        "Created the document library 'Applicant documents'.",
+      );
+    });
   });
 });
 

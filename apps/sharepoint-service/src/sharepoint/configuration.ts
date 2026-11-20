@@ -70,6 +70,8 @@ export const configurationSchema = {
           idempotencyFields: { type: 'array', uniqueItems: true, items: requiredString },
           enabled: { type: 'boolean' },
           folderLinkField: requiredString,
+          documentFilesLibraryId: requiredString,
+          documentFilesLibraryName: requiredString,
           detailLists: { type: 'array', items: detailList },
         },
         // Detail rows are replaced by finding the main row, so it needs a row key.

@@ -1,6 +1,7 @@
 import { adspId } from '@abgov/adsp-service-sdk';
 import { SharePointError } from './errors';
 import { GraphClient, GraphTokenProvider, ListColumn, NewColumn } from './graph';
+import { LibraryDriveResolver } from './libraryDrives';
 import { ListNameTakenError, SharePointSetup } from './setup';
 import { SharePointConfiguration, SharePointDestination } from './types';
 
@@ -100,6 +101,7 @@ describe('SharePointSetup', () => {
 
   let graph: FakeGraph;
   let tokens: { getToken: jest.Mock; evict: jest.Mock };
+  let drives: { driveFor: jest.Mock };
   let setup: SharePointSetup;
 
   beforeEach(() => {
@@ -110,7 +112,104 @@ describe('SharePointSetup', () => {
       columns: [text('ParentItemId', { indexed: true }), text('MemberName')],
     });
     tokens = { getToken: jest.fn().mockResolvedValue('token-1'), evict: jest.fn() };
-    setup = new SharePointSetup(tokens as unknown as GraphTokenProvider, graph as unknown as GraphClient);
+    drives = { driveFor: jest.fn().mockResolvedValue('drive-9') };
+    setup = new SharePointSetup(
+      tokens as unknown as GraphTokenProvider,
+      graph as unknown as GraphClient,
+      drives as unknown as LibraryDriveResolver,
+    );
+  });
+
+  describe('document library', () => {
+    const withLibrary = { ...main, documentFilesLibraryId: 'library-1' };
+
+    it('reports a usable document library and checks it with a fresh lookup', async () => {
+      const result = await setup.verify(tenantId, configurationFor(withLibrary), 'household');
+
+      expect(result.documentLibrary).toEqual({ libraryId: 'library-1', status: 'ok' });
+      expect(result.ready).toBe(true);
+      expect(drives.driveFor).toHaveBeenCalledWith(tenantId, expect.objectContaining({ id: 'hr-site' }), 'library-1', {
+        fresh: true,
+      });
+    });
+
+    it.each([
+      ['document-library-not-found', 'notFound'],
+      ['not-a-document-library', 'notADocumentLibrary'],
+    ])('reports %s as not ready', async (errorCode, status) => {
+      drives.driveFor.mockRejectedValueOnce(new SharePointError(errorCode, false));
+
+      const result = await setup.verify(tenantId, configurationFor(withLibrary), 'household');
+
+      expect(result.documentLibrary).toEqual({ libraryId: 'library-1', status });
+      expect(result.ready).toBe(false);
+    });
+
+    it('leaves the library out for a destination that uses the default one', async () => {
+      const result = await setup.verify(tenantId, configurationFor(main), 'household');
+
+      expect(result.documentLibrary).toBeUndefined();
+      expect(drives.driveFor).not.toHaveBeenCalled();
+    });
+
+    it('passes on other errors from the lookup', async () => {
+      drives.driveFor.mockRejectedValueOnce(new SharePointError('graph:accessDenied', false));
+
+      await expect(setup.verify(tenantId, configurationFor(withLibrary), 'household')).rejects.toMatchObject({
+        errorCode: 'graph:accessDenied',
+      });
+    });
+
+    it('includes the library in the report after a setup', async () => {
+      const result = await setup.setUp(tenantId, configurationFor(withLibrary), 'household');
+
+      expect(result.report.documentLibrary).toEqual({ libraryId: 'library-1', status: 'ok' });
+      expect(graph.createList).not.toHaveBeenCalled();
+    });
+
+    describe('named for setup to create', () => {
+      const named = { ...main, documentFilesLibraryName: 'Applicant documents' };
+
+      it('reports a named library without an ID as not created yet', async () => {
+        const result = await setup.verify(tenantId, configurationFor(named), 'household');
+
+        expect(result.documentLibrary).toEqual({ libraryName: 'Applicant documents', status: 'notCreated' });
+        expect(result.ready).toBe(false);
+        expect(drives.driveFor).not.toHaveBeenCalled();
+      });
+
+      it('creates the document library and reports it ready', async () => {
+        const result = await setup.setUp(tenantId, configurationFor(named), 'household');
+
+        expect(graph.createList).toHaveBeenCalledWith('token-1', siteId, 'Applicant documents', 'documentLibrary');
+        expect(result.createdLibrary).toEqual({ libraryName: 'Applicant documents', libraryId: 'new-list-1' });
+        expect(result.report.documentLibrary).toEqual({
+          libraryId: 'new-list-1',
+          libraryName: 'Applicant documents',
+          status: 'ok',
+        });
+      });
+
+      it('does not take over a list or library that already has the name', async () => {
+        graph.lists.set('existing', { name: 'Applicant documents', columns: [] });
+
+        const result = await setup.setUp(tenantId, configurationFor(named), 'household');
+
+        expect(graph.createList).not.toHaveBeenCalled();
+        expect(result.createdLibrary).toBeUndefined();
+        expect(result.failures).toEqual([{ name: 'Applicant documents', errorCode: 'library-name-taken' }]);
+        expect(result.report.documentLibrary.status).toBe('notCreated');
+      });
+
+      it('reports the library for the site owner to create when the grant only allows writing rows', async () => {
+        graph.createList.mockRejectedValueOnce(new SharePointError('graph:accessDenied', false));
+
+        const result = await setup.setUp(tenantId, configurationFor(named), 'household');
+
+        expect(result.permissionDenied).toBe(true);
+        expect(result.report.documentLibrary.status).toBe('notCreated');
+      });
+    });
   });
 
   describe('verify', () => {
