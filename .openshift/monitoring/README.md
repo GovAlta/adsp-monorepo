@@ -1,8 +1,8 @@
 # ADSP alerting
 
 Alert rules and notification routing for the `adsp-dev`, `adsp-uat` and `adsp-prod` namespaces.
-Alerts are delivered by email to `TI-DDDOSPFullStackDevelopers@gov.ab.ca` and to the Slack channel
-of each environment.
+Alerts are delivered by email to the addresses in `EMAIL_TO` of `params/<env>.env` and to the
+Slack channel of each environment.
 
 ```
 .openshift/monitoring/
@@ -20,21 +20,29 @@ the same params files. Param files treat `#` as a comment: values must not conta
 
 ## Routing
 
-| Severity           | First notification | Repeat while firing |
-| ------------------ | ------------------ | ------------------- |
-| `critical`         | immediately        | 30m                 |
-| `error`, `warning` | after 1m           | 2h                  |
-| other or missing   | after 30s          | 4h                  |
-| `info`             | not notified       | -                   |
+| Severity         | First notification | Repeat while firing |
+| ---------------- | ------------------ | ------------------- |
+| `critical`       | immediately        | 30m                 |
+| `warning`        | after 1m           | 2h                  |
+| other or missing | after 30s          | 4h                  |
+| `info`           | not notified       | -                   |
 
 - Alerts are grouped by `alertname`, `service` and `kubernetes_pod_name`.
-- A firing `critical` alert suppresses `error` and `warning` alerts for the same service and pod.
+- A firing `critical` alert suppresses `warning` alerts for the same service and pod.
 - Resolved alerts are notified with `[RESOLVED]` in the title.
 - The operator restricts the configuration to its own namespace; other namespaces are unaffected.
 
-Each notification shows the summary, description, service, namespace, pod, container, severity,
-start time (UTC) and, once resolved, end time, with links to the pod logs, a pod log search, the
-runbook and the namespace's alerts in the console.
+Notifications are written for whoever is on call, possibly in the middle of the night. A firing
+alert shows, in order:
+
+1. **What's happening**: the `description`.
+2. **Impact**: who or what is affected (`impact`).
+3. **First steps**: the first checks to make (`first_steps`).
+4. **Runbook**: a link to this alert's own runbook (`runbook_url`).
+5. Service, namespace, pod, container, severity and start time (UTC), with links to the pod logs,
+   a pod log search and the namespace's alerts in the console.
+
+A resolved alert shows the same details with its end time instead of the impact and first steps.
 
 Log-based alerts are counts, so they cannot carry the log line itself: put what happened and
 `{{ $value }}` in the description, and use the log links for the details.
@@ -45,25 +53,58 @@ Add `rules/<service>.yaml` as a Template whose objects set `namespace: ${NAMESPA
 `AlertingRule` (Loki), `PrometheusRule` and `AlertmanagerConfig` objects are accepted, and only in
 the environment's namespace.
 
-Labels and annotations used by routing and notifications:
+Labels and annotations used by routing and notifications. `render-manifests.sh` rejects an alert
+missing any of the required ones, so CI fails on the pull request.
 
-| Kind       | Name                        | Value                                                        |
-| ---------- | --------------------------- | ------------------------------------------------------------ |
-| label      | `severity`                  | `critical`, `error`, `warning` or `info`                     |
-| label      | `service`                   | Service name matching the rules file, e.g. `form-service`    |
-| label      | `namespace`                 | `${NAMESPACE}`, set on every rule                            |
-| label      | `kubernetes_pod_name`       | Keep in the query's `sum by (...)` so links point at the pod |
-| label      | `kubernetes_container_name` | Keep in the query's `sum by (...)`                           |
-| annotation | `summary`                   | One line naming the problem                                  |
-| annotation | `description`               | What happened, including `{{ $value }}`                      |
-| annotation | `runbook_url`               | Runbook for this alert; see [Runbooks](#runbooks)            |
+| Kind       | Name                        | Required | Value                                                           |
+| ---------- | --------------------------- | -------- | --------------------------------------------------------------- |
+| label      | `severity`                  | yes      | `critical`, `warning` or `info` (the values Loki accepts)       |
+| label      | `service`                   | yes      | Service name matching the rules file, e.g. `form-service`       |
+| label      | `namespace`                 |          | `${NAMESPACE}`, set on every rule                               |
+| label      | `kubernetes_pod_name`       |          | Keep in the query's `sum by (...)` so links point at the pod    |
+| label      | `kubernetes_container_name` |          | Keep in the query's `sum by (...)`                              |
+| annotation | `summary`                   | yes      | One line naming the problem                                     |
+| annotation | `description`               | yes      | What happened, including `{{ $value }}`                         |
+| annotation | `impact`                    | yes      | Who or what is affected, in plain words                         |
+| annotation | `first_steps`               | yes      | Numbered first checks, one per line                             |
+| annotation | `runbook_url`               | yes      | `https` link to this alert's runbook; see [Runbooks](#runbooks) |
+
+Example:
+
+```yaml
+- alert: FormServiceErrorLogs
+  expr: ...
+  labels:
+    severity: critical
+    service: form-service
+    namespace: ${NAMESPACE}
+  annotations:
+    summary: form-service is logging errors
+    description: 'form-service logged {{ $value }} errors in the last 5 minutes.'
+    impact: Users may be unable to submit forms or save drafts.
+    first_steps: |
+      1. Open the pod logs and read the first error after the start time.
+      2. Check whether form-service restarted or was deployed in the last hour.
+      3. If submissions are failing, follow Mitigate in the runbook.
+    runbook_url: https://goa-dio.atlassian.net/wiki/spaces/ADSPA/pages/<id>/FormServiceErrorLogs
+```
 
 Never put raw log messages or other unbounded values in labels.
 
 ## Runbooks
 
-Every alert should set `runbook_url` to a page explaining what the alert means, how to confirm
-impact and how to mitigate it. Alerts without one link here.
+Runbooks live in Confluence under
+[ADSPA / Runbook](https://goa-dio.atlassian.net/wiki/spaces/ADSPA/folder/5203099686/Runbook),
+one page per alert, named after the alert. Write the page before the rule is merged and set the
+rule's `runbook_url` to it. Each page covers:
+
+- **Meaning**: what the alert detects and why it matters.
+- **Impact**: who or what is affected, and how badly.
+- **Diagnose**: numbered checks, with the console pages or commands to use.
+- **Mitigate**: the fix for each likely cause, including rollback.
+- **Escalate**: when and to whom, if it is not mitigated in time.
+- **Known false positives**: and how to tell them apart.
+- **Owner** and date last reviewed.
 
 ## Slack webhooks
 
