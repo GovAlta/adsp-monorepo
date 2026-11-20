@@ -254,8 +254,8 @@ components:
               result: null
       400:
         description: >
-          Request is invalid. For example, `format` is not csv or json, `resourceId` is not an ADSP URN, or the
-          `fileType` does not exist in the tenant.
+          Request is invalid. For example, `format` is not csv or json, `resourceId` is not an ADSP URN for an API
+          resource, or the `fileType` does not exist in the tenant.
         content:
           application/json:
             schema:
@@ -265,6 +265,10 @@ components:
                 summary: Body parameter failed validation
                 value:
                   errorMessage: 'Validation failed with error(s): format (body) - Invalid value'
+              resourceId:
+                summary: resourceId is not an API resource URN
+                value:
+                  errorMessage: Value of resourceId must be a valid ADSP URN for an API resource.
               fileType:
                 summary: File type does not exist
                 value:

@@ -196,6 +196,17 @@ describe('export router documented behaviour', () => {
       expect(res.status).toBe(400);
     });
 
+    it('returns 400 when resourceId is an ADSP URN but not an API resource', async () => {
+      const res = await request(createApp())
+        .post('/export/v1/jobs')
+        .set('Authorization', 'Bearer exporter')
+        .send({ ...csvExport, resourceId: 'urn:ads:platform:task-service:v1' });
+
+      expect(res.status).toBe(400);
+      expect(res.body.errorMessage).toBe('Value of resourceId must be a valid ADSP URN for an API resource.');
+      expect(repositoryMock.create).not.toHaveBeenCalled();
+    });
+
     it('returns 400 when the file type does not exist', async () => {
       fileServiceMock.typeExists.mockResolvedValueOnce(false);
 
