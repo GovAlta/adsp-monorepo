@@ -373,4 +373,74 @@ describe('GraphFileClient', () => {
       });
     });
   });
+
+  describe('a chosen document library', () => {
+    const driveRoot = 'https://graph.example/v1.0/drives/drive-9/root:';
+
+    it('uploads into the library drive instead of the default one', async () => {
+      axiosMock.put.mockResolvedValueOnce({ status: 201, data: driveItem });
+
+      await client.uploadFile('token-1', siteId, 'sub-1', 'proof.pdf', 10, streamOf(10), 'drive-9');
+
+      expect(axiosMock.put).toHaveBeenCalledWith(
+        `${driveRoot}/sub-1/proof.pdf:/content`,
+        expect.anything(),
+        expect.anything(),
+      );
+    });
+
+    it('links to the folder in the library drive', async () => {
+      axiosMock.get.mockResolvedValueOnce({ data: { webUrl: 'https://sp.example/Applicants/sub-1' } });
+
+      await client.getFolderUrl('token-1', siteId, 'sub-1', 'drive-9');
+
+      expect(axiosMock.get).toHaveBeenCalledWith(`${driveRoot}/sub-1`, expect.anything());
+    });
+
+    it('finds the drive of a document library by its list ID', async () => {
+      axiosMock.get.mockResolvedValueOnce({
+        data: { id: 'drive-9', driveType: 'documentLibrary', name: 'Applicants' },
+      });
+
+      expect(await client.getLibraryDriveId('token-1', siteId, 'library-1')).toBe('drive-9');
+      expect(axiosMock.get).toHaveBeenCalledWith(`https://graph.example/v1.0/sites/${siteId}/lists/library-1/drive`, {
+        headers: { Authorization: 'Bearer token-1' },
+      });
+    });
+
+    it('reports a list that is not a document library, which Graph answers with an empty drive', async () => {
+      axiosMock.get.mockResolvedValueOnce({ data: {} });
+
+      await expect(client.getLibraryDriveId('token-1', siteId, 'list-1')).rejects.toMatchObject({
+        errorCode: 'not-a-document-library',
+        retryable: false,
+      });
+    });
+
+    it('reports a library ID that is not on the site', async () => {
+      axiosMock.isAxiosError.mockReturnValue(true);
+      axiosMock.get.mockRejectedValueOnce({
+        response: {
+          status: 404,
+          data: { error: { code: 'itemNotFound', message: 'The specified list was not found' } },
+        },
+      });
+
+      await expect(client.getLibraryDriveId('token-1', siteId, 'missing')).rejects.toMatchObject({
+        errorCode: 'document-library-not-found',
+        retryable: false,
+      });
+    });
+
+    it('passes other Graph errors on', async () => {
+      axiosMock.isAxiosError.mockReturnValue(true);
+      axiosMock.get.mockRejectedValueOnce({
+        response: { status: 403, data: { error: { code: 'accessDenied', message: 'Denied' } } },
+      });
+
+      await expect(client.getLibraryDriveId('token-1', siteId, 'library-1')).rejects.toMatchObject({
+        errorCode: 'graph:accessDenied',
+      });
+    });
+  });
 });

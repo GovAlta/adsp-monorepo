@@ -10,11 +10,13 @@ import {
   DEMO_CLIENT_SECRET,
   DEMO_DETAIL_LIST_ID,
   DEMO_ENTRA_TENANT_ID,
+  DEMO_LIBRARY_ID,
   DEMO_LIST_ID,
   DEMO_SITE_ID,
 } from '../mock-server/seed';
 import { MockState } from '../mock-server/state';
-import { GraphClient, GraphTokenProvider } from './graph';
+import { GraphClient, GraphFileClient, GraphTokenProvider } from './graph';
+import { LibraryDriveResolver } from './libraryDrives';
 import { SharePointPusher } from './push';
 import { SharePointSetup } from './setup';
 import { SharePointConfiguration } from './types';
@@ -61,6 +63,7 @@ describe('SharePoint service against the mock server', () => {
   let state: MockState;
   let pusher: SharePointPusher;
   let graph: GraphClient;
+  let fileClient: GraphFileClient;
   let tokens: { getToken: () => Promise<string>; evict: jest.Mock };
 
   const tokenFor = async (base: string): Promise<string> =>
@@ -83,6 +86,7 @@ describe('SharePoint service against the mock server', () => {
     const token = await tokenFor(base);
     tokens = { getToken: async () => token, evict: jest.fn() };
     graph = new GraphClient(`${base}/v1.0`);
+    fileClient = new GraphFileClient(`${base}/v1.0`);
     pusher = new SharePointPusher(tokens as unknown as GraphTokenProvider, graph);
   });
 
@@ -160,7 +164,11 @@ describe('SharePoint service against the mock server', () => {
         },
       },
     };
-    const setup = new SharePointSetup(tokens as unknown as GraphTokenProvider, graph);
+    const setup = new SharePointSetup(
+      tokens as unknown as GraphTokenProvider,
+      graph,
+      new LibraryDriveResolver(tokens as unknown as GraphTokenProvider, fileClient),
+    );
 
     expect((await setup.verify(tenantId, fresh, 'pets')).ready).toBe(false);
     const result = await setup.setUp(tenantId, fresh, 'pets');
@@ -182,6 +190,44 @@ describe('SharePoint service against the mock server', () => {
     ]);
   });
 
+  it('verifies a chosen document library, and reports an ordinary list given as one', async () => {
+    const setup = new SharePointSetup(
+      tokens as unknown as GraphTokenProvider,
+      graph,
+      new LibraryDriveResolver(tokens as unknown as GraphTokenProvider, fileClient),
+    );
+    const withLibrary = (documentFilesLibraryId: string): SharePointConfiguration => ({
+      ...configuration,
+      destinations: { household: { ...configuration.destinations.household, documentFilesLibraryId } },
+    });
+
+    const library = await setup.verify(tenantId, withLibrary(DEMO_LIBRARY_ID), 'household');
+    const ordinaryList = await setup.verify(tenantId, withLibrary(DEMO_LIST_ID), 'household');
+
+    expect(library.documentLibrary).toEqual({ libraryId: DEMO_LIBRARY_ID, status: 'ok' });
+    expect(ordinaryList.documentLibrary).toEqual({ libraryId: DEMO_LIST_ID, status: 'notADocumentLibrary' });
+    expect(ordinaryList.ready).toBe(false);
+  });
+
+  it('creates a named document library during setup', async () => {
+    const setup = new SharePointSetup(
+      tokens as unknown as GraphTokenProvider,
+      graph,
+      new LibraryDriveResolver(tokens as unknown as GraphTokenProvider, fileClient),
+    );
+    const named: SharePointConfiguration = {
+      ...configuration,
+      destinations: {
+        household: { ...configuration.destinations.household, documentFilesLibraryName: 'Household uploads' },
+      },
+    };
+
+    const result = await setup.setUp(tenantId, named, 'household');
+
+    expect(result.createdLibrary).toEqual({ libraryName: 'Household uploads', libraryId: expect.any(String) });
+    expect(result.report.documentLibrary).toMatchObject({ libraryId: result.createdLibrary.libraryId, status: 'ok' });
+  });
+
   it('reports that an app with only the write role cannot set up a destination', async () => {
     const writeOnly = new MockState({
       ...defaultSeed,
@@ -195,7 +241,11 @@ describe('SharePoint service against the mock server', () => {
     try {
       const base = `http://127.0.0.1:${(writeServer.address() as AddressInfo).port}`;
       const writeTokens = { getToken: async () => tokenFor(base), evict: jest.fn() };
-      const setup = new SharePointSetup(writeTokens as unknown as GraphTokenProvider, new GraphClient(`${base}/v1.0`));
+      const setup = new SharePointSetup(
+        writeTokens as unknown as GraphTokenProvider,
+        new GraphClient(`${base}/v1.0`),
+        new LibraryDriveResolver(writeTokens as unknown as GraphTokenProvider, new GraphFileClient(`${base}/v1.0`)),
+      );
       const destination = {
         ...configuration.destinations.household,
         fieldMappings: [{ source: 'notes', target: 'Notes', columnType: 'multilineText' as const }],
