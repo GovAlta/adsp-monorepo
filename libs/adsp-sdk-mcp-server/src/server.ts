@@ -8,6 +8,7 @@ import { DocsRepository } from './docs/docsRepository';
 import { OFFLINE_ENDPOINT_INSTRUCTIONS, SERVER_INSTRUCTIONS } from './instructions';
 import { getMetrics, ToolErrorType } from './metrics';
 import { createApiTools } from './tools/registerApiTools';
+import { createAppQuickstartTool } from './tools/registerAppQuickstartTool';
 import { createConfigurationSchemaTools } from './tools/registerConfigurationSchemaTool';
 import { isBusyResult } from './tools/liveToolLimit';
 import { createDocsTools } from './tools/registerDocsTools';
@@ -69,6 +70,7 @@ export function loadAdspMcpTools(options: CreateAdspMcpServerOptions = {}): Adsp
     ...createDocsTools(docs),
     ...createSdkTools(),
     ...createQuickstartTool(),
+    ...createAppQuickstartTool(),
     ...createServiceRolesTools(),
     ...createConfigurationSchemaTools(),
     ...createServerInfoTool(docs),

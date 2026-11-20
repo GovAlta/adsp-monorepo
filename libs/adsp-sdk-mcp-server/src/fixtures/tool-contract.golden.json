@@ -43,6 +43,13 @@
       }
     },
     {
+      "name": "get_app_quickstart",
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false
+      }
+    },
+    {
       "name": "list_service_roles",
       "annotations": {
         "readOnlyHint": true
