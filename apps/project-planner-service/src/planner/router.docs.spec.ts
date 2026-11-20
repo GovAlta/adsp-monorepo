@@ -428,6 +428,14 @@ describe('planner router documented behaviour', () => {
       expect(res.status).toBe(400);
     });
 
+    it.each(['concepts', 'decisions', 'questions'])('PATCH returns 400 for null items in %s', async (field) => {
+      const res = await request(createApp(owner))
+        .patch(`/planner/v1/solutions/${SOLUTION_ID}`)
+        .send({ [field]: [null] });
+
+      expect(res.status).toBe(400);
+    });
+
     it('PATCH returns 403 to another user', async () => {
       const res = await request(createApp(other)).patch(`/planner/v1/solutions/${SOLUTION_ID}`).send({ name: 'X' });
       expect(res.status).toBe(403);
