@@ -142,6 +142,7 @@ describe('export', () => {
       expect(eventServiceMock.send).toHaveBeenCalledWith(
         expect.objectContaining({
           name: ExportQueuedDefinition.name,
+          payload: expect.objectContaining({ filename: 'exported' }),
         }),
       );
     });
@@ -246,6 +247,7 @@ describe('export', () => {
           format: 'csv',
           resourceId: 'urn:ads:platform:test-service:v1:/tests',
           fileType: 'custom-type',
+          filename: 'custom-export',
         },
         getServiceConfiguration: jest.fn(() => Promise.resolve({ getSource: jest.fn() })),
       };
@@ -282,11 +284,13 @@ describe('export', () => {
           format: req.body.format,
           fileType: req.body.fileType,
           resourceId: req.body.resourceId,
+          filename: req.body.filename,
         }),
       );
       expect(eventServiceMock.send).toHaveBeenCalledWith(
         expect.objectContaining({
           name: ExportQueuedDefinition.name,
+          payload: expect.objectContaining({ filename: req.body.filename }),
         }),
       );
     });
@@ -351,7 +355,7 @@ describe('export', () => {
         eventServiceMock,
         fileServiceMock,
         queueServiceMock,
-        repositoryMock
+        repositoryMock,
       );
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(res.send).not.toHaveBeenCalled();
