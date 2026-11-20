@@ -1328,7 +1328,8 @@ paths:
         Extracts the text of an uploaded document, to use as a problem statement. Supports Markdown (.md, .markdown),
         Word (.docx, and .doc HTML exports such as Confluence "Export to Word") and PDF (.pdf) files up to 20 MB. The
         file isn't stored. Requires the planner-user or planner-admin role in the tenant of the token. Responds 400 if
-        no file is uploaded, the format isn't supported, or no text can be read from the file.
+        no file is uploaded, the field name is not `file`, the format isn't supported, or no text can be read. Responds
+        413 if the file exceeds 20 MB.
       requestBody:
         required: true
         content:
@@ -1354,6 +1355,12 @@ paths:
           $ref: '#/components/responses/PlannerUnauthorized'
         403:
           $ref: '#/components/responses/PlannerForbidden'
+        413:
+          description: The uploaded file exceeds the 20 MB limit.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlannerError'
   /planner/v1/solutions:
     get:
       tags: [Solution]

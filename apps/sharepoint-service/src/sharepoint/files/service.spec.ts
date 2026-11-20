@@ -1,13 +1,20 @@
 import { adspId } from '@abgov/adsp-service-sdk';
 import type { EventService } from '@abgov/adsp-service-sdk';
 import { Readable } from 'stream';
-import { CredentialNotSetError, DestinationDisabledError, DetailRowsFailedError, SharePointError } from '../errors';
+import {
+  CredentialNotSetError,
+  DestinationDisabledError,
+  DestinationNotSetUpError,
+  DetailRowsFailedError,
+  SharePointError,
+} from '../errors';
 import { GraphFileClient, GraphTokenProvider } from '../graph';
 import { RowIdentityMissingError } from '../mapper';
 import { SharePointPusher } from '../push';
 import { SharePointConfiguration } from '../types';
 import { MAX_FILES, SharePointFileService } from './service';
 import { FileSource } from './source';
+import { LibraryDriveResolver } from '../libraryDrives';
 
 const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
 
@@ -63,6 +70,25 @@ const configuration: SharePointConfiguration = {
       idempotencyFields: ['_adsp.key'],
     },
     orphan: { id: 'orphan', name: 'Orphan', connectionId: 'missing', listId: 'list-1', fieldMappings: [] },
+    'own-library': {
+      id: 'own-library',
+      name: 'Own library',
+      connectionId: 'hr-site',
+      listId: 'list-1',
+      fieldMappings: [{ source: 'applicant.firstName', target: 'FirstName' }],
+      idempotencyFields: ['_adsp.key'],
+      folderLinkField: 'FilesFolder',
+      documentFilesLibraryId: 'library-1',
+    },
+    'library-to-create': {
+      id: 'library-to-create',
+      name: 'Library to create',
+      connectionId: 'hr-site',
+      listId: 'list-1',
+      fieldMappings: [{ source: 'applicant.firstName', target: 'FirstName' }],
+      idempotencyFields: ['_adsp.key'],
+      documentFilesLibraryName: 'Applicant documents',
+    },
     household: {
       id: 'household',
       name: 'Household',
@@ -90,6 +116,7 @@ describe('SharePointFileService', () => {
   let source: { open: jest.Mock };
   let pusher: { push: jest.Mock };
   let eventService: { send: jest.Mock };
+  let drives: { driveFor: jest.Mock; evict: jest.Mock };
   let service: SharePointFileService;
 
   const build = (concurrency?: number) =>
@@ -99,6 +126,7 @@ describe('SharePointFileService', () => {
       source as unknown as FileSource,
       pusher as unknown as SharePointPusher,
       eventService as unknown as EventService,
+      drives as unknown as LibraryDriveResolver,
       concurrency,
     );
 
@@ -118,6 +146,10 @@ describe('SharePointFileService', () => {
     source = { open: jest.fn().mockImplementation(async (_tenant, fileId) => openAs(`${fileId}.pdf`)) };
     pusher = { push: jest.fn().mockResolvedValue({ itemId: 'row-1', outcome: 'created' }) };
     eventService = { send: jest.fn() };
+    drives = {
+      driveFor: jest.fn().mockImplementation(async (_t, _c, libraryId) => (libraryId ? 'drive-9' : undefined)),
+      evict: jest.fn(),
+    };
     service = build();
   });
 
@@ -128,6 +160,62 @@ describe('SharePointFileService', () => {
   });
 
   describe('files', () => {
+    describe('a chosen document library', () => {
+      const withRow = () => request({ data: { applicant: { firstName: 'Ada' }, _adsp: { key: 'k1' } } });
+
+      it("uploads into the library's drive and links to the folder there", async () => {
+        await service.upload(tenantId, configuration, 'own-library', withRow());
+
+        expect(drives.driveFor).toHaveBeenCalledWith(tenantId, connection, 'library-1');
+        expect(graph.uploadFile.mock.calls[0][6]).toBe('drive-9');
+        expect(graph.getFolderUrl).toHaveBeenCalledWith('token-1', connection.siteId, 'submission-1', 'drive-9');
+      });
+
+      it('uses the default library when the destination has none', async () => {
+        await service.upload(tenantId, configuration, 'hr-intake', request());
+
+        expect(graph.uploadFile.mock.calls[0][6]).toBeUndefined();
+      });
+
+      it('fails before opening or uploading any file when the library cannot be used', async () => {
+        drives.driveFor.mockRejectedValueOnce(new SharePointError('not-a-document-library', false));
+
+        await expect(service.upload(tenantId, configuration, 'own-library', withRow())).rejects.toMatchObject({
+          errorCode: 'not-a-document-library',
+        });
+        expect(source.open).not.toHaveBeenCalled();
+        expect(graph.uploadFile).not.toHaveBeenCalled();
+      });
+
+      it('clears the cached drive when the library is no longer there', async () => {
+        graph.uploadFile.mockRejectedValueOnce(new SharePointError('graph:itemNotFound', false));
+
+        const result = await service.upload(tenantId, configuration, 'own-library', withRow());
+
+        expect(result.files[0]).toMatchObject({ status: 'failed', errorCode: 'graph:itemNotFound' });
+        expect(drives.evict).toHaveBeenCalledWith(tenantId, connection, 'library-1');
+      });
+
+      it('checks the library with a fresh lookup, for Test', async () => {
+        await service.checkDocumentLibrary(tenantId, configuration, 'own-library');
+        await service.checkDocumentLibrary(tenantId, configuration, 'hr-intake');
+
+        expect(drives.driveFor.mock.calls).toEqual([
+          [tenantId, connection, 'library-1', { fresh: true }],
+          [tenantId, connection, undefined, { fresh: true }],
+        ]);
+      });
+
+      it('refuses uploads and Test while a named library is not created yet', async () => {
+        await expect(service.upload(tenantId, configuration, 'library-to-create', withRow())).rejects.toBeInstanceOf(
+          DestinationNotSetUpError,
+        );
+        await expect(service.checkDocumentLibrary(tenantId, configuration, 'library-to-create')).rejects.toBeInstanceOf(
+          DestinationNotSetUpError,
+        );
+        expect(graph.uploadFile).not.toHaveBeenCalled();
+      });
+    });
     it('uploads each file into a folder named after the submission and returns its link', async () => {
       const result = await service.upload(tenantId, configuration, 'hr-intake', request());
 
@@ -140,6 +228,7 @@ describe('SharePointFileService', () => {
         'proof.pdf',
         10,
         expect.anything(),
+        undefined,
       );
       expect(result).toEqual({
         files: [
@@ -253,6 +342,7 @@ describe('SharePointFileService', () => {
         'bad_name_.pdf',
         10,
         expect.anything(),
+        undefined,
       );
     });
 
@@ -712,7 +802,7 @@ describe('SharePointFileService', () => {
           request({ data: householdData, files: certificate }),
         );
 
-        expect(graph.getFolderUrl).toHaveBeenCalledWith('token-1', connection.siteId, 'submission-1');
+        expect(graph.getFolderUrl).toHaveBeenCalledWith('token-1', connection.siteId, 'submission-1', undefined);
         expect(pusher.push.mock.calls[0][4]).toEqual({
           folderLink: { Url: 'https://sp.example/submission-1', Description: 'submission-1' },
         });

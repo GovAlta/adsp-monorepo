@@ -343,6 +343,24 @@ describe('planner router documented behaviour', () => {
       expect(res.status).toBe(400);
     });
 
+    it('returns 413 when the file exceeds the upload limit', async () => {
+      const res = await request(createApp(owner))
+        .post('/planner/v1/documents/extract')
+        .attach('file', Buffer.alloc(20 * 1024 * 1024 + 1), 'plan.md');
+
+      expect(res.status).toBe(413);
+      expect(res.body).toEqual({ errorMessage: 'Uploaded file exceeds the 20 MB limit.' });
+    });
+
+    it('returns 400 when the file field is unexpected', async () => {
+      const res = await request(createApp(owner))
+        .post('/planner/v1/documents/extract')
+        .attach('document', Buffer.from('Applicants apply online.'), 'plan.md');
+
+      expect(res.status).toBe(400);
+      expect(res.body).toEqual({ errorMessage: 'Invalid file upload: Unexpected file field' });
+    });
+
     it('returns 400 for an unsupported format', async () => {
       const res = await request(createApp(owner))
         .post('/planner/v1/documents/extract')

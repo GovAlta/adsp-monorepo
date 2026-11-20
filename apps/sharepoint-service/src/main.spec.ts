@@ -8,6 +8,7 @@ const mockGetToken = jest.fn();
 const mockLocalFileSource = jest.fn();
 const mockFileServiceSource = jest.fn();
 const mockSharePointFileService = jest.fn();
+const mockLibraryDriveResolver = jest.fn();
 const mockLogger = { info: jest.fn(), error: jest.fn(), debug: jest.fn(), warn: jest.fn() };
 const mockEnvironment: Record<string, unknown> = {};
 
@@ -49,6 +50,7 @@ jest.mock('./sharepoint', () => ({
   FileServiceSource: mockFileServiceSource,
   GraphClient: jest.fn(),
   GraphFileClient: jest.fn(),
+  LibraryDriveResolver: mockLibraryDriveResolver,
   GraphTokenProvider: mockGraphTokenProvider,
   LocalFileSource: mockLocalFileSource,
   SharePointFileService: mockSharePointFileService,
@@ -150,7 +152,8 @@ describe('main', () => {
     expect(mockFileServiceSource).toHaveBeenCalledWith('directory', 'token-provider');
     expect(mockLocalFileSource).not.toHaveBeenCalled();
     expect(mockSharePointFileService.mock.calls[0][4]).toBe('event-service');
-    expect(mockSharePointFileService.mock.calls[0][5]).toBe(3);
+    expect(mockSharePointFileService.mock.calls[0][5]).toBeInstanceOf(mockLibraryDriveResolver);
+    expect(mockSharePointFileService.mock.calls[0][6]).toBe(3);
   });
 
   it('registers the file upload events with the platform', async () => {

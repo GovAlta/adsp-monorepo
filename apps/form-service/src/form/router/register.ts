@@ -1,5 +1,5 @@
 import { AdspId, AuditService, isAllowedUser, UnauthorizedUserError, User } from '@abgov/adsp-service-sdk';
-import { assertAuthenticatedHandler, createValidationHandler, InvalidOperationError } from '@core-services/core-common';
+import { assertAuthenticatedHandler, createValidationHandler } from '@core-services/core-common';
 import { RequestHandler, Router } from 'express';
 import { body, param } from 'express-validator';
 import * as HttpStatusCodes from 'http-status-codes';
@@ -13,18 +13,12 @@ import {
 } from '../audit';
 import { DataRegisterClient } from '../dataRegisterClient';
 import { ConfigurationServiceRoles, FormServiceRoles } from '../roles';
+import { getRequiredTenantId } from './tenant';
 import { DataRegisterCreateRequest, DataRegisterUpdateRequest } from '../types/register';
 
 // 1 to 50 letters, digits, hyphens, underscores and spaces, not starting or ending with a space, so a name can't be
 // blank and ' weekdays' can't exist alongside 'weekdays'.
 export const REGISTER_NAME_PATTERN = /^[a-zA-Z0-9-_](?:[a-zA-Z0-9-_ ]{0,48}[a-zA-Z0-9-_])?$/;
-
-const getRequiredTenantId = (req: Parameters<RequestHandler>[0]): AdspId => {
-  if (!req.tenant?.id) {
-    throw new InvalidOperationError('Tenant context is required for operation.');
-  }
-  return req.tenant.id;
-};
 
 const assertCanManageRegisters = (user: User, tenantId: AdspId, operation: string): void => {
   if (!isAllowedUser(user, tenantId, [FormServiceRoles.Admin, ConfigurationServiceRoles.ConfigurationAdmin], true)) {

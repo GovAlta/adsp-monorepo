@@ -283,6 +283,18 @@ export function createPlannerRouter({
     storage: multer.memoryStorage(),
     limits: { fileSize: MAX_PROBLEM_STATEMENT_UPLOAD_BYTES },
   });
+  const uploadProblemStatement = (req: Request, res: Response, next: NextFunction) =>
+    uploadProblemStatementFile.single('file')(req, res, (err: unknown) => {
+      if (!err) {
+        next();
+      } else if (err instanceof multer.MulterError && err.code === 'LIMIT_FILE_SIZE') {
+        next(new InvalidOperationError('Uploaded file exceeds the 20 MB limit.', { statusCode: 413 }));
+      } else if (err instanceof multer.MulterError) {
+        next(new InvalidOperationError(`Invalid file upload: ${err.message}`));
+      } else {
+        next(err);
+      }
+    });
 
   // Per request: whether solution content was sent to the AI model, whether any call fell back to rules, and the
   // solution and result mode to audit.
@@ -781,38 +793,33 @@ export function createPlannerRouter({
     res.send({ results: SPECIALISTS });
   });
 
-  router.post(
-    '/documents/extract',
-    requirePlannerUser,
-    uploadProblemStatementFile.single('file'),
-    async (req, res, next) => {
-      try {
-        const file = req.file;
-        if (!file) {
-          throw new InvalidOperationError('No file was uploaded.');
-        }
-        if (!isSupportedProblemStatementFile(file.originalname)) {
-          throw new InvalidOperationError(
-            `${file.originalname} is not a supported format. Upload a Markdown (.md), Word (.doc, .docx) or PDF (.pdf) file.`,
-          );
-        }
-        let text: string;
-        try {
-          text = await extractProblemStatementText(file.buffer, file.originalname);
-        } catch (err) {
-          throw new InvalidOperationError(`Could not read ${file.originalname}: ${(err as Error).message}`);
-        }
-        if (!text) {
-          throw new InvalidOperationError(
-            `No readable text was found in ${file.originalname}. Try a different file or enter the problem statement manually.`,
-          );
-        }
-        res.send({ text });
-      } catch (err) {
-        next(err);
+  router.post('/documents/extract', requirePlannerUser, uploadProblemStatement, async (req, res, next) => {
+    try {
+      const file = req.file;
+      if (!file) {
+        throw new InvalidOperationError('No file was uploaded.');
       }
-    },
-  );
+      if (!isSupportedProblemStatementFile(file.originalname)) {
+        throw new InvalidOperationError(
+          `${file.originalname} is not a supported format. Upload a Markdown (.md), Word (.doc, .docx) or PDF (.pdf) file.`,
+        );
+      }
+      let text: string;
+      try {
+        text = await extractProblemStatementText(file.buffer, file.originalname);
+      } catch (err) {
+        throw new InvalidOperationError(`Could not read ${file.originalname}: ${(err as Error).message}`);
+      }
+      if (!text) {
+        throw new InvalidOperationError(
+          `No readable text was found in ${file.originalname}. Try a different file or enter the problem statement manually.`,
+        );
+      }
+      res.send({ text });
+    } catch (err) {
+      next(err);
+    }
+  });
 
   router.get(
     '/solutions',
