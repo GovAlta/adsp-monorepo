@@ -21,7 +21,7 @@ export function createExportJob(
   eventService: EventService,
   fileService: FileService,
   queueService: WorkQueueService<ExportServiceWorkItem>,
-  repository: JobRepository<FileResult>
+  repository: JobRepository<FileResult>,
 ): RequestHandler {
   return async (req, res, next) => {
     try {
@@ -36,13 +36,14 @@ export function createExportJob(
 
       const configuration = await req.getServiceConfiguration<ExportServiceConfiguration, ExportServiceConfiguration>(
         null,
-        tenantId
+        tenantId,
       );
 
       const source = configuration?.getSource(resourceId);
       if (!isAllowedUser(user, tenantId, [ServiceRoles.Exporter, ...(source?.exporterRoles || [])], true)) {
         throw new UnauthorizedUserError('create export job', user);
       }
+      const effectiveFilename = filename || 'exported';
 
       if (fileType) {
         const typeExists = await fileService.typeExists(tenantId, fileType);
@@ -62,14 +63,14 @@ export function createExportJob(
         format,
         formatOptions: formatOptions || {},
         fileType: fileType || EXPORT_FILE,
-        filename: filename || 'exported',
+        filename: effectiveFilename,
         requestedBy: {
           id: user.id,
           name: user.name,
         },
       });
 
-      eventService.send(exportQueued(tenantId, user, job.id, resourceId, format, filename));
+      eventService.send(exportQueued(tenantId, user, job.id, resourceId, format, effectiveFilename));
       res.send(mapJob(serviceId, job));
 
       logger.info(`Queued export job (ID: ${job.id}) for export of resource: ${resourceId}.`, {
@@ -135,9 +136,9 @@ export function createExportRouter({
       body('params').optional().isObject(),
       body('resultsPath').optional().isString().isLength({ min: 1, max: 150 }),
       body('filename').optional({ nullable: true }).isString().isLength({ min: 1, max: 100 }),
-      body('fileType').optional({ nullable: true }).isString().isLength({ min: 1, max: 50 })
+      body('fileType').optional({ nullable: true }).isString().isLength({ min: 1, max: 50 }),
     ),
-    createExportJob(serviceId, logger, eventService, fileService, queueService, repository)
+    createExportJob(serviceId, logger, eventService, fileService, queueService, repository),
   );
 
   router.get('/jobs/:jobId', createValidationHandler(param('jobId').isUUID()), getExportJob(serviceId, repository));

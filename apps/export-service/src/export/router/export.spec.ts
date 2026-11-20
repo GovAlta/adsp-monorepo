@@ -67,7 +67,7 @@ describe('export', () => {
         eventServiceMock,
         fileServiceMock,
         queueServiceMock,
-        repositoryMock
+        repositoryMock,
       );
       expect(handler).toBeTruthy();
     });
@@ -104,7 +104,7 @@ describe('export', () => {
         eventServiceMock,
         fileServiceMock,
         queueServiceMock,
-        repositoryMock
+        repositoryMock,
       );
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ id: job.id, status: job.status }));
@@ -115,12 +115,13 @@ describe('export', () => {
           format: req.body.format,
           fileType: EXPORT_FILE,
           resourceId: req.body.resourceId,
-        })
+        }),
       );
       expect(eventServiceMock.send).toHaveBeenCalledWith(
         expect.objectContaining({
           name: ExportQueuedDefinition.name,
-        })
+          payload: expect.objectContaining({ filename: 'exported' }),
+        }),
       );
     });
 
@@ -139,7 +140,7 @@ describe('export', () => {
             getSource: jest.fn(() => ({
               exporterRoles: ['urn:ads:platform:test-service:test-exporter'],
             })),
-          })
+          }),
         ),
       };
 
@@ -162,7 +163,7 @@ describe('export', () => {
         eventServiceMock,
         fileServiceMock,
         queueServiceMock,
-        repositoryMock
+        repositoryMock,
       );
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ id: job.id, status: job.status }));
@@ -173,12 +174,12 @@ describe('export', () => {
           format: req.body.format,
           fileType: EXPORT_FILE,
           resourceId: req.body.resourceId,
-        })
+        }),
       );
       expect(eventServiceMock.send).toHaveBeenCalledWith(
         expect.objectContaining({
           name: ExportQueuedDefinition.name,
-        })
+        }),
       );
     });
 
@@ -207,7 +208,7 @@ describe('export', () => {
         eventServiceMock,
         fileServiceMock,
         queueServiceMock,
-        repositoryMock
+        repositoryMock,
       );
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(res.send).not.toHaveBeenCalled();
@@ -224,6 +225,7 @@ describe('export', () => {
           format: 'csv',
           resourceId: 'urn:ads:platform:test-service:v1:/tests',
           fileType: 'custom-type',
+          filename: 'custom-export',
         },
         getServiceConfiguration: jest.fn(() => Promise.resolve({ getSource: jest.fn() })),
       };
@@ -249,7 +251,7 @@ describe('export', () => {
         eventServiceMock,
         fileServiceMock,
         queueServiceMock,
-        repositoryMock
+        repositoryMock,
       );
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ id: job.id, status: job.status }));
@@ -260,12 +262,14 @@ describe('export', () => {
           format: req.body.format,
           fileType: req.body.fileType,
           resourceId: req.body.resourceId,
-        })
+          filename: req.body.filename,
+        }),
       );
       expect(eventServiceMock.send).toHaveBeenCalledWith(
         expect.objectContaining({
           name: ExportQueuedDefinition.name,
-        })
+          payload: expect.objectContaining({ filename: req.body.filename }),
+        }),
       );
     });
 
@@ -297,7 +301,7 @@ describe('export', () => {
         eventServiceMock,
         fileServiceMock,
         queueServiceMock,
-        repositoryMock
+        repositoryMock,
       );
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(res.send).not.toHaveBeenCalled();
@@ -329,7 +333,7 @@ describe('export', () => {
         eventServiceMock,
         fileServiceMock,
         queueServiceMock,
-        repositoryMock
+        repositoryMock,
       );
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(res.send).not.toHaveBeenCalled();
