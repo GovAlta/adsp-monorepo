@@ -50,12 +50,15 @@ do I sign my app's users in?" gets token-handler instead of the service-to-servi
   need the user's token in the browser;
 - real-time updates: registering a stream with `eventStreams` first, then subscribing with `socket.io-client`, and who
   may subscribe. An app that signs in through token-handler holds no token, so it can use public streams only;
+- a checklist of the one-time set-up: the token-handler client, the backend's directory entry, and creating and
+  assigning service roles, apart from what the backend registers at startup;
 - `samples/chat-app` and `samples/chat-service` as the worked example. chat-app signs in with OpenID Connect in the
-  browser, not token-handler, because it subscribes to a stream that isn't public.
+  browser, not token-handler, and needs that token because the stream it subscribes to isn't public.
 
 It gives no UI component or design guidance: it points to the GoA design-system MCP server (`goa-design-system`).
-`src/tools/registerAppQuickstartTool.spec.ts` fails if a doc page, sample file, token-handler configuration field or
-stream field it names no longer exists.
+`src/tools/registerAppQuickstartTool.spec.ts` checks the guide against the repo: the doc pages and sample files it
+names exist, its token-handler configuration and stream fields are in the token-handler schema and the SDK `Stream`
+type, and the roles, paths and URNs it lists appear in the docs it cites (`APP_GUIDE_SOURCES` in the tool).
 
 ### Matching needs to services
 

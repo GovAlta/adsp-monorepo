@@ -63,16 +63,46 @@ describe('get_app_quickstart', () => {
   it('says that a token-handler app holds no token for non-public streams', async () => {
     const push = section(await guide(), '## 3.');
 
-    expect(push).toMatch(/token-handler/);
-    expect(push).toMatch(/public/i);
+    expect(push).toContain('holds no token');
+    expect(push).toContain('public streams only');
   });
 
-  it('lists the Tenant Admin prerequisites', async () => {
-    const checklist = section(await guide(), '## 4.');
+  it('subscribes to a public stream without a token, and uses a token only in the browser-token case', async () => {
+    const push = section(await guide(), '## 3.');
+    const calls = push.split('io(').slice(1);
 
-    expect(checklist).toMatch(/Tenant Admin/);
-    expect(checklist).toContain('Valid Redirect URIs');
-    expect(checklist).toContain('platform:token-handler');
+    expect(calls.length).toBeGreaterThanOrEqual(2);
+    expect(calls[0].split(');')[0]).not.toContain('auth');
+    expect(push.indexOf('getAccessToken')).toBeGreaterThan(push.indexOf("user's token in the browser"));
+  });
+
+  it('lists every field a stream needs and a fully qualified subscriber role', async () => {
+    const push = section(await guide(), '## 3.');
+
+    for (const field of ['`id`', '`name`', '`description`', '`events`', '`subscriberRoles`', '`publicSubscribe`']) {
+      expect(push).toContain(field);
+    }
+    expect(push).toMatch(/urn:ads:<tenant>:<service>:<role>/);
+  });
+
+  it('sets the redirect URIs before registering the token-handler client', async () => {
+    const signIn = section(await guide(), '## 2.');
+
+    expect(signIn.indexOf('redirectUris')).toBeLessThan(signIn.indexOf('Register the client'));
+    expect(signIn).toContain('registrationToken');
+    expect(signIn).toContain('PUT /token-handler/v1/clients/{clientId}');
+  });
+
+  it('lists the Tenant Admin prerequisites, including directory entries and service roles', async () => {
+    const checklist = section(await guide(), '## 4.');
+    const [doneOnce, byBackend] = checklist.split('Done by your backend service');
+
+    expect(doneOnce).toMatch(/Tenant Admin/);
+    expect(doneOnce).toContain('Valid Redirect URIs');
+    expect(doneOnce).toContain('platform:token-handler');
+    expect(doneOnce).toMatch(/directory/);
+    expect(doneOnce).toContain('Service roles');
+    expect(byBackend).not.toMatch(/directory/);
   });
 
   it('marks which steps run in the browser and which need a backend', async () => {
@@ -115,15 +145,31 @@ describe('get_app_quickstart grounding', () => {
     expect(APP_GUIDE_SOURCES.files.filter((path) => !text.includes(path))).toEqual([]);
   });
 
-  it('uses token-handler configuration fields that its schema defines', () => {
+  it('uses token-handler configuration fields that its schema defines', async () => {
     const schema = readFileSync(resolve(REPO_ROOT, 'apps/token-handler/src/token/configuration/schema.ts'), 'utf8');
+    const text = await guide();
 
     expect(APP_GUIDE_SOURCES.tokenHandlerFields.filter((field) => !schema.includes(`${field}:`))).toEqual([]);
+    expect(APP_GUIDE_SOURCES.tokenHandlerFields.filter((field) => !text.includes(`\`${field}\``))).toEqual([]);
   });
 
-  it('uses push stream fields that the SDK Stream type defines', () => {
+  it('uses push stream fields that the SDK Stream type defines', async () => {
     const types = readFileSync(resolve(REPO_ROOT, 'libs/adsp-service-sdk/src/push/types.ts'), 'utf8');
+    const text = await guide();
 
-    expect(APP_GUIDE_SOURCES.streamFields.filter((field) => !types.includes(`${field}:`))).toEqual([]);
+    expect(APP_GUIDE_SOURCES.streamFields.filter((field) => !types.includes(`  ${field}:`))).toEqual([]);
+    expect(APP_GUIDE_SOURCES.streamFields.filter((field) => !text.includes(`\`${field}\``))).toEqual([]);
+  });
+
+  it('uses roles, paths and URNs that its source docs state', async () => {
+    const docs = new DocsRepository(resolve(REPO_ROOT, 'docs'));
+    const text = await guide();
+    const missing = Object.entries(APP_GUIDE_SOURCES.docTerms).flatMap(([path, terms]) =>
+      terms
+        .filter((term) => !docs.read(path)?.content.includes(term) || !text.includes(term))
+        .map((term) => ({ path, term })),
+    );
+
+    expect(missing).toEqual([]);
   });
 });
