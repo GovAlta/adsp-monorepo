@@ -82,6 +82,7 @@ export interface FeedbackConfiguration {
 }
 
 export interface ConfigState {
+  directory?: Record<string, string>;
   keycloakApi?: KeycloakApi;
   tenantApi?: TenantApi;
   serviceUrls?: ServiceUrls;

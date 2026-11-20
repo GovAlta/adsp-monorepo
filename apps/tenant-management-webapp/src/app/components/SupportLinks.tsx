@@ -2,13 +2,15 @@ import { EmailLinkColor, SpaceAdjust } from './styled-components';
 import React from 'react';
 import { GoAContextMenuIcon } from '@components/ContextMenu';
 
+export const SUPPORT_EMAIL = 'adsp@gov.ab.ca';
+
 function SupportLinks(): JSX.Element {
   return (
     <>
       <SpaceAdjust>Support</SpaceAdjust>
       {
         <EmailLinkColor data-testid="support-link">
-          <a rel="noopener noreferrer" target="_blank" href="mailto:adsp@gov.ab.ca">
+          <a rel="noopener noreferrer" target="_blank" href={`mailto:${SUPPORT_EMAIL}`}>
             Get support
             <GoAContextMenuIcon type="mail" title="Email" testId="mail-icon" />
           </a>

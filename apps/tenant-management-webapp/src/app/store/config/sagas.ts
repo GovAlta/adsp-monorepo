@@ -21,6 +21,7 @@ export function* fetchConfig(): SagaIterator {
       });
 
       const tenantWebConfig: Record<string, unknown> = {
+        directory: entryMapping,
         keycloakApi: {
           ...data.keycloakApi,
           url: getKeycloakUrl(data),
