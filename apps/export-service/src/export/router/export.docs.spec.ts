@@ -166,6 +166,9 @@ describe('export router documented behaviour', () => {
 
       expect(res.status).toBe(200);
       expect(fileServiceMock.typeExists).toHaveBeenCalledWith(tenantId, 'form-export');
+      expect(eventServiceMock.send).toHaveBeenCalledWith(
+        expect.objectContaining({ payload: expect.objectContaining({ filename: 'exported' }) }),
+      );
     });
 
     it('queues an export job in the tenantId tenant for a core user', async () => {

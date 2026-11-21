@@ -31,8 +31,8 @@ parameters:
   - name: CONSOLE_URL
     value: https://console-openshift-console.apps.aro-01.int.gov.ab.ca
   - name: RUNBOOK_BASE_URL
-    description: Fallback link for alerts without a runbook_url annotation.
-    value: https://github.com/GovAlta/adsp-monorepo/blob/main/.openshift/monitoring/README.md#runbooks
+    description: Runbook index in Confluence; fallback link for alerts without a runbook_url annotation.
+    value: https://goa-dio.atlassian.net/wiki/spaces/ADSPA/folder/5203099686/Runbook
 objects:
   - apiVersion: monitoring.coreos.com/v1beta1
     kind: AlertmanagerConfig
@@ -67,8 +67,8 @@ objects:
           - receiver: adsp-team
             matchers:
               - name: severity
-                matchType: '=~'
-                value: 'error|warning'
+                matchType: '='
+                value: warning
             groupWait: 1m
             groupInterval: 5m
             repeatInterval: 2h
@@ -79,8 +79,8 @@ objects:
               value: critical
           targetMatch:
             - name: severity
-              matchType: '=~'
-              value: 'error|warning'
+              matchType: '='
+              value: warning
           equal: ['service', 'kubernetes_pod_name']
       receivers:
         - name: 'null'
@@ -97,10 +97,18 @@ objects:
               html: |
                 {{ range .Alerts -}}
                 <table role="presentation" cellpadding="0" cellspacing="0" style="margin-bottom:16px;font-family:Arial,sans-serif;font-size:14px">
-                <tr><td style="border-left:4px solid {{ if eq .Status "resolved" }}#2eb886{{ else if eq .Labels.severity "critical" }}#a30200{{ else if eq .Labels.severity "error" }}#e8590c{{ else if eq .Labels.severity "warning" }}#daa038{{ else }}#439fe0{{ end }};padding-left:12px">
+                <tr><td style="border-left:4px solid {{ if eq .Status "resolved" }}#2eb886{{ else if eq .Labels.severity "critical" }}#a30200{{ else if eq .Labels.severity "warning" }}#daa038{{ else }}#439fe0{{ end }};padding-left:12px">
                 <p style="font-size:16px"><b>[{{ .Status | toUpper }}] [${ENV_LABEL}] {{ .Labels.alertname }}</b></p>
                 {{ if .Annotations.summary }}<p>{{ .Annotations.summary }}</p>{{ end }}
-                <p>{{ if eq .Status "resolved" }}Alert condition is no longer firing.{{ else }}{{ .Annotations.description }}{{ end }}</p>
+                {{ if eq .Status "resolved" -}}
+                <p>Alert condition is no longer firing.</p>
+                {{- else -}}
+                <p><b>What's happening</b><br/>{{ .Annotations.description }}</p>
+                {{ if .Annotations.impact }}<p><b>Impact</b><br/>{{ .Annotations.impact }}</p>{{ end }}
+                {{ if .Annotations.first_steps }}<p style="margin-bottom:4px"><b>First steps</b></p>
+                <pre style="font-family:Arial,sans-serif;font-size:14px;white-space:pre-wrap;margin:0 0 12px 0">{{ .Annotations.first_steps | trimSpace }}</pre>{{ end }}
+                {{- end }}
+                <p><b><a href="{{ or .Annotations.runbook_url "${RUNBOOK_BASE_URL}" }}">Runbook: {{ .Labels.alertname }}</a></b></p>
                 <table role="presentation" cellpadding="2" cellspacing="0">
                 <tr><td><b>Service</b></td><td>{{ or .Labels.service "-" }}</td></tr>
                 <tr><td><b>Namespace</b></td><td>${NAMESPACE}</td></tr>
@@ -113,8 +121,7 @@ objects:
                 <p>
                 {{ if .Labels.kubernetes_pod_name }}<a href="${CONSOLE_URL}/k8s/ns/${NAMESPACE}/pods/{{ .Labels.kubernetes_pod_name }}/logs">Pod logs</a> |
                 <a href="${CONSOLE_URL}/monitoring/logs?tenant=application&q={{ printf "{kubernetes_namespace_name=\"${NAMESPACE}\", kubernetes_pod_name=\"%s\"}" .Labels.kubernetes_pod_name }}">Search logs</a> |
-                {{ end }}<a href="{{ or .Annotations.runbook_url "${RUNBOOK_BASE_URL}" }}">Runbook</a> |
-                <a href="${CONSOLE_URL}/dev-monitoring/ns/${NAMESPACE}/alerts">Alerts in console</a>
+                {{ end }}<a href="${CONSOLE_URL}/dev-monitoring/ns/${NAMESPACE}/alerts">Alerts in console</a>
                 </p>
                 </td></tr>
                 </table>
@@ -127,14 +134,20 @@ objects:
               sendResolved: true
               title: '[{{ .Status | toUpper }}] [${ENV_LABEL}] {{ .CommonLabels.alertname }}{{ if .CommonLabels.service }} - {{ .CommonLabels.service }}{{ end }}'
               titleLink: '${CONSOLE_URL}/dev-monitoring/ns/${NAMESPACE}/alerts'
-              color: '{{ if eq .Status "resolved" }}good{{ else if eq .CommonLabels.severity "critical" }}danger{{ else if eq .CommonLabels.severity "error" }}#e8590c{{ else if eq .CommonLabels.severity "warning" }}warning{{ else }}#439fe0{{ end }}'
+              color: '{{ if eq .Status "resolved" }}good{{ else if eq .CommonLabels.severity "critical" }}danger{{ else if eq .CommonLabels.severity "warning" }}warning{{ else }}#439fe0{{ end }}'
               text: |
                 {{ range .Alerts -}}
                 *{{ .Labels.alertname }}*{{ if .Annotations.summary }} - {{ .Annotations.summary }}{{ end }}
-                {{ if eq .Status "resolved" }}Alert condition is no longer firing.{{ else }}{{ .Annotations.description }}{{ end }}
+                {{ if eq .Status "resolved" }}Alert condition is no longer firing.{{ else }}*What's happening:* {{ .Annotations.description }}
+                {{- if .Annotations.impact }}
+                *Impact:* {{ .Annotations.impact }}{{ end }}
+                {{- if .Annotations.first_steps }}
+                *First steps:*
+                {{ .Annotations.first_steps | trimSpace }}{{ end }}{{ end }}
+                *Runbook:* <{{ or .Annotations.runbook_url "${RUNBOOK_BASE_URL}" }}|{{ .Labels.alertname }}>
                 *Service:* {{ or .Labels.service "-" }}   *Severity:* {{ or .Labels.severity "-" }}
                 *Pod:* {{ or .Labels.kubernetes_pod_name "-" }}   *Container:* {{ or .Labels.kubernetes_container_name "-" }}
                 *Started:* {{ .StartsAt.UTC.Format "2006-01-02 15:04:05 MST" }}{{ if eq .Status "resolved" }}   *Ended:* {{ .EndsAt.UTC.Format "2006-01-02 15:04:05 MST" }}{{ end }}
-                {{ if .Labels.kubernetes_pod_name }}<${CONSOLE_URL}/k8s/ns/${NAMESPACE}/pods/{{ .Labels.kubernetes_pod_name }}/logs|Pod logs> | <${CONSOLE_URL}/monitoring/logs?tenant=application&q={{ printf "{kubernetes_namespace_name=\"${NAMESPACE}\", kubernetes_pod_name=\"%s\"}" .Labels.kubernetes_pod_name | urlquery }}|Search logs> | {{ end }}<{{ or .Annotations.runbook_url "${RUNBOOK_BASE_URL}" }}|Runbook>
+                {{ if .Labels.kubernetes_pod_name }}<${CONSOLE_URL}/k8s/ns/${NAMESPACE}/pods/{{ .Labels.kubernetes_pod_name }}/logs|Pod logs> | <${CONSOLE_URL}/monitoring/logs?tenant=application&q={{ printf "{kubernetes_namespace_name=\"${NAMESPACE}\", kubernetes_pod_name=\"%s\"}" .Labels.kubernetes_pod_name | urlquery }}|Search logs>{{ end }}
 
                 {{ end }}
