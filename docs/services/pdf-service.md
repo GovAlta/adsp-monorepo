@@ -26,8 +26,8 @@ Templates and jobs belong to a tenant.
 - **Tenant users and service accounts** always act on the tenant of their token. Any `tenantId` query parameter is ignored.
 - **Core (platform) users and service accounts** act on the tenant given by the `tenantId` query parameter (for example, `?tenantId=urn:ads:platform:tenant-service:v2:/tenants/{id}`). They must set it when creating, updating, or deleting templates, and when generating PDFs. Without it, listing and getting templates returns only platform templates.
 - **Platform versus tenant templates.** The templates available to a tenant combine the tenant's own templates with _platform_ templates configured by ADSP for all tenants. A platform template replaces a tenant template with the same ID, and creating a template with the ID of a platform template responds `409`.
-- **Isolation.** A template ID that exists only in another tenant responds `404`. A job of another tenant responds `403`.
-- **Role scope.** pdf-admin and pdf-generator can be held in the tenant, or by a core user, for template management and generation. Reading a job (`GET /jobs/{jobId}`) requires pdf-generator in the job's tenant; core users can't read jobs, and should use the job events instead.
+- **Isolation.** A template ID that exists only in another tenant responds `404`. A job of another tenant also responds `404`.
+- **Role scope.** pdf-admin and pdf-generator can be held in the tenant, or by a core user, for template management, generation and reading jobs (`GET /jobs/{jobId}`). Core users must set `tenantId`.
 
 ## API overview
 
@@ -38,7 +38,7 @@ All endpoints are under `https://pdf-service.adsp.alberta.ca/pdf/v1` and require
 | Templates | `GET /templates`, `GET /templates/{templateId}`                                      | Any authenticated user            |
 |           | `POST /templates`, `PATCH /templates/{templateId}`, `DELETE /templates/{templateId}` | pdf-admin                         |
 | Jobs      | `POST /jobs`                                                                         | pdf-generator                     |
-|           | `GET /jobs/{jobId}`                                                                  | pdf-generator in the job's tenant |
+|           | `GET /jobs/{jobId}`                                                                  | pdf-generator                     |
 
 Templates can also be managed directly in the [configuration service](configuration-service.md) under `platform:pdf-service`, or in the tenant admin app. Generated PDFs are downloaded through the [file service](file-service.md); the PDF service has no download endpoint.
 

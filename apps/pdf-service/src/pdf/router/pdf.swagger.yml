@@ -496,11 +496,12 @@ components:
       - Generator
     description: >
       Retrieve the specified job's status and, once completed, the generated file. Requires the
-      `urn:ads:platform:pdf-service:pdf-generator` role in the job's tenant. Core users and service accounts are not
-      allowed (403), and a job of another tenant responds 403. Jobs expire about 24 hours after their last update and
-      then respond 404.
+      `urn:ads:platform:pdf-service:pdf-generator` role, in the job's tenant or as a core user (for example a platform
+      service account). Core callers must set tenantId. A job of another tenant responds 404, the same as an unknown
+      job. Jobs expire about 24 hours after their last update and then respond 404.
     operationId: getJob
     parameters:
+      - $ref: '#/components/parameters/PdfTenantId'
       - name: jobId
         description: ID of job to retrieve.
         in: path
@@ -523,7 +524,7 @@ components:
       403:
         $ref: '#/components/responses/PdfForbidden'
       404:
-        description: Job not found, or expired.
+        description: Job not found, expired, or belongs to another tenant.
         content:
           application/json:
             schema:
