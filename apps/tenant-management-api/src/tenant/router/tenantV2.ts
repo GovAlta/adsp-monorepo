@@ -109,8 +109,9 @@ export function getTenant(logger: Logger, repository: TenantRepository): Request
       const { id } = req.params;
 
       const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/${id}`;
-      if (!user.isCore && user.tenantId.toString() !== tenantId.toString()) {
-        throw new UnauthorizedUserError('get tenant', user);
+      // Respond 404 rather than 403 so tenant users can't confirm that another tenant's ID exists.
+      if (!user.isCore && user.tenantId?.toString() !== tenantId.toString()) {
+        throw new NotFoundError('tenant', id);
       }
 
       const tenant = await repository.get(id);
