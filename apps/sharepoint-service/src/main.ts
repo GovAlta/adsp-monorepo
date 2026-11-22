@@ -18,6 +18,7 @@ import {
   GraphClient,
   GraphFileClient,
   GraphTokenProvider,
+  LibraryDriveResolver,
   LocalFileSource,
   parseEncryptionKeyring,
   ServiceRoles,
@@ -105,8 +106,10 @@ const initializeApp = async (): Promise<express.Application> => {
   const credentialStore = new CredentialStore(credentialRepository, encryptionKeys);
   const tokens = new GraphTokenProvider(environment.ENTRA_AUTHORITY_URL, credentialStore);
   const graph = new GraphClient(environment.GRAPH_URL);
+  const fileClient = new GraphFileClient(environment.GRAPH_URL);
+  const drives = new LibraryDriveResolver(tokens, fileClient);
   const pusher = new SharePointPusher(tokens, graph);
-  const setup = new SharePointSetup(tokens, graph);
+  const setup = new SharePointSetup(tokens, graph, drives);
 
   if (environment.DEV_FILES_DIRECTORY) {
     logger.warn(`Reading files for upload from local directory '${environment.DEV_FILES_DIRECTORY}'.`);
@@ -116,10 +119,11 @@ const initializeApp = async (): Promise<express.Application> => {
     : new FileServiceSource(directory, tokenProvider);
   const fileService = new SharePointFileService(
     tokens,
-    new GraphFileClient(environment.GRAPH_URL),
+    fileClient,
     fileSource,
     pusher,
     eventService,
+    drives,
     environment.FILE_UPLOAD_CONCURRENCY,
   );
 

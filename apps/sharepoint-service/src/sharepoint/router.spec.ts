@@ -86,7 +86,7 @@ describe('SharePoint router', () => {
 
   let logger: { debug: jest.Mock; info: jest.Mock; warn: jest.Mock; error: jest.Mock };
   let pusher: { push: jest.Mock; test: jest.Mock };
-  let fileService: { upload: jest.Mock };
+  let fileService: { upload: jest.Mock; checkDocumentLibrary: jest.Mock };
   let setup: { verify: jest.Mock; setUp: jest.Mock };
   let clearConfiguration: jest.Mock;
   let tokens: { evict: jest.Mock };
@@ -99,7 +99,7 @@ describe('SharePoint router', () => {
       push: jest.fn().mockResolvedValue({ itemId: 'item-7', outcome: 'updated' }),
       test: jest.fn().mockResolvedValue({ itemId: 'item-8', outcome: 'created' }),
     };
-    fileService = { upload: jest.fn() };
+    fileService = { upload: jest.fn(), checkDocumentLibrary: jest.fn().mockResolvedValue(undefined) };
     setup = { verify: jest.fn(), setUp: jest.fn() };
     clearConfiguration = jest.fn();
     tokens = { evict: jest.fn() };
@@ -370,6 +370,20 @@ describe('SharePoint router', () => {
       const detailRows = [{ listId: 'members', rowIds: ['m-1'] }];
       pusher.test.mockResolvedValueOnce({ itemId: 'item-8', outcome: 'created', detailRows });
       expect((await runTest()).body).toEqual({ ok: true, outcome: 'created', detailRows });
+    });
+
+    it('checks the document library before writing the test row', async () => {
+      await runTest();
+      expect(fileService.checkDocumentLibrary).toHaveBeenCalledWith(tenantId, configuration, 'hr-intake');
+      expect(fileService.checkDocumentLibrary.mock.invocationCallOrder[0]).toBeLessThan(
+        pusher.test.mock.invocationCallOrder[0],
+      );
+    });
+
+    it('reports a document library that cannot be used, without writing the test row', async () => {
+      fileService.checkDocumentLibrary.mockRejectedValueOnce(new SharePointError('not-a-document-library', false));
+      expect((await runTest()).body).toEqual({ ok: false, errorCode: 'not-a-document-library' });
+      expect(pusher.test).not.toHaveBeenCalled();
     });
 
     it('reports detail rows that failed', async () => {

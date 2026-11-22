@@ -13,6 +13,7 @@ describe('sharepoint module', () => {
         GraphClient: expect.any(Function),
         GraphFileClient: expect.any(Function),
         GraphTokenProvider: expect.any(Function),
+        LibraryDriveResolver: expect.any(Function),
         LocalFileSource: expect.any(Function),
         parseEncryptionKeyring: expect.any(Function),
         ServiceRoles: expect.any(Object),

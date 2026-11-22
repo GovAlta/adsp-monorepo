@@ -58,6 +58,7 @@ describe('pdf router documented behaviour', () => {
   const admin = user([ServiceRoles.Admin]);
   const generator = user([ServiceRoles.PdfGenerator]);
   const noRole = user([]);
+  const coreAdmin = user([ServiceRoles.Admin], { tenantId: undefined, isCore: true });
   const coreGenerator = user([ServiceRoles.PdfGenerator], { tenantId: undefined, isCore: true });
 
   // Stands in for passport.authenticate in main.ts, which responds 401 without a valid bearer token.
@@ -161,6 +162,12 @@ describe('pdf router documented behaviour', () => {
       expect(res.status).toBe(403);
     });
 
+    it('responds 400 for a core user without tenantId', async () => {
+      const res = await request(createApp(coreAdmin)).post('/pdf/v1/templates').send({ name: 'New template' });
+      expect(res.status).toBe(400);
+      expect(axiosMock.patch).not.toHaveBeenCalled();
+    });
+
     it('responds 409 when a template with the ID already exists', async () => {
       const res = await request(createApp(admin)).post('/pdf/v1/templates').send({ name: 'Submission summary' });
       expect(res.status).toBe(409);
@@ -212,6 +219,12 @@ describe('pdf router documented behaviour', () => {
       expect(res.status).toBe(403);
     });
 
+    it('responds 400 for a core user without tenantId', async () => {
+      const res = await request(createApp(coreAdmin)).patch('/pdf/v1/templates/submission-summary').send({});
+      expect(res.status).toBe(400);
+      expect(axiosMock.patch).not.toHaveBeenCalled();
+    });
+
     it('responds 404 for an unknown template, before checking the role', async () => {
       const res = await request(createApp(noRole)).patch('/pdf/v1/templates/unknown').send({});
       expect(res.status).toBe(404);
@@ -237,6 +250,12 @@ describe('pdf router documented behaviour', () => {
     it('responds 403 without the pdf-admin role', async () => {
       const res = await request(createApp(generator)).delete('/pdf/v1/templates/submission-summary');
       expect(res.status).toBe(403);
+    });
+
+    it('responds 400 for a core user without tenantId', async () => {
+      const res = await request(createApp(coreAdmin)).delete('/pdf/v1/templates/submission-summary');
+      expect(res.status).toBe(400);
+      expect(axiosMock.patch).not.toHaveBeenCalled();
     });
 
     it('responds 404 for an unknown template', async () => {

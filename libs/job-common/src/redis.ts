@@ -19,8 +19,12 @@ export class RedisJobRepository<T> implements JobRepository<T> {
         if (err) {
           reject(err);
         } else if (result) {
-          const job = JSON.parse(result);
-          resolve({ ...job, tenantId: AdspId.parse(job.tenantId) });
+          try {
+            const job = JSON.parse(result);
+            resolve({ ...job, tenantId: AdspId.parse(job.tenantId) });
+          } catch (parseErr) {
+            reject(parseErr);
+          }
         } else {
           resolve(null);
         }

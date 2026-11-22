@@ -684,7 +684,7 @@ describe('pdf', () => {
       expect(res.json).not.toHaveBeenCalled();
     });
 
-    it('calls next when tenant is missing', async () => {
+    it('calls next with InvalidOperationError when tenant is missing', async () => {
       const req = {
         user: { tenantId, id: 'test', name: 'tester', roles: [ServiceRoles.Admin] },
         params: { templateId: 'test' },
@@ -700,7 +700,7 @@ describe('pdf', () => {
         next,
       );
 
-      expect(next).toHaveBeenCalledWith(expect.any(TypeError));
+      expect(next).toHaveBeenCalledWith(expect.any(InvalidOperationError));
       expect(res.status).not.toHaveBeenCalled();
     });
   });
@@ -842,7 +842,7 @@ describe('pdf', () => {
       expect(res.status).not.toHaveBeenCalled();
     });
 
-    it('calls next when tenant is missing', async () => {
+    it('calls next with InvalidOperationError when tenant is missing', async () => {
       const req = {
         user: { tenantId, id: 'test', name: 'tester', roles: [ServiceRoles.Admin] },
         params: { templateId: 'test' },
@@ -859,7 +859,7 @@ describe('pdf', () => {
         next,
       );
 
-      expect(next).toHaveBeenCalledWith(expect.any(TypeError));
+      expect(next).toHaveBeenCalledWith(expect.any(InvalidOperationError));
       expect(res.status).not.toHaveBeenCalled();
     });
   });
@@ -984,6 +984,7 @@ describe('pdf', () => {
     });
     it('can not generate pdf without tenantId', async () => {
       const req = {
+        query: {},
         user: {
           tenantId,
           id: 'test',
@@ -1016,8 +1017,49 @@ describe('pdf', () => {
       );
       await handler(req as unknown as Request, res as unknown as Response, next);
 
-      expect(next).toHaveBeenCalledWith(expect.any(TypeError));
+      expect(next).toHaveBeenCalledWith(expect.any(InvalidOperationError));
       expect(res.send).not.toHaveBeenCalled();
+      expect(repositoryMock.create).not.toHaveBeenCalled();
+      expect(queueServiceMock.enqueue).not.toHaveBeenCalled();
+    });
+
+    it('can not generate pdf for core user without tenantId', async () => {
+      const req = {
+        user: {
+          tenantId: undefined,
+          isCore: true,
+          id: 'core-tester',
+          name: 'core tester',
+          roles: [ServiceRoles.PdfGenerator],
+        },
+        query: {},
+        body: {
+          templateId: 'test',
+          filename: 'test.pdf',
+          data: {},
+        },
+        template: { ...configuration.test, tenantId: undefined },
+      };
+      const res = {
+        send: jest.fn(),
+      };
+      const next = jest.fn();
+
+      const handler = generatePdf(
+        serviceId,
+        repositoryMock,
+        eventServiceMock,
+        fileServiceMock,
+        queueServiceMock,
+        loggerMock,
+        auditServiceMock,
+      );
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      expect(next).toHaveBeenCalledWith(expect.any(InvalidOperationError));
+      expect(res.send).not.toHaveBeenCalled();
+      expect(repositoryMock.create).not.toHaveBeenCalled();
+      expect(queueServiceMock.enqueue).not.toHaveBeenCalled();
     });
 
     it('can generate core pdf', async () => {
