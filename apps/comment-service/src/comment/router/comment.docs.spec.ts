@@ -108,6 +108,12 @@ describe('comment router documented behaviour', () => {
     expect(res.status).toBe(200);
   });
 
+  it('responds 400 for a core user without tenantId', async () => {
+    const res = await request(createApp(coreAdmin)).get('/comment/v1/comments');
+    expect(res.status).toBe(400);
+    expect(repositoryMock.getComments).not.toHaveBeenCalled();
+  });
+
   it('responds 400 for a core user with an invalid tenantId', async () => {
     const res = await request(createApp(coreAdmin)).get('/comment/v1/comments').query({ tenantId: 'test' });
     expect(res.status).toBe(400);

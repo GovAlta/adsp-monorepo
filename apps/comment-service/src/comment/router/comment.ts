@@ -5,6 +5,7 @@ import { query } from 'express-validator';
 import { TopicTypeEntity } from '../model';
 import { TopicRepository } from '../repository';
 import { ExportServiceRoles, ServiceRoles } from '../roles';
+import { assertTenantContext } from './topic';
 import { CommentCriteria } from '../types';
 
 interface CommentRouterProps {
@@ -24,7 +25,7 @@ export function getComments(repository: TopicRepository): RequestHandler {
       // Otherwise user must be a comment service admin to search comments.
       if (criteria?.typeIdEquals) {
         const types = await req.getConfiguration<Record<string, TopicTypeEntity>, Record<string, TopicTypeEntity>>(
-          tenantId
+          tenantId,
         );
 
         const type = types[criteria.typeIdEquals];
@@ -56,6 +57,7 @@ export function createCommentRouter({ repository }: CommentRouterProps): Router 
 
   router.get(
     '/comments',
+    assertTenantContext,
     createValidationHandler(
       query('top').optional().isInt({ min: 1, max: 5000 }),
       query('after')

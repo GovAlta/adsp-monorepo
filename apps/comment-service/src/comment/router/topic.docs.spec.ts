@@ -175,6 +175,42 @@ describe('topic router documented behaviour', () => {
       expect(clientMock.getTenantConfiguration.mock.calls[0][0].toString()).toBe(tenantId.toString());
     });
 
+    it.each([
+      ['post', '/comment/v1/topic-types'],
+      ['get', '/comment/v1/topic-types/case-notes'],
+      ['patch', '/comment/v1/topic-types/case-notes'],
+      ['delete', '/comment/v1/topic-types/case-notes'],
+      ['get', '/comment/v1/topics'],
+      ['post', '/comment/v1/topics'],
+      ['get', '/comment/v1/topics/42'],
+      ['patch', '/comment/v1/topics/42'],
+      ['delete', '/comment/v1/topics/42'],
+      ['get', '/comment/v1/topics/42/comments'],
+      ['post', '/comment/v1/topics/42/comments'],
+      ['get', '/comment/v1/topics/42/comments/1203'],
+      ['patch', '/comment/v1/topics/42/comments/1203'],
+      ['delete', '/comment/v1/topics/42/comments/1203'],
+    ])('responds 400 on %s %s for a core user without tenantId', async (method, path) => {
+      // Valid bodies, so a 400 can only come from the missing tenant context.
+      const bodies = {
+        '/comment/v1/topic-types': { id: 'new-type', name: 'New type' },
+        '/comment/v1/topics': {
+          typeId: 'case-notes',
+          name: 'Topic',
+          resourceId: 'urn:ads:demo:case-service:v1:/cases/1',
+        },
+        '/comment/v1/topics/42/comments': { content: 'Comment' },
+      };
+      const res = await request(createApp(coreSetter))
+        [method](path)
+        .send(method === 'post' ? bodies[path] : {});
+      expect(res.status).toBe(400);
+      expect(res.body.errorMessage ?? res.text).toContain('Tenant context is required');
+      expect(axiosMock.patch).not.toHaveBeenCalled();
+      expect(repositoryMock.getTopic).not.toHaveBeenCalled();
+      expect(repositoryMock.getTopics).not.toHaveBeenCalled();
+    });
+
     it('responds 400 for a core user with an invalid tenantId', async () => {
       const res = await request(createApp(coreSetter)).get('/comment/v1/topic-types').query({ tenantId: 'test' });
       expect(res.status).toBe(400);
