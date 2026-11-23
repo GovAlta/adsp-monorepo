@@ -184,9 +184,8 @@ export function createPdfTemplate(
       const [configuration] = await req.getConfiguration<Record<string, PdfTemplateEntity>>();
 
       if (isTemplateIdAlreadyInUse(configuration, id)) {
-        return res.status(HttpStatusCodes.CONFLICT).send({
-          error: `PDF template '${name}' already exists.`,
-        });
+        const message = `PDF template '${name}' already exists.`;
+        return res.status(HttpStatusCodes.CONFLICT).send({ errorMessage: message, error: message });
       }
 
       const patch = createPdfTemplatePatch(
@@ -280,7 +279,7 @@ export function updatePdfTemplate(
         }),
       );
 
-      res.status(HttpStatusCodes.CREATED).json(updated);
+      res.status(HttpStatusCodes.OK).json(updated);
     } catch (err) {
       next(err);
     }

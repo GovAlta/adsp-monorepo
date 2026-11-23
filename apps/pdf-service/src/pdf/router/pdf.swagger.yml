@@ -107,11 +107,16 @@ components:
         variables: '{"applicant": {"name": "Test User"}}'
     TemplateConflict:
       type: object
-      description: Response body when a template with the same ID already exists. Note that the property is `error`.
+      description: Response body when a template with the same ID already exists.
       properties:
+        errorMessage:
+          type: string
         error:
           type: string
+          deprecated: true
+          description: Duplicate of `errorMessage`, kept for existing clients.
       example:
+        errorMessage: "PDF template 'Submission summary' already exists."
         error: "PDF template 'Submission summary' already exists."
     Job:
       type: object
@@ -340,8 +345,7 @@ components:
       Update an existing PDF template of the tenant. Only the fields included in the request body are updated; all
       other fields are left unchanged, and the ID does not change when the name does. Requires the
       `urn:ads:platform:pdf-service:pdf-admin` role, in the tenant or as a core user. The template is looked up before
-      the role is checked, so an unknown ID responds 404 to any caller. Core callers must set tenantId. Responds 201,
-      not 200, on success.
+      the role is checked, so an unknown ID responds 404 to any caller. Core callers must set tenantId.
     parameters:
       - $ref: '#/components/parameters/PdfTemplateId'
       - $ref: '#/components/parameters/PdfTenantId'
@@ -386,7 +390,7 @@ components:
             template: <p>Submitted by {{data.applicant.name}} on {{formatDate data.submitted}}</p>
             additionalStyles: '.label { font-weight: bold; }'
     responses:
-      201:
+      200:
         description: The PDF template was successfully updated.
         content:
           application/json:
