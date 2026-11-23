@@ -1362,5 +1362,48 @@ describe('pdf', () => {
       expect(res.send).not.toHaveBeenCalled();
       expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedUserError));
     });
+
+    const coreUser = { isCore: true, id: 'core', name: 'core', roles: [ServiceRoles.PdfGenerator] };
+
+    it('can get file for core user with tenantId', async () => {
+      const req = { user: coreUser, query: { tenantId: `${tenantId}` }, params: { jobId: 'job1' } };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+
+      repositoryMock.get.mockResolvedValueOnce({ tenantId, id: 'job1', status: 'completed' });
+      const handler = getGeneratedFile(serviceId, repositoryMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ id: 'job1' }));
+      expect(next).not.toHaveBeenCalled();
+    });
+
+    it('can call next with invalid operation for core user without tenantId', async () => {
+      const req = { user: coreUser, query: {}, params: { jobId: 'job1' } };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+
+      const handler = getGeneratedFile(serviceId, repositoryMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(res.send).not.toHaveBeenCalled();
+      expect(next).toHaveBeenCalledWith(expect.any(InvalidOperationError));
+      expect(repositoryMock.get).not.toHaveBeenCalled();
+    });
+
+    it('can call next with not found for job of another tenant', async () => {
+      const otherTenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/other`;
+      const req = {
+        tenant: { id: tenantId },
+        user: { tenantId, id: 'test', name: 'tester', roles: [ServiceRoles.PdfGenerator] },
+        params: { jobId: 'job1' },
+      };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+
+      repositoryMock.get.mockResolvedValueOnce({ tenantId: otherTenantId, id: 'job1', status: 'completed' });
+      const handler = getGeneratedFile(serviceId, repositoryMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(res.send).not.toHaveBeenCalled();
+      expect(next).toHaveBeenCalledWith(expect.any(NotFoundError));
+    });
   });
 });

@@ -674,9 +674,9 @@ describe('tenant routers documented behaviour', () => {
         expect(res.body.name).toBe('Test');
       });
 
-      it('responds 403 when a tenant user retrieves another tenant', async () => {
+      it('responds 404 when a tenant user retrieves another tenant', async () => {
         const res = await request(createApp(plain)).get('/api/tenant/v2/tenants/other');
-        expect(res.status).toBe(403);
+        expect(res.status).toBe(404);
       });
 
       it('lets a core user retrieve any tenant', async () => {

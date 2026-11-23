@@ -70,7 +70,7 @@ export const getStream = async (
   req: Request,
   tenant: string,
   stream: string,
-  next: NextFunction
+  next: NextFunction,
 ): Promise<void> => {
   try {
     const user = req.user as User;
@@ -87,7 +87,7 @@ export const getStream = async (
     });
 
     const entities = await req.getConfiguration<Record<string, StreamEntity>, Record<string, StreamEntity>>(tenantId);
-    const entity = entities[stream];
+    const entity = stream === 'webhooks' ? undefined : entities[stream];
     if (!entity) {
       throw new NotFoundError('stream', stream);
     }
@@ -115,7 +115,7 @@ export const getStreams: RequestHandler = async (req, res, next) => {
   res.send(
     Object.values(entities)
       .filter((stream) => stream.canSubscribe(user))
-      .reduce((streams, stream) => ({ ...streams, [stream.id]: mapStream(stream) }), {})
+      .reduce((streams, stream) => ({ ...streams, [stream.id]: mapStream(stream) }), {}),
   );
 };
 
@@ -170,7 +170,7 @@ export function subscribeBySse(logger: Logger, events: Observable<DomainEvent>):
           ...LOG_CONTEXT,
           tenant: entity.tenantId?.toString(),
           user: user ? `${user.name} (ID: ${user.id})` : null,
-        }
+        },
       );
 
       res.on('close', () => {
@@ -217,7 +217,7 @@ export function onIoConnection(logger: Logger, events: Observable<DomainEvent>) 
           ...LOG_CONTEXT,
           tenant: entity.tenantId?.toString(),
           user: user ? `${user.name} (ID: ${user.id})` : null,
-        }
+        },
       );
 
       socket.on('disconnect', () => {
@@ -250,14 +250,14 @@ export const createStreamRouter = (
     eventService,
     configurationService,
     serviceId,
-  }: StreamRouterProps
+  }: StreamRouterProps,
 ): Router => {
   const events = eventServiceAmp.getItems().pipe(
     map(({ item, done }) => {
       done();
       return item;
     }),
-    share()
+    share(),
   );
 
   const webhookEvents = eventServiceAmpWebhooks.getItems().pipe(
@@ -265,7 +265,7 @@ export const createStreamRouter = (
       done();
       return item;
     }),
-    share()
+    share(),
   );
 
   events.subscribe(async (next) => {
@@ -316,7 +316,7 @@ export const createStreamRouter = (
   streamRouter.get(
     '/streams/:stream',
     (req, _res, next) => getStream(logger, tenantService, req, req.query.tenant as string, req.params.stream, next),
-    subscribeBySse(logger, events)
+    subscribeBySse(logger, events),
   );
 
   for (const io of ios) {
