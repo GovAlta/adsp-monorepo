@@ -13,6 +13,7 @@ let formId;
 let replacementString;
 
 import dayjs = require('dayjs');
+import { DateTime } from 'luxon';
 
 const commonObj = new common();
 const tenantAdminObj = new tenantAdminPage();
@@ -431,13 +432,47 @@ Given('an admin user is on event log page', function () {
   cy.viewport(1920, 1080);
 });
 
-When('the user searches with {string}', function (namespaceName: string) {
-  tenantAdminObj.eventLogSearchBox().click();
-  tenantAdminObj.eventLogSearchBox().type(namespaceName);
-  tenantAdminObj.eventLogSearchBox().should('have.value', namespaceName);
-  tenantAdminObj.eventLogSearchBtn().shadow().find('button').click({ force: true });
-  cy.wait(4000);
-});
+When(
+  'the user searches with {string} as Namespace, {string} as Event name',
+  function (namespace: string, eventName: string) {
+    tenantAdminObj.eventLogNamespaceFilter().select(namespace).should('have.value', namespace);
+    tenantAdminObj.eventLogNameFilter().select(eventName).should('have.value', eventName);
+    tenantAdminObj.eventLogSearchBtn().shadow().find('button').click({ force: true });
+    cy.wait(4000);
+  }
+);
+
+When(
+  'the user searches with {string} as Namespace, {string} as Event name, {string} as minimum timestamp, {string} as maximum timestamp',
+  function (namespace: string, eventName: string, minTimestamp: string, maxTimestamp: string) {
+    const now = DateTime.now().setZone('America/Edmonton');
+    const parseTimestamp = (value: string) => {
+      const relative = /^now([+-])(\d+)mins$/.exec(value);
+      const date = relative
+        ? now.plus({ minutes: Number(relative[2]) * (relative[1] === '-' ? -1 : 1) }).startOf('minute')
+        : DateTime.fromISO(value, { zone: 'America/Edmonton' });
+      expect(date.isValid, `Invalid event log timestamp: ${value}`).to.equal(true);
+      if (!relative) {
+        expect(date.toFormat("yyyy-MM-dd'T'HH:mm"), `Invalid local timestamp: ${value}`).to.equal(value);
+      }
+      return date;
+    };
+    const from = parseTimestamp(minTimestamp);
+    const to = parseTimestamp(maxTimestamp);
+    expect(from.toMillis(), 'Minimum timestamp must precede maximum timestamp').to.be.lessThan(to.toMillis());
+
+    tenantAdminObj.eventLogNamespaceFilter().select(namespace).should('have.value', namespace);
+    tenantAdminObj.eventLogNameFilter().select(eventName).should('have.value', eventName);
+    tenantAdminObj.eventLogDateRangeFilter().select('custom').should('have.value', 'custom');
+    tenantAdminObj.eventLogFromFilter().clear().type(from.toFormat("yyyy-MM-dd'T'HH:mm")).blur();
+    tenantAdminObj.eventLogToFilter().clear().type(to.toFormat("yyyy-MM-dd'T'HH:mm")).blur();
+    cy.wait(2000);
+    cy.wrap({ min: from.toMillis(), max: to.toMillis() }).as('eventLogDateRange');
+    cy.intercept('GET', '**/value/v1/event-service/values/event?*').as('eventLogCustomSearch');
+    tenantAdminObj.eventLogSearchBtn().shadow().find('button').should('be.enabled').click('top');
+    tenantAdminObj.eventLogSearchBtn().shadow().find('button', { timeout: 30000 }).should('be.enabled');
+  }
+);
 
 //dayjs is date time utility to format the date time
 //replace "now-5mins" with "2022-01-09T04:02" to input absolute timestamp as static date and time
@@ -599,20 +634,18 @@ Then(
   }
 );
 
-Then('the user views the events matching the search filter of {string}', function (namespaceName: string) {
-  tenantAdminObj.eventTableBody().each(($row) => {
-    cy.wrap($row).within(() => {
-      cy.get('td').each(($col) => {
-        if ($col.eq(2).text() == namespaceName.split(':')[0]) {
-          expect($col.eq(2).text()).to.equal(namespaceName.split(':')[0]);
-        }
-        if ($col.eq(3).text() == namespaceName.split(':')[1]) {
-          expect($col.eq(3).text()).to.equal(namespaceName.split(':')[1]);
-        }
+Then(
+  'the user views the events matching the search filter of {string} as Namespace, {string} as Event name',
+  function (namespace: string, eventName: string) {
+    tenantAdminObj
+      .eventTableBody()
+      .find('tr')
+      .each(($row) => {
+        cy.wrap($row).find('td[headers="namespace"]').should('have.text', namespace);
+        cy.wrap($row).find('td[headers="name"]').should('have.text', eventName);
       });
-    });
-  });
-});
+  }
+);
 
 Then(
   'the user views the event details of {string} application status changed from {string} to {string} for subscriber of {string}',

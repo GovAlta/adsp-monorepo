@@ -509,39 +509,16 @@ Then('the user should not have regular admin view', function () {
   tenantAdminObj.dashboardServicesMenuCategory().should('not.exist');
 });
 
-When('the user clicks Load more button on event log page', function () {
-  // count numbers of row in the table before clicking Load more...
-  tenantAdminObj
-    .eventTableBody()
-    .find('tr')
-    .then((elm) => {
-      numOfRows = Number(elm.length);
-    });
-  tenantAdminObj.eventLoadMoreBtn().shadow().find('button').click({ force: true });
-  cy.wait(10000);
+When('the user clicks Filters button on event log page', function () {
+  tenantAdminObj.eventLogFiltersBtn().shadow().find('button').click({ force: true });
 });
 
-Then('the user views more events matching the search filter of {string}', function (namespaceName: string) {
-  // count numbers of row in the table after clicking Load more... than compare the count
-  tenantAdminObj
-    .eventTableBody()
-    .find('tr')
-    .then((tableRowsAfterLoadMore) => {
-      expect(tableRowsAfterLoadMore.length).to.be.gt(numOfRows);
-    });
+When('the user clicks Close button on event log filters pane', function () {
+  tenantAdminObj.eventLogFiltersCloseBtn().shadow().find('button').click({ force: true });
+});
 
-  tenantAdminObj.eventTableBody().each(($row) => {
-    cy.wrap($row).within(() => {
-      cy.get('td').each(($col) => {
-        if ($col.eq(2).text() == namespaceName.split(':')[0]) {
-          expect($col.eq(2).text()).to.equal(namespaceName.split(':')[0]);
-        }
-        if ($col.eq(3).text() == namespaceName.split(':')[1]) {
-          expect($col.eq(3).text()).to.equal(namespaceName.split(':')[1]);
-        }
-      });
-    });
-  });
+When('the user clicks Next button on event log page', function () {
+  tenantAdminObj.eventLogNextBtn().shadow().find('button').should('be.enabled').click();
 });
 
 //dayjs is date time utility to format the date time
@@ -810,8 +787,53 @@ Then(
 );
 
 Then('the user resets event log views', function () {
+  tenantAdminObj.eventLogFiltersPane().then(($pane) => {
+    if (!$pane.is('[open]')) {
+      tenantAdminObj.eventLogFiltersBtn().shadow().find('button').click({ force: true });
+    }
+  });
+  tenantAdminObj.eventLogFiltersPane().should('have.attr', 'open');
   tenantAdminObj.eventLogResetBtn().shadow().find('button').click({ force: true });
   cy.wait(2000);
+});
+
+Then(
+  'the user views events with {string} as Namespace, {string} as Event name within the selected date range',
+  function (namespace: string, eventName: string) {
+    cy.get<{ min: number; max: number }>('@eventLogDateRange').then(({ min, max }) => {
+      tenantAdminObj
+        .eventTableBody()
+        .find('tr')
+        .each(($row) => {
+          cy.wrap($row).find('td[headers="namespace"]').should('have.text', namespace);
+          cy.wrap($row).find('td[headers="name"]').should('have.text', eventName);
+          cy.wrap($row)
+            .find('td[headers="timestamp"]')
+            .then(($cell) => {
+              const parts = $cell.find('span');
+              expect(parts).to.have.length(2);
+              const timestamp = new Date(`${parts.eq(0).text()} ${parts.eq(1).text()}`).getTime();
+              expect(timestamp, 'Event timestamp must be valid').to.be.finite;
+              expect(timestamp).to.be.within(min, max);
+            });
+        });
+    });
+  }
+);
+
+Then('the user views the default event log filters', function () {
+  tenantAdminObj.eventLogNamespaceFilter().should('have.value', 'all-namespaces');
+  tenantAdminObj.eventLogNameFilter().should('have.value', 'all-event-names');
+  tenantAdminObj.eventLogDateRangeFilter().should('have.value', 'last-7-days');
+  cy.get('goa-input[name="event-log-correlation-filter"]').shadow().find('input').should('have.value', '');
+  cy.get('goa-filter-chip[testid="event-log-filter-badge-namespace"]').should('not.exist');
+  cy.get('goa-filter-chip[testid="event-log-filter-badge-name"]').should('not.exist');
+  cy.get('goa-filter-chip[testid="event-log-filter-badge-correlationId"]').should('not.exist');
+  cy.get('goa-filter-chip[testid="event-log-filter-badge-dateRange"]').should(
+    'have.attr',
+    'content',
+    'Date range: Last 7 days'
+  );
 });
 
 Then('the user views that search fields are empty', function () {
