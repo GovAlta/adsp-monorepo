@@ -899,7 +899,7 @@ components:
       - Tenant service
     description: >
       Retrieves a tenant. No role is required, but the request must be authenticated. Tenant users can only
-      retrieve their own tenant, and get 403 for any other tenant ID; core users can retrieve any tenant.
+      retrieve their own tenant, and get 404 for any other tenant ID; core users can retrieve any tenant.
     responses:
       200:
         description: Tenant information.
@@ -909,14 +909,6 @@ components:
               $ref: '#/components/schemas/Tenant'
       401:
         $ref: '#/components/responses/TenantUnauthorized'
-      403:
-        description: Tenant user is not permitted to retrieve another tenant.
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/TenantError'
-            example:
-              errorMessage: 'User Test User (ID: 3d1c5e7a-9b2f-4c6d-8e0a-1f3b5d7c9e2a) not permitted to get tenant.'
       404:
         $ref: '#/components/responses/TenantNotFound'
   delete:
