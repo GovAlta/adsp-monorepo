@@ -93,14 +93,22 @@ const getDefinition = async (
   return result;
 };
 
+const parseTenantId = (value: string): AdspId => {
+  try {
+    return AdspId.parse(value);
+  } catch (err) {
+    throw new InvalidOperationError(`Tenant ID '${value}' is not valid.`);
+  }
+};
+
 export const getTenantId = (req: Request): AdspId => {
   if (!req.isAuthenticated || !req.user) {
     if (req.query?.tenant) {
-      return AdspId.parse(req.query.tenant as string);
+      return parseTenantId(req.query.tenant as string);
     }
 
     if (req.query?.tenantId) {
-      return AdspId.parse(req.query.tenantId as string);
+      return parseTenantId(req.query.tenantId as string);
     }
   }
 
@@ -658,7 +666,12 @@ export function createConfigurationRouter({
         .isString()
         .matches(/^[a-zA-Z0-9-_ ]{1,50}$/),
       query('top').optional().isInt({ min: 1, max: 1000 }),
-      query('after').optional().isString(),
+      query('after')
+        .optional()
+        .isString()
+        .custom((val) => {
+          return !isNaN(decodeAfter(val));
+        }),
       query('includeActive').optional().isBoolean(),
       query('registerIdEquals').optional().isBoolean(),
       query('criteria').optional().isJSON()

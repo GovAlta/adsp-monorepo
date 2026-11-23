@@ -238,7 +238,8 @@ export class MongoConfigurationRepository implements ConfigurationRepository {
       Object.entries(criteria).forEach(([key, value]) => {
         if (key !== 'revision' && value !== undefined && value !== null && value !== '') {
           if (typeof value === 'string') {
-            query[`configuration.${key}`] = { $regex: value, $options: 'i' };
+            const escapedValue = value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            query[`configuration.${key}`] = { $regex: escapedValue, $options: 'i' };
           } else {
             query[`configuration.${key}`] = value;
           }

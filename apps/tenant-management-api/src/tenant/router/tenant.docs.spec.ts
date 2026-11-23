@@ -718,6 +718,22 @@ describe('tenant routers documented behaviour', () => {
         expect(res.status).toBe(400);
       });
 
+      it('responds 400 for a name another tenant already uses', async () => {
+        const res = await request(createApp(serviceAdmin))
+          .patch('/api/tenant/v2/tenants/other/name')
+          .send({ name: 'Test' });
+        expect(res.status).toBe(400);
+        expect(repositoryMock.save).not.toHaveBeenCalled();
+      });
+
+      it('allows renaming a tenant to its own current name', async () => {
+        const res = await request(createApp(serviceAdmin))
+          .patch('/api/tenant/v2/tenants/other/name')
+          .send({ name: 'Other' });
+        expect(res.status).toBe(200);
+        expect(res.body.name).toBe('Other');
+      });
+
       it('responds 404 for an unknown tenant', async () => {
         const res = await request(createApp(serviceAdmin))
           .patch('/api/tenant/v2/tenants/unknown/name')
