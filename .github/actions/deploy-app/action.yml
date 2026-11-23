@@ -41,17 +41,17 @@ runs:
       run: |
         if oc get deployment/${{ inputs.app }} ; then
           oc set triggers deployment/${{ inputs.app }} --auto
-          oc rollout status deployment/${{ inputs.app }}
+          oc rollout status deployment/${{ inputs.app }} --timeout=300s
           oc set triggers deployment/${{ inputs.app }} --manual
         elif oc get dc/${{ inputs.app }} ; then
           oc rollout latest dc/${{ inputs.app }}
-          oc rollout status dc/${{ inputs.app }}
+          oc rollout status dc/${{ inputs.app }} --timeout=300s
         else
           echo 'No Deployment or DeploymentConfig found for ${{ inputs.app }}.'
         fi
 
         if oc get deployment/${{ inputs.app }}-job ; then
           oc set triggers deployment/${{ inputs.app }}-job --auto
-          oc rollout status deployment/${{ inputs.app }}-job
+          oc rollout status deployment/${{ inputs.app }}-job --timeout=300s
           oc set triggers deployment/${{ inputs.app }}-job --manual
         fi
