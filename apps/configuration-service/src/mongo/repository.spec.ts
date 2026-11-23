@@ -741,6 +741,25 @@ describe('MongoConfigurationRepository', () => {
   });
 
   describe('getRevisions (additional coverage)', () => {
+    it('escapes regex characters in string criteria values', async () => {
+      const entity = { namespace: 'test-namespace', name: 'test-name' } as unknown as ConfigurationEntity<unknown>;
+      const findMock = {
+        sort: jest.fn().mockReturnThis(),
+        skip: jest.fn().mockReturnThis(),
+        limit: jest.fn().mockReturnThis(),
+        exec: jest.fn().mockImplementation((cb) => cb(null, [])),
+      };
+      revisionModelMock.find.mockReturnValue(findMock);
+
+      await repository.getRevisions(entity, 10, undefined, { theme: '(' });
+
+      expect(revisionModelMock.find).toHaveBeenCalledWith(
+        expect.objectContaining({ 'configuration.theme': { $regex: '\\(', $options: 'i' } }),
+        null,
+        expect.any(Object),
+      );
+    });
+
     it('can get revisions without criteria', async () => {
       const namespace = 'test-namespace';
       const name = 'test-name';
