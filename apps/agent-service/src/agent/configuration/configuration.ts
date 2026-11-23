@@ -10,15 +10,21 @@ import { PostgresStore } from '@mastra/pg';
 import { Logger } from 'winston';
 import { environment } from '../../environments/environment';
 import { AgentBroker } from '../model';
-import { createApiRequestTool, createTools } from '../tools';
+import { createApiRequestTool, createPdfDefinitionReader, createTools } from '../tools';
 import { createBrokerInputProcessors, createInputProcessors } from '../processors';
 import { clearThreadWorkspace, createWorkspaceResolver, type AgentWorkspaceConfiguration } from '../workspace';
 import { createFileServiceClient } from '../clients';
 import { scheduleAgentJobs } from '../jobs';
 import { AgentModelConfiguration, getAgentModelConfiguration, getAgentModelId } from '../model/modelConfiguration';
-import { ACCESS_SERVICE_AGENT_ID, NOTIFICATION_TEMPLATE_AGENT_ID } from '../model/executionLimits';
+import {
+  ACCESS_SERVICE_AGENT_ID,
+  FORM_GENERATION_AGENT_ID,
+  NOTIFICATION_TEMPLATE_AGENT_ID,
+  PDF_GENERATION_AGENT_ID,
+} from '../model/executionLimits';
 import { createAccessServiceSupervisorOptions } from '../agents/access/supervisorOptions';
 import { createNotificationTemplateOptions } from '../agents/notificationOptions';
+import { createPdfSupervisorOptions } from '../agents/pdf/supervisorOptions';
 import { withContextualInstructions } from './contextualInstructions';
 import { createAuthenticatedMcpFetch, loadKnownMcpServerSecrets, normalizeMcpServerUrl } from './mcpCredentials';
 import { closeMcpClient } from './mcpSessions';
@@ -160,9 +166,20 @@ export class AgentServiceConfiguration {
           });
 
       const sharedMemory = createAgentMemory(storage, environment.AGENT_OBSERVATIONAL_MEMORY);
-      const formGenerationMemory = createAgentMemory(storage, false);
-      const accessMemory = createAgentMemory(storage, false, environment.AGENT_ACCESS_LAST_MESSAGES);
-      const notificationMemory = createAgentMemory(storage, false, environment.AGENT_NOTIFICATION_LAST_MESSAGES);
+      const agentMemory: Record<string, Memory> = {
+        [FORM_GENERATION_AGENT_ID]: createAgentMemory(storage, false),
+        [ACCESS_SERVICE_AGENT_ID]: createAgentMemory(storage, false, environment.AGENT_ACCESS_LAST_MESSAGES),
+        [NOTIFICATION_TEMPLATE_AGENT_ID]: createAgentMemory(
+          storage,
+          false,
+          environment.AGENT_NOTIFICATION_LAST_MESSAGES,
+        ),
+        [PDF_GENERATION_AGENT_ID]: createAgentMemory(storage, false, environment.AGENT_PDF_LAST_MESSAGES),
+      };
+      const readPdfDefinition = createPdfDefinitionReader({
+        directory: this.directory,
+        tokenProvider: this.tokenProvider,
+      });
 
       const mcpToolsByAgent = Object.fromEntries(
         await Promise.all(
@@ -187,7 +204,9 @@ export class AgentServiceConfiguration {
                   ? createAccessServiceSupervisorOptions(this.logger, tenantId?.toString())
                   : key === NOTIFICATION_TEMPLATE_AGENT_ID
                     ? createNotificationTemplateOptions(configuration.instructions)
-                    : {};
+                    : key === PDF_GENERATION_AGENT_ID
+                      ? createPdfSupervisorOptions(this.logger, readPdfDefinition)
+                      : {};
               const delegation = configuration.agents?.length
                 ? withDelegationAudit(this.auditService, tenantId, supervisorOptions.delegation)
                 : supervisorOptions.delegation;
@@ -276,14 +295,7 @@ export class AgentServiceConfiguration {
                       {} as Record<string, unknown>,
                     ) || {}),
                   } as unknown as never,
-                  memory:
-                    key === 'formGenerationAgent'
-                      ? formGenerationMemory
-                      : key === ACCESS_SERVICE_AGENT_ID
-                        ? accessMemory
-                        : key === NOTIFICATION_TEMPLATE_AGENT_ID
-                          ? notificationMemory
-                          : sharedMemory,
+                  memory: agentMemory[key] ?? sharedMemory,
                   workspace: configuration.workspace?.enabled ? createWorkspaceResolver(this.logger, key) : undefined,
                   inputProcessors: ({ requestContext }) =>
                     createInputProcessors({
