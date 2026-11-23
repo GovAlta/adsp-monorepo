@@ -1,6 +1,6 @@
 import { benchmark } from '@abgov/adsp-service-sdk';
 import { InvalidOperationError, NotFoundError } from '@core-services/core-common';
-import { Request } from 'express';
+import { Request, RequestHandler } from 'express';
 import * as multer from 'multer';
 import * as validFilename from 'valid-filename';
 import { Logger } from 'winston';
@@ -121,3 +121,17 @@ export const createUpload = ({ logger, fileRepository, storageProvider }: Upload
 
   return multer({ storage, limits });
 };
+
+export const uploadSingleFile = (upload: multer.Multer): RequestHandler =>
+  (req, res, next) =>
+    upload.single('file')(req, res, (err: unknown) => {
+      if (!err) {
+        next();
+      } else if (err instanceof multer.MulterError && err.code === 'LIMIT_FILE_SIZE') {
+        next(new InvalidOperationError('Uploaded file exceeds the 3 GB limit.', { statusCode: 413 }));
+      } else if (err instanceof multer.MulterError) {
+        next(new InvalidOperationError(`Invalid file upload: ${err.message}`));
+      } else {
+        next(err);
+      }
+    });
