@@ -81,11 +81,12 @@ export const getTemplates: RequestHandler = async (req, res, next) => {
 };
 
 const TEMPLATE = 'template';
+const PLATFORM_TEMPLATE = 'platformTemplate';
 export function getTemplate(templateIn: 'params' | 'body'): RequestHandler {
   return async (req, res, next) => {
     try {
       const { templateId } = req[templateIn];
-      const [configuration] = await req.getConfiguration<Record<string, PdfTemplateEntity>>();
+      const [configuration, coreConfiguration] = await req.getConfiguration<Record<string, PdfTemplateEntity>>();
 
       const template = configuration[templateId];
 
@@ -94,6 +95,7 @@ export function getTemplate(templateIn: 'params' | 'body'): RequestHandler {
       }
 
       req[TEMPLATE] = template;
+      req[PLATFORM_TEMPLATE] = Object.prototype.hasOwnProperty.call(coreConfiguration ?? {}, templateId);
 
       next();
     } catch (err) {
@@ -137,6 +139,11 @@ const createPdfTemplatePatch = (
     },
   },
 });
+
+const sendPlatformTemplateConflict = (res: Response, templateId: string, action: string) =>
+  res.status(HttpStatusCodes.CONFLICT).send({
+    error: `PDF template '${templateId}' is a platform template and cannot be ${action} by a tenant.`,
+  });
 
 const isTemplateIdAlreadyInUse = (configuration: Record<string, PdfTemplateEntity>, name: string): boolean =>
   Boolean(configuration[name]);
@@ -242,6 +249,10 @@ export function updatePdfTemplate(
       const tenant = requireTenantId(tenantId, 'update pdf template');
 
       const template: PdfTemplateEntity = req[TEMPLATE];
+      if (req[PLATFORM_TEMPLATE]) {
+        return sendPlatformTemplateConflict(res, req.params.templateId, 'updated');
+      }
+
       const { name, description, template: templateBody, header, footer, additionalStyles, variables } = req.body;
 
       const updated: PdfTemplateConfiguration = {
@@ -295,6 +306,10 @@ export function deletePdfTemplate(
 
       const { templateId } = req.params;
       const template: PdfTemplateEntity | undefined = req[TEMPLATE];
+      if (req[PLATFORM_TEMPLATE]) {
+        return sendPlatformTemplateConflict(res, templateId, 'deleted');
+      }
+
       await deletePdfTemplateFromConfig(directory, tokenProvider, tenant.toString(), templateId);
 
       void auditService.record(

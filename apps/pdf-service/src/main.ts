@@ -19,6 +19,7 @@ import * as helmet from 'helmet';
 import { environment } from './environments/environment';
 import {
   applyPdfMiddleware,
+  combinePdfConfiguration,
   configurationSchema,
   GeneratedPdfType,
   PdfAuditActions,
@@ -112,12 +113,7 @@ const initializeApp = async (): Promise<express.Application> => {
       directoryUrl: new URL(environment.DIRECTORY_URL),
       tracing: environment.OTEL_EXPORTER_OTLP_ENDPOINT,
       metrics: environment.OTEL_EXPORTER_OTLP_ENDPOINT,
-      combineConfiguration: (tenantConfig: Record<string, PdfTemplate>, coreConfig: Record<string, PdfTemplate>) => [
-        {
-          ...tenantConfig,
-          ...coreConfig,
-        },
-      ],
+      combineConfiguration: combinePdfConfiguration,
       values: [ServiceMetricsValueDefinition],
       useLongConfigurationCacheTTL: true,
     },

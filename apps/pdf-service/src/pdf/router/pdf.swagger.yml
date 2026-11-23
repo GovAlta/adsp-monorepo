@@ -400,6 +400,8 @@ components:
         $ref: '#/components/responses/PdfForbidden'
       404:
         $ref: '#/components/responses/PdfTemplateNotFound'
+      409:
+        description: The template is a platform template, which a tenant cannot update.
   delete:
     tags:
       - Templates
@@ -421,6 +423,8 @@ components:
         $ref: '#/components/responses/PdfForbidden'
       404:
         $ref: '#/components/responses/PdfTemplateNotFound'
+      409:
+        description: The template is a platform template, which a tenant cannot delete.
 
 /pdf/v1/jobs:
   post:
