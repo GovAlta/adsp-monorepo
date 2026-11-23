@@ -45,4 +45,14 @@ describe('createInputProcessors', () => {
     expect(processors.map((processor) => processor.id)).toEqual(['notification-template-history', undefined]);
     expect(processors[1]).toBeInstanceOf(PromptInjectionDetector);
   });
+
+  it('trims the PDF template agent history before the prompt injection check', () => {
+    const requestContext = new RequestContext<Record<string, unknown>>();
+    requestContext.set('agentId', 'pdfGenerationAgent');
+
+    const processors = createInputProcessors({ logger, requestContext });
+
+    expect(processors.map((processor) => processor.id)).toEqual(['pdf-history', undefined]);
+    expect(processors[1]).toBeInstanceOf(PromptInjectionDetector);
+  });
 });
