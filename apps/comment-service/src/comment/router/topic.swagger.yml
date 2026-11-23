@@ -160,7 +160,10 @@ components:
       type: object
       properties:
         type:
-          $ref: '#/components/schemas/TopicType'
+          description: Type of the topic. Null if the topic's type is no longer configured; such a topic can be read and deleted, but updates respond 400.
+          nullable: true
+          allOf:
+            - $ref: '#/components/schemas/TopicType'
         id:
           type: integer
           readOnly: true
