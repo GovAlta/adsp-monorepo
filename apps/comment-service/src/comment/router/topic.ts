@@ -146,8 +146,11 @@ export function getTopicType(client: ConfigurationClient<TopicTypeConfiguration>
       const topicTypeId = req.params.topicTypeId;
 
       const types = await client.getTenantConfiguration(tenantId);
-
-      const type = types?.[topicTypeId];
+      // Platform types are listed alongside tenant types and can be used by topics, so they are readable by ID too.
+      // A tenant type takes precedence over a platform type with the same ID, as it does for topics.
+      const ownType = (config: TopicTypeConfiguration) =>
+        config && Object.prototype.hasOwnProperty.call(config, topicTypeId) ? config[topicTypeId] : undefined;
+      const type = ownType(types) ?? ownType(await client.getCoreConfiguration());
       if (!type) {
         throw new NotFoundError('topic type', topicTypeId);
       }
@@ -807,7 +810,12 @@ export function createTopicRouter({
       body('typeId').isString().isLength({ min: 1, max: 50 }),
       body('name').isString().isLength({ min: 1, max: 50 }),
       body('description').optional().isString(),
-      body('securityClassification').optional().isString(),
+      body('securityClassification')
+        .not()
+        .exists()
+        .withMessage('securityClassification is set from the topic type and cannot be set on a topic.'),
+      body('commenters').optional().isArray(),
+      body('commenters.*').isString().isLength({ min: 1 }),
       body('resourceId').optional().isString().isLength({ min: 1, max: 1200 }),
     ),
     createTopic(apiId, logger, repository, eventService, auditService),
@@ -826,6 +834,7 @@ export function createTopicRouter({
       body('name').optional().isString().isLength({ min: 1, max: 50 }),
       body('description').optional().isString(),
       body('commenters').optional().isArray(),
+      body('commenters.*').isString().isLength({ min: 1 }),
     ),
     getTopic(repository),
     updateTopic(apiId, logger, eventService, auditService),

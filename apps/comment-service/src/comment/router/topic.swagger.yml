@@ -423,8 +423,8 @@ components:
       - Topic
     description: >
       Retrieves a topic type configured by the tenant. Requires the comment-admin or topic-setter role, held in the
-      tenant or as a core (platform) role. Core users must set tenantId. Only the tenant's own types are found;
-      platform types respond 404, so use the topic types list to read them.
+      tenant or as a core (platform) role. Core users must set tenantId. Platform types are found too; a tenant type
+      with the ID of a platform type takes precedence.
     parameters:
       - $ref: '#/components/parameters/TopicTypeId'
       - $ref: '#/components/parameters/CommentTenantId'
@@ -635,7 +635,8 @@ components:
     description: >
       Creates a topic in the tenant. Requires the comment-admin or topic-setter role, held in the tenant or as a core
       (platform) role. Core users must set tenantId. The topic type can be one of the tenant's types or a platform
-      type. The topic's security classification is taken from its type.
+      type. The topic's security classification is taken from its type; requests that set securityClassification
+      respond 400.
     parameters:
       - $ref: '#/components/parameters/CommentTenantId'
     requestBody:
@@ -662,6 +663,7 @@ components:
                 type: array
                 items:
                   type: string
+                  minLength: 1
                 description: IDs of additional users who can read and comment on the topic.
               resourceId:
                 type: string
@@ -747,6 +749,7 @@ components:
                 type: array
                 items:
                   type: string
+                  minLength: 1
                 description: IDs of additional users who can read and comment on the topic. Replaces the existing list.
           example:
             name: Comments on case-123
