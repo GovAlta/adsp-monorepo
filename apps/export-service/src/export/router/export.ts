@@ -52,6 +52,7 @@ export function createExportJob(
       if (!isAllowedUser(user, tenantId, [ServiceRoles.Exporter, ...(source?.exporterRoles || [])], true)) {
         throw new UnauthorizedUserError('create export job', user);
       }
+      const effectiveFilename = filename || 'exported';
 
       if (fileType) {
         const typeExists = await fileService.typeExists(tenantId, fileType);
@@ -71,14 +72,14 @@ export function createExportJob(
         format,
         formatOptions: formatOptions || {},
         fileType: fileType || EXPORT_FILE,
-        filename: filename || 'exported',
+        filename: effectiveFilename,
         requestedBy: {
           id: user.id,
           name: user.name,
         },
       });
 
-      eventService.send(exportQueued(tenantId, user, job.id, resourceId, format, filename));
+      eventService.send(exportQueued(tenantId, user, job.id, resourceId, format, effectiveFilename));
       res.send(mapJob(serviceId, job));
 
       logger.info(`Queued export job (ID: ${job.id}) for export of resource: ${resourceId}.`, {
