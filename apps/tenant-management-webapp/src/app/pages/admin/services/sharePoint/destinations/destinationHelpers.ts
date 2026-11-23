@@ -98,7 +98,14 @@ const FAILURE_DESCRIPTIONS: Record<string, string> = {
   'adsp:http-404': 'The destination or its connection was not found. Save the destination and try again.',
   'row-identity-missing':
     'The test data has no value for a row identity field. Add one, for example "_adsp": { "key": "test-1" }.',
-  'destination-not-set-up': 'A detail list is not set up yet. Use Verify setup to create it.',
+  'destination-not-set-up': 'A detail list or the document library is not created yet. Use Verify setup to create it.',
+  'document-library-not-found':
+    'The document library was not found on the site. Check the document library ID, or leave it empty to use Documents.',
+  'not-a-document-library':
+    'The document library ID belongs to a list, not a document library. Use the ID of a document library.',
+  'library-name-taken':
+    'A list or library with this name already exists on the site. Enter its ID as the document library ID if it is the one to use, or change the name.',
+  'library-not-created': 'The document library could not be created. Run setup again.',
   'adsp:save-failed': 'The destination could not be saved, so it was not verified. Try saving again.',
 };
 

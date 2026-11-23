@@ -657,6 +657,7 @@ export class KeycloakRealmServiceImpl implements RealmService {
     } catch (error) {
       const errMessage = `Failed to find user id by email ${email} in ${realm} due to ${error.message}`;
       this.logger.error(errMessage);
+      throw new Error(`Failed to find user id in ${realm}.`);
     }
   }
 

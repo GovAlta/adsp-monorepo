@@ -166,6 +166,9 @@ describe('export router documented behaviour', () => {
 
       expect(res.status).toBe(200);
       expect(fileServiceMock.typeExists).toHaveBeenCalledWith(tenantId, 'form-export');
+      expect(eventServiceMock.send).toHaveBeenCalledWith(
+        expect.objectContaining({ payload: expect.objectContaining({ filename: 'exported' }) }),
+      );
     });
 
     it('queues an export job in the tenantId tenant for a core user', async () => {
@@ -176,6 +179,19 @@ describe('export router documented behaviour', () => {
 
       expect(res.status).toBe(200);
       expect(repositoryMock.create).toHaveBeenCalledWith(users.core, tenantId);
+    });
+
+    it('returns 400 for a core user without tenantId', async () => {
+      const res = await request(createApp())
+        .post('/export/v1/jobs')
+        .set('Authorization', 'Bearer core')
+        .send(csvExport);
+
+      expect(res.status).toBe(400);
+      expect(res.body.errorMessage).toBe(
+        'Tenant context is required. Core users must set the tenantId query parameter.',
+      );
+      expect(repositoryMock.create).not.toHaveBeenCalled();
     });
 
     it('returns 400 for an invalid format', async () => {
@@ -272,9 +288,29 @@ describe('export router documented behaviour', () => {
     it('returns the job to the core user who created it', async () => {
       repositoryMock.get.mockResolvedValueOnce(job(users.core));
 
-      const res = await request(createApp()).get(`/export/v1/jobs/${jobId}`).set('Authorization', 'Bearer core');
+      const res = await request(createApp())
+        .get(`/export/v1/jobs/${jobId}?tenantId=${tenantId}`)
+        .set('Authorization', 'Bearer core');
 
       expect(res.status).toBe(200);
+    });
+
+    it('returns a job of the tenantId tenant to a core user with the exporter role', async () => {
+      repositoryMock.get.mockResolvedValueOnce(job(users.plain));
+
+      const res = await request(createApp())
+        .get(`/export/v1/jobs/${jobId}?tenantId=${tenantId}`)
+        .set('Authorization', 'Bearer core');
+
+      expect(res.status).toBe(200);
+    });
+
+    it('returns 400 to a core user without tenantId', async () => {
+      const res = await request(createApp()).get(`/export/v1/jobs/${jobId}`).set('Authorization', 'Bearer core');
+
+      expect(res.status).toBe(400);
+      expect(res.body.errorMessage).toBe('Tenant context is required. Core users must set the tenantId query parameter.');
+      expect(repositoryMock.get).not.toHaveBeenCalled();
     });
 
     it('returns 400 when jobId is not a UUID', async () => {

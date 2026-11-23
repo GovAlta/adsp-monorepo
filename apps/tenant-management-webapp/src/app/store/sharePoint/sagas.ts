@@ -197,7 +197,7 @@ export function* setUpSharepointDestinationSaga({ id }: SetUpSharepointDestinati
     );
     const { report, ...setup } = data;
 
-    if (setup.createdLists.length) {
+    if (setup.createdLists.length || setup.createdLibrary) {
       const destination: SharepointDestination = yield select((state: RootState) => state.sharepoint.destinations[id]);
       yield call(saveDestination, {
         ...destination,
@@ -205,6 +205,7 @@ export function* setUpSharepointDestinationSaga({ id }: SetUpSharepointDestinati
           const created = setup.createdLists.find((candidate) => candidate.index === index);
           return created ? { ...list, listId: created.listId } : list;
         }),
+        ...(setup.createdLibrary ? { documentFilesLibraryId: setup.createdLibrary.libraryId } : {}),
       });
     }
     yield put(setUpSharepointDestinationSuccess(id, { report, setup }));

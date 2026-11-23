@@ -227,7 +227,9 @@ describe('SolutionWorkplace', () => {
     const ready = analyzed();
     const { container } = await setup(ready, { blueprint: jest.fn().mockResolvedValue(withPlan()) });
 
-    expect(goa(container, 'project-blueprint-generate').textContent).toContain('Regenerate blueprint');
+    await waitFor(() =>
+      expect(goa(container, 'project-blueprint-generate').textContent).toContain('Regenerate blueprint'),
+    );
     expect(container.querySelector('[testid="blueprint-generate"]')).toBeNull();
   });
 
@@ -350,8 +352,8 @@ describe('SolutionWorkplace', () => {
     type(container, 'problem-input', 'New permit workflow.');
     click(container, 'problem-continue');
     await waitFor(() => expect(api.discovery).toHaveBeenCalledWith('solution-1', { mode: 'ai', restart: true }));
+    await waitFor(() => expect(container.textContent).toContain('Who reviews applications?'));
     expect(container.querySelector('[data-testid="discovery-panel"]')).not.toBeNull();
-    expect(container.textContent).toContain('Who reviews applications?');
   });
 
   it('uses the selected analysis mode and generates the blueprint once when confidence meets the threshold', async () => {
@@ -370,9 +372,11 @@ describe('SolutionWorkplace', () => {
     expect(api.analyze).toHaveBeenCalledWith('solution-1', { mode: 'ai', checkpoint: true });
     expect(api.blueprint).toHaveBeenCalledWith('solution-1', { mode: 'rules' });
     expect(api.discovery).not.toHaveBeenCalled();
+    await waitFor(() =>
+      expect(goa(container, 'analysis-mode-badge').getAttribute('content')).toContain('Last run: Rule-based analysis'),
+    );
     expect(goa(container, 'analysis-mode-rules').getAttribute('type')).toBe('primary');
-    expect(goa(container, 'analysis-mode-badge').getAttribute('content')).toContain('Last run: Rule-based analysis');
-    expect(container.querySelector('[data-testid="discovery-panel"]')).not.toBeNull();
+    await waitFor(() => expect(container.querySelector('[data-testid="discovery-panel"]')).not.toBeNull());
     expect(container.querySelectorAll('goa-textarea[testid="discovery-input"]')).toHaveLength(1);
     expect(container.querySelector('[data-testid="confidence-bar"]')).not.toBeNull();
     expect(
@@ -409,7 +413,7 @@ describe('SolutionWorkplace', () => {
     click(container, 'problem-continue');
 
     await waitFor(() => expect(api.discovery).toHaveBeenCalledWith('solution-1', { mode: 'ai', restart: true }));
-    expect(container.textContent).toContain('Who uses the service?');
+    await waitFor(() => expect(container.textContent).toContain('Who uses the service?'));
   });
 
   it('shows remaining questions as optional and allows skipping to a plan', async () => {
