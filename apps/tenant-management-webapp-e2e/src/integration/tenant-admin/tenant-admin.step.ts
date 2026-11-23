@@ -1,4 +1,4 @@
-import { Given, When, Then } from '@badeball/cypress-cucumber-preprocessor';
+import { Before, Given, When, Then } from '@badeball/cypress-cucumber-preprocessor';
 import tenantAdminPage from './tenant-admin.page';
 import commonPage from '../common/common.page';
 import commonlib from '../common/common-library';
@@ -978,3 +978,224 @@ Then('the user can access the log in page with the corresponding tenant id showi
 Then('the user is redirected to the tenant management landing page', function () {
   welcomPageObj.welcomePageTitle().should('contain.text', 'The Alberta Digital Service Platform (ADSP)');
 });
+
+interface Tenant {
+  id: string;
+  name: string;
+  realm: string;
+  status: string;
+  deletedAt?: string;
+}
+
+interface LoggedEvent {
+  timestamp: string;
+  context: { namespace: string; name: string };
+}
+
+interface AuditEvent {
+  action: string;
+  occurredAt: string;
+  resource: { id: string };
+}
+
+let tenantPath: string;
+let tenantUrn: string;
+const scenarioTag = '@TEST_CS-5847';
+let tenant: Tenant;
+let lastResponse: Cypress.Response<Tenant>;
+let restoreRequired: boolean;
+let operationStartedAt: number;
+
+function tenantRequest(method: 'GET' | 'DELETE' | 'POST', path: string) {
+  return cy.request<Tenant>({
+    method,
+    url: `${Cypress.env('tenantManagementApi')}${path}`,
+    auth: { bearer: Cypress.env('core-api-token') },
+  });
+}
+
+function realmLoginRequest() {
+  return cy.request<string>({
+    method: 'GET',
+    url: `${Cypress.env('accessManagementApi')}/realms/${encodeURIComponent(tenant.realm)}/protocol/openid-connect/auth`,
+    qs: {
+      client_id: 'urn:ads:platform:tenant-admin-app',
+      response_type: 'code',
+      scope: 'openid',
+      redirect_uri: Cypress.config('baseUrl'),
+    },
+    failOnStatusCode: false,
+    followRedirect: false,
+  });
+}
+
+function isRecent(timestamp: string): boolean {
+  const time = Date.parse(timestamp);
+  return (
+    Number.isFinite(time) &&
+    time >= Date.now() - 5 * 60 * 1000 &&
+    time >= operationStartedAt - 5000 &&
+    time <= Date.now() + 5000
+  );
+}
+
+Before({ tags: scenarioTag }, function () {
+  restoreRequired = false;
+  tenantPath = '';
+  tenantUrn = '';
+});
+
+afterEach(function () {
+  if (restoreRequired) {
+    return tenantRequest('GET', tenantPath).then((response) => {
+      expect(response.body.id, 'cleanup tenant ID').to.equal(tenantUrn);
+      if (response.body.status === 'archived') {
+        return tenantRequest('POST', `${tenantPath}/restore`).then((restored) => {
+          expect(restored.body.status, 'cleanup tenant status').to.equal('active');
+          restoreRequired = false;
+        });
+      }
+      expect(response.body.status, 'cleanup tenant status').to.equal('active');
+      restoreRequired = false;
+    });
+  }
+});
+
+When('a user with tenant-service-admin role sends a DELETE request to {string} for tenant with id {string} and name {string}', function (path: string, id: string, name: string) {
+  tenantPath = `/api/tenant/v2/tenants/${id}`;
+  tenantUrn = `urn:ads:platform:tenant-service:v2:/tenants/${id}`;
+  expect(path, 'test tenant archive path').to.equal(tenantPath);
+  tenantRequest('GET', path).then((response) => {
+    expect(response.body.id, 'disposable test tenant ID').to.equal(tenantUrn);
+    expect(response.body.name, 'disposable test tenant name').to.equal(name);
+    expect(response.body.status, 'initial tenant status').to.equal('active');
+    expect(response.body.realm, 'tenant realm').to.be.a('string').and.not.be.empty;
+    tenant = response.body;
+    restoreRequired = true;
+    operationStartedAt = Date.now();
+    return tenantRequest('DELETE', path).then((archived) => {
+      lastResponse = archived;
+    });
+  });
+});
+
+Then(
+  '{string} is returned with a response having {string} as status, {string} in id, {string} as name and today timestamp as deletedAt',
+  function (statusCode: string, status: string, id: string, name: string) {
+    expect(lastResponse.status).to.equal(Number(statusCode));
+    expect(lastResponse.body.status).to.equal(status);
+    expect(lastResponse.body.id).to.equal(`urn:ads:platform:tenant-service:v2:/tenants/${id}`);
+    expect(lastResponse.body.name).to.equal(name);
+    expect(lastResponse.body.deletedAt, 'deletedAt').to.be.a('string').and.not.be.empty;
+    expect(dayjs(lastResponse.body.deletedAt).isValid(), 'deletedAt is a valid timestamp').to.be.true;
+    expect(dayjs(lastResponse.body.deletedAt).isSame(dayjs(), 'day'), 'deletedAt is today').to.be.true;
+  }
+);
+
+Then(
+  'a GET request to the Keycloak auth endpoint for realm {string} should return {string}, {string}',
+  function (name: string, status: string, message: string) {
+    expect(tenant.name).to.equal(name);
+    realmLoginRequest().then((response) => {
+      expect(response.status).to.equal(Number(status));
+      expect(response.body.toLowerCase()).to.include(message.toLowerCase());
+    });
+  }
+);
+
+Then('the tenant with id {string} and name {string} should appear in the list for {string}', function (id: string, name: string, request: string) {
+  const tenantUrn = `urn:ads:platform:tenant-service:v2:/tenants/${id}`;
+  expect(request).to.equal('GET /api/tenant/v2/tenants?status=archived');
+  cy.request<{ results: Tenant[] }>({
+    method: 'GET',
+    url: `${Cypress.env('tenantManagementApi')}/api/tenant/v2/tenants`,
+    qs: { status: 'archived', name },
+    auth: { bearer: Cypress.env('core-api-token') },
+  }).then((response) => {
+    const archived = response.body.results.find((result) => result.id === tenantUrn);
+    expect(archived, 'tenant in archived list').to.exist;
+    expect(archived!.status).to.equal('archived');
+  });
+});
+
+Then('the event log should contain a {string} event for tenant with id {string} in the last 5 minutes', function (eventName: string, id: string) {
+  const tenantUrn = `urn:ads:platform:tenant-service:v2:/tenants/${id}`;
+  const [namespace, name] = eventName.split(':');
+  const deadline = Date.now() + 30000;
+  function checkEvent(): void {
+    cy.request<{ 'event-service': { event: LoggedEvent[] } }>({
+      method: 'GET',
+      url: `${Cypress.env('valueServiceApiUrl')}/value/v1/event-service/values/event`,
+      qs: { tenantId: tenantUrn, context: JSON.stringify({ namespace, name }), top: 10 },
+      auth: { bearer: Cypress.env('core-api-token') },
+    }).then((response) => {
+      const events = response.body['event-service']?.event || [];
+      const found = events.some(
+        (event) => event.context.namespace === namespace && event.context.name === name && isRecent(event.timestamp)
+      );
+      if (!found && Date.now() < deadline) {
+        cy.wait(1000).then(checkEvent);
+      } else {
+        expect(found, `recent ${eventName} event for ${tenantUrn}`).to.be.true;
+      }
+    });
+  }
+  checkEvent();
+});
+
+Then('the audit log should contain a {string} action for tenant with id {string} in the last 5 minutes', function (action: string, id: string) {
+  const tenantUrn = `urn:ads:platform:tenant-service:v2:/tenants/${id}`;
+  const deadline = Date.now() + 30000;
+  function checkAudit(): void {
+    cy.request<{ results: AuditEvent[] }>({
+      method: 'GET',
+      url: `${Cypress.env('auditServiceApiUrl')}/audit/v1/tenant-service/events`,
+      qs: { tenantId: tenantUrn, resourceId: tenantUrn, action, top: 10 },
+      auth: { bearer: Cypress.env('core-api-token') },
+    }).then((response) => {
+      const found = response.body.results.some(
+        (event) => event.action === action && event.resource?.id === tenantUrn && isRecent(event.occurredAt)
+      );
+      if (!found && Date.now() < deadline) {
+        cy.wait(1000).then(checkAudit);
+      } else {
+        expect(found, `recent ${action} audit record for ${tenantUrn}`).to.be.true;
+      }
+    });
+  }
+  checkAudit();
+});
+
+When('a user with tenant-service-admin role sends a POST request to {string}', function (path: string) {
+  expect(path, 'disposable test tenant restore path').to.equal(`${tenantPath}/restore`);
+  operationStartedAt = Date.now();
+  tenantRequest('POST', path).then((response) => {
+    lastResponse = response;
+    if (response.body.status === 'active') {
+      restoreRequired = false;
+    }
+  });
+});
+
+Then(
+  '{string} is returned with a response having {string} as status, {string} in id, {string} as name and no deletedAt record',
+  function (statusCode: string, status: string, id: string, name: string) {
+    expect(lastResponse.status).to.equal(Number(statusCode));
+    expect(lastResponse.body.status).to.equal(status);
+    expect(lastResponse.body.id).to.equal(`urn:ads:platform:tenant-service:v2:/tenants/${id}`);
+    expect(lastResponse.body.name).to.equal(name);
+    expect(lastResponse.body).not.to.have.property('deletedAt');
+  }
+);
+
+Then(
+  'a GET request to the Keycloak auth endpoint for realm {string} should no longer return a {string} error',
+  function (name: string, message: string) {
+    expect(tenant.name).to.equal(name);
+    realmLoginRequest().then((response) => {
+      expect(response.status).not.to.equal(400);
+      expect(response.status).equal(200);
+      expect(response.body.toLowerCase()).not.to.include(message.toLowerCase());
+    });
+  }
+);

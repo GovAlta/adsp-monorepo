@@ -28,3 +28,14 @@ export const configurationSchema = {
   },
   additionalProperties: false,
 };
+
+/**
+ * Combines tenant and platform (core) templates. A platform template replaces a tenant template with the same ID.
+ * The platform templates are returned as the second element, so that handlers can tell them apart.
+ */
+export function combinePdfConfiguration<T>(
+  tenantConfig: Record<string, T>,
+  coreConfig: Record<string, T>,
+): [Record<string, T>, Record<string, T>] {
+  return [{ ...tenantConfig, ...coreConfig }, coreConfig || {}];
+}
