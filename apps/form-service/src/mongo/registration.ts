@@ -111,6 +111,13 @@ export class MongoFormRegistrationRepository implements FormRegistrationReposito
     return doc ? this.fromDoc(entity.tenantId, doc) : null;
   }
 
+  async deleteAll(tenantId: AdspId, definitionId: string): Promise<number> {
+    const { deletedCount } = await this.registrationModel
+      .deleteMany({ tenantId: tenantId.toString(), formDefinitionId: definitionId })
+      .exec();
+    return deletedCount;
+  }
+
   private toDoc(entity: FormRegistrationEntity): FormRegistrationDoc {
     return {
       id: entity.id,
