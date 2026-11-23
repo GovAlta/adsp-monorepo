@@ -277,6 +277,7 @@ describe('pdf', () => {
 
       expect(res.status).toHaveBeenCalledWith(HttpStatusCodes.CONFLICT);
       expect(res.send).toHaveBeenCalledWith({
+        errorMessage: "PDF template 'we are the mushrooms' already exists.",
         error: "PDF template 'we are the mushrooms' already exists.",
       });
       expect(serviceDirectoryMock.getServiceUrl).not.toHaveBeenCalled();
@@ -497,7 +498,7 @@ describe('pdf', () => {
       expect(handler).toBeTruthy();
     });
 
-    it('updates a PDF template and returns 201', async () => {
+    it('updates a PDF template and returns 200', async () => {
       const req = {
         tenant: { id: tenantId },
         user: { tenantId, id: 'test', name: 'tester', roles: [ServiceRoles.Admin] },
@@ -538,7 +539,7 @@ describe('pdf', () => {
           params: { tenantId: tenantId.toString() },
         },
       );
-      expect(res.status).toHaveBeenCalledWith(HttpStatusCodes.CREATED);
+      expect(res.status).toHaveBeenCalledWith(HttpStatusCodes.OK);
       expect(res.json).toHaveBeenCalledWith({
         id: 'test',
         name: 'Test template',
