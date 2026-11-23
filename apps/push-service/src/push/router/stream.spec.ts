@@ -451,6 +451,31 @@ describe('stream router', () => {
       expect(res.send).not.toHaveBeenCalled();
       expect(next).toHaveBeenCalledWith(expect.any(NotFoundError));
     });
+
+    it('returns not found for the webhooks configuration key', async () => {
+      const req = {
+        tenantId,
+        user: { tenantId, id: 'tester', roles: [] } as User,
+        params: { stream: 'webhooks' },
+        query: { tenant: null },
+        getConfiguration: jest.fn().mockResolvedValue({
+          webhooks: { configuredWebhook: { url: 'https://example.com' } },
+        }),
+      };
+      const next = jest.fn();
+
+      await getStream(
+        loggerMock,
+        tenantServiceMock as unknown as TenantService,
+        req as unknown as Request,
+        req.query.tenant,
+        req.params.stream,
+        next,
+      );
+
+      expect(req['stream']).toBeUndefined();
+      expect(next).toHaveBeenCalledWith(expect.any(NotFoundError));
+    });
   });
 
   describe('getStreams', () => {
