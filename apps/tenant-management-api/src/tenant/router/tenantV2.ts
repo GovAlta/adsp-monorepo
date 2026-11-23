@@ -149,6 +149,8 @@ export function updateTenantName(
       if (!tenant) {
         throw new NotFoundError('tenant', id);
       }
+      await validateName(logger, repository, name, tenant.id);
+
       const previousName = tenant.name;
       tenant.name = name;
       const newTenant = await repository.save(tenant);

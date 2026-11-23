@@ -140,7 +140,7 @@ describe('configuration router documented behaviour', () => {
       expect(res.status).toBe(403);
     });
 
-    it.each(['top=0', 'top=1001', 'includeActive=yes', 'criteria=not-json'])('responds 400 for %s', async (query) => {
+    it.each(['top=0', 'top=1001', 'includeActive=yes', 'criteria=not-json', 'after=zzz'])('responds 400 for %s', async (query) => {
       const res = await request(createApp(admin)).get(`/configuration/v2/configuration/app?${query}`);
       expect(res.status).toBe(400);
     });
@@ -452,6 +452,14 @@ describe('configuration router documented behaviour', () => {
         `/configuration/v2/configuration/app/public-settings/${path}?tenant=my-tenant`,
       );
       expect(res.status).toBe(400);
+    });
+
+    it('responds 400 for an anonymous request with a tenant URN that has too many parts', async () => {
+      const res = await request(createApp(null)).get(
+        `/configuration/v2/configuration/app/public-settings/${path}?tenant=urn:ads:a:b:c:d:e`,
+      );
+      expect(res.status).toBe(400);
+      expect(res.body.errorMessage).toContain('urn:ads:a:b:c:d:e');
     });
   });
 

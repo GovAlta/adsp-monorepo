@@ -703,7 +703,7 @@ describe('createTenantV2Router', () => {
       const req = {
         params: { id: 'tenant-a' },
         body: {
-          name: 'new-mock-name',
+          name: 'New mock name',
         },
         user: { isCore: true },
       };
@@ -715,15 +715,17 @@ describe('createTenantV2Router', () => {
 
       const entity = new TenantEntity(repositoryMock, tenant);
       repositoryMock.get.mockResolvedValueOnce(entity);
-      repositoryMock.save.mockResolvedValueOnce({ ...entity, name: 'new-mock-name' });
+      repositoryMock.find.mockResolvedValueOnce([]);
+      repositoryMock.save.mockResolvedValueOnce({ ...entity, name: 'New mock name' });
 
       await handler(req as unknown as Request, res as unknown as Response, next);
-      expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ name: 'new-mock-name' }));
+      expect(repositoryMock.find).toHaveBeenCalledWith(expect.objectContaining({ nameEquals: 'New mock name' }));
+      expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ name: 'New mock name' }));
       expect(auditServiceMock.record).toHaveBeenCalledWith(
         expect.objectContaining({ name: 'tenant.updated', captureChangeSet: true }),
         tenantAudit(
-          { id: tenantUrn, name: 'new-mock-name' },
-          { changeSet: { before: { name: tenant.name }, after: { name: 'new-mock-name' } } },
+          { id: tenantUrn, name: 'New mock name' },
+          { changeSet: { before: { name: tenant.name }, after: { name: 'New mock name' } } },
         ),
       );
     });

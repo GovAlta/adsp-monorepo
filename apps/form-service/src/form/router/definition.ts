@@ -819,7 +819,8 @@ export function submitRegistration(
   };
 }
 
-export function deleteRegistrationSettings(
+export function deleteAccessRequests(
+  repository: FormRegistrationRepository,
   directory: ServiceDirectory,
   tokenProvider: TokenProvider,
   configurationService: ConfigurationService,
@@ -841,12 +842,18 @@ export function deleteRegistrationSettings(
         ({ registration, ...existing }) => (registration ? existing : null),
       );
 
-      if (removed) {
-        logger.info(`Registration removed from form definition '${definitionId}'.`, {
-          context: 'definition-router',
-          tenant: tenantId.toString(),
-          user: `${user.name} (ID: ${user.id})`,
-        });
+      const deletedCount = await repository.deleteAll(tenantId, definitionId);
+
+      if (removed || deletedCount > 0) {
+        logger.info(
+          `Deleted ${deletedCount} access request(s) of form definition '${definitionId}'` +
+            (removed ? ' and removed its registration settings.' : '.'),
+          {
+            context: 'definition-router',
+            tenant: tenantId.toString(),
+            user: `${user.name} (ID: ${user.id})`,
+          },
+        );
       }
       res.status(HttpStatusCodes.NO_CONTENT).send();
     } catch (err) {
@@ -1148,7 +1155,7 @@ export function createFormDefinitionRouter({
     createValidationHandler(
       param('definitionId').isString().isLength({ min: 1, max: 50 }).matches(DEFINITION_ID_REGEX),
     ),
-    deleteRegistrationSettings(directory, tokenProvider, configurationService, logger),
+    deleteAccessRequests(registrationRepository, directory, tokenProvider, configurationService, logger),
   );
 
   router.get(

@@ -6,6 +6,9 @@ export const ACCESS_SERVICE_AGENT_MAX_STEPS = 6;
 export const NOTIFICATION_TEMPLATE_AGENT_ID = 'notificationEmailTemplateAgent';
 // A proposal, a retry after a rejected tool input, and a written reply.
 export const NOTIFICATION_TEMPLATE_AGENT_MAX_STEPS = 3;
+export const PDF_GENERATION_AGENT_ID = 'pdfGenerationAgent';
+// A save, a retry after a rejected save, a second retry and a closing reply.
+export const PDF_GENERATION_AGENT_MAX_STEPS = 4;
 
 export interface AgentExecutionLimits {
   timeoutMs: number;
