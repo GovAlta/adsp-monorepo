@@ -22,15 +22,10 @@ import { createAmqpEventService as createAmqpEventServiceWebhooks } from '@core-
 import { environment } from './environments/environment';
 import {
   applyPushMiddleware,
-  AppStatusWebhookEntity,
+  combinePushConfiguration,
   configurationSchema,
-  isAppStatusWebhook,
   PushServiceConfiguration,
   PushServiceRoles,
-  Stream,
-  StreamEntity,
-  Webhook,
-  WebhookEntity,
   WebhookTriggeredDefinition,
 } from './push';
 import { fromSocketHandshake, REQ_SOCKET_PROP } from './socket';
@@ -81,24 +76,7 @@ const initializeApp = async (): Promise<Server> => {
         schema: configurationSchema,
       },
       combineConfiguration: (tenant: PushServiceConfiguration, core: PushServiceConfiguration, tenantId) =>
-        Object.entries({ ...tenant, ...core }).reduce((c, [k, s]) => {
-          return k === 'webhooks'
-            ? {
-                ...c,
-                webhooks: Object.entries(s as Record<string, Webhook>)
-                  .filter(([_hk, hv]) => hv)
-                  .reduce(
-                    (hs, [hk, hv]) => ({
-                      ...hs,
-                      [hk]: isAppStatusWebhook(hv)
-                        ? new AppStatusWebhookEntity(logger, hv)
-                        : new WebhookEntity(logger, hv),
-                    }),
-                    {} as Record<string, WebhookEntity>,
-                  ),
-              }
-            : { ...c, [k]: new StreamEntity(logger, tenantId, s as Stream) };
-        }, {}),
+        combinePushConfiguration(tenant, core, tenantId, logger),
       events: [WebhookTriggeredDefinition],
       clientSecret: environment.CLIENT_SECRET,
       accessServiceUrl,
