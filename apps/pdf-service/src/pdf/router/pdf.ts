@@ -391,15 +391,19 @@ export function getGeneratedFile(serviceId: AdspId, repository: JobRepository<Fi
   return async (req, res, next) => {
     try {
       const user = req.user;
-
+      const tenantId = req.tenant?.id || (req.query.tenantId && adspId`${req.query.tenantId}`);
       const { jobId } = req.params;
 
+      if (!tenantId) {
+        throw new InvalidOperationError('Tenant context is required to get a PDF job; specify tenantId.');
+      }
+
       const job = await repository.get(jobId);
-      if (!job) {
+      if (!job || `${job.tenantId}` !== `${tenantId}`) {
         throw new NotFoundError('Generated PDF', jobId);
       }
 
-      if (!isAllowedUser(user, job.tenantId, ServiceRoles.PdfGenerator)) {
+      if (!isAllowedUser(user, tenantId, ServiceRoles.PdfGenerator, true)) {
         throw new UnauthorizedUserError('get generated pdf', user);
       }
 
