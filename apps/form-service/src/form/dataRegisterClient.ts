@@ -139,7 +139,7 @@ export class DataRegisterClient {
 
   public async create(tenantId: AdspId, request: DataRegisterCreateRequest): Promise<DataRegisterResponse> {
     try {
-      const { name, description = '', entries = [] } = request;
+      const { name, description = '', entries = [], anonymousRead = false } = request;
 
       const [definitions, document] = await Promise.all([
         this.definitions.getTenantConfiguration(tenantId),
@@ -153,13 +153,15 @@ export class DataRegisterClient {
       }
 
       // Definition is written first so the data write below never validates against a stale leftover definition.
+      // anonymousRead on the definition is what lets configuration-service serve the entries without a token.
       await this.definitions.updateEntry(tenantId, getDefinitionKey(name), {
         configurationSchema: REGISTER_SCHEMA,
         description,
+        anonymousRead,
       });
       const savedEntries = await this.replaceData(tenantId, name, entries, document.active);
 
-      return { namespace: DATA_REGISTER_NAMESPACE, name, description, entries: savedEntries };
+      return { namespace: DATA_REGISTER_NAMESPACE, name, description, anonymousRead, entries: savedEntries };
     } catch (err) {
       throw mapConfigurationError(err);
     }
@@ -171,7 +173,7 @@ export class DataRegisterClient {
     request: DataRegisterUpdateRequest,
   ): Promise<DataRegisterResponse> {
     try {
-      const { description, entries } = request;
+      const { description, entries, anonymousRead } = request;
 
       const [definitions, document] = await Promise.all([
         this.definitions.getTenantConfiguration(tenantId),
@@ -185,13 +187,18 @@ export class DataRegisterClient {
       }
 
       // Entries are written first: they are what configuration-service validates against the register's schema, so
-      // a rejected update fails before the description is touched and the register is left unchanged.
+      // a rejected update fails before the definition (description, anonymous access) is touched and the register is
+      // left unchanged.
       const updatedEntries =
         entries !== undefined ? await this.replaceData(tenantId, name, entries, document.active) : existingEntries;
 
       let definition = existingDefinition;
-      if (description !== undefined) {
-        definition = { ...existingDefinition, description };
+      if (description !== undefined || anonymousRead !== undefined) {
+        definition = {
+          ...existingDefinition,
+          ...(description !== undefined && { description }),
+          ...(anonymousRead !== undefined && { anonymousRead }),
+        };
         await this.definitions.updateEntry(tenantId, getDefinitionKey(name), definition);
       }
 
@@ -230,7 +237,13 @@ export class DataRegisterClient {
     definition: DataRegisterDefinition,
     entries: DataRegisterEntry[],
   ): DataRegisterResponse {
-    return { namespace: DATA_REGISTER_NAMESPACE, name, description: definition?.description || '', entries };
+    return {
+      namespace: DATA_REGISTER_NAMESPACE,
+      name,
+      description: definition?.description || '',
+      anonymousRead: definition?.anonymousRead === true,
+      entries,
+    };
   }
 
   private async listData(tenantId: AdspId): Promise<Map<string, DataRegisterEntry[]>> {

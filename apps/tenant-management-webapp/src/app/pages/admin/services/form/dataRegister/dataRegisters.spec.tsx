@@ -3,7 +3,8 @@ import { Provider } from 'react-redux';
 import configureStore from 'redux-mock-store';
 import { fireEvent, render } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import { RegisterConfigData, RegisterDataType } from '@abgov/jsonforms-components';
+import { RegisterDataType } from '@abgov/jsonforms-components';
+import { DataRegisterConfigData } from '@store/configuration/model';
 import {
   createDataRegisterAction,
   deleteDataRegisterAction,
@@ -22,25 +23,31 @@ jest.mock('@monaco-editor/react', () => ({
 
 interface MockAddModalProps {
   open: boolean;
-  onSave: (data: RegisterDataType | null, name: string, description: string) => void;
+  onSave: (data: RegisterDataType | null, name: string, description: string, anonymousRead: boolean) => void;
   existingNames?: string[];
 }
 
 jest.mock('./addRegisterDataModal', () => ({
   AddRegisterDataModal: ({ open, onSave, existingNames }: MockAddModalProps) => (
     <div data-testid="add-modal-mock" data-open={String(open)} data-existing-names={existingNames?.join(',')}>
-      <button data-testid="add-modal-save-without-data" onClick={() => onSave(null, 'provinces', 'Provinces')} />
+      <button data-testid="add-modal-save-without-data" onClick={() => onSave(null, 'provinces', 'Provinces', false)} />
+      <button data-testid="add-modal-save-public" onClick={() => onSave(['AB'], 'provinces', 'Provinces', true)} />
     </div>
   ),
 }));
 
 const urnFor = (name: string) => `urn:ads:platform:configuration:v2:/configuration/data-register/${name}`;
-const weekdays: RegisterConfigData = { urn: urnFor('weekdays'), description: 'Days of the week', data: ['Monday'] };
-const colours: RegisterConfigData = { urn: urnFor('colours'), description: 'Colours', data: ['Red'] };
+const weekdays: DataRegisterConfigData = {
+  urn: urnFor('weekdays'),
+  description: 'Days of the week',
+  anonymousRead: false,
+  data: ['Monday'],
+};
+const colours: DataRegisterConfigData = { urn: urnFor('colours'), description: 'Colours', data: ['Red'] };
 
 const mockStore = configureStore([]);
 const createStore = (
-  registers: RegisterConfigData[] | undefined,
+  registers: DataRegisterConfigData[] | undefined,
   isFetchingRegisterData = false,
   loadingStates: LoadingState[] = [],
 ) => mockStore({ configuration: { registers, isFetchingRegisterData }, session: { loadingStates } });
@@ -94,7 +101,7 @@ describe('DataRegisters', () => {
 
     click(byTestId(baseElement, 'goa-icon-button', 'data-register-details-weekdays'));
 
-    expect(baseElement.querySelector('goa-badge')).toHaveAttribute('content', urnFor('weekdays'));
+    expect(baseElement.querySelector(`goa-badge[content='${urnFor('weekdays')}']`)).not.toBeNull();
   });
 
   it('drops the selection of a register that is removed from state', () => {
@@ -160,7 +167,80 @@ describe('DataRegisters', () => {
 
     fireEvent.click(getByTestId('add-modal-save-without-data'));
 
-    expect(store.getActions()).toContainEqual(createDataRegisterAction('provinces', 'Provinces', undefined));
+    expect(store.getActions()).toContainEqual(createDataRegisterAction('provinces', 'Provinces', undefined, false));
+  });
+
+  it('creates a register with anonymous access when the add modal asks for it', () => {
+    const store = createStore([]);
+    const { getByTestId } = renderDataRegisters(store);
+
+    fireEvent.click(getByTestId('add-modal-save-public'));
+
+    expect(store.getActions()).toContainEqual(createDataRegisterAction('provinces', 'Provinces', ['AB'], true));
+  });
+
+  describe('access', () => {
+    const accessBadge = (baseElement: HTMLElement, name: string) =>
+      byTestId(baseElement, 'goa-badge', `data-register-access-${name}`);
+    const toggleAccess = (baseElement: HTMLElement) =>
+      click(byTestId(baseElement, 'goa-icon-button', 'data-register-access-toggle-weekdays'));
+    const accessModal = (baseElement: HTMLElement) => byTestId(baseElement, 'goa-modal', 'data-register-access-modal');
+
+    it('shows Private for a register without anonymous access, including one that does not say', () => {
+      const { baseElement } = renderDataRegisters(createStore([weekdays, colours]));
+
+      expect(accessBadge(baseElement, 'weekdays')).toHaveAttribute('content', 'Private');
+      expect(accessBadge(baseElement, 'colours')).toHaveAttribute('content', 'Private');
+    });
+
+    it('shows Public for a register with anonymous access', () => {
+      const { baseElement } = renderDataRegisters(createStore([{ ...weekdays, anonymousRead: true }]));
+
+      expect(accessBadge(baseElement, 'weekdays')).toHaveAttribute('content', 'Public');
+    });
+
+    it('asks for confirmation before changing the access', () => {
+      const store = createStore([weekdays]);
+      const { baseElement } = renderDataRegisters(store);
+
+      toggleAccess(baseElement);
+
+      expect(accessModal(baseElement)).toHaveAttribute('heading', 'Allow anonymous access');
+      expect(store.getActions()).toEqual([getRegisterDataAction()]);
+    });
+
+    it('allows anonymous access once confirmed', () => {
+      const store = createStore([weekdays]);
+      const { baseElement } = renderDataRegisters(store);
+
+      toggleAccess(baseElement);
+      click(byTestId(baseElement, 'goa-button', 'data-register-access-confirm'));
+
+      expect(store.getActions()).toContainEqual(updateDataRegisterAction('weekdays', undefined, undefined, true));
+      expect(accessModal(baseElement)).toBeNull();
+    });
+
+    it('makes a public register private once confirmed', () => {
+      const store = createStore([{ ...weekdays, anonymousRead: true }]);
+      const { baseElement } = renderDataRegisters(store);
+
+      toggleAccess(baseElement);
+      expect(accessModal(baseElement)).toHaveAttribute('heading', 'Make register private');
+      click(byTestId(baseElement, 'goa-button', 'data-register-access-confirm'));
+
+      expect(store.getActions()).toContainEqual(updateDataRegisterAction('weekdays', undefined, undefined, false));
+    });
+
+    it('leaves the access unchanged when the change is cancelled', () => {
+      const store = createStore([weekdays]);
+      const { baseElement } = renderDataRegisters(store);
+
+      toggleAccess(baseElement);
+      click(byTestId(baseElement, 'goa-button', 'data-register-access-cancel'));
+
+      expect(store.getActions()).toEqual([getRegisterDataAction()]);
+      expect(accessModal(baseElement)).toBeNull();
+    });
   });
 
   it('updates only the entries of an edited register', () => {
