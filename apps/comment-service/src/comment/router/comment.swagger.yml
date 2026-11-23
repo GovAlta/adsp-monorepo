@@ -10,24 +10,8 @@
       tenant. Core roles don't grant access.
     parameters:
       - $ref: '#/components/parameters/CommentTenantId'
-      - name: top
-        description: Maximum number of comments to return. Defaults to 10. Must be a positive integer.
-        in: query
-        required: false
-        schema:
-          type: integer
-          minimum: 1
-          default: 10
-        example: 10
-      - name: after
-        description: >
-          Cursor of the page to retrieve. Use the `page.next` value of the previous response to page sequentially
-          through the results.
-        in: query
-        required: false
-        schema:
-          type: string
-        example: MTA=
+      - $ref: '#/components/parameters/CommentTop'
+      - $ref: '#/components/parameters/CommentAfter'
       - name: criteria
         description: >
           Criteria for the comments to retrieve, as URL-encoded JSON. Must be valid JSON. The text criteria are

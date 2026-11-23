@@ -1,6 +1,7 @@
 import { UnauthorizedUserError, isAllowedUser } from '@abgov/adsp-service-sdk';
-import { NotFoundError } from '@core-services/core-common';
+import { NotFoundError, createValidationHandler, decodeAfter } from '@core-services/core-common';
 import { RequestHandler, Router } from 'express';
+import { query } from 'express-validator';
 import { TopicTypeEntity } from '../model';
 import { TopicRepository } from '../repository';
 import { ExportServiceRoles, ServiceRoles } from '../roles';
@@ -54,7 +55,18 @@ export function getComments(repository: TopicRepository): RequestHandler {
 export function createCommentRouter({ repository }: CommentRouterProps): Router {
   const router = Router();
 
-  router.get('/comments', assertTenantContext, getComments(repository));
+  router.get(
+    '/comments',
+    assertTenantContext,
+    createValidationHandler(
+      query('top').optional().isInt({ min: 1, max: 5000 }),
+      query('after')
+        .optional()
+        .isString()
+        .custom((val) => !isNaN(decodeAfter(val))),
+    ),
+    getComments(repository),
+  );
 
   return router;
 }

@@ -37,6 +37,7 @@ module.exports = defineConfig({
     formAppUrl: 'https://form.adsp-dev.gov.ab.ca/',
     taskServiceApiUrl: '',
     valueServiceApiUrl: '',
+    auditServiceApiUrl: 'https://audit-service-adsp-dev.apps.aro-01.int.gov.ab.ca',
   },
   retries: 1,
   defaultCommandTimeout: 10000,

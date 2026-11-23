@@ -527,6 +527,41 @@ describe('CacheTarget', () => {
       await expect(target.get(req as Request, res as unknown as Response)).rejects.toThrow(NotFoundError);
     });
 
+    it('can throw not found when directory has no entry for the target', async () => {
+      const req = {
+        method: 'GET',
+        headers: {},
+        path: '',
+        query: {},
+        baseUrl: '/cache/v1',
+      };
+      const res = {};
+
+      providerMock.get.mockResolvedValueOnce(null);
+      directoryMock.getServiceUrl.mockRejectedValueOnce(
+        new Error('Failed to find directory entry for urn:ads:platform:test-service:v1')
+      );
+
+      await expect(target.get(req as Request, res as unknown as Response)).rejects.toThrow(NotFoundError);
+    });
+
+    it('can propagate unexpected directory errors', async () => {
+      const req = {
+        method: 'GET',
+        headers: {},
+        path: '',
+        query: {},
+        baseUrl: '/cache/v1',
+      };
+      const res = {};
+
+      providerMock.get.mockResolvedValueOnce(null);
+      const error = new Error('Unexpected');
+      directoryMock.getServiceUrl.mockRejectedValueOnce(error);
+
+      await expect(target.get(req as Request, res as unknown as Response)).rejects.toBe(error);
+    });
+
     it('can throw invalid operation for path traversal', async () => {
       const req = {
         method: 'GET',
