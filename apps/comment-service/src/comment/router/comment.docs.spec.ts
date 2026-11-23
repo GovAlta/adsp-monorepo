@@ -131,6 +131,18 @@ describe('comment router documented behaviour', () => {
     expect(repositoryMock.getComments).not.toHaveBeenCalled();
   });
 
+  it('responds 400 for criteria that is not valid JSON', async () => {
+    const res = await request(createApp(admin)).get('/comment/v1/comments').query({ criteria: 'notjson' });
+    expect(res.status).toBe(400);
+    expect(repositoryMock.getComments).not.toHaveBeenCalled();
+  });
+
+  it('responds 400 for repeated criteria values', async () => {
+    const res = await request(createApp(admin)).get('/comment/v1/comments?criteria={}&criteria={}');
+    expect(res.status).toBe(400);
+    expect(repositoryMock.getComments).not.toHaveBeenCalled();
+  });
+
   it('accepts the maximum top and a cursor from a previous page', async () => {
     const res = await request(createApp(admin)).get('/comment/v1/comments').query({ top: 5000, after: 'MTA=' });
     expect(res.status).toBe(200);

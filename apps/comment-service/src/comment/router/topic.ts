@@ -797,6 +797,7 @@ export function createTopicRouter({
         .custom((val) => {
           return !isNaN(decodeAfter(val));
         }),
+      query('criteria').optional().isString().isJSON().withMessage('criteria must be valid JSON'),
     ),
     getTopics(apiId, repository),
   );
@@ -847,6 +848,7 @@ export function createTopicRouter({
         .custom((val) => {
           return !isNaN(decodeAfter(val));
         }),
+      query('criteria').optional().isString().isJSON().withMessage('criteria must be valid JSON'),
     ),
     getTopic(repository),
     getTopicComments(),

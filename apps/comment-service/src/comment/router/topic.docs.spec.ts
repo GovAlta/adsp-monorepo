@@ -401,10 +401,13 @@ describe('topic router documented behaviour', () => {
       });
     });
 
-    it.each([{ top: 0 }, { top: 5001 }, { after: 'not-a-cursor' }])('responds 400 on list for %p', async (query) => {
-      const res = await request(createApp(auditor)).get('/comment/v1/topics').query(query);
-      expect(res.status).toBe(400);
-    });
+    it.each([{ top: 0 }, { top: 5001 }, { after: 'not-a-cursor' }, { criteria: 'notjson' }])(
+      'responds 400 on list for %p',
+      async (query) => {
+        const res = await request(createApp(auditor)).get('/comment/v1/topics').query(query);
+        expect(res.status).toBe(400);
+      },
+    );
 
     it('responds 401 on list when there is no authenticated user', async () => {
       const res = await request(createApp(null)).get('/comment/v1/topics');
@@ -518,6 +521,12 @@ describe('topic router documented behaviour', () => {
     it('responds 400 on list for an invalid top', async () => {
       const res = await request(createApp(auditor)).get('/comment/v1/topics/42/comments').query({ top: 0 });
       expect(res.status).toBe(400);
+    });
+
+    it('responds 400 on list for criteria that is not valid JSON', async () => {
+      const res = await request(createApp(auditor)).get('/comment/v1/topics/42/comments').query({ criteria: '{' });
+      expect(res.status).toBe(400);
+      expect(res.body.errorMessage).toContain('criteria must be valid JSON');
     });
 
     it('posts a comment for a commenter', async () => {

@@ -64,6 +64,7 @@ export function createCommentRouter({ repository }: CommentRouterProps): Router 
         .optional()
         .isString()
         .custom((val) => !isNaN(decodeAfter(val))),
+      query('criteria').optional().isString().isJSON().withMessage('criteria must be valid JSON'),
     ),
     getComments(repository),
   );
