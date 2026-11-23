@@ -176,8 +176,9 @@ export function createTopicType(
       }
       assertUserCanPerform(user, tenantId, 'create topic type');
 
-      const { id, name, readRoles, readerRoles, writeRoles = [] } = req.body;
+      const { id, name, adminRoles, readRoles, readerRoles, commenterRoles, writeRoles } = req.body;
       const resolvedReaderRoles = readerRoles || readRoles || [];
+      const resolvedCommenterRoles = commenterRoles || writeRoles || [];
       const types = await req.getConfiguration<Record<string, TopicTypeEntity>, Record<string, TopicTypeEntity>>(
         tenantId,
       );
@@ -194,9 +195,9 @@ export function createTopicType(
       const topicType = {
         id,
         name,
-        adminRoles: [],
+        adminRoles: adminRoles || [],
         readerRoles: resolvedReaderRoles,
-        commenterRoles: writeRoles,
+        commenterRoles: resolvedCommenterRoles,
       };
 
       await axios.patch(
@@ -734,12 +735,16 @@ export function createTopicRouter({
         .isLength({ min: 1, max: 50 })
         .matches(/^[a-zA-Z0-9-_ ]{1,50}$/),
       body('name').isString().isLength({ min: 1, max: 50 }),
+      body('adminRoles').optional().isArray(),
+      body('adminRoles.*').optional().isString(),
       body('readRoles').optional().isArray(),
       body('readRoles.*').optional().isString(),
       body('readerRoles').optional().isArray(),
       body('readerRoles.*').optional().isString(),
+      body('commenterRoles').optional().isArray(),
+      body('commenterRoles.*').optional().isString(),
       body('writeRoles').optional().isArray(),
-      body('writerRoles.*').optional().isString(),
+      body('writeRoles.*').optional().isString(),
     ),
     createTopicType(apiId, logger, directory, client, tokenProvider, auditService),
   );
