@@ -39,19 +39,38 @@ runs:
     - name: Deploy ${{ inputs.to }}
       shell: bash
       run: |
+        # Roll out with image triggers on, then always switch them back to manual,
+        # even when the rollout fails or times out (the step runs with bash -e) or
+        # the job is cancelled. Otherwise the deployment would keep auto-rolling out
+        # on every later image tag.
+        active=""
+        restore_triggers() {
+          if [ -n "$active" ]; then
+            oc set triggers "$active" --manual || true
+            active=""
+          fi
+        }
+        trap restore_triggers EXIT
+        trap "restore_triggers; exit 130" INT TERM
+
+        rollout_with_triggers() {
+          active="$1"
+          oc set triggers "$1" --auto
+          local rc=0
+          oc rollout status "$1" --timeout=300s || rc=$?
+          restore_triggers
+          return $rc
+        }
+
         if oc get deployment/${{ inputs.app }} ; then
-          oc set triggers deployment/${{ inputs.app }} --auto
-          oc rollout status deployment/${{ inputs.app }} --timeout=300s
-          oc set triggers deployment/${{ inputs.app }} --manual
+          rollout_with_triggers deployment/${{ inputs.app }}
         elif oc get dc/${{ inputs.app }} ; then
           oc rollout latest dc/${{ inputs.app }}
           oc rollout status dc/${{ inputs.app }} --timeout=300s
         else
-          echo 'No Deployment or DeploymentConfig found for ${{ inputs.app }}.'
+          echo "No Deployment or DeploymentConfig found for ${{ inputs.app }}."
         fi
 
         if oc get deployment/${{ inputs.app }}-job ; then
-          oc set triggers deployment/${{ inputs.app }}-job --auto
-          oc rollout status deployment/${{ inputs.app }}-job --timeout=300s
-          oc set triggers deployment/${{ inputs.app }}-job --manual
+          rollout_with_triggers deployment/${{ inputs.app }}-job
         fi
