@@ -4,6 +4,7 @@ import { RequestHandler, Router } from 'express';
 import { TopicTypeEntity } from '../model';
 import { TopicRepository } from '../repository';
 import { ExportServiceRoles, ServiceRoles } from '../roles';
+import { assertTenantContext } from './topic';
 import { CommentCriteria } from '../types';
 
 interface CommentRouterProps {
@@ -23,7 +24,7 @@ export function getComments(repository: TopicRepository): RequestHandler {
       // Otherwise user must be a comment service admin to search comments.
       if (criteria?.typeIdEquals) {
         const types = await req.getConfiguration<Record<string, TopicTypeEntity>, Record<string, TopicTypeEntity>>(
-          tenantId
+          tenantId,
         );
 
         const type = types[criteria.typeIdEquals];
@@ -53,7 +54,7 @@ export function getComments(repository: TopicRepository): RequestHandler {
 export function createCommentRouter({ repository }: CommentRouterProps): Router {
   const router = Router();
 
-  router.get('/comments', getComments(repository));
+  router.get('/comments', assertTenantContext, getComments(repository));
 
   return router;
 }

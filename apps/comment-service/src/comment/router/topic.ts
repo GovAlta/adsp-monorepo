@@ -76,6 +76,12 @@ const assertUserCanPerform = (user: User, tenantId: AdspId, operation: string) =
   }
 };
 
+// Topic types, topics and comments belong to a tenant. Core users must set tenantId; without it the handlers would
+// read or write the platform (core) configuration and query across tenants.
+export const assertTenantContext: RequestHandler = (req, _res, next) => {
+  next(req.tenant?.id ? undefined : new InvalidOperationError('Tenant context is required.'));
+};
+
 type TopicResponse = Omit<Topic, 'tenantId' | 'type'> & { type: TopicTypeResponse; urn: string };
 function mapTopic(apiId: AdspId, topic: Topic): TopicResponse {
   return {
@@ -718,8 +724,10 @@ export function createTopicRouter({
   const router = Router();
 
   router.get('/topic-types', getTopicTypes(client));
+  router.use(['/topic-types/:topicTypeId', '/topics'], assertTenantContext);
   router.post(
     '/topic-types',
+    assertTenantContext,
     createValidationHandler(
       body('id')
         .isString()
