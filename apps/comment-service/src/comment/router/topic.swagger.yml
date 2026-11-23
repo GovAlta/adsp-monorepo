@@ -329,8 +329,8 @@ components:
       - Topic
     description: >
       Creates a topic type in the tenant's comment service configuration. Requires the comment-admin or topic-setter
-      role, held in the tenant or as a core (platform) role. Core users must set tenantId. The new type has no admin
-      roles; set them with an update. The service responds 409 if the tenant or platform already has a type with the
+      role, held in the tenant or as a core (platform) role. Core users must set tenantId. Role lists that are not set
+      are saved empty. The service responds 409 if the tenant or platform already has a type with the
       ID, or a type with a different ID has the same name.
     parameters:
       - $ref: '#/components/parameters/CommentTenantId'
@@ -352,6 +352,11 @@ components:
                 description: Name of the topic type.
                 minLength: 1
                 maxLength: 50
+              adminRoles:
+                type: array
+                description: Roles that can read and comment on topics of the type, and update or delete any comment on them.
+                items:
+                  type: string
               readerRoles:
                 type: array
                 description: Roles that can read topics of the type.
@@ -363,17 +368,24 @@ components:
                 description: Alternative name for readerRoles, used when readerRoles is not set.
                 items:
                   type: string
+              commenterRoles:
+                type: array
+                description: Roles that can read topics of the type, post comments, and update or delete their own comments.
+                items:
+                  type: string
               writeRoles:
                 type: array
-                description: Roles that can comment on topics of the type. Saved as the type's commenterRoles.
+                deprecated: true
+                description: Alternative name for commenterRoles, used when commenterRoles is not set.
                 items:
                   type: string
             required: [id, name]
           example:
             id: case-notes
             name: Case notes
+            adminRoles: [case-supervisor]
             readerRoles: [case-auditor]
-            writeRoles: [case-worker]
+            commenterRoles: [case-worker]
     responses:
       200:
         description: Topic type created successfully.
@@ -384,7 +396,7 @@ components:
             example:
               id: case-notes
               name: Case notes
-              adminRoles: []
+              adminRoles: [case-supervisor]
               readerRoles: [case-auditor]
               commenterRoles: [case-worker]
       400:
@@ -462,7 +474,7 @@ components:
                   type: string
               commenterRoles:
                 type: array
-                description: Roles that can comment on topics of the type.
+                description: Roles that can read topics of the type, post comments, and update or delete their own comments.
                 items:
                   type: string
               securityClassification:

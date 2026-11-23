@@ -110,7 +110,7 @@ Reading topics and comments is not audited. Topic type changes made directly in 
 
 ## Code examples
 ### Create a topic type
-Users or service accounts with the comment-admin or topic-setter role can create topic types for their tenant. The new type's commenter roles are set with `writeRoles`, and it has no admin roles until you update it. The service responds `409` if a type with the ID or name already exists.
+Users or service accounts with the comment-admin or topic-setter role can create topic types for their tenant. Set `adminRoles`, `readerRoles` and `commenterRoles` in the request; `readRoles` and `writeRoles` are still accepted as older names for reader and commenter roles. The service responds `409` if a type with the ID or name already exists.
 
 ```typescript
 const response = await fetch('https://comment-service.adsp.alberta.ca/comment/v1/topic-types', {
@@ -122,12 +122,13 @@ const response = await fetch('https://comment-service.adsp.alberta.ca/comment/v1
   body: JSON.stringify({
     id: 'case-notes',
     name: 'Case notes',
+    adminRoles: ['case-supervisor'],
     readerRoles: ['case-auditor'],
-    writeRoles: ['case-worker'],
+    commenterRoles: ['case-worker'],
   }),
 });
 
-const { id, name, readerRoles, commenterRoles } = await response.json();
+const { id, name, adminRoles, readerRoles, commenterRoles } = await response.json();
 ```
 
 ### Update the roles of a topic type

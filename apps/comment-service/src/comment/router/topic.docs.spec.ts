@@ -209,6 +209,36 @@ describe('topic router documented behaviour', () => {
       });
     });
 
+    it('creates a type with adminRoles and commenterRoles saved as sent', async () => {
+      const created = {
+        id: 'incident-notes',
+        name: 'Incident notes',
+        adminRoles: ['case-supervisor'],
+        readerRoles: ['case-auditor'],
+        commenterRoles: ['case-worker'],
+      };
+      clientMock.getTenantConfiguration.mockResolvedValueOnce({ ...types, 'incident-notes': created });
+      const res = await request(createApp(setter))
+        .post('/comment/v1/topic-types')
+        .send({ ...created, writeRoles: ['ignored-alias'] });
+      expect(res.status).toBe(200);
+      expect(axiosMock.patch.mock.calls[0][1]).toEqual({
+        operation: 'UPDATE',
+        update: { 'incident-notes': { ...created } },
+      });
+    });
+
+    it.each(['adminRoles', 'commenterRoles', 'writeRoles', 'readerRoles', 'readRoles'])(
+      'responds 400 on create for a non-string item in %s',
+      async (field) => {
+        const res = await request(createApp(setter))
+          .post('/comment/v1/topic-types')
+          .send({ id: 'incident-notes', name: 'Incident notes', [field]: [1] });
+        expect(res.status).toBe(400);
+        expect(axiosMock.patch).not.toHaveBeenCalled();
+      },
+    );
+
     it('responds 400 on create for an invalid ID', async () => {
       const res = await request(createApp(setter)).post('/comment/v1/topic-types').send({ id: 'bad/id', name: 'Bad' });
       expect(res.status).toBe(400);
