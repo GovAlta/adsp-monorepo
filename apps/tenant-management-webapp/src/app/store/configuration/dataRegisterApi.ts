@@ -1,11 +1,12 @@
 import axios from 'axios';
-import { RegisterConfigData, RegisterDataType } from '@abgov/jsonforms-components';
-import { DATA_REGISTER_NAMESPACE } from './model';
+import { RegisterDataType } from '@abgov/jsonforms-components';
+import { DATA_REGISTER_NAMESPACE, DataRegisterConfigData } from './model';
 
 export interface DataRegisterResponse {
   namespace: string;
   name: string;
   description: string;
+  anonymousRead?: boolean;
   entries: RegisterDataType;
 }
 
@@ -13,21 +14,24 @@ export interface CreateDataRegisterRequest {
   name: string;
   description?: string;
   entries?: RegisterDataType;
+  anonymousRead?: boolean;
 }
 
 export interface UpdateDataRegisterRequest {
   description?: string;
   entries?: RegisterDataType;
+  anonymousRead?: boolean;
 }
 
 // The URN is deliberately left unencoded: jsonforms resolves registers by exact URN match and saved forms embed it.
-export const toRegisterConfigData = (register: DataRegisterResponse): RegisterConfigData => ({
+export const toRegisterConfigData = (register: DataRegisterResponse): DataRegisterConfigData => ({
   urn: `urn:ads:platform:configuration:v2:/configuration/${DATA_REGISTER_NAMESPACE}/${register.name}`,
   description: register.description,
+  anonymousRead: register.anonymousRead === true,
   data: register.entries,
 });
 
-export const fetchRegistersApi = async (token: string, url: string): Promise<RegisterConfigData[]> => {
+export const fetchRegistersApi = async (token: string, url: string): Promise<DataRegisterConfigData[]> => {
   const { data } = await axios.get<DataRegisterResponse[]>(new URL('form/v1/registers', url).href, {
     headers: { Authorization: `Bearer ${token}` },
   });
@@ -38,7 +42,7 @@ export const createRegisterApi = async (
   token: string,
   url: string,
   request: CreateDataRegisterRequest,
-): Promise<RegisterConfigData> => {
+): Promise<DataRegisterConfigData> => {
   const { data } = await axios.post<DataRegisterResponse>(new URL('form/v1/registers', url).href, request, {
     headers: { Authorization: `Bearer ${token}` },
   });
@@ -50,7 +54,7 @@ export const updateRegisterApi = async (
   url: string,
   name: string,
   request: UpdateDataRegisterRequest,
-): Promise<RegisterConfigData> => {
+): Promise<DataRegisterConfigData> => {
   const { data } = await axios.patch<DataRegisterResponse>(
     new URL(`form/v1/registers/${encodeURIComponent(name)}`, url).href,
     request,

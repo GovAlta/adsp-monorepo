@@ -10,16 +10,19 @@ export interface DataRegisterCreateRequest {
   name: string;
   description?: string;
   entries?: DataRegisterEntry[];
+  anonymousRead?: boolean;
 }
 
 export interface DataRegisterUpdateRequest {
   description?: string;
   entries?: DataRegisterEntry[];
+  anonymousRead?: boolean;
 }
 
 export interface DataRegisterResponse {
   namespace: string;
   name: string;
   description: string;
+  anonymousRead: boolean;
   entries: DataRegisterEntry[];
 }

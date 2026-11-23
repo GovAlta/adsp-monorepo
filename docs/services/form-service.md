@@ -119,22 +119,22 @@ Form service provides an API to manage the data registers of a tenant. Tenant ad
 
 Form service stores each register in the [configuration service](configuration-service.md) in two parts:
 
-- **Definition**: the `data-register:<name>` entry in the tenant's `platform:configuration-service` configuration. It holds the register's schema and description.
+- **Definition**: the `data-register:<name>` entry in the tenant's `platform:configuration-service` configuration. It holds the register's schema, description and `anonymousRead` setting.
 - **Entries**: the configuration with namespace `data-register` and the register's name. It holds the array of values.
 
 ### Endpoints
 
 All endpoints require a user with the `urn:ads:platform:form-service:form-admin` role or the `urn:ads:platform:configuration-service:configuration-admin` role, in the context of a tenant. A core user must specify the tenant with the `tenantId` query parameter. Every endpoint returns 401 if the user is not authenticated, 403 if the user has neither role, and 502 if configuration service fails.
 
-| Method | Path                        | Description                                                                                             | Responses     |
-| :----- | :-------------------------- | :------------------------------------------------------------------------------------------------------ | :------------ |
-| GET    | `/form/v1/registers`        | Lists the tenant's data registers.                                                                      | 200           |
-| GET    | `/form/v1/registers/{name}` | Gets a data register.                                                                                   | 200, 404      |
-| POST   | `/form/v1/registers`        | Creates a data register from `name`, `description` and `entries`. `entries` defaults to an empty array. | 201, 400, 409 |
-| PATCH  | `/form/v1/registers/{name}` | Updates `description` and/or `entries`. A field that is not sent is left unchanged.                     | 200, 400, 404 |
-| DELETE | `/form/v1/registers/{name}` | Deletes the data register's entries and definition.                                                     | 204, 404      |
+| Method | Path                        | Description                                                                                                                                             | Responses     |
+| :----- | :-------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------ | :------------ |
+| GET    | `/form/v1/registers`        | Lists the tenant's data registers.                                                                                                                      | 200           |
+| GET    | `/form/v1/registers/{name}` | Gets a data register.                                                                                                                                   | 200, 404      |
+| POST   | `/form/v1/registers`        | Creates a data register from `name`, `description`, `entries` and `anonymousRead`. `entries` defaults to an empty array and `anonymousRead` to `false`. | 201, 400, 409 |
+| PATCH  | `/form/v1/registers/{name}` | Updates `description`, `entries` and/or `anonymousRead`. A field that is not sent is left unchanged.                                                    | 200, 400, 404 |
+| DELETE | `/form/v1/registers/{name}` | Deletes the data register's entries and definition.                                                                                                     | 204, 404      |
 
-Registers are returned as `{ namespace: 'data-register', name, description, entries }`.
+Registers are returned as `{ namespace: 'data-register', name, description, anonymousRead, entries }`.
 
 ### Rules
 
@@ -145,7 +145,7 @@ Registers are returned as `{ namespace: 'data-register', name, description, entr
 - **Entries**: an array whose items are all strings or objects.
 - **URN**: forms reference a register as `urn:ads:platform:configuration:v2:/configuration/data-register/<name>`. The name is not URL encoded in the URN.
 - **Deleting removes data**: a delete removes the register's entries, including their revision history, and its definition. Forms that reference the register lose its options.
-- **Anonymous access**: registers are not readable by anonymous applicants unless `anonymousRead` is set on the definition in configuration service. An update keeps this setting, but the API does not set it.
+- **Anonymous access**: a register is private by default, so only signed-in users of the tenant can read it. Set `anonymousRead` to `true` on create or update to let anonymous applicants and other apps read it without a token, from `GET /configuration/v2/configuration/data-register/<name>/active?orLatest=true&tenant=<tenant URN>`. Anyone who knows the tenant and the name can then read the entries, so don't make a register with sensitive entries public. An update that doesn't send `anonymousRead` keeps the current setting, including one set on the definition in configuration service. In the tenant management webapp, the Register data tab shows each register as Public or Private and asks for confirmation before changing it.
 - **Errors**: when configuration service rejects a request, form service returns 400. When configuration service fails or denies access, form service returns 502.
 - **Service account role**: form service calls configuration service with its own service account. Deleting a register and moving the active revision need that account to have the configuration service `configuration-admin` role.
 

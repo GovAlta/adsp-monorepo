@@ -1,4 +1,4 @@
-import { RegisterData } from '@abgov/jsonforms-components';
+import { RegisterConfigData } from '@abgov/jsonforms-components';
 
 export const allNames = 'all names';
 
@@ -21,7 +21,7 @@ export interface ConfigurationDefinitionState {
     service?: string;
     revisions?: { result?: []; next?: string; active?: number; latest?: number; isCore?: boolean };
   };
-  registers?: RegisterData;
+  registers?: DataRegisterConfigData[];
   isFetchingRegisterData?: boolean;
   serviceList: string[];
   openEditor: string;
@@ -104,3 +104,8 @@ export interface Revision {
 }
 
 export const DATA_REGISTER_NAMESPACE = 'data-register';
+
+// A data register as jsonforms resolves it, plus whether it can be read without signing in.
+export interface DataRegisterConfigData extends RegisterConfigData {
+  anonymousRead?: boolean;
+}

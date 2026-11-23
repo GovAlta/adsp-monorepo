@@ -1,4 +1,4 @@
-import { RegisterConfigData, RegisterData, RegisterDataType } from '@abgov/jsonforms-components';
+import { RegisterDataType } from '@abgov/jsonforms-components';
 import { ErrorNotification } from '@store/notifications/actions';
 import { getAccessToken } from '@store/tenant/actions';
 import { io, Socket } from 'socket.io-client';
@@ -10,6 +10,7 @@ import {
   ServiceConfiguration,
   ReplaceConfiguration,
   Revision,
+  DataRegisterConfigData,
 } from './model';
 
 export const DELETE_CONFIGURATION_DEFINITION_ACTION = 'configuration/DELETE_CONFIGURATION_DEFINITION_ACTION';
@@ -197,7 +198,7 @@ export interface FetchRegisterDataAction {
 
 export interface FetchRegisterDataSuccessAction {
   type: typeof FETCH_REGISTER_DATA_SUCCESS_ACTION;
-  payload: RegisterData;
+  payload: DataRegisterConfigData[];
 }
 
 export interface FetchRegisterDataFailedAction {
@@ -209,11 +210,12 @@ export interface CreateDataRegisterAction {
   name: string;
   description?: string;
   entries?: RegisterDataType;
+  anonymousRead?: boolean;
 }
 
 export interface CreateDataRegisterSuccessAction {
   type: typeof CREATE_DATA_REGISTER_SUCCESS_ACTION;
-  payload: RegisterConfigData;
+  payload: DataRegisterConfigData;
 }
 
 export interface UpdateDataRegisterAction {
@@ -221,11 +223,12 @@ export interface UpdateDataRegisterAction {
   name: string;
   description?: string;
   entries?: RegisterDataType;
+  anonymousRead?: boolean;
 }
 
 export interface UpdateDataRegisterSuccessAction {
   type: typeof UPDATE_DATA_REGISTER_SUCCESS_ACTION;
-  payload: RegisterConfigData;
+  payload: DataRegisterConfigData;
 }
 
 export interface DeleteDataRegisterAction {
@@ -477,7 +480,9 @@ export const getReplaceConfigurationErrorSuccessAction = (
   payload: replacedConfiguration,
 });
 
-export const getRegisterDataSuccessAction = (registerData: RegisterData): FetchRegisterDataSuccessAction => ({
+export const getRegisterDataSuccessAction = (
+  registerData: DataRegisterConfigData[],
+): FetchRegisterDataSuccessAction => ({
   type: FETCH_REGISTER_DATA_SUCCESS_ACTION,
   payload: registerData,
 });
@@ -494,14 +499,16 @@ export const createDataRegisterAction = (
   name: string,
   description?: string,
   entries?: RegisterDataType,
+  anonymousRead?: boolean,
 ): CreateDataRegisterAction => ({
   type: CREATE_DATA_REGISTER_ACTION,
   name,
   description,
   entries,
+  anonymousRead,
 });
 
-export const createDataRegisterSuccessAction = (payload: RegisterConfigData): CreateDataRegisterSuccessAction => ({
+export const createDataRegisterSuccessAction = (payload: DataRegisterConfigData): CreateDataRegisterSuccessAction => ({
   type: CREATE_DATA_REGISTER_SUCCESS_ACTION,
   payload,
 });
@@ -510,14 +517,16 @@ export const updateDataRegisterAction = (
   name: string,
   description?: string,
   entries?: RegisterDataType,
+  anonymousRead?: boolean,
 ): UpdateDataRegisterAction => ({
   type: UPDATE_DATA_REGISTER_ACTION,
   name,
   description,
   entries,
+  anonymousRead,
 });
 
-export const updateDataRegisterSuccessAction = (payload: RegisterConfigData): UpdateDataRegisterSuccessAction => ({
+export const updateDataRegisterSuccessAction = (payload: DataRegisterConfigData): UpdateDataRegisterSuccessAction => ({
   type: UPDATE_DATA_REGISTER_SUCCESS_ACTION,
   payload,
 });
