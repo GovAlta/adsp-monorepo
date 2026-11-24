@@ -8,7 +8,7 @@ import {
   TokenProvider,
   User,
 } from '@abgov/adsp-service-sdk';
-import { createErrorHandler } from '@core-services/core-common';
+import { createErrorHandler, InvalidOperationError } from '@core-services/core-common';
 import { createDocumentedResponseRecorder } from '@core-services/core-common/testing';
 import axios from 'axios';
 import * as express from 'express';
@@ -605,7 +605,9 @@ describe('calendar router documented behaviour', () => {
 
       expect(res.status).toBe(200);
       // Compare instants: the America/Edmonton offset differs between tzdata releases.
-      expect(DateTime.fromISO(res.body.start).toMillis()).toBe(DateTime.fromISO('2026-11-18T09:00:00-07:00').toMillis());
+      expect(DateTime.fromISO(res.body.start).toMillis()).toBe(
+        DateTime.fromISO('2026-11-18T09:00:00-07:00').toMillis(),
+      );
       expect(eventServiceMock.send).toHaveBeenCalledWith(expect.objectContaining({ name: 'calendar-event-updated' }));
     });
 
@@ -770,6 +772,20 @@ describe('calendar router documented behaviour', () => {
       expect(res.status).toBe(400);
     });
 
+    it('responds 409 when an attendee with the email is already on the event', async () => {
+      repositoryMock.getCalendarEvent.mockResolvedValueOnce(event());
+      repositoryMock.saveAttendee.mockRejectedValueOnce(
+        new InvalidOperationError('An attendee with the same email already exists for the event.', { statusCode: 409 }),
+      );
+
+      const res = await request(createApp(scheduler))
+        .post(path)
+        .send({ name: 'Test User', email: 'test.user@gov.ab.ca' });
+
+      expect(res.status).toBe(409);
+      expect(res.body.errorMessage).toBe('An attendee with the same email already exists for the event.');
+    });
+
     it('responds 403 for readers', async () => {
       repositoryMock.getCalendarEvent.mockResolvedValueOnce(event());
 
@@ -844,6 +860,26 @@ describe('calendar router documented behaviour', () => {
       const res = await request(createApp(scheduler)).put(path).send({ email: 'test.user@gov.ab.ca' });
 
       expect(res.status).toBe(400);
+    });
+
+    it('responds 404 when the event has no attendee with the ID', async () => {
+      repositoryMock.getCalendarEvent.mockResolvedValueOnce(event());
+      repositoryMock.saveAttendee.mockResolvedValueOnce(null);
+
+      const res = await request(createApp(scheduler)).put(path).send(update);
+
+      expect(res.status).toBe(404);
+    });
+
+    it('responds 409 when another attendee of the event has the email', async () => {
+      repositoryMock.getCalendarEvent.mockResolvedValueOnce(event());
+      repositoryMock.saveAttendee.mockRejectedValueOnce(
+        new InvalidOperationError('An attendee with the same email already exists for the event.', { statusCode: 409 }),
+      );
+
+      const res = await request(createApp(scheduler)).put(path).send(update);
+
+      expect(res.status).toBe(409);
     });
 
     it('responds 403 for readers', async () => {
