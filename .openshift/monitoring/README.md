@@ -39,8 +39,9 @@ alert shows, in order:
 2. **Impact**: who or what is affected (`impact`).
 3. **First steps**: the first checks to make (`first_steps`).
 4. **Runbook**: a link to this alert's own runbook (`runbook_url`).
-5. Service, namespace, pod, container, severity and start time (UTC), with links to the pod logs,
-   a pod log search and the namespace's alerts in the console.
+5. Service, namespace, pod, container, severity and start time (UTC), each on its own line in both
+   email and Slack, with links to the pod logs, a pod log search and the namespace's alerts in the
+   console.
 
 A resolved alert shows the same details with its end time instead of the impact and first steps.
 
