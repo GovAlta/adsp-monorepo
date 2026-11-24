@@ -65,6 +65,22 @@ interface TaskRouterProps {
 
 export const TASK_KEY = 'task';
 
+function parseCriteria(value: string): Record<string, unknown> {
+  if (!value) {
+    return {};
+  }
+
+  try {
+    const criteria = JSON.parse(value);
+    if (typeof criteria !== 'object' || criteria === null || Array.isArray(criteria)) {
+      throw new Error('Criteria is not an object.');
+    }
+    return criteria;
+  } catch {
+    throw new InvalidOperationError('Criteria must be a valid JSON object.');
+  }
+}
+
 export const getTasks =
   (apiId: AdspId, repository: TaskRepository): RequestHandler =>
   async (req, res, next) => {
@@ -85,7 +101,7 @@ export const getTasks =
 
       const { top: topValue, after, criteria: criteriaValue } = req.query;
       const top = topValue ? parseInt(topValue as string) : 10;
-      const criteria = criteriaValue ? JSON.parse(criteriaValue as string) : {};
+      const criteria = parseCriteria(criteriaValue as string);
 
       const [{ queues }] = await req.getConfiguration<TaskServiceConfiguration>();
       const tasks = await repository.getTasks(queues, top, after as string, { ...criteria, tenantId });
