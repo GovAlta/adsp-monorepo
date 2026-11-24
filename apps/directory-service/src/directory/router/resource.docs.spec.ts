@@ -16,6 +16,8 @@ describe('resource router documented behaviour', () => {
   const apiId = adspId`urn:ads:platform:directory-service:resource-v1`;
   const resourceUrn = 'urn:ads:platform:file-service:v1:/files/ff118afa-f74e-44ac-8866-7ebd5a43cb4c';
   const encodedUrn = encodeURIComponent(resourceUrn);
+  const extraColonUrn = 'urn:ads:platform:file-service:v1:/files/a:b';
+  const encodedExtraColonUrn = encodeURIComponent(extraColonUrn);
   const documented = createDocumentedResponseRecorder(join(__dirname, 'resource.swagger.yml'));
 
   const loggerMock = {
@@ -124,6 +126,14 @@ describe('resource router documented behaviour', () => {
       const res = await request(createApp(browser)).get('/resource/v1/tags').query({ top: 501 });
 
       expect(res.status).toBe(400);
+    });
+
+    it('returns 400 when the resource URN has more than four elements', async () => {
+      const res = await request(createApp(browser)).get('/resource/v1/tags').query({ resource: extraColonUrn });
+
+      expect(res.status).toBe(400);
+      expect(res.body.errorMessage).toBe('Resource URN is not valid.');
+      expect(repositoryMock.getTags).not.toHaveBeenCalled();
     });
 
     it('returns 401 when the request is not authenticated', async () => {
@@ -367,6 +377,14 @@ describe('resource router documented behaviour', () => {
       expect(res.status).toBe(400);
     });
 
+    it('returns 400 when the resource URN has more than four elements', async () => {
+      const res = await request(createApp(browser)).get(`/resource/v1/resources/${encodedExtraColonUrn}`);
+
+      expect(res.status).toBe(400);
+      expect(res.body.errorMessage).toBe('Resource URN is not valid.');
+      expect(repositoryMock.getResources).not.toHaveBeenCalled();
+    });
+
     it('returns 401 when the request is not authenticated', async () => {
       const res = await request(createApp(null)).get(`/resource/v1/resources/${encodedUrn}`);
 
@@ -405,6 +423,14 @@ describe('resource router documented behaviour', () => {
       expect(res.status).toBe(400);
     });
 
+    it('returns 400 when the resource URN has more than four elements', async () => {
+      const res = await request(createApp(admin)).delete(`/resource/v1/resources/${encodedExtraColonUrn}`);
+
+      expect(res.status).toBe(400);
+      expect(res.body.errorMessage).toBe('Resource URN is not valid.');
+      expect(repositoryMock.deleteResource).not.toHaveBeenCalled();
+    });
+
     it('returns 401 when the request is not authenticated', async () => {
       const res = await request(createApp(null)).delete(`/resource/v1/resources/${encodedUrn}`);
 
@@ -432,6 +458,14 @@ describe('resource router documented behaviour', () => {
       const res = await request(createApp(tagger)).get('/resource/v1/resources/not-a-urn/tags');
 
       expect(res.status).toBe(400);
+    });
+
+    it('returns 400 when the resource URN has more than four elements', async () => {
+      const res = await request(createApp(tagger)).get(`/resource/v1/resources/${encodedExtraColonUrn}/tags`);
+
+      expect(res.status).toBe(400);
+      expect(res.body.errorMessage).toBe('Resource URN is not valid.');
+      expect(repositoryMock.getTags).not.toHaveBeenCalled();
     });
 
     it('returns 401 when the request is not authenticated', async () => {
