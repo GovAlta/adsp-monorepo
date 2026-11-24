@@ -175,7 +175,13 @@ export class CalendarEventEntity implements CalendarEvent {
       throw new UnauthorizedUserError('update calendar event', user);
     }
 
-    return this.repository.saveAttendee(this, attendee);
+    return this.repository.saveAttendee(this, attendee).then((saved) => {
+      if (!saved) {
+        throw new NotFoundError('Attendee', `${attendee.id}`);
+      }
+
+      return saved;
+    });
   }
 
   deleteAttendee(user: User, id: number): Promise<boolean> {

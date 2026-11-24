@@ -619,6 +619,26 @@ describe('CalendarEventEntity', () => {
       expect(repositoryMock.saveAttendee).toHaveBeenCalledWith(event, expect.objectContaining({ id: 1 }));
     });
 
+    it('can throw not found for an attendee that is not on the event', async () => {
+      const event = new CalendarEventEntity(repositoryMock, calendar, {
+        name: 'test',
+        description: 'testing 1 2 3',
+        isPublic: false,
+        isAllDay: false,
+        start: DateTime.now(),
+        end: null,
+      });
+
+      repositoryMock.saveAttendee.mockResolvedValueOnce(null);
+      await expect(
+        event.updateAttendee({ tenantId, id: 'test', roles: ['test-updater'] } as User, {
+          id: 99,
+          name: null,
+          email: null,
+        }),
+      ).rejects.toThrow(NotFoundError);
+    });
+
     it('can throw for unauthorized user', () => {
       const event = new CalendarEventEntity(repositoryMock, calendar, {
         name: 'test',

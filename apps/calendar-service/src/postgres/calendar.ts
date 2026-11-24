@@ -1,4 +1,5 @@
-import { decodeAfter, encodeNext, Results } from '@core-services/core-common';
+import { decodeAfter, encodeNext, InvalidOperationError, Results } from '@core-services/core-common';
+import * as HttpStatusCodes from 'http-status-codes';
 import { Knex } from 'knex';
 import { DateTime } from 'luxon';
 import {
@@ -13,6 +14,8 @@ import {
 } from '../calendar';
 import { AttendeeRecord, DateRecord, EventRecord, ExclusionRecord } from './types';
 import { fromDateAndTimeIds, toDateId, toTimeId } from '../utils';
+
+const UNIQUE_VIOLATION = '23505';
 
 export class PostgresCalendarRepository implements CalendarRepository {
   constructor(private knex: Knex) {}
@@ -432,23 +435,28 @@ export class PostgresCalendarRepository implements CalendarRepository {
 
   async saveAttendee(event: CalendarEventEntity, attendee: Attendee): Promise<Attendee> {
     const tenant = event.calendar.tenantId.toString();
-    const record = await this.knex.transaction(async (ts) => {
-      const [row] = await ts<AttendeeRecord>('attendees')
-        .insert({
-          tenant,
-          event_id: event.id,
-          id: attendee.id,
-          name: attendee.name,
-          email: attendee.email,
-        })
-        .onConflict(['tenant', 'event_id', 'id'])
-        .merge()
-        .returning('*');
+    const values = { name: attendee.name, email: attendee.email };
 
-      return row;
-    });
+    try {
+      const [row] =
+        attendee.id === undefined
+          ? await this.knex<AttendeeRecord>('attendees')
+              .insert({ tenant, event_id: event.id, ...values })
+              .returning('*')
+          : await this.knex<AttendeeRecord>('attendees')
+              .where({ tenant, event_id: event.id, id: attendee.id })
+              .update(values)
+              .returning('*');
 
-    return this.mapAttendeeRecord(record);
+      return row ? this.mapAttendeeRecord(row) : null;
+    } catch (err) {
+      if (err?.code === UNIQUE_VIOLATION) {
+        throw new InvalidOperationError('An attendee with the same email already exists for the event.', {
+          statusCode: HttpStatusCodes.CONFLICT,
+        });
+      }
+      throw err;
+    }
   }
 
   async saveExclusion(event: CalendarEventEntity, occurrenceDate: number): Promise<boolean> {
