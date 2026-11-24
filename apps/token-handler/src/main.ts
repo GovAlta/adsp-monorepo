@@ -139,6 +139,7 @@ const initializeApp = async (): Promise<express.Application> => {
     configurationHandler,
     eventService,
     passport,
+    serviceId,
     sessionStore,
     tenantHandler,
     tenantService,
