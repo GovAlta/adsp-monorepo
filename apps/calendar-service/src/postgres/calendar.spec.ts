@@ -48,6 +48,31 @@ describe('PostgresCalendarRepository', () => {
     expect(bindings).toEqual([endsAfterDate, endsAfterDate, toTimeId(endsAfter), endsAfterDate]);
   });
 
+  it('matches events active on a time by comparing start and end times', () => {
+    const activeOn = DateTime.fromISO('2026-11-02T09:30:00-07:00');
+    const activeOnDate = toDateId(activeOn);
+    const activeOnTime = toTimeId(activeOn);
+
+    const { sql, bindings } = toSql({ activeOn });
+
+    expect(sql).toContain(
+      '("e"."start_date" < $1 or ("e"."start_date" = $2 and ("e"."start_time" <= $3 or "e"."is_all_day" = $4)))',
+    );
+    expect(sql).toContain(
+      '("e"."end_date" > $5 or ("e"."end_date" = $6 and ("e"."end_time" >= $7 or "e"."is_all_day" = $8)) or ("e"."end_date" is null))',
+    );
+    expect(bindings).toEqual([
+      activeOnDate,
+      activeOnDate,
+      activeOnTime,
+      true,
+      activeOnDate,
+      activeOnDate,
+      activeOnTime,
+      true,
+    ]);
+  });
+
   it('leaves recurring series to occurrence filtering when skipping their time criteria', () => {
     const { sql } = toSql(
       {

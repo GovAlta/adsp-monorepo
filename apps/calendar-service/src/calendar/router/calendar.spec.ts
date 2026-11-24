@@ -448,6 +448,7 @@ describe('calendar router', () => {
             endsBefore: '2020-05-01',
             startsBefore: '2020-04-01',
             endsAfter: '2020-03-01',
+            activeOn: '2020-03-15T10:00:00',
           }),
         },
         calendar: entity,
@@ -480,6 +481,10 @@ describe('calendar router', () => {
       expect(repositoryMock.getCalendarEvents.mock.calls[0][3].endsAfter.valueOf()).toBe(
         DateTime.fromISO('2020-03-01T00:00:00', { zone: calendarTimeZone }).valueOf(),
       );
+      expect(repositoryMock.getCalendarEvents.mock.calls[0][3].activeOn.valueOf()).toBe(
+        DateTime.fromISO('2020-03-15T10:00:00', { zone: calendarTimeZone }).valueOf(),
+      );
+      expect(next).not.toHaveBeenCalled();
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ name: calendar.displayName }));
     });
   });

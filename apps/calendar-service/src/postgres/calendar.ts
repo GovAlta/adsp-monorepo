@@ -152,11 +152,11 @@ export class PostgresCalendarRepository implements CalendarRepository {
       );
       query.andWhere((query) =>
         query
-          .andWhere('e.end_date', '>', activeOnDate)
+          .where('e.end_date', '>', activeOnDate)
           .orWhere((query) =>
             query
               .where('e.end_date', '=', activeOnDate)
-              .andWhere((query) => query.where('e.end_date', '>=', activeOnTime).orWhere('e.is_all_day', true)),
+              .andWhere((query) => query.where('e.end_time', '>=', activeOnTime).orWhere('e.is_all_day', true)),
           )
           .orWhere((query) => query.whereNull('e.end_date')),
       );
