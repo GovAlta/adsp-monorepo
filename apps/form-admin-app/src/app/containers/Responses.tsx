@@ -17,7 +17,9 @@ import {
   findForms,
   formActions,
   formCriteriaSelector,
+  appliedFormFiltersSelector,
   formFilterCountSelector,
+  removeAppliedFilter,
   formsSelector,
   nextSelector,
   canExportSelector,
@@ -48,6 +50,7 @@ import { Tags } from './Tags';
 import { TagSearchFilter } from './TagSearchFilter';
 import { GoabDropdownOnChangeDetail, GoabTableOnSortDetail } from '@abgov/ui-components-common';
 import { ResultsSummary } from '../components/ResultsSummary';
+import { AppliedFilters } from '../components/AppliedFilters';
 import { SortableColumnHeader, toSortChange } from '../components/SortableColumnHeader';
 
 // Tags are managed from within the row, so a click on one of their controls selects the tag rather
@@ -140,6 +143,7 @@ export const Responses: FunctionComponent<ResponsesProps> = ({ definitionId }) =
   const forms = useSelector(formsSelector);
   const dataValues = useSelector(selectedDataValuesSelector);
   const criteria = useSelector(formCriteriaSelector);
+  const appliedFilters = useSelector(appliedFormFiltersSelector);
   const sort = useSelector(formSortSelector);
   const activeFilterCount = useSelector(formFilterCountSelector);
   const { forms: next } = useSelector(nextSelector);
@@ -159,6 +163,11 @@ export const Responses: FunctionComponent<ResponsesProps> = ({ definitionId }) =
   const searchDisabled = isSearchDisabled(busy.loading, criteria);
   const updateCriteria = (update: typeof criteria) => dispatch(formActions.setFormCriteria(update)); // clean-code-ignore: 2.10
   const handleFindResponses = (after?: string) => dispatch(findForms({ definitionId, criteria, sort, after })); // clean-code-ignore: 2.10
+  const removeFilter = (key: string) => {
+    const update = removeAppliedFilter(criteria, key);
+    dispatch(formActions.setFormCriteria(update));
+    dispatch(findForms({ definitionId, criteria: update, sort }));
+  };
   const clearFilters = () => {
     const criteria = {};
     dispatch(formActions.setFormCriteria(criteria));
@@ -255,13 +264,8 @@ export const Responses: FunctionComponent<ResponsesProps> = ({ definitionId }) =
       }
     >
       <ContentContainer>
-        <ResultsSummary
-          visible={forms.length}
-          total={totalForms}
-          itemLabel="responses"
-          loading={busy.loading}
-          onClearFilters={clearFilters}
-        />
+        <AppliedFilters filters={appliedFilters} onRemove={removeFilter} onClearAll={clearFilters} />
+        <ResultsSummary visible={forms.length} total={totalForms} itemLabel="responses" loading={busy.loading} />
         <ResultsTable key={sortableColumnsKey} width="100%" onSort={handleSort}>
           <thead>
             <tr>
