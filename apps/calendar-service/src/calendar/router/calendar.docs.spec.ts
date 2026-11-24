@@ -424,6 +424,16 @@ describe('calendar router documented behaviour', () => {
       expect(res.status).toBe(400);
     });
 
+    it.each([[{ top: 'abc' }], [{ top: '0' }], [{ top: '5001' }], [{ top: '1.5' }], [{ criteria: 'not-json' }]])(
+      'responds 400 for invalid query %j',
+      async (query) => {
+        const res = await request(createApp(plain)).get('/calendar/v1/calendars/site-inspections/export').query(query);
+
+        expect(res.status).toBe(400);
+        expect(repositoryMock.getCalendarEvents).not.toHaveBeenCalled();
+      },
+    );
+
     it('responds 403 when attendees are requested without private access', async () => {
       repositoryMock.getCalendarEvents.mockResolvedValueOnce({ results: [publicEvent()], page: { size: 1 } });
 
@@ -485,6 +495,16 @@ describe('calendar router documented behaviour', () => {
 
       expect(res.status).toBe(400);
     });
+
+    it.each([[{ top: 'abc' }], [{ top: '0' }], [{ top: '5001' }], [{ top: '1.5' }], [{ criteria: 'not-json' }]])(
+      'responds 400 for invalid query %j',
+      async (query) => {
+        const res = await request(createApp(reader)).get('/calendar/v1/calendars/site-inspections/events').query(query);
+
+        expect(res.status).toBe(400);
+        expect(repositoryMock.getCalendarEvents).not.toHaveBeenCalled();
+      },
+    );
 
     it('responds 403 when attendees are requested without private access', async () => {
       tenantServiceMock.getTenantByName.mockResolvedValueOnce({ id: tenantId, name: 'service-delivery' });
@@ -605,7 +625,9 @@ describe('calendar router documented behaviour', () => {
 
       expect(res.status).toBe(200);
       // Compare instants: the America/Edmonton offset differs between tzdata releases.
-      expect(DateTime.fromISO(res.body.start).toMillis()).toBe(DateTime.fromISO('2026-11-18T09:00:00-07:00').toMillis());
+      expect(DateTime.fromISO(res.body.start).toMillis()).toBe(
+        DateTime.fromISO('2026-11-18T09:00:00-07:00').toMillis(),
+      );
       expect(eventServiceMock.send).toHaveBeenCalledWith(expect.objectContaining({ name: 'calendar-event-updated' }));
     });
 
