@@ -845,7 +845,9 @@ components:
       - Tenant service
     description: >
       Update the tenant name. Requires the core realm tenant-service-admin role, which can rename any tenant; tenant
-      users, including tenant administrators, are rejected. Rate limited.
+      users, including tenant administrators, are rejected. Rate limited. The name must not be used by another tenant
+      (compared ignoring case), so a duplicate responds 400; renaming a tenant to its own current name, or changing only
+      its case, is allowed.
     requestBody:
       required: true
       content:
@@ -897,7 +899,7 @@ components:
       - Tenant service
     description: >
       Retrieves a tenant. No role is required, but the request must be authenticated. Tenant users can only
-      retrieve their own tenant, and get 403 for any other tenant ID; core users can retrieve any tenant.
+      retrieve their own tenant, and get 404 for any other tenant ID; core users can retrieve any tenant.
     responses:
       200:
         description: Tenant information.
@@ -907,14 +909,6 @@ components:
               $ref: '#/components/schemas/Tenant'
       401:
         $ref: '#/components/responses/TenantUnauthorized'
-      403:
-        description: Tenant user is not permitted to retrieve another tenant.
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/TenantError'
-            example:
-              errorMessage: 'User Test User (ID: 3d1c5e7a-9b2f-4c6d-8e0a-1f3b5d7c9e2a) not permitted to get tenant.'
       404:
         $ref: '#/components/responses/TenantNotFound'
   delete:

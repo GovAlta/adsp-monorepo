@@ -262,6 +262,7 @@ export function* createDataRegister(action: CreateDataRegisterAction): SagaItera
         name: action.name,
         description: action.description,
         entries: action.entries,
+        anonymousRead: action.anonymousRead,
       });
       yield put(createDataRegisterSuccessAction(register));
     } catch (err) {
@@ -290,6 +291,7 @@ export function* updateDataRegister(action: UpdateDataRegisterAction): SagaItera
     const register = yield call(updateRegisterApi, token, formApiUrl, action.name, {
       description: action.description,
       entries: action.entries,
+      anonymousRead: action.anonymousRead,
     });
     yield put(updateDataRegisterSuccessAction(register));
     yield put(updateRegisterLoadingState(action.name, 'completed'));

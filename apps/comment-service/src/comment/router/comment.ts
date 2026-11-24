@@ -1,9 +1,11 @@
 import { UnauthorizedUserError, isAllowedUser } from '@abgov/adsp-service-sdk';
-import { NotFoundError } from '@core-services/core-common';
+import { NotFoundError, createValidationHandler, decodeAfter } from '@core-services/core-common';
 import { RequestHandler, Router } from 'express';
+import { query } from 'express-validator';
 import { TopicTypeEntity } from '../model';
 import { TopicRepository } from '../repository';
 import { ExportServiceRoles, ServiceRoles } from '../roles';
+import { assertTenantContext } from './topic';
 import { CommentCriteria } from '../types';
 
 interface CommentRouterProps {
@@ -23,7 +25,7 @@ export function getComments(repository: TopicRepository): RequestHandler {
       // Otherwise user must be a comment service admin to search comments.
       if (criteria?.typeIdEquals) {
         const types = await req.getConfiguration<Record<string, TopicTypeEntity>, Record<string, TopicTypeEntity>>(
-          tenantId
+          tenantId,
         );
 
         const type = types[criteria.typeIdEquals];
@@ -53,7 +55,19 @@ export function getComments(repository: TopicRepository): RequestHandler {
 export function createCommentRouter({ repository }: CommentRouterProps): Router {
   const router = Router();
 
-  router.get('/comments', getComments(repository));
+  router.get(
+    '/comments',
+    assertTenantContext,
+    createValidationHandler(
+      query('top').optional().isInt({ min: 1, max: 5000 }),
+      query('after')
+        .optional()
+        .isString()
+        .custom((val) => !isNaN(decodeAfter(val))),
+      query('criteria').optional().isString().isJSON().withMessage('criteria must be valid JSON'),
+    ),
+    getComments(repository),
+  );
 
   return router;
 }

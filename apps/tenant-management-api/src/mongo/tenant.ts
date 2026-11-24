@@ -1,5 +1,5 @@
 import { Doc, InvalidOperationError, NotFoundError } from '@core-services/core-common';
-import { Document, Model, model, Types } from 'mongoose';
+import { Document, isValidObjectId, Model, model, Types } from 'mongoose';
 import { Logger } from 'winston';
 import { TenantEntity, Tenant } from '../tenant/models';
 import { TenantRepository } from '../tenant/repository';
@@ -45,11 +45,20 @@ export class MongoTenantRepository implements TenantRepository {
       throw new InvalidOperationError('ID of tenant to delete not specified');
     }
 
+    if (!isValidObjectId(id)) {
+      return false;
+    }
+
     const { deletedCount } = await this.tenantModel.deleteOne({ _id: id });
     return deletedCount > 0;
   }
 
   async get(id: string): Promise<TenantEntity> {
+    // An id that is not an ObjectId cannot match a tenant, and querying with it throws a CastError.
+    if (!isValidObjectId(id)) {
+      throw new NotFoundError('Tenant', id);
+    }
+
     const doc = await this.tenantModel.findOne({ _id: id });
     if (!doc) {
       throw new NotFoundError('Tenant', id);
@@ -61,6 +70,9 @@ export class MongoTenantRepository implements TenantRepository {
     const query: Record<string, unknown> = {};
     if (criteria) {
       if (criteria.idEquals) {
+        if (!isValidObjectId(criteria.idEquals)) {
+          return [];
+        }
         query._id = criteria.idEquals;
       }
 

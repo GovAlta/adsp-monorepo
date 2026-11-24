@@ -1550,14 +1550,15 @@ components:
       - Form registration
     description: >
       Removes the registration settings from the latest revision of a form definition, so the form no longer accepts
-      access requests. Existing access requests are kept. Requires the `form-admin` role; core users with the role must
-      set `tenantId`. A definition without registration settings also responds 204.
+      access requests, and permanently deletes all access requests of the definition. Requires the `form-admin` role;
+      core users with the role must set `tenantId`. A definition without registration settings also responds 204, and
+      its access requests are still deleted.
     parameters:
       - $ref: '#/components/parameters/FormDefinitionIdPath'
       - $ref: '#/components/parameters/FormTenantId'
     responses:
       204:
-        description: Successfully removed the registration settings.
+        description: Successfully removed the registration settings and deleted the access requests.
       400:
         $ref: '#/components/responses/FormBadRequest'
       401:

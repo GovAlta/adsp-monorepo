@@ -77,8 +77,32 @@ describe('DataRegisterClient', () => {
       const registers = await client.find(tenantId);
 
       expect(registers).toEqual([
-        { namespace: 'data-register', name: 'weekdays', description: 'Days of the week', entries: ['Monday'] },
+        {
+          namespace: 'data-register',
+          name: 'weekdays',
+          description: 'Days of the week',
+          anonymousRead: false,
+          entries: ['Monday'],
+        },
       ]);
+    });
+
+    it('reports anonymousRead from the definition', async () => {
+      definitionsClientMock.getTenantConfiguration.mockResolvedValue({
+        'data-register:weekdays': { ...weekdaysDefinition, anonymousRead: true },
+      });
+      axiosMock.get.mockResolvedValueOnce({
+        data: {
+          results: [
+            { name: 'weekdays', namespace: 'data-register', latest: { revision: 1, configuration: ['Monday'] } },
+          ],
+          page: {},
+        },
+      });
+
+      const [register] = await client.find(tenantId);
+
+      expect(register.anonymousRead).toBe(true);
     });
 
     it('excludes a data document with no matching definition', async () => {
@@ -201,6 +225,7 @@ describe('DataRegisterClient', () => {
         namespace: 'data-register',
         name: 'weekdays',
         description: 'Days of the week',
+        anonymousRead: false,
         entries: ['Monday', 'Tuesday'],
       });
     });
@@ -246,13 +271,25 @@ describe('DataRegisterClient', () => {
       );
     });
 
-    it('writes the definition with the register schema and description', async () => {
+    it('writes the definition with the register schema and description, private by default', async () => {
       await client.create(tenantId, { name: 'test-register', description: 'Test register', entries: ['one', 'two'] });
 
       expect(definitionsClientMock.updateEntry).toHaveBeenCalledWith(tenantId, 'data-register:test-register', {
         configurationSchema: REGISTER_SCHEMA,
         description: 'Test register',
+        anonymousRead: false,
       });
+    });
+
+    it('writes anonymousRead on the definition when anonymous access is requested', async () => {
+      const register = await client.create(tenantId, { name: 'test-register', anonymousRead: true });
+
+      expect(definitionsClientMock.updateEntry).toHaveBeenCalledWith(
+        tenantId,
+        'data-register:test-register',
+        expect.objectContaining({ anonymousRead: true }),
+      );
+      expect(register.anonymousRead).toBe(true);
     });
 
     it('replaces the data document of the named register with the entries', async () => {
@@ -296,6 +333,7 @@ describe('DataRegisterClient', () => {
         namespace: 'data-register',
         name: 'test-register',
         description: 'Test',
+        anonymousRead: false,
         entries: ['one', 'two'],
       });
     });
@@ -372,6 +410,28 @@ describe('DataRegisterClient', () => {
         tenantId,
         'data-register:weekdays',
         expect.objectContaining({ anonymousRead: true }),
+      );
+    });
+
+    it('changes only anonymousRead when only anonymousRead is sent', async () => {
+      const register = await client.update(tenantId, 'weekdays', { anonymousRead: false });
+
+      expect(definitionsClientMock.updateEntry).toHaveBeenCalledWith(tenantId, 'data-register:weekdays', {
+        ...weekdaysDefinition,
+        anonymousRead: false,
+      });
+      expect(dataClientMock.replaceConfiguration).not.toHaveBeenCalled();
+      expect(register).toEqual(expect.objectContaining({ anonymousRead: false, entries: ['Monday'] }));
+    });
+
+    it('writes the description and anonymousRead in one definition update', async () => {
+      await client.update(tenantId, 'weekdays', { description: 'Updated', anonymousRead: false });
+
+      expect(definitionsClientMock.updateEntry).toHaveBeenCalledTimes(1);
+      expect(definitionsClientMock.updateEntry).toHaveBeenCalledWith(
+        tenantId,
+        'data-register:weekdays',
+        expect.objectContaining({ description: 'Updated', anonymousRead: false }),
       );
     });
 

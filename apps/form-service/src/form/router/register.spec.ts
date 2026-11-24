@@ -45,6 +45,7 @@ describe('register router', () => {
     namespace: 'data-register',
     name: 'weekdays',
     description: 'Days of the week',
+    anonymousRead: false,
     entries: ['Monday'],
   };
 
@@ -244,7 +245,7 @@ describe('register router', () => {
         actor: expect.objectContaining({ id: 'admin', type: 'user', name: 'Admin' }),
         resource: { type: 'data-register', id: 'weekdays', name: 'weekdays' },
         correlationId: 'weekdays',
-        metadata: { name: 'weekdays', entryCount: 1 },
+        metadata: { name: 'weekdays', entryCount: 1, anonymousRead: false },
       });
     });
 
@@ -311,6 +312,20 @@ describe('register router', () => {
           actor: expect.objectContaining({ id: 'admin' }),
           resource: { type: 'data-register', id: 'weekdays', name: 'weekdays' },
           metadata: { name: 'weekdays', updatedFields: ['description'], entryCount: 1 },
+        }),
+      );
+    });
+
+    it('audits a change of anonymous access with the new value', async () => {
+      clientMock.update.mockResolvedValue({ ...register, anonymousRead: true });
+      const req = createReq({ params: { name: 'weekdays' }, body: { anonymousRead: true } });
+
+      await updateRegister(client, loggerMock as never, auditServiceMock)(req, createRes(), jest.fn());
+
+      expect(auditServiceMock.record).toHaveBeenCalledWith(
+        DataRegisterUpdatedAuditAction,
+        expect.objectContaining({
+          metadata: { name: 'weekdays', updatedFields: ['anonymousRead'], entryCount: 1, anonymousRead: true },
         }),
       );
     });
@@ -447,6 +462,35 @@ describe('register router', () => {
         .send({ name: 'weekdays', entries: ['Monday', { label: 'Tuesday', value: 2 }] });
 
       expect(res.status).toBe(HttpStatusCodes.CREATED);
+    });
+
+    it('passes anonymousRead to the client as a boolean on create', async () => {
+      clientMock.create.mockResolvedValue({ ...register, anonymousRead: true });
+
+      const res = await request(buildApp()).post('/registers').send({ name: 'weekdays', anonymousRead: true });
+
+      expect(res.status).toBe(HttpStatusCodes.CREATED);
+      expect(clientMock.create).toHaveBeenCalledWith(tenantId, { name: 'weekdays', anonymousRead: true });
+    });
+
+    it('converts a "false" string anonymousRead to a boolean on update', async () => {
+      clientMock.update.mockResolvedValue(register);
+
+      const res = await request(buildApp()).patch('/registers/weekdays').send({ anonymousRead: 'false' });
+
+      expect(res.status).toBe(HttpStatusCodes.OK);
+      expect(clientMock.update).toHaveBeenCalledWith(tenantId, 'weekdays', { anonymousRead: false });
+    });
+
+    it.each([
+      ['post', '/registers', { name: 'weekdays', anonymousRead: 'yes' }],
+      ['patch', '/registers/weekdays', { anonymousRead: 'public' }],
+    ] as const)('rejects a %s with a non-boolean anonymousRead', async (method, path, body) => {
+      const res = await request(buildApp())[method](path).send(body);
+
+      expect(res.status).toBe(HttpStatusCodes.BAD_REQUEST);
+      expect(clientMock.create).not.toHaveBeenCalled();
+      expect(clientMock.update).not.toHaveBeenCalled();
     });
 
     describe('role rule shared by every route: form-admin or configuration-admin', () => {

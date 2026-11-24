@@ -2,6 +2,8 @@ import * as React from 'react';
 import {
   GoabButton,
   GoabButtonGroup,
+  GoabCallout,
+  GoabCheckbox,
   GoabDropdown,
   GoabDropdownItem,
   GoabFormItem,
@@ -10,6 +12,7 @@ import {
   GoabTextArea,
 } from '@abgov/react-components';
 import {
+  GoabCheckboxOnChangeDetail,
   GoabDropdownOnChangeDetail,
   GoabInputOnChangeDetail,
   GoabTextAreaOnChangeDetail,
@@ -27,7 +30,7 @@ import { RegisterDataType } from '@abgov/jsonforms-components';
 interface AddRegisterDataModalProps {
   open: boolean;
   onCancel: () => void;
-  onSave: (data: RegisterDataType | null, name: string, description: string) => void;
+  onSave: (data: RegisterDataType | null, name: string, description: string, anonymousRead: boolean) => void;
   existingNames?: string[];
 }
 
@@ -43,6 +46,7 @@ export const AddRegisterDataModal = ({
   const [configValue, setConfigValue] = React.useState<string>('');
   const [newName, setNewName] = React.useState('');
   const [newDescription, onDescriptionChange] = React.useState('');
+  const [anonymousRead, setAnonymousRead] = React.useState(false);
 
   const resetState = () => {
     setDataError('');
@@ -51,6 +55,7 @@ export const AddRegisterDataModal = ({
     setConfigValue('');
     setNewName('');
     onDescriptionChange('');
+    setAnonymousRead(false);
   };
 
   const trimmedName = newName.trim();
@@ -139,7 +144,7 @@ export const AddRegisterDataModal = ({
           <GoabButton size="compact"
             type="primary"
             onClick={() => {
-              onSave(parsedData, trimmedName, newDescription);
+              onSave(parsedData, trimmedName, newDescription, anonymousRead);
               resetState();
             }}
             disabled={!trimmedName || !!nameError || !!dataError}
@@ -203,6 +208,27 @@ export const AddRegisterDataModal = ({
           onBlur={() => parseAndSet(configValue, separator)}
         />
       </GoabFormItem>
+      <GoabFormItem
+        label=""
+        mt="m"
+        helpText="Lets anonymous applicants and other apps read this register without signing in. Leave unchecked to keep it private to signed-in users of this tenant."
+      >
+        <GoabCheckbox
+          size="compact"
+          name="register-anonymous-read"
+          checked={anonymousRead}
+          text="Allow anonymous access"
+          testId="data-register-add-anonymous-read"
+          ariaLabel="anonymous-read"
+          onChange={(detail: GoabCheckboxOnChangeDetail) => setAnonymousRead(detail.checked)}
+        />
+      </GoabFormItem>
+      {anonymousRead && (
+        <GoabCallout type="important" size="medium" mt="s" testId="data-register-add-anonymous-warning">
+          Anyone who knows your tenant and this register's name can read its entries without signing in. Don't include
+          sensitive information.
+        </GoabCallout>
+      )}
     </GoabModal>
   );
 };

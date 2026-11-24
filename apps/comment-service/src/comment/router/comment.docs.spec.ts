@@ -108,9 +108,45 @@ describe('comment router documented behaviour', () => {
     expect(res.status).toBe(200);
   });
 
+  it('responds 400 for a core user without tenantId', async () => {
+    const res = await request(createApp(coreAdmin)).get('/comment/v1/comments');
+    expect(res.status).toBe(400);
+    expect(repositoryMock.getComments).not.toHaveBeenCalled();
+  });
+
   it('responds 400 for a core user with an invalid tenantId', async () => {
     const res = await request(createApp(coreAdmin)).get('/comment/v1/comments').query({ tenantId: 'test' });
     expect(res.status).toBe(400);
+  });
+
+  it.each([['abc'], ['0'], ['5001'], ['1.5']])('responds 400 for an invalid top of %s', async (top) => {
+    const res = await request(createApp(admin)).get('/comment/v1/comments').query({ top });
+    expect(res.status).toBe(400);
+    expect(repositoryMock.getComments).not.toHaveBeenCalled();
+  });
+
+  it('responds 400 for an after that is not a cursor', async () => {
+    const res = await request(createApp(admin)).get('/comment/v1/comments').query({ after: 'not-a-cursor' });
+    expect(res.status).toBe(400);
+    expect(repositoryMock.getComments).not.toHaveBeenCalled();
+  });
+
+  it('responds 400 for criteria that is not valid JSON', async () => {
+    const res = await request(createApp(admin)).get('/comment/v1/comments').query({ criteria: 'notjson' });
+    expect(res.status).toBe(400);
+    expect(repositoryMock.getComments).not.toHaveBeenCalled();
+  });
+
+  it('responds 400 for repeated criteria values', async () => {
+    const res = await request(createApp(admin)).get('/comment/v1/comments?criteria={}&criteria={}');
+    expect(res.status).toBe(400);
+    expect(repositoryMock.getComments).not.toHaveBeenCalled();
+  });
+
+  it('accepts the maximum top and a cursor from a previous page', async () => {
+    const res = await request(createApp(admin)).get('/comment/v1/comments').query({ top: 5000, after: 'MTA=' });
+    expect(res.status).toBe(200);
+    expect(repositoryMock.getComments).toHaveBeenCalledWith(5000, 'MTA=', { tenantIdEquals: tenantId });
   });
 
   it('responds 401 when there is no authenticated user', async () => {

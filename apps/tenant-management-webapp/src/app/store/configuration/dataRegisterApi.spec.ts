@@ -47,6 +47,16 @@ describe('dataRegisterApi', () => {
         expect.objectContaining({ description: 'Days of the week', data: ['Monday', 'Tuesday'] }),
       );
     });
+
+    it.each([
+      [true, true],
+      [false, false],
+      [undefined, false],
+    ])('maps anonymousRead %p to %p', (anonymousRead, expected) => {
+      const register = toRegisterConfigData({ ...weekdays, anonymousRead });
+
+      expect(register.anonymousRead).toBe(expected);
+    });
   });
 
   describe('fetchRegistersApi', () => {
