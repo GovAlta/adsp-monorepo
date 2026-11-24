@@ -140,7 +140,8 @@ interpolates. Grafana reads them only at startup: after the token Secret is recr
 CA rotates, restart it with `oc rollout restart deployment/grafana`.
 
 To check the datasource, open it under Connections > Data sources and choose Test, or run a query in
-Explore such as `sum(kube_pod_status_phase{phase="Running"})`.
+Explore such as `sum(kube_pod_status_phase{phase="Running"})`. The `adsp-workload-health` dashboard
+(see [Dashboards](#dashboards)) is built on it.
 
 ## Evaluation Notes
 
@@ -224,17 +225,22 @@ overwritten. Export and commit when you are happy with a change.
 | `configuration-service-performance.json` | The same, narrowed to configuration-service, plus its internal benchmark phases. |
 | `adsp-service-dependencies.json` | What is a service waiting on? Outbound latency per callee, service graph edges, event bus depth. |
 | `adsp-event-bus-rabbitmq.json` | Is the event bus about to block, and are domain events flowing without loss? Broker-side view. |
-| `adsp-namespace-operations.json` | Are pods running, restarting or short of replicas, and what CPU, memory and network do they use? From `Cluster Prometheus`, so it covers every workload in the namespace, not only SDK services. |
+| `adsp-workload-health.json` | Are pods running, restarting or short of replicas, and what CPU, memory and network do they use? From `Cluster Prometheus`, so it covers every workload in the namespace, not only SDK services. |
 
 `adsp-event-bus-rabbitmq.json` covers only per-node aggregates, because
 `prometheus.return_per_object_metrics` is deliberately off -- per-object series scale with
 queues x channels x connections. It can show that the bus is backing up but not which queue is
 responsible; use the management UI on the affected node for that.
 
-`adsp-namespace-operations.json` works in any environment unchanged, because the datasource supplies
+`adsp-workload-health.json` works in any environment unchanged, because the datasource supplies
 the namespace. Its Namespace CPU % is usage against the ResourceQuota `limits.cpu`, and reads No data
 in a namespace without one. The replicas table lists Deployments only; DeploymentConfigs and
-StatefulSets are not in it.
+StatefulSets are not in it. The Network panel draws receive above the axis and transmit below it,
+per workload: pods are mapped to their Deployment through `kube_pod_owner` and
+`kube_replicaset_owner`, to their DeploymentConfig through `kube_replicationcontroller_owner`, and
+otherwise to their direct owner (a StatefulSet, for example), so no pod is dropped. The Deployment
+filter lists Deployments only, so DeploymentConfigs and StatefulSets appear in the panel only under
+All.
 
 ### Conventions
 

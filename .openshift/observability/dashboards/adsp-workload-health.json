@@ -440,7 +440,7 @@
       },
       "gridPos": {
         "h": 8,
-        "w": 8,
+        "w": 24,
         "x": 0,
         "y": 5
       },
@@ -540,10 +540,10 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 8,
-        "w": 8,
-        "x": 8,
-        "y": 5
+        "h": 9,
+        "w": 24,
+        "x": 0,
+        "y": 13
       },
       "id": 8,
       "options": {
@@ -641,10 +641,10 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 8,
-        "w": 8,
-        "x": 16,
-        "y": 5
+        "h": 9,
+        "w": 24,
+        "x": 0,
+        "y": 22
       },
       "id": 9,
       "options": {
@@ -680,6 +680,130 @@
         }
       ],
       "title": "Memory Working Set by Container",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "cluster-prometheus"
+      },
+      "description": "Bytes per second summed over each workload's pods: receive above the axis, transmit below it (tooltip and legend values stay positive). Pods are mapped to their Deployment through the ReplicaSet, to their DeploymentConfig through the ReplicationController, and otherwise to their direct owner such as a StatefulSet. Filtered by Deployment, which lists Deployments only, so DeploymentConfigs and StatefulSets show under All. Container does not apply: network is counted per pod.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "receive (+) / transmit (-)",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 4,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "binBps"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID",
+              "options": "B"
+            },
+            "properties": [
+              {
+                "id": "custom.transform",
+                "value": "negative-Y"
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 24,
+        "x": 0,
+        "y": 31
+      },
+      "id": 10,
+      "options": {
+        "legend": {
+          "calcs": [
+            "mean",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "sortBy": "Max",
+          "sortDesc": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "pluginVersion": "11.5.2",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "cluster-prometheus"
+          },
+          "editorMode": "code",
+          "expr": "sum by (workload) (rate(container_network_receive_bytes_total[$__rate_interval]) * on (pod) group_left (workload) (max by (pod, workload) (label_replace(kube_pod_owner{owner_kind=\"ReplicaSet\"}, \"replicaset\", \"$1\", \"owner_name\", \"(.*)\") * on (replicaset) group_left (workload) label_replace(max by (replicaset, owner_name) (kube_replicaset_owner{owner_kind=\"Deployment\", owner_name=~\"${deployment:pipe}\"}), \"workload\", \"$1\", \"owner_name\", \"(.*)\")) or on (pod) max by (pod, workload) (label_replace(kube_pod_owner{owner_kind=\"ReplicationController\"}, \"replicationcontroller\", \"$1\", \"owner_name\", \"(.*)\") * on (replicationcontroller) group_left (workload) label_replace(max by (replicationcontroller, owner_name) (kube_replicationcontroller_owner{owner_kind=\"DeploymentConfig\", owner_name=~\"${deployment:pipe}\"}), \"workload\", \"$1\", \"owner_name\", \"(.*)\")) or on (pod) max by (pod, workload) (label_replace(kube_pod_owner{owner_kind!=\"<none>\", owner_name=~\"${deployment:pipe}\"}, \"workload\", \"$1\", \"owner_name\", \"(.*)\")) or on (pod) max by (pod, workload) (label_replace(kube_pod_owner{owner_kind=\"<none>\", pod=~\"${deployment:pipe}\"}, \"workload\", \"$1\", \"pod\", \"(.*)\"))))",
+          "legendFormat": "{{workload}} receive",
+          "range": true,
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "cluster-prometheus"
+          },
+          "editorMode": "code",
+          "expr": "sum by (workload) (rate(container_network_transmit_bytes_total[$__rate_interval]) * on (pod) group_left (workload) (max by (pod, workload) (label_replace(kube_pod_owner{owner_kind=\"ReplicaSet\"}, \"replicaset\", \"$1\", \"owner_name\", \"(.*)\") * on (replicaset) group_left (workload) label_replace(max by (replicaset, owner_name) (kube_replicaset_owner{owner_kind=\"Deployment\", owner_name=~\"${deployment:pipe}\"}), \"workload\", \"$1\", \"owner_name\", \"(.*)\")) or on (pod) max by (pod, workload) (label_replace(kube_pod_owner{owner_kind=\"ReplicationController\"}, \"replicationcontroller\", \"$1\", \"owner_name\", \"(.*)\") * on (replicationcontroller) group_left (workload) label_replace(max by (replicationcontroller, owner_name) (kube_replicationcontroller_owner{owner_kind=\"DeploymentConfig\", owner_name=~\"${deployment:pipe}\"}), \"workload\", \"$1\", \"owner_name\", \"(.*)\")) or on (pod) max by (pod, workload) (label_replace(kube_pod_owner{owner_kind!=\"<none>\", owner_name=~\"${deployment:pipe}\"}, \"workload\", \"$1\", \"owner_name\", \"(.*)\")) or on (pod) max by (pod, workload) (label_replace(kube_pod_owner{owner_kind=\"<none>\", pod=~\"${deployment:pipe}\"}, \"workload\", \"$1\", \"pod\", \"(.*)\"))))",
+          "legendFormat": "{{workload}} transmit",
+          "range": true,
+          "refId": "B"
+        }
+      ],
+      "title": "Network by Workload",
       "type": "timeseries"
     },
     {
@@ -776,9 +900,9 @@
       },
       "gridPos": {
         "h": 16,
-        "w": 12,
+        "w": 24,
         "x": 0,
-        "y": 13
+        "y": 41
       },
       "id": 1,
       "options": {
@@ -873,208 +997,6 @@
         }
       ],
       "type": "table"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "cluster-prometheus"
-      },
-      "description": "Bytes received per second per pod, filtered by Deployment. Container does not apply: network is counted per pod.",
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "barWidthFactor": 0.6,
-            "drawStyle": "line",
-            "fillOpacity": 10,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "insertNulls": false,
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 4,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "never",
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "min": 0,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              }
-            ]
-          },
-          "unit": "binBps"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 13
-      },
-      "id": 10,
-      "options": {
-        "legend": {
-          "calcs": [
-            "mean",
-            "max"
-          ],
-          "displayMode": "table",
-          "placement": "right",
-          "showLegend": true,
-          "sortBy": "Max",
-          "sortDesc": true
-        },
-        "tooltip": {
-          "hideZeros": false,
-          "mode": "multi",
-          "sort": "desc"
-        }
-      },
-      "pluginVersion": "11.5.2",
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "cluster-prometheus"
-          },
-          "editorMode": "code",
-          "expr": "sum by (pod) (rate(container_network_receive_bytes_total{pod=~\"(${deployment:pipe})(-[a-z0-9]+-[a-z0-9]+)?\"}[$__rate_interval]))",
-          "legendFormat": "{{pod}}",
-          "range": true,
-          "refId": "A"
-        }
-      ],
-      "title": "Network Receive by Pod",
-      "type": "timeseries"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "cluster-prometheus"
-      },
-      "description": "Bytes sent per second per pod, filtered by Deployment. Container does not apply: network is counted per pod.",
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "barWidthFactor": 0.6,
-            "drawStyle": "line",
-            "fillOpacity": 10,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "insertNulls": false,
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 4,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "never",
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "min": 0,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              }
-            ]
-          },
-          "unit": "binBps"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 21
-      },
-      "id": 11,
-      "options": {
-        "legend": {
-          "calcs": [
-            "mean",
-            "max"
-          ],
-          "displayMode": "table",
-          "placement": "right",
-          "showLegend": true,
-          "sortBy": "Max",
-          "sortDesc": true
-        },
-        "tooltip": {
-          "hideZeros": false,
-          "mode": "multi",
-          "sort": "desc"
-        }
-      },
-      "pluginVersion": "11.5.2",
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "cluster-prometheus"
-          },
-          "editorMode": "code",
-          "expr": "sum by (pod) (rate(container_network_transmit_bytes_total{pod=~\"(${deployment:pipe})(-[a-z0-9]+-[a-z0-9]+)?\"}[$__rate_interval]))",
-          "legendFormat": "{{pod}}",
-          "range": true,
-          "refId": "A"
-        }
-      ],
-      "title": "Network Transmit by Pod",
-      "type": "timeseries"
     }
   ],
   "preload": false,
@@ -1125,7 +1047,7 @@
           "uid": "cluster-prometheus"
         },
         "definition": "label_values(kube_deployment_spec_replicas, deployment)",
-        "description": "Filters the Deployment Replicas table and the network panels.",
+        "description": "Filters the Deployment Replicas table and the Network panel.",
         "includeAll": true,
         "label": "Deployment",
         "multi": true,
@@ -1149,7 +1071,7 @@
   },
   "timepicker": {},
   "timezone": "",
-  "title": "ADSP Namespace Operations",
-  "uid": "adsp-namespace-operations",
+  "title": "ADSP Workload Health",
+  "uid": "adsp-workload-health",
   "weekStart": ""
 }
