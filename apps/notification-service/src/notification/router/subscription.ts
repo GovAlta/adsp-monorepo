@@ -811,6 +811,7 @@ export const createSubscriptionRouter = ({
 
   subscriptionRouter.get(
     '/types/:type/subscriptions',
+    assertHasTenant,
     validateTypeHandler,
     createValidationHandler(
       query('top').optional().isInt({ min: 1, max: 5000 }),
@@ -828,6 +829,7 @@ export const createSubscriptionRouter = ({
   );
   subscriptionRouter.post(
     '/types/:type/subscriptions',
+    assertHasTenant,
     validateTypeHandler,
     createValidationHandler(
       query('userSub').optional().isBoolean(),
@@ -848,6 +850,7 @@ export const createSubscriptionRouter = ({
 
   subscriptionRouter.post(
     '/types/:type/subscriptions/:subscriber',
+    assertHasTenant,
     validateTypeAndSubscriberHandler,
     createValidationHandler(
       oneOf([
@@ -871,6 +874,7 @@ export const createSubscriptionRouter = ({
 
   subscriptionRouter.delete(
     '/types/:type/subscriptions/:subscriber/criteria',
+    assertHasTenant,
     validateTypeAndSubscriberHandler,
     getNotificationType,
     deleteTypeSubscriptionCriteria(subscriptionRepository, eventService, auditor)
@@ -878,6 +882,7 @@ export const createSubscriptionRouter = ({
 
   subscriptionRouter.get(
     '/types/:type/subscriptions/:subscriber',
+    assertHasTenant,
     validateTypeAndSubscriberHandler,
     getNotificationType,
     getTypeSubscription(apiId, subscriptionRepository)
@@ -885,6 +890,7 @@ export const createSubscriptionRouter = ({
 
   subscriptionRouter.delete(
     '/types/:type/subscriptions/:subscriber',
+    assertHasTenant,
     validateTypeAndSubscriberHandler,
     getNotificationType,
     deleteTypeSubscription(subscriptionRepository, eventService, auditor)
@@ -892,6 +898,7 @@ export const createSubscriptionRouter = ({
 
   subscriptionRouter.get(
     '/subscribers',
+    assertHasTenant,
     createValidationHandler(
       query('top').optional().isInt({ min: 1, max: 5000 }),
       query('after')
@@ -906,10 +913,11 @@ export const createSubscriptionRouter = ({
     ),
     getSubscribers(apiId, subscriptionRepository)
   );
-  subscriptionRouter.post('/subscribers', createSubscriber(apiId, subscriptionRepository, eventService, auditor));
+  subscriptionRouter.post('/subscribers', assertHasTenant, createSubscriber(apiId, subscriptionRepository, eventService, auditor));
 
   subscriptionRouter.get(
     '/subscribers/my-subscriber',
+    assertHasTenant,
     getSubscriberByUserId(subscriptionRepository),
     getSubscriberDetails(apiId, subscriptionRepository)
   );
