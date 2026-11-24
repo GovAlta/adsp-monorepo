@@ -1165,6 +1165,44 @@ describe('file router', () => {
       expect(next).toHaveBeenCalledWith(expect.any(NotFoundError));
     });
 
+    it('can call next with invalid operation for a type without tenant context', async () => {
+      const req = {
+        user: {
+          tenantId,
+          id: 'tester',
+          roles: ['test-updater'],
+        },
+        getConfiguration: jest.fn(),
+        query: {},
+        fileEntity: file,
+        body: {
+          operation: 'copy',
+          type: 'platform-type',
+        },
+      };
+
+      const res = {
+        send: jest.fn(),
+      };
+      const next = jest.fn();
+
+      req.getConfiguration.mockResolvedValueOnce({
+        'platform-type': new FileTypeEntity({
+          id: 'platform-type',
+          name: 'Platform Type',
+          anonymousRead: false,
+          readRoles: [],
+          updateRoles: ['test-updater'],
+        } as FileType),
+      });
+
+      const handler = fileOperation(apiId, loggerMock, eventServiceMock, auditServiceMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(res.send).not.toHaveBeenCalled();
+      expect(storageProviderMock.copyFile).not.toHaveBeenCalled();
+      expect(next).toHaveBeenCalledWith(expect.any(InvalidOperationError));
+    });
+
     it('can call next with invalid operation for unknown operation', async () => {
       const req = {
         user: {

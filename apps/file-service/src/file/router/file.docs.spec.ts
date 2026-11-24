@@ -434,6 +434,28 @@ describe('file router documented behaviour', () => {
       expect(res.headers['content-disposition']).toMatch(/^inline/);
     });
 
+    it('inlines a file whose type was removed without caching it', async () => {
+      files[fileIds.private] = new FileEntity(storageProviderMock as never, repositoryMock as never, null, {
+        id: fileIds.private,
+        tenantId,
+        filename: 'test.txt',
+        mimeType: 'text/plain',
+        size: 10,
+        created: new Date(),
+        createdBy: { id: uploader.id, name: uploader.name },
+        lastAccessed: new Date(),
+        scanned: true,
+        deleted: false,
+        infected: false,
+      } as never);
+
+      const res = await request(createApp(uploader)).get(`/file/v1/files/${fileIds.private}/download?embed=true`);
+
+      expect(res.status).toBe(200);
+      expect(res.headers['content-disposition']).toMatch(/^inline/);
+      expect(res.headers['cache-control']).toBe('no-store');
+    });
+
     it('responds 206 for a single byte range', async () => {
       const res = await request(createApp(reader))
         .get(`/file/v1/files/${fileIds.private}/download`)
@@ -585,6 +607,17 @@ describe('file router documented behaviour', () => {
         .post(`/file/v1/files/${fileIds.private}`)
         .send({ operation: 'copy', type: 'unknown' });
       expect(res.status).toBe(404);
+    });
+
+    it('responds 400 for a core user who sets a platform type without a tenantId', async () => {
+      const app = createApp(core, { platform: type('platform', { tenantId: undefined }) });
+      const res = await request(app)
+        .post(`/file/v1/files/${fileIds.private}`)
+        .send({ operation: 'copy', type: 'platform' });
+      expect(res.status).toBe(400);
+      expect(res.body.errorMessage).toBe('Cannot copy file without tenant context.');
+      expect(repositoryMock.save).not.toHaveBeenCalled();
+      expect(storageProviderMock.copyFile).not.toHaveBeenCalled();
     });
 
     it('responds 400 for an unrecognized operation', async () => {

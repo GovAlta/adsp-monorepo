@@ -262,7 +262,7 @@ export function downloadFile(logger: Logger, auditService: AuditService): Reques
       res.setHeader('Accept-Ranges', 'bytes');
 
       if (embed === 'true') {
-        res.setHeader('Cache-Control', fileEntity.type.anonymousRead ? 'public' : 'no-store');
+        res.setHeader('Cache-Control', fileEntity.type?.anonymousRead ? 'public' : 'no-store');
         res.setHeader('Content-Disposition', `inline; filename*=UTF-8''${encodeRFC5987(fileEntity.filename)}`);
       } else {
         res.setHeader('Cache-Control', 'no-store');
@@ -450,6 +450,10 @@ export function fileOperation(
             fileType = configuration?.[type];
             if (!fileType) {
               throw new NotFoundError('File Type', type);
+            }
+
+            if (!fileType.tenantId) {
+              throw new InvalidOperationError('Cannot copy file without tenant context.');
             }
           }
 
