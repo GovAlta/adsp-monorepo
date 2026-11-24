@@ -23,6 +23,8 @@ Run one stack per environment, owned by the platform team.
 - Tempo with persistent local storage and OTLP ingest (`4317`/`4318`)
 - OpenTelemetry Collector with retry queue, batching, and environment tagging
 - Grafana with a pre-provisioned Tempo datasource and route
+- A Cluster Prometheus datasource for OpenShift cluster monitoring, scoped to the namespace; see
+  [Cluster metrics](#cluster-metrics)
 
 Application services should target the collector service, not Tempo directly.
 
@@ -34,6 +36,7 @@ Fastest path: deploy the whole stack with one template.
 oc process -f .openshift/observability/observability-stack.yml \
   --param-file .openshift/environments/dev/observability-stack.env \
   -p ENVIRONMENT_NAME=dev \
+  -p NAMESPACE=adsp-dev \
   -p INFRA_NAMESPACE=core-services-infra \
   -p IMAGE_TAG=latest \
   -p IMAGE_IMPORT_SCHEDULED=false \
@@ -45,6 +48,9 @@ oc process -f .openshift/observability/observability-stack.yml \
   -p GRAFANA_OAUTH_API_URL=https://access.<env-domain>/auth/realms/core/protocol/openid-connect/userinfo \
   | oc apply -f -
 ```
+
+`NAMESPACE` must be the namespace being applied to. It has no default, so omitting it fails instead of
+scoping one environment's Grafana to another environment's namespace.
 
 The template imports source images into ImageStreams in `INFRA_NAMESPACE` and
 deployments pull from the internal OpenShift registry to avoid direct Docker Hub pulls.
@@ -98,6 +104,44 @@ Application services should export traces to:
 Grafana reaches Tempo internally at:
 
 - `http://tempo:3200`
+
+## Cluster metrics
+
+The `Cluster Prometheus` datasource (uid `cluster-prometheus`) reads pod, container and deployment
+metrics from OpenShift cluster monitoring: kube-state-metrics (`kube_pod_*`, `kube_deployment_*`,
+`kube_resourcequota`) and cAdvisor (`container_cpu_*`, `container_memory_*`, `container_network_*`).
+The SDK metrics are not there; they stay in the `Prometheus` datasource.
+
+It queries `https://thanos-querier.openshift-monitoring.svc:9092`, the tenancy port. Port 9091 needs
+cluster-wide `cluster-monitoring-view`, which an environment's Grafana should not have. Port 9092
+requires a `namespace` query parameter, checks that the token can view that namespace, and injects
+`namespace="<NAMESPACE>"` into every selector. So:
+
+- Queries need no namespace selector, and cannot read another namespace. Asking for one returns 403.
+- The datasource must use `GET`. Access is checked with the verb mapped from the HTTP method, and the
+  `create` that `POST` maps to is not in `view`.
+- `/api/v1/query`, `/query_range`, `/labels`, `/label/<name>/values` and `/series` work, so template
+  variables (`label_values(...)`) do. `/api/v1/metadata` returns 404, so the query editor shows no
+  metric help text.
+
+The template creates what the datasource authenticates with:
+
+| Object | Purpose |
+|---|---|
+| ServiceAccount `${GRAFANA_NAME}-metrics` | Identity for the queries. Not the Grafana pod's own account, so the pod gains no API access. |
+| RoleBinding `${GRAFANA_NAME}-metrics-view` | ClusterRole `view` in `NAMESPACE` only. |
+| Secret `${GRAFANA_NAME}-metrics-token` | Long-lived `kubernetes.io/service-account-token`; the token controller fills in `token`. |
+| ConfigMap `${GRAFANA_NAME}-service-ca` | Annotated `service.beta.openshift.io/inject-cabundle`, so it receives the service CA that signs thanos-querier's certificate. TLS is verified, not skipped. |
+
+The account, binding and token Secret are created in `NAMESPACE` explicitly, so the binding always
+grants to an account in its own namespace. The token and CA reach Grafana as the
+`CLUSTER_METRICS_TOKEN` and `CLUSTER_METRICS_CA_CERT` environment variables, which the datasource file
+interpolates. Grafana reads them only at startup: after the token Secret is recreated or the service
+CA rotates, restart it with `oc rollout restart deployment/grafana`.
+
+To check the datasource, open it under Connections > Data sources and choose Test, or run a query in
+Explore such as `sum(kube_pod_status_phase{phase="Running"})`. The `adsp-workload-health` dashboard
+(see [Dashboards](#dashboards)) is built on it.
 
 ## Evaluation Notes
 
@@ -181,11 +225,22 @@ overwritten. Export and commit when you are happy with a change.
 | `configuration-service-performance.json` | The same, narrowed to configuration-service, plus its internal benchmark phases. |
 | `adsp-service-dependencies.json` | What is a service waiting on? Outbound latency per callee, service graph edges, event bus depth. |
 | `adsp-event-bus-rabbitmq.json` | Is the event bus about to block, and are domain events flowing without loss? Broker-side view. |
+| `adsp-workload-health.json` | Are pods running, restarting or short of replicas, and what CPU, memory and network do they use? From `Cluster Prometheus`, so it covers every workload in the namespace, not only SDK services. |
 
 `adsp-event-bus-rabbitmq.json` covers only per-node aggregates, because
 `prometheus.return_per_object_metrics` is deliberately off -- per-object series scale with
 queues x channels x connections. It can show that the bus is backing up but not which queue is
 responsible; use the management UI on the affected node for that.
+
+`adsp-workload-health.json` works in any environment unchanged, because the datasource supplies
+the namespace. Its Namespace CPU % is usage against the ResourceQuota `limits.cpu`, and reads No data
+in a namespace without one. The replicas table lists Deployments only; DeploymentConfigs and
+StatefulSets are not in it. The Network panel draws receive above the axis and transmit below it,
+per workload: pods are mapped to their Deployment through `kube_pod_owner` and
+`kube_replicaset_owner`, to their DeploymentConfig through `kube_replicationcontroller_owner`, and
+otherwise to their direct owner (a StatefulSet, for example), so no pod is dropped. The Deployment
+filter lists Deployments only, so DeploymentConfigs and StatefulSets appear in the panel only under
+All.
 
 ### Conventions
 

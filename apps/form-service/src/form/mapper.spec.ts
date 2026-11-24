@@ -1,5 +1,6 @@
 import { adspId } from '@abgov/adsp-service-sdk';
-import { mapFormSubmission } from './mapper';
+import { mapFormSubmission, mapFormWithFormSubmission } from './mapper';
+import { FormEntityWithJobId } from './router';
 import { FormSubmissionEntity } from './model';
 import { FormSubmission } from './types';
 
@@ -66,6 +67,39 @@ describe('mapper', () => {
       const result = mapFormSubmission(apiId, entity);
 
       expect(result.disposition).toEqual({ id: 'disposition-1', status: 'rejected', reason: 'invalid data', date });
+    });
+  });
+  describe('mapFormWithFormSubmission', () => {
+    const form = {
+      id: 'form-1',
+      definition: { id: 'test-form-definition', name: 'Test form', description: '', submissionRecords: true },
+      status: 'submitted',
+      created: new Date(),
+      submitted: new Date(),
+    } as unknown as FormEntityWithJobId;
+
+    it('can map submission disposition status and date for the applicant', () => {
+      const date = new Date();
+      const entity = new FormSubmissionEntity(repositoryMock, tenantId, {
+        ...submissionInfo,
+        disposition: { id: 'disposition-1', status: 'Approved', reason: 'internal assessor note', date },
+      });
+
+      const result = mapFormWithFormSubmission(apiId, form, entity);
+
+      expect(result.submission).toEqual({
+        id: 'submission-1',
+        urn: entity.formSubmissionUrn,
+        disposition: { status: 'Approved', date },
+      });
+    });
+
+    it('can map submission without disposition', () => {
+      const entity = new FormSubmissionEntity(repositoryMock, tenantId, submissionInfo);
+
+      const result = mapFormWithFormSubmission(apiId, form, entity);
+
+      expect(result.submission.disposition).toBeNull();
     });
   });
 });

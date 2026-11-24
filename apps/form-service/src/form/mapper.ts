@@ -104,6 +104,9 @@ export function mapFormWithFormSubmission(
     submission: {
       id: submissionEntity.id,
       urn: submissionEntity.formSubmissionUrn,
+      disposition: submissionEntity.disposition
+        ? { status: submissionEntity.disposition.status, date: submissionEntity.disposition.date }
+        : null,
     },
   };
 }

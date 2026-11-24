@@ -87,7 +87,7 @@ Form represents a particular instance of an application including the informatio
 
 ### Submission
 
-When a form is submitted and its definition has submission records enabled, form service creates a _submission_ with a copy of the form data. Assessors review submissions, add notes, and record a _disposition_ using one of the definition's disposition states. A form that is set back to draft and submitted again gets a new submission.
+When a form is submitted and its definition has submission records enabled, form service creates a _submission_ with a copy of the form data. Assessors review submissions, add notes, and record a _disposition_ using one of the definition's disposition states. A form that is set back to draft and submitted again gets a new submission. When a form is read, its `submission` includes the disposition `status` and `date` of its latest submission (or `null` before a decision), so applicants can see that a decision was made; the disposition reason is only returned to assessors on the submission.
 
 ### Draft expiry
 

@@ -22,8 +22,8 @@ components:
     ResourceUrnPath:
       name: resource
       description: >
-        URN of the resource, URL encoded. Responds 400 if the value does not begin with `urn:ads:` or has an empty
-        element.
+        URN of the resource, URL encoded. Responds 400 if the value is not a valid ADSP URN: it does not begin with
+        `urn:ads:`, has an empty element, or has more than four elements.
       in: path
       required: true
       schema:
@@ -261,7 +261,7 @@ components:
       - $ref: '#/components/parameters/ResourceTop'
       - $ref: '#/components/parameters/ResourceAfter'
       - name: resource
-        description: URN of a resource; retrieves only the tags of that resource.
+        description: URN of a resource; retrieves only the tags of that resource. Responds 400 if it is not a valid ADSP URN.
         in: query
         required: false
         schema:
