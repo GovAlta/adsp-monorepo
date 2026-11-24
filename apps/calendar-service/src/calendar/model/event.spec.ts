@@ -137,6 +137,41 @@ describe('CalendarEventEntity', () => {
       expect(result).toEqual(expect.objectContaining({ context: update.context }));
     });
 
+    it('can update and clear the record ID', async () => {
+      const event = new CalendarEventEntity(repositoryMock, calendar, {
+        name: 'test',
+        description: 'testing 1 2 3',
+        recordId: 'record-1',
+        isPublic: false,
+        isAllDay: false,
+        start: DateTime.now(),
+        end: null,
+      });
+      const user = { tenantId, id: 'test', roles: ['test-updater'] } as User;
+
+      const updated = await event.update(user, { recordId: 'record-2' });
+      expect(updated.recordId).toBe('record-2');
+
+      const cleared = await event.update(user, { recordId: null });
+      expect(cleared.recordId).toBeNull();
+    });
+
+    it('leaves the record ID unchanged when it is not in the update', async () => {
+      const event = new CalendarEventEntity(repositoryMock, calendar, {
+        name: 'test',
+        description: 'testing 1 2 3',
+        recordId: 'record-1',
+        isPublic: false,
+        isAllDay: false,
+        start: DateTime.now(),
+        end: null,
+      });
+
+      const result = await event.update({ tenantId, id: 'test', roles: ['test-updater'] } as User, { name: 'test-2' });
+
+      expect(result.recordId).toBe('record-1');
+    });
+
     it('can throw for unauthorized user', () => {
       const event = new CalendarEventEntity(repositoryMock, calendar, {
         name: 'test',
