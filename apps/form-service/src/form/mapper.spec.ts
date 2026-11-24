@@ -1,12 +1,39 @@
 import { adspId } from '@abgov/adsp-service-sdk';
-import { mapFormSubmission, mapFormWithFormSubmission } from './mapper';
+import { mapAdminFormDefinition, mapFormDefinition, mapFormSubmission, mapFormWithFormSubmission } from './mapper';
 import { FormEntityWithJobId } from './router';
 import { FormSubmissionEntity } from './model';
-import { FormSubmission } from './types';
+import { FormDefinition, FormSubmission } from './types';
 
 describe('mapper', () => {
   const apiId = adspId`urn:ads:platform:form-service:v1`;
   const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
+
+  describe('mapFormDefinition', () => {
+    const definition = {
+      id: 'test',
+      name: 'Test',
+      registration: { enabled: true, accessGroup: 'test-access' },
+    } as FormDefinition;
+
+    it('does not return the access group', () => {
+      expect(mapFormDefinition(definition, 1).registration).toEqual({ enabled: true });
+    });
+
+    it('can return the access group for administrators', () => {
+      expect(mapAdminFormDefinition(definition, 1).registration).toEqual({
+        enabled: true,
+        accessGroup: 'test-access',
+      });
+    });
+
+    it('can map a definition without an access group for administrators', () => {
+      const { registration: _registration, ...withoutRegistration } = definition;
+
+      expect(mapAdminFormDefinition(withoutRegistration as FormDefinition, 1).registration).toEqual({
+        enabled: false,
+      });
+    });
+  });
 
   const repositoryMock = {
     find: jest.fn(),

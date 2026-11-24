@@ -252,11 +252,11 @@ components:
               description: Whether the form is restricted and accepts access requests. Defaults to false.
             accessGroup:
               type: string
-              writeOnly: true
               minLength: 1
               maxLength: 255
               description: >
-                Keycloak group containing the roles needed to access the form. Not returned by the form APIs.
+                Keycloak group containing the roles needed to access the form. Optional. Returned only to `form-admin`
+                callers.
             dataSchema:
               type: object
               description: >
@@ -371,11 +371,11 @@ components:
               description: Whether the form is restricted and accepts access requests.
             accessGroup:
               type: string
-              writeOnly: true
               minLength: 1
               maxLength: 255
               description: >
-                Keycloak group containing the roles needed to access the form. Not returned by the form APIs.
+                Keycloak group containing the roles needed to access the form. Optional. Returned only to `form-admin`
+                callers.
             dataSchema:
               type: object
               description: >
