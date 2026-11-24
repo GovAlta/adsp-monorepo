@@ -222,10 +222,13 @@ components:
             properties:
               service:
                 type: string
+                minLength: 1
+                maxLength: 50
                 description: Name of the service.
               url:
                 type: string
-                description: URL of the service.
+                format: uri
+                description: Absolute http or https URL of the service.
             required: [service, url]
           example:
             service: form-service
@@ -240,6 +243,8 @@ components:
             example:
               service: form-service
               host: https://form-service.test.gov.ab.ca
+      400:
+        $ref: '#/components/responses/DirectoryBadRequest'
       403:
         $ref: '#/components/responses/DirectoryForbidden'
       404:
@@ -459,10 +464,13 @@ components:
             properties:
               api:
                 type: string
+                minLength: 1
+                maxLength: 50
                 description: Name of the API, usually its version.
               url:
                 type: string
-                description: URL of the API.
+                format: uri
+                description: Absolute http or https URL of the API.
             required: [api, url]
           example:
             api: v1
@@ -474,6 +482,8 @@ components:
           application/json:
             schema:
               $ref: '#/components/schemas/DirectoryService'
+      400:
+        $ref: '#/components/responses/DirectoryBadRequest'
       403:
         $ref: '#/components/responses/DirectoryForbidden'
       404:

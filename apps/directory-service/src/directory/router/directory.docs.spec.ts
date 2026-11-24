@@ -297,6 +297,32 @@ describe('directory router documented behaviour', () => {
       expect(res.status).toBe(404);
     });
 
+    it.each([
+      ['an empty body', {}],
+      ['a missing url', { service: 'form-service' }],
+      ['a missing service', { url: 'https://form.test.co' }],
+      ['an invalid url', { service: 'form-service', url: 'not a url' }],
+      ['a service name that is too long', { service: 'a'.repeat(51), url: 'https://form.test.co' }],
+      ['a blank service name', { service: '   ', url: 'https://form.test.co' }],
+      ['a non-string service and url', { service: { a: 1 }, url: 42 }],
+      ['a url without a protocol', { service: 'form-service', url: 'form.test.co' }],
+    ])('returns 400 for %s', async (_case, body) => {
+      const res = await request(createApp(admin)).post(path).send(body);
+
+      expect(res.status).toBe(400);
+      expect(repositoryMock.update).not.toHaveBeenCalled();
+    });
+
+    it('accepts an internal cluster url without a top-level domain', async () => {
+      repositoryMock.getDirectories.mockResolvedValueOnce(null);
+
+      const res = await request(createApp(admin))
+        .post(path)
+        .send({ service: 'form-service', url: 'http://form-service:3333' });
+
+      expect(res.status).toBe(201);
+    });
+
     it('returns 409 when the service entry exists', async () => {
       repositoryMock.getDirectories.mockResolvedValueOnce(directory());
 
@@ -338,6 +364,19 @@ describe('directory router documented behaviour', () => {
       const res = await request(createApp(admin)).post(path).send({ api: 'v2', url: 'https://form.test.co/form/v2' });
 
       expect(res.status).toBe(404);
+    });
+
+    it.each([
+      ['an empty body', {}],
+      ['a missing url', { api: 'v2' }],
+      ['a missing api', { url: 'https://form.test.co/form/v2' }],
+      ['an invalid url', { api: 'v2', url: 'ftp://form.test.co' }],
+      ['an api name that is too long', { api: 'a'.repeat(51), url: 'https://form.test.co/form/v2' }],
+    ])('returns 400 for %s', async (_case, body) => {
+      const res = await request(createApp(admin)).post(path).send(body);
+
+      expect(res.status).toBe(400);
+      expect(repositoryMock.update).not.toHaveBeenCalled();
     });
 
     it('returns 409 when the API entry exists', async () => {
