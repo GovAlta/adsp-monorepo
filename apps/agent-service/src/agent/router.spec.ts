@@ -1,6 +1,7 @@
 import { environment } from '../environments/environment';
 import { AgentConfigurations } from './configuration';
-import { deleteThread, getAccessScope, onIoConnection } from './router';
+import { InvalidValueError } from '@core-services/core-common';
+import { deleteThread, getAccessScope, messageAgent, onIoConnection, toUserContent } from './router';
 import { WorkspaceChangeProjector } from './workspace';
 import { TokenBudget, TokenBudgetConfig, UsageRecorder } from './model';
 
@@ -1750,6 +1751,67 @@ describe('deleteThread', () => {
     await deleteThread(logger as never)(req as never, res as never, next);
 
     expect(next).toHaveBeenCalledWith(error);
+    expect(res.send).not.toHaveBeenCalled();
+  });
+});
+
+describe('toUserContent', () => {
+  it('wraps a string in a text part', () => {
+    expect(toUserContent('hello')).toEqual([{ type: 'text', text: 'hello' }]);
+  });
+
+  it('passes an array of parts through', () => {
+    const parts = [{ type: 'text', text: 'hi' }];
+    expect(toUserContent(parts)).toBe(parts);
+  });
+
+  it.each([undefined, null, 42, { text: 'hi' }, [null], [{ text: 'no type' }]])('rejects %p', (content) => {
+    expect(() => toUserContent(content)).toThrow(InvalidValueError);
+  });
+});
+
+describe('messageAgent', () => {
+  const logger = { debug: jest.fn(), info: jest.fn(), warn: jest.fn(), error: jest.fn() };
+  const user = { id: 'user-1', name: 'Tester' };
+
+  function createRequest(body: unknown) {
+    const broker = {
+      Agent: { id: 'my-agent' },
+      generate: jest.fn().mockResolvedValue({ text: 'reply', object: undefined }),
+    };
+    const req = { body, user, tenant: { id: { toString: () => 'tenant-1' } }, agent: broker };
+    return { req, broker };
+  }
+
+  it('sends each message to the agent as user parts', async () => {
+    const { req, broker } = createRequest([{ content: 'one' }, { content: [{ type: 'text', text: 'two' }] }]);
+    const res = { send: jest.fn() };
+    const next = jest.fn();
+
+    await messageAgent(logger as never)(req as never, res as never, next);
+
+    expect(broker.generate).toHaveBeenCalledWith(user, expect.any(String), [
+      { content: [{ type: 'text', text: 'one' }], role: 'user' },
+      { content: [{ type: 'text', text: 'two' }], role: 'user' },
+    ]);
+    expect(res.send).toHaveBeenCalledWith({ agent: 'my-agent', content: 'reply', output: undefined });
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ['an empty object', {}],
+    ['a message without content', { text: 'hi' }],
+    ['an empty array', []],
+    ['an array with an invalid message', [{ content: 'ok' }, null]],
+  ])('rejects %s with 400 without calling the model', async (_, body) => {
+    const { req, broker } = createRequest(body);
+    const res = { send: jest.fn() };
+    const next = jest.fn();
+
+    await messageAgent(logger as never)(req as never, res as never, next);
+
+    expect(next).toHaveBeenCalledWith(expect.any(InvalidValueError));
+    expect(broker.generate).not.toHaveBeenCalled();
     expect(res.send).not.toHaveBeenCalled();
   });
 });

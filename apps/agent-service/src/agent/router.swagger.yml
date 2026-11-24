@@ -423,7 +423,8 @@ components:
       Sends one or more user messages to an agent and responds with its complete reply. Available to any
       authenticated user when the agent has no userRoles; otherwise the user needs one of the agent's userRoles in the
       tenant, so core users can only use agents without userRoles. The agent-user role is not checked on this
-      operation. Each request starts a new thread, so the agent has no context from earlier requests; use the
+      operation. Each message needs content as a string or an array of parts, otherwise it responds 400 without
+      calling the model. Each request starts a new thread, so the agent has no context from earlier requests; use the
       socket.io interface for multi-turn conversations and streaming.
     requestBody:
       required: true
@@ -433,6 +434,7 @@ components:
             oneOf:
               - $ref: '#/components/schemas/UserMessage'
               - type: array
+                minItems: 1
                 items:
                   $ref: '#/components/schemas/UserMessage'
           examples:
