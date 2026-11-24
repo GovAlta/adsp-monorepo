@@ -40,6 +40,21 @@ describe('Mongo: Tenant', () => {
     await expect(repo.get(missingId)).rejects.toThrow(missingId);
   });
 
+  describe('with an id that is not an ObjectId', () => {
+    it('throws NotFoundError on get', async () => {
+      await expect(repo.get('abc')).rejects.toThrow(NotFoundError);
+      await expect(repo.get('abc')).rejects.toThrow('abc');
+    });
+
+    it('deletes nothing', async () => {
+      await expect(repo.delete('abc')).resolves.toBe(false);
+    });
+
+    it('finds nothing by id', async () => {
+      await expect(repo.find({ idEquals: 'abc' })).resolves.toEqual([]);
+    });
+  });
+
   describe('find with a non-string criterion', () => {
     it.each(['adminEmailEquals', 'nameEquals', 'realmEquals'])(
       'rejects an operator object for %s instead of querying with it',

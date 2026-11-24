@@ -324,6 +324,38 @@ describe('file router documented behaviour', () => {
       expect(res.status).toBe(400);
     });
 
+    it('responds 400 for an unexpected file field', async () => {
+      const res = await request(createApp(uploader))
+        .post('/file/v1/files')
+        .field('type', 'private')
+        .attach('document', Buffer.from('content'), 'test.txt');
+
+      expect(res.status).toBe(400);
+      expect(res.body).toEqual({ errorMessage: 'Invalid file upload: Unexpected file field' });
+    });
+
+    it('responds 400 for multiple files', async () => {
+      const res = await request(createApp(uploader))
+        .post('/file/v1/files')
+        .field('type', 'private')
+        .attach('file', Buffer.from('first'), 'first.txt')
+        .attach('file', Buffer.from('second'), 'second.txt');
+
+      expect(res.status).toBe(400);
+      expect(res.body.errorMessage).toEqual(expect.stringContaining('Invalid file upload:'));
+    });
+
+    it('responds 400 when the multipart field limit is exceeded', async () => {
+      const upload = request(createApp(uploader)).post('/file/v1/files').field('type', 'private');
+      for (let index = 0; index < 10; index++) {
+        upload.field(`metadata-${index}`, 'value');
+      }
+      const res = await upload.attach('file', Buffer.from('content'), 'test.txt');
+
+      expect(res.status).toBe(400);
+      expect(res.body.errorMessage).toEqual(expect.stringContaining('Invalid file upload:'));
+    });
+
     it('responds 400 when the type is not specified', async () => {
       const res = await request(createApp(uploader))
         .post('/file/v1/files')

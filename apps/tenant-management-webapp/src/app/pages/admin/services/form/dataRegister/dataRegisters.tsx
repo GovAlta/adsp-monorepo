@@ -2,8 +2,9 @@ import * as React from 'react';
 import { useEffect, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch } from '@store/index';
-import { RegisterConfigData, RegisterDataType } from '@abgov/jsonforms-components';
+import { RegisterDataType } from '@abgov/jsonforms-components';
 import { selectRegisterData } from '@store/configuration/selectors';
+import { DataRegisterConfigData } from '@store/configuration/model';
 import { RootState } from '@store/index';
 import { LoadingState } from '@store/session/models';
 import { GoAContextMenu, GoAContextMenuIcon } from '@components/ContextMenu';
@@ -38,21 +39,31 @@ import {
 } from '@store/configuration/action';
 import { parseUrn, urnCompare, validateRegisterJson } from './utils';
 import { AddRegisterDataModal } from './addRegisterDataModal';
+import { AccessChangeModal } from './accessChangeModal';
+
+const COLUMN_COUNT = 4;
 
 interface RegisterItemProps {
-  entry: RegisterConfigData;
+  entry: DataRegisterConfigData;
   isSelected: boolean;
-  onToggle: (entry: RegisterConfigData | null) => void;
+  onToggle: (entry: DataRegisterConfigData | null) => void;
+  onChangeAccess: (name: string, anonymousRead: boolean) => void;
   detail?: React.ReactNode;
 }
 
-const RegisterItem = ({ entry, isSelected, onToggle, detail }: RegisterItemProps): JSX.Element => {
+interface AccessChange {
+  name: string;
+  anonymousRead: boolean;
+}
+
+const RegisterItem = ({ entry, isSelected, onToggle, onChangeAccess, detail }: RegisterItemProps): JSX.Element => {
   const dispatch = useDispatch<AppDispatch>();
   const [isEditing, setIsEditing] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [editValue, setEditValue] = useState('');
   const [jsonError, setJsonError] = useState('');
   const { name } = parseUrn(entry.urn ?? '');
+  const isPublic = entry.anonymousRead === true;
   // A new object each time the update saga reports progress for this register.
   const updateState = useSelector((state: RootState) =>
     state.session.loadingStates?.find((s) => s.name === UPDATE_DATA_REGISTER_ACTION && s.id === name),
@@ -116,6 +127,14 @@ const RegisterItem = ({ entry, isSelected, onToggle, detail }: RegisterItemProps
       <tr>
         <td data-testid="data-register-name">{name}</td>
         <td data-testid="data-register-description">{entry.description}</td>
+        <td data-testid="data-register-access">
+          <GoabBadge
+            type={isPublic ? 'important' : 'default'}
+            content={isPublic ? 'Public' : 'Private'}
+            icon={false}
+            testId={`data-register-access-${name}`}
+          />
+        </td>
         <td data-testid="data-register-action">
           <DataRegisterIconDiv>
             <GoAContextMenu>
@@ -132,6 +151,12 @@ const RegisterItem = ({ entry, isSelected, onToggle, detail }: RegisterItemProps
                 testId={`data-register-edit-${name}`}
               />
               <GoAContextMenuIcon
+                type={isPublic ? 'lock-closed' : 'lock-open'}
+                title={isPublic ? 'Make private' : 'Allow anonymous access'}
+                onClick={() => onChangeAccess(name, !isPublic)}
+                testId={`data-register-access-toggle-${name}`}
+              />
+              <GoAContextMenuIcon
                 type="trash"
                 title="Delete"
                 onClick={() => setShowDeleteConfirm(true)}
@@ -143,12 +168,12 @@ const RegisterItem = ({ entry, isSelected, onToggle, detail }: RegisterItemProps
       </tr>
       {detail && (
         <tr>
-          <td colSpan={3}>{detail}</td>
+          <td colSpan={COLUMN_COUNT}>{detail}</td>
         </tr>
       )}
       {isEditing && (
         <tr>
-          <td colSpan={3}>
+          <td colSpan={COLUMN_COUNT}>
             <DataRegisterEditorWrapper>
               <GoabFormItem label="" error={jsonError}>
                 <DataRegisterMonacoDiv>
@@ -215,12 +240,14 @@ const RegisterItem = ({ entry, isSelected, onToggle, detail }: RegisterItemProps
 
 export const DataRegisters = (): JSX.Element => {
   const dispatch = useDispatch<AppDispatch>();
-  const selectedRegisterData = useSelector(selectRegisterData) as RegisterConfigData[] | undefined;
+  const selectedRegisterData = useSelector(selectRegisterData) as DataRegisterConfigData[] | undefined;
   const registerData = useMemo(() => selectedRegisterData ?? [], [selectedRegisterData]);
   const isFetching = useSelector((state: RootState) => state.configuration.isFetchingRegisterData);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [selectedUrn, setSelectedUrn] = useState<string | null>(null);
   const [urnCopied, setUrnCopied] = useState(false);
+  // Rendered outside the table: a modal can't be a child of <tbody>.
+  const [accessChange, setAccessChange] = useState<AccessChange | null>(null);
 
   // Tabs mount only the active tab, so this fetches fresh data each time the Register data tab is opened.
   useEffect(() => {
@@ -238,14 +265,14 @@ export const DataRegisters = (): JSX.Element => {
 
   const selectedEntry = selectedUrn ? (registerData.find((entry) => entry.urn === selectedUrn) ?? null) : null;
 
-  const handleToggle = (entry: RegisterConfigData | null) => {
+  const handleToggle = (entry: DataRegisterConfigData | null) => {
     setSelectedUrn(entry?.urn ?? null);
     setUrnCopied(false);
   };
 
-  const handleAddSave = (data: RegisterDataType | null, name: string, description: string) => {
+  const handleAddSave = (data: RegisterDataType | null, name: string, description: string, anonymousRead: boolean) => {
     // form-service rejects `entries: null`; omitting it creates the register with no entries.
-    dispatch(createDataRegisterAction(name, description, data ?? undefined));
+    dispatch(createDataRegisterAction(name, description, data ?? undefined, anonymousRead));
     setIsAddModalOpen(false);
   };
 
@@ -302,13 +329,16 @@ export const DataRegisters = (): JSX.Element => {
           <GoabTable testId="data-registers-table" width="100%">
             <thead data-testid="data-registers-table-header">
               <tr>
-                <th data-testid="data-registers-table-header-name" style={{ width: '30%' }}>
+                <th data-testid="data-registers-table-header-name" style={{ width: '25%' }}>
                   Name
                 </th>
-                <th data-testid="data-registers-table-header-description" style={{ width: '60%' }}>
+                <th data-testid="data-registers-table-header-description" style={{ width: '50%' }}>
                   Description
                 </th>
-                <th data-testid="data-registers-table-header-action" style={{ width: '10%' }}>
+                <th data-testid="data-registers-table-header-access" style={{ width: '10%' }}>
+                  Access
+                </th>
+                <th data-testid="data-registers-table-header-action" style={{ width: '15%' }}>
                   Action
                 </th>
               </tr>
@@ -320,6 +350,7 @@ export const DataRegisters = (): JSX.Element => {
                   entry={entry}
                   isSelected={selectedUrn === entry.urn}
                   onToggle={handleToggle}
+                  onChangeAccess={(name, anonymousRead) => setAccessChange({ name, anonymousRead })}
                   detail={selectedUrn === entry.urn ? renderSelectedDetail() : null}
                 />
               ))}
@@ -333,6 +364,19 @@ export const DataRegisters = (): JSX.Element => {
         onSave={handleAddSave}
         existingNames={registerData.map((entry) => parseUrn(entry.urn ?? '').name)}
       />
+      {accessChange && (
+        <AccessChangeModal
+          open={true}
+          name={accessChange.name}
+          anonymousRead={accessChange.anonymousRead}
+          onCancel={() => setAccessChange(null)}
+          onConfirm={() => {
+            // Access only: leaving description and entries out of the request keeps them unchanged.
+            dispatch(updateDataRegisterAction(accessChange.name, undefined, undefined, accessChange.anonymousRead));
+            setAccessChange(null);
+          }}
+        />
+      )}
     </>
   );
 };

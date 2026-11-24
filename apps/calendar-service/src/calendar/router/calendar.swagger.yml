@@ -68,12 +68,13 @@ components:
         default: false
     CalendarEventsTop:
       name: top
-      description: Number of events to return in a page. Must be a positive integer.
+      description: Number of events to return in a page. Must be an integer from 1 to 5000.
       in: query
       required: false
       schema:
         type: integer
         minimum: 1
+        maximum: 5000
         default: 10
       example: 25
     CalendarEventsAfter:
@@ -126,6 +127,14 @@ components:
             $ref: '#/components/schemas/CalendarError'
           example:
             errorMessage: "Calendar 'site-inspections' already exists."
+    AttendeeEmailConflict:
+      description: Another attendee of the event has the same email.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CalendarError'
+          example:
+            errorMessage: An attendee with the same email already exists for the event.
     CalendarBadGateway:
       description: Configuration service is unavailable, rejected the service's credentials, or returned invalid calendar definitions.
       content:
@@ -702,7 +711,7 @@ components:
         example: site-inspections.ics
       - name: criteria
         description: >
-          JSON criteria for the events to export. Must be valid JSON. activeOn is not supported for export.
+          JSON criteria for the events to export. Must be valid JSON.
         in: query
         required: false
         content:
@@ -751,7 +760,7 @@ components:
 
       Calendar date/time values use the service timezone, America/Edmonton (Mountain time; MST or MDT depending on
       the date). When both from and to are specified, returns the complete set of events that overlap the requested
-      range in a single response; top and after are ignored for range retrieval, but criteria can still be used to
+      range in a single response; top and after are ignored for range retrieval (top is still validated), but criteria can still be used to
       filter the results. An event overlaps the range when it occurs at least partially within it, including events
       that start before from or end after to. Range retrieval supports a maximum range of 366 days. Range retrieval
       returns each occurrence of a recurring event that overlaps the range, excluding cancelled occurrences; without
@@ -783,7 +792,7 @@ components:
           format: date-time
         example: '2026-10-31T23:59:59-06:00'
       - name: criteria
-        description: JSON criteria for the events to retrieve.
+        description: JSON criteria for the events to retrieve. Must be valid JSON.
         in: query
         required: false
         content:
@@ -1032,7 +1041,8 @@ components:
       held in the calendar's tenant or by a core user; other callers, including anonymous users, receive 403. Adding
       an attendee to a private event also requires read access, which updateRoles include. The calendar is found in
       the tenant named by the tenant parameter; otherwise in the tenant of the token, or of tenantId for core users.
-      Without a tenant context the request responds 400. Signals calendar-event-updated.
+      Without a tenant context the request responds 400. Responds 409 if another attendee of the event has the same
+      email. Signals calendar-event-updated.
     requestBody:
       required: true
       content:
@@ -1052,6 +1062,8 @@ components:
         $ref: '#/components/responses/CalendarForbidden'
       404:
         $ref: '#/components/responses/CalendarNotFound'
+      409:
+        $ref: '#/components/responses/AttendeeEmailConflict'
 
 /calendar/v1/calendars/{name}/events/{id}/attendees/{attendeeId}:
   parameters:
@@ -1090,7 +1102,8 @@ components:
       Requires the calendar-admin role, or one of the calendar's updateRoles, held in the calendar's tenant or by a
       core user; other callers, including anonymous users, receive 403. The calendar is found in the tenant named by
       the tenant parameter; otherwise in the tenant of the token, or of tenantId for core users. Without a tenant
-      context the request responds 400. Signals calendar-event-updated.
+      context the request responds 400. Responds 404 if the event has no attendee with the ID, and 409 if another
+      attendee of the event has the same email. Signals calendar-event-updated.
     requestBody:
       required: true
       content:
@@ -1110,6 +1123,8 @@ components:
         $ref: '#/components/responses/CalendarForbidden'
       404:
         $ref: '#/components/responses/CalendarNotFound'
+      409:
+        $ref: '#/components/responses/AttendeeEmailConflict'
   delete:
     tags:
       - Calendar

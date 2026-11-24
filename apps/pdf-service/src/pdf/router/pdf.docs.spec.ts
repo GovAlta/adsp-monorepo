@@ -171,7 +171,10 @@ describe('pdf router documented behaviour', () => {
     it('responds 409 when a template with the ID already exists', async () => {
       const res = await request(createApp(admin)).post('/pdf/v1/templates').send({ name: 'Submission summary' });
       expect(res.status).toBe(409);
-      expect(res.body).toEqual({ error: "PDF template 'Submission summary' already exists." });
+      expect(res.body).toEqual({
+        errorMessage: "PDF template 'Submission summary' already exists.",
+        error: "PDF template 'Submission summary' already exists.",
+      });
       expect(axiosMock.patch).not.toHaveBeenCalled();
     });
   });
@@ -195,11 +198,11 @@ describe('pdf router documented behaviour', () => {
   });
 
   describe('PATCH /templates/:templateId', () => {
-    it('updates only the fields in the request and responds 201', async () => {
+    it('updates only the fields in the request and responds 200', async () => {
       const res = await request(createApp(admin))
         .patch('/pdf/v1/templates/submission-summary')
         .send({ footer: '<p>Government of Alberta</p>' });
-      expect(res.status).toBe(201);
+      expect(res.status).toBe(200);
       expect(res.body).toEqual(
         expect.objectContaining({
           id: 'submission-summary',
@@ -327,15 +330,35 @@ describe('pdf router documented behaviour', () => {
       expect(res.status).toBe(400);
     });
 
-    it('responds 403 for a job of another tenant', async () => {
+    it('responds 404 for a job of another tenant', async () => {
       const res = await request(createApp(user([ServiceRoles.PdfGenerator], { tenantId: otherTenantId }))).get(
         `/pdf/v1/jobs/${jobId}`,
       );
-      expect(res.status).toBe(403);
+      expect(res.status).toBe(404);
     });
 
-    it('responds 403 for a core user', async () => {
+    it('gets a job for a core user with tenantId', async () => {
+      const res = await request(createApp(coreGenerator))
+        .get(`/pdf/v1/jobs/${jobId}`)
+        .query({ tenantId: `${tenantId}` });
+      expect(res.status).toBe(200);
+      expect(res.body.id).toBe(jobId);
+    });
+
+    it('responds 404 for a core user with the tenantId of another tenant', async () => {
+      const res = await request(createApp(coreGenerator))
+        .get(`/pdf/v1/jobs/${jobId}`)
+        .query({ tenantId: `${otherTenantId}` });
+      expect(res.status).toBe(404);
+    });
+
+    it('responds 400 for a core user without tenantId', async () => {
       const res = await request(createApp(coreGenerator)).get(`/pdf/v1/jobs/${jobId}`);
+      expect(res.status).toBe(400);
+    });
+
+    it('responds 403 without the pdf-generator role', async () => {
+      const res = await request(createApp(admin)).get(`/pdf/v1/jobs/${jobId}`);
       expect(res.status).toBe(403);
     });
 

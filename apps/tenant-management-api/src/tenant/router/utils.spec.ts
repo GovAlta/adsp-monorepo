@@ -62,6 +62,22 @@ describe('utils', () => {
       ).rejects.toThrow(InvalidValueError);
     });
 
+    it('can allow the excluded tenant to keep its name', async () => {
+      const name = 'My tenant';
+      repositoryMock.find.mockResolvedValueOnce([{ id: 'tenant-a', name: 'MY TENANT' }]);
+      await expect(
+        validateName(loggerMock as Logger, repositoryMock as unknown as TenantRepository, name, 'tenant-a')
+      ).resolves.toBeUndefined();
+    });
+
+    it('can throw for duplicate name of another tenant when excluding a tenant', async () => {
+      const name = 'My tenant';
+      repositoryMock.find.mockResolvedValueOnce([{ id: 'tenant-b', name }]);
+      await expect(
+        validateName(loggerMock as Logger, repositoryMock as unknown as TenantRepository, name, 'tenant-a')
+      ).rejects.toThrow(InvalidValueError);
+    });
+
     it('can throw for invalid character in name', async () => {
       const name = 'My tenant!';
       repositoryMock.find.mockResolvedValueOnce([]);

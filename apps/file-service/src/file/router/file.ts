@@ -22,7 +22,7 @@ import { pipeline } from 'stream/promises';
 import validator from 'validator';
 import { Logger } from 'winston';
 import { FileRepository } from '../repository';
-import { createUpload } from './upload';
+import { createUpload, uploadSingleFile } from './upload';
 import {
   FileDeletedAuditAction,
   FileDownloadedAuditAction,
@@ -535,7 +535,7 @@ export const createFileRouter = ({
   fileRouter.post(
     '/files',
     assertAuthenticatedHandler,
-    upload.single('file'),
+    uploadSingleFile(upload),
     uploadFile(apiId, logger, eventService, auditService),
   );
   fileRouter.delete(

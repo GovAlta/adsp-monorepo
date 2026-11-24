@@ -88,13 +88,15 @@ export const DestinationModal = ({ destinationId, onCancel, onSave }: Destinatio
     if (!form) {
       return;
     }
-    const generated = generateFormServiceMappings(form.dataSchema);
+    const generated = generateFormServiceMappings(form.dataSchema, { submissionPdf: !!form.submissionPdfTemplate });
+    // Detail rows and the submission PDF are both written to the submission's row, found by its key.
+    const needsRowKey = generated.detailLists.length > 0 || !!form.submissionPdfTemplate;
     setDestination((current) => ({
       ...current,
       fieldMappings: generated.fieldMappings.length ? generated.fieldMappings : current.fieldMappings,
       detailLists: mergeDetailLists(current.detailLists ?? [], generated.detailLists),
       folderLinkField: generated.folderLinkField ?? current.folderLinkField,
-      idempotencyFields: generated.detailLists.length ? [ADSP_KEY_FIELD] : current.idempotencyFields,
+      idempotencyFields: needsRowKey ? [ADSP_KEY_FIELD] : current.idempotencyFields,
     }));
   };
 

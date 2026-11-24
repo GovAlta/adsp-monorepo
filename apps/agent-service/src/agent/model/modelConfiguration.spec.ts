@@ -4,13 +4,14 @@ const mockEnvironment = {
   MODEL_API_KEY: 'model-key',
   AGENT_ACCESS_MAX_OUTPUT_TOKENS: 1000,
   AGENT_NOTIFICATION_MAX_OUTPUT_TOKENS: 6000,
+  AGENT_PDF_MAX_OUTPUT_TOKENS: 10000,
 };
 
 jest.mock('../../environments/environment', () => ({ environment: mockEnvironment }));
 
 import type { LanguageModelV3 } from '@ai-sdk/provider';
 import { getAgentModelConfiguration, getAgentProviderOptions } from './modelConfiguration';
-import { ACCESS_SERVICE_AGENT_ID, NOTIFICATION_TEMPLATE_AGENT_ID } from './executionLimits';
+import { ACCESS_SERVICE_AGENT_ID, NOTIFICATION_TEMPLATE_AGENT_ID, PDF_GENERATION_AGENT_ID } from './executionLimits';
 
 const PROMPT = [
   { role: 'user' as const, content: [{ type: 'text' as const, text: 'Which clients are in the realm?' }] },
@@ -132,6 +133,14 @@ describe('getAgentProviderOptions', () => {
 
     // Assert
     expect(options).toBeUndefined();
+  });
+
+  it('limits PDF template agent replies, with room for a whole template field', () => {
+    // Act
+    const options = getAgentProviderOptions(PDF_GENERATION_AGENT_ID);
+
+    // Assert
+    expect(options).toEqual({ openai: { max_completion_tokens: 10000 } });
   });
 
   it('leaves the reply limit to model settings without an OpenAI-compatible endpoint', () => {

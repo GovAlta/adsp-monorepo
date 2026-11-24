@@ -84,6 +84,27 @@ export const TenantRestoredDefinition: DomainEventDefinition = {
   },
 };
 
+export const TenantNameUpdatedDefinition: DomainEventDefinition = {
+  name: 'tenant-name-updated',
+  description: 'Signalled when a tenant is renamed.',
+  payloadSchema: {
+    type: 'object',
+    properties: {
+      tenant: {
+        type: 'object',
+      },
+      updatedBy: {
+        type: 'object',
+        properties: {
+          id: { type: 'string' },
+          name: { type: 'string' },
+        },
+      },
+    },
+    required: ['tenant', 'updatedBy'],
+  },
+};
+
 export function tenantCreated(user: User, tenant: Tenant): DomainEvent {
   return {
     name: 'tenant-created',

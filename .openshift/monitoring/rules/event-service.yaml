@@ -1,0 +1,95 @@
+# DRAFT: Alert timing and thresholds remain implementation candidates pending team approval.
+# DEV verified explicit extraction of the JSON message field, anchored Winston Error matching,
+# optional ANSI handling, and the complete three-minute Error metric expression across API and
+# background-job pods. Critical positive matching, Loki Ruler evaluation, and end-to-end
+# notification delivery remain to be validated.
+apiVersion: template.openshift.io/v1
+kind: Template
+metadata:
+  name: event-service-log-alerts
+  annotations:
+    description: >-
+      Candidate Loki log alerts for actual event-service Winston Critical, Alert and Error
+      severity. Collector-generated severity is not used because DEV validation confirmed
+      that it can disagree with application severity.
+parameters:
+  - name: NAMESPACE
+    description: Target namespace, e.g. adsp-dev.
+    required: true
+objects:
+  - apiVersion: loki.grafana.com/v1
+    kind: AlertingRule
+    metadata:
+      name: event-service-log-alerts
+      namespace: ${NAMESPACE}
+      # Add only labels required by the LokiStack rule selector after runtime verification.
+    spec:
+      tenantID: application
+      groups:
+        - name: event-service-log-alerts
+          interval: 30s
+          rules:
+            - alert: ADSPLogCritical
+              expr: |
+                sum by (kubernetes_pod_name, kubernetes_container_name) (
+                  count_over_time(
+                    {kubernetes_namespace_name="${NAMESPACE}", kubernetes_container_name="event-service"}
+                      | json app_message="message"
+                      | __error__=""
+                      | line_format "{{.app_message}}"
+                      |~ `^(\x1b\[[0-9;]*m)?(critical|alert)(\x1b\[[0-9;]*m)?:[[:space:]]`
+                      [1m]
+                  )
+                ) > 0
+              for: 0s
+              labels:
+                service: event-service
+                namespace: ${NAMESPACE}
+                severity: critical
+              annotations:
+                summary: Critical event-service application log detected
+                description: >-
+                  Event service emitted {{ $value }} Winston critical- or alert-severity log(s)
+                  in the last minute for pod {{ $labels.kubernetes_pod_name }} and container
+                  {{ $labels.kubernetes_container_name }}.
+                impact: >-
+                  Domain event publication, event logging, access auditing or downstream
+                  event-driven processing may be unavailable or severely disrupted.
+                first_steps: |
+                  1. Inspect the affected pod and confirm the application message begins with critical: or alert:.
+                  2. Determine whether the pod belongs to the API or background-job deployment.
+                  3. Check RabbitMQ and any dependency named in the log; do not replay events until duplication risk is understood.
+                runbook_url: https://goa-dio.atlassian.net/wiki/spaces/ADSPA/pages/5228494940/Event+Service+Critical+Log+Alert
+            - alert: ADSPLogError
+              expr: |
+                sum by (kubernetes_pod_name, kubernetes_container_name) (
+                  count_over_time(
+                    {kubernetes_namespace_name="${NAMESPACE}", kubernetes_container_name="event-service"}
+                      | json app_message="message"
+                      | __error__=""
+                      | line_format "{{.app_message}}"
+                      |~ `^(\x1b\[[0-9;]*m)?error(\x1b\[[0-9;]*m)?:[[:space:]]`
+                      [3m]
+                  )
+                ) > 0
+              for: 30s
+              labels:
+                service: event-service
+                namespace: ${NAMESPACE}
+                severity: warning
+              annotations:
+                summary: Recent event-service application error logs detected
+                description: >-
+                  Event service emitted {{ $value }} Winston error-severity log(s) in the last
+                  three minutes for pod {{ $labels.kubernetes_pod_name }} and container
+                  {{ $labels.kubernetes_container_name }}; the condition persisted for at least
+                  30 seconds. The lookback and threshold remain candidate settings.
+                impact: >-
+                  The log may represent invalid event-definition configuration or an operational
+                  failure affecting event publication, event logging, access auditing, RabbitMQ
+                  or another dependency. Not every Error indicates an after-hours service outage.
+                first_steps: |
+                  1. Confirm the application message begins with error: and classify it as configuration or operational.
+                  2. Identify whether the affected pod belongs to the API or background-job deployment.
+                  3. For schema errors, determine tenant or core scope; for operational errors, check RabbitMQ and the named dependency.
+                runbook_url: https://goa-dio.atlassian.net/wiki/spaces/ADSPA/pages/5228429420/Event+Service+Error+Log+Alert

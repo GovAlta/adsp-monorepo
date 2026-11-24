@@ -23,6 +23,7 @@ export interface SharepointFormChoice {
   id: string;
   name: string;
   sharepointConfigurationId?: string | null;
+  submissionPdfTemplate?: string;
   dataSchema?: Record<string, unknown>;
 }
 
