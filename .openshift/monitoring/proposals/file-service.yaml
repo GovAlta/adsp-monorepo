@@ -1,0 +1,101 @@
+# NON-DEPLOYABLE PROPOSAL: move this template to rules/file-service.yaml only after both
+# File Service runbooks exist and their verified HTTPS URLs are added to the alerts.
+#
+# Alert timing and thresholds remain implementation candidates pending File Service DEV baseline
+# validation and team approval. The explicit JSON message extraction and anchored Winston severity
+# matching are based on the Event Service pattern but have not yet been validated against File
+# Service Loki logs, Loki Ruler evaluation, or end-to-end notification delivery.
+apiVersion: template.openshift.io/v1
+kind: Template
+metadata:
+  name: file-service-log-alerts
+  annotations:
+    description: >-
+      Non-deployable candidate Loki log alerts for actual file-service Winston Critical, Alert and
+      Error severity. Collector-generated severity is not used because it may disagree with
+      application severity. Verified runbook URLs are required before this proposal can be moved
+      into the deployable rules directory.
+parameters:
+  - name: NAMESPACE
+    description: Target namespace, e.g. adsp-dev.
+    required: true
+objects:
+  - apiVersion: loki.grafana.com/v1
+    kind: AlertingRule
+    metadata:
+      name: file-service-log-alerts
+      namespace: ${NAMESPACE}
+      # Add only labels required by the LokiStack rule selector after runtime verification.
+    spec:
+      tenantID: application
+      groups:
+        - name: file-service-log-alerts
+          interval: 30s
+          rules:
+            - alert: ADSPLogCritical
+              expr: |
+                sum by (kubernetes_pod_name, kubernetes_container_name) (
+                  count_over_time(
+                    {kubernetes_namespace_name="${NAMESPACE}", kubernetes_container_name="file-service"}
+                      | json app_message="message"
+                      | __error__=""
+                      | line_format "{{.app_message}}"
+                      |~ `^(\x1b\[[0-9;]*m)?(critical|alert)(\x1b\[[0-9;]*m)?:[[:space:]]`
+                      [1m]
+                  )
+                ) > 0
+              for: 0s
+              labels:
+                service: file-service
+                namespace: ${NAMESPACE}
+                severity: critical
+              annotations:
+                summary: Critical file-service application log detected
+                description: >-
+                  File service emitted {{ $value }} Winston critical- or alert-severity log(s) in
+                  the last minute for pod {{ $labels.kubernetes_pod_name }} and container
+                  {{ $labels.kubernetes_container_name }}.
+                impact: >-
+                  File upload, download, copy, deletion, antivirus processing or retention may be
+                  unavailable or severely disrupted. Metadata and stored content may require an
+                  integrity check before recovery is declared.
+                first_steps: |
+                  1. Confirm the application message begins with critical: or alert: and identify whether the pod belongs to the API or job deployment.
+                  2. Check pod health and the dependency named in the log: MongoDB, configured storage, antivirus provider, RabbitMQ or a platform service.
+                  3. Protect file integrity: do not bypass antivirus, delete stored content, purge queues or blindly retry destructive operations.
+                # runbook_url is intentionally absent. A verified File Service Critical runbook URL
+                # is required before this proposal can become a deployable rule.
+            - alert: ADSPLogError
+              expr: |
+                sum by (kubernetes_pod_name, kubernetes_container_name) (
+                  count_over_time(
+                    {kubernetes_namespace_name="${NAMESPACE}", kubernetes_container_name="file-service"}
+                      | json app_message="message"
+                      | __error__=""
+                      | line_format "{{.app_message}}"
+                      |~ `^(\x1b\[[0-9;]*m)?error(\x1b\[[0-9;]*m)?:[[:space:]]`
+                      [3m]
+                  )
+                ) > 0
+              for: 30s
+              labels:
+                service: file-service
+                namespace: ${NAMESPACE}
+                severity: warning
+              annotations:
+                summary: Recent file-service application error logs detected
+                description: >-
+                  File service emitted {{ $value }} Winston error-severity log(s) in the last three
+                  minutes for pod {{ $labels.kubernetes_pod_name }} and container
+                  {{ $labels.kubernetes_container_name }}; the condition persisted for at least 30
+                  seconds. The lookback and threshold remain candidate settings.
+                impact: >-
+                  One or more file operations or background jobs may have failed because of
+                  MongoDB, configured storage, RabbitMQ or another dependency. An isolated Error
+                  does not by itself prove a service-wide or after-hours outage.
+                first_steps: |
+                  1. Confirm the application message begins with error: and identify whether the pod belongs to the API or job deployment.
+                  2. Correlate the message with file upload, download, copy, delete or retention activity and check MongoDB, configured storage and RabbitMQ health.
+                  3. Check the configured antivirus and platform dependencies when relevant; preserve file integrity and avoid destructive retries or queue purges.
+                # runbook_url is intentionally absent. A verified File Service Error runbook URL
+                # is required before this proposal can become a deployable rule.
