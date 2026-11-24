@@ -458,6 +458,20 @@ describe('AuthenticationClient', () => {
         );
       });
 
+      it('passes a strategy error on complete to next', async () => {
+        repositoryMock.get.mockReturnValueOnce(credentials);
+        const error = new Error('token exchange failed');
+        passportMock.authenticate.mockReturnValueOnce(jest.fn((_req, _res, done) => done(error)));
+        const client = createClient();
+
+        const handler = await client.authenticate(passportMock as unknown as PassportStatic, true);
+        const req = { protocol: 'https', get: jest.fn(() => 'frontend'), session: { callbackUrl: 'https://app-a/callback' } };
+        const next = jest.fn();
+        await handler(req as unknown as Request, {} as unknown as Response, next);
+
+        expect(next).toHaveBeenCalledWith(error);
+      });
+
       it('can provide the callback URL from the session on complete', async () => {
         repositoryMock.get.mockReturnValueOnce(credentials);
         const client = createClient();
