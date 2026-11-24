@@ -126,6 +126,38 @@ describe('DestinationModal with detail lists', () => {
     expect(onSave.mock.calls[1][0]).not.toHaveProperty('documentFilesLibraryId');
   });
 
+  it("adds the submission PDF's mapping, and turns on row updates it needs, for a form that generates a PDF", () => {
+    const store = storeWith({
+      destinations: { household: { ...destination, idempotencyFields: [] } },
+      forms: [
+        {
+          ...formDefinition,
+          submissionPdfTemplate: 'submitted-form',
+          dataSchema: { type: 'object', properties: { amount: { type: 'number' } } },
+        },
+      ],
+    });
+    const { modal, onSave } = renderModal(store);
+
+    fire(modal.querySelector('[name="generate-form"]'), { value: 'housing' });
+    click(modal, 'generate-mappings');
+    click(modal, 'destination-modal-save');
+
+    expect(onSave).toHaveBeenCalledWith(
+      expect.objectContaining({
+        fieldMappings: expect.arrayContaining([
+          {
+            source: '_adsp.submissionPdf',
+            target: 'SubmissionPdf',
+            displayName: 'Submission PDF',
+            columnType: 'hyperlink',
+          },
+        ]),
+        idempotencyFields: ['_adsp.key'],
+      }),
+    );
+  });
+
   it('lists forms linked to the destination first', () => {
     const store = storeWith({
       forms: [{ ...formDefinition, id: 'aaa', name: 'Another form', sharepointConfigurationId: null }, formDefinition],

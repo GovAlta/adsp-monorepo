@@ -4,7 +4,7 @@ import { mapForm } from './mapper';
 import { SUBMITTED_FORM } from './pdf';
 import { FormServiceRoles } from './roles';
 import { SUPPORT_COMMENT_TOPIC_TYPE_ID } from './comment';
-import { SharePointPush } from './sharepoint';
+import { SharePointPush, SharePointPushPart } from './sharepoint';
 
 export const FORM_CREATED = 'form-created';
 export const FORM_DELETED = 'form-deleted';
@@ -772,27 +772,43 @@ export function formMessageForwarded(
 export const SharePointPushFailedDefinition: DomainEventDefinition = {
   name: SHAREPOINT_PUSH_FAILED,
   description:
-    'Signalled once when a submitted form could not be pushed to its SharePoint destination, after the retries ' +
-    'ran out or the failure could not be fixed by retrying. It carries identifiers and the error code only.',
+    'Signalled once when a submitted form or its submission PDF could not be pushed to its SharePoint destination, ' +
+    'after the retries ran out or the failure could not be fixed by retrying. It carries identifiers and the error ' +
+    'code only.',
   payloadSchema: {
     type: 'object',
     properties: {
       formId: { type: 'string' },
       submissionId: { type: ['string', 'null'] },
       destinationId: { type: 'string', description: 'The SharePoint destination of the form definition.' },
+      part: {
+        type: 'string',
+        enum: ['submission', 'submission-pdf'],
+        description:
+          'What did not arrive: the submission row and its files, or the submission PDF, which is pushed separately ' +
+          'once it is generated.',
+      },
       errorCode: {
         type: 'string',
-        description: 'Why the push failed, for example entra:AADSTS7000222 or graph:accessDenied.',
+        description:
+          'Why the push failed, for example entra:AADSTS7000222 or graph:accessDenied, or pdf-generation-failed ' +
+          'when the submission PDF could not be generated.',
         examples: ['entra:AADSTS7000222'],
       },
-      attempts: { type: 'number', description: 'The number of times the push was attempted.' },
+      attempts: {
+        type: 'number',
+        description:
+          'The number of times the push was attempted. Left out when the submission PDF could not be generated, ' +
+          'since nothing was pushed.',
+      },
     },
   },
 };
 
 export function sharePointPushFailed(
   apiId: AdspId,
-  push: SharePointPush,
+  push: Pick<SharePointPush, 'tenantId' | 'formId' | 'submissionId'> & Partial<Pick<SharePointPush, 'attempts'>>,
+  part: SharePointPushPart,
   destinationId: string,
   errorCode: string,
   timestamp: Date,
@@ -807,6 +823,7 @@ export function sharePointPushFailed(
       formId: push.formId,
       submissionId: push.submissionId ?? null,
       destinationId,
+      part,
       errorCode,
       attempts: push.attempts,
     },

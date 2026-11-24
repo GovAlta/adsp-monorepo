@@ -632,4 +632,57 @@ describe('SharePointPusher', () => {
       expect(result.detailRows).toEqual([{ listId: 'members', rowIds: ['m-1', 'm-2'] }]);
     });
   });
+
+  describe('updating the row only', () => {
+    const household: SharePointDestination = {
+      ...intake,
+      id: 'household',
+      detailLists: [
+        {
+          listId: 'members',
+          dataPath: 'householdMembers',
+          parentRefField: 'ParentItemId',
+          fieldMappings: [{ source: 'name', target: 'MemberName' }],
+        },
+      ],
+    };
+    const config = { ...configuration, destinations: { ...configuration.destinations, household } };
+
+    it('updates only the columns in the data and leaves the detail rows alone', async () => {
+      graph.findItemIdByKey.mockResolvedValueOnce('item-7');
+
+      const result = await pusher.push(
+        tenantId,
+        config,
+        'household',
+        { applicationNumber: 'A-1', amount: 6 },
+        {
+          updateRowOnly: true,
+        },
+      );
+
+      expect(result).toEqual({ itemId: 'item-7', outcome: 'updated' });
+      expect(graph.updateItemFields).toHaveBeenCalledWith('token-1', siteId, 'list-1', 'item-7', {
+        Amount: 6,
+        AdspItemKey: 'A-1',
+      });
+      expect(graph.findItemIdsByField).not.toHaveBeenCalled();
+      expect(graph.createItem).not.toHaveBeenCalled();
+      expect(graph.deleteItem).not.toHaveBeenCalled();
+    });
+
+    it('fails, so it can be retried, when no row has the key yet', async () => {
+      await expect(
+        pusher.push(tenantId, config, 'household', { applicationNumber: 'A-1' }, { updateRowOnly: true }),
+      ).rejects.toMatchObject({ errorCode: 'row-not-found', retryable: true });
+      expect(graph.createItem).not.toHaveBeenCalled();
+    });
+
+    it('fails without retry when the destination has no row identity to find the row by', async () => {
+      await expect(
+        pusher.push(tenantId, configuration, 'hr-log', { amount: 1 }, { updateRowOnly: true }),
+      ).rejects.toMatchObject({ errorCode: 'row-identity-missing', retryable: false });
+      expect(tokens.getToken).not.toHaveBeenCalled();
+    });
+  });
 });

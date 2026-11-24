@@ -238,6 +238,7 @@ export const sharePointPushSchema = new Schema(
     tenantId: { type: String, required: true },
     formId: { type: String, required: true },
     submissionId: { type: String, required: false },
+    submissionPdfFileId: { type: String, required: false },
     attempts: { type: Number, required: true },
     nextAttemptAt: { type: Date, required: true, index: true },
     lastErrorCode: { type: String, required: false },

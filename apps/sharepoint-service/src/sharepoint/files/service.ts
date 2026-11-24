@@ -49,6 +49,7 @@ export interface FilesUploadRequest {
   submissionId: string;
   files: FileRequest[];
   data?: Record<string, unknown>;
+  updateRowOnly?: boolean;
 }
 
 export interface UploadedFileResult {
@@ -251,7 +252,14 @@ export class SharePointFileService {
 
     return {
       files,
-      row: await this.writeRow(tenantId, configuration, destinationId, { ...target, destination }, data),
+      row: await this.writeRow(
+        tenantId,
+        configuration,
+        destinationId,
+        { ...target, destination },
+        data,
+        request.updateRowOnly,
+      ),
     };
   }
 
@@ -348,9 +356,10 @@ export class SharePointFileService {
     destinationId: string,
     { destination, connection, folder, driveId }: RowTarget,
     data: Record<string, unknown>,
+    updateRowOnly?: boolean,
   ): Promise<RowResult> {
     try {
-      const options: PushOptions = {};
+      const options: PushOptions = { updateRowOnly };
       if (destination.folderLinkField) {
         options.folderLink = {
           Url: await withToken(this.tokens, tenantId, connection, (token) =>

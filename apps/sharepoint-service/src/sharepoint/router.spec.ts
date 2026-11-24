@@ -627,6 +627,7 @@ describe('SharePoint router', () => {
       ['a file without a field', { ...body, files: [{ fileId: 'local:proof.pdf' }] }],
       ['a file without an ID', { ...body, files: [{ field: 'proofOfIdentity' }] }],
       ['data that is not an object', { ...body, data: 'text' }],
+      ['updateRowOnly that is not a boolean', { ...body, updateRowOnly: 'yes' }],
     ])('returns 400 for %s', async (_name, payload) => {
       expect((await upload(payload)).status).toBe(400);
       expect(fileService.upload).not.toHaveBeenCalled();
