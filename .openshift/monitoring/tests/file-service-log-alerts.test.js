@@ -1,18 +1,18 @@
 const assert = require('node:assert/strict');
-const { readFileSync } = require('node:fs');
+const { existsSync, readFileSync } = require('node:fs');
 const { test } = require('node:test');
 const { join } = require('node:path');
 
-// The File Service rule remains outside rules/ until its verified runbook URLs are available.
-// These tests exercise the expressions in that actual proposal; they are local JavaScript fixture
+// These tests exercise the expressions in the deployable rule; they are local JavaScript fixture
 // checks and do not prove Loki RE2 parsing, LogQL execution, Ruler evaluation or notification.
+const rulePath = join(__dirname, '..', 'rules', 'file-service.yaml');
 const proposalPath = join(__dirname, '..', 'proposals', 'file-service.yaml');
-const template = readFileSync(proposalPath, 'utf8');
+const template = readFileSync(rulePath, 'utf8');
 
 function getRuleBlock(alertName) {
   const startMarker = `            - alert: ${alertName}\n`;
   const start = template.indexOf(startMarker);
-  assert.notEqual(start, -1, `${alertName} must exist in ${proposalPath}`);
+  assert.notEqual(start, -1, `${alertName} must exist in ${rulePath}`);
 
   const nextRule = template.indexOf('\n            - alert:', start + startMarker.length);
   return template.slice(start, nextRule === -1 ? template.length : nextRule);
@@ -112,7 +112,7 @@ test('File Service: namespace substitution preserves namespace and query selecto
   }
 });
 
-test('File Service: proposal preserves routing labels and actionable annotations', () => {
+test('File Service: deployable rule preserves routing labels and actionable annotations', () => {
   const critical = getRuleBlock('ADSPLogCritical');
   const error = getRuleBlock('ADSPLogError');
 
@@ -129,12 +129,26 @@ test('File Service: proposal preserves routing labels and actionable annotations
     for (const annotation of ['summary', 'description', 'impact', 'first_steps']) {
       assert.match(block, new RegExp(`\\n                ${annotation}:`));
     }
-    assert.doesNotMatch(block, /\n                runbook_url:/);
   }
+
+  assert.match(
+    critical,
+    /runbook_url: https:\/\/goa-dio\.atlassian\.net\/wiki\/spaces\/ADSPA\/pages\/5228528046\/File\+Service\+Critical\+Log\+Alert/
+  );
+  assert.match(
+    error,
+    /runbook_url: https:\/\/goa-dio\.atlassian\.net\/wiki\/spaces\/ADSPA\/pages\/5228429666\/File\+Service\+Error\+Log\+Alert/
+  );
 });
 
-test('File Service: proposal cannot be confused with a deployable rule', () => {
-  assert.match(proposalPath, /\/proposals\/file-service\.yaml$/);
-  assert.match(template, /^# NON-DEPLOYABLE PROPOSAL:/);
-  assert.doesNotMatch(template, /^\s+runbook_url:/m);
+test('File Service: rule is deployable and no proposal copy remains', () => {
+  assert.match(rulePath, /\/rules\/file-service\.yaml$/);
+  assert.equal(existsSync(proposalPath), false);
+
+  const runbookUrls = [...template.matchAll(/^\s+runbook_url:\s+(\S+)$/gm)].map((match) => match[1]);
+  assert.equal(runbookUrls.length, 2);
+  for (const url of runbookUrls) {
+    assert.match(url, /^https:\/\//);
+    assert.doesNotMatch(url, /(?:insert|placeholder|todo|example)/i);
+  }
 });
