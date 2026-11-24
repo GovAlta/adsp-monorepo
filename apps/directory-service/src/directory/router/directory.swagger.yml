@@ -56,6 +56,14 @@ components:
             $ref: '#/components/schemas/DirectoryError'
           example:
             errorMessage: directory namespace with ID 'test-tenant' could not be found.
+    DirectoryNamespaceOrDirectoryNotFound:
+      description: No tenant has the name of the namespace, or the namespace has no directory yet.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/DirectoryError'
+          example:
+            errorMessage: directory namespace with ID 'test-tenant' could not be found.
     DirectoryConflict:
       description: An entry with the name already exists in the namespace. The response has no body.
   schemas:
@@ -170,7 +178,8 @@ components:
             example:
               errorMessage: 'Value not valid for Create new namespace: namespace test-tenant exists'
       403:
-        description: User does not have the directory-admin role.
+        description: >
+          User does not have the directory-admin role, or the request is anonymous or from a user without a tenant.
         content:
           application/json:
             schema:
@@ -306,8 +315,7 @@ components:
                     href: https://form-service.test.gov.ab.ca/form/v1
       400:
         description: >
-          A path parameter failed validation, or the service is not in the namespace. When the namespace has no
-          directory, the response is the plain text `Bad Request`.
+          A path parameter failed validation, or the service is not in the namespace.
         content:
           application/json:
             schema:
@@ -315,7 +323,7 @@ components:
             example:
               errorMessage: 'Value not valid for Update service: Cannot find service: form-service'
       404:
-        $ref: '#/components/responses/DirectoryNamespaceNotFound'
+        $ref: '#/components/responses/DirectoryNamespaceOrDirectoryNotFound'
       424:
         description: The metadata could not be retrieved from the service URL, or it is not a JSON object.
         content:
@@ -363,7 +371,7 @@ components:
       403:
         $ref: '#/components/responses/DirectoryForbidden'
       404:
-        $ref: '#/components/responses/DirectoryNamespaceNotFound'
+        $ref: '#/components/responses/DirectoryNamespaceOrDirectoryNotFound'
   delete:
     tags:
       - Directory
@@ -437,8 +445,8 @@ components:
         $ref: '#/components/responses/DirectoryBadRequest'
       404:
         description: >
-          No tenant has the name of the namespace, or the namespace has no entry for the service or its APIs. The
-          second case responds with the plain text `Not Found`.
+          No tenant has the name of the namespace, the namespace has no directory yet, or it has no entry for the
+          service or its APIs.
         content:
           application/json:
             schema:
@@ -563,7 +571,7 @@ components:
       403:
         $ref: '#/components/responses/DirectoryForbidden'
       404:
-        $ref: '#/components/responses/DirectoryNamespaceNotFound'
+        $ref: '#/components/responses/DirectoryNamespaceOrDirectoryNotFound'
   delete:
     tags:
       - Directory

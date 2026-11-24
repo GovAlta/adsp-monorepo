@@ -104,7 +104,7 @@ export const getEntriesForService =
       const { namespace, service } = req.params;
       const result = await getEntriesForServiceImpl(namespace, service, directoryRepository);
       if (!result) {
-        return res.sendStatus(HttpStatusCodes.NOT_FOUND);
+        throw new NotFoundError('directory service', `${namespace}:${service}`);
       }
       return res.json(result);
     } catch (err) {
@@ -123,7 +123,7 @@ export const getEntriesForServiceImpl = async (
   directoryRepository: DirectoryRepository,
 ): Promise<ServiceEntity> => {
   const data = await directoryRepository.getDirectories(namespace);
-  if (!data.services) {
+  if (!data?.services) {
     return null;
   }
 
@@ -167,7 +167,10 @@ export const createNamespace =
   async (req, res, next) => {
     try {
       const user = req.user;
-      const tenant = await tenantService.getTenant(req.user?.tenantId);
+      if (!user?.tenantId) {
+        throw new UnauthorizedUserError('create namespace', user);
+      }
+      const tenant = await tenantService.getTenant(user.tenantId);
       req.tenant = tenant;
       const namespace = toKebabName(tenant.name);
       if (!isAllowedUser(user, tenant.id, ServiceRoles.DirectoryAdmin)) {
@@ -390,6 +393,9 @@ const updateEntry = async (
   directoryRepository: DirectoryRepository,
 ): Promise<{ previousUrl: string } | null> => {
   const result = await directoryRepository.getDirectories(namespace);
+  if (!result) {
+    throw new NotFoundError('directory namespace', namespace);
+  }
   const services = result.services;
   const dbEntry = services.find((x) => x.service.toString() === entry);
 
@@ -508,7 +514,7 @@ export const getServiceData =
     try {
       const directoryEntity = await directoryRepository.getDirectories(namespace);
       if (!directoryEntity) {
-        return res.sendStatus(HttpStatusCodes.BAD_REQUEST).json({ error: `${namespace} could not find` });
+        throw new NotFoundError('directory namespace', namespace);
       }
       const services = directoryEntity.services;
       const filteredService = services.find((x) => x.service === service);
