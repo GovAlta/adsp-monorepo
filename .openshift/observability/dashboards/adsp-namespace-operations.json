@@ -698,7 +698,8 @@
             "cellOptions": {
               "type": "auto"
             },
-            "inspect": false
+            "inspect": false,
+            "minWidth": 80
           },
           "mappings": [],
           "thresholds": {
@@ -716,9 +717,37 @@
           {
             "matcher": {
               "id": "byName",
+              "options": "Desired"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 120
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Available"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 120
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
               "options": "Unavailable"
             },
             "properties": [
+              {
+                "id": "custom.width",
+                "value": 120
+              },
               {
                 "id": "custom.cellOptions",
                 "value": {
