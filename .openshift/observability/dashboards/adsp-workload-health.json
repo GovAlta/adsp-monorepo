@@ -455,7 +455,8 @@
           "placement": "right",
           "showLegend": true,
           "sortBy": "Max",
-          "sortDesc": true
+          "sortDesc": true,
+          "width": 460
         },
         "tooltip": {
           "hideZeros": true,
@@ -556,7 +557,8 @@
           "placement": "right",
           "showLegend": true,
           "sortBy": "Max",
-          "sortDesc": true
+          "sortDesc": true,
+          "width": 460
         },
         "tooltip": {
           "hideZeros": false,
@@ -657,7 +659,8 @@
           "placement": "right",
           "showLegend": true,
           "sortBy": "Max",
-          "sortDesc": true
+          "sortDesc": true,
+          "width": 460
         },
         "tooltip": {
           "hideZeros": false,
@@ -770,7 +773,8 @@
           "placement": "right",
           "showLegend": true,
           "sortBy": "Max",
-          "sortDesc": true
+          "sortDesc": true,
+          "width": 460
         },
         "tooltip": {
           "hideZeros": false,
