@@ -4,7 +4,8 @@ import { AppState } from '../state';
 import { GoabCallout } from '@abgov/react-components';
 import { Grid, GridItem } from '@core-services/app-common';
 import { JsonForms } from '@jsonforms/react';
-import { FunctionComponent, useEffect, useMemo } from 'react';
+import { FunctionComponent, ReactNode, useEffect, useMemo } from 'react';
+import { DateTime } from 'luxon';
 import styled from 'styled-components';
 import {
   Form,
@@ -17,6 +18,7 @@ import {
   filesSelector,
   loadFileMetadata,
   store,
+  SubmissionDisposition,
 } from '../state';
 import { useDispatch, useSelector } from 'react-redux';
 import { checkPdfFileSelector, getSocketChannel } from '../state';
@@ -90,6 +92,32 @@ const extractFileRefsFromData = (
 
   return refs;
 };
+
+interface ApplicationStatusCalloutProps {
+  submitted: DateTime;
+  disposition?: SubmissionDisposition | null;
+  children?: ReactNode;
+}
+
+const DATE_FORMAT = 'LLLL d, yyyy';
+
+export const ApplicationStatusCallout: FunctionComponent<ApplicationStatusCalloutProps> = ({
+  submitted,
+  disposition,
+  children,
+}) =>
+  disposition ? (
+    <GoabCallout type="success" heading="Decision made">
+      A decision was made on your application on {DateTime.fromISO(disposition.date).toFormat(DATE_FORMAT)}:{' '}
+      <b>{disposition.status}</b>.
+      {children}
+    </GoabCallout>
+  ) : (
+    <GoabCallout type="success" heading="We're processing your application">
+      Your application was received on {submitted.toFormat(DATE_FORMAT)} and we're working on it.
+      {children}
+    </GoabCallout>
+  );
 
 export const SubmittedForm: FunctionComponent<ApplicationStatusProps> = ({ definition, form, data }) => {
   const dispatch = useDispatch<AppDispatch>();
@@ -171,14 +199,13 @@ export const SubmittedForm: FunctionComponent<ApplicationStatusProps> = ({ defin
     <Grid>
       <GridItem md={1} />
       <GridItem md={10}>
-        <GoabCallout type="success" heading="We're processing your application">
-          Your application was received on {form.submitted.toFormat('LLLL d, yyyy')} and we're working on it.
+        <ApplicationStatusCallout submitted={form.submitted} disposition={form.submission?.disposition}>
           {definition.generatesPdf && pdfFileExists && (
             <div>
               <DownloadLink link={() => downloadPDFFile(fileQueryUrn)} text="Download PDF copy" />
             </div>
           )}
-        </GoabCallout>
+        </ApplicationStatusCallout>
         <Heading>The submitted form for your reference</Heading>
         {isMetadataReady && (
           <ContextProvider
