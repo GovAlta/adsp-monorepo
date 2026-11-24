@@ -61,7 +61,11 @@ export function serializeEvent(event: StoredEvent, { redactActor = false }: Seri
 
 export function assertCanReadEvents(req: Parameters<RequestHandler>[0]) {
   const tenantId = req.tenant?.id;
-  if (!tenantId || !isAllowedUser(req.user, tenantId, AuditServiceRoles.Reader, true)) {
+  // Matches the write, add-action and failed-event endpoints: a missing tenant selection is a bad request.
+  if (!tenantId) {
+    throw new InvalidOperationError('Tenant context is required to read audit events.');
+  }
+  if (!isAllowedUser(req.user, tenantId, AuditServiceRoles.Reader, true)) {
     throw new UnauthorizedUserError('read audit events', req.user);
   }
   return tenantId.toString();
