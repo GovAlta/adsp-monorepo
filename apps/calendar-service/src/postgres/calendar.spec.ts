@@ -1,4 +1,5 @@
 import { adspId } from '@abgov/adsp-service-sdk';
+import { InvalidOperationError } from '@core-services/core-common';
 import { knex, Knex } from 'knex';
 import { DateTime } from 'luxon';
 import { CalendarEntity, CalendarEventCriteria, CalendarEventEntity } from '../calendar';
@@ -276,6 +277,59 @@ describe('PostgresCalendarRepository', () => {
       });
 
       expect(result).toEqual(expect.objectContaining({ id: 3, name: 'Tester' }));
+    });
+
+    it('inserts a new attendee when no ID is given', async () => {
+      rows.mockReturnValueOnce([{ tenant: tenantId.toString(), event_id: 1, id: 4, name: 'Tester', email: null }]);
+
+      const result = await queryRepository.saveAttendee({ calendar, id: 1 } as CalendarEventEntity, {
+        id: undefined,
+        name: 'Tester',
+        email: null,
+      });
+
+      expect(result).toEqual(expect.objectContaining({ id: 4 }));
+      expect(statements()[0]).toContain('insert into "attendees"');
+    });
+
+    it('only updates an existing attendee and returns null when the event has no attendee with the ID', async () => {
+      const result = await queryRepository.saveAttendee({ calendar, id: 1 } as CalendarEventEntity, {
+        id: 99,
+        name: 'Tester',
+        email: null,
+      });
+
+      expect(result).toBeNull();
+      expect(statements()[0]).toContain('update "attendees"');
+    });
+
+    it('throws a conflict for an attendee email that is already on the event', async () => {
+      rows.mockImplementationOnce(() => {
+        throw Object.assign(new Error('duplicate key value violates unique constraint'), { code: '23505' });
+      });
+
+      const result = queryRepository.saveAttendee({ calendar, id: 1 } as CalendarEventEntity, {
+        id: undefined,
+        name: 'Tester',
+        email: 'tester@test.co',
+      });
+
+      await expect(result).rejects.toBeInstanceOf(InvalidOperationError);
+      await expect(result).rejects.toMatchObject({ extra: { statusCode: 409 } });
+    });
+
+    it('rethrows other attendee save errors', async () => {
+      rows.mockImplementationOnce(() => {
+        throw new Error('connection lost');
+      });
+
+      await expect(
+        queryRepository.saveAttendee({ calendar, id: 1 } as CalendarEventEntity, {
+          id: undefined,
+          name: 'Tester',
+          email: null,
+        }),
+      ).rejects.toThrow('connection lost');
     });
 
     it('can save an exclusion', async () => {
