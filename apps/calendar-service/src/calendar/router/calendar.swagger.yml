@@ -702,7 +702,7 @@ components:
         example: site-inspections.ics
       - name: criteria
         description: >
-          JSON criteria for the events to export. Must be valid JSON. activeOn is not supported for export.
+          JSON criteria for the events to export. Must be valid JSON.
         in: query
         required: false
         content:
