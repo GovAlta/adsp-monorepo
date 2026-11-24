@@ -161,7 +161,8 @@ export function getFile(repository: FileRepository, ...roles: string[]): Request
       const user = req.user;
       const { fileId } = req.params;
 
-      const fileEntity = await repository.get(fileId);
+      // Scope to the request tenant when there is one; anonymous requests (e.g. public download) have no tenant context.
+      const fileEntity = await repository.get(fileId, req.tenant?.id);
 
       if (!fileEntity) {
         throw new NotFoundError('File', fileId);
@@ -408,7 +409,7 @@ export function deleteFiles(
 
       const results = [];
       for (const fileId of fileIds) {
-        const fileEntity = await repository.get(fileId);
+        const fileEntity = await repository.get(fileId, req.tenant?.id);
         if (!fileEntity) {
           throw new NotFoundError('File', fileId);
         }
