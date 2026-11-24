@@ -37,6 +37,7 @@ export * from './sharepoint';
 export * from './sharepointRetry';
 export * from './calendar';
 export * from './jobs/messageNotification';
+export * from './jobs/submissionPdf';
 
 interface FormMiddlewareProps extends Repositories {
   serviceId: AdspId;

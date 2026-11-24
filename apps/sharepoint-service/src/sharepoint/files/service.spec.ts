@@ -586,6 +586,21 @@ describe('SharePointFileService', () => {
       expect(result.row).toEqual({ written: true, dataId: 'row-1', outcome: 'created' });
     });
 
+    it('asks for the existing row to be updated only, when the request does', async () => {
+      await service.upload(tenantId, configuration, 'hr-intake', request({ data, updateRowOnly: true }));
+
+      expect(pusher.push.mock.calls[0][4]).toEqual({ updateRowOnly: true });
+    });
+
+    it('reports that the row is not there yet as a retryable row failure', async () => {
+      pusher.push.mockRejectedValueOnce(new SharePointError('row-not-found', true));
+
+      const result = await service.upload(tenantId, configuration, 'hr-intake', request({ data, updateRowOnly: true }));
+
+      expect(result.files[0].status).toBe('uploaded');
+      expect(result.row).toEqual({ written: false, errorCode: 'row-not-found', retryable: true });
+    });
+
     it('writes the link as plain text when the mapping asks for it', async () => {
       await service.upload(tenantId, configuration, 'text-links', request({ data }));
 

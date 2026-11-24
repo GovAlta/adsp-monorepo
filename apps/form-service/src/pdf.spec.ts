@@ -156,6 +156,7 @@ describe('pdf', () => {
           operation: 'generate',
           templateId: definition.submissionPdfTemplate,
           recordId: 'urn:ads:platform:form-service:v1:/forms/test-form/submissions/formSubmission-id',
+          context: expect.objectContaining({ formId: 'test-form', submissionId: 'formSubmission-id' }),
         }),
         expect.objectContaining({
           params: expect.objectContaining({ tenantId: tenantId.toString() }),

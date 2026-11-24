@@ -198,6 +198,7 @@ describe('sharepoint sagas', () => {
                             id: 'a',
                             name: 'Applications',
                             sharepointConfigurationId: 'household',
+                            submissionPdfTemplate: 'submitted-form',
                             dataSchema: schema,
                             clerkRoles: ['x'],
                           },
@@ -218,7 +219,13 @@ describe('sharepoint sagas', () => {
       })
       .put(
         fetchSharepointFormsSuccess([
-          { id: 'a', name: 'Applications', sharepointConfigurationId: 'household', dataSchema: schema },
+          {
+            id: 'a',
+            name: 'Applications',
+            sharepointConfigurationId: 'household',
+            submissionPdfTemplate: 'submitted-form',
+            dataSchema: schema,
+          },
           { id: 'b', name: 'Benefits', dataSchema: schema },
         ]),
       )

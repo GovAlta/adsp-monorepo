@@ -49,9 +49,13 @@ export class SharePointPushRetryService implements SharePointRetryService {
     this.maxAttempts = props.retryDelaysSeconds.length + 1;
   }
 
-  async push(form: FormEntity, submission?: FormSubmissionEntity): Promise<SharePointPushResult> {
-    const pending = await this.store(form, submission);
-    const result = await this.props.client.push(form, submission);
+  async push(
+    form: FormEntity,
+    submission?: FormSubmissionEntity,
+    submissionPdfFileId?: string,
+  ): Promise<SharePointPushResult> {
+    const pending = await this.store(form, submission, submissionPdfFileId);
+    const result = await this.props.client.push(form, submission, submissionPdfFileId);
     if (pending) {
       await this.settle(pending, form.definition?.sharepointConfigurationId, result);
     }
@@ -71,12 +75,17 @@ export class SharePointPushRetryService implements SharePointRetryService {
     return attempted;
   }
 
-  private async store(form: FormEntity, submission?: FormSubmissionEntity): Promise<SharePointPush | null> {
+  private async store(
+    form: FormEntity,
+    submission?: FormSubmissionEntity,
+    submissionPdfFileId?: string,
+  ): Promise<SharePointPush | null> {
     const pending: SharePointPush = {
       id: uuidv4(),
       tenantId: form.tenantId,
       formId: form.id,
       submissionId: submission?.id,
+      submissionPdfFileId,
       attempts: 1,
       nextAttemptAt: new Date(Date.now() + ATTEMPT_LEASE_MS),
     };
@@ -116,7 +125,7 @@ export class SharePointPushRetryService implements SharePointRetryService {
         return;
       }
 
-      const result = await client.push(form, submission);
+      const result = await client.push(form, submission, pending.submissionPdfFileId);
       await this.settle(pending, destinationId, result);
     } catch (err) {
       logger.error(
@@ -156,7 +165,8 @@ export class SharePointPushRetryService implements SharePointRetryService {
   private async giveUp(pending: SharePointPush, destinationId: string, errorCode: string): Promise<void> {
     const { apiId, logger, repository, eventService } = this.props;
     await repository.delete(pending.id);
-    eventService.send(sharePointPushFailed(apiId, pending, destinationId, errorCode, new Date()));
+    const part = pending.submissionPdfFileId ? 'submission-pdf' : 'submission';
+    eventService.send(sharePointPushFailed(apiId, pending, part, destinationId, errorCode, new Date()));
     logger.warn(
       `Gave up pushing form (ID: ${pending.formId}) to SharePoint after ${pending.attempts} attempt(s): ${errorCode}.`,
       LOG_CONTEXT,
