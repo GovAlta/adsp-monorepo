@@ -339,19 +339,8 @@ describe('KeycloakRealmService', () => {
               consentRequired: true,
               fullScopeAllowed: false,
               attributes: { 'pkce.code.challenge.method': 'S256' },
-              redirectUris: [
-                'http://localhost:33419/callback',
-                'http://127.0.0.1:33419/callback',
-                'http://127.0.0.1:33418',
-                'http://127.0.0.1:33418/',
-                'https://vscode.dev/redirect',
-                'http://localhost:8787/callback',
-                'cursor://anysphere.cursor-mcp/oauth/callback',
-                'http://localhost:6274/oauth/callback',
-                'http://localhost:6274/oauth/callback/debug',
-                'http://127.0.0.1:6276/oauth/callback',
-              ],
-              webOrigins: ['https://vscode.dev', 'http://localhost:6274'],
+              redirectUris: ['https://mcp.example.test/oauth/callback', 'http://localhost:3000/oauth/callback'],
+              webOrigins: [],
               protocolMappers: [
                 {
                   name: 'adsp-sdk-mcp-server-aud',

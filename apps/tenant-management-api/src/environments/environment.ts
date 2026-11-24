@@ -4,6 +4,21 @@ import * as util from 'util';
 
 dotenv.config();
 
+// Keycloak redirect URIs must be exact; plain http is only allowed for a server run on localhost.
+const callbackUrls = envalid.makeValidator<string[]>((value) => {
+  const urls = value
+    .split(',')
+    .map((url) => url.trim())
+    .filter(Boolean);
+  for (const url of urls) {
+    const { protocol, hostname } = new URL(url);
+    if (url.includes('*') || !(protocol === 'https:' || (protocol === 'http:' && hostname === 'localhost'))) {
+      throw new envalid.EnvError(`Invalid MCP server callback URL: ${url}`);
+    }
+  }
+  return urls;
+});
+
 export const environment = envalid.cleanEnv(
   process.env,
   {
@@ -23,6 +38,9 @@ export const environment = envalid.cleanEnv(
     TENANT_WEB_APP_HOST: envalid.str({ default: 'http://localhost:4200' }),
     SUBSCRIBER_APP_HOST: envalid.str({ default: 'http://localhost:4200' }),
     API_APP_HOST: envalid.str({ default: 'http://localhost:4200' }),
+    // Comma separated. Production: only https://<public-url>/oauth/callback; dev and UAT also add the localhost one.
+    // Unset leaves adsp-mcp with no redirect URIs, so no sign-in is possible rather than a localhost one.
+    MCP_SERVER_CALLBACK_URLS: callbackUrls({ default: [] }),
     CLIENT_ID: envalid.str({ default: 'urn:ads:platform:tenant-service' }),
     CLIENT_SECRET: envalid.str({ default: '' }),
     APP_ENVIRONMENT: envalid.str({ default: 'dev' }),

@@ -165,11 +165,6 @@ export const ADSP_CLI_CLIENT_SCOPE_MAPPINGS = [
 
 export const ADSP_MCP_CLIENT_ID = 'adsp-mcp';
 
-/** The hosted MCP server's live tools only read configuration, so its callers' tokens carry nothing else. */
-export const ADSP_MCP_CLIENT_SCOPE_MAPPINGS = [
-  { client: 'urn:ads:platform:configuration-service', roles: ['configuration-admin'] },
-];
-
 const audienceMapper = (
   name: string,
   audience: 'included.client.audience' | 'included.custom.audience',
@@ -195,29 +190,17 @@ export const createAdspMcpPublicClientConfig = (id: string): ClientRepresentatio
   attributes: {
     'pkce.code.challenge.method': 'S256',
   },
-  // Exact URIs, one group per supported MCP client: Claude Code, VS Code, Cursor, MCP Inspector.
-  redirectUris: [
-    'http://localhost:33419/callback',
-    'http://127.0.0.1:33419/callback',
-    'http://127.0.0.1:33418',
-    'http://127.0.0.1:33418/',
-    'https://vscode.dev/redirect',
-    'http://localhost:8787/callback',
-    'cursor://anysphere.cursor-mcp/oauth/callback',
-    'http://localhost:6274/oauth/callback',
-    'http://localhost:6274/oauth/callback/debug',
-    'http://127.0.0.1:6276/oauth/callback',
-  ],
-  // Browser-hosted clients exchange the code from the page, so the token endpoint must allow their origin.
-  webOrigins: ['https://vscode.dev', 'http://localhost:6274'],
+  // Only the hosted MCP server signs in here; loopback URIs would let any local process obtain the same token.
+  redirectUris: environment.MCP_SERVER_CALLBACK_URLS,
+  webOrigins: [],
   // One audience mapper honours either a client or a custom audience, not both.
   protocolMappers: [
     audienceMapper('adsp-sdk-mcp-server-aud', 'included.custom.audience', 'urn:ads:platform:adsp-sdk-mcp-server'),
     audienceMapper('configuration-service-aud', 'included.client.audience', 'urn:ads:platform:configuration-service'),
   ],
   description:
-    'Public client for MCP clients (Claude Code, VS Code, Cursor, MCP Inspector) signing in to the hosted ADSP SDK ' +
-    'MCP server. PKCE-only, consent required. Scope restricted to configuration-admin via clientScopeMappings.',
+    'Public client for the hosted ADSP SDK MCP server signing in to tenant realms. PKCE-only, consent required. ' +
+    'Scope restricted to configuration-admin via clientScopeMappings.',
 });
 
 export const ADSP_CLI_CI_CLIENT_ID = 'adsp-cli-ci';
