@@ -56,6 +56,16 @@ describe('date router documented behaviour', () => {
       expect(res.body.results[0]).toMatchObject({ id: 20261111, holiday: 'Remembrance Day' });
       expect(repositoryMock.getDates).toHaveBeenCalledWith(50, undefined, criteria);
     });
+
+    it.each([[{ top: 'abc' }], [{ top: '0' }], [{ top: '5001' }], [{ top: '1.5' }], [{ criteria: 'not-json' }]])(
+      'responds 400 for invalid query %j',
+      async (query) => {
+        const res = await request(createApp()).get('/calendar/v1/dates').query(query);
+
+        expect(res.status).toBe(400);
+        expect(repositoryMock.getDates).not.toHaveBeenCalled();
+      },
+    );
   });
 
   describe('GET /calendar/v1/dates/{id}', () => {

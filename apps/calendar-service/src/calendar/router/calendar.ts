@@ -34,6 +34,7 @@ import { CalendarRepository } from '../repository';
 import { Attendee, CalendarServiceConfiguration } from '../types';
 import { registerCalendarDefinitionRoutes } from './definition';
 import { mapCalendar } from './mapper';
+import { criteriaQueryValidator, topQueryValidator } from './validation';
 
 export { getCalendars } from './definition';
 
@@ -597,6 +598,11 @@ export const createCalendarRouter = ({
   router.get(
     '/calendars/:name/export',
     validateNameHandler,
+    createValidationHandler(
+      topQueryValidator(),
+      criteriaQueryValidator(),
+      query('includeAttendees').optional().isBoolean(),
+    ),
     getCalendar(tenantService),
     exportCalendar(serviceId, directory),
   );
@@ -605,7 +611,8 @@ export const createCalendarRouter = ({
     '/calendars/:name/events',
     validateNameHandler,
     createValidationHandler(
-      query('criteria').optional().isJSON(),
+      topQueryValidator(),
+      criteriaQueryValidator(),
       query('includeAttendees').optional().isBoolean(),
       query('from').optional().isISO8601(),
       query('to').optional().isISO8601(),

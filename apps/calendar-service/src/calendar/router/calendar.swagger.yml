@@ -68,12 +68,13 @@ components:
         default: false
     CalendarEventsTop:
       name: top
-      description: Number of events to return in a page. Must be a positive integer.
+      description: Number of events to return in a page. Must be an integer from 1 to 5000.
       in: query
       required: false
       schema:
         type: integer
         minimum: 1
+        maximum: 5000
         default: 10
       example: 25
     CalendarEventsAfter:
@@ -759,7 +760,7 @@ components:
 
       Calendar date/time values use the service timezone, America/Edmonton (Mountain time; MST or MDT depending on
       the date). When both from and to are specified, returns the complete set of events that overlap the requested
-      range in a single response; top and after are ignored for range retrieval, but criteria can still be used to
+      range in a single response; top and after are ignored for range retrieval (top is still validated), but criteria can still be used to
       filter the results. An event overlaps the range when it occurs at least partially within it, including events
       that start before from or end after to. Range retrieval supports a maximum range of 366 days. Range retrieval
       returns each occurrence of a recurring event that overlaps the range, excluding cancelled occurrences; without
@@ -791,7 +792,7 @@ components:
           format: date-time
         example: '2026-10-31T23:59:59-06:00'
       - name: criteria
-        description: JSON criteria for the events to retrieve.
+        description: JSON criteria for the events to retrieve. Must be valid JSON.
         in: query
         required: false
         content:

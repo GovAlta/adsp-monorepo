@@ -424,6 +424,16 @@ describe('calendar router documented behaviour', () => {
       expect(res.status).toBe(400);
     });
 
+    it.each([[{ top: 'abc' }], [{ top: '0' }], [{ top: '5001' }], [{ top: '1.5' }], [{ criteria: 'not-json' }]])(
+      'responds 400 for invalid query %j',
+      async (query) => {
+        const res = await request(createApp(plain)).get('/calendar/v1/calendars/site-inspections/export').query(query);
+
+        expect(res.status).toBe(400);
+        expect(repositoryMock.getCalendarEvents).not.toHaveBeenCalled();
+      },
+    );
+
     it('responds 403 when attendees are requested without private access', async () => {
       repositoryMock.getCalendarEvents.mockResolvedValueOnce({ results: [publicEvent()], page: { size: 1 } });
 
@@ -485,6 +495,16 @@ describe('calendar router documented behaviour', () => {
 
       expect(res.status).toBe(400);
     });
+
+    it.each([[{ top: 'abc' }], [{ top: '0' }], [{ top: '5001' }], [{ top: '1.5' }], [{ criteria: 'not-json' }]])(
+      'responds 400 for invalid query %j',
+      async (query) => {
+        const res = await request(createApp(reader)).get('/calendar/v1/calendars/site-inspections/events').query(query);
+
+        expect(res.status).toBe(400);
+        expect(repositoryMock.getCalendarEvents).not.toHaveBeenCalled();
+      },
+    );
 
     it('responds 403 when attendees are requested without private access', async () => {
       tenantServiceMock.getTenantByName.mockResolvedValueOnce({ id: tenantId, name: 'service-delivery' });
