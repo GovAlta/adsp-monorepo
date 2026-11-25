@@ -380,7 +380,7 @@ describe('createTenantV2Router', () => {
       );
     });
 
-    it('can throw unauthorized for not own tenant', async () => {
+    it('can throw not found for not own tenant', async () => {
       const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/tenant-321`;
       const req = {
         params: { id: 'tenant-123' },
@@ -392,15 +392,25 @@ describe('createTenantV2Router', () => {
       const next = jest.fn();
       const handler = getTenant(loggerMock, repositoryMock);
 
-      const tenant = {
-        id: 'tenant-a',
-        name: 'tenant-a',
-        realm: 'tenant-a-realm',
-        adminEmail: 'tester@test.co',
-      };
-      repositoryMock.get.mockResolvedValueOnce(tenant);
       await handler(req as unknown as Request, res as unknown as Response, next);
-      expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedUserError));
+      expect(next).toHaveBeenCalledWith(expect.any(NotFoundError));
+      expect(repositoryMock.get).not.toHaveBeenCalled();
+      expect(res.send).not.toHaveBeenCalled();
+    });
+
+    it('can throw not found for tenant user without tenant id', async () => {
+      const req = {
+        params: { id: 'tenant-123' },
+        user: { isCore: false },
+      };
+      const res = {
+        send: jest.fn(),
+      };
+      const next = jest.fn();
+      const handler = getTenant(loggerMock, repositoryMock);
+
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(next).toHaveBeenCalledWith(expect.any(NotFoundError));
       expect(res.send).not.toHaveBeenCalled();
     });
 
@@ -693,7 +703,7 @@ describe('createTenantV2Router', () => {
       const req = {
         params: { id: 'tenant-a' },
         body: {
-          name: 'new-mock-name',
+          name: 'New mock name',
         },
         user: { isCore: true },
       };
@@ -705,17 +715,28 @@ describe('createTenantV2Router', () => {
 
       const entity = new TenantEntity(repositoryMock, tenant);
       repositoryMock.get.mockResolvedValueOnce(entity);
-      repositoryMock.save.mockResolvedValueOnce({ ...entity, name: 'new-mock-name' });
+      repositoryMock.find.mockResolvedValueOnce([]);
+      repositoryMock.save.mockResolvedValueOnce({ ...entity, name: 'New mock name' });
 
       await handler(req as unknown as Request, res as unknown as Response, next);
-      expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ name: 'new-mock-name' }));
+      expect(repositoryMock.find).toHaveBeenCalledWith(expect.objectContaining({ nameEquals: 'New mock name' }));
+      expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ name: 'New mock name' }));
       expect(auditServiceMock.record).toHaveBeenCalledWith(
         expect.objectContaining({ name: 'tenant.updated', captureChangeSet: true }),
         tenantAudit(
-          { id: tenantUrn, name: 'new-mock-name' },
-          { changeSet: { before: { name: tenant.name }, after: { name: 'new-mock-name' } } },
+          { id: tenantUrn, name: 'New mock name' },
+          { changeSet: { before: { name: tenant.name }, after: { name: 'New mock name' } } },
         ),
       );
+      expect(eventServiceMock.send).toHaveBeenCalledWith(
+        expect.objectContaining({
+          name: 'tenant-name-updated',
+          payload: expect.objectContaining({ tenant: expect.objectContaining({ name: 'New mock name' }) }),
+        }),
+      );
+      const event = eventServiceMock.send.mock.calls[eventServiceMock.send.mock.calls.length - 1][0];
+      expect(event.payload.tenant).not.toHaveProperty('repository');
+      expect(() => JSON.stringify(event)).not.toThrow();
     });
 
     it('can call next with not found', async () => {

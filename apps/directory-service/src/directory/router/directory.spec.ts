@@ -260,7 +260,8 @@ describe('router', () => {
       const entity = new DirectoryEntity(repositoryMock, testDirectory);
       repositoryMock.getDirectories.mockResolvedValueOnce(entity);
       await handler(req, res as unknown as Response, next);
-      expect(res.sendStatus).toHaveBeenCalledWith(HttpStatusCodes.NOT_FOUND);
+      expect(next).toHaveBeenCalledWith(expect.any(NotFoundError));
+      expect(res.sendStatus).not.toHaveBeenCalled();
     });
     it('should call next(err) on error', async () => {
       const error = new Error('Test error');
@@ -536,7 +537,7 @@ describe('router', () => {
       expect(res.json).toHaveBeenCalledWith(expect.objectContaining(response));
     });
 
-    it('should return BAD_REQUEST if directory entity is not found', async () => {
+    it('should pass NotFoundError to next if directory entity is not found', async () => {
       repositoryMock.getDirectories.mockResolvedValueOnce(null);
       const res = {
         sendStatus: jest.fn(),
@@ -545,7 +546,8 @@ describe('router', () => {
 
       const handler = getServiceData(repositoryMock, loggerMock as Logger);
       await handler(req, res as unknown as Response, next);
-      expect(res.sendStatus).toHaveBeenCalledWith(HttpStatusCodes.BAD_REQUEST);
+      expect(next).toHaveBeenCalledWith(expect.any(NotFoundError));
+      expect(res.sendStatus).not.toHaveBeenCalled();
     });
 
     it('should throw an error if service is not found in directory', async () => {

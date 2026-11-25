@@ -57,7 +57,7 @@ export const TenantIdp = (): JSX.Element => {
       validators.clear();
     }
 
-    if ((fetchUserIdState?.state as unknown) === 'completed') {
+    if (['completed', 'error'].includes(fetchUserIdState?.state as string)) {
       dispatch(ResetLoadingState());
       setCopied('');
     }
@@ -118,6 +118,13 @@ export const TenantIdp = (): JSX.Element => {
         <div>
           <GoabSpacer vSpacing="m"></GoabSpacer>
           <p>{`Cannot find user ${email}`}</p>
+        </div>
+      )}
+
+      {fetchedUserInfo && fetchUserIdState?.state === 'error' && (
+        <div>
+          <GoabSpacer vSpacing="m"></GoabSpacer>
+          <p data-testid="user-search-error">{`Unable to look up user ${email}. Please try again later.`}</p>
         </div>
       )}
 

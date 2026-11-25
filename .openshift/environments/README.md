@@ -8,7 +8,8 @@ for a single environment.
   the values that differ from the template defaults.
 - The deploy action (`.github/actions/deploy-app`) passes the file to `oc process --param-file` when it
   exists. Without a file, the template defaults apply.
-- There is deliberately no `prod` directory; production runs on the template defaults.
+- Production runs on the template defaults, so `prod` holds only `observability-stack.env`: Grafana's URLs
+  differ in every environment and have no production default.
 - `oc process` rejects unknown parameter names, so add the parameter to the template before setting it
   here. A typo fails the deploy rather than being silently ignored.
 
@@ -54,7 +55,8 @@ oc set resources statefulset/event-service-rabbitmq -c rabbitmq \
 oc set resources statefulset/event-service-rabbitmq -c rm-erlang-cookie --requests=cpu=$RABBITMQ_INIT_CPU_REQUEST
 ```
 
-The observability stack is applied manually; see `../observability/README.md`.
+The observability stack is deployed by `.github/workflows/observability.yml`, including changes to its
+override files; see `../observability/README.md`.
 
 ## dev and uat right-sizing
 

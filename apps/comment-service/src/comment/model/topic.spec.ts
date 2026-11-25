@@ -1,4 +1,5 @@
 import { UnauthorizedUserError, User, adspId } from '@abgov/adsp-service-sdk';
+import { InvalidOperationError } from '@core-services/core-common';
 import { TopicEntity } from './topic';
 import { TopicTypeEntity } from './type';
 import { ServiceRoles } from '../roles';
@@ -44,6 +45,28 @@ describe('TopicEntity', () => {
     expect(entity).toBeTruthy();
   });
 
+  it('can be initialized without a type', () => {
+    const entity = new TopicEntity(repositoryMock, undefined, {
+      tenantId,
+      id: 1,
+      name: 'Test',
+      description: 'test',
+      securityClassification: 'protected b',
+    });
+    expect(entity.type).toBeUndefined();
+    expect(entity.securityClassification).toBe('protected b');
+  });
+
+  it('can be initialized without a type for a new topic', () => {
+    const entity = new TopicEntity(repositoryMock, undefined, { tenantId, name: 'Test', description: 'test' });
+    expect(entity.securityClassification).toBeUndefined();
+  });
+
+  it('denies read without a type to users who are not commenters or topic setters', () => {
+    const entity = new TopicEntity(repositoryMock, undefined, { tenantId, id: 1, name: 'Test', description: 'test' });
+    expect(entity.canRead({ tenantId, id: 'other', name: 'Other', roles: [] } as User)).toBe(false);
+  });
+
   describe('create', () => {
     it('can create new topic', async () => {
       const result = await TopicEntity.create(user as User, repositoryMock, type, {
@@ -83,6 +106,14 @@ describe('TopicEntity', () => {
         const update = { name: 'new name', description: 'new description' };
         entity.update({ ...user, roles: [] } as User, update);
       }).toThrowError(UnauthorizedUserError);
+    });
+
+    it('can fail without a type', async () => {
+      const untyped = new TopicEntity(repositoryMock, undefined, { tenantId, id: 1, name: 'Test', description: 'test' });
+      await expect(untyped.update(user as User, { name: 'new name', description: 'new' })).rejects.toThrow(
+        InvalidOperationError,
+      );
+      expect(repositoryMock.save).not.toHaveBeenCalled();
     });
   });
 

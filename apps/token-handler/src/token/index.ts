@@ -1,4 +1,4 @@
-import { EventService, TenantService } from '@abgov/adsp-service-sdk';
+import { AdspId, EventService, TenantService } from '@abgov/adsp-service-sdk';
 import { Application, RequestHandler } from 'express';
 import { PassportStatic } from 'passport';
 import { Logger } from 'winston';
@@ -21,6 +21,7 @@ interface MiddlewareOptions {
   configurationHandler: RequestHandler;
   eventService: EventService;
   passport: PassportStatic;
+  serviceId: AdspId;
   sessionStore: SessionStore;
   tenantHandler: RequestHandler;
   tenantService: TenantService;
@@ -28,7 +29,16 @@ interface MiddlewareOptions {
 
 export function applyTokenHandlerMiddleware(
   app: Application,
-  { configurationHandler, eventService, logger, passport, sessionStore, tenantHandler, tenantService }: MiddlewareOptions
+  {
+    configurationHandler,
+    eventService,
+    logger,
+    passport,
+    serviceId,
+    sessionStore,
+    tenantHandler,
+    tenantService,
+  }: MiddlewareOptions
 ) {
   const clientRouter = createClientRouter({
     configurationHandler,
@@ -39,7 +49,7 @@ export function applyTokenHandlerMiddleware(
     tenantService,
   });
   const targetRouter = createTargetRouter({ configurationHandler });
-  const sessionRouter = createSessionRouter({ passport, sessionStore });
+  const sessionRouter = createSessionRouter({ passport, serviceId, sessionStore });
 
   app.use('/token-handler/v1', [clientRouter, targetRouter, sessionRouter]);
 }

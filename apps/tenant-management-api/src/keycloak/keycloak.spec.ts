@@ -236,9 +236,8 @@ describe('KeycloakRealmService', () => {
         .mockResolvedValueOnce([{ id: 'config-service-client-123' }])
         .mockResolvedValueOnce([])
         .mockResolvedValueOnce([{ id: 'directory-service-client-123' }])
-        // grantClientScopeMappings for adsp-mcp: adsp-mcp, config-service
+        // grantClientScopeMappings for adsp-mcp: adsp-mcp only, it has no mappings
         .mockResolvedValueOnce([{ id: 'adsp-mcp-client-123' }])
-        .mockResolvedValueOnce([{ id: 'config-service-client-123' }])
         .mockResolvedValueOnce([{ id: 'realm-management-client-123' }])
         .mockResolvedValueOnce([{ id: 'adsp-cli-ci-client-123' }])
         .mockResolvedValueOnce([{ id: 'config-service-client-123' }])
@@ -252,7 +251,6 @@ describe('KeycloakRealmService', () => {
         // grantClientScopeMappings for adsp-cli: configuration-admin from config-service, directory-admin from directory-service
         .mockResolvedValueOnce({ id: 'config-admin-role-123', name: 'configuration-admin' })
         .mockResolvedValueOnce({ id: 'directory-admin-role-123', name: 'directory-admin' })
-        .mockResolvedValueOnce({ id: 'config-admin-role-123', name: 'configuration-admin' })
         .mockResolvedValueOnce({ id: 'config-admin-role-123', name: 'configuration-admin' })
         .mockResolvedValueOnce({ id: 'manage-clients-role-123', name: 'manage-clients' })
         .mockResolvedValueOnce({ id: 'manage-users-role-123', name: 'manage-users' });
@@ -329,7 +327,7 @@ describe('KeycloakRealmService', () => {
         expect.objectContaining({
           clients: expect.arrayContaining([
             expect.objectContaining({
-              clientId: 'adsp-mcp',
+              clientId: 'urn:ads:platform:adsp-mcp',
               enabled: true,
               publicClient: true,
               standardFlowEnabled: true,
@@ -337,70 +335,37 @@ describe('KeycloakRealmService', () => {
               directAccessGrantsEnabled: false,
               serviceAccountsEnabled: false,
               consentRequired: true,
-              fullScopeAllowed: false,
-              attributes: { 'pkce.code.challenge.method': 'S256' },
-              redirectUris: [
-                'http://localhost:33419/callback',
-                'http://127.0.0.1:33419/callback',
-                'http://127.0.0.1:33418',
-                'http://127.0.0.1:33418/',
-                'https://vscode.dev/redirect',
-                'http://localhost:8787/callback',
-                'cursor://anysphere.cursor-mcp/oauth/callback',
-                'http://localhost:6274/oauth/callback',
-                'http://localhost:6274/oauth/callback/debug',
-                'http://127.0.0.1:6276/oauth/callback',
-              ],
-              webOrigins: ['https://vscode.dev', 'http://localhost:6274'],
-              protocolMappers: [
-                {
-                  name: 'adsp-sdk-mcp-server-aud',
-                  protocol: 'openid-connect',
-                  protocolMapper: 'oidc-audience-mapper',
-                  config: {
-                    'included.custom.audience': 'urn:ads:platform:adsp-sdk-mcp-server',
-                    'id.token.claim': 'false',
-                    'access.token.claim': 'true',
-                  },
-                },
-                {
-                  name: 'configuration-service-aud',
-                  protocol: 'openid-connect',
-                  protocolMapper: 'oidc-audience-mapper',
-                  config: {
-                    'included.client.audience': 'urn:ads:platform:configuration-service',
-                    'id.token.claim': 'false',
-                    'access.token.claim': 'true',
-                  },
-                },
-              ],
+              fullScopeAllowed: true,
+              attributes: {
+                'pkce.code.challenge.method': 'S256',
+                'access.token.lifespan': '600',
+                'client.session.idle.timeout': '3600',
+              },
+              redirectUris: ['https://mcp.example.test/oauth/callback', 'http://localhost:3000/oauth/callback'],
+              webOrigins: [],
             }),
           ]),
         }),
       );
-      // Realm JSON keys clientScopeMappings by the role-owning client, so an 'adsp-mcp' key would create stray roles.
-      expect(keycloakClientMock.realms.create.mock.calls[0][0].clientScopeMappings).not.toHaveProperty('adsp-mcp');
+      // Realm JSON keys clientScopeMappings by the role-owning client, so an adsp-mcp key would create stray roles.
+      expect(keycloakClientMock.realms.create.mock.calls[0][0].clientScopeMappings).not.toHaveProperty(
+        'urn:ads:platform:adsp-mcp',
+      );
       const adspMcpClient = keycloakClientMock.realms.create.mock.calls[0][0].clients.find(
-        (c: { clientId: string }) => c.clientId === 'adsp-mcp',
+        (c: { clientId: string }) => c.clientId === 'urn:ads:platform:adsp-mcp',
       );
       expect(adspMcpClient.description.length).toBeLessThanOrEqual(255);
-      // configuration-admin only: the MCP server's live tools read configuration and nothing else.
       expect(
         keycloakClientMock.clients.addClientScopeMappings.mock.calls.filter(
           ([target]) => target.id === 'adsp-mcp-client-123',
         ),
-      ).toEqual([
-        [
-          { realm, id: 'adsp-mcp-client-123', client: 'config-service-client-123' },
-          [{ id: 'config-admin-role-123', name: 'configuration-admin' }],
-        ],
-      ]);
-      // The adsp-cli grant, the adsp-mcp grant and the CI service account each look up configuration-admin once.
+      ).toEqual([]);
+      // The adsp-cli grant and the CI service account each look up configuration-admin once.
       expect(
         keycloakClientMock.clients.findRole.mock.calls.filter(
           ([query]) => query.id === 'config-service-client-123' && query.roleName === 'configuration-admin',
         ),
-      ).toHaveLength(3);
+      ).toHaveLength(2);
 
       axiosMock.get.mockResolvedValueOnce({ data: [{ id: 'execution-123' }] });
 
@@ -457,9 +422,8 @@ describe('KeycloakRealmService', () => {
         .mockResolvedValueOnce([{ id: 'config-service-client-123' }])
         .mockResolvedValueOnce([])
         .mockResolvedValueOnce([{ id: 'directory-service-client-123' }])
-        // grantClientScopeMappings for adsp-mcp: adsp-mcp, config-service
+        // grantClientScopeMappings for adsp-mcp: adsp-mcp only, it has no mappings
         .mockResolvedValueOnce([{ id: 'adsp-mcp-client-123' }])
-        .mockResolvedValueOnce([{ id: 'config-service-client-123' }])
         .mockResolvedValueOnce([{ id: 'realm-management-client-123' }])
         .mockResolvedValueOnce([{ id: 'adsp-cli-ci-client-123' }])
         .mockResolvedValueOnce([{ id: 'config-service-client-123' }])
@@ -472,7 +436,6 @@ describe('KeycloakRealmService', () => {
         .mockResolvedValueOnce({ id: 'manage-users-role-123', name: 'manage-users' })
         .mockResolvedValueOnce({ id: 'config-admin-role-123', name: 'configuration-admin' })
         .mockResolvedValueOnce({ id: 'directory-admin-role-123', name: 'directory-admin' })
-        .mockResolvedValueOnce({ id: 'config-admin-role-123', name: 'configuration-admin' })
         .mockResolvedValueOnce({ id: 'config-admin-role-123', name: 'configuration-admin' })
         .mockResolvedValueOnce({ id: 'manage-clients-role-123', name: 'manage-clients' })
         .mockResolvedValueOnce({ id: 'manage-users-role-123', name: 'manage-users' });
@@ -517,9 +480,8 @@ describe('KeycloakRealmService', () => {
         .mockResolvedValueOnce([{ id: 'config-service-client-123' }])
         .mockResolvedValueOnce([])
         .mockResolvedValueOnce([{ id: 'directory-service-client-123' }])
-        // grantClientScopeMappings for adsp-mcp: adsp-mcp, config-service
+        // grantClientScopeMappings for adsp-mcp: adsp-mcp only, it has no mappings
         .mockResolvedValueOnce([{ id: 'adsp-mcp-client-123' }])
-        .mockResolvedValueOnce([{ id: 'config-service-client-123' }])
         .mockResolvedValueOnce([{ id: 'realm-management-client-123' }])
         .mockResolvedValueOnce([{ id: 'adsp-cli-ci-client-123' }])
         .mockResolvedValueOnce([{ id: 'config-service-client-123' }])
@@ -532,7 +494,6 @@ describe('KeycloakRealmService', () => {
         .mockResolvedValueOnce({ id: 'manage-users-role-123', name: 'manage-users' })
         .mockResolvedValueOnce({ id: 'config-admin-role-123', name: 'configuration-admin' })
         .mockResolvedValueOnce({ id: 'directory-admin-role-123', name: 'directory-admin' })
-        .mockResolvedValueOnce({ id: 'config-admin-role-123', name: 'configuration-admin' })
         .mockResolvedValueOnce({ id: 'config-admin-role-123', name: 'configuration-admin' })
         .mockResolvedValueOnce({ id: 'manage-clients-role-123', name: 'manage-clients' })
         .mockResolvedValueOnce({ id: 'manage-users-role-123', name: 'manage-users' });
@@ -573,6 +534,13 @@ describe('KeycloakRealmService', () => {
       axiosMock.get.mockResolvedValueOnce({ data: [] });
       const id = await service.findUserId('mock-realm', email);
       expect(id).toBe(null);
+    });
+
+    it('can throw and log when the keycloak lookup fails', async () => {
+      const email = 'mock-test@gov.ab.ca';
+      axiosMock.get.mockRejectedValueOnce(new Error('realm not found'));
+      await expect(service.findUserId('mock-realm', email)).rejects.toThrow('Failed to find user id in mock-realm.');
+      expect(loggerMock.error).toHaveBeenCalledWith(expect.stringContaining('realm not found'));
     });
 
     it('can delete IdP', async () => {

@@ -26,7 +26,7 @@ import {
 } from '@store/sharePoint/actions';
 import { ADSP_KEY_FIELD, defaultDestination } from '@store/sharePoint/model';
 import { FieldLabel, InfoHint } from '../fieldLabel';
-import { CheckboxRow, ConnectionPadding } from '../styled-components';
+import { CheckboxRow, ConnectionPadding, FieldPair } from '../styled-components';
 import { validateDestination } from './destinationHelpers';
 import { DetailListsEditor } from './detailListsEditor';
 import { generateFormServiceMappings } from './generateMappings';
@@ -39,6 +39,9 @@ interface DestinationModalProps {
 }
 
 const completeMappings = (mappings: SharepointFieldMapping[]) => mappings.filter((m) => m.source && m.target);
+
+const trimmedOrOmitted = <K extends string>(key: K, value: string | undefined): Partial<Record<K, string>> =>
+  value?.trim() ? ({ [key]: value.trim() } as Record<K, string>) : {};
 
 // Generated detail lists keep the list ID of an existing detail list for the same array.
 const mergeDetailLists = (current: SharepointDetailList[], generated: SharepointDetailList[]) =>
@@ -85,13 +88,15 @@ export const DestinationModal = ({ destinationId, onCancel, onSave }: Destinatio
     if (!form) {
       return;
     }
-    const generated = generateFormServiceMappings(form.dataSchema);
+    const generated = generateFormServiceMappings(form.dataSchema, { submissionPdf: !!form.submissionPdfTemplate });
+    // Detail rows and the submission PDF are both written to the submission's row, found by its key.
+    const needsRowKey = generated.detailLists.length > 0 || !!form.submissionPdfTemplate;
     setDestination((current) => ({
       ...current,
       fieldMappings: generated.fieldMappings.length ? generated.fieldMappings : current.fieldMappings,
       detailLists: mergeDetailLists(current.detailLists ?? [], generated.detailLists),
       folderLinkField: generated.folderLinkField ?? current.folderLinkField,
-      idempotencyFields: generated.detailLists.length ? [ADSP_KEY_FIELD] : current.idempotencyFields,
+      idempotencyFields: needsRowKey ? [ADSP_KEY_FIELD] : current.idempotencyFields,
     }));
   };
 
@@ -101,18 +106,27 @@ export const DestinationModal = ({ destinationId, onCancel, onSave }: Destinatio
     if (Object.keys(found).length > 0) {
       return;
     }
-    const { idempotencyFields, folderLinkField, detailLists: lists, ...rest } = destination;
+    const {
+      idempotencyFields,
+      folderLinkField,
+      documentFilesLibraryId,
+      documentFilesLibraryName,
+      detailLists: lists,
+      ...rest
+    } = destination;
     const savedLists = (lists ?? []).map(({ listId, listName, ...list }) => ({
       ...list,
-      ...(listId?.trim() ? { listId: listId.trim() } : {}),
-      ...(listName?.trim() ? { listName: listName.trim() } : {}),
+      ...trimmedOrOmitted('listId', listId),
+      ...trimmedOrOmitted('listName', listName),
       fieldMappings: completeMappings(list.fieldMappings),
     }));
     onSave({
       ...rest,
       fieldMappings: completeMappings(destination.fieldMappings),
       ...(idempotencyFields?.length ? { idempotencyFields } : {}),
-      ...(folderLinkField?.trim() ? { folderLinkField: folderLinkField.trim() } : {}),
+      ...trimmedOrOmitted('folderLinkField', folderLinkField),
+      ...trimmedOrOmitted('documentFilesLibraryId', documentFilesLibraryId),
+      ...trimmedOrOmitted('documentFilesLibraryName', documentFilesLibraryName),
       ...(savedLists.length ? { detailLists: savedLists } : {}),
       enabled: destination.enabled !== false,
     });
@@ -260,24 +274,6 @@ export const DestinationModal = ({ destinationId, onCancel, onSave }: Destinatio
         </ConnectionPadding>
         <ConnectionPadding>
           <FieldLabel
-            label="Files folder link column (optional)"
-            hint="A Hyperlink column on the main list that links to the folder of files uploaded with each submission."
-          />
-          <GoabFormItem label="">
-            <GoabInput
-              size="compact"
-              name="destination-folder-link"
-              testId="destination-folder-link"
-              value={destination.folderLinkField ?? ''}
-              width="100%"
-              onChange={(detail: GoabInputOnChangeDetail) =>
-                setDestination((current) => ({ ...current, folderLinkField: detail.value }))
-              }
-            />
-          </GoabFormItem>
-        </ConnectionPadding>
-        <ConnectionPadding>
-          <FieldLabel
             label="Detail lists"
             hint="For repeating sections. Each section is a sub list with each section item as a row in the sub list."
           />
@@ -296,6 +292,64 @@ export const DestinationModal = ({ destinationId, onCancel, onSave }: Destinatio
               })
             }
           />
+        </ConnectionPadding>
+        <ConnectionPadding>
+          <FieldPair>
+            <div>
+              <FieldLabel
+                label="Document library name (optional)"
+                hint="Verify setup creates a document library with this name when there is no document library ID."
+              />
+              <GoabFormItem label="">
+                <GoabInput
+                  size="compact"
+                  name="destination-library-name"
+                  testId="destination-library-name"
+                  value={destination.documentFilesLibraryName ?? ''}
+                  width="100%"
+                  onChange={(detail: GoabInputOnChangeDetail) =>
+                    setDestination((current) => ({ ...current, documentFilesLibraryName: detail.value }))
+                  }
+                />
+              </GoabFormItem>
+            </div>
+            <div>
+              <FieldLabel
+                label="Document library ID (optional)"
+                hint="The document library for uploaded files. Files go to the site's Documents library when this and the name are empty."
+              />
+              <GoabFormItem label="">
+                <GoabInput
+                  size="compact"
+                  name="destination-library-id"
+                  testId="destination-library-id"
+                  value={destination.documentFilesLibraryId ?? ''}
+                  width="100%"
+                  onChange={(detail: GoabInputOnChangeDetail) =>
+                    setDestination((current) => ({ ...current, documentFilesLibraryId: detail.value }))
+                  }
+                />
+              </GoabFormItem>
+            </div>
+          </FieldPair>
+        </ConnectionPadding>
+        <ConnectionPadding>
+          <FieldLabel
+            label="Files folder link column (optional)"
+            hint="A Hyperlink column on the main list that links to the folder of files uploaded with each submission."
+          />
+          <GoabFormItem label="">
+            <GoabInput
+              size="compact"
+              name="destination-folder-link"
+              testId="destination-folder-link"
+              value={destination.folderLinkField ?? ''}
+              width="100%"
+              onChange={(detail: GoabInputOnChangeDetail) =>
+                setDestination((current) => ({ ...current, folderLinkField: detail.value }))
+              }
+            />
+          </GoabFormItem>
         </ConnectionPadding>
         <CheckboxRow>
           <GoabCheckbox

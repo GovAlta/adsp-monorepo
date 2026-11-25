@@ -73,7 +73,10 @@ export function createRegister(client: DataRegisterClient, logger: Logger, audit
       res.status(HttpStatusCodes.CREATED).send(register);
       logRegisterAction(logger, 'created', register.name, tenantId, user);
       recordFormAudit(auditService, logger, DataRegisterCreatedAuditAction, () =>
-        toDataRegisterAuditDetails(user, tenantId, register.name, { entryCount: register.entries?.length ?? 0 }),
+        toDataRegisterAuditDetails(user, tenantId, register.name, {
+          entryCount: register.entries?.length ?? 0,
+          anonymousRead: register.anonymousRead,
+        }),
       );
     } catch (err) {
       next(err);
@@ -98,8 +101,10 @@ export function updateRegister(client: DataRegisterClient, logger: Logger, audit
           updatedFields: [
             ...(request.entries !== undefined ? ['entries'] : []),
             ...(request.description !== undefined ? ['description'] : []),
+            ...(request.anonymousRead !== undefined ? ['anonymousRead'] : []),
           ],
           entryCount: register.entries?.length ?? 0,
+          ...(request.anonymousRead !== undefined && { anonymousRead: register.anonymousRead }),
         }),
       );
     } catch (err) {
@@ -139,6 +144,13 @@ const validateEntries = body('entries')
   .custom((entries: unknown[]) => entries.every(isEntry))
   .withMessage('entries must be strings or objects');
 
+// Stored as a real boolean: configuration-service only allows anonymous reads when anonymousRead === true.
+const validateAnonymousRead = body('anonymousRead')
+  .optional()
+  .isBoolean()
+  .withMessage('anonymousRead must be a boolean')
+  .toBoolean(true);
+
 interface RegisterRouterProps {
   client: DataRegisterClient;
   logger: Logger;
@@ -166,6 +178,7 @@ export function createRegisterRouter({ client, logger, auditService }: RegisterR
       body('name').exists().withMessage('name is required').bail().isString().matches(REGISTER_NAME_PATTERN),
       body('description').optional().isString(),
       validateEntries,
+      validateAnonymousRead,
     ),
     createRegister(client, logger, auditService),
   );
@@ -173,7 +186,12 @@ export function createRegisterRouter({ client, logger, auditService }: RegisterR
   router.patch(
     '/registers/:name',
     assertAuthenticatedHandler,
-    createValidationHandler(validateNameParam, body('description').optional().isString(), validateEntries),
+    createValidationHandler(
+      validateNameParam,
+      body('description').optional().isString(),
+      validateEntries,
+      validateAnonymousRead,
+    ),
     updateRegister(client, logger, auditService),
   );
 

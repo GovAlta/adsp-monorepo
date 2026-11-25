@@ -34,6 +34,7 @@ import { CalendarRepository } from '../repository';
 import { Attendee, CalendarServiceConfiguration } from '../types';
 import { registerCalendarDefinitionRoutes } from './definition';
 import { mapCalendar } from './mapper';
+import { criteriaQueryValidator, topQueryValidator } from './validation';
 
 export { getCalendars } from './definition';
 
@@ -148,6 +149,18 @@ export function getCalendar(tenantService: TenantService): RequestHandler {
   };
 }
 
+const criteriaDateTimeKeys = ['startsAfter', 'endsBefore', 'startsBefore', 'endsAfter', 'activeOn'] as const;
+
+export function parseEventCriteria(criteriaValue: string) {
+  const criteria = criteriaValue ? JSON.parse(criteriaValue) : null;
+  for (const key of criteriaDateTimeKeys) {
+    if (criteria?.[key]) {
+      criteria[key] = parseServiceDateTime(criteria[key], `criteria.${key}`);
+    }
+  }
+  return criteria;
+}
+
 export const exportCalendar =
   (serviceId: AdspId, directory: ServiceDirectory): RequestHandler =>
   async (req, res, next) => {
@@ -156,19 +169,7 @@ export const exportCalendar =
       const calendar: CalendarEntity = req[CALENDAR_KEY];
       const { top: topValue, after, filename, includeAttendees, criteria: criteriaValue } = req.query;
       const top = topValue ? parseInt(topValue as string) : 10;
-      const criteria = criteriaValue ? JSON.parse(criteriaValue as string) : null;
-      if (criteria?.startsAfter) {
-        criteria.startsAfter = parseServiceDateTime(criteria.startsAfter, 'criteria.startsAfter');
-      }
-      if (criteria?.endsBefore) {
-        criteria.endsBefore = parseServiceDateTime(criteria.endsBefore, 'criteria.endsBefore');
-      }
-      if (criteria?.startsBefore) {
-        criteria.startsBefore = parseServiceDateTime(criteria.startsBefore, 'criteria.startsBefore');
-      }
-      if (criteria?.endsAfter) {
-        criteria.endsAfter = parseServiceDateTime(criteria.endsAfter, 'criteria.endsAfter');
-      }
+      const criteria = parseEventCriteria(criteriaValue as string);
 
       const { results } = await calendar.getEvents(user, top, after as string, criteria);
       if (includeAttendees === 'true') {
@@ -224,22 +225,7 @@ export function getCalendarEvents(apiId: AdspId): RequestHandler {
       } = req.query;
       const hasRange = fromValue != null || toValue != null;
 
-      const criteria = criteriaValue ? JSON.parse(criteriaValue as string) : null;
-      if (criteria?.startsAfter) {
-        criteria.startsAfter = parseServiceDateTime(criteria.startsAfter, 'criteria.startsAfter');
-      }
-      if (criteria?.endsBefore) {
-        criteria.endsBefore = parseServiceDateTime(criteria.endsBefore, 'criteria.endsBefore');
-      }
-      if (criteria?.startsBefore) {
-        criteria.startsBefore = parseServiceDateTime(criteria.startsBefore, 'criteria.startsBefore');
-      }
-      if (criteria?.endsAfter) {
-        criteria.endsAfter = parseServiceDateTime(criteria.endsAfter, 'criteria.endsAfter');
-      }
-      if (criteria?.activeOn) {
-        criteria.activeOn = parseServiceDateTime(criteria.activeOn, 'criteria.activeOn');
-      }
+      const criteria = parseEventCriteria(criteriaValue as string);
 
       if (hasRange) {
         if (fromValue == null || toValue == null) {
@@ -527,7 +513,7 @@ export const deleteEventAttendee =
 
 export const calendarEventBodySchema: Schema = {
   start: { isISO8601: true },
-  end: { isISO8601: true },
+  end: { optional: { options: { nullable: true } }, isISO8601: true },
   name: { isString: true, isLength: { options: { min: 1, max: 50 } } },
   description: { optional: true, isString: true },
   isPublic: { optional: true, isBoolean: true },
@@ -612,6 +598,11 @@ export const createCalendarRouter = ({
   router.get(
     '/calendars/:name/export',
     validateNameHandler,
+    createValidationHandler(
+      topQueryValidator(),
+      criteriaQueryValidator(),
+      query('includeAttendees').optional().isBoolean(),
+    ),
     getCalendar(tenantService),
     exportCalendar(serviceId, directory),
   );
@@ -620,7 +611,8 @@ export const createCalendarRouter = ({
     '/calendars/:name/events',
     validateNameHandler,
     createValidationHandler(
-      query('criteria').optional().isJSON(),
+      topQueryValidator(),
+      criteriaQueryValidator(),
       query('includeAttendees').optional().isBoolean(),
       query('from').optional().isISO8601(),
       query('to').optional().isISO8601(),

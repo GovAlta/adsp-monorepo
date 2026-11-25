@@ -10,6 +10,7 @@ describe('SharePointPushRetryService', () => {
   const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
   const now = new Date('2026-11-19T12:00:00Z');
   const delays = [60, 300];
+  const pdfUrn = 'urn:ads:platform:file-service:v1:/files/pdf-1';
 
   const logger = { debug: jest.fn(), info: jest.fn(), warn: jest.fn(), error: jest.fn() } as unknown as Logger;
   const client = { push: jest.fn() };
@@ -78,7 +79,7 @@ describe('SharePointPushRetryService', () => {
       await service.push(aForm(), aSubmission());
 
       expect(Object.keys(repository.create.mock.calls[0][0]).sort()).toEqual(
-        ['attempts', 'formId', 'id', 'nextAttemptAt', 'submissionId', 'tenantId'].sort(),
+        ['attempts', 'formId', 'id', 'nextAttemptAt', 'submissionId', 'submissionPdfFileId', 'tenantId'].sort(),
       );
     });
 
@@ -113,10 +114,28 @@ describe('SharePointPushRetryService', () => {
             formId: 'form-1',
             submissionId: 'submission-1',
             destinationId: 'hr-intake',
+            part: 'submission',
             errorCode: 'credential-not-set',
             attempts: 1,
           },
         }),
+      );
+    });
+
+    it('stores the PDF file ID with a PDF push and passes it on', async () => {
+      await service.push(aForm(), aSubmission(), pdfUrn);
+
+      expect(repository.create).toHaveBeenCalledWith(expect.objectContaining({ submissionPdfFileId: pdfUrn }));
+      expect(client.push).toHaveBeenCalledWith(aForm(), aSubmission(), pdfUrn);
+    });
+
+    it('sends the event for the submission PDF when a PDF push gives up', async () => {
+      client.push.mockResolvedValue(failure('file:access-denied', false));
+
+      await service.push(aForm(), aSubmission(), pdfUrn);
+
+      expect(eventService.send).toHaveBeenCalledWith(
+        expect.objectContaining({ payload: expect.objectContaining({ part: 'submission-pdf' }) }),
       );
     });
 
@@ -167,7 +186,7 @@ describe('SharePointPushRetryService', () => {
 
       expect(formRepository.get).toHaveBeenCalledWith(tenantId, 'form-1');
       expect(submissionRepository.get).toHaveBeenCalledWith(tenantId, 'submission-1', 'form-1');
-      expect(client.push).toHaveBeenCalledWith(aForm(), aSubmission());
+      expect(client.push).toHaveBeenCalledWith(aForm(), aSubmission(), undefined);
       expect(repository.delete).toHaveBeenCalledWith('push-1');
       expect(eventService.send).not.toHaveBeenCalled();
     });
@@ -257,7 +276,15 @@ describe('SharePointPushRetryService', () => {
       await service.retryDue();
 
       expect(submissionRepository.get).not.toHaveBeenCalled();
-      expect(client.push).toHaveBeenCalledWith(aForm(), undefined);
+      expect(client.push).toHaveBeenCalledWith(aForm(), undefined, undefined);
+    });
+
+    it('retries a PDF push with the stored PDF file ID', async () => {
+      repository.claimDue.mockResolvedValueOnce(aPush({ submissionPdfFileId: pdfUrn }));
+
+      await service.retryDue();
+
+      expect(client.push).toHaveBeenCalledWith(aForm(), aSubmission(), pdfUrn);
     });
 
     it('keeps the push for a later run when the retry cannot be processed', async () => {

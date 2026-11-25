@@ -22,6 +22,11 @@ interface DriveItem {
   size: number;
 }
 
+interface LibraryDrive {
+  id?: string;
+  driveType?: string;
+}
+
 const encodeSegment = (value: string) => encodeURIComponent(value).replace(/%2C/gi, ',');
 
 const toUploadedFile = ({ id, name, webUrl, size }: DriveItem): UploadedFile => ({ id, name, webUrl, size });
@@ -36,21 +41,46 @@ export class GraphFileClient {
     this.chunkSize = Math.max(CHUNK_SIZE_UNIT, Math.floor(chunkSize / CHUNK_SIZE_UNIT) * CHUNK_SIZE_UNIT);
   }
 
-  private itemPath(siteId: string, folder: string, filename: string): string {
-    return `${this.folderPath(siteId, folder)}/${encodeURIComponent(filename)}:`;
+  private itemPath(siteId: string, folder: string, filename: string, driveId?: string): string {
+    return `${this.folderPath(siteId, folder, driveId)}/${encodeURIComponent(filename)}:`;
   }
 
-  private folderPath(siteId: string, folder: string): string {
-    return `${this.graphUrl.replace(/\/$/, '')}/sites/${encodeSegment(siteId)}/drive/root:/${encodeURIComponent(folder)}`;
+  private get baseUrl(): string {
+    return this.graphUrl.replace(/\/$/, '');
+  }
+
+  // Without a drive ID, files go to the site's default document library.
+  private folderPath(siteId: string, folder: string, driveId?: string): string {
+    const drive = driveId ? `drives/${encodeSegment(driveId)}` : `sites/${encodeSegment(siteId)}/drive`;
+    return `${this.baseUrl}/${drive}/root:/${encodeURIComponent(folder)}`;
   }
 
   private headers(token: string) {
     return { Authorization: `Bearer ${token}` };
   }
 
-  async getFolderUrl(token: string, siteId: string, folder: string): Promise<string> {
+  // Graph answers an ordinary list's drive request with an empty drive rather than an error.
+  async getLibraryDriveId(token: string, siteId: string, libraryId: string): Promise<string> {
+    const url = `${this.baseUrl}/sites/${encodeSegment(siteId)}/lists/${encodeSegment(libraryId)}/drive`;
+    let drive: LibraryDrive;
+    try {
+      const { data } = await requestWithRetry(() => axios.get<LibraryDrive>(url, { headers: this.headers(token) }));
+      drive = data;
+    } catch (err) {
+      if (err instanceof SharePointError && err.errorCode === 'graph:itemNotFound') {
+        throw new SharePointError('document-library-not-found', false);
+      }
+      throw err;
+    }
+    if (!drive?.id || drive.driveType !== 'documentLibrary') {
+      throw new SharePointError('not-a-document-library', false);
+    }
+    return drive.id;
+  }
+
+  async getFolderUrl(token: string, siteId: string, folder: string, driveId?: string): Promise<string> {
     const { data } = await requestWithRetry(() =>
-      axios.get<{ webUrl: string }>(this.folderPath(siteId, folder), {
+      axios.get<{ webUrl: string }>(this.folderPath(siteId, folder, driveId), {
         headers: this.headers(token),
         params: { $select: 'webUrl' },
       }),
@@ -65,8 +95,9 @@ export class GraphFileClient {
     filename: string,
     size: number,
     stream: Readable,
+    driveId?: string,
   ): Promise<UploadedFile> {
-    const path = this.itemPath(siteId, folder, filename);
+    const path = this.itemPath(siteId, folder, filename, driveId);
     try {
       return size <= SIMPLE_UPLOAD_LIMIT
         ? await this.simpleUpload(token, path, size, stream)

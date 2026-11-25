@@ -1,5 +1,5 @@
 import { AdspId, AssertRole, UnauthorizedUserError, User, isAllowedUser } from '@abgov/adsp-service-sdk';
-import { New, Results } from '@core-services/core-common';
+import { InvalidOperationError, New, Results } from '@core-services/core-common';
 import { TopicRepository } from '../repository';
 import { Comment, CommentCriteria, Topic } from '../types';
 import { TopicTypeEntity } from './type';
@@ -37,7 +37,7 @@ export class TopicEntity implements Topic {
     this.resourceId = topic.resourceId;
     this.name = topic.name;
     this.description = topic.description;
-    this.securityClassification = type.securityClassification;
+    this.securityClassification = type?.securityClassification;
     this.commenters = topic.commenters || [];
     this.requiresAttention = false;
 
@@ -66,7 +66,7 @@ export class TopicEntity implements Topic {
       this.commenters = commenters;
     }
 
-    return await this.repository.save(this);
+    return await this.save();
   }
 
   public async setRequiresAttention(user: User, requiresAttention: boolean) {
@@ -78,11 +78,19 @@ export class TopicEntity implements Topic {
     if (this.requiresAttention !== requiresAttention) {
       this.requiresAttention = requiresAttention;
 
-      const result = await this.repository.save(this);
+      const result = await this.save();
       set = result.requiresAttention === requiresAttention;
     }
 
     return set;
+  }
+
+  // A topic whose type is no longer configured can still be read, but can't be saved: the record stores the type ID.
+  private async save(): Promise<TopicEntity> {
+    if (!this.type) {
+      throw new InvalidOperationError("The topic's type is no longer configured.");
+    }
+    return await this.repository.save(this);
   }
 
   @AssertRole('delete topic', [ServiceRoles.Admin, ServiceRoles.TopicSetter], null, true)

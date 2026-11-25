@@ -44,8 +44,8 @@ Two roles of other platform services also apply:
 Topic types, topics, and comments all belong to one tenant.
 
 - **Tenant users and service accounts** always act on the tenant of their token. Any `tenantId` query parameter is ignored.
-- **Core (platform) users and service accounts** have no tenant of their own, so they must set the `tenantId` query parameter (for example, `?tenantId=urn:ads:platform:tenant-service:v2:/tenants/{id}`) on every request. A value that isn't a tenant URN responds `400`. Only `GET /topic-types` handles a missing tenant, by returning just the platform topic types; other endpoints fail without a clear error, so always include it.
-- **Topic types** combine *platform* types (configured by ADSP for all tenants) with the tenant's own types. A tenant type with the same ID as a platform type replaces it. Topics can use either. `GET /topic-types` returns them separately as `tenant` and `core`, while `GET`, `PATCH`, and `DELETE /topic-types/{topicTypeId}` act only on the tenant's own types, so platform types respond `404` there.
+- **Core (platform) users and service accounts** have no tenant of their own, so they must set the `tenantId` query parameter (for example, `?tenantId=urn:ads:platform:tenant-service:v2:/tenants/{id}`) on every request. A value that isn't a tenant URN responds `400`. Only `GET /topic-types` handles a missing tenant, by returning just the platform topic types; every other endpoint responds `400` without it.
+- **Topic types** combine *platform* types (configured by ADSP for all tenants) with the tenant's own types. A tenant type with the same ID as a platform type replaces it. Topics can use either. `GET /topic-types` returns them separately as `tenant` and `core`, `GET /topic-types/{topicTypeId}` finds both (the tenant type first), while `PATCH` and `DELETE` act only on the tenant's own types, so platform types respond `404` there.
 - **Isolation.** A topic or comment ID from another tenant responds `404`, not `403`, so callers can't tell whether it exists.
 - **Role scope.** Roles in a topic type's `adminRoles`, `commenterRoles`, and `readerRoles`, and the comment-admin role for comments, must be held in the topic's tenant. The comment-admin and topic-setter roles grant topic type and topic management, and reading topics, as core roles too. `GET /comments` accepts only tenant roles.
 
@@ -110,7 +110,7 @@ Reading topics and comments is not audited. Topic type changes made directly in 
 
 ## Code examples
 ### Create a topic type
-Users or service accounts with the comment-admin or topic-setter role can create topic types for their tenant. The new type's commenter roles are set with `writeRoles`, and it has no admin roles until you update it. The service responds `409` if a type with the ID or name already exists.
+Users or service accounts with the comment-admin or topic-setter role can create topic types for their tenant. Set `adminRoles`, `readerRoles` and `commenterRoles` in the request; `readRoles` and `writeRoles` are still accepted as older names for reader and commenter roles. The service responds `409` if a type with the ID or name already exists.
 
 ```typescript
 const response = await fetch('https://comment-service.adsp.alberta.ca/comment/v1/topic-types', {
@@ -122,12 +122,13 @@ const response = await fetch('https://comment-service.adsp.alberta.ca/comment/v1
   body: JSON.stringify({
     id: 'case-notes',
     name: 'Case notes',
+    adminRoles: ['case-supervisor'],
     readerRoles: ['case-auditor'],
-    writeRoles: ['case-worker'],
+    commenterRoles: ['case-worker'],
   }),
 });
 
-const { id, name, readerRoles, commenterRoles } = await response.json();
+const { id, name, adminRoles, readerRoles, commenterRoles } = await response.json();
 ```
 
 ### Update the roles of a topic type

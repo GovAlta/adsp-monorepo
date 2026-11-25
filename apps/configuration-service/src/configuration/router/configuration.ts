@@ -73,11 +73,11 @@ const getDefinition = async (
   repository: ConfigurationRepository,
   namespace: string,
   name: string,
-  tenantId?: AdspId
+  tenantId?: AdspId,
 ): Promise<ConfigurationDefinition> => {
   const core = await repository.get<ConfigurationDefinitions>(
     configurationServiceId.namespace,
-    configurationServiceId.service
+    configurationServiceId.service,
   );
 
   let result = resolveDefinition(core, namespace, name);
@@ -85,7 +85,7 @@ const getDefinition = async (
     const tenant = await repository.get<ConfigurationDefinitions>(
       configurationServiceId.namespace,
       configurationServiceId.service,
-      tenantId
+      tenantId,
     );
     result = resolveDefinition(tenant, namespace, name);
   }
@@ -93,14 +93,22 @@ const getDefinition = async (
   return result;
 };
 
+const parseTenantId = (value: string): AdspId => {
+  try {
+    return AdspId.parse(value);
+  } catch (err) {
+    throw new InvalidOperationError(`Tenant ID '${value}' is not valid.`);
+  }
+};
+
 export const getTenantId = (req: Request): AdspId => {
   if (!req.isAuthenticated || !req.user) {
     if (req.query?.tenant) {
-      return AdspId.parse(req.query.tenant as string);
+      return parseTenantId(req.query.tenant as string);
     }
 
     if (req.query?.tenantId) {
-      return AdspId.parse(req.query.tenantId as string);
+      return parseTenantId(req.query.tenantId as string);
     }
   }
 
@@ -143,7 +151,7 @@ export function getConfigurationEntity(
   repository: ConfigurationRepository,
   rateLimitHandler: RateLimitRequestHandler,
   loadDefinition: boolean = true,
-  requestCore = (_req: Request): boolean => false
+  requestCore = (_req: Request): boolean => false,
 ): RequestHandler {
   return async (req, res, next) => {
     try {
@@ -224,12 +232,15 @@ export function findConfiguration(apiId: AdspId, repository: ConfigurationReposi
       const criteria = criteriaValue ? JSON.parse(criteriaValue as string) : {};
 
       if (
-        !isAllowedUser(user, tenantId, ConfigurationServiceRoles.ConfigurationAdmin) &&
         !isAllowedUser(
           user,
           tenantId,
-          [ConfigurationServiceRoles.ConfiguredService, ExportServiceRoles.ExportJob],
-          true
+          [
+            ConfigurationServiceRoles.ConfigurationAdmin,
+            ConfigurationServiceRoles.ConfiguredService,
+            ExportServiceRoles.ExportJob,
+          ],
+          true,
         )
       ) {
         throw new UnauthorizedUserError('find configuration', user);
@@ -243,7 +254,7 @@ export function findConfiguration(apiId: AdspId, repository: ConfigurationReposi
           registeredIdEquals: registeredId as string,
         },
         top,
-        after as string
+        after as string,
       );
 
       const results = [];
@@ -335,7 +346,7 @@ export const patchConfigurationRevision =
             tenant: entity.tenantId?.toString(),
             context: 'configuration-router',
             user: `${user.name} (ID: ${user.id})`,
-          }
+          },
         );
 
         end();
@@ -367,7 +378,7 @@ export const patchConfigurationRevision =
             logger,
             updated.namespace,
             updated.name,
-            updated.latest?.configuration
+            updated.latest?.configuration,
           );
 
           eventService.send(
@@ -383,8 +394,8 @@ export const patchConfigurationRevision =
                 operation: request.operation,
                 data: updateData,
               },
-              sizeBytes
-            )
+              sizeBytes,
+            ),
           );
         }
 
@@ -430,7 +441,7 @@ export const getActiveRevision =
             tenant: configuration.tenantId?.toString(),
             context: 'configuration-router',
             user: `${user.name} (ID: ${user.id})`,
-          }
+          },
         );
       } else {
         //If this an anonymous user, just log the tenant as there will be no user context information
@@ -470,7 +481,7 @@ export const configurationOperations =
               logger,
               updated.namespace,
               updated.name,
-              updated.latest?.configuration
+              updated.latest?.configuration,
             );
 
             eventService.send(
@@ -481,8 +492,8 @@ export const configurationOperations =
                 updated.name,
                 updated.latest?.created.toISOString(),
                 updated.latest?.revision,
-                sizeBytes
-              )
+                sizeBytes,
+              ),
             );
           }
 
@@ -493,7 +504,7 @@ export const configurationOperations =
               tenant: updated.tenantId?.toString(),
               context: 'configuration-router',
               user: `${user.name} (ID: ${user.id})`,
-            }
+            },
           );
           break;
         }
@@ -521,8 +532,8 @@ export const configurationOperations =
                 configuration.namespace,
                 configuration.name,
                 newRevision.revision,
-                oldRevision?.revision
-              )
+                oldRevision?.revision,
+              ),
             );
 
             logger.info(
@@ -532,7 +543,7 @@ export const configurationOperations =
                 tenant: configuration.tenantId?.toString(),
                 context: 'configuration-router',
                 user: `${user.name} (ID: ${user.id})`,
-              }
+              },
             );
           } else {
             logger.info(
@@ -542,7 +553,7 @@ export const configurationOperations =
                 tenant: configuration.tenantId?.toString(),
                 context: 'configuration-router',
                 user: `${user.name} (ID: ${user.id})`,
-              }
+              },
             );
           }
 
@@ -564,7 +575,7 @@ export function deleteConfiguration(
   apiId: AdspId,
   logger: Logger,
   eventService: EventService,
-  auditService: AuditService
+  auditService: AuditService,
 ): RequestHandler {
   return async (req, res, next) => {
     try {
@@ -580,7 +591,7 @@ export function deleteConfiguration(
       if (deleted) {
         auditConfiguration(auditService, logger, ConfigurationDeletedAuditAction, user, configuration);
         eventService.send(
-          configurationDeleted(apiId, user, configuration.tenantId, configuration.namespace, configuration.name)
+          configurationDeleted(apiId, user, configuration.tenantId, configuration.namespace, configuration.name),
         );
       }
 
@@ -590,7 +601,7 @@ export function deleteConfiguration(
           tenant: configuration.tenantId?.toString(),
           context: 'configuration-router',
           user: `${user.name} (ID: ${user.id})`,
-        }
+        },
       );
     } catch (err) {
       next(err);
@@ -604,7 +615,7 @@ export const getRevisions =
       const { criteria } = req.query;
       return criteria ? JSON.parse(criteria as string) : {};
     },
-    mapResults = (_req: Request, results: Results<ConfigurationRevision>): unknown => results
+    mapResults = (_req: Request, results: Results<ConfigurationRevision>): unknown => results,
   ): RequestHandler =>
   async (req, res, next) => {
     try {
@@ -646,8 +657,8 @@ export function createConfigurationRouter({
         namespace: { isString: true, matches: { options: /^[a-zA-Z0-9-_ ]{1,50}$/ } },
         name: { isString: true, matches: { options: /^[a-zA-Z0-9-_ ]{1,50}$/ } },
       },
-      ['params']
-    )
+      ['params'],
+    ),
   );
 
   router.get(
@@ -658,12 +669,17 @@ export function createConfigurationRouter({
         .isString()
         .matches(/^[a-zA-Z0-9-_ ]{1,50}$/),
       query('top').optional().isInt({ min: 1, max: 1000 }),
-      query('after').optional().isString(),
+      query('after')
+        .optional()
+        .isString()
+        .custom((val) => {
+          return !isNaN(decodeAfter(val));
+        }),
       query('includeActive').optional().isBoolean(),
-      query('registerIdEquals').optional().isBoolean(),
-      query('criteria').optional().isJSON()
+      query('registeredId').optional().isString(),
+      query('criteria').optional().isJSON(),
     ),
-    findConfiguration(apiId, configurationRepository)
+    findConfiguration(apiId, configurationRepository),
   );
 
   router.get(
@@ -675,9 +691,9 @@ export function createConfigurationRouter({
       configurationRepository,
       rateLimitHandler,
       true,
-      (req) => req.query.core !== undefined
+      (req) => req.query.core !== undefined,
     ),
-    getConfigurationWithActive(apiId)
+    getConfigurationWithActive(apiId),
   );
 
   router.get(
@@ -690,9 +706,9 @@ export function createConfigurationRouter({
       configurationRepository,
       rateLimitHandler,
       true,
-      (req) => req.query.core !== undefined
+      (req) => req.query.core !== undefined,
     ),
-    getConfiguration(apiId, (_, configuration) => configuration.latest?.configuration || {})
+    getConfiguration(apiId, (_, configuration) => configuration.latest?.configuration || {}),
   );
 
   router.patch(
@@ -701,7 +717,7 @@ export function createConfigurationRouter({
     validateNamespaceNameHandler,
     createValidationHandler(body('operation').isString().isIn([OPERATION_DELETE, OPERATION_UPDATE, OPERATION_REPLACE])),
     getConfigurationEntity(serviceId, configurationRepository, rateLimitHandler),
-    patchConfigurationRevision(apiId, logger, eventService, auditService)
+    patchConfigurationRevision(apiId, logger, eventService, auditService),
   );
 
   router.post(
@@ -711,10 +727,10 @@ export function createConfigurationRouter({
     createValidationHandler(
       body('operation').isString().isIn([OPERATION_SET_ACTIVE_REVISION, OPERATION_CREATE_REVISION]),
       body('revision').optional().isNumeric(),
-      body('setActiveRevision').optional().isNumeric()
+      body('setActiveRevision').optional().isNumeric(),
     ),
     getConfigurationEntity(serviceId, configurationRepository, rateLimitHandler),
-    configurationOperations(apiId, logger, eventService, auditService)
+    configurationOperations(apiId, logger, eventService, auditService),
   );
 
   router.delete(
@@ -722,7 +738,7 @@ export function createConfigurationRouter({
     assertAuthenticatedHandler,
     validateNamespaceNameHandler,
     getConfigurationEntity(serviceId, configurationRepository, rateLimitHandler),
-    deleteConfiguration(apiId, logger, eventService, auditService)
+    deleteConfiguration(apiId, logger, eventService, auditService),
   );
 
   router.get(
@@ -737,10 +753,10 @@ export function createConfigurationRouter({
         .custom((val) => {
           return !isNaN(decodeAfter(val));
         }),
-      query('criteria').optional().isJSON()
+      query('criteria').optional().isJSON(),
     ),
     getConfigurationEntity(serviceId, configurationRepository, rateLimitHandler, true),
-    getRevisions()
+    getRevisions(),
   );
 
   router.get(
@@ -754,10 +770,10 @@ export function createConfigurationRouter({
         .isString()
         .custom((val) => {
           return !isNaN(decodeAfter(val));
-        })
+        }),
     ),
     getConfigurationEntity(serviceId, configurationRepository, rateLimitHandler, true),
-    getActiveRevision(logger)
+    getActiveRevision(logger),
   );
 
   router.get(
@@ -769,8 +785,8 @@ export function createConfigurationRouter({
         {
           revision: { isInt: { options: { min: 0 } } },
         },
-        ['params']
-      )
+        ['params'],
+      ),
     ),
     getConfigurationEntity(serviceId, configurationRepository, rateLimitHandler, true),
     getRevisions(
@@ -780,8 +796,8 @@ export function createConfigurationRouter({
           throw new NotFoundError('revision', req.params.revision);
         }
         return results[0]?.configuration;
-      }
-    )
+      },
+    ),
   );
 
   return router;

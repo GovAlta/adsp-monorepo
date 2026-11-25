@@ -46,7 +46,7 @@ REST endpoints are under `https://agent-service.adsp.alberta.ca/agent/v1` and re
 | Messages     | `POST /agents/{agentId}`                      | Any authenticated user, or one of the agent's `userRoles` when it has any |
 | Threads      | `DELETE /agents/{agentId}/threads/{threadId}` | Any authenticated user, or one of the agent's `userRoles` when it has any |
 
-`POST /agents/{agentId}` responds with the complete reply and starts a new thread for every request. Streaming replies, multi-turn conversations, and workspaces are only available over [socket.io](#socketio-interface). socket.io isn't a REST transport, so it isn't in the API documentation; its events are described below.
+`POST /agents/{agentId}` responds with the complete reply and starts a new thread for every request. Each message needs `content` as a string or an array of parts; anything else responds `400` without calling the model, the same as over socket.io. Streaming replies, multi-turn conversations, and workspaces are only available over [socket.io](#socketio-interface). socket.io isn't a REST transport, so it isn't in the API documentation; its events are described below.
 
 Agents are configured through the [configuration service](configuration-service.md); there are no agent-service endpoints for changing them.
 
@@ -397,6 +397,21 @@ Each model call gets the agent's instructions followed by this context as text; 
 | -------------------------------------- | ------- | ----------------------------------------------------------------- |
 | `AGENT_NOTIFICATION_LAST_MESSAGES`     | `8`     | Messages of the thread the agent reads                            |
 | `AGENT_NOTIFICATION_MAX_OUTPUT_TOKENS` | `6000`  | Longest reply the model may write in one call, including the body |
+
+#### PDF template agent
+
+`pdfGenerationAgent` edits the PDF template open in the tenant admin PDF Template Editor; the client sends `{ pdfDefinitionId }` as the message context. To keep each model call small:
+
+- Each call gets short instructions and the saved template itself, so the agent edits and saves in one call instead of first calling `pdfConfigurationRetrievalTool`. The guidance on files from the user (design references and uploaded images) is added only while a file is part of the conversation.
+- Long data URIs, such as the logo in the default header and footer, and long comments are shown to the model as placeholders like `[[elided-asset-1]]`. `pdfConfigurationUpdateTool` puts the original content back when it saves, and rejects a save that uses a placeholder the template does not have. Test data wrapped in a `data` object is saved at the root, where the template reads it.
+- The model gets a short note for each save, while the client still gets the saved template in the tool result. Template copies from earlier turns are replaced with notes in later requests (the thread keeps them), and files from turns before the previous one are left out.
+- A save is followed by a short closing reply that needs neither the template nor the tools.
+- It keeps its own short history without observational memory.
+
+| Variable                      | Default | Meaning                                       |
+| ----------------------------- | ------- | --------------------------------------------- |
+| `AGENT_PDF_LAST_MESSAGES`     | `8`     | Messages of the thread the agent reads        |
+| `AGENT_PDF_MAX_OUTPUT_TOKENS` | `10000` | Longest reply the model may write in one call |
 
 ### Delete a thread
 

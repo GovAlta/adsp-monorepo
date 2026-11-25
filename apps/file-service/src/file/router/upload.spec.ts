@@ -1,10 +1,11 @@
 import { adspId } from '@abgov/adsp-service-sdk';
 import { InvalidOperationError, NotFoundError } from '@core-services/core-common';
-import { Request } from 'express';
+import { NextFunction, Request, Response } from 'express';
+import * as multer from 'multer';
 import { Logger } from 'winston';
 import { FileEntity, FileTypeEntity } from '../model';
 import { FileType } from '../types';
-import { FileStorageEngine } from './upload';
+import { FileStorageEngine, uploadSingleFile } from './upload';
 
 jest.mock('../../utils/fileTypeDetector', () => ({
   FileTypeDetector: jest.fn().mockImplementation(() => ({
@@ -146,6 +147,23 @@ describe('upload', () => {
 
       await engine._handleFile(req as unknown as Request, multerFile as Express.Multer.File, cb);
       expect(cb).toHaveBeenCalledWith(expect.any(InvalidOperationError));
+    });
+  });
+
+  describe('uploadSingleFile', () => {
+    it('maps file size errors to 413', () => {
+      const upload = {
+        single: jest.fn(() => (_req: Request, _res: Response, callback: NextFunction) =>
+          callback(new multer.MulterError('LIMIT_FILE_SIZE')),
+        ),
+      } as unknown as multer.Multer;
+      const next = jest.fn();
+
+      uploadSingleFile(upload)({} as Request, {} as Response, next);
+
+      expect(next).toHaveBeenCalledWith(
+        expect.objectContaining({ extra: expect.objectContaining({ statusCode: 413 }) }),
+      );
     });
   });
 

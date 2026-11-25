@@ -15,7 +15,6 @@ import {
   ADSP_CLI_CI_CLIENT_SCOPE_MAPPINGS,
   ADSP_CLI_CLIENT_SCOPE_MAPPINGS,
   ADSP_MCP_CLIENT_ID,
-  ADSP_MCP_CLIENT_SCOPE_MAPPINGS,
   createAdspCliAdminClientScopeConfig,
   createAdspCliCiClientConfig,
   createAdspCliPublicClientConfig,
@@ -541,7 +540,7 @@ export class KeycloakRealmServiceImpl implements RealmService {
     await this.createTenantAdminComposite(client, serviceClients, realm, tenantAdminRole);
     await this.grantAdspCliAdminScopeMapping(client, realm);
     await this.grantClientScopeMappings(client, realm, 'adsp-cli', ADSP_CLI_CLIENT_SCOPE_MAPPINGS);
-    await this.grantClientScopeMappings(client, realm, ADSP_MCP_CLIENT_ID, ADSP_MCP_CLIENT_SCOPE_MAPPINGS);
+    await this.grantClientScopeMappings(client, realm, ADSP_MCP_CLIENT_ID, []);
 
     const flowAlias = await this.createAuthenticationFlow(client, realm);
     await this.createCoreIdentityProvider(client, brokerClientSecret, brokerClient, flowAlias, realm);
@@ -657,6 +656,7 @@ export class KeycloakRealmServiceImpl implements RealmService {
     } catch (error) {
       const errMessage = `Failed to find user id by email ${email} in ${realm} due to ${error.message}`;
       this.logger.error(errMessage);
+      throw new Error(`Failed to find user id in ${realm}.`);
     }
   }
 

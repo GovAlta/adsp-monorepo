@@ -36,6 +36,10 @@ export interface SharePointDestination {
   idempotencyFields?: string[];
   enabled?: boolean;
   folderLinkField?: string;
+  // List ID of the document library for uploaded files; the site's default library when unset.
+  documentFilesLibraryId?: string;
+  // Setup creates a document library with this name when there is no library ID yet.
+  documentFilesLibraryName?: string;
   detailLists?: DetailList[];
 }
 

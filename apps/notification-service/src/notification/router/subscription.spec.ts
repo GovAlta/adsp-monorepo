@@ -122,6 +122,37 @@ describe('subscription router', () => {
       });
       expect(router).toBeTruthy();
     });
+
+    // CS-5720: core users may omit tenantId, so tenant-scoped subscription routes must reject with 400 first.
+    it.each([
+      ['get', '/types/:type/subscriptions'],
+      ['post', '/types/:type/subscriptions'],
+      ['post', '/types/:type/subscriptions/:subscriber'],
+      ['delete', '/types/:type/subscriptions/:subscriber/criteria'],
+      ['get', '/types/:type/subscriptions/:subscriber'],
+      ['delete', '/types/:type/subscriptions/:subscriber'],
+      ['get', '/subscribers'],
+      ['post', '/subscribers'],
+      ['get', '/subscribers/my-subscriber'],
+    ])('%s %s asserts tenant context first', (method, path) => {
+      const router = createSubscriptionRouter({
+        serviceId,
+        logger: loggerMock,
+        subscriptionRepository: repositoryMock,
+        eventService: eventServiceMock,
+        auditor: auditorMock,
+        verifyService: verifyServiceMock,
+        tenantService: tenantServiceMock,
+        directory: null,
+        tokenProvider: null,
+        configurationService: null,
+      });
+      const layer = router.stack.find(
+        (l) => l.route?.path === path && (l.route as unknown as { methods: Record<string, boolean> }).methods[method]
+      );
+      const [first] = (layer.route as unknown as { stack: { handle: unknown }[] }).stack;
+      expect(first.handle).toBe(assertHasTenant);
+    });
   });
 
   describe('assertHasTenant', () => {

@@ -23,6 +23,12 @@ import { TenantService, EventService, ConfigurationService } from '@abgov/adsp-s
 import { applicationStatusToStarted, applicationStatusToStopped, applicationStatusChange } from '../events';
 import { ApplicationRepo } from './ApplicationRepo';
 import { WebhookRepo } from './WebhookRepo';
+import {
+  assertTenantUser,
+  validateApplicationStatus,
+  validateCreateApplication,
+  validateUpdateApplication,
+} from './validation';
 import { monitoredServiceDown, monitoredServiceUp } from '../events';
 import {
   ApplicationCreatedAuditAction,
@@ -510,12 +516,13 @@ export function createServiceStatusRouter({
   const webhookRepo = new WebhookRepo(tokenProvider, configurationService);
 
   // Get the service for the tenant
-  router.get('/applications', assertAuthenticatedHandler, getApplications(logger, applicationRepo));
+  router.get('/applications', assertAuthenticatedHandler, assertTenantUser, getApplications(logger, applicationRepo));
 
   // Enable the service
   router.patch(
     '/applications/:appKey/enable',
     assertAuthenticatedHandler,
+    assertTenantUser,
     assertStatusAdmin,
     enableApplication(logger, applicationRepo, auditService),
   );
@@ -524,6 +531,7 @@ export function createServiceStatusRouter({
   router.patch(
     '/applications/:appKey/disable',
     assertAuthenticatedHandler,
+    assertTenantUser,
     assertStatusAdmin,
     disableApplication(logger, applicationRepo, auditService),
   );
@@ -531,45 +539,59 @@ export function createServiceStatusRouter({
   router.post(
     '/applications',
     assertAuthenticatedHandler,
+    assertTenantUser,
     assertStatusAdmin,
+    validateCreateApplication(ApplicationRepo.getApplicationKey),
     createNewApplication(logger, applicationRepo, tenantService, auditService),
   );
   router.put(
     '/applications/:appKey',
     assertAuthenticatedHandler,
+    assertTenantUser,
     assertStatusAdmin,
+    validateUpdateApplication,
     updateApplication(logger, applicationRepo, auditService),
   );
   router.delete(
     '/applications/:appKey',
     assertAuthenticatedHandler,
+    assertTenantUser,
     assertStatusAdmin,
     deleteApplication(logger, applicationRepo, eventService, auditService),
   );
   router.patch(
     '/applications/:appKey/status',
     assertAuthenticatedHandler,
+    assertTenantUser,
     assertStatusAdmin,
+    validateApplicationStatus,
     updateApplicationStatus(logger, applicationRepo, eventService, auditService),
   );
 
   router.patch(
     '/applications/:appKey/toggle',
     assertAuthenticatedHandler,
+    assertTenantUser,
     assertStatusAdmin,
     toggleApplication(logger, applicationRepo, eventService, auditService),
   );
 
   router.get(
     '/applications/:appKey/endpoint-status-entries',
+    assertTenantUser,
     getApplicationEntries(logger, applicationRepo, endpointStatusEntryRepository),
   );
 
-  router.get('/applications/endpoint-status-entries', getAllApplicationEntries(logger, endpointStatusEntryRepository));
+  router.get(
+    '/applications/endpoint-status-entries',
+    assertTenantUser,
+    getAllApplicationEntries(logger, endpointStatusEntryRepository),
+  );
 
   router.get(
     '/webhook/:id/test/:eventName',
     assertAuthenticatedHandler,
+    assertTenantUser,
     assertStatusAdmin,
     testWebhook(logger, webhookRepo, applicationRepo, eventService),
   );

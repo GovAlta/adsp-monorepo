@@ -152,6 +152,25 @@ describe('sharepoint', () => {
     expect(form.data).toEqual({ applicant: { name: 'Ada' } });
   });
 
+  describe('with the submission PDF', () => {
+    const pdfUrn = 'urn:ads:platform:file-service:v1:/files/pdf-1';
+
+    it('sends only the PDF and the row key, and asks for the existing row to be updated only', async () => {
+      await service.push(aForm(), aSubmission({ formFiles: { proof: fileUrn('f1') } }), pdfUrn);
+
+      expect(axiosMock.post).toHaveBeenCalledWith(
+        'http://sharepoint-service/sharepoint/v1/destinations/hr%20intake/files',
+        {
+          submissionId: 'submission-1',
+          files: [{ field: '_adsp.submissionPdf', fileId: pdfUrn }],
+          data: { _adsp: { key: 'submission-1', formId: 'form-1', submittedAt: '2026-11-16T12:00:00.000Z' } },
+          updateRowOnly: true,
+        },
+        expect.anything(),
+      );
+    });
+  });
+
   describe('failures', () => {
     it('reports the first failed file, retryable only when every failure is retryable', async () => {
       axiosMock.post.mockRejectedValueOnce(

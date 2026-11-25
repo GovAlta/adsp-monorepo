@@ -60,6 +60,28 @@ describe('export', () => {
   });
 
   describe('createExportJob', () => {
+    it('can call next with invalid operation without a tenant context', async () => {
+      const req = {
+        user: { id: 'core', isCore: true, roles: [ServiceRoles.Exporter] },
+        body: { resourceId: 'urn:ads:platform:task-service:v1:/tasks', format: 'csv' },
+      };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+
+      const handler = createExportJob(
+        serviceId,
+        loggerMock,
+        eventServiceMock,
+        fileServiceMock,
+        queueServiceMock,
+        repositoryMock,
+      );
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      expect(repositoryMock.create).not.toHaveBeenCalled();
+      expect(next).toHaveBeenCalledWith(expect.any(InvalidOperationError));
+    });
+
     it('can create handler', () => {
       const handler = createExportJob(
         serviceId,
@@ -67,7 +89,7 @@ describe('export', () => {
         eventServiceMock,
         fileServiceMock,
         queueServiceMock,
-        repositoryMock
+        repositoryMock,
       );
       expect(handler).toBeTruthy();
     });
@@ -104,7 +126,7 @@ describe('export', () => {
         eventServiceMock,
         fileServiceMock,
         queueServiceMock,
-        repositoryMock
+        repositoryMock,
       );
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ id: job.id, status: job.status }));
@@ -115,12 +137,13 @@ describe('export', () => {
           format: req.body.format,
           fileType: EXPORT_FILE,
           resourceId: req.body.resourceId,
-        })
+        }),
       );
       expect(eventServiceMock.send).toHaveBeenCalledWith(
         expect.objectContaining({
           name: ExportQueuedDefinition.name,
-        })
+          payload: expect.objectContaining({ filename: 'exported' }),
+        }),
       );
     });
 
@@ -139,7 +162,7 @@ describe('export', () => {
             getSource: jest.fn(() => ({
               exporterRoles: ['urn:ads:platform:test-service:test-exporter'],
             })),
-          })
+          }),
         ),
       };
 
@@ -162,7 +185,7 @@ describe('export', () => {
         eventServiceMock,
         fileServiceMock,
         queueServiceMock,
-        repositoryMock
+        repositoryMock,
       );
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ id: job.id, status: job.status }));
@@ -173,12 +196,12 @@ describe('export', () => {
           format: req.body.format,
           fileType: EXPORT_FILE,
           resourceId: req.body.resourceId,
-        })
+        }),
       );
       expect(eventServiceMock.send).toHaveBeenCalledWith(
         expect.objectContaining({
           name: ExportQueuedDefinition.name,
-        })
+        }),
       );
     });
 
@@ -207,7 +230,7 @@ describe('export', () => {
         eventServiceMock,
         fileServiceMock,
         queueServiceMock,
-        repositoryMock
+        repositoryMock,
       );
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(res.send).not.toHaveBeenCalled();
@@ -224,6 +247,7 @@ describe('export', () => {
           format: 'csv',
           resourceId: 'urn:ads:platform:test-service:v1:/tests',
           fileType: 'custom-type',
+          filename: 'custom-export',
         },
         getServiceConfiguration: jest.fn(() => Promise.resolve({ getSource: jest.fn() })),
       };
@@ -249,7 +273,7 @@ describe('export', () => {
         eventServiceMock,
         fileServiceMock,
         queueServiceMock,
-        repositoryMock
+        repositoryMock,
       );
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ id: job.id, status: job.status }));
@@ -260,12 +284,14 @@ describe('export', () => {
           format: req.body.format,
           fileType: req.body.fileType,
           resourceId: req.body.resourceId,
-        })
+          filename: req.body.filename,
+        }),
       );
       expect(eventServiceMock.send).toHaveBeenCalledWith(
         expect.objectContaining({
           name: ExportQueuedDefinition.name,
-        })
+          payload: expect.objectContaining({ filename: req.body.filename }),
+        }),
       );
     });
 
@@ -297,7 +323,7 @@ describe('export', () => {
         eventServiceMock,
         fileServiceMock,
         queueServiceMock,
-        repositoryMock
+        repositoryMock,
       );
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(res.send).not.toHaveBeenCalled();
@@ -329,7 +355,7 @@ describe('export', () => {
         eventServiceMock,
         fileServiceMock,
         queueServiceMock,
-        repositoryMock
+        repositoryMock,
       );
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(res.send).not.toHaveBeenCalled();
@@ -339,6 +365,18 @@ describe('export', () => {
   });
 
   describe('getExportJob', () => {
+    it('can call next with invalid operation without a tenant context', async () => {
+      const req = { user: { id: 'core', isCore: true, roles: [ServiceRoles.Exporter] }, params: { jobId: '123' } };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+
+      const handler = getExportJob(serviceId, repositoryMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      expect(repositoryMock.get).not.toHaveBeenCalled();
+      expect(next).toHaveBeenCalledWith(expect.any(InvalidOperationError));
+    });
+
     it('can create handler', () => {
       const handler = getExportJob(serviceId, repositoryMock);
       expect(handler).toBeTruthy();

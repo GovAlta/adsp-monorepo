@@ -6,6 +6,7 @@ import {
   DEMO_CLIENT_SECRET,
   DEMO_DETAIL_LIST_ID,
   DEMO_ENTRA_TENANT_ID,
+  DEMO_LIBRARY_ID,
   DEMO_LIST_ID,
   DEMO_SITE_ID,
   EXPIRED_CLIENT_ID,
@@ -341,6 +342,35 @@ describe('SharePoint mock server', () => {
       expect(
         new MockState(defaultSeed).findSite(DEMO_SITE_ID).lists.map(({ displayName }) => displayName),
       ).not.toContain('Only here');
+    });
+
+    it("answers a list's drive like Graph: the drive for a document library, empty for an ordinary list", async () => {
+      const auth = await bearer();
+      const driveOf = (listId: string) => request(app).get(`${listsPath}/${listId}/drive`).set('Authorization', auth);
+
+      const library = await driveOf(DEMO_LIBRARY_ID);
+      const ordinary = await driveOf(DEMO_LIST_ID);
+      const missing = await driveOf('missing');
+
+      expect(library.status).toBe(200);
+      expect(library.body).toMatchObject({ id: expect.any(String), driveType: 'documentLibrary' });
+      expect(ordinary.status).toBe(200);
+      expect(ordinary.body).toEqual({});
+      expect(missing.status).toBe(404);
+      expect(missing.body.error.code).toBe('itemNotFound');
+    });
+
+    it('creates a document library that has a drive', async () => {
+      const auth = await bearer();
+      const created = await request(app)
+        .post(listsPath)
+        .set('Authorization', auth)
+        .send({ displayName: 'Applicant uploads', list: { template: 'documentLibrary' } });
+
+      const drive = await request(app).get(`${listsPath}/${created.body.id}/drive`).set('Authorization', auth);
+
+      expect(created.status).toBe(201);
+      expect(drive.body).toMatchObject({ driveType: 'documentLibrary' });
     });
   });
 

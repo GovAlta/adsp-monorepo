@@ -85,11 +85,11 @@ Create, update, and delete requests return:
 - 502 if the configuration service is unavailable.
 
 ### Calendar event
-Calendar events represent a scheduled activity. Each event has a name (up to 50 characters), an optional description, and a start and end time; `end` is required when creating an event and can't be before `start`. An event can also have a `recordId` to link it to a record in another system, and a `context` object of properties that can be used as criteria to find it.
+Calendar events represent a scheduled activity. Each event has a name (up to 50 characters), an optional description, and a start time and an optional end time; `end` can't be before `start`. An event can also have a `recordId` to link it to a record in another system, and a `context` object of properties that can be used as criteria to find it.
 
 Events are private unless `isPublic` is `true`. Anyone, including anonymous users, can read the fields of a public event. Private events are only returned to callers with one of the calendar's roles or `calendar-admin` (see [Client roles](#client-roles)).
 
-Updates (`PATCH`) change only the properties in the request. `end`, `name`, `description`, and `context` can be changed but not cleared, and `recordId` can't be changed.
+Updates (`PATCH`) change only the properties in the request. `end`, `name`, `description`, and `context` can be changed but not cleared. `recordId` can be changed, and cleared by setting it to `null`.
 
 ### Recurring event
 An event can optionally repeat by including a `recurrence`. The model is a subset of the iCalendar (RFC 5545) recurrence rule:

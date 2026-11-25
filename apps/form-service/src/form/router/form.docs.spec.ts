@@ -49,6 +49,7 @@ describe('form routers documented behaviour', () => {
     find: jest.fn(),
     create: jest.fn(),
     updateIfPending: jest.fn(),
+    deleteAll: jest.fn(),
   };
   const eventServiceMock = { send: jest.fn() };
   const notificationServiceMock = {
@@ -930,12 +931,14 @@ describe('form routers documented behaviour', () => {
     };
     const { registration: _removed, ...withoutRegistration } = existing;
 
-    it('removes the registration settings from the latest revision', async () => {
+    it('removes the registration settings from the latest revision and deletes the access requests', async () => {
       axiosMock.get.mockResolvedValueOnce({ status: 200, data: existing });
+      registrationRepositoryMock.deleteAll.mockResolvedValueOnce(3);
 
       const res = await request(createApp(admin)).delete(url);
 
       expect(res.status).toBe(204);
+      expect(registrationRepositoryMock.deleteAll).toHaveBeenCalledWith(tenantId, 'restricted');
       expect(axiosMock.patch).toHaveBeenCalledWith(
         expect.stringContaining('v2/configuration/form-service/restricted'),
         { operation: 'REPLACE', configuration: withoutRegistration },

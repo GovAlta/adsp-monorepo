@@ -76,6 +76,12 @@ const assertUserCanPerform = (user: User, tenantId: AdspId, operation: string) =
   }
 };
 
+// Topic types, topics and comments belong to a tenant. Core users must set tenantId; without it the handlers would
+// read or write the platform (core) configuration and query across tenants.
+export const assertTenantContext: RequestHandler = (req, _res, next) => {
+  next(req.tenant?.id ? undefined : new InvalidOperationError('Tenant context is required.'));
+};
+
 type TopicResponse = Omit<Topic, 'tenantId' | 'type'> & { type: TopicTypeResponse; urn: string };
 function mapTopic(apiId: AdspId, topic: Topic): TopicResponse {
   return {
@@ -140,8 +146,11 @@ export function getTopicType(client: ConfigurationClient<TopicTypeConfiguration>
       const topicTypeId = req.params.topicTypeId;
 
       const types = await client.getTenantConfiguration(tenantId);
-
-      const type = types?.[topicTypeId];
+      // Platform types are listed alongside tenant types and can be used by topics, so they are readable by ID too.
+      // A tenant type takes precedence over a platform type with the same ID, as it does for topics.
+      const ownType = (config: TopicTypeConfiguration) =>
+        config && Object.prototype.hasOwnProperty.call(config, topicTypeId) ? config[topicTypeId] : undefined;
+      const type = ownType(types) ?? ownType(await client.getCoreConfiguration());
       if (!type) {
         throw new NotFoundError('topic type', topicTypeId);
       }
@@ -170,8 +179,9 @@ export function createTopicType(
       }
       assertUserCanPerform(user, tenantId, 'create topic type');
 
-      const { id, name, readRoles, readerRoles, writeRoles = [] } = req.body;
+      const { id, name, adminRoles, readRoles, readerRoles, commenterRoles, writeRoles } = req.body;
       const resolvedReaderRoles = readerRoles || readRoles || [];
+      const resolvedCommenterRoles = commenterRoles || writeRoles || [];
       const types = await req.getConfiguration<Record<string, TopicTypeEntity>, Record<string, TopicTypeEntity>>(
         tenantId,
       );
@@ -188,9 +198,9 @@ export function createTopicType(
       const topicType = {
         id,
         name,
-        adminRoles: [],
+        adminRoles: adminRoles || [],
         readerRoles: resolvedReaderRoles,
-        commenterRoles: writeRoles,
+        commenterRoles: resolvedCommenterRoles,
       };
 
       await axios.patch(
@@ -718,20 +728,26 @@ export function createTopicRouter({
   const router = Router();
 
   router.get('/topic-types', getTopicTypes(client));
+  router.use(['/topic-types/:topicTypeId', '/topics'], assertTenantContext);
   router.post(
     '/topic-types',
+    assertTenantContext,
     createValidationHandler(
       body('id')
         .isString()
         .isLength({ min: 1, max: 50 })
         .matches(/^[a-zA-Z0-9-_ ]{1,50}$/),
       body('name').isString().isLength({ min: 1, max: 50 }),
+      body('adminRoles').optional().isArray(),
+      body('adminRoles.*').optional().isString(),
       body('readRoles').optional().isArray(),
       body('readRoles.*').optional().isString(),
       body('readerRoles').optional().isArray(),
       body('readerRoles.*').optional().isString(),
+      body('commenterRoles').optional().isArray(),
+      body('commenterRoles.*').optional().isString(),
       body('writeRoles').optional().isArray(),
-      body('writerRoles.*').optional().isString(),
+      body('writeRoles.*').optional().isString(),
     ),
     createTopicType(apiId, logger, directory, client, tokenProvider, auditService),
   );
@@ -784,6 +800,7 @@ export function createTopicRouter({
         .custom((val) => {
           return !isNaN(decodeAfter(val));
         }),
+      query('criteria').optional().isString().isJSON().withMessage('criteria must be valid JSON'),
     ),
     getTopics(apiId, repository),
   );
@@ -793,7 +810,12 @@ export function createTopicRouter({
       body('typeId').isString().isLength({ min: 1, max: 50 }),
       body('name').isString().isLength({ min: 1, max: 50 }),
       body('description').optional().isString(),
-      body('securityClassification').optional().isString(),
+      body('securityClassification')
+        .not()
+        .exists()
+        .withMessage('securityClassification is set from the topic type and cannot be set on a topic.'),
+      body('commenters').optional().isArray(),
+      body('commenters.*').isString().isLength({ min: 1 }),
       body('resourceId').optional().isString().isLength({ min: 1, max: 1200 }),
     ),
     createTopic(apiId, logger, repository, eventService, auditService),
@@ -812,6 +834,7 @@ export function createTopicRouter({
       body('name').optional().isString().isLength({ min: 1, max: 50 }),
       body('description').optional().isString(),
       body('commenters').optional().isArray(),
+      body('commenters.*').isString().isLength({ min: 1 }),
     ),
     getTopic(repository),
     updateTopic(apiId, logger, eventService, auditService),
@@ -834,6 +857,7 @@ export function createTopicRouter({
         .custom((val) => {
           return !isNaN(decodeAfter(val));
         }),
+      query('criteria').optional().isString().isJSON().withMessage('criteria must be valid JSON'),
     ),
     getTopic(repository),
     getTopicComments(),

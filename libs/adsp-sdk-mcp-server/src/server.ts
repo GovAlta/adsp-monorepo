@@ -2,12 +2,14 @@ import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { CallToolRequestSchema, CallToolResult, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
 import { join, resolve } from 'path';
 import { performance } from 'perf_hooks';
-import { ApiSpecsRepository } from './api-specs/apiSpecsRepository';
+import { ApiSpecsRepository, readApiServiceIndex } from './api-specs/apiSpecsRepository';
 import { loadCapabilityCatalog } from './capabilities/catalog';
 import { DocsRepository } from './docs/docsRepository';
+import { SDK_REFERENCE } from './sdk-reference/reference';
 import { OFFLINE_ENDPOINT_INSTRUCTIONS, SERVER_INSTRUCTIONS } from './instructions';
 import { getMetrics, ToolErrorType } from './metrics';
-import { createApiTools } from './tools/registerApiTools';
+import { buildLinkIndex } from './tools/links';
+import { createApiTools, createEndpointQuery } from './tools/registerApiTools';
 import { createAppQuickstartTool } from './tools/registerAppQuickstartTool';
 import { createConfigurationSchemaTools } from './tools/registerConfigurationSchemaTool';
 import { isBusyResult } from './tools/liveToolLimit';
@@ -65,16 +67,25 @@ export function loadAdspMcpTools(options: CreateAdspMcpServerOptions = {}): Adsp
 
   const started = performance.now();
   const docs = new DocsRepository(docsRoot);
+  const apis = lazy(() => new ApiSpecsRepository(apiSpecsRoot));
+  const endpointQuery = createEndpointQuery(apis);
+  const links = lazy(() =>
+    buildLinkIndex({ docs, sdkSymbols: SDK_REFERENCE, apiServices: () => readApiServiceIndex(apiSpecsRoot) }),
+  );
   const tools = [
-    ...createFindServicesTool(lazy(() => loadCapabilityCatalog(capabilitiesPath))),
-    ...createDocsTools(docs),
-    ...createSdkTools(),
+    ...createFindServicesTool(
+      lazy(() => loadCapabilityCatalog(capabilitiesPath)),
+      links,
+      endpointQuery,
+    ),
+    ...createDocsTools(docs, links, endpointQuery),
+    ...createSdkTools(links),
     ...createQuickstartTool(),
     ...createAppQuickstartTool(),
     ...createServiceRolesTools(),
     ...createConfigurationSchemaTools(),
     ...createServerInfoTool(docs),
-    ...createApiTools(lazy(() => new ApiSpecsRepository(apiSpecsRoot))),
+    ...createApiTools(apis, links),
   ];
   const offlineTools = tools.filter(isOfflineTool);
   const loaded = {

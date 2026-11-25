@@ -184,6 +184,12 @@ describe('export events', () => {
     expect(reader.find).not.toHaveBeenCalled();
   });
 
+  it('responds 400 to a Core caller without a tenant', async () => {
+    const res = await request(createApp({ ...user, isCore: true, tenantId: undefined })).get('/audit/v1/events/export');
+    expect(res.status).toBe(400);
+    expect(reader.find).not.toHaveBeenCalled();
+  });
+
   it('rejects invalid filters before streaming', async () => {
     const res = await request(createApp()).get('/audit/v1/events/export?severity=bogus');
     expect(res.status).toBe(400);

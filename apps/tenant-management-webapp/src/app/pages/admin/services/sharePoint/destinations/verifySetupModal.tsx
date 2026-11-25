@@ -6,6 +6,7 @@ import {
   setUpSharepointDestination,
   SharepointColumnReport,
   SharepointDestination,
+  SharepointDocumentLibraryReport,
   SharepointListReport,
   SharepointVerifyReport,
   verifySharepointDestination,
@@ -54,9 +55,16 @@ const LIST_STATUS: Record<SharepointListReport['status'], string> = {
   notFound: 'Not found on the site. Check the list ID.',
 };
 
+const LIBRARY_STATUS: Record<SharepointDocumentLibraryReport['status'], string> = {
+  ok: 'Ready',
+  notCreated: 'Not created yet.',
+  notFound: 'Not found on the site. Check the document library ID.',
+  notADocumentLibrary: 'This is a list, not a document library. Use the ID of a document library.',
+};
+
 // What the site owner has to do by hand when the app's grant can't change lists or columns.
 export function manualSteps(report: SharepointVerifyReport): string[] {
-  return report.lists.flatMap((list) => {
+  const listSteps = report.lists.flatMap((list) => {
     const name = list.kind === 'main' ? 'the main list' : `'${list.listName || list.dataPath}'`;
     const describe = (column: SharepointColumnReport) =>
       `${column.name} (${typeLabel(column.expectedType ?? 'text')}${column.purpose === 'key' || column.purpose === 'parent' ? ', indexed' : ''})`;
@@ -77,9 +85,17 @@ export function manualSteps(report: SharepointVerifyReport): string[] {
         .map((column) => `Index the ${column.name} column of ${name}.`),
     ];
   });
+  const library = report.documentLibrary;
+  return library?.status === 'notCreated'
+    ? [
+        ...listSteps,
+        `Create a document library named '${library.libraryName}'. Then enter its ID as the document library ID on the destination.`,
+      ]
+    : listSteps;
 }
 
 const needsSetup = (report?: SharepointVerifyReport) =>
+  report?.documentLibrary?.status === 'notCreated' ||
   !!report?.lists.some(
     ({ status, columns }) =>
       status === 'notCreated' ||
@@ -121,6 +137,8 @@ export const VerifySetupModal = ({ destination, onClose }: VerifySetupModalProps
 
   const setup = result?.setup;
   const idle = !result?.loading;
+  const libraryStatus = report?.documentLibrary?.status;
+  const libraryUnusable = libraryStatus === 'notFound' || libraryStatus === 'notADocumentLibrary';
   return (
     <GoabModal
       testId="verify-setup-modal"
@@ -178,6 +196,7 @@ export const VerifySetupModal = ({ destination, onClose }: VerifySetupModalProps
         >
           Created {setup.createdLists.length} lists and {setup.createdColumns.length} columns, and indexed{' '}
           {setup.indexedColumns.length} columns.
+          {setup.createdLibrary && ` Created the document library '${setup.createdLibrary.libraryName}'.`}
           {setup.failures.length > 0 && (
             <ul>
               {setup.failures.map((failure, index) => (
@@ -200,6 +219,11 @@ export const VerifySetupModal = ({ destination, onClose }: VerifySetupModalProps
               <li key={step}>{step}</li>
             ))}
           </ul>
+        </GoabCallout>
+      )}
+      {idle && libraryUnusable && (
+        <GoabCallout type="important" heading="The document library can't be used" testId="verify-setup-library">
+          {LIBRARY_STATUS[libraryStatus]}
         </GoabCallout>
       )}
       {idle && report?.ready && (
@@ -237,6 +261,13 @@ export const VerifySetupModal = ({ destination, onClose }: VerifySetupModalProps
           </table>
         </VerifyList>
       ))}
+      {report?.documentLibrary && (
+        <VerifyList data-testid="verify-document-library">
+          <h3>Document library</h3>
+          <p>{report.documentLibrary.libraryName ?? report.documentLibrary.libraryId}</p>
+          <p>{LIBRARY_STATUS[report.documentLibrary.status]}</p>
+        </VerifyList>
+      )}
     </GoabModal>
   );
 };

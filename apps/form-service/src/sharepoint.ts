@@ -6,6 +6,7 @@ import { FormEntity, FormSubmissionEntity, SharePointPushResult, SharePointServi
 const SHAREPOINT_SERVICE_ID = adspId`urn:ads:platform:sharepoint-service`;
 const REQUEST_TIMEOUT_MS = 70000;
 const GATEWAY_STATUSES = [502, 503, 504];
+const SUBMISSION_PDF_FIELD = '_adsp.submissionPdf';
 
 interface FailureDetail {
   errorCode?: string;
@@ -48,6 +49,29 @@ function toFailure(err: unknown): SharePointPushResult {
   };
 }
 
+function toPushRequest(
+  form: FormEntity,
+  submission?: FormSubmissionEntity,
+  submissionPdfFileId?: string,
+): { path: 'files' | 'data'; body: unknown; fileCount: number } {
+  const key = submission?.id ?? form.id;
+  const _adsp = { key, formId: form.id, submittedAt: form.submitted?.toISOString() };
+
+  if (submissionPdfFileId) {
+    // The submission's own push writes the row, so this only adds the PDF's link to it once it's there.
+    const files = [{ field: SUBMISSION_PDF_FIELD, fileId: submissionPdfFileId }];
+    return { path: 'files', body: { submissionId: key, files, data: { _adsp }, updateRowOnly: true }, fileCount: 1 };
+  }
+
+  const files = Object.entries(submission?.formFiles ?? form.files ?? {})
+    .filter(([, urn]) => !!urn)
+    .map(([field, urn]) => ({ field, fileId: urn.toString() }));
+  const data = { ...(submission?.formData ?? form.data ?? {}), _adsp };
+  return files.length > 0
+    ? { path: 'files', body: { submissionId: key, files, data }, fileCount: files.length }
+    : { path: 'data', body: data, fileCount: 0 };
+}
+
 class SharePointServiceImpl implements SharePointService {
   constructor(
     private logger: Logger,
@@ -55,29 +79,22 @@ class SharePointServiceImpl implements SharePointService {
     private tokenProvider: TokenProvider,
   ) {}
 
-  async push(form: FormEntity, submission?: FormSubmissionEntity): Promise<SharePointPushResult> {
+  async push(
+    form: FormEntity,
+    submission?: FormSubmissionEntity,
+    submissionPdfFileId?: string,
+  ): Promise<SharePointPushResult> {
     const destinationId = form.definition?.sharepointConfigurationId;
     try {
-      const key = submission?.id ?? form.id;
-      const files = submission?.formFiles ?? form.files ?? {};
-      const fileList = Object.entries(files)
-        .filter(([, urn]) => !!urn)
-        .map(([field, urn]) => ({ field, fileId: urn.toString() }));
-
-      const data = {
-        ...(submission?.formData ?? form.data ?? {}),
-        _adsp: { key, formId: form.id, submittedAt: form.submitted?.toISOString() },
-      };
+      const { path, body, fileCount } = toPushRequest(form, submission, submissionPdfFileId);
 
       this.logger.debug(
-        `Pushing form (ID: ${form.id}) to SharePoint destination '${destinationId}' with ${fileList.length} file(s)...`,
+        `Pushing form (ID: ${form.id}) to SharePoint destination '${destinationId}' with ${fileCount} file(s)...`,
         { context: 'SharePointService', tenant: form.tenantId.toString() },
       );
 
       const baseUrl = await this.directory.getServiceUrl(SHAREPOINT_SERVICE_ID);
-      const path = fileList.length > 0 ? 'files' : 'data';
       const url = new URL(`/sharepoint/v1/destinations/${encodeURIComponent(destinationId)}/${path}`, baseUrl);
-      const body = fileList.length > 0 ? { submissionId: key, files: fileList, data } : data;
 
       const token = await this.tokenProvider.getAccessToken();
       await axios.post(url.href, body, {

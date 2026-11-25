@@ -198,6 +198,7 @@ describe('sharepoint sagas', () => {
                             id: 'a',
                             name: 'Applications',
                             sharepointConfigurationId: 'household',
+                            submissionPdfTemplate: 'submitted-form',
                             dataSchema: schema,
                             clerkRoles: ['x'],
                           },
@@ -218,7 +219,13 @@ describe('sharepoint sagas', () => {
       })
       .put(
         fetchSharepointFormsSuccess([
-          { id: 'a', name: 'Applications', sharepointConfigurationId: 'household', dataSchema: schema },
+          {
+            id: 'a',
+            name: 'Applications',
+            sharepointConfigurationId: 'household',
+            submissionPdfTemplate: 'submitted-form',
+            dataSchema: schema,
+          },
           { id: 'b', name: 'Benefits', dataSchema: schema },
         ]),
       )
@@ -307,7 +314,36 @@ describe('sharepoint sagas', () => {
         .run();
     });
 
-    it('does not save the destination when setup created no lists', () =>
+    it('saves the ID of the document library setup created', () => {
+      const setup = {
+        createdLists: [],
+        createdLibrary: { libraryName: 'Applicant documents', libraryId: 'new-library' },
+        createdColumns: [],
+        indexedColumns: [],
+        failures: [],
+        permissionDenied: false,
+      };
+      const saved = { ...withDetailList, documentFilesLibraryId: 'new-library' };
+      return expectSaga(setUpSharepointDestinationSaga, setUpSharepointDestination('hr-intake'))
+        .withState(stateWith)
+        .provide([
+          [matchers.call.fn(getAccessToken), 'token'],
+          [matchers.call.fn(axios.post), { data: { ...setup, report } }],
+          [
+            matchers.call.fn(axios.patch),
+            { data: { latest: { configuration: { destinations: { 'hr-intake': saved } } } } },
+          ],
+        ])
+        .call(
+          axios.patch,
+          configUrl,
+          { operation: 'UPDATE', update: { destinations: { 'hr-intake': saved } } },
+          jsonHeaders,
+        )
+        .run();
+    });
+
+    it('does not save the destination when setup created no lists or library', () =>
       expectSaga(setUpSharepointDestinationSaga, setUpSharepointDestination('hr-intake'))
         .withState(stateWith)
         .provide([

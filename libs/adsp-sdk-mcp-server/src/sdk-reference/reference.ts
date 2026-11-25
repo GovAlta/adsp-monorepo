@@ -326,6 +326,18 @@ export const SDK_REFERENCE: SdkSymbolDoc[] = [
       'Preloads all tenants on construction and caches results with a 10hr TTL. Obtained from PlatformCapabilities.tenantService (not available on initializeService capabilities, since a tenant service only has its own tenant).',
     seeAlso: ['Tenant'],
   },
+  {
+    name: 'getRequestedTenant',
+    kind: 'function',
+    module: 'tenant',
+    summary: 'Resolves a tenant from a caller supplied tenantId, failing with a 400 for a bad or unknown tenant.',
+    details:
+      'async getRequestedTenant(service: TenantService, value: unknown): Promise<Tenant>\n\n' +
+      'Use for a tenantId taken from the request (e.g. a query parameter). Throws AdspIdFormatError (400) when the ' +
+      'value is not a single urn:ads:platform:tenant-service:v2:/tenants/{id} URN, or when tenant-service does not ' +
+      'know the tenant. Other lookup failures are rethrown. tenantHandler uses it for core users.',
+    seeAlso: ['TenantService', 'AdspIdFormatError'],
+  },
 
   // configuration
   {

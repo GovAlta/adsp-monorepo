@@ -237,11 +237,10 @@ components:
       - Configuration
     description: >
       Find configuration in a namespace, sorted by name, with the latest revision of each. Requires the
-      configuration-admin role in the tenant, or the configured-service or export-service export-job role in the
-      tenant or as a core user. Unlike the other read operations, the configuration-reader role is not sufficient,
-      and core users with only the configuration-admin role are not allowed. Tenant users find the configuration of
-      their tenant; core users find the configuration of the tenant given by `tenantId`, or core (platform)
-      configuration without it.
+      configuration-admin, configured-service, or export-service export-job role, in the tenant or as a core user.
+      Unlike the other read operations, the configuration-reader role is not sufficient. Tenant users find the
+      configuration of their tenant; core users find the configuration of the tenant given by `tenantId`, or core
+      (platform) configuration without it.
     parameters:
       - name: top
         description: Number of results to return in the page, e.g. the top N results. Defaults to 10.

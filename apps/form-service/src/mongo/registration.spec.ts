@@ -199,4 +199,28 @@ describe('MongoFormRegistrationRepository', () => {
       await expect(repo.updateIfPending(stale.review(reviewer, RegistrationStatus.Denied))).resolves.toBeNull();
     });
   });
+
+  describe('deleteAll', () => {
+    it('deletes the requests of the definition and tenant only', async () => {
+      const reviewed = await repo.create(createEntity());
+      await repo.updateIfPending(reviewed.review(reviewer, RegistrationStatus.Approved));
+      await repo.create(createEntity('other.user@gov.ab.ca'));
+      const otherTenant = await repo.create(createEntity('test.user@gov.ab.ca', otherTenantId));
+      const otherForm = await repo.create(
+        FormRegistrationEntity.create(tenantId, 'other-form', {
+          firstName: 'Test',
+          lastName: 'User',
+          email: 'test.user@gov.ab.ca',
+          data: {},
+        }),
+      );
+
+      await expect(repo.deleteAll(tenantId, definitionId)).resolves.toBe(2);
+
+      const { results } = await repo.find(10, undefined, { tenantIdEquals: tenantId, definitionIdEquals: definitionId });
+      expect(results).toHaveLength(0);
+      await expect(repo.get(otherTenantId, definitionId, otherTenant.id)).resolves.toBeTruthy();
+      await expect(repo.get(tenantId, 'other-form', otherForm.id)).resolves.toBeTruthy();
+    });
+  });
 });

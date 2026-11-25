@@ -1,5 +1,7 @@
+import { mkdtempSync, rmSync, writeFileSync } from 'fs';
+import { tmpdir } from 'os';
 import { join } from 'path';
-import { ApiSpecsRepository } from './apiSpecsRepository';
+import { ApiSpecsRepository, readApiServiceIndex } from './apiSpecsRepository';
 
 const FIXTURE_ROOT = join(__dirname, '../fixtures/api-specs');
 const BUNDLED_ROOT = join(__dirname, '../../api-specs');
@@ -86,5 +88,28 @@ describe('ApiSpecsRepository over the bundled specs', () => {
         expect(repo.read(service, method, path)).toBeDefined();
       }
     }
+  });
+});
+
+describe('readApiServiceIndex', () => {
+  it('returns [] when the index file is missing', () => {
+    expect(readApiServiceIndex(join(__dirname, 'no-such-folder'))).toEqual([]);
+  });
+
+  it('rethrows errors other than a missing file', () => {
+    const root = mkdtempSync(join(tmpdir(), 'api-index-'));
+    try {
+      writeFileSync(join(root, 'index.json'), '{ not json');
+
+      expect(() => readApiServiceIndex(root)).toThrow(SyntaxError);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+});
+
+describe('ApiSpecsRepository without an index', () => {
+  it('still throws when the index file is missing', () => {
+    expect(() => new ApiSpecsRepository(join(__dirname, 'no-such-folder'))).toThrow(/ENOENT/);
   });
 });

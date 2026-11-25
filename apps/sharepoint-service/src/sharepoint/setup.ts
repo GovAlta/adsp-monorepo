@@ -1,7 +1,8 @@
 import { AdspId } from '@abgov/adsp-service-sdk';
-import { NotFoundError } from '@core-services/core-common';
+import { resolveDestination } from './destinations';
 import { SharePointError } from './errors';
 import { ColumnKind, GraphClient, GraphTokenProvider, ListColumn } from './graph';
+import { LibraryDriveResolver } from './libraryDrives';
 import { ITEM_KEY_COLUMN } from './mapper';
 import {
   ColumnType,
@@ -35,10 +36,22 @@ export interface ListReport {
   columns: ColumnReport[];
 }
 
+export interface DocumentLibraryReport {
+  libraryId?: string;
+  libraryName?: string;
+  status: 'ok' | 'notCreated' | 'notFound' | 'notADocumentLibrary';
+}
+
 export interface VerifyResult {
   ready: boolean;
   lists: ListReport[];
+  documentLibrary?: DocumentLibraryReport;
 }
+
+const LIBRARY_STATUS: Record<string, DocumentLibraryReport['status']> = {
+  'document-library-not-found': 'notFound',
+  'not-a-document-library': 'notADocumentLibrary',
+};
 
 export interface CreatedList {
   index: number;
@@ -47,8 +60,14 @@ export interface CreatedList {
   listId: string;
 }
 
+export interface CreatedLibrary {
+  libraryName: string;
+  libraryId: string;
+}
+
 export interface SetupResult {
   createdLists: CreatedList[];
+  createdLibrary?: CreatedLibrary;
   createdColumns: { listId: string; name: string }[];
   indexedColumns: { listId: string; name: string }[];
   failures: { listId?: string; name?: string; errorCode: string }[];
@@ -82,6 +101,8 @@ interface PlannedList {
   dataPath?: string;
   columns: ExpectedColumn[];
 }
+
+type PlannedLibrary = Pick<DocumentLibraryReport, 'libraryId' | 'libraryName'>;
 
 const VALID_COLUMN_NAME = /^[A-Za-z_][A-Za-z0-9_]*$/;
 
@@ -159,6 +180,15 @@ function planLists(destination: SharePointDestination, detailListIds: Map<number
   ];
 }
 
+function planLibrary(destination: SharePointDestination, createdLibraryId?: string): PlannedLibrary | undefined {
+  const libraryId = destination.documentFilesLibraryId ?? createdLibraryId;
+  const libraryName = destination.documentFilesLibraryName;
+  if (!libraryId && !libraryName) {
+    return undefined;
+  }
+  return { ...(libraryId ? { libraryId } : {}), ...(libraryName ? { libraryName } : {}) };
+}
+
 function checkColumn(expected: ExpectedColumn, existing: ListColumn[]): ColumnReport {
   const { name, displayName, purpose, type } = expected;
   const report: ColumnReport = { name, displayName, purpose, ...(type ? { expectedType: type } : {}), status: 'ok' };
@@ -180,22 +210,8 @@ export class SharePointSetup {
   constructor(
     private tokens: GraphTokenProvider,
     private graph: GraphClient,
+    private drives: LibraryDriveResolver,
   ) {}
-
-  private resolve(
-    configuration: SharePointConfiguration | undefined,
-    destinationId: string,
-  ): { destination: SharePointDestination; connection: SharePointConnection } {
-    const destination = configuration?.destinations?.[destinationId];
-    if (!destination) {
-      throw new NotFoundError('SharePoint destination', destinationId);
-    }
-    const connection = configuration?.connections?.[destination.connectionId];
-    if (!connection) {
-      throw new NotFoundError('SharePoint connection', destination.connectionId);
-    }
-    return { destination, connection };
-  }
 
   private call<T>(tenantId: AdspId, connection: SharePointConnection, call: (token: string) => Promise<T>) {
     return withToken(this.tokens, tenantId, connection, call);
@@ -218,10 +234,31 @@ export class SharePointSetup {
     }
   }
 
+  private async checkLibrary(
+    tenantId: AdspId,
+    connection: SharePointConnection,
+    library: PlannedLibrary,
+  ): Promise<DocumentLibraryReport> {
+    if (!library.libraryId) {
+      return { ...library, status: 'notCreated' };
+    }
+    try {
+      await this.drives.driveFor(tenantId, connection, library.libraryId, { fresh: true });
+      return { ...library, status: 'ok' };
+    } catch (err) {
+      const status = err instanceof SharePointError ? LIBRARY_STATUS[err.errorCode] : undefined;
+      if (!status) {
+        throw err;
+      }
+      return { ...library, status };
+    }
+  }
+
   private async check(
     tenantId: AdspId,
     connection: SharePointConnection,
     planned: PlannedList[],
+    library?: PlannedLibrary,
   ): Promise<{ report: VerifyResult; existing: Map<string, ListColumn[]> }> {
     const existing = new Map<string, ListColumn[]>();
     const lists: ListReport[] = [];
@@ -244,8 +281,10 @@ export class SharePointSetup {
       existing.set(listId, listColumns);
       lists.push({ ...identity, status: 'ok', columns: columns.map((column) => checkColumn(column, listColumns)) });
     }
-    const ready = lists.every(({ status, columns }) => status === 'ok' && columns.every((c) => c.status === 'ok'));
-    return { report: { ready, lists }, existing };
+    const listsReady = lists.every(({ status, columns }) => status === 'ok' && columns.every((c) => c.status === 'ok'));
+    const documentLibrary = library ? await this.checkLibrary(tenantId, connection, library) : undefined;
+    const ready = listsReady && (!documentLibrary || documentLibrary.status === 'ok');
+    return { report: { ready, lists, ...(documentLibrary ? { documentLibrary } : {}) }, existing };
   }
 
   async verify(
@@ -253,8 +292,8 @@ export class SharePointSetup {
     configuration: SharePointConfiguration | undefined,
     destinationId: string,
   ): Promise<VerifyResult> {
-    const { destination, connection } = this.resolve(configuration, destinationId);
-    return (await this.check(tenantId, connection, planLists(destination, new Map()))).report;
+    const { destination, connection } = resolveDestination(configuration, destinationId);
+    return (await this.check(tenantId, connection, planLists(destination, new Map()), planLibrary(destination))).report;
   }
 
   async setUp(
@@ -262,7 +301,7 @@ export class SharePointSetup {
     configuration: SharePointConfiguration | undefined,
     destinationId: string,
   ): Promise<SetupResult> {
-    const { destination, connection } = this.resolve(configuration, destinationId);
+    const { destination, connection } = resolveDestination(configuration, destinationId);
     const { siteId } = connection;
     const result: Omit<SetupResult, 'report'> = {
       createdLists: [],
@@ -329,6 +368,26 @@ export class SharePointSetup {
         result.createdLists.push({ index, dataPath, listName: name, listId });
       }
 
+      const library = planLibrary(destination);
+      if (library?.libraryName && !library.libraryId) {
+        const name = library.libraryName;
+        // Never take over a list or library by name: it may be an ordinary list or belong to another team.
+        const existingId = await this.call(tenantId, connection, (token) =>
+          this.graph.findListIdByName(token, siteId, name),
+        );
+        let libraryId: string | undefined;
+        if (!existingId) {
+          await change(async (token) => {
+            libraryId = await this.graph.createList(token, siteId, name, 'documentLibrary');
+          });
+        }
+        if (libraryId) {
+          result.createdLibrary = { libraryName: name, libraryId };
+        } else {
+          result.failures.push({ name, errorCode: existingId ? 'library-name-taken' : 'library-not-created' });
+        }
+      }
+
       const planned = planLists(destination, detailListIds);
       const { report, existing } = await this.check(tenantId, connection, planned);
       const work = planned.flatMap((list, position) =>
@@ -380,7 +439,12 @@ export class SharePointSetup {
       result.permissionDenied = true;
     }
 
-    const { report } = await this.check(tenantId, connection, planLists(destination, detailListIds));
+    const { report } = await this.check(
+      tenantId,
+      connection,
+      planLists(destination, detailListIds),
+      planLibrary(destination, result.createdLibrary?.libraryId),
+    );
     return { ...result, report };
   }
 }

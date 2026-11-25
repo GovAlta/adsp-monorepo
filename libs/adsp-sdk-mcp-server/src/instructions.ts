@@ -13,6 +13,7 @@ const TOOL_CHOICE = [
 ];
 
 const CONTENT_FRESHNESS = [
+  'Results may carry next.suggested_calls (a tool and its arguments, to call as given) and related (paths and names).',
   'Bundled content can lag the platform. get_adsp_mcp_server_info says when and from which commit it was built;',
   'mention that when a detail may be out of date.',
 ];

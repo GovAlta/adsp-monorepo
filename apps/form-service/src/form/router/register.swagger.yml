@@ -14,6 +14,11 @@ components:
         description:
           type: string
           description: Human-readable description of what the register contains.
+        anonymousRead:
+          type: boolean
+          description: >
+            Whether the register can be read without signing in, by anonymous applicants and other apps, from
+            configuration service. False means the register is private to signed-in tenant users.
         entries:
           type: array
           description: >
@@ -27,6 +32,7 @@ components:
         namespace: data-register
         name: weekdays
         description: Days of the week
+        anonymousRead: false
         entries:
           - Monday
           - Tuesday
@@ -47,6 +53,12 @@ components:
         description:
           type: string
           description: Human-readable description of what the register contains.
+        anonymousRead:
+          type: boolean
+          description: >
+            Allow anonymous access: lets anonymous applicants and other apps read the register from configuration
+            service without signing in. Defaults to false (private).
+          default: false
         entries:
           type: array
           description: Initial list of values stored in the register. Defaults to an empty array.
@@ -64,6 +76,9 @@ components:
         description:
           type: string
           description: Updated description for the register.
+        anonymousRead:
+          type: boolean
+          description: Allow (true) or stop (false) anonymous access to the register.
         entries:
           type: array
           description: Replacement list of values for the register.
@@ -96,6 +111,7 @@ components:
               - namespace: data-register
                 name: weekdays
                 description: Days of the week
+                anonymousRead: false
                 entries:
                   - Monday
                   - Tuesday
@@ -128,6 +144,7 @@ components:
           example:
             name: weekdays
             description: Days of the week
+            anonymousRead: false
             entries:
               - Monday
               - Tuesday
@@ -145,6 +162,7 @@ components:
               namespace: data-register
               name: weekdays
               description: Days of the week
+              anonymousRead: false
               entries:
                 - Monday
                 - Tuesday
@@ -190,6 +208,7 @@ components:
               namespace: data-register
               name: weekdays
               description: Days of the week
+              anonymousRead: false
               entries:
                 - Monday
                 - Tuesday
@@ -212,8 +231,10 @@ components:
     tags:
       - Form
     description: >
-      Updates the description and/or entries of an existing data register. Only provided fields are changed:
-      sending description alone leaves the entries unchanged, and vice versa. Entries are written to the latest
+      Updates the description, entries and/or anonymous access of an existing data register. Only provided fields
+      are changed: sending description alone leaves the entries unchanged, and vice versa. Setting anonymousRead to
+      true lets anonymous applicants and other apps read the register from configuration service without signing
+      in; false makes it private again. Entries are written to the latest
       revision; if an older revision is pinned as active, the pin moves to that revision so the new entries are
       live. Requires the form-service admin role or the configuration-service configuration-admin role. Core users
       with either role must set `tenantId`.

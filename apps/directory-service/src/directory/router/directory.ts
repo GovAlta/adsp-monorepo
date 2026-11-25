@@ -15,7 +15,7 @@ import {
 } from '@core-services/core-common';
 import axios from 'axios';
 import { Router, RequestHandler } from 'express';
-import { checkSchema } from 'express-validator';
+import { checkSchema, ParamSchema } from 'express-validator';
 import * as HttpStatusCodes from 'http-status-codes';
 import * as NodeCache from 'node-cache';
 import { Logger } from 'winston';
@@ -36,6 +36,12 @@ import { Service, Links, DirectoryEntry } from '../types';
 import { getEntry, getNamespaceEntries } from './util';
 
 const TIME_OUT = 10000;
+
+const entryName: ParamSchema = { isString: { bail: true }, trim: true, isLength: { options: { min: 1, max: 50 } } };
+const entryUrl: ParamSchema = {
+  isString: { bail: true },
+  isURL: { options: { protocols: ['http', 'https'], require_protocol: true, require_tld: false } },
+};
 
 interface DirectoryRouterProps {
   logger?: Logger;
@@ -98,7 +104,7 @@ export const getEntriesForService =
       const { namespace, service } = req.params;
       const result = await getEntriesForServiceImpl(namespace, service, directoryRepository);
       if (!result) {
-        return res.sendStatus(HttpStatusCodes.NOT_FOUND);
+        throw new NotFoundError('directory service', `${namespace}:${service}`);
       }
       return res.json(result);
     } catch (err) {
@@ -114,10 +120,10 @@ export interface ServiceEntity {
 export const getEntriesForServiceImpl = async (
   namespace: string,
   service: string,
-  directoryRepository: DirectoryRepository
+  directoryRepository: DirectoryRepository,
 ): Promise<ServiceEntity> => {
   const data = await directoryRepository.getDirectories(namespace);
-  if (!data.services) {
+  if (!data?.services) {
     return null;
   }
 
@@ -156,12 +162,15 @@ export const createNamespace =
     directoryRepository: DirectoryRepository,
     tenantService: TenantService,
     logger: Logger,
-    auditService: AuditService
+    auditService: AuditService,
   ): RequestHandler =>
   async (req, res, next) => {
     try {
       const user = req.user;
-      const tenant = await tenantService.getTenant(req.user?.tenantId);
+      if (!user?.tenantId) {
+        throw new UnauthorizedUserError('create namespace', user);
+      }
+      const tenant = await tenantService.getTenant(user.tenantId);
       req.tenant = tenant;
       const namespace = toKebabName(tenant.name);
       if (!isAllowedUser(user, tenant.id, ServiceRoles.DirectoryAdmin)) {
@@ -180,7 +189,7 @@ export const createNamespace =
           NamespaceCreatedAuditAction,
           user,
           tenant.id,
-          toNamespaceAuditDetails(namespace)
+          toNamespaceAuditDetails(namespace),
         );
         return res.sendStatus(HttpStatusCodes.CREATED);
       }
@@ -195,7 +204,7 @@ export const addService =
     directoryRepository: DirectoryRepository,
     eventService: EventService,
     logger: Logger,
-    auditService: AuditService
+    auditService: AuditService,
   ): RequestHandler =>
   async (req, res, next) => {
     const { namespace } = req.params;
@@ -215,7 +224,7 @@ export const addService =
         EntryCreatedAuditAction,
         user,
         req.tenant?.id,
-        toEntryAuditDetails(namespace, service, undefined, { url })
+        toEntryAuditDetails(namespace, service, undefined, { url }),
       );
       return res.status(HttpStatusCodes.CREATED).json(result);
     } catch (err) {
@@ -229,7 +238,7 @@ export const addServiceApi =
     directoryRepository: DirectoryRepository,
     eventService: EventService,
     logger: Logger,
-    auditService: AuditService
+    auditService: AuditService,
   ): RequestHandler =>
   async (req, res, next) => {
     const { namespace, service } = req.params;
@@ -248,7 +257,7 @@ export const addServiceApi =
         EntryCreatedAuditAction,
         user,
         req.tenant?.id,
-        toEntryAuditDetails(namespace, service, api, { url })
+        toEntryAuditDetails(namespace, service, api, { url }),
       );
       return res.status(HttpStatusCodes.CREATED).json(result);
     } catch (err) {
@@ -261,7 +270,7 @@ const addEntry = async (
   namespace: string,
   entry: string,
   url: string,
-  directoryRepository: DirectoryRepository
+  directoryRepository: DirectoryRepository,
 ): Promise<Service | 'exists'> => {
   const result = await directoryRepository.getDirectories(namespace);
 
@@ -297,7 +306,7 @@ export const updateService =
     directoryRepository: DirectoryRepository,
     eventService: EventService,
     logger: Logger,
-    auditService: AuditService
+    auditService: AuditService,
   ): RequestHandler =>
   async (req, res, next) => {
     const { namespace, service } = req.params;
@@ -309,7 +318,7 @@ export const updateService =
 
       if (didUpdate) {
         logger.info(
-          `Directory ${namespace}:${service} update by ${user.name} (ID: ${user.id}) user tenant id : ${user.tenantId} `
+          `Directory ${namespace}:${service} update by ${user.name} (ID: ${user.id}) user tenant id : ${user.tenantId} `,
         );
         eventService.send(entryUpdated(user, namespace, service, '', url));
         auditDirectory(
@@ -321,7 +330,7 @@ export const updateService =
           toEntryAuditDetails(namespace, service, undefined, {
             url,
             changeSet: { before: { url: didUpdate.previousUrl }, after: { url } },
-          })
+          }),
         );
         return res.sendStatus(HttpStatusCodes.CREATED);
       } else {
@@ -339,7 +348,7 @@ export const updateApi =
     directoryRepository: DirectoryRepository,
     eventService: EventService,
     logger: Logger,
-    auditService: AuditService
+    auditService: AuditService,
   ): RequestHandler =>
   async (req, res, next) => {
     const { namespace, service, api } = req.params;
@@ -352,7 +361,7 @@ export const updateApi =
 
       if (didUpdate) {
         logger.info(
-          `Directory ${namespace}:${entry} update by ${user.name} (ID: ${user.id}) user tenant id : ${user.tenantId} `
+          `Directory ${namespace}:${entry} update by ${user.name} (ID: ${user.id}) user tenant id : ${user.tenantId} `,
         );
         eventService.send(entryUpdated(user, namespace, service, api, url));
         auditDirectory(
@@ -364,7 +373,7 @@ export const updateApi =
           toEntryAuditDetails(namespace, service, api, {
             url,
             changeSet: { before: { url: didUpdate.previousUrl }, after: { url } },
-          })
+          }),
         );
         return res.sendStatus(HttpStatusCodes.CREATED);
       } else {
@@ -381,9 +390,12 @@ const updateEntry = async (
   namespace: string,
   entry: string,
   url: string,
-  directoryRepository: DirectoryRepository
+  directoryRepository: DirectoryRepository,
 ): Promise<{ previousUrl: string } | null> => {
   const result = await directoryRepository.getDirectories(namespace);
+  if (!result) {
+    throw new NotFoundError('directory namespace', namespace);
+  }
   const services = result.services;
   const dbEntry = services.find((x) => x.service.toString() === entry);
 
@@ -403,7 +415,7 @@ export const deleteService =
     directoryRepository: DirectoryRepository,
     eventService: EventService,
     logger: Logger,
-    auditService: AuditService
+    auditService: AuditService,
   ): RequestHandler =>
   async (req, res, next) => {
     const { namespace, service } = req.params;
@@ -412,7 +424,7 @@ export const deleteService =
     try {
       const dbEntry = await deleteEntry(namespace, service, directoryRepository);
       logger.info(
-        `Directory ${namespace}:${service} update by ${user.name} (ID: ${user.id}), user tenant id : ${user.tenantId} `
+        `Directory ${namespace}:${service} update by ${user.name} (ID: ${user.id}), user tenant id : ${user.tenantId} `,
       );
       eventService.send(entryDeleted(user, namespace, service, 'eventApi', dbEntry.host));
       auditDirectory(
@@ -421,7 +433,7 @@ export const deleteService =
         EntryDeletedAuditAction,
         user,
         req.tenant?.id,
-        toEntryAuditDetails(namespace, service, undefined, { url: dbEntry.host })
+        toEntryAuditDetails(namespace, service, undefined, { url: dbEntry.host }),
       );
       return res.sendStatus(HttpStatusCodes.OK);
     } catch (err) {
@@ -435,7 +447,7 @@ export const deleteApi =
     directoryRepository: DirectoryRepository,
     eventService: EventService,
     logger: Logger,
-    auditService: AuditService
+    auditService: AuditService,
   ): RequestHandler =>
   async (req, res, next) => {
     const { namespace, service, api } = req.params;
@@ -444,7 +456,7 @@ export const deleteApi =
     try {
       const dbEntry = await deleteEntry(namespace, `${service}:${api}`, directoryRepository);
       logger.info(
-        `Directory ${namespace}:${service} update by ${user.name} (ID: ${user.id}), user tenant id : ${user.tenantId} `
+        `Directory ${namespace}:${service} update by ${user.name} (ID: ${user.id}), user tenant id : ${user.tenantId} `,
       );
       eventService.send(entryDeleted(user, namespace, service, api, dbEntry.host));
       auditDirectory(
@@ -453,7 +465,7 @@ export const deleteApi =
         EntryDeletedAuditAction,
         user,
         req.tenant?.id,
-        toEntryAuditDetails(namespace, service, api, { url: dbEntry.host })
+        toEntryAuditDetails(namespace, service, api, { url: dbEntry.host }),
       );
       return res.sendStatus(HttpStatusCodes.OK);
     } catch (err) {
@@ -465,7 +477,7 @@ export const deleteApi =
 export const deleteEntry = async (
   namespace: string,
   entry: string,
-  directoryRepository: DirectoryRepository
+  directoryRepository: DirectoryRepository,
 ): Promise<Service> => {
   const directoryEntity = await directoryRepository.getDirectories(namespace);
   if (!directoryEntity) {
@@ -479,7 +491,7 @@ export const deleteEntry = async (
   }
   services.splice(
     services.findIndex((item) => item.service === entry),
-    1
+    1,
   );
   const directory = { name: namespace, services: services };
   await directoryRepository.update(directory);
@@ -502,7 +514,7 @@ export const getServiceData =
     try {
       const directoryEntity = await directoryRepository.getDirectories(namespace);
       if (!directoryEntity) {
-        return res.sendStatus(HttpStatusCodes.BAD_REQUEST).json({ error: `${namespace} could not find` });
+        throw new NotFoundError('directory namespace', namespace);
       }
       const services = directoryEntity.services;
       const filteredService = services.find((x) => x.service === service);
@@ -556,11 +568,11 @@ export const createDirectoryRouter = ({
         {
           namespace: { isString: true, isLength: { options: { min: 1, max: 50 } } },
         },
-        ['params']
-      )
+        ['params'],
+      ),
     ),
     resolveNamespaceTenant(logger, tenantService),
-    getDirectoriesByNamespace(directoryRepository)
+    getDirectoriesByNamespace(directoryRepository),
   );
 
   /**
@@ -573,11 +585,11 @@ export const createDirectoryRouter = ({
         {
           namespace: { isString: true, isLength: { options: { min: 1, max: 50 } } },
         },
-        ['params']
-      )
+        ['params'],
+      ),
     ),
     resolveNamespaceTenant(logger, tenantService),
-    getEntriesForService(directoryRepository)
+    getEntriesForService(directoryRepository),
   );
 
   /**
@@ -590,11 +602,11 @@ export const createDirectoryRouter = ({
         {
           namespace: { isString: true, isLength: { options: { min: 1, max: 50 } } },
         },
-        ['params']
-      )
+        ['params'],
+      ),
     ),
     resolveNamespaceTenant(logger, tenantService),
-    getDirectoryEntryForApi(directoryRepository)
+    getDirectoryEntryForApi(directoryRepository),
   );
 
   /**
@@ -607,9 +619,10 @@ export const createDirectoryRouter = ({
    */
   directoryRouter.post(
     '/namespaces/:namespace/services',
+    createValidationHandler(...checkSchema({ service: entryName, url: entryUrl }, ['body'])),
     resolveNamespaceTenant(logger, tenantService),
     validateNamespaceEndpointsPermission,
-    addService(directoryRepository, eventService, logger, auditService)
+    addService(directoryRepository, eventService, logger, auditService),
   );
 
   /**
@@ -619,9 +632,10 @@ export const createDirectoryRouter = ({
    */
   directoryRouter.post(
     '/namespaces/:namespace/services/:service/apis',
+    createValidationHandler(...checkSchema({ api: entryName, url: entryUrl }, ['body'])),
     resolveNamespaceTenant(logger, tenantService),
     validateNamespaceEndpointsPermission,
-    addServiceApi(directoryRepository, eventService, logger, auditService)
+    addServiceApi(directoryRepository, eventService, logger, auditService),
   );
 
   /**
@@ -631,7 +645,7 @@ export const createDirectoryRouter = ({
     '/namespaces/:namespace/services/:service',
     resolveNamespaceTenant(logger, tenantService),
     validateNamespaceEndpointsPermission,
-    updateService(directoryRepository, eventService, logger, auditService)
+    updateService(directoryRepository, eventService, logger, auditService),
   );
 
   /**
@@ -641,7 +655,7 @@ export const createDirectoryRouter = ({
     '/namespaces/:namespace/services/:service/apis/:api',
     resolveNamespaceTenant(logger, tenantService),
     validateNamespaceEndpointsPermission,
-    updateApi(directoryRepository, eventService, logger, auditService)
+    updateApi(directoryRepository, eventService, logger, auditService),
   );
 
   /**
@@ -651,7 +665,7 @@ export const createDirectoryRouter = ({
     '/namespaces/:namespace/services/:service',
     resolveNamespaceTenant(logger, tenantService),
     validateNamespaceEndpointsPermission,
-    deleteService(directoryRepository, eventService, logger, auditService)
+    deleteService(directoryRepository, eventService, logger, auditService),
   );
 
   /**
@@ -661,7 +675,7 @@ export const createDirectoryRouter = ({
     '/namespaces/:namespace/services/:service/apis/:api',
     resolveNamespaceTenant(logger, tenantService),
     validateNamespaceEndpointsPermission,
-    deleteApi(directoryRepository, eventService, logger, auditService)
+    deleteApi(directoryRepository, eventService, logger, auditService),
   );
 
   /**
@@ -675,11 +689,11 @@ export const createDirectoryRouter = ({
           namespace: { isString: true, isLength: { options: { min: 1, max: 50 } } },
           service: { isString: true, isLength: { options: { min: 1, max: 50 } } },
         },
-        ['params']
-      )
+        ['params'],
+      ),
     ),
     resolveNamespaceTenant(logger, tenantService),
-    getServiceData(directoryRepository, logger)
+    getServiceData(directoryRepository, logger),
   );
 
   return directoryRouter;

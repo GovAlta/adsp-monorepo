@@ -175,6 +175,42 @@ describe('topic router documented behaviour', () => {
       expect(clientMock.getTenantConfiguration.mock.calls[0][0].toString()).toBe(tenantId.toString());
     });
 
+    it.each([
+      ['post', '/comment/v1/topic-types'],
+      ['get', '/comment/v1/topic-types/case-notes'],
+      ['patch', '/comment/v1/topic-types/case-notes'],
+      ['delete', '/comment/v1/topic-types/case-notes'],
+      ['get', '/comment/v1/topics'],
+      ['post', '/comment/v1/topics'],
+      ['get', '/comment/v1/topics/42'],
+      ['patch', '/comment/v1/topics/42'],
+      ['delete', '/comment/v1/topics/42'],
+      ['get', '/comment/v1/topics/42/comments'],
+      ['post', '/comment/v1/topics/42/comments'],
+      ['get', '/comment/v1/topics/42/comments/1203'],
+      ['patch', '/comment/v1/topics/42/comments/1203'],
+      ['delete', '/comment/v1/topics/42/comments/1203'],
+    ])('responds 400 on %s %s for a core user without tenantId', async (method, path) => {
+      // Valid bodies, so a 400 can only come from the missing tenant context.
+      const bodies = {
+        '/comment/v1/topic-types': { id: 'new-type', name: 'New type' },
+        '/comment/v1/topics': {
+          typeId: 'case-notes',
+          name: 'Topic',
+          resourceId: 'urn:ads:demo:case-service:v1:/cases/1',
+        },
+        '/comment/v1/topics/42/comments': { content: 'Comment' },
+      };
+      const res = await request(createApp(coreSetter))
+        [method](path)
+        .send(method === 'post' ? bodies[path] : {});
+      expect(res.status).toBe(400);
+      expect(res.body.errorMessage ?? res.text).toContain('Tenant context is required');
+      expect(axiosMock.patch).not.toHaveBeenCalled();
+      expect(repositoryMock.getTopic).not.toHaveBeenCalled();
+      expect(repositoryMock.getTopics).not.toHaveBeenCalled();
+    });
+
     it('responds 400 for a core user with an invalid tenantId', async () => {
       const res = await request(createApp(coreSetter)).get('/comment/v1/topic-types').query({ tenantId: 'test' });
       expect(res.status).toBe(400);
@@ -208,6 +244,36 @@ describe('topic router documented behaviour', () => {
         update: { 'incident-notes': { ...created } },
       });
     });
+
+    it('creates a type with adminRoles and commenterRoles saved as sent', async () => {
+      const created = {
+        id: 'incident-notes',
+        name: 'Incident notes',
+        adminRoles: ['case-supervisor'],
+        readerRoles: ['case-auditor'],
+        commenterRoles: ['case-worker'],
+      };
+      clientMock.getTenantConfiguration.mockResolvedValueOnce({ ...types, 'incident-notes': created });
+      const res = await request(createApp(setter))
+        .post('/comment/v1/topic-types')
+        .send({ ...created, writeRoles: ['ignored-alias'] });
+      expect(res.status).toBe(200);
+      expect(axiosMock.patch.mock.calls[0][1]).toEqual({
+        operation: 'UPDATE',
+        update: { 'incident-notes': { ...created } },
+      });
+    });
+
+    it.each(['adminRoles', 'commenterRoles', 'writeRoles', 'readerRoles', 'readRoles'])(
+      'responds 400 on create for a non-string item in %s',
+      async (field) => {
+        const res = await request(createApp(setter))
+          .post('/comment/v1/topic-types')
+          .send({ id: 'incident-notes', name: 'Incident notes', [field]: [1] });
+        expect(res.status).toBe(400);
+        expect(axiosMock.patch).not.toHaveBeenCalled();
+      },
+    );
 
     it('responds 400 on create for an invalid ID', async () => {
       const res = await request(createApp(setter)).post('/comment/v1/topic-types').send({ id: 'bad/id', name: 'Bad' });
@@ -245,6 +311,24 @@ describe('topic router documented behaviour', () => {
       const res = await request(createApp(setter)).get('/comment/v1/topic-types/case-notes');
       expect(res.status).toBe(200);
       expect(res.body).toMatchObject({ id: 'case-notes', commenterRoles: ['case-worker'] });
+    });
+
+    it('gets a platform type', async () => {
+      clientMock.getCoreConfiguration.mockResolvedValue({
+        'platform-notes': { id: 'platform-notes', name: 'Platform notes', readerRoles: ['platform-reader'] },
+      });
+      const res = await request(createApp(setter)).get('/comment/v1/topic-types/platform-notes');
+      expect(res.status).toBe(200);
+      expect(res.body).toMatchObject({ id: 'platform-notes', readerRoles: ['platform-reader'] });
+    });
+
+    it('gets the tenant type over a platform type with the same ID', async () => {
+      clientMock.getCoreConfiguration.mockResolvedValue({
+        'case-notes': { id: 'case-notes', name: 'Platform case notes' },
+      });
+      const res = await request(createApp(setter)).get('/comment/v1/topic-types/case-notes');
+      expect(res.status).toBe(200);
+      expect(res.body.name).toBe('Case notes');
     });
 
     it.each([
@@ -335,10 +419,13 @@ describe('topic router documented behaviour', () => {
       });
     });
 
-    it.each([{ top: 0 }, { top: 5001 }, { after: 'not-a-cursor' }])('responds 400 on list for %p', async (query) => {
-      const res = await request(createApp(auditor)).get('/comment/v1/topics').query(query);
-      expect(res.status).toBe(400);
-    });
+    it.each([{ top: 0 }, { top: 5001 }, { after: 'not-a-cursor' }, { criteria: 'notjson' }])(
+      'responds 400 on list for %p',
+      async (query) => {
+        const res = await request(createApp(auditor)).get('/comment/v1/topics').query(query);
+        expect(res.status).toBe(400);
+      },
+    );
 
     it('responds 401 on list when there is no authenticated user', async () => {
       const res = await request(createApp(null)).get('/comment/v1/topics');
@@ -348,10 +435,38 @@ describe('topic router documented behaviour', () => {
     it('creates a topic with the security classification of its type', async () => {
       const res = await request(createApp(setter))
         .post('/comment/v1/topics')
-        .send({ typeId: 'case-notes', name: 'Comments on case-124', securityClassification: 'public' });
+        .send({ typeId: 'case-notes', name: 'Comments on case-124' });
       expect(res.status).toBe(200);
       expect(res.body).toMatchObject({ id: 43, securityClassification: 'protected b' });
       expect(eventServiceMock.send).toHaveBeenCalledWith(expect.objectContaining({ name: 'topic-created' }));
+    });
+
+    it('responds 400 on create that sets the security classification', async () => {
+      const res = await request(createApp(setter))
+        .post('/comment/v1/topics')
+        .send({ typeId: 'case-notes', name: 'Comments on case-124', securityClassification: 'public' });
+      expect(res.status).toBe(400);
+      expect(repositoryMock.save).not.toHaveBeenCalled();
+    });
+
+    it('creates a topic with commenters', async () => {
+      const res = await request(createApp(setter))
+        .post('/comment/v1/topics')
+        .send({ typeId: 'case-notes', name: 'Comments on case-124', commenters: ['3f2b1c4d'] });
+      expect(res.status).toBe(200);
+      expect(res.body.commenters).toEqual(['3f2b1c4d']);
+    });
+
+    it.each([
+      ['not an array', 'user-1'],
+      ['a non-string ID', [123]],
+      ['an empty ID', ['']],
+    ])('responds 400 on create with commenters that is %s', async (_, commenters) => {
+      const res = await request(createApp(setter))
+        .post('/comment/v1/topics')
+        .send({ typeId: 'case-notes', name: 'Comments on case-124', commenters });
+      expect(res.status).toBe(400);
+      expect(repositoryMock.save).not.toHaveBeenCalled();
     });
 
     it('responds 400 on create without a name', async () => {
@@ -399,6 +514,12 @@ describe('topic router documented behaviour', () => {
         .send({ commenters: ['3f2b1c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d'] });
       expect(res.status).toBe(200);
       expect(res.body.commenters).toEqual(['3f2b1c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d']);
+    });
+
+    it('responds 400 on update with a non-string commenter ID', async () => {
+      const res = await request(createApp(setter)).patch('/comment/v1/topics/42').send({ commenters: [123] });
+      expect(res.status).toBe(400);
+      expect(repositoryMock.save).not.toHaveBeenCalled();
     });
 
     it('deletes a topic for a topic setter', async () => {
@@ -452,6 +573,12 @@ describe('topic router documented behaviour', () => {
     it('responds 400 on list for an invalid top', async () => {
       const res = await request(createApp(auditor)).get('/comment/v1/topics/42/comments').query({ top: 0 });
       expect(res.status).toBe(400);
+    });
+
+    it('responds 400 on list for criteria that is not valid JSON', async () => {
+      const res = await request(createApp(auditor)).get('/comment/v1/topics/42/comments').query({ criteria: '{' });
+      expect(res.status).toBe(400);
+      expect(res.body.errorMessage).toContain('criteria must be valid JSON');
     });
 
     it('posts a comment for a commenter', async () => {

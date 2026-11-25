@@ -350,7 +350,13 @@ export class AuthenticationClient {
           req,
           res,
           complete
-            ? () => {
+            ? (err?: unknown) => {
+                // Errors from the strategy are passed on, so the cause is not lost.
+                if (err) {
+                  next(err);
+                  return;
+                }
+
                 try {
                   // Set the maxAge based on the expiry time of the refresh token.
                   const { id, name, refreshExp } = req.user as UserSessionData;

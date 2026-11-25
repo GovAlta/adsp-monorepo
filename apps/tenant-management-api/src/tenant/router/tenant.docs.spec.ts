@@ -674,9 +674,9 @@ describe('tenant routers documented behaviour', () => {
         expect(res.body.name).toBe('Test');
       });
 
-      it('responds 403 when a tenant user retrieves another tenant', async () => {
+      it('responds 404 when a tenant user retrieves another tenant', async () => {
         const res = await request(createApp(plain)).get('/api/tenant/v2/tenants/other');
-        expect(res.status).toBe(403);
+        expect(res.status).toBe(404);
       });
 
       it('lets a core user retrieve any tenant', async () => {
@@ -716,6 +716,22 @@ describe('tenant routers documented behaviour', () => {
           .patch('/api/tenant/v2/tenants/other/name')
           .send({ name: 'Re:named' });
         expect(res.status).toBe(400);
+      });
+
+      it('responds 400 for a name another tenant already uses', async () => {
+        const res = await request(createApp(serviceAdmin))
+          .patch('/api/tenant/v2/tenants/other/name')
+          .send({ name: 'Test' });
+        expect(res.status).toBe(400);
+        expect(repositoryMock.save).not.toHaveBeenCalled();
+      });
+
+      it('allows renaming a tenant to its own current name', async () => {
+        const res = await request(createApp(serviceAdmin))
+          .patch('/api/tenant/v2/tenants/other/name')
+          .send({ name: 'Other' });
+        expect(res.status).toBe(200);
+        expect(res.body.name).toBe('Other');
       });
 
       it('responds 404 for an unknown tenant', async () => {
