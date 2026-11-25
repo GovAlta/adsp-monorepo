@@ -1,0 +1,238 @@
+name: Observability stack
+
+# Deploys .openshift/observability/observability-stack.yml (Tempo, OpenTelemetry Collector, Prometheus
+# and Grafana) to adsp-<env>. Pushes to main deploy dev, then uat after Staging-gate approval. Prod is
+# deployed only by a manual run on main, following promote.yml. See .openshift/observability/README.md.
+
+on:
+  pull_request:
+    paths:
+      - '.openshift/observability/observability-stack.yml'
+      - '.openshift/observability/render-stack.sh'
+      - '.openshift/environments/*/observability-stack.env'
+      - '.github/workflows/observability.yml'
+  push:
+    branches: [main]
+    paths:
+      - '.openshift/observability/observability-stack.yml'
+      - '.openshift/observability/render-stack.sh'
+      - '.openshift/environments/*/observability-stack.env'
+      - '.github/workflows/observability.yml'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Environment to deploy (main branch only)
+        type: choice
+        required: true
+        options: [dev, uat, prod]
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 5
+    outputs:
+      dev: ${{ steps.select.outputs.dev }}
+      uat: ${{ steps.select.outputs.uat }}
+      prod: ${{ steps.select.outputs.prod }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Render the stack for every environment
+        run: |
+          for target in dev uat prod; do
+            .openshift/observability/render-stack.sh "$target" > /dev/null
+            echo "$target rendered"
+          done
+      - name: Select environments
+        id: select
+        env:
+          BEFORE: ${{ github.event.before }}
+          TARGET: ${{ inputs.environment }}
+        run: |
+          set -euo pipefail
+          dev=false; uat=false; prod=false
+          if [[ "$GITHUB_EVENT_NAME" == workflow_dispatch ]]; then
+            [[ "$GITHUB_REF" == refs/heads/main ]] || { echo "::error::Deploy only from main"; exit 1; }
+            case "$TARGET" in
+              dev|uat|prod) declare "$TARGET=true" ;;
+              *) echo "::error::Invalid environment"; exit 1 ;;
+            esac
+          elif [[ "$GITHUB_EVENT_NAME" == push ]]; then
+            if [[ "$BEFORE" =~ ^0+$ ]]; then
+              changed=.github/workflows/observability.yml
+            else
+              changed=$(git diff --name-only --no-renames "$BEFORE" "$GITHUB_SHA")
+            fi
+            shared='^(\.openshift/observability/(observability-stack\.yml|render-stack\.sh)|\.github/workflows/observability\.yml)$'
+            if grep -Eq "$shared" <<< "$changed"; then
+              dev=true; uat=true; prod=true
+            fi
+            for target in dev uat prod; do
+              if grep -qx ".openshift/environments/$target/observability-stack.env" <<< "$changed"; then
+                declare "$target=true"
+              fi
+            done
+            if [[ "$prod" == true ]]; then
+              echo "::notice::Prod is affected; deploy it with a manual run of this workflow on main."
+              prod=false
+            fi
+          fi
+          printf 'dev=%s\nuat=%s\nprod=%s\n' "$dev" "$uat" "$prod" >> "$GITHUB_OUTPUT"
+
+  dev:
+    needs: validate
+    if: needs.validate.outputs.dev == 'true'
+    runs-on: ubuntu-22.04
+    timeout-minutes: 45
+    environment:
+      name: Dev
+    concurrency:
+      group: observability-dev
+      cancel-in-progress: false
+    steps: &deploy-observability
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - name: Oc login
+        uses: redhat-actions/oc-login@v1
+        with:
+          openshift_server_url: ${{ secrets.ARO_SERVER }}
+          openshift_token: ${{ secrets.ARO_TOKEN }}
+          namespace: adsp-${{ github.job }}
+          insecure_skip_tls_verify: true
+      - name: Render and dry-run
+        env:
+          TARGET: ${{ github.job }}
+        run: |
+          set -euo pipefail
+          .openshift/observability/render-stack.sh "$TARGET" > "$RUNNER_TEMP/stack.json"
+          # The ImageStreams in adsp-build are shared by every environment, so their tags are set
+          # one at a time below rather than applied: applying would replace the other environments' tags.
+          # The deploy account has edit in adsp-<env>, which cannot read or write RoleBindings, so
+          # grafana-metrics-view is left to a namespace admin; see .openshift/observability/README.md.
+          jq '.items |= map(select(.kind | IN("ImageStream", "RoleBinding") | not))' "$RUNNER_TEMP/stack.json" > "$RUNNER_TEMP/objects.json"
+          jq -r '.items[] | select(.kind == "RoleBinding") | "::notice::Not applied: RoleBinding/\(.metadata.name) needs a namespace admin"' "$RUNNER_TEMP/stack.json"
+          oc apply -n "adsp-$TARGET" --dry-run=server --validate=strict -f "$RUNNER_TEMP/objects.json" > /dev/null
+      # Each environment has its own tag (IMAGE_TAG=<env>), so importing for dev does not roll uat or prod.
+      - name: Import images
+        env:
+          TARGET: ${{ github.job }}
+        run: |
+          set -euo pipefail
+          streams=$(jq -c '[.items[] | select(.kind == "ImageStream")
+            | {name: .metadata.name, tag: .spec.tags[0].name, source: .spec.tags[0].from.name}]' "$RUNNER_TEMP/stack.json")
+          images='{}'
+          for i in $(seq 0 $(($(jq length <<< "$streams") - 1))); do
+            name=$(jq -r ".[$i].name" <<< "$streams")
+            tag=$(jq -r ".[$i].tag" <<< "$streams")
+            source=$(jq -r ".[$i].source" <<< "$streams")
+            oc tag -n adsp-build --source=docker "$source" "$name:$tag" --reference-policy=local
+            oc import-image -n adsp-build "$name:$tag" --reference-policy=local > /dev/null
+            # A status item older than the spec means the import of $source has not succeeded.
+            image=$(oc get imagestream "$name" -n adsp-build -o json | jq -er --arg tag "$tag" '
+              (.spec.tags[] | select(.name == $tag) | .generation) as $generation
+              | (.status.tags[] | select(.tag == $tag) | .items[0]) as $item
+              | if $item.generation >= $generation then "\(.status.dockerImageRepository)@\($item.image)"
+                else error("\($tag) has not been imported from its current source") end')
+            echo "$name:$tag <- $source ($image)"
+            images=$(jq -c --arg key "$name:$tag" --arg image "$image" '.[$key] = $image' <<< "$images")
+          done
+          # Set the resolved image so applying rolls each Deployment once, instead of once to the tag
+          # and again when the image trigger resolves it.
+          jq --argjson images "$images" '.items |= map(if .kind == "Deployment" then
+              (.metadata.annotations["image.openshift.io/triggers"] | fromjson | .[0].from.name) as $tag
+              | .spec.template.spec.containers[0].image = ($images[$tag] // error("No image imported for \($tag)"))
+            else . end)' "$RUNNER_TEMP/objects.json" > "$RUNNER_TEMP/pinned.json"
+      - name: Apply
+        env:
+          TARGET: ${{ github.job }}
+        run: |
+          set -euo pipefail
+          namespace="adsp-$TARGET"
+          objects="$RUNNER_TEMP/pinned.json"
+          deployments=$(jq -r '.items[] | select(.kind == "Deployment") | .metadata.name' "$objects")
+          generation() {
+            oc get deployment "$1" -n "$namespace" --ignore-not-found -o jsonpath='{.metadata.generation}'
+          }
+          config() {
+            local name
+            for name in $(jq -r --arg name "$1" '.items[] | select(.kind == "Deployment" and .metadata.name == $name)
+              | .spec.template.spec | [.volumes[]?.configMap.name, .containers[].env[]?.valueFrom.configMapKeyRef.name]
+              | map(select(.)) | unique | .[]' "$objects"); do
+              echo "$name=$(oc get configmap "$name" -n "$namespace" --ignore-not-found -o jsonpath='{.metadata.resourceVersion}')"
+            done
+          }
+          declare -A generations configs
+          for deployment in $deployments; do
+            generations[$deployment]=$(generation "$deployment")
+            configs[$deployment]=$(config "$deployment")
+          done
+
+          oc apply -n "$namespace" --validate=strict -f "$objects"
+
+          # The components read their ConfigMaps only at startup (the collector does not hot-reload), so
+          # restart any Deployment whose config changed but whose pods were not already replaced.
+          for deployment in $deployments; do
+            if [[ "$(generation "$deployment")" == "${generations[$deployment]}" &&
+                  "$(config "$deployment")" != "${configs[$deployment]}" ]]; then
+              echo "Config of $deployment changed; restarting it"
+              oc rollout restart "deployment/$deployment" -n "$namespace"
+            fi
+          done
+      - name: Wait for rollout
+        env:
+          TARGET: ${{ github.job }}
+        run: |
+          set -euo pipefail
+          namespace="adsp-$TARGET"
+          for deployment in $(jq -r '.items[] | select(.kind == "Deployment") | .metadata.name' "$RUNNER_TEMP/pinned.json"); do
+            oc rollout status "deployment/$deployment" -n "$namespace" --timeout=10m
+            expected=$(jq -r --arg name "$deployment" '.items[]
+              | select(.kind == "Deployment" and .metadata.name == $name) | .spec.template.spec.containers[0].image' "$RUNNER_TEMP/pinned.json")
+            actual=$(oc get deployment "$deployment" -n "$namespace" -o jsonpath='{.spec.template.spec.containers[0].image}')
+            [[ "${actual##*@}" == "${expected##*@}" ]] || {
+              echo "::error::$deployment runs $actual, expected $expected"
+              exit 1
+            }
+            echo "$deployment runs $actual"
+          done
+
+  uat-approval:
+    needs: [validate, dev]
+    if: >-
+      !cancelled() && needs.validate.result == 'success' && needs.validate.outputs.uat == 'true' &&
+      (needs.dev.result == 'success' || needs.dev.result == 'skipped')
+    runs-on: ubuntu-22.04
+    environment:
+      name: Staging-gate
+    steps:
+      - run: echo "UAT observability stack deployment approved"
+
+  uat:
+    needs: [validate, uat-approval]
+    if: ${{ !cancelled() && needs.uat-approval.result == 'success' }}
+    runs-on: ubuntu-22.04
+    timeout-minutes: 45
+    environment:
+      name: Staging
+    concurrency:
+      group: observability-uat
+      cancel-in-progress: false
+    steps: *deploy-observability
+
+  prod:
+    needs: validate
+    if: github.event_name == 'workflow_dispatch' && needs.validate.outputs.prod == 'true'
+    runs-on: ubuntu-22.04
+    timeout-minutes: 45
+    environment:
+      name: Production
+    concurrency:
+      group: observability-prod
+      cancel-in-progress: false
+    steps: *deploy-observability

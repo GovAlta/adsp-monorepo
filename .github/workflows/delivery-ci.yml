@@ -104,9 +104,15 @@ jobs:
     needs: [build, buildContainers]
     strategy:
       fail-fast: true
-      max-parallel: 4
+      max-parallel: 8
       matrix:
         app: ${{ fromJson(needs.build.outputs.affected_apps_array) }}
+    # Two runs never roll out the same app in the same namespace at once; the later
+    # one waits. Scoped to the app, not the workflow, so a run paused at the uat
+    # approval gate does not hold up dev deploys from newer runs.
+    concurrency:
+      group: deploy-dev-${{ matrix.app }}
+      cancel-in-progress: false
     environment:
       name: Dev
     steps:
@@ -165,9 +171,15 @@ jobs:
     needs: [build, deployStagingApproval]
     strategy:
       fail-fast: true
-      max-parallel: 4
+      max-parallel: 8
       matrix:
         app: ${{ fromJson(needs.build.outputs.affected_apps_array) }}
+    # Two runs never roll out the same app in the same namespace at once; the later
+    # one waits. Scoped to the app, not the workflow, so a run paused at the uat
+    # approval gate does not hold up dev deploys from newer runs.
+    concurrency:
+      group: deploy-uat-${{ matrix.app }}
+      cancel-in-progress: false
     environment:
       name: Staging
     steps:

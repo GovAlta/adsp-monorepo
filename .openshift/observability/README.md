@@ -6,7 +6,8 @@ the shared collector endpoint and should not deploy their own tracing stack.
 
 Files in this folder:
 
-- `observability-stack.yml`: one-template deployment of Tempo + Collector + Grafana.
+- `observability-stack.yml`: one-template deployment of Tempo + Collector + Prometheus + Grafana.
+- `render-stack.sh`: renders the template for dev, uat or prod with the parameters it is deployed with.
 
 ## Topology
 
@@ -30,27 +31,73 @@ Application services should target the collector service, not Tempo directly.
 
 ## Deploy
 
-Fastest path: deploy the whole stack with one template.
+`.github/workflows/observability.yml` deploys the stack, the same way `.github/workflows/monitoring.yml`
+applies alerting:
+
+| Trigger | Deploys |
+|---|---|
+| Pull request changing the template, `render-stack.sh`, an `observability-stack.env` or the workflow | Nothing. Renders the stack for dev, uat and prod. |
+| Push to `main` changing the template, `render-stack.sh` or the workflow | dev, then uat after `Staging-gate` approval. Prod is skipped with a notice. |
+| Push to `main` changing `.openshift/environments/<env>/observability-stack.env` | That environment (dev, or uat after approval). |
+| Manual run (Actions > Observability stack > Run workflow) on `main` | The chosen environment. The only way to deploy prod. |
+
+The deploy jobs run in the `Dev`, `Staging` and `Production` GitHub Environments and log in with their
+`ARO_SERVER` and `ARO_TOKEN` secrets, the account Delivery CI deploys with. Deploying needs an account
+that can update ImageStreams in `adsp-build`, which personal accounts usually cannot.
+
+Each deploy job:
+
+1. Renders the template with `render-stack.sh <env>` and dry-runs it against `adsp-<env>`.
+2. Points the environment's ImageStream tags in `adsp-build` at the source images (`oc tag`) and imports
+   them, failing if an import does not succeed.
+3. Applies everything except the ImageStreams and the RoleBinding to `adsp-<env>`, with each Deployment's
+   image set to the imported digest so it rolls once.
+4. Restarts a Deployment whose ConfigMap changed but whose pods were not replaced by the apply. The
+   components, the collector included, read their config only at startup.
+5. Waits for the four Deployments to roll out and checks that they run the imported images.
+
+It does not back up Grafana's database or apply the dashboards; see [Dashboards](#dashboards).
+
+The deploy account has `edit` in `adsp-<env>`, which cannot read or write RoleBindings, so the job skips
+RoleBinding `grafana-metrics-view` (see [Cluster metrics](#cluster-metrics)). It exists in dev, uat and
+prod. A namespace admin applies it when it is new or changes:
 
 ```sh
-oc process -f .openshift/observability/observability-stack.yml \
-  --param-file .openshift/environments/dev/observability-stack.env \
-  -p ENVIRONMENT_NAME=dev \
-  -p NAMESPACE=adsp-dev \
-  -p INFRA_NAMESPACE=adsp-build \
-  -p IMAGE_TAG=latest \
-  -p IMAGE_IMPORT_SCHEDULED=false \
-  -p GRAFANA_SECRET_NAME=grafana \
-  -p GRAFANA_OAUTH_ENABLED=true \
-  -p GRAFANA_ROOT_URL=https://grafana-<env-route-host> \
-  -p GRAFANA_OAUTH_AUTH_URL=https://access.<env-domain>/auth/realms/core/protocol/openid-connect/auth \
-  -p GRAFANA_OAUTH_TOKEN_URL=https://access.<env-domain>/auth/realms/core/protocol/openid-connect/token \
-  -p GRAFANA_OAUTH_API_URL=https://access.<env-domain>/auth/realms/core/protocol/openid-connect/userinfo \
-  | oc apply -f -
+ENV=dev
+.openshift/observability/render-stack.sh $ENV | jq '.items |= map(select(.kind == "RoleBinding"))' | oc apply -n adsp-$ENV -f -
 ```
 
-`NAMESPACE` must be the namespace being applied to. It has no default, so omitting it fails instead of
-scoping one environment's Grafana to another environment's namespace.
+### Parameters
+
+`render-stack.sh <env>` renders the template with:
+
+- `ENVIRONMENT_NAME=<env>`, `NAMESPACE=adsp-<env>` and `INFRA_NAMESPACE=adsp-build`.
+- `IMAGE_TAG=<env>`. The ImageStreams in `adsp-build` are shared by every environment, so with a shared
+  tag such as `latest`, importing a new image for dev would also roll uat and prod through their image
+  triggers. Each environment has its own tag instead. For the same reason the workflow sets tags with
+  `oc tag` rather than applying the ImageStream objects: applying one environment's ImageStream would
+  remove the other environments' tags.
+- `.openshift/environments/<env>/observability-stack.env`, which holds the values that differ by
+  environment:
+
+| Parameter | dev | uat | prod |
+|---|---|---|---|
+| `GRAFANA_ROOT_URL` | `https://grafana-adsp-dev.apps.aro-01.int.gov.ab.ca` | `https://grafana-adsp-uat.apps.aro-01.int.gov.ab.ca` | `https://grafana-adsp-prod.apps.aro-01.int.gov.ab.ca` |
+| `GRAFANA_OAUTH_*_URL` (core realm) | `access.adsp-dev.gov.ab.ca` | `access-uat.alberta.ca` | `access.alberta.ca` |
+| `GRAFANA_DISABLE_LOGIN_FORM` | `true` | `false` | `false` |
+| CPU requests and limits | reduced | reduced | template defaults |
+
+`GRAFANA_ROOT_URL` is the host OpenShift generates for the `grafana` route. If it is unset, OAuth login
+redirects to `localhost`; `render-stack.sh` refuses to render OAuth without https URLs.
+
+Grafana credentials and OAuth client credentials are sourced from an existing secret
+(`GRAFANA_SECRET_NAME`). The stack template does not generate this secret.
+
+Reference secret manifest:
+
+- `.openshift/configuration/grafana.yml`
+
+### Images
 
 The template imports source images into ImageStreams in `INFRA_NAMESPACE` and
 deployments pull from the internal OpenShift registry to avoid direct Docker Hub pulls.
@@ -68,34 +115,43 @@ Source images and registries (the `*_IMAGE` template parameters):
 
 Grafana Labs publishes Tempo and Grafana images only on Docker Hub, so those two imports still pull
 from `docker.io`. Upgrading Grafana migrates its database on the `grafana-storage` volume and cannot
-be rolled back by changing the image tag; back up `/var/lib/grafana/grafana.db` first.
+be rolled back by changing the image tag; back up `/var/lib/grafana/grafana.db` first if its data
+matters.
 
-CPU and memory for each component are template parameters (for example `PROMETHEUS_CPU_LIMIT`) that
-default to the production values. `.openshift/environments/<env>/observability-stack.env` overrides them
-for dev and uat; omit `--param-file` for an environment without a file.
+The `latest` tags that the stacks used before the workflow are left in place; nothing tracks them once
+every environment has been deployed by the workflow.
 
-The dev, uat and prod stacks use `INFRA_NAMESPACE=adsp-build`, the namespace that holds the platform
-service images; the template default `core-services-infra` is not used. The account applying the
-template must be allowed to create/update ImageStreams in `INFRA_NAMESPACE`. An account without that
-permission can apply everything except the `ImageStream` objects, as long as the ImageStreams already
-exist there.
+### Deploying manually
 
-Grafana credentials and OAuth client credentials are sourced from an existing secret
-(`GRAFANA_SECRET_NAME`). The stack template does not generate this secret.
-
-Reference secret manifest:
-
-- `.openshift/configuration/grafana.yml`
-
-To refresh imported images on demand (instead of periodic polling):
+Without the workflow, an account that can update ImageStreams in `adsp-build` can do the same steps by
+hand. Tag and import the images, then apply the rest:
 
 ```sh
-oc import-image -n adsp-build tempo:latest --from=docker.io/grafana/tempo:2.10.10 --confirm
-oc import-image -n adsp-build otel-collector:latest --from=ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector-contrib:0.166.0 --confirm
-oc import-image -n adsp-build prometheus:latest --from=quay.io/prometheus/prometheus:v3.16.0 --confirm
-oc import-image -n adsp-build grafana:latest --from=docker.io/grafana/grafana:12.4.16 --confirm
+ENV=dev
+.openshift/observability/render-stack.sh $ENV > observability.$ENV.json
+jq -r '.items[] | select(.kind == "ImageStream") | "\(.metadata.name):\(.spec.tags[0].name) \(.spec.tags[0].from.name)"' \
+  observability.$ENV.json | while read -r tag source; do
+  oc tag -n adsp-build --source=docker "$source" "$tag" --reference-policy=local
+  oc import-image -n adsp-build "$tag" --reference-policy=local
+done
+# Add RoleBinding objects back if the account is a namespace admin.
+jq '.items |= map(select(.kind | IN("ImageStream", "RoleBinding") | not))' observability.$ENV.json > objects.$ENV.json
+oc diff -n adsp-$ENV -f objects.$ENV.json   # review before applying
+oc apply -n adsp-$ENV -f objects.$ENV.json
+oc rollout restart deployment/otel-collector -n adsp-$ENV   # if only its ConfigMap changed
 ```
 
+`NAMESPACE` must be the namespace being applied to. It has no default, so omitting it fails instead of
+scoping one environment's Grafana to another environment's namespace.
+
+To re-import an environment's images on demand (instead of periodic polling), for example dev:
+
+```sh
+for name in tempo otel-collector prometheus grafana; do oc import-image -n adsp-build $name:dev; done
+```
+
+`oc import-image` refuses to change a tag's source; change the `*_IMAGE` parameter and deploy, or use
+`oc tag --source=docker <image> <name>:<env>`.
 To see the generated Grafana route host:
 
 ```sh
