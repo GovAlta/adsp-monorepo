@@ -24,6 +24,11 @@ export class CredentialStore {
     private keys: EncryptionKeyring,
   ) {}
 
+  /** Version of the key that new and replaced secrets are encrypted with. */
+  get keyVersion(): number {
+    return this.keys.current.version;
+  }
+
   private aad(tenantId: string, connectionId: string): string {
     return `${tenantId}:${connectionId}`;
   }

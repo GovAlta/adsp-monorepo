@@ -449,10 +449,10 @@ describe('audit service API documentation', () => {
         expect(result.body).toEqual({ results: ['case-service'] });
       });
 
-      it('responds 403 to a Core caller without a tenant', async () => {
+      it('responds 400 to a Core caller without a tenant', async () => {
         await request(createApp({ ...reading, isCore: true, tenantId: undefined }))
           .get('/audit/v1/namespaces')
-          .expect(403);
+          .expect(400);
       });
 
       it('responds 503 when storage is unavailable', async () => {

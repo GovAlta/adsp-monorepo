@@ -1,4 +1,4 @@
-import { adspId, AdspId, User } from '@abgov/adsp-service-sdk';
+import { adspId, AdspId, AuditService, EventService, User } from '@abgov/adsp-service-sdk';
 import { createErrorHandler, NotFoundError } from '@core-services/core-common';
 import { randomBytes } from 'crypto';
 import * as express from 'express';
@@ -7,18 +7,30 @@ import * as request from 'supertest';
 import { Logger } from 'winston';
 import { CredentialRepository, CredentialStore, parseEncryptionKey, StoredCredential } from './credentials';
 import {
+  ConnectionNotFoundError,
   CredentialNotSetError,
   CredentialUnreadableError,
   DestinationDisabledError,
+  DestinationNotFoundError,
   DestinationNotSetUpError,
   DetailRowsFailedError,
   SharePointError,
 } from './errors';
+import {
+  CredentialDeletedAuditAction,
+  CredentialSetAuditAction,
+  DataPushedAuditAction,
+  DestinationSetUpAuditAction,
+  DestinationTestedAuditAction,
+  DestinationVerifiedAuditAction,
+  FilePushedAuditAction,
+} from './audit';
 import { SharePointFileService } from './files';
 import { ListNameTakenError, SharePointSetup } from './setup';
 import { GraphTokenProvider } from './graph';
 import { RowIdentityMissingError } from './mapper';
 import { SharePointPusher } from './push';
+import { requestWithRetry } from './retry';
 import { ServiceRoles } from './roles';
 import { createSharePointRouter } from './router';
 import { SharePointConfiguration } from './types';
@@ -90,11 +102,15 @@ describe('SharePoint router', () => {
   let setup: { verify: jest.Mock; setUp: jest.Mock };
   let clearConfiguration: jest.Mock;
   let tokens: { evict: jest.Mock };
+  let auditService: { record: jest.Mock };
+  let eventService: { send: jest.Mock };
   let currentUser: User;
   let app: express.Application;
 
   beforeEach(() => {
     logger = { debug: jest.fn(), info: jest.fn(), warn: jest.fn(), error: jest.fn() };
+    auditService = { record: jest.fn().mockResolvedValue({ status: 'recorded', eventId: 'event-1' }) };
+    eventService = { send: jest.fn() };
     pusher = {
       push: jest.fn().mockResolvedValue({ itemId: 'item-7', outcome: 'updated' }),
       test: jest.fn().mockResolvedValue({ itemId: 'item-8', outcome: 'created' }),
@@ -126,6 +142,8 @@ describe('SharePoint router', () => {
         pusher: pusher as unknown as SharePointPusher,
         fileService: fileService as unknown as SharePointFileService,
         setup: setup as unknown as SharePointSetup,
+        auditService: auditService as unknown as AuditService,
+        eventService: eventService as unknown as EventService,
         clearConfiguration,
       }),
     );
@@ -146,6 +164,9 @@ describe('SharePoint router', () => {
   const loggedText = () =>
     JSON.stringify([logger.debug.mock.calls, logger.info.mock.calls, logger.warn.mock.calls, logger.error.mock.calls]);
 
+  const recorded = () => auditService.record.mock.calls.map(([action, details]) => [action.name, details]);
+  const recordedText = () => JSON.stringify(auditService.record.mock.calls);
+
   describe('credentials', () => {
     it('sets a credential, clears the cached token and reports status without the secret', async () => {
       const res = await setSecret();
@@ -160,6 +181,11 @@ describe('SharePoint router', () => {
 
     it('returns 404 for a connection that is not in the tenant configuration', async () => {
       expect((await setSecret('someone-elses')).status).toBe(404);
+    });
+
+    it('reads the configuration fresh, so a secret saved right after its new connection finds it', async () => {
+      await setSecret();
+      expect(clearConfiguration).toHaveBeenCalledWith(tenantId);
     });
 
     it('rejects an empty secret', async () => {
@@ -274,7 +300,7 @@ describe('SharePoint router', () => {
     it('returns 502 with the main row ID and the failed items when detail rows fail', async () => {
       const detailFailures = [{ listId: 'members', indexes: [1] }];
       pusher.push.mockRejectedValueOnce(
-        new DetailRowsFailedError('item-7', detailFailures, 'graph:serviceNotAvailable', true),
+        new DetailRowsFailedError('item-7', 'created', detailFailures, 'graph:serviceNotAvailable', true),
       );
 
       const res = await push();
@@ -389,7 +415,7 @@ describe('SharePoint router', () => {
     it('reports detail rows that failed', async () => {
       const detailFailures = [{ listId: 'members', indexes: [0], column: 'ParentItemId' }];
       pusher.test.mockRejectedValueOnce(
-        new DetailRowsFailedError('item-8', detailFailures, 'graph:invalidRequest', false),
+        new DetailRowsFailedError('item-8', 'created', detailFailures, 'graph:invalidRequest', false),
       );
       expect((await runTest()).body).toEqual({ ok: false, errorCode: 'graph:invalidRequest', detailFailures });
     });
@@ -649,6 +675,769 @@ describe('SharePoint router', () => {
       await upload({ ...body, data: { applicant: { firstName: SENTINEL }, _adsp: { key: 'submission-1' } } });
 
       expect(loggedText()).not.toContain(SENTINEL);
+    });
+  });
+
+  describe('audit', () => {
+    const deleteSecret = () => request(app).delete('/sharepoint/v1/connections/hr-site/credentials');
+    const adminActor = expect.objectContaining({ id: 'admin', type: 'user' });
+    const writerActor = expect.objectContaining({ id: 'form-service' });
+    const connectionResource = { type: 'sharepoint-connection', id: 'hr-site' };
+    const destinationResource = { type: 'sharepoint-destination', id: 'hr-intake' };
+
+    const proof = {
+      field: 'proofOfIdentity',
+      fileId: 'urn:ads:platform:file-service:v1:/files/file-1',
+      status: 'uploaded',
+      id: 'sp-file-1',
+      name: `${SENTINEL}.pdf`,
+      url: `https://sp.example/${SENTINEL}.pdf`,
+      size: 10,
+    };
+    const statement = { ...proof, field: 'statements[0]', fileId: 'file-2', id: 'sp-file-2', size: 20 };
+    const filesBody = {
+      submissionId: 'submission-1',
+      files: [
+        { field: proof.field, fileId: proof.fileId },
+        { field: statement.field, fileId: statement.fileId },
+      ],
+      data: { applicant: { firstName: SENTINEL }, _adsp: { key: 'row-key-1' } },
+    };
+    const upload = () => request(app).post('/sharepoint/v1/destinations/hr-intake/files').send(filesBody);
+
+    const filePushed = (file: typeof proof) => [
+      'file.pushed',
+      {
+        tenantId,
+        actor: writerActor,
+        resource: destinationResource,
+        correlationId: 'submission-1',
+        metadata: {
+          connectionId: 'hr-site',
+          submissionId: 'submission-1',
+          field: file.field,
+          fileId: file.fileId,
+          sharepointFileId: file.id,
+          size: file.size,
+        },
+      },
+    ];
+
+    describe('secret changes', () => {
+      it('records a saved secret with the admin, the connection and the key version', async () => {
+        await setSecret();
+
+        expect(recorded()).toEqual([
+          [
+            CredentialSetAuditAction.name,
+            {
+              tenantId,
+              actor: adminActor,
+              resource: connectionResource,
+              metadata: { connectionId: 'hr-site', keyVersion: 1 },
+            },
+          ],
+        ]);
+      });
+
+      it('records a replaced secret as set again', async () => {
+        await setSecret();
+        await setSecret('hr-site', 'replacement');
+
+        expect(recorded().map(([name]) => name)).toEqual(['credential.set', 'credential.set']);
+      });
+
+      it('records a deleted secret with the admin and the connection', async () => {
+        await setSecret();
+        auditService.record.mockClear();
+
+        expect((await deleteSecret()).status).toBe(204);
+
+        expect(recorded()).toEqual([
+          [
+            CredentialDeletedAuditAction.name,
+            { tenantId, actor: adminActor, resource: connectionResource, metadata: { connectionId: 'hr-site' } },
+          ],
+        ]);
+      });
+
+      it('records nothing when there was no secret to delete', async () => {
+        expect((await deleteSecret()).status).toBe(204);
+        expect(auditService.record).not.toHaveBeenCalled();
+      });
+
+      it('never records the secret', async () => {
+        await setSecret();
+        await deleteSecret();
+
+        expect(recordedText()).not.toContain(SECRET);
+        expect(recordedText()).not.toMatch(/ciphertext|authTag|"iv"/);
+      });
+
+      it.each([
+        ['an invalid secret', () => setSecret('hr-site', '')],
+        ['an unknown connection', () => setSecret('someone-elses')],
+        [
+          'a user without the admin role',
+          () => {
+            currentUser = reader;
+            return setSecret();
+          },
+        ],
+        [
+          'a delete by a user without the admin role',
+          () => {
+            currentUser = reader;
+            return deleteSecret();
+          },
+        ],
+      ])('records nothing for %s', async (_case, send) => {
+        expect((await send()).status).toBeGreaterThanOrEqual(400);
+        expect(auditService.record).not.toHaveBeenCalled();
+      });
+
+      it('still saves and deletes the secret when the audit service fails', async () => {
+        auditService.record.mockRejectedValue(new Error('audit service unavailable'));
+
+        expect((await setSecret()).status).toBe(200);
+        expect((await deleteSecret()).status).toBe(204);
+        await new Promise((resolve) => setImmediate(resolve));
+        expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining('credential.set'), expect.anything());
+      });
+    });
+
+    describe('data pushes', () => {
+      beforeEach(() => {
+        currentUser = writer;
+      });
+
+      it('records a pushed row with the calling account, the item and the outcome, keyed by the row key', async () => {
+        await push({ applicant: { firstName: SENTINEL }, _adsp: { key: 'row-key-1' } });
+
+        expect(recorded()).toEqual([
+          [
+            DataPushedAuditAction.name,
+            {
+              tenantId,
+              actor: writerActor,
+              resource: destinationResource,
+              correlationId: 'row-key-1',
+              metadata: { connectionId: 'hr-site', sharepointItemId: 'item-7', outcome: 'updated' },
+            },
+          ],
+        ]);
+        expect(recordedText()).not.toContain(SENTINEL);
+      });
+
+      it('records a created row', async () => {
+        pusher.push.mockResolvedValueOnce({ itemId: 'item-9', outcome: 'created' });
+
+        await push();
+
+        expect(auditService.record.mock.calls[0][1].metadata).toEqual(
+          expect.objectContaining({ sharepointItemId: 'item-9', outcome: 'created' }),
+        );
+      });
+
+      it('leaves out the correlation ID when the data has no row key', async () => {
+        await push({ applicant: { firstName: 'Ada' } });
+
+        expect(auditService.record.mock.calls[0][1]).not.toHaveProperty('correlationId');
+      });
+
+      it('records a push that succeeds after a retry once', async () => {
+        let attempts = 0;
+        pusher.push.mockImplementationOnce(() =>
+          requestWithRetry(async () => {
+            if (++attempts === 1) {
+              throw new SharePointError('graph:serviceNotAvailable', true, undefined, 503, 0);
+            }
+            return { itemId: 'item-7', outcome: 'created' };
+          }),
+        );
+
+        expect((await push()).status).toBe(200);
+
+        expect(attempts).toBe(2);
+        expect(auditService.record).toHaveBeenCalledTimes(1);
+      });
+
+      it.each([
+        ['a body that is not an object', () => push([1, 2])],
+        [
+          'a user without the writer role',
+          () => {
+            currentUser = reader;
+            return push();
+          },
+        ],
+        [
+          'an unknown destination',
+          () => {
+            pusher.push.mockRejectedValueOnce(new NotFoundError('SharePoint destination', 'missing'));
+            return push();
+          },
+        ],
+        [
+          'a disabled destination',
+          () => {
+            pusher.push.mockRejectedValueOnce(new DestinationDisabledError('hr-intake'));
+            return push();
+          },
+        ],
+        [
+          'a missing row identity',
+          () => {
+            pusher.push.mockRejectedValueOnce(new RowIdentityMissingError('_adsp.key'));
+            return push();
+          },
+        ],
+        [
+          'a failed write',
+          () => {
+            pusher.push.mockRejectedValueOnce(new SharePointError('graph:TooManyRequests', true));
+            return push();
+          },
+        ],
+      ])('records nothing for %s', async (_case, send) => {
+        expect((await send()).status).toBeGreaterThanOrEqual(400);
+        expect(auditService.record).not.toHaveBeenCalled();
+      });
+
+      it('records a row whose detail rows failed, since the row itself reached SharePoint', async () => {
+        pusher.push.mockRejectedValueOnce(
+          new DetailRowsFailedError(
+            'item-7',
+            'created',
+            [{ listId: 'members', indexes: [1] }],
+            'graph:invalidRequest',
+            false,
+          ),
+        );
+
+        expect((await push()).status).toBe(502);
+
+        expect(recorded()).toEqual([
+          [
+            DataPushedAuditAction.name,
+            expect.objectContaining({
+              resource: destinationResource,
+              correlationId: 'submission-1',
+              metadata: {
+                connectionId: 'hr-site',
+                sharepointItemId: 'item-7',
+                outcome: 'created',
+                detailRowsFailed: true,
+              },
+            }),
+          ],
+        ]);
+      });
+
+      it('still returns the push result when the audit service fails', async () => {
+        auditService.record.mockRejectedValue(new Error('audit service unavailable'));
+
+        const res = await push();
+
+        expect(res.status).toBe(200);
+        expect(res.body).toEqual({ dataId: 'item-7', outcome: 'updated', date: expect.any(String) });
+      });
+    });
+
+    describe('file pushes', () => {
+      beforeEach(() => {
+        currentUser = writer;
+        fileService.upload.mockResolvedValue({ files: [proof] });
+      });
+
+      it('records one uploaded file with the submission, field, file IDs and size', async () => {
+        await request(app)
+          .post('/sharepoint/v1/destinations/hr-intake/files')
+          .send({ submissionId: 'submission-1', files: [filesBody.files[0]] });
+
+        expect(recorded()).toEqual([filePushed(proof)]);
+      });
+
+      it('records each uploaded file and the row written with them', async () => {
+        fileService.upload.mockResolvedValueOnce({
+          files: [proof, statement],
+          row: { written: true, dataId: 'item-7', outcome: 'created' },
+        });
+
+        expect((await upload()).status).toBe(200);
+
+        expect(recorded()).toEqual([
+          filePushed(proof),
+          filePushed(statement),
+          [
+            DataPushedAuditAction.name,
+            {
+              tenantId,
+              actor: writerActor,
+              resource: destinationResource,
+              correlationId: 'row-key-1',
+              metadata: { connectionId: 'hr-site', sharepointItemId: 'item-7', outcome: 'created' },
+            },
+          ],
+        ]);
+        expect(auditService.record.mock.calls.map(([action]) => action)).toEqual([
+          FilePushedAuditAction,
+          FilePushedAuditAction,
+          DataPushedAuditAction,
+        ]);
+      });
+
+      it('records only the files that uploaded when others fail', async () => {
+        fileService.upload.mockResolvedValueOnce({
+          files: [
+            proof,
+            { field: 'statements[0]', fileId: 'file-2', status: 'failed', errorCode: 'x', retryable: true },
+          ],
+        });
+
+        expect((await upload()).status).toBe(502);
+
+        expect(recorded()).toEqual([filePushed(proof)]);
+      });
+
+      it('records the files but not a row that could not be written', async () => {
+        fileService.upload.mockResolvedValueOnce({
+          files: [proof],
+          row: { written: false, errorCode: 'graph:invalidRequest', retryable: false },
+        });
+
+        await upload();
+
+        expect(recorded().map(([name]) => name)).toEqual(['file.pushed']);
+      });
+
+      it('records a row whose detail rows failed, since the row itself reached SharePoint', async () => {
+        fileService.upload.mockResolvedValueOnce({
+          files: [proof],
+          row: {
+            written: false,
+            errorCode: 'graph:invalidRequest',
+            retryable: false,
+            dataId: 'item-7',
+            outcome: 'updated',
+            detailFailures: [{ listId: 'members', indexes: [0] }],
+          },
+        });
+
+        expect((await upload()).status).toBe(502);
+
+        expect(recorded()[1]).toEqual([
+          DataPushedAuditAction.name,
+          expect.objectContaining({
+            correlationId: 'row-key-1',
+            metadata: {
+              connectionId: 'hr-site',
+              sharepointItemId: 'item-7',
+              outcome: 'updated',
+              detailRowsFailed: true,
+            },
+          }),
+        ]);
+      });
+
+      it('never records form data, file names or links', async () => {
+        fileService.upload.mockResolvedValueOnce({
+          files: [proof],
+          row: { written: true, dataId: 'item-7', outcome: 'created' },
+        });
+
+        await upload();
+
+        expect(recordedText()).not.toContain(SENTINEL);
+        expect(recordedText()).not.toContain('sp.example');
+      });
+
+      it('records nothing when the request fails before any upload', async () => {
+        fileService.upload.mockRejectedValueOnce(new CredentialNotSetError('hr-site'));
+
+        expect((await upload()).status).toBe(409);
+        expect(auditService.record).not.toHaveBeenCalled();
+      });
+
+      it('still returns the upload result when the audit service fails', async () => {
+        auditService.record.mockRejectedValue(new Error('audit service unavailable'));
+
+        const res = await upload();
+
+        expect(res.status).toBe(200);
+        expect(res.body).toEqual({ files: [proof] });
+      });
+    });
+
+    describe('destination admin actions', () => {
+      const verify = () => request(app).post('/sharepoint/v1/destinations/hr-intake/verify');
+      const runSetup = () => request(app).post('/sharepoint/v1/destinations/hr-intake/setup');
+      const report = { ready: true, lists: [] };
+
+      it('records a test that wrote a row, with the admin, the item and the outcome', async () => {
+        await runTest({ applicant: { firstName: SENTINEL }, _adsp: { key: 'test-key' } });
+
+        expect(recorded()).toEqual([
+          [
+            DestinationTestedAuditAction.name,
+            {
+              tenantId,
+              actor: adminActor,
+              resource: destinationResource,
+              correlationId: 'test-key',
+              metadata: { connectionId: 'hr-site', sharepointItemId: 'item-8', outcome: 'created' },
+            },
+          ],
+        ]);
+        expect(recordedText()).not.toContain(SENTINEL);
+      });
+
+      it('records a test whose detail rows failed, since its row reached SharePoint', async () => {
+        pusher.test.mockRejectedValueOnce(
+          new DetailRowsFailedError('item-8', 'updated', [{ listId: 'members', indexes: [0] }], 'graph:x', false),
+        );
+
+        await runTest();
+
+        expect(auditService.record.mock.calls[0][1].metadata).toEqual({
+          connectionId: 'hr-site',
+          sharepointItemId: 'item-8',
+          outcome: 'updated',
+          detailRowsFailed: true,
+        });
+      });
+
+      it('records nothing for a test that wrote nothing', async () => {
+        pusher.test.mockRejectedValueOnce(new SharePointError('graph:invalidRequest', false, 'FirstName'));
+
+        expect((await runTest()).body).toEqual(expect.objectContaining({ ok: false }));
+        expect(auditService.record).not.toHaveBeenCalled();
+      });
+
+      it('records a verify with whether the destination is ready', async () => {
+        setup.verify.mockResolvedValueOnce({ ...report, ready: false });
+
+        await verify();
+
+        expect(recorded()).toEqual([
+          [
+            DestinationVerifiedAuditAction.name,
+            {
+              tenantId,
+              actor: adminActor,
+              resource: destinationResource,
+              metadata: { connectionId: 'hr-site', ready: false },
+            },
+          ],
+        ]);
+      });
+
+      it('records a setup with what it created and what failed', async () => {
+        setup.setUp.mockResolvedValueOnce({
+          createdLists: [{ index: 0, dataPath: 'members', listName: 'Members', listId: 'list-2' }],
+          createdColumns: [
+            { listId: 'list-1', name: 'FirstName' },
+            { listId: 'list-2', name: 'Name' },
+          ],
+          indexedColumns: [{ listId: 'list-1', name: 'AdspItemKey' }],
+          failures: [{ listId: 'list-2', name: 'Age', errorCode: 'graph:invalidRequest' }],
+          permissionDenied: false,
+          report,
+        });
+
+        await runSetup();
+
+        expect(recorded()).toEqual([
+          [
+            DestinationSetUpAuditAction.name,
+            {
+              tenantId,
+              actor: adminActor,
+              resource: destinationResource,
+              metadata: {
+                connectionId: 'hr-site',
+                createdLists: 1,
+                createdColumns: 2,
+                indexedColumns: 1,
+                failures: 1,
+                permissionDenied: false,
+              },
+            },
+          ],
+        ]);
+      });
+
+      it.each([
+        [
+          'a verify without a secret',
+          () => {
+            setup.verify.mockRejectedValueOnce(new CredentialNotSetError('hr-site'));
+            return verify();
+          },
+        ],
+        [
+          'a setup whose list name is taken',
+          () => {
+            setup.setUp.mockRejectedValueOnce(new ListNameTakenError([]));
+            return runSetup();
+          },
+        ],
+        [
+          'a test by a user without the admin role',
+          () => {
+            currentUser = reader;
+            return runTest();
+          },
+        ],
+      ])('records nothing for %s', async (_case, send) => {
+        expect((await send()).status).toBeGreaterThanOrEqual(400);
+        expect(auditService.record).not.toHaveBeenCalled();
+      });
+    });
+  });
+
+  describe('events', () => {
+    const sent = () => eventService.send.mock.calls.map(([event]) => event);
+    const sentText = () => JSON.stringify(eventService.send.mock.calls);
+    const filesBody = {
+      submissionId: 'submission-1',
+      files: [
+        { field: 'proofOfIdentity', fileId: 'file-1' },
+        { field: 'statements[0]', fileId: 'file-2' },
+      ],
+      data: { applicant: { firstName: SENTINEL }, _adsp: { key: 'row-key-1' } },
+    };
+    const upload = () => request(app).post('/sharepoint/v1/destinations/hr-intake/files').send(filesBody);
+    const failedFile = (field: string, fileId: string, errorCode: string, retryable: boolean) => ({
+      field,
+      fileId,
+      status: 'failed',
+      errorCode,
+      retryable,
+    });
+
+    describe('secret changes', () => {
+      it('signals credential-set with the connection and the admin', async () => {
+        await setSecret();
+
+        expect(sent()).toEqual([
+          expect.objectContaining({
+            name: 'credential-set',
+            tenantId,
+            payload: { connectionId: 'hr-site', updatedBy: { id: 'admin', name: 'Admin' } },
+          }),
+        ]);
+        expect(sentText()).not.toContain(SECRET);
+      });
+
+      it('signals credential-deleted when a secret was deleted', async () => {
+        await setSecret();
+        eventService.send.mockClear();
+
+        await request(app).delete('/sharepoint/v1/connections/hr-site/credentials');
+
+        expect(sent()).toEqual([
+          expect.objectContaining({
+            name: 'credential-deleted',
+            tenantId,
+            payload: { connectionId: 'hr-site', deletedBy: { id: 'admin', name: 'Admin' } },
+          }),
+        ]);
+      });
+
+      it('still saves the secret when the event cannot be sent', async () => {
+        eventService.send.mockImplementation(() => {
+          throw new Error('event service down');
+        });
+
+        expect((await setSecret()).status).toBe(200);
+      });
+    });
+
+    describe('push failures', () => {
+      beforeEach(() => {
+        currentUser = writer;
+      });
+
+      it('signals push-failed for a failure an admin has to fix, keyed by the row key', async () => {
+        pusher.push.mockRejectedValueOnce(new SharePointError('graph:invalidRequest', false, 'FirstName'));
+
+        await push({ applicant: { firstName: SENTINEL }, _adsp: { key: 'row-key-1' } });
+
+        expect(sent()).toEqual([
+          expect.objectContaining({
+            name: 'push-failed',
+            tenantId,
+            correlationId: 'row-key-1',
+            context: { destinationId: 'hr-intake' },
+            payload: { destinationId: 'hr-intake', errorCode: 'graph:invalidRequest', column: 'FirstName' },
+          }),
+        ]);
+        expect(sentText()).not.toContain(SENTINEL);
+      });
+
+      it.each([
+        ['destination-disabled', new DestinationDisabledError('hr-intake')],
+        ['credential-not-set', new CredentialNotSetError('hr-site')],
+        ['credential-unreadable', new CredentialUnreadableError('hr-site')],
+        ['destination-not-set-up', new DestinationNotSetUpError('hr-intake')],
+      ])('signals push-failed for %s', async (errorCode, error) => {
+        pusher.push.mockRejectedValueOnce(error);
+
+        expect((await push()).status).toBe(409);
+
+        expect(sent()).toEqual([
+          expect.objectContaining({ name: 'push-failed', payload: { destinationId: 'hr-intake', errorCode } }),
+        ]);
+      });
+
+      it.each([
+        ['destination-not-found', new DestinationNotFoundError('hr-intake')],
+        ['connection-not-found', new ConnectionNotFoundError('hr-site')],
+      ])('signals push-failed for %s and still returns 404', async (errorCode, error) => {
+        pusher.push.mockRejectedValueOnce(error);
+
+        expect((await push()).status).toBe(404);
+
+        expect(sent()).toEqual([
+          expect.objectContaining({ name: 'push-failed', payload: { destinationId: 'hr-intake', errorCode } }),
+        ]);
+      });
+
+      it('signals push-failed with the written row when detail rows fail for good', async () => {
+        pusher.push.mockRejectedValueOnce(
+          new DetailRowsFailedError('item-7', 'created', [{ listId: 'members', indexes: [1] }], 'graph:x', false),
+        );
+
+        await push();
+
+        expect(sent()[0].payload).toEqual({ destinationId: 'hr-intake', errorCode: 'graph:x', dataId: 'item-7' });
+      });
+
+      it.each([
+        ['a successful push', () => undefined],
+        [
+          'a failure a retry can fix',
+          () => pusher.push.mockRejectedValueOnce(new SharePointError('graph:serviceNotAvailable', true)),
+        ],
+        [
+          'detail rows a retry can fix',
+          () =>
+            pusher.push.mockRejectedValueOnce(
+              new DetailRowsFailedError('item-7', 'created', [{ listId: 'members', indexes: [1] }], 'graph:x', true),
+            ),
+        ],
+      ])('signals nothing for %s', async (_case, arrange) => {
+        arrange();
+
+        await push();
+
+        expect(eventService.send).not.toHaveBeenCalled();
+      });
+
+      it('still returns the push failure when the event cannot be sent', async () => {
+        eventService.send.mockRejectedValue(new Error('event service down'));
+        pusher.push.mockRejectedValueOnce(new CredentialNotSetError('hr-site'));
+
+        const res = await push();
+
+        expect(res.status).toBe(409);
+        expect(res.body).toEqual({ errorCode: 'credential-not-set' });
+        await new Promise((resolve) => setImmediate(resolve));
+        expect(logger.warn).toHaveBeenCalledWith('Event push-failed was not sent.', expect.anything());
+      });
+    });
+
+    describe('file upload failures', () => {
+      beforeEach(() => {
+        currentUser = writer;
+      });
+
+      it('signals one file-upload-failed per request, with only the files an admin has to fix', async () => {
+        fileService.upload.mockResolvedValueOnce({
+          files: [
+            failedFile('proofOfIdentity', 'file-1', 'file:access-denied', false),
+            failedFile('statements[0]', 'file-2', 'graph:serviceNotAvailable', true),
+          ],
+        });
+
+        expect((await upload()).status).toBe(502);
+
+        expect(sent()).toEqual([
+          expect.objectContaining({
+            name: 'file-upload-failed',
+            tenantId,
+            correlationId: 'submission-1',
+            context: { destinationId: 'hr-intake', submissionId: 'submission-1' },
+            payload: {
+              destinationId: 'hr-intake',
+              submissionId: 'submission-1',
+              files: [{ field: 'proofOfIdentity', fileId: 'file-1', errorCode: 'file:access-denied' }],
+            },
+          }),
+        ]);
+      });
+
+      it('signals every requested file when the request fails before any upload', async () => {
+        fileService.upload.mockRejectedValueOnce(new CredentialNotSetError('hr-site'));
+
+        expect((await upload()).status).toBe(409);
+
+        expect(sent()[0].payload.files).toEqual([
+          { field: 'proofOfIdentity', fileId: 'file-1', errorCode: 'credential-not-set' },
+          { field: 'statements[0]', fileId: 'file-2', errorCode: 'credential-not-set' },
+        ]);
+      });
+
+      it('signals every requested file when the destination is unknown, and still returns 404', async () => {
+        fileService.upload.mockRejectedValueOnce(new DestinationNotFoundError('hr-intake'));
+
+        expect((await upload()).status).toBe(404);
+
+        expect(sent()[0].payload.files).toEqual([
+          { field: 'proofOfIdentity', fileId: 'file-1', errorCode: 'destination-not-found' },
+          { field: 'statements[0]', fileId: 'file-2', errorCode: 'destination-not-found' },
+        ]);
+      });
+
+      it('signals push-failed for a row an admin has to fix', async () => {
+        fileService.upload.mockResolvedValueOnce({
+          files: [],
+          row: { written: false, errorCode: 'graph:invalidRequest', retryable: false },
+        });
+
+        await upload();
+
+        expect(sent()).toEqual([
+          expect.objectContaining({
+            name: 'push-failed',
+            correlationId: 'row-key-1',
+            payload: { destinationId: 'hr-intake', errorCode: 'graph:invalidRequest' },
+          }),
+        ]);
+        expect(sentText()).not.toContain(SENTINEL);
+      });
+
+      it.each([
+        [
+          'failures a retry can fix',
+          () =>
+            fileService.upload.mockResolvedValueOnce({
+              files: [failedFile('proofOfIdentity', 'file-1', 'file:not-ready', true)],
+              row: { written: false, errorCode: 'graph:serviceNotAvailable', retryable: true },
+            }),
+        ],
+        [
+          'a request that fails in a way a retry can fix',
+          () => fileService.upload.mockRejectedValueOnce(new SharePointError('graph:serviceNotAvailable', true)),
+        ],
+      ])('signals nothing for %s', async (_case, arrange) => {
+        arrange();
+
+        await upload();
+
+        expect(eventService.send).not.toHaveBeenCalled();
+      });
     });
   });
 });

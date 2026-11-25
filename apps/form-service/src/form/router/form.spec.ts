@@ -412,6 +412,52 @@ describe('form router', () => {
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ id: 'test', name: 'test-form-definition' }));
     });
 
+    describe('registration access group', () => {
+      const restricted = () =>
+        new FormDefinitionEntity(validationService, calendarService, tenantId, {
+          id: 'test',
+          name: 'test-form-definition',
+          description: '',
+          formDraftUrlTemplate: 'https://my-form/{{ id }}',
+          anonymousApply: false,
+          applicantRoles: ['test-applicant'],
+          assessorRoles: [],
+          clerkRoles: [],
+          dataSchema: {},
+          dispositionStates: [],
+          submissionRecords: false,
+          submissionPdfTemplate: '',
+          supportTopic: false,
+          registration: { enabled: true, accessGroup: 'test-access' },
+        });
+
+      const runHandler = async (roles: string[]) => {
+        const req = {
+          user: { tenantId, id: 'tester', roles },
+          params: { definitionId: 'test' },
+          query: {},
+          getServiceConfiguration: jest.fn().mockResolvedValueOnce([restricted()]),
+          tenant: { id: tenantId },
+        };
+        const res = { send: jest.fn() };
+        const handler = getFormDefinition(tenantServiceMock, calendarServiceMock, directoryMock, tokenProviderMock);
+        await handler(req as unknown as Request, res as unknown as Response, jest.fn());
+        return res.send.mock.calls[0][0];
+      };
+
+      it('can return the access group to a form-admin', async () => {
+        const result = await runHandler([FormServiceRoles.Admin]);
+
+        expect(result.registration).toEqual({ enabled: true, accessGroup: 'test-access' });
+      });
+
+      it('does not return the access group to an applicant', async () => {
+        const result = await runHandler(['test-applicant']);
+
+        expect(result.registration).toEqual({ enabled: true });
+      });
+    });
+
     it('can call next with unauthorized', async () => {
       const user = {
         tenantId,

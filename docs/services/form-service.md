@@ -103,7 +103,7 @@ Some forms are restricted to a segment of the population, for example to physici
 
 - `enabled`: whether the form is restricted and accepts access requests.
 - `dataSchema` and `uiSchema`: the registration questions that help a reviewer decide whether the applicant meets the criteria. The questions can't define `firstName`, `lastName` or `email`, since every request includes them.
-- `accessGroup`: the Keycloak group containing the roles needed to access the form. It is not returned by the form APIs.
+- `accessGroup`: optional, the Keycloak group containing the roles needed to access the form. Form APIs return it only to `form-admin` users.
 
 Submitting the first access request for a form enables registration: form service sets `registration.enabled` to `true` in the latest revision of the definition, creating the `registration` settings if the definition has none. Like the other definition endpoints, it doesn't change the active revision; if an older revision is set as active, the change takes effect once the latest revision is set as active in configuration service. Use `GET /form/v1/definitions/{definitionId}?version=latest` (`form-admin` only) to read the latest revision.
 

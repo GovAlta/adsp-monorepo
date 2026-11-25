@@ -4,6 +4,7 @@ import { Request, Response } from 'express';
 import * as passport from 'passport';
 import { Logger } from 'winston';
 import {
+  assertAdminUser,
   completeAuthenticate,
   createClientRouter,
   getAuthenticationClient,
@@ -50,6 +51,26 @@ describe('client router', () => {
         tenantService: tenantServiceMock as unknown as TenantService,
       });
       expect(router).toBeTruthy();
+    });
+  });
+
+  describe('assertAdminUser', () => {
+    it('calls next for an admin user', () => {
+      const req = { tenant: { id: tenantId }, user: { tenantId, id: 'tester', roles: [ServiceRoles.Admin] } };
+      const next = jest.fn();
+
+      assertAdminUser('get client')(req as unknown as Request, {} as Response, next);
+
+      expect(next).toHaveBeenCalledWith();
+    });
+
+    it('calls next with unauthorized error for a user without the admin role', () => {
+      const req = { tenant: { id: tenantId }, user: { tenantId, id: 'tester', roles: [] } };
+      const next = jest.fn();
+
+      assertAdminUser('get client')(req as unknown as Request, {} as Response, next);
+
+      expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedUserError));
     });
   });
 
@@ -518,6 +539,32 @@ describe('client router', () => {
       expect(authenticateHandler).toHaveBeenCalledWith(req, res, expect.any(Function));
       expect(client.authenticate).toHaveBeenCalledWith(passport, true);
       expect(res.redirect).toHaveBeenCalled();
+    });
+
+    it('logs the error and redirects to the failure URL when authentication errors', async () => {
+      const client = {
+        id: 'test',
+        successRedirectUrl: '/success',
+        failureRedirectUrl: '/fail',
+        authenticate: jest.fn(),
+      };
+      const req = {
+        tenant: { id: tenantId },
+        ['tk_client']: client,
+        isAuthenticated: jest.fn(() => true),
+      };
+      const res = { redirect: jest.fn() };
+      const next = jest.fn();
+      const logger = { warn: jest.fn() };
+
+      client.authenticate.mockResolvedValueOnce(jest.fn((_req, _res, next) => next(new Error('oops'))));
+
+      const handler = completeAuthenticate(passport, logger as unknown as Logger);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining('oops'), expect.any(Object));
+      expect(res.redirect).toHaveBeenCalledWith('/fail');
+      expect(next).not.toHaveBeenCalled();
     });
   });
 
