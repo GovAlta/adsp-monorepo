@@ -57,6 +57,19 @@ deployments pull from the internal OpenShift registry to avoid direct Docker Hub
 By default, scheduled imports are disabled to minimize upstream registry requests.
 Set `IMAGE_IMPORT_SCHEDULED=true` only if you want periodic automatic refreshes.
 
+Source images and registries (the `*_IMAGE` template parameters):
+
+| Component | Source image |
+|---|---|
+| Tempo | `docker.io/grafana/tempo:2.10.10` |
+| OpenTelemetry Collector | `ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector-contrib:0.166.0` |
+| Prometheus | `quay.io/prometheus/prometheus:v3.16.0` |
+| Grafana | `docker.io/grafana/grafana:12.4.16` |
+
+Grafana Labs publishes Tempo and Grafana images only on Docker Hub, so those two imports still pull
+from `docker.io`. Upgrading Grafana migrates its database on the `grafana-storage` volume and cannot
+be rolled back by changing the image tag; back up `/var/lib/grafana/grafana.db` first.
+
 CPU and memory for each component are template parameters (for example `PROMETHEUS_CPU_LIMIT`) that
 default to the production values. `.openshift/environments/<env>/observability-stack.env` overrides them
 for dev and uat; omit `--param-file` for an environment without a file.
@@ -77,9 +90,10 @@ Reference secret manifest:
 To refresh imported images on demand (instead of periodic polling):
 
 ```sh
-oc import-image -n adsp-build tempo:latest --from=grafana/tempo:2.7.2 --confirm
-oc import-image -n adsp-build otel-collector:latest --from=ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector-contrib:0.125.0 --confirm
-oc import-image -n adsp-build grafana:latest --from=grafana/grafana:11.5.2 --confirm
+oc import-image -n adsp-build tempo:latest --from=docker.io/grafana/tempo:2.10.10 --confirm
+oc import-image -n adsp-build otel-collector:latest --from=ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector-contrib:0.166.0 --confirm
+oc import-image -n adsp-build prometheus:latest --from=quay.io/prometheus/prometheus:v3.16.0 --confirm
+oc import-image -n adsp-build grafana:latest --from=docker.io/grafana/grafana:12.4.16 --confirm
 ```
 
 To see the generated Grafana route host:
