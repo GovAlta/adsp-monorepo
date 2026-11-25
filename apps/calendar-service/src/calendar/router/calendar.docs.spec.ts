@@ -544,10 +544,19 @@ describe('calendar router documented behaviour', () => {
       expect(eventServiceMock.send).toHaveBeenCalledWith(expect.objectContaining({ name: 'calendar-event-created' }));
     });
 
-    it('responds 400 when end is missing', async () => {
+    it('responds 200 when end is omitted', async () => {
       const res = await request(createApp(scheduler))
         .post('/calendar/v1/calendars/site-inspections/events')
         .send({ ...newEvent, end: undefined });
+
+      expect(res.status).toBe(200);
+      expect(res.body.end).toBeNull();
+    });
+
+    it('responds 400 when end is not a date', async () => {
+      const res = await request(createApp(scheduler))
+        .post('/calendar/v1/calendars/site-inspections/events')
+        .send({ ...newEvent, end: 'tomorrow' });
 
       expect(res.status).toBe(400);
     });
@@ -629,6 +638,18 @@ describe('calendar router documented behaviour', () => {
         DateTime.fromISO('2026-11-18T09:00:00-07:00').toMillis(),
       );
       expect(eventServiceMock.send).toHaveBeenCalledWith(expect.objectContaining({ name: 'calendar-event-updated' }));
+    });
+
+    it('responds 200 and applies a new recordId', async () => {
+      repositoryMock.getCalendarEvent.mockResolvedValueOnce(event({ recordId: 'inspection-1024' }));
+
+      const res = await request(createApp(scheduler))
+        .patch('/calendar/v1/calendars/site-inspections/events/42')
+        .send({ recordId: 'inspection-2048' });
+
+      expect(res.status).toBe(200);
+      expect(res.body.recordId).toBe('inspection-2048');
+      expect(repositoryMock.save).toHaveBeenCalledWith(expect.objectContaining({ recordId: 'inspection-2048' }));
     });
 
     it('responds 400 when end is before start', async () => {
