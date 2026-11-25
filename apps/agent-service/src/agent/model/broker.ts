@@ -47,7 +47,6 @@ import {
   MemoryStatus,
   MessageHistory,
   USAGE_RECORDER_KEY,
-  getUsageRecorder,
   UsageRecorder,
   usesObservationalMemory,
 } from './conversationUsage';
@@ -138,8 +137,6 @@ export class AgentBroker<TAgentId extends string = string, TTools extends ToolsI
       ...(providerOptions != null ? { providerOptions } : {}),
       onStepFinish: ({ finishReason, usage }: Parameters<NonNullable<AgentExecutionOptions['onStepFinish']>>[0]) => {
         stepCount += 1;
-        // For pacing only: the agent's own usage is counted from the stream when the reply finishes.
-        getUsageRecorder(requestContext)?.observe(usage);
         this.logger.debug(
           `Agent ${this.agent.name} finished step for reason '${finishReason}' and used ${usage?.totalTokens ?? 0} tokens.`,
           { context: 'AgentBroker', tenant: this.tenantId?.toString() },

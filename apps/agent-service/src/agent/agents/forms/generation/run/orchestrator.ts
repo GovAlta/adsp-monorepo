@@ -12,16 +12,10 @@ import { validateFormSchemas } from '../../schema/validateCore';
 import type { DocumentOutline } from '../../../../utils/documentOutline';
 import { createGenerationLog, modelOutputOf, type GenerationLog } from './log';
 import type { GenerationAgents } from '../llm/agents';
-import { UsageRecorder } from '../../../../model/conversationUsage';
+import type { UsageRecorder } from '../../../../model/conversationUsage';
 import { planFormGeneration } from '../llm/planner';
 import { FORM_GENERATION_PROGRESS, type GenerationPass, type ProgressEmitter } from './progress';
 import { generateStepPayload } from '../llm/stepBuilder';
-import {
-  createGenerationPacer,
-  getGenerationTokensPerMinute,
-  PLANNER_ESTIMATE_TOKENS,
-  type GenerationPacer,
-} from './pacer';
 import type { GenerationPlan, GenerationRunResult, IncrementPayload, PlannedStep, StepFailure } from '../types';
 
 const MAX_STEP_ATTEMPTS = 3;
@@ -43,8 +37,6 @@ export interface RunFormGenerationInput {
   abortSignal?: AbortSignal;
   /** Collects planner and step builder usage, which the chat agent's own usage leaves out. */
   usage?: UsageRecorder;
-  /** Spaces out the run's model calls; by default within AGENT_FORM_GENERATION_TOKENS_PER_MINUTE. */
-  pacer?: GenerationPacer;
 }
 
 interface StepCounts {
@@ -78,13 +70,8 @@ const GENERATION_FAILED = 'generation_failed';
 const MAX_CONSECUTIVE_GENERATION_FAILURES = 2;
 const STALE_READ = 'stale_read';
 
-// The guarded reader, pacer and usage are run-scoped state, so they are added here rather than on the caller-supplied
-// input.
-type RunInput = RunFormGenerationInput & {
-  readLatest: () => Promise<FormDefinitionLatest>;
-  pacer: GenerationPacer;
-  usage: UsageRecorder;
-};
+// The guarded reader is run-scoped state, so it is added here rather than on the caller-supplied input.
+type RunInput = RunFormGenerationInput & { readLatest: () => Promise<FormDefinitionLatest> };
 
 /**
  * Every save replaces both schemas wholesale, so a read that comes back empty after content was saved
@@ -117,11 +104,7 @@ export async function runFormGeneration(input: RunFormGenerationInput): Promise<
     input;
 
   const readLatest = createGuardedReader(input);
-  const usage = input.usage ?? new UsageRecorder();
-  const pacer =
-    input.pacer ??
-    createGenerationPacer({ tokensPerMinute: getGenerationTokensPerMinute(), usage, abortSignal, logger });
-  const run: RunInput = { ...input, readLatest, pacer, usage };
+  const run: RunInput = { ...input, readLatest };
 
   const initial = await readLatest();
   const log = createGenerationLog(logger, formDefinitionId, tenantId);
@@ -137,7 +120,6 @@ export async function runFormGeneration(input: RunFormGenerationInput): Promise<
     current: describeCurrent(initial),
   });
 
-  await pacer.waitForRoom(PLANNER_ESTIMATE_TOKENS);
   const plan = await planFormGeneration({
     agents,
     requirement,
@@ -146,7 +128,7 @@ export async function runFormGeneration(input: RunFormGenerationInput): Promise<
     variant,
     abortSignal,
     log,
-    usage,
+    usage: input.usage,
   });
 
   await emit({
@@ -331,7 +313,7 @@ async function runStep(
   pass: GenerationPass,
   priorError?: string,
 ): Promise<StepOutcome> {
-  const { agents, client, tenantId, formDefinitionId, documents, emit, abortSignal, readLatest, usage, pacer } = input;
+  const { agents, client, tenantId, formDefinitionId, documents, emit, abortSignal, readLatest, usage } = input;
   let errors: string[] = priorError ? [priorError] : [];
   let generationFailed = false;
 
@@ -353,11 +335,6 @@ async function runStep(
       ...(errors.length ? { message: errors[0] } : {}),
     });
 
-    // Waits before reading, so the step builds on the form as it is after the wait.
-    if (step.type !== 'scaffold') {
-      await pacer.waitForRoom(pacer.stepEstimate);
-    }
-
     let latest: FormDefinitionLatest;
     try {
       latest = await readLatest();
@@ -368,7 +345,6 @@ async function runStep(
     }
 
     let payload: IncrementPayload;
-    const usedBefore = usage.total.totalTokens;
     try {
       payload =
         step.type === 'scaffold'
@@ -398,7 +374,6 @@ async function runStep(
     }
 
     generationFailed = false;
-    pacer.noteStep(usage.total.totalTokens - usedBefore);
 
     const savedScopes = collectControlScopes(latest.uiSchema);
     const resolvedScope = resolveNearMissScope(payload, savedScopes);
