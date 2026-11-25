@@ -31,7 +31,7 @@ export class WebhookRepo {
       Record<string, Webhooks>
     >(pushServiceId, token, tenantId);
 
-    const webhooksRes = response?.webhooks;
+    const webhooksRes = response?.webhooks ?? {};
     const webhooks = {} as Record<string, Webhooks>;
     Object.keys(webhooksRes).map(async (key) => {
       if (webhooksRes[key]) {
