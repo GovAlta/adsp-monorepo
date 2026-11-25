@@ -170,6 +170,15 @@ describe('directory router documented behaviour', () => {
       expect(res.status).toBe(404);
     });
 
+    it('returns 404 when the namespace has no directory', async () => {
+      repositoryMock.getDirectories.mockResolvedValueOnce(null);
+
+      const res = await request(createApp(null)).get(path);
+
+      expect(res.status).toBe(404);
+      expect(res.body.errorMessage).toBe("directory service with ID 'test-tenant:form-service' could not be found.");
+    });
+
     it('returns 404 when the namespace has no tenant', async () => {
       tenantServiceMock.getTenantByName.mockResolvedValueOnce(null);
 
@@ -254,6 +263,18 @@ describe('directory router documented behaviour', () => {
       expect(res.status).toBe(403);
       expect(repositoryMock.update).not.toHaveBeenCalled();
     });
+
+    it.each([
+      ['an anonymous user', null],
+      ['a core user without a tenant', { ...admin, tenantId: undefined, isCore: true } as User],
+    ])('returns 403 for %s', async (_, currentUser) => {
+      const res = await request(createApp(currentUser)).post('/directory/v2/namespaces');
+
+      expect(res.status).toBe(403);
+      expect(res.body.errorMessage).toMatch(/not permitted to create namespace/);
+      expect(tenantServiceMock.getTenant).not.toHaveBeenCalled();
+      expect(repositoryMock.update).not.toHaveBeenCalled();
+    });
   });
 
   describe('POST /directory/v2/namespaces/{namespace}/services', () => {
@@ -297,6 +318,32 @@ describe('directory router documented behaviour', () => {
       expect(res.status).toBe(404);
     });
 
+    it.each([
+      ['an empty body', {}],
+      ['a missing url', { service: 'form-service' }],
+      ['a missing service', { url: 'https://form.test.co' }],
+      ['an invalid url', { service: 'form-service', url: 'not a url' }],
+      ['a service name that is too long', { service: 'a'.repeat(51), url: 'https://form.test.co' }],
+      ['a blank service name', { service: '   ', url: 'https://form.test.co' }],
+      ['a non-string service and url', { service: { a: 1 }, url: 42 }],
+      ['a url without a protocol', { service: 'form-service', url: 'form.test.co' }],
+    ])('returns 400 for %s', async (_case, body) => {
+      const res = await request(createApp(admin)).post(path).send(body);
+
+      expect(res.status).toBe(400);
+      expect(repositoryMock.update).not.toHaveBeenCalled();
+    });
+
+    it('accepts an internal cluster url without a top-level domain', async () => {
+      repositoryMock.getDirectories.mockResolvedValueOnce(null);
+
+      const res = await request(createApp(admin))
+        .post(path)
+        .send({ service: 'form-service', url: 'http://form-service:3333' });
+
+      expect(res.status).toBe(201);
+    });
+
     it('returns 409 when the service entry exists', async () => {
       repositoryMock.getDirectories.mockResolvedValueOnce(directory());
 
@@ -338,6 +385,19 @@ describe('directory router documented behaviour', () => {
       const res = await request(createApp(admin)).post(path).send({ api: 'v2', url: 'https://form.test.co/form/v2' });
 
       expect(res.status).toBe(404);
+    });
+
+    it.each([
+      ['an empty body', {}],
+      ['a missing url', { api: 'v2' }],
+      ['a missing api', { url: 'https://form.test.co/form/v2' }],
+      ['an invalid url', { api: 'v2', url: 'ftp://form.test.co' }],
+      ['an api name that is too long', { api: 'a'.repeat(51), url: 'https://form.test.co/form/v2' }],
+    ])('returns 400 for %s', async (_case, body) => {
+      const res = await request(createApp(admin)).post(path).send(body);
+
+      expect(res.status).toBe(400);
+      expect(repositoryMock.update).not.toHaveBeenCalled();
     });
 
     it('returns 409 when the API entry exists', async () => {
@@ -385,6 +445,15 @@ describe('directory router documented behaviour', () => {
       const res = await request(createApp(null)).get('/directory/v2/namespaces/test-tenant/services/form-service');
 
       expect(res.status).toBe(404);
+    });
+
+    it('returns 404 when the namespace has no directory', async () => {
+      repositoryMock.getDirectories.mockResolvedValueOnce(null);
+
+      const res = await request(createApp(null)).get('/directory/v2/namespaces/test-tenant/services/form-service');
+
+      expect(res.status).toBe(404);
+      expect(res.body.errorMessage).toBe("directory namespace with ID 'test-tenant' could not be found.");
     });
 
     it('returns 424 when the metadata cannot be retrieved', async () => {
@@ -435,6 +504,16 @@ describe('directory router documented behaviour', () => {
       const res = await request(createApp(admin)).patch(path).send({ url: 'https://form2.test.co' });
 
       expect(res.status).toBe(404);
+    });
+
+    it('returns 404 when the namespace has no directory', async () => {
+      repositoryMock.getDirectories.mockResolvedValueOnce(null);
+
+      const res = await request(createApp(admin)).patch(path).send({ url: 'https://form2.test.co' });
+
+      expect(res.status).toBe(404);
+      expect(res.body.errorMessage).toBe("directory namespace with ID 'test-tenant' could not be found.");
+      expect(repositoryMock.update).not.toHaveBeenCalled();
     });
   });
 
@@ -510,6 +589,16 @@ describe('directory router documented behaviour', () => {
       const res = await request(createApp(admin)).patch(path).send({ url: 'https://form2.test.co/form/v1' });
 
       expect(res.status).toBe(404);
+    });
+
+    it('returns 404 when the namespace has no directory', async () => {
+      repositoryMock.getDirectories.mockResolvedValueOnce(null);
+
+      const res = await request(createApp(admin)).patch(path).send({ url: 'https://form2.test.co/form/v1' });
+
+      expect(res.status).toBe(404);
+      expect(res.body.errorMessage).toBe("directory namespace with ID 'test-tenant' could not be found.");
+      expect(repositoryMock.update).not.toHaveBeenCalled();
     });
   });
 

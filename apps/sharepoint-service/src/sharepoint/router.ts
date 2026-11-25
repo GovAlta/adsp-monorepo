@@ -460,6 +460,7 @@ export function createSharePointRouter({
       body('files.*.field').isString().isLength({ min: 1, max: 200 }),
       body('files.*.fileId').isString().isLength({ min: 1, max: 300 }),
       body('data').optional().isObject(),
+      body('updateRowOnly').optional().isBoolean({ strict: true }),
     ),
     uploadFiles(fileService, logger),
   );

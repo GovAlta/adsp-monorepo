@@ -13,6 +13,13 @@ parameters:
     displayName: Environment Name
     required: true
     value: dev
+  - name: NAMESPACE
+    description: >-
+      Namespace the stack is deployed in, e.g. adsp-dev. Scopes the Cluster Prometheus datasource
+      and the RBAC that backs it. No default, so a missing value fails rather than pointing an
+      environment's Grafana at another environment's namespace.
+    displayName: Namespace
+    required: true
   - name: INFRA_NAMESPACE
     description: Namespace where shared ImageStreams are created.
     displayName: Infra Namespace
@@ -1034,6 +1041,86 @@ objects:
             url: http://${PROMETHEUS_NAME}:9090
             isDefault: false
             editable: false
+      # OpenShift cluster monitoring, for pod, container and deployment metrics. The SDK metrics
+      # are not here; they are in the Prometheus datasource above. Port 9092 is the tenancy port:
+      # it requires the namespace query parameter and injects it as a label matcher into every
+      # query, so the token only needs view in this namespace. It checks access with the verb
+      # mapped from the HTTP method, so httpMethod must stay GET -- POST maps to create, which
+      # view does not grant. $CLUSTER_METRICS_* are Grafana environment variable interpolation,
+      # set on the Grafana container, not template parameters.
+      cluster-prometheus.yaml: |
+        apiVersion: 1
+        datasources:
+          - name: Cluster Prometheus
+            uid: cluster-prometheus
+            type: prometheus
+            access: proxy
+            url: https://thanos-querier.openshift-monitoring.svc:9092
+            isDefault: false
+            editable: false
+            jsonData:
+              httpMethod: GET
+              customQueryParameters: namespace=${NAMESPACE}
+              timeInterval: 30s
+              tlsAuthWithCACert: true
+              httpHeaderName1: Authorization
+            secureJsonData:
+              tlsCACert: $CLUSTER_METRICS_CA_CERT
+              httpHeaderValue1: Bearer $CLUSTER_METRICS_TOKEN
+  # Identity Grafana uses to query cluster monitoring. Separate from the pod's own service account
+  # so the pod gains no API access. These three carry an explicit namespace so the RoleBinding and
+  # the account it grants to are always in the same namespace, whatever project is current.
+  - apiVersion: v1
+    kind: ServiceAccount
+    metadata:
+      name: ${GRAFANA_NAME}-metrics
+      namespace: ${NAMESPACE}
+      labels:
+        app: ${GRAFANA_NAME}
+        component: observability
+        environment: ${ENVIRONMENT_NAME}
+  - apiVersion: rbac.authorization.k8s.io/v1
+    kind: RoleBinding
+    metadata:
+      name: ${GRAFANA_NAME}-metrics-view
+      namespace: ${NAMESPACE}
+      labels:
+        app: ${GRAFANA_NAME}
+        component: observability
+        environment: ${ENVIRONMENT_NAME}
+    roleRef:
+      apiGroup: rbac.authorization.k8s.io
+      kind: ClusterRole
+      name: view
+    subjects:
+      - kind: ServiceAccount
+        name: ${GRAFANA_NAME}-metrics
+        namespace: ${NAMESPACE}
+  # Long-lived token for the account above; the token controller fills in data.token. Grafana
+  # reads it once at startup, so restart Grafana if this Secret is deleted and recreated.
+  - apiVersion: v1
+    kind: Secret
+    type: kubernetes.io/service-account-token
+    metadata:
+      name: ${GRAFANA_NAME}-metrics-token
+      namespace: ${NAMESPACE}
+      annotations:
+        kubernetes.io/service-account.name: ${GRAFANA_NAME}-metrics
+      labels:
+        app: ${GRAFANA_NAME}
+        component: observability
+        environment: ${ENVIRONMENT_NAME}
+  # The service CA operator injects data.service-ca.crt, which signs thanos-querier's certificate.
+  - apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      name: ${GRAFANA_NAME}-service-ca
+      annotations:
+        service.beta.openshift.io/inject-cabundle: 'true'
+      labels:
+        app: ${GRAFANA_NAME}
+        component: observability
+        environment: ${ENVIRONMENT_NAME}
   - apiVersion: v1
     kind: PersistentVolumeClaim
     metadata:
@@ -1142,6 +1229,18 @@ objects:
                     secretKeyRef:
                       name: ${GRAFANA_SECRET_NAME}
                       key: oauth-client-secret
+                # Interpolated into the Cluster Prometheus datasource. Not GF_-prefixed, so
+                # Grafana does not read them as configuration overrides.
+                - name: CLUSTER_METRICS_TOKEN
+                  valueFrom:
+                    secretKeyRef:
+                      name: ${GRAFANA_NAME}-metrics-token
+                      key: token
+                - name: CLUSTER_METRICS_CA_CERT
+                  valueFrom:
+                    configMapKeyRef:
+                      name: ${GRAFANA_NAME}-service-ca
+                      key: service-ca.crt
               ports:
                 - containerPort: 3000
                   name: http

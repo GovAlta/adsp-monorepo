@@ -158,6 +158,11 @@ describe('task router documented behaviour', () => {
       expect(res.status).toBe(400);
     });
 
+    it('responds 400 for criteria that is not valid JSON', async () => {
+      const res = await request(createApp(reader)).get('/task/v1/tasks?criteria=notjson');
+      expect(res.status).toBe(400);
+    });
+
     it('responds 400 without a tenant context', async () => {
       const res = await request(createApp(coreReader)).get('/task/v1/tasks');
       expect(res.status).toBe(400);

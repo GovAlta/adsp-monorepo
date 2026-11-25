@@ -742,7 +742,8 @@ components:
       Executes a file operation. The copy operation copies the file to a new file, optionally of a different type.
       Requires an authenticated user who can read the source file (see GET), otherwise 403, and who has one of the
       destination file type's updateRoles or the file-service-admin role, otherwise 401. The destination type is
-      looked up in the tenant of the request, so core users who set type must also set tenantId.
+      looked up in the tenant of the request, so core users who set type must also set tenantId; otherwise the request
+      responds 400.
     parameters:
       - $ref: '#/components/parameters/FileTenantId'
     requestBody:

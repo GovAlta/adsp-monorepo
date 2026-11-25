@@ -270,6 +270,7 @@ interface FormDefinitionResult {
       id?: string;
       name?: string;
       sharepointConfigurationId?: string | null;
+      submissionPdfTemplate?: string;
       dataSchema?: Record<string, unknown>;
     };
   } | null;
@@ -295,6 +296,9 @@ export function* fetchSharepointFormsSaga(): SagaIterator {
             name: configuration.name ?? id,
             ...(configuration.sharepointConfigurationId
               ? { sharepointConfigurationId: configuration.sharepointConfigurationId }
+              : {}),
+            ...(configuration.submissionPdfTemplate
+              ? { submissionPdfTemplate: configuration.submissionPdfTemplate }
               : {}),
             dataSchema: configuration.dataSchema,
           });

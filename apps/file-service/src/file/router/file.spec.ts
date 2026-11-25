@@ -539,6 +539,33 @@ describe('file router', () => {
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedUserError));
     });
+
+    it('can scope the lookup to the request tenant', async () => {
+      const req = {
+        user: { tenantId, id: 'test', roles: ['test-reader'] },
+        tenant: { id: tenantId },
+        params: { fileId: 'test' },
+      };
+      const next = jest.fn();
+
+      fileRepositoryMock.get.mockResolvedValueOnce(null);
+
+      const handler = getFile(fileRepositoryMock);
+      await handler(req as unknown as Request, {} as Response, next);
+      expect(fileRepositoryMock.get).toHaveBeenCalledWith('test', tenantId);
+      expect(next).toHaveBeenCalledWith(expect.any(NotFoundError));
+    });
+
+    it('can look up without tenant scope for anonymous request', async () => {
+      const req = { params: { fileId: 'test' } };
+      const next = jest.fn();
+
+      fileRepositoryMock.get.mockResolvedValueOnce(null);
+
+      const handler = getFile(fileRepositoryMock);
+      await handler(req as unknown as Request, {} as Response, next);
+      expect(fileRepositoryMock.get).toHaveBeenCalledWith('test', undefined);
+    });
   });
 
   describe('downloadFile', () => {
@@ -944,6 +971,25 @@ describe('file router', () => {
       expect(handler).toBeTruthy();
     });
 
+    it('can call next with not found for a file outside the request tenant', async () => {
+      const req = {
+        user: { tenantId, id: 'tester', name: 'Tester', roles: ['test-updater'] },
+        tenant: { id: tenantId },
+        query: { files: 'file-1' },
+      };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+
+      fileRepositoryMock.get.mockResolvedValueOnce(null);
+
+      const handler = deleteFiles(apiId, loggerMock, eventServiceMock, auditServiceMock, fileRepositoryMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      expect(fileRepositoryMock.get).toHaveBeenCalledWith('file-1', tenantId);
+      expect(next).toHaveBeenCalledWith(expect.any(NotFoundError));
+      expect(res.send).not.toHaveBeenCalled();
+    });
+
     it('can delete multiple files from a comma-separated query parameter', async () => {
       const firstFile = createFile('file-1');
       const secondFile = createFile('file-2');
@@ -967,8 +1013,8 @@ describe('file router', () => {
       const handler = deleteFiles(apiId, loggerMock, eventServiceMock, auditServiceMock, fileRepositoryMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
 
-      expect(fileRepositoryMock.get).toHaveBeenCalledWith('file-1');
-      expect(fileRepositoryMock.get).toHaveBeenCalledWith('file-2');
+      expect(fileRepositoryMock.get).toHaveBeenCalledWith('file-1', undefined);
+      expect(fileRepositoryMock.get).toHaveBeenCalledWith('file-2', undefined);
       expect(res.send).toHaveBeenCalledWith({
         deleted: true,
         results: [
@@ -1002,8 +1048,8 @@ describe('file router', () => {
       const handler = deleteFiles(apiId, loggerMock, eventServiceMock, auditServiceMock, fileRepositoryMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
 
-      expect(fileRepositoryMock.get).toHaveBeenCalledWith('file-1');
-      expect(fileRepositoryMock.get).toHaveBeenCalledWith('file-2');
+      expect(fileRepositoryMock.get).toHaveBeenCalledWith('file-1', undefined);
+      expect(fileRepositoryMock.get).toHaveBeenCalledWith('file-2', undefined);
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ deleted: true }));
     });
 
@@ -1163,6 +1209,44 @@ describe('file router', () => {
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(res.send).not.toHaveBeenCalled();
       expect(next).toHaveBeenCalledWith(expect.any(NotFoundError));
+    });
+
+    it('can call next with invalid operation for a type without tenant context', async () => {
+      const req = {
+        user: {
+          tenantId,
+          id: 'tester',
+          roles: ['test-updater'],
+        },
+        getConfiguration: jest.fn(),
+        query: {},
+        fileEntity: file,
+        body: {
+          operation: 'copy',
+          type: 'platform-type',
+        },
+      };
+
+      const res = {
+        send: jest.fn(),
+      };
+      const next = jest.fn();
+
+      req.getConfiguration.mockResolvedValueOnce({
+        'platform-type': new FileTypeEntity({
+          id: 'platform-type',
+          name: 'Platform Type',
+          anonymousRead: false,
+          readRoles: [],
+          updateRoles: ['test-updater'],
+        } as FileType),
+      });
+
+      const handler = fileOperation(apiId, loggerMock, eventServiceMock, auditServiceMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(res.send).not.toHaveBeenCalled();
+      expect(storageProviderMock.copyFile).not.toHaveBeenCalled();
+      expect(next).toHaveBeenCalledWith(expect.any(InvalidOperationError));
     });
 
     it('can call next with invalid operation for unknown operation', async () => {

@@ -247,9 +247,25 @@ describe('agent router documented behaviour', () => {
       expect(res.status).toBe(200);
       expect(res.body).toEqual({ agent: 'my-assistant', content: 'A renewal form needs the licence number.' });
       expect(openAgent.generate).toHaveBeenCalledWith(
-        [{ role: 'user', content: 'Which fields should a business licence renewal form include?' }],
+        [
+          {
+            role: 'user',
+            content: [{ type: 'text', text: 'Which fields should a business licence renewal form include?' }],
+          },
+        ],
         expect.any(Object),
       );
+    });
+
+    it.each([
+      ['an empty object', {}],
+      ['a message without content', { text: 'Hello' }],
+      ['an empty array', []],
+      ['content parts without a type', { content: [null] }],
+    ])('responds 400 for %s without calling the model', async (_, body) => {
+      const res = await request(createApp(noRole)).post('/agent/v1/agents/my-assistant').send(body);
+      expect(res.status).toBe(400);
+      expect(openAgent.generate).not.toHaveBeenCalled();
     });
 
     it('accepts an array of messages and includes structured output', async () => {

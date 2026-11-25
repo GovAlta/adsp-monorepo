@@ -106,6 +106,24 @@ describe('generateFormServiceMappings', () => {
     ).toBeUndefined();
   });
 
+  it('maps the submission PDF to a Hyperlink column, with the folder link, when the form generates one', () => {
+    const withPdf = generateFormServiceMappings(
+      { type: 'object', properties: { submissionPdf: { type: 'string' } } },
+      { submissionPdf: true },
+    );
+
+    expect(withPdf.fieldMappings).toEqual([
+      { source: 'submissionPdf', target: 'SubmissionPdf', displayName: 'Submission pdf', columnType: 'text' },
+      {
+        source: '_adsp.submissionPdf',
+        target: 'SubmissionPdf2',
+        displayName: 'Submission PDF',
+        columnType: 'hyperlink',
+      },
+    ]);
+    expect(withPdf.folderLinkField).toBe('AdspFilesFolder');
+  });
+
   it('skips sections nested more than one level deep and the _adsp metadata', () => {
     const sources = [
       ...generated.fieldMappings.map(({ source }) => source),

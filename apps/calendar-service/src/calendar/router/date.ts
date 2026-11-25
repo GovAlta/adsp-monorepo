@@ -2,6 +2,7 @@ import { createValidationHandler, NotFoundError } from '@core-services/core-comm
 import { RequestHandler, Router } from 'express';
 import { param } from 'express-validator';
 import { CalendarRepository } from '../repository';
+import { criteriaQueryValidator, topQueryValidator } from './validation';
 
 interface DateRouterProps {
   repository: CalendarRepository;
@@ -44,11 +45,11 @@ export function getDate(repository: CalendarRepository): RequestHandler {
 export const createDateRouter = ({ repository }: DateRouterProps): Router => {
   const router = Router();
 
-  router.get('/dates', getDates(repository));
+  router.get('/dates', createValidationHandler(topQueryValidator(), criteriaQueryValidator()), getDates(repository));
   router.get(
     '/dates/:id',
     createValidationHandler(param('id').isInt({ min: 20200000, max: 20600000 })),
-    getDate(repository)
+    getDate(repository),
   );
 
   return router;

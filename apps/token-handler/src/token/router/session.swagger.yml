@@ -1,7 +1,7 @@
 components:
   responses:
     TokenHandlerNoSession:
-      description: No user is signed in on the session cookie.
+      description: No user is signed in on the session cookie, and no valid bearer token was sent.
       content:
         text/plain:
           schema:
@@ -55,10 +55,12 @@ components:
       whether the user is signed in, and who they are.
 
 
-      Requires a signed in user on the session cookie; no role is required. The token-handler-admin role is intended to
-      list all sessions of the user's tenant, but that listing is not currently supported.
+      Requires a signed in user on the session cookie, or a tenant bearer token; no role is required. A bearer token
+      without a session cookie has no session, so the array is empty. A user with the token-handler-admin role instead
+      gets every session of their tenant.
     security:
       - sessionCookie: []
+      - accessToken: []
     responses:
       200:
         description: Request completed successfully.

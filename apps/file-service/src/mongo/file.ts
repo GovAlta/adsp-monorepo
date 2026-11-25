@@ -61,9 +61,14 @@ export class MongoFileRepository implements FileRepository {
     };
   }
 
-  get(id: string): Promise<FileEntity> {
+  get(id: string, tenantId?: AdspId): Promise<FileEntity> {
+    const query: { _id: string; spaceId?: string } = { _id: id };
+    if (tenantId) {
+      query.spaceId = tenantId.toString();
+    }
+
     return new Promise<FileEntity>((resolve, reject) =>
-      this.model.findOne({ _id: id }, null, { lean: true }, async (err, doc) => {
+      this.model.findOne(query, null, { lean: true }, async (err, doc) => {
         if (err) {
           reject(err);
         } else if (!doc || !doc.spaceId) {

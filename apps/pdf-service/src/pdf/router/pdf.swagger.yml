@@ -32,6 +32,23 @@ components:
             $ref: '#/components/schemas/PdfError'
           example:
             errorMessage: 'Validation failed with error(s): name (body) - name is required'
+    PdfTemplateWriteBadRequest:
+      description: >
+        Request is invalid. Either a parameter or the request body failed validation, or a core (platform) caller did
+        not set tenantId. Template writes always act on a tenant's templates, so core callers must name the tenant.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/PdfError'
+          examples:
+            ValidationFailed:
+              summary: A parameter or the request body failed validation.
+              value:
+                errorMessage: 'Validation failed with error(s): name (body) - name is required'
+            TenantRequired:
+              summary: Core caller without tenantId.
+              value:
+                errorMessage: 'Tenant context is required to create pdf template; core users must set tenantId.'
     PdfUnauthorized:
       description: Request does not include a valid bearer token.
     PdfForbidden:
@@ -248,7 +265,7 @@ components:
       - Templates
     description: >
       Creates a new PDF template for the tenant. Requires the `urn:ads:platform:pdf-service:pdf-admin` role, in the
-      tenant or as a core user. The template ID is derived from the name. Core callers must set tenantId.
+      tenant or as a core user. The template ID is derived from the name. Core callers must set tenantId; a core caller without it gets 400.
     parameters:
       - $ref: '#/components/parameters/PdfTenantId'
     requestBody:
@@ -303,7 +320,7 @@ components:
             schema:
               $ref: '#/components/schemas/Template'
       400:
-        $ref: '#/components/responses/PdfBadRequest'
+        $ref: '#/components/responses/PdfTemplateWriteBadRequest'
       401:
         $ref: '#/components/responses/PdfUnauthorized'
       403:
@@ -345,7 +362,7 @@ components:
       Update an existing PDF template of the tenant. Only the fields included in the request body are updated; all
       other fields are left unchanged, and the ID does not change when the name does. Requires the
       `urn:ads:platform:pdf-service:pdf-admin` role, in the tenant or as a core user. The template is looked up before
-      the role is checked, so an unknown ID responds 404 to any caller. Core callers must set tenantId.
+      the role is checked, so an unknown ID responds 404 to any caller. Core callers must set tenantId; a core caller without it gets 400.
     parameters:
       - $ref: '#/components/parameters/PdfTemplateId'
       - $ref: '#/components/parameters/PdfTenantId'
@@ -397,7 +414,7 @@ components:
             schema:
               $ref: '#/components/schemas/Template'
       400:
-        $ref: '#/components/responses/PdfBadRequest'
+        $ref: '#/components/responses/PdfTemplateWriteBadRequest'
       401:
         $ref: '#/components/responses/PdfUnauthorized'
       403:
@@ -412,7 +429,7 @@ components:
     description: >
       Delete the specified PDF template of the tenant. Requires the `urn:ads:platform:pdf-service:pdf-admin` role, in
       the tenant or as a core user. The template is looked up before the role is checked, so an unknown ID responds
-      404 to any caller. Core callers must set tenantId.
+      404 to any caller. Core callers must set tenantId; a core caller without it gets 400.
     parameters:
       - $ref: '#/components/parameters/PdfTemplateId'
       - $ref: '#/components/parameters/PdfTenantId'
@@ -420,7 +437,7 @@ components:
       204:
         description: The PDF template was successfully deleted.
       400:
-        $ref: '#/components/responses/PdfBadRequest'
+        $ref: '#/components/responses/PdfTemplateWriteBadRequest'
       401:
         $ref: '#/components/responses/PdfUnauthorized'
       403:

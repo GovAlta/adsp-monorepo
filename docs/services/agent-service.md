@@ -46,7 +46,7 @@ REST endpoints are under `https://agent-service.adsp.alberta.ca/agent/v1` and re
 | Messages     | `POST /agents/{agentId}`                      | Any authenticated user, or one of the agent's `userRoles` when it has any |
 | Threads      | `DELETE /agents/{agentId}/threads/{threadId}` | Any authenticated user, or one of the agent's `userRoles` when it has any |
 
-`POST /agents/{agentId}` responds with the complete reply and starts a new thread for every request. Streaming replies, multi-turn conversations, and workspaces are only available over [socket.io](#socketio-interface). socket.io isn't a REST transport, so it isn't in the API documentation; its events are described below.
+`POST /agents/{agentId}` responds with the complete reply and starts a new thread for every request. Each message needs `content` as a string or an array of parts; anything else responds `400` without calling the model, the same as over socket.io. Streaming replies, multi-turn conversations, and workspaces are only available over [socket.io](#socketio-interface). socket.io isn't a REST transport, so it isn't in the API documentation; its events are described below.
 
 Agents are configured through the [configuration service](configuration-service.md); there are no agent-service endpoints for changing them.
 

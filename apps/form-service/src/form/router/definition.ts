@@ -33,7 +33,7 @@ import {
 } from '../audit';
 import { registrationReviewed, registrationSubmitted } from '../events';
 import { FormDefinitionEntity, FormRegistrationEntity, normalizeEmail } from '../model';
-import { mapFormDefinition, mapRegistration } from '../mapper';
+import { mapAdminFormDefinition, mapFormDefinition, mapRegistration } from '../mapper';
 import { FormRegistrationRepository } from '../repository';
 import { FormServiceRoles } from '../roles';
 import { FormDefinition, FormRegistrationCreate, Intake, RegistrationStatus } from '../types';
@@ -164,8 +164,8 @@ export function getFormDefinitions(directory: ServiceDirectory, tokenProvider: T
         ...data,
         results: data.results.map(({ latest, active }) =>
           active
-            ? mapFormDefinition(active.configuration, active.revision, undefined, latest.created as unknown as Date)
-            : mapFormDefinition(latest.configuration, latest.revision, undefined, latest.created as unknown as Date),
+            ? mapAdminFormDefinition(active.configuration, active.revision, undefined, latest.created as unknown as Date)
+            : mapAdminFormDefinition(latest.configuration, latest.revision, undefined, latest.created as unknown as Date),
         ),
       });
     } catch (err) {
@@ -229,7 +229,7 @@ export function getFormDefinition(
 
       if (version === 'latest') {
         const latest = await getLatestFormDefinition(directory, tokenProvider, req.tenant.id, definitionId);
-        res.send(mapFormDefinition(latest.configuration, latest.revision));
+        res.send(mapAdminFormDefinition(latest.configuration, latest.revision));
         return;
       }
 
@@ -258,7 +258,10 @@ export function getFormDefinition(
         intake = await calendarService.getScheduledIntake(definition);
       }
 
-      res.send(mapFormDefinition(definition, definition.revision, intake));
+      const map = isAllowedUser(user, req.tenant.id, FormServiceRoles.Admin, true)
+        ? mapAdminFormDefinition
+        : mapFormDefinition;
+      res.send(map(definition, definition.revision, intake));
     } catch (err) {
       next(err);
     }
@@ -325,7 +328,7 @@ export function createFormDefinition(
         definition,
       );
 
-      res.status(HttpStatusCodes.CREATED).send(mapFormDefinition(data.latest.configuration, data.latest.revision));
+      res.status(HttpStatusCodes.CREATED).send(mapAdminFormDefinition(data.latest.configuration, data.latest.revision));
     } catch (err) {
       next(err);
     }
@@ -355,7 +358,7 @@ export function updateFormDefinition(directory: ServiceDirectory, tokenProvider:
         definition,
       );
 
-      res.send(mapFormDefinition(data.latest.configuration, data.latest.revision));
+      res.send(mapAdminFormDefinition(data.latest.configuration, data.latest.revision));
     } catch (err) {
       next(err);
     }
@@ -407,7 +410,7 @@ export function patchFormDefinition(directory: ServiceDirectory, tokenProvider: 
         patchedDefinition,
       );
 
-      res.status(HttpStatusCodes.OK).send(mapFormDefinition(data.latest.configuration, data.latest.revision));
+      res.status(HttpStatusCodes.OK).send(mapAdminFormDefinition(data.latest.configuration, data.latest.revision));
     } catch (err) {
       next(err);
     }
@@ -530,7 +533,7 @@ export function updateFormDefinitionRoles(directory: ServiceDirectory, tokenProv
         updatedDefinition,
       );
 
-      res.status(HttpStatusCodes.OK).send(mapFormDefinition(data.latest.configuration, data.latest.revision));
+      res.status(HttpStatusCodes.OK).send(mapAdminFormDefinition(data.latest.configuration, data.latest.revision));
     } catch (err) {
       next(err);
     }
@@ -586,7 +589,7 @@ export function patchFormDefinitionLifecycle(
         updatedDefinition,
       );
 
-      res.send(mapFormDefinition(data.latest.configuration, data.latest.revision));
+      res.send(mapAdminFormDefinition(data.latest.configuration, data.latest.revision));
     } catch (err) {
       next(err);
     }
@@ -664,7 +667,7 @@ export function updateIntakeSchedule(calendarService: CalendarService): RequestH
         name,
       });
 
-      const mapped = mapFormDefinition(definition, definition.revision, intake);
+      const mapped = mapAdminFormDefinition(definition, definition.revision, intake);
 
       res.status(HttpStatusCodes.OK).send(mapped);
     } catch (err) {
@@ -726,7 +729,7 @@ export function patchFormDefinitionSubmissionActions(
         updatedDefinition,
       );
 
-      res.status(HttpStatusCodes.OK).send(mapFormDefinition(data.latest.configuration, data.latest.revision));
+      res.status(HttpStatusCodes.OK).send(mapAdminFormDefinition(data.latest.configuration, data.latest.revision));
     } catch (err) {
       next(err);
     }

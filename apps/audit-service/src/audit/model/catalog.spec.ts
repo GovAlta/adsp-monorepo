@@ -1,6 +1,7 @@
 import { adspId, ConfigurationService } from '@abgov/adsp-service-sdk';
 import { createLogger, transports } from 'winston';
 import * as HttpStatusCodes from 'http-status-codes';
+import { UnauthorizedError } from '@core-services/core-common';
 import { CatalogService, CatalogUnavailableError } from './catalog';
 import { REPLAY_ACTION, REPLAY_DEFINITION } from '../actions';
 
@@ -175,6 +176,32 @@ describe('CatalogService', () => {
         CatalogUnavailableError,
       );
       expect(store.saveAction).not.toHaveBeenCalled();
+    });
+
+    it('reports a failed catalog write as unavailable', async () => {
+      store.saveAction.mockRejectedValue(new Error('socket hang up'));
+
+      await expect(adding.addAction('sandbox-app', 'my-action', definition, tenantId, 'token')).rejects.toBeInstanceOf(
+        CatalogUnavailableError,
+      );
+    });
+
+    it('keeps a configuration permission failure as unauthorized', async () => {
+      const denied = new UnauthorizedError('denied');
+      store.saveAction.mockRejectedValue(denied);
+
+      await expect(adding.addAction('sandbox-app', 'my-action', definition, tenantId, 'token')).rejects.toBe(denied);
+    });
+
+    it('reports a failed back-out of a concurrent twin as unavailable', async () => {
+      store.readActionNames.mockImplementation(async (_application: string, tenant?: unknown) =>
+        tenant ? (store.saveAction.mock.calls.length ? ['Alpha', 'alpha'] : []) : null,
+      );
+      store.removeAction.mockRejectedValue(new Error('502'));
+
+      await expect(adding.addAction('sandbox-app', 'alpha', definition, tenantId, 'token')).rejects.toBeInstanceOf(
+        CatalogUnavailableError,
+      );
     });
   });
 

@@ -236,6 +236,32 @@ describe('client router documented behaviour', () => {
 
       expect(res.status).toBe(404);
     });
+
+    it('returns 403 for an unknown client to a user without the token-handler-admin role', async () => {
+      const res = await request(createApp()).get('/token-handler/v1/clients/unknown').auth('plain', { type: 'bearer' });
+
+      expect(res.status).toBe(403);
+    });
+  });
+
+  describe('client ID enumeration', () => {
+    it('returns 403 for an unknown client on register to a user without the token-handler-admin role', async () => {
+      const res = await request(createApp())
+        .post('/token-handler/v1/clients/unknown')
+        .auth('plain', { type: 'bearer' })
+        .send({ registrationToken: 'initial-access-token' });
+
+      expect(res.status).toBe(403);
+    });
+
+    it('returns 403 for an unknown client on update to a user without the token-handler-admin role', async () => {
+      const res = await request(createApp())
+        .put('/token-handler/v1/clients/unknown')
+        .auth('plain', { type: 'bearer' })
+        .send({ redirectUris: [callbackUrl] });
+
+      expect(res.status).toBe(403);
+    });
   });
 
   describe('POST /token-handler/v1/clients/{clientId}', () => {
@@ -503,6 +529,10 @@ describe('client router documented behaviour', () => {
 
       expect(res.status).toBe(302);
       expect(res.headers.location).toBe('/sign-in-failed');
+      expect(loggerMock.warn).toHaveBeenCalledWith(
+        expect.stringContaining('No callback URL in session.'),
+        expect.objectContaining({ context: 'ClientRouter' }),
+      );
     });
 
     it('returns 404 for an unknown tenant', async () => {

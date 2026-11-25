@@ -38,6 +38,8 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: false
+      - name: Test log alert expressions
+        run: node --test .openshift/monitoring/tests/*.test.js
       - name: Render templates for every environment
         run: |
           for target in dev uat prod; do

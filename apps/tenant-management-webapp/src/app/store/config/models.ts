@@ -82,6 +82,9 @@ export interface FeedbackConfiguration {
 }
 
 export interface ConfigState {
+  directory?: Record<string, string>;
+  /** Where users send support requests; set by `supportEmail` in the app's config.json ConfigMap. */
+  supportEmail?: string;
   keycloakApi?: KeycloakApi;
   tenantApi?: TenantApi;
   serviceUrls?: ServiceUrls;
@@ -91,3 +94,5 @@ export interface ConfigState {
 }
 
 export const CONFIG_INIT: ConfigState = {};
+
+export const DEFAULT_SUPPORT_EMAIL = 'adsp@gov.ab.ca';

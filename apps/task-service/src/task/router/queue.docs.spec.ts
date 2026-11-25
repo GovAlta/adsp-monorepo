@@ -175,6 +175,11 @@ describe('queue router documented behaviour', () => {
       expect(res.status).toBe(400);
     });
 
+    it('responds 400 for a core user without tenantId', async () => {
+      const res = await request(createApp(coreReader)).get('/task/v1/queues');
+      expect(res.status).toBe(400);
+    });
+
     it('responds 401 without a token', async () => {
       const res = await request(createApp(null)).get('/task/v1/queues');
       expect(res.status).toBe(401);
@@ -190,6 +195,11 @@ describe('queue router documented behaviour', () => {
 
     it('responds 400 for a name that is too long', async () => {
       const res = await request(createApp(plain)).get(`/task/v1/queues/support/${longName}`);
+      expect(res.status).toBe(400);
+    });
+
+    it('responds 400 for a core user without tenantId', async () => {
+      const res = await request(createApp(coreReader)).get(queuePath);
       expect(res.status).toBe(400);
     });
 

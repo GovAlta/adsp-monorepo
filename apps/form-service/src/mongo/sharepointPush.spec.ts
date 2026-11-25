@@ -64,6 +64,13 @@ describe('MongoSharePointPushRepository', () => {
       expect((await repo.claimDue(now, leaseMs)).id).toBe('older');
     });
 
+    it('keeps the PDF file ID of a submission PDF push', async () => {
+      const pdfUrn = 'urn:ads:platform:file-service:v1:/files/pdf-1';
+      await repo.create(aPush('due', minutes(-1), { submissionPdfFileId: pdfUrn }));
+
+      expect(await repo.claimDue(now, leaseMs)).toMatchObject({ id: 'due', submissionPdfFileId: pdfUrn });
+    });
+
     it('does not hand the same push to a second claim while it is leased', async () => {
       await repo.create(aPush('due', minutes(-1)));
 

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
+import { selectSupportEmail } from '@store/config/selectors';
 
 import { GoabNotification, GoabButton, GoabInput, GoabFormItem, GoabButtonGroup } from '@abgov/react-components';
 import { CreateTenant, IsTenantAdmin } from '@store/tenant/actions';
@@ -41,6 +42,7 @@ const CreateRealm = (): JSX.Element => {
       notifications: state.notifications.notifications,
     }),
   );
+  const supportEmail = useSelector(selectSupportEmail);
 
   useEffect(() => {
     dispatch(KeycloakCheckSSO('core'));
@@ -62,7 +64,7 @@ const CreateRealm = (): JSX.Element => {
         <>
           {props.email} has already created a tenant. Currently, one GoA staff is only allowed to create one tenant
           through ADSP website. If you need to create another tenant using the same email, please send your request to{' '}
-          <a href="mailto:adsp@gov.ab.ca">adsp@gov.ab.ca</a> or #adsp-connections on slack.
+          <a href={`mailto:${supportEmail}`}>{supportEmail}</a> or #adsp-connections on slack.
         </>
       );
     };
@@ -178,7 +180,7 @@ const CreateRealm = (): JSX.Element => {
             a tenant.
           </p>
           <div style={{ marginBottom: '1.5rem' }}>
-            Please contact <a href="mailto: adsp@gov.ab.ca">adsp@gov.ab.ca</a> for more information.
+            Please contact <a href={`mailto:${supportEmail}`}>{supportEmail}</a> for more information.
           </div>
           <GoALinkButton buttonType="primary" onClick={() => dispatch(TenantLogout())} to="">
             Back to sign in page
