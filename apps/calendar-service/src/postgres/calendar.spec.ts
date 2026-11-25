@@ -1,4 +1,5 @@
 import { adspId } from '@abgov/adsp-service-sdk';
+import { InvalidOperationError } from '@core-services/core-common';
 import { knex, Knex } from 'knex';
 import { DateTime } from 'luxon';
 import { CalendarEntity, CalendarEventCriteria, CalendarEventEntity } from '../calendar';
@@ -46,6 +47,31 @@ describe('PostgresCalendarRepository', () => {
         ' or ("e"."recurrence" is not null and ("e"."recurrence_end_date" is null or "e"."recurrence_end_date" >= $4)))',
     );
     expect(bindings).toEqual([endsAfterDate, endsAfterDate, toTimeId(endsAfter), endsAfterDate]);
+  });
+
+  it('matches events active on a time by comparing start and end times', () => {
+    const activeOn = DateTime.fromISO('2026-11-02T09:30:00-07:00');
+    const activeOnDate = toDateId(activeOn);
+    const activeOnTime = toTimeId(activeOn);
+
+    const { sql, bindings } = toSql({ activeOn });
+
+    expect(sql).toContain(
+      '("e"."start_date" < $1 or ("e"."start_date" = $2 and ("e"."start_time" <= $3 or "e"."is_all_day" = $4)))',
+    );
+    expect(sql).toContain(
+      '("e"."end_date" > $5 or ("e"."end_date" = $6 and ("e"."end_time" >= $7 or "e"."is_all_day" = $8)) or ("e"."end_date" is null))',
+    );
+    expect(bindings).toEqual([
+      activeOnDate,
+      activeOnDate,
+      activeOnTime,
+      true,
+      activeOnDate,
+      activeOnDate,
+      activeOnTime,
+      true,
+    ]);
   });
 
   it('leaves recurring series to occurrence filtering when skipping their time criteria', () => {
@@ -251,6 +277,59 @@ describe('PostgresCalendarRepository', () => {
       });
 
       expect(result).toEqual(expect.objectContaining({ id: 3, name: 'Tester' }));
+    });
+
+    it('inserts a new attendee when no ID is given', async () => {
+      rows.mockReturnValueOnce([{ tenant: tenantId.toString(), event_id: 1, id: 4, name: 'Tester', email: null }]);
+
+      const result = await queryRepository.saveAttendee({ calendar, id: 1 } as CalendarEventEntity, {
+        id: undefined,
+        name: 'Tester',
+        email: null,
+      });
+
+      expect(result).toEqual(expect.objectContaining({ id: 4 }));
+      expect(statements()[0]).toContain('insert into "attendees"');
+    });
+
+    it('only updates an existing attendee and returns null when the event has no attendee with the ID', async () => {
+      const result = await queryRepository.saveAttendee({ calendar, id: 1 } as CalendarEventEntity, {
+        id: 99,
+        name: 'Tester',
+        email: null,
+      });
+
+      expect(result).toBeNull();
+      expect(statements()[0]).toContain('update "attendees"');
+    });
+
+    it('throws a conflict for an attendee email that is already on the event', async () => {
+      rows.mockImplementationOnce(() => {
+        throw Object.assign(new Error('duplicate key value violates unique constraint'), { code: '23505' });
+      });
+
+      const result = queryRepository.saveAttendee({ calendar, id: 1 } as CalendarEventEntity, {
+        id: undefined,
+        name: 'Tester',
+        email: 'tester@test.co',
+      });
+
+      await expect(result).rejects.toBeInstanceOf(InvalidOperationError);
+      await expect(result).rejects.toMatchObject({ extra: { statusCode: 409 } });
+    });
+
+    it('rethrows other attendee save errors', async () => {
+      rows.mockImplementationOnce(() => {
+        throw new Error('connection lost');
+      });
+
+      await expect(
+        queryRepository.saveAttendee({ calendar, id: 1 } as CalendarEventEntity, {
+          id: undefined,
+          name: 'Tester',
+          email: null,
+        }),
+      ).rejects.toThrow('connection lost');
     });
 
     it('can save an exclusion', async () => {

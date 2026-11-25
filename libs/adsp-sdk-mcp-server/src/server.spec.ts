@@ -102,6 +102,7 @@ describe('adsp-sdk-mcp-server', () => {
         'read_adsp_doc',
         'search_sdk_reference',
         'get_platform_quickstart',
+        'get_app_quickstart',
         'diagnose_adsp_error',
         'list_service_roles',
         'get_service_configuration_schema',
@@ -116,7 +117,7 @@ describe('adsp-sdk-mcp-server', () => {
   it('search_adsp_docs finds a bundled doc by keyword', async () => {
     const result = await client.callTool({ name: 'search_adsp_docs', arguments: { query: 'event service' } });
     const [content] = result.content as { type: 'text'; text: string }[];
-    const results = JSON.parse(content.text);
+    const { results } = JSON.parse(content.text);
 
     expect(results[0].path).toBe('services/event-service.md');
   });
@@ -143,7 +144,7 @@ describe('adsp-sdk-mcp-server', () => {
       arguments: { query: 'initializePlatform' },
     });
     const [content] = result.content as { type: 'text'; text: string }[];
-    const results = JSON.parse(content.text);
+    const { results } = JSON.parse(content.text);
 
     expect(results[0].name).toBe('initializePlatform');
   });
@@ -212,6 +213,15 @@ describe('server instructions', () => {
 
   it.each([SERVER_INSTRUCTIONS, OFFLINE_ENDPOINT_INSTRUCTIONS])('stay about 10 lines', (instructions) => {
     expect(instructions.split('\n').length).toBeLessThanOrEqual(12);
+  });
+
+  it.each([SERVER_INSTRUCTIONS, OFFLINE_ENDPOINT_INSTRUCTIONS])('point browser apps at get_app_quickstart', (instructions) => {
+    expect(instructions).toContain('get_app_quickstart');
+  });
+
+  it.each([SERVER_INSTRUCTIONS, OFFLINE_ENDPOINT_INSTRUCTIONS])('explain next and related', (instructions) => {
+    expect(instructions).toContain('next.suggested_calls');
+    expect(instructions).toContain('related');
   });
 
   it('name the login the live tools need, and where to check content freshness', () => {
@@ -332,7 +342,7 @@ describe('shared tools', () => {
     const fromBeta = await betaClient.callTool({ name: 'search_adsp_docs', arguments: { query: 'beta' } });
 
     expect(firstText(fromAlpha)).toBe('No ADSP docs match "beta". Try other keywords, or call list_adsp_docs to browse.');
-    expect(JSON.parse(firstText(fromBeta))[0].path).toBe('services/beta-service.md');
+    expect(JSON.parse(firstText(fromBeta)).results[0].path).toBe('services/beta-service.md');
   });
 
   it('does not cache a docs root that failed to load', async () => {

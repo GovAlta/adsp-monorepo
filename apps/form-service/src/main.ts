@@ -61,6 +61,7 @@ import {
   RegistrationReviewedDefinition,
   SharePointPushFailedDefinition,
   createSharePointRetryService,
+  createSubmissionPdfJob,
   parseRetryDelays,
 } from './form';
 import { closeRepositories, createRepositories } from './mongo';
@@ -363,6 +364,27 @@ const initializeApp = async () => {
 
   eventSubscriber.getItems().subscribe(({ item, done }) => {
     messageNotificationJob(item).finally(() => done());
+  });
+
+  // The submission PDF is generated after submit, so it is pushed to SharePoint when PDF Service reports it.
+  const pdfEventSubscriber = await createAmqpEventService({
+    ...environment,
+    queue: 'form-sharepoint-submission-pdf',
+    bindingKey: 'pdf-service.#',
+    logger,
+  });
+
+  const submissionPdfJob = createSubmissionPdfJob({
+    apiId: adspId`${serviceId}:v1`,
+    logger,
+    repository: repositories.formRepository,
+    submissionRepository: repositories.formSubmissionRepository,
+    sharepointService,
+    eventService,
+  });
+
+  pdfEventSubscriber.getItems().subscribe(({ item, done }) => {
+    submissionPdfJob(item).finally(() => done());
   });
 
   applyFormMiddleware(app, {

@@ -5,7 +5,7 @@ import * as cors from 'cors';
 import * as helmet from 'helmet';
 import { AdspId, initializePlatform, instrumentAxios, ServiceMetricsValueDefinition } from '@abgov/adsp-service-sdk';
 import type { User } from '@abgov/adsp-service-sdk';
-import { createLogger, createErrorHandler } from '@core-services/core-common';
+import { createLogger, createErrorHandler, createShutdownHandler } from '@core-services/core-common';
 import { environment } from './environments/environment';
 import { connectMongo } from './mongo';
 import {
@@ -13,14 +13,15 @@ import {
   createSharePointRouter,
   CredentialStore,
   FileServiceSource,
-  FileUploadedDefinition,
-  FileUploadFailedDefinition,
   GraphClient,
   GraphFileClient,
   GraphTokenProvider,
+  LibraryDriveResolver,
   LocalFileSource,
   parseEncryptionKeyring,
   ServiceRoles,
+  SharePointAuditActions,
+  SharePointEventDefinitions,
   SharePointFileService,
   SharePointPusher,
   SharePointSetup,
@@ -28,7 +29,7 @@ import {
 
 const logger = createLogger('sharepoint-service', environment.LOG_LEVEL);
 
-const initializeApp = async (): Promise<express.Application> => {
+const initializeApp = async () => {
   const encryptionKeys = parseEncryptionKeyring(environment);
 
   const app = express();
@@ -45,6 +46,7 @@ const initializeApp = async (): Promise<express.Application> => {
 
   const serviceId = AdspId.parse(environment.CLIENT_ID);
   const {
+    auditService,
     coreStrategy,
     configurationHandler,
     configurationService,
@@ -52,6 +54,7 @@ const initializeApp = async (): Promise<express.Application> => {
     eventService,
     healthCheck,
     metricsHandler,
+    shutdownTelemetry,
     tenantHandler,
     tenantStrategy,
     tokenProvider,
@@ -83,7 +86,8 @@ const initializeApp = async (): Promise<express.Application> => {
       tracing: environment.OTEL_EXPORTER_OTLP_ENDPOINT,
       metrics: environment.OTEL_EXPORTER_OTLP_ENDPOINT,
       values: [ServiceMetricsValueDefinition],
-      events: [FileUploadedDefinition, FileUploadFailedDefinition],
+      auditActions: SharePointAuditActions,
+      events: SharePointEventDefinitions,
       enableConfigurationInvalidation: true,
     },
     { logger },
@@ -105,8 +109,10 @@ const initializeApp = async (): Promise<express.Application> => {
   const credentialStore = new CredentialStore(credentialRepository, encryptionKeys);
   const tokens = new GraphTokenProvider(environment.ENTRA_AUTHORITY_URL, credentialStore);
   const graph = new GraphClient(environment.GRAPH_URL);
+  const fileClient = new GraphFileClient(environment.GRAPH_URL);
+  const drives = new LibraryDriveResolver(tokens, fileClient);
   const pusher = new SharePointPusher(tokens, graph);
-  const setup = new SharePointSetup(tokens, graph);
+  const setup = new SharePointSetup(tokens, graph, drives);
 
   if (environment.DEV_FILES_DIRECTORY) {
     logger.warn(`Reading files for upload from local directory '${environment.DEV_FILES_DIRECTORY}'.`);
@@ -116,10 +122,10 @@ const initializeApp = async (): Promise<express.Application> => {
     : new FileServiceSource(directory, tokenProvider);
   const fileService = new SharePointFileService(
     tokens,
-    new GraphFileClient(environment.GRAPH_URL),
+    fileClient,
     fileSource,
     pusher,
-    eventService,
+    drives,
     environment.FILE_UPLOAD_CONCURRENCY,
   );
 
@@ -136,6 +142,8 @@ const initializeApp = async (): Promise<express.Application> => {
       pusher,
       fileService,
       setup,
+      auditService,
+      eventService,
       clearConfiguration: (tenantId) =>
         configurationService.clearCached?.(tenantId, serviceId.namespace, serviceId.service),
     }),
@@ -161,15 +169,26 @@ const initializeApp = async (): Promise<express.Application> => {
 
   app.use(createErrorHandler(logger));
 
-  return app;
+  return { app, auditService, shutdownTelemetry };
 };
 
 initializeApp()
-  .then((app) => {
+  .then(({ app, auditService, shutdownTelemetry }) => {
     const server = app.listen(environment.PORT, () => {
       logger.info(`Listening at http://localhost:${environment.PORT}`);
     });
     server.on('error', (err) => logger.error(`Error encountered in server: ${err}`));
+
+    // Stop accepting requests, then deliver any pending audit entries before the process exits.
+    const shutdown = createShutdownHandler({
+      serviceName: 'SharePoint service',
+      server,
+      auditService,
+      shutdownTelemetry,
+      logger,
+    });
+    process.once('SIGTERM', shutdown);
+    process.once('SIGINT', shutdown);
   })
   .catch((err) => {
     logger.error(`Failed to start service: ${err}`);

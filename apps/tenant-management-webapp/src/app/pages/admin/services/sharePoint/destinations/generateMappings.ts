@@ -2,6 +2,8 @@ import { SharepointColumnType, SharepointDetailList, SharepointFieldMapping } fr
 
 export const FOLDER_LINK_COLUMN = 'AdspFilesFolder';
 export const PARENT_REF_COLUMN = 'ParentItemId';
+// Form Service pushes the PDF it generates on submit to this field, once the submission's row is there.
+const SUBMISSION_PDF_SOURCE = '_adsp.submissionPdf';
 const FILE_FORMAT = 'file-urn';
 const MAX_COLUMN_NAME = 32;
 
@@ -190,12 +192,24 @@ function walk(schema: Schema, path: string[], context: Walk): void {
   }
 }
 
-export function generateFormServiceMappings(dataSchema: Record<string, unknown> | undefined): GeneratedMappings {
+export function generateFormServiceMappings(
+  dataSchema: Record<string, unknown> | undefined,
+  { submissionPdf = false }: { submissionPdf?: boolean } = {},
+): GeneratedMappings {
   const root = (dataSchema ?? {}) as Schema;
   const resolved = resolve(root, root);
   const context: Walk = { root, names: new ColumnNames(), mappings: [], detailLists: [], files: { found: false } };
   if (resolved) {
     walk(resolved, [], context);
+  }
+  if (submissionPdf) {
+    context.files.found = true;
+    context.mappings.push({
+      source: SUBMISSION_PDF_SOURCE,
+      target: context.names.take(['submissionPdf']),
+      displayName: 'Submission PDF',
+      columnType: 'hyperlink',
+    });
   }
   return {
     fieldMappings: context.mappings,

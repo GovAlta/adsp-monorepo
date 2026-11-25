@@ -1,4 +1,4 @@
-import { AdspId, AdspIdFormatError, startBenchmark, TenantService } from '@abgov/adsp-service-sdk';
+import { AdspIdFormatError, getRequestedTenant, startBenchmark, TenantService } from '@abgov/adsp-service-sdk';
 import { RequestHandler } from 'express';
 
 export const createAnonymousTenantHandler =
@@ -11,9 +11,8 @@ export const createAnonymousTenantHandler =
         throw new AdspIdFormatError('tenantId must be a single tenant URN.');
       }
       // When there is no user context (anonymous), then allow selection of tenant via the tenantId query param.
-      const tenantId = !req.user && tenantIdValue ? AdspId.parse(tenantIdValue as string) : null;
-      if (tenantId) {
-        req.tenant = await service.getTenant(tenantId);
+      if (!req.user && tenantIdValue) {
+        req.tenant = await getRequestedTenant(service, tenantIdValue);
       }
     } catch (err) {
       next(err);

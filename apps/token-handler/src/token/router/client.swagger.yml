@@ -202,8 +202,7 @@ components:
 
 
       Requires the token-handler-admin role. The caller acts on the tenant of their bearer token, which must be from a
-      tenant realm. The client is looked up before the role is checked, so an unknown client responds 404 for any
-      caller.
+      tenant realm. The role is checked before the client is looked up, so only admins get 404 for an unknown client.
     responses:
       200:
         description: Request completed successfully.

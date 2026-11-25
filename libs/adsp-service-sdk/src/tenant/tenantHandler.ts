@@ -1,8 +1,8 @@
 import type { RequestHandler } from 'express';
 import { trace } from '@opentelemetry/api';
 import { startBenchmark } from '../metrics';
-import { AdspId } from '../utils';
-import { TenantService } from './tenantService';
+import { getRequestedTenant } from './requestedTenant';
+import type { Tenant, TenantService } from './tenantService';
 
 export const createTenantHandler =
   (service: TenantService): RequestHandler =>
@@ -13,9 +13,13 @@ export const createTenantHandler =
     let failure: unknown;
     try {
       const { tenantId: tenantIdValue } = req.query;
-      const tenantId = req.user?.isCore && tenantIdValue ? AdspId.parse(tenantIdValue as string) : req.user?.tenantId;
-      if (tenantId) {
-        const tenant = await service.getTenant(tenantId);
+      let tenant: Tenant;
+      if (req.user?.isCore && tenantIdValue) {
+        tenant = await getRequestedTenant(service, tenantIdValue);
+      } else if (req.user?.tenantId) {
+        tenant = await service.getTenant(req.user.tenantId);
+      }
+      if (tenant) {
         req.tenant = tenant;
         trace.getActiveSpan()?.setAttribute('adsp.tenant.id', tenant.id.toString());
         trace.getActiveSpan()?.setAttribute('adsp.tenant.name', tenant.name);

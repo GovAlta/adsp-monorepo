@@ -1,5 +1,15 @@
 components:
   parameters:
+    PlannerTenantIdQuery:
+      name: tenantId
+      description: >
+        ID of the tenant to act on. Only used for core (platform) users, who must set it; tenant users always act on
+        the tenant of their token and this parameter is ignored.
+      in: query
+      required: false
+      schema:
+        type: string
+      example: urn:ads:platform:tenant-service:v2:/tenants/61f2e3a8c9b1d2e3f4a5b6c7
     PlannerSolutionId:
       name: id
       description: ID of the solution.
@@ -64,7 +74,7 @@ components:
     PlannerBadRequest:
       description: >
         Request is invalid, for example a path, query, or body parameter failed validation. Also returned when there is
-        no tenant context, which is the case for core (platform) users that don't set a tenant.
+        no tenant context, which is the case for core (platform) users that don't set the tenantId parameter.
       content:
         application/json:
           schema:
@@ -81,7 +91,7 @@ components:
     PlannerForbidden:
       description: >
         User does not have the role required for the operation in the tenant, or is not permitted to act on the
-        solution. Core (platform) users are not granted access.
+        solution. Core (platform) users need a planner role and must set the tenantId parameter.
       content:
         application/json:
           schema:
@@ -1105,6 +1115,8 @@ components:
 
 paths:
   /planner/v1/analysis/options:
+    parameters:
+      - $ref: '#/components/parameters/PlannerTenantIdQuery'
     get:
       tags: [Solution]
       summary: Retrieves the available analysis modes.
@@ -1125,6 +1137,8 @@ paths:
         403:
           $ref: '#/components/responses/PlannerForbidden'
   /planner/v1/patterns:
+    parameters:
+      - $ref: '#/components/parameters/PlannerTenantIdQuery'
     get:
       tags: [Pattern]
       summary: Retrieves business patterns.
@@ -1189,6 +1203,8 @@ paths:
         403:
           $ref: '#/components/responses/PlannerForbidden'
   /planner/v1/patterns/match:
+    parameters:
+      - $ref: '#/components/parameters/PlannerTenantIdQuery'
     post:
       tags: [Pattern]
       summary: Matches free text against patterns.
@@ -1224,6 +1240,7 @@ paths:
           $ref: '#/components/responses/PlannerForbidden'
   /planner/v1/patterns/{patternId}:
     parameters:
+      - $ref: '#/components/parameters/PlannerTenantIdQuery'
       - $ref: '#/components/parameters/PlannerPatternId'
     get:
       tags: [Pattern]
@@ -1301,6 +1318,8 @@ paths:
         404:
           $ref: '#/components/responses/PlannerNotFound'
   /planner/v1/specialists:
+    parameters:
+      - $ref: '#/components/parameters/PlannerTenantIdQuery'
     get:
       tags: [Specialist]
       summary: Retrieves the service specialists.
@@ -1321,6 +1340,8 @@ paths:
         403:
           $ref: '#/components/responses/PlannerForbidden'
   /planner/v1/documents/extract:
+    parameters:
+      - $ref: '#/components/parameters/PlannerTenantIdQuery'
     post:
       tags: [Solution]
       summary: Extracts a problem statement from a document.
@@ -1328,7 +1349,8 @@ paths:
         Extracts the text of an uploaded document, to use as a problem statement. Supports Markdown (.md, .markdown),
         Word (.docx, and .doc HTML exports such as Confluence "Export to Word") and PDF (.pdf) files up to 20 MB. The
         file isn't stored. Requires the planner-user or planner-admin role in the tenant of the token. Responds 400 if
-        no file is uploaded, the format isn't supported, or no text can be read from the file.
+        no file is uploaded, the field name is not `file`, the format isn't supported, or no text can be read. Responds
+        413 if the file exceeds 20 MB.
       requestBody:
         required: true
         content:
@@ -1354,7 +1376,15 @@ paths:
           $ref: '#/components/responses/PlannerUnauthorized'
         403:
           $ref: '#/components/responses/PlannerForbidden'
+        413:
+          description: The uploaded file exceeds the 20 MB limit.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlannerError'
   /planner/v1/solutions:
+    parameters:
+      - $ref: '#/components/parameters/PlannerTenantIdQuery'
     get:
       tags: [Solution]
       summary: Retrieves solutions.
@@ -1443,6 +1473,7 @@ paths:
           $ref: '#/components/responses/PlannerForbidden'
   /planner/v1/solutions/{id}:
     parameters:
+      - $ref: '#/components/parameters/PlannerTenantIdQuery'
       - $ref: '#/components/parameters/PlannerSolutionId'
     get:
       tags: [Solution]
@@ -1616,6 +1647,7 @@ paths:
           $ref: '#/components/responses/PlannerNotFound'
   /planner/v1/solutions/{id}/analyze:
     parameters:
+      - $ref: '#/components/parameters/PlannerTenantIdQuery'
       - $ref: '#/components/parameters/PlannerSolutionId'
     post:
       tags: [Solution]
@@ -1660,6 +1692,7 @@ paths:
           $ref: '#/components/responses/PlannerNotFound'
   /planner/v1/solutions/{id}/discovery:
     parameters:
+      - $ref: '#/components/parameters/PlannerTenantIdQuery'
       - $ref: '#/components/parameters/PlannerSolutionId'
     post:
       tags: [Solution]
@@ -1709,6 +1742,7 @@ paths:
           $ref: '#/components/responses/PlannerNotFound'
   /planner/v1/solutions/{id}/chat:
     parameters:
+      - $ref: '#/components/parameters/PlannerTenantIdQuery'
       - $ref: '#/components/parameters/PlannerSolutionId'
     post:
       tags: [Solution]
@@ -1753,6 +1787,7 @@ paths:
           $ref: '#/components/responses/PlannerNotFound'
   /planner/v1/solutions/{id}/blueprint:
     parameters:
+      - $ref: '#/components/parameters/PlannerTenantIdQuery'
       - $ref: '#/components/parameters/PlannerSolutionId'
     post:
       tags: [Solution]
@@ -1797,6 +1832,7 @@ paths:
           $ref: '#/components/responses/PlannerNotFound'
   /planner/v1/solutions/{id}/components/{order}/review:
     parameters:
+      - $ref: '#/components/parameters/PlannerTenantIdQuery'
       - $ref: '#/components/parameters/PlannerSolutionId'
       - name: order
         in: path
@@ -1844,6 +1880,7 @@ paths:
           $ref: '#/components/responses/PlannerNotFound'
   /planner/v1/solutions/{id}/consult/{service}:
     parameters:
+      - $ref: '#/components/parameters/PlannerTenantIdQuery'
       - $ref: '#/components/parameters/PlannerSolutionId'
       - $ref: '#/components/parameters/PlannerSpecialistService'
     post:
@@ -1890,6 +1927,7 @@ paths:
           $ref: '#/components/responses/PlannerNotFound'
   /planner/v1/solutions/{id}/export:
     parameters:
+      - $ref: '#/components/parameters/PlannerTenantIdQuery'
       - $ref: '#/components/parameters/PlannerSolutionId'
     get:
       tags: [Solution]
@@ -1921,6 +1959,7 @@ paths:
           $ref: '#/components/responses/PlannerNotFound'
   /planner/v1/solutions/{id}/versions:
     parameters:
+      - $ref: '#/components/parameters/PlannerTenantIdQuery'
       - $ref: '#/components/parameters/PlannerSolutionId'
     get:
       tags: [Solution]
@@ -1946,6 +1985,7 @@ paths:
           $ref: '#/components/responses/PlannerNotFound'
   /planner/v1/solutions/{id}/versions/checkpoint:
     parameters:
+      - $ref: '#/components/parameters/PlannerTenantIdQuery'
       - $ref: '#/components/parameters/PlannerSolutionId'
     post:
       tags: [Solution]
@@ -1972,6 +2012,7 @@ paths:
           $ref: '#/components/responses/PlannerNotFound'
   /planner/v1/solutions/{id}/versions/{number}:
     parameters:
+      - $ref: '#/components/parameters/PlannerTenantIdQuery'
       - $ref: '#/components/parameters/PlannerSolutionId'
       - $ref: '#/components/parameters/PlannerVersionNumber'
     patch:
@@ -2012,6 +2053,7 @@ paths:
           $ref: '#/components/responses/PlannerNotFound'
   /planner/v1/solutions/{id}/versions/{number}/export:
     parameters:
+      - $ref: '#/components/parameters/PlannerTenantIdQuery'
       - $ref: '#/components/parameters/PlannerSolutionId'
       - $ref: '#/components/parameters/PlannerVersionNumber'
     get:
@@ -2044,6 +2086,7 @@ paths:
           $ref: '#/components/responses/PlannerNotFound'
   /planner/v1/specialists/{service}/chat:
     parameters:
+      - $ref: '#/components/parameters/PlannerTenantIdQuery'
       - $ref: '#/components/parameters/PlannerSpecialistService'
     post:
       tags: [Specialist]
@@ -2101,6 +2144,8 @@ paths:
         404:
           $ref: '#/components/responses/PlannerNotFound'
   /planner/v1/specialists/chats:
+    parameters:
+      - $ref: '#/components/parameters/PlannerTenantIdQuery'
     get:
       tags: [Specialist]
       summary: Lists the caller's saved specialist chats.
@@ -2124,6 +2169,8 @@ paths:
         403:
           $ref: '#/components/responses/PlannerForbidden'
   /planner/v1/specialists/chats/export:
+    parameters:
+      - $ref: '#/components/parameters/PlannerTenantIdQuery'
     get:
       tags: [Specialist]
       summary: Downloads the caller's saved chats.
@@ -2154,6 +2201,7 @@ paths:
           $ref: '#/components/responses/PlannerForbidden'
   /planner/v1/specialists/chats/{chatId}:
     parameters:
+      - $ref: '#/components/parameters/PlannerTenantIdQuery'
       - $ref: '#/components/parameters/PlannerChatId'
     get:
       tags: [Specialist]
@@ -2195,6 +2243,7 @@ paths:
           $ref: '#/components/responses/PlannerNotFound'
   /planner/v1/specialists/chats/{chatId}/export:
     parameters:
+      - $ref: '#/components/parameters/PlannerTenantIdQuery'
       - $ref: '#/components/parameters/PlannerChatId'
     get:
       tags: [Specialist]

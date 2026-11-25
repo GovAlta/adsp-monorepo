@@ -53,6 +53,13 @@ describe('RedisJobRepository', () => {
       redisClient.get.mockImplementationOnce((_key, cb) => cb(new Error('no nodes!')));
       await expect(repository.get('job1')).rejects.toThrow(Error);
     });
+
+    it('can reject for stored job with invalid tenant ID', async () => {
+      redisClient.get.mockImplementationOnce((_key, cb) =>
+        cb(null, JSON.stringify({ tenantId: 'undefined', id: 'job1', status: 'queued' }))
+      );
+      await expect(repository.get('job1')).rejects.toThrow(Error);
+    });
   });
 
   describe('update', () => {

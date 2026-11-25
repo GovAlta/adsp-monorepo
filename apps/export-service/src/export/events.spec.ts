@@ -10,6 +10,14 @@ describe('events', () => {
     error: jest.fn(),
   };
 
+  it.each([ExportQueuedDefinition, ExportCompletedDefinition, ExportFailedDefinition])(
+    '$name has a description',
+    (definition) => {
+      expect(definition.description).toEqual(expect.any(String));
+      expect(definition.description.trim()).not.toBe('');
+    },
+  );
+
   it('export-queued is valid json schema', () => {
     const service = new AjvValidationService(logger as unknown as Logger);
     service.setSchema('payload', { $ref: 'http://json-schema.org/draft-07/schema#' });

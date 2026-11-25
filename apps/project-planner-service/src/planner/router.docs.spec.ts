@@ -59,6 +59,7 @@ describe('planner router documented behaviour', () => {
   const admin = tenantUser('admin', [PlannerServiceRoles.Admin]);
   const plain = tenantUser('plain', []);
   const core = { id: 'core', name: 'core', isCore: true, roles: [PlannerServiceRoles.Admin] } as unknown as User;
+  const coreWithoutRole = { id: 'core-plain', name: 'core-plain', isCore: true, roles: [] } as unknown as User;
 
   const hypothesis: Hypothesis = {
     id: 'h-1',
@@ -209,8 +210,8 @@ describe('planner router documented behaviour', () => {
       expect(res.status).toBe(400);
     });
 
-    it('returns 403 for a core user with a tenant', async () => {
-      const res = await send(createApp(core), method, `${path}?tenantId=${tenantId}`);
+    it('returns 403 for a core user without a planner role who sets a tenantId', async () => {
+      const res = await send(createApp(coreWithoutRole), method, `${path}?tenantId=${tenantId}`);
       expect(res.status).toBe(403);
     });
 
@@ -236,6 +237,12 @@ describe('planner router documented behaviour', () => {
   });
 
   describe('patterns', () => {
+    it('GET /planner/v1/patterns returns the catalogue for a core user who sets a tenantId', async () => {
+      const res = await request(createApp(core)).get(`/planner/v1/patterns?tenantId=${tenantId}`);
+      expect(res.status).toBe(200);
+      expect(patternRepository.find).toHaveBeenCalledWith(tenantId);
+    });
+
     it('GET /planner/v1/patterns returns the catalogue', async () => {
       const res = await request(createApp(owner)).get('/planner/v1/patterns');
       expect(res.status).toBe(200);
@@ -343,6 +350,24 @@ describe('planner router documented behaviour', () => {
       expect(res.status).toBe(400);
     });
 
+    it('returns 413 when the file exceeds the upload limit', async () => {
+      const res = await request(createApp(owner))
+        .post('/planner/v1/documents/extract')
+        .attach('file', Buffer.alloc(20 * 1024 * 1024 + 1), 'plan.md');
+
+      expect(res.status).toBe(413);
+      expect(res.body).toEqual({ errorMessage: 'Uploaded file exceeds the 20 MB limit.' });
+    });
+
+    it('returns 400 when the file field is unexpected', async () => {
+      const res = await request(createApp(owner))
+        .post('/planner/v1/documents/extract')
+        .attach('document', Buffer.from('Applicants apply online.'), 'plan.md');
+
+      expect(res.status).toBe(400);
+      expect(res.body).toEqual({ errorMessage: 'Invalid file upload: Unexpected file field' });
+    });
+
     it('returns 400 for an unsupported format', async () => {
       const res = await request(createApp(owner))
         .post('/planner/v1/documents/extract')
@@ -425,6 +450,14 @@ describe('planner router documented behaviour', () => {
       const res = await request(createApp(owner))
         .patch(`/planner/v1/solutions/${SOLUTION_ID}`)
         .send({ status: 'done' });
+      expect(res.status).toBe(400);
+    });
+
+    it.each(['concepts', 'decisions', 'questions'])('PATCH returns 400 for null items in %s', async (field) => {
+      const res = await request(createApp(owner))
+        .patch(`/planner/v1/solutions/${SOLUTION_ID}`)
+        .send({ [field]: [null] });
+
       expect(res.status).toBe(400);
     });
 

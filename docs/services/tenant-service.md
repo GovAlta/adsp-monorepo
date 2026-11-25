@@ -93,12 +93,13 @@ Each tenant has its own Keycloak realm, which signs the access tokens of the ten
 
 Tenant service sends the following domain events under the `tenant-service` namespace. It doesn't consume events.
 
-| Event             | Description                                                                                                                                   |
-| :---------------- | :-------------------------------------------------------------------------------------------------------------------------------------------- |
-| `tenant-created`  | A tenant was created, either with an existing realm or once its new realm was provisioned. The payload includes the `tenant` and `createdBy`. |
-| `tenant-deleted`  | A tenant was permanently deleted (purged). The payload includes the `tenant` and `deletedBy`.                                                 |
-| `tenant-archived` | A tenant was archived. The payload includes the `tenant` and `archivedBy`.                                                                    |
-| `tenant-restored` | An archived tenant was restored. The payload includes the `tenant` and `restoredBy`.                                                          |
+| Event                 | Description                                                                                                                                   |
+| :-------------------- | :-------------------------------------------------------------------------------------------------------------------------------------------- |
+| `tenant-created`      | A tenant was created, either with an existing realm or once its new realm was provisioned. The payload includes the `tenant` and `createdBy`. |
+| `tenant-deleted`      | A tenant was permanently deleted (purged). The payload includes the `tenant` and `deletedBy`.                                                 |
+| `tenant-archived`     | A tenant was archived. The payload includes the `tenant` and `archivedBy`.                                                                    |
+| `tenant-restored`     | An archived tenant was restored. The payload includes the `tenant` and `restoredBy`.                                                          |
+| `tenant-name-updated` | A tenant was renamed. The payload includes the updated `tenant` and `updatedBy`.                                                              |
 
 ## Audit actions
 

@@ -27,7 +27,8 @@ export function mapFormDefinition(entity: FormDefinition, revision: number, inta
     // Only the columns are of interest to clients; the questions email is internal routing
     // configuration and is deliberately not exposed to form applicants.
     reviewConfiguration: { columns: entity.reviewConfiguration?.columns || [] },
-    // Access group is internal provisioning configuration and is not exposed.
+    // Access group, approver group and notification email are internal configuration and are not exposed here;
+    // mapAdminFormDefinition adds the access group for form-admin callers.
     registration: entity.registration
       ? {
           enabled: entity.registration.enabled,
@@ -38,6 +39,13 @@ export function mapFormDefinition(entity: FormDefinition, revision: number, inta
     created,
     intake: intake ? intake : null,
   };
+}
+
+// Only for responses to form-admin callers.
+export function mapAdminFormDefinition(entity: FormDefinition, revision: number, intake?: Intake, created?: Date) {
+  const mapped = mapFormDefinition(entity, revision, intake, created);
+  const accessGroup = entity.registration?.accessGroup;
+  return accessGroup ? { ...mapped, registration: { ...mapped.registration, accessGroup } } : mapped;
 }
 
 export function mapRegistration(entity: FormRegistrationEntity) {
@@ -104,6 +112,9 @@ export function mapFormWithFormSubmission(
     submission: {
       id: submissionEntity.id,
       urn: submissionEntity.formSubmissionUrn,
+      disposition: submissionEntity.disposition
+        ? { status: submissionEntity.disposition.status, date: submissionEntity.disposition.date }
+        : null,
     },
   };
 }

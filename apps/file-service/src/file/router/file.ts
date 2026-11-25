@@ -22,7 +22,7 @@ import { pipeline } from 'stream/promises';
 import validator from 'validator';
 import { Logger } from 'winston';
 import { FileRepository } from '../repository';
-import { createUpload } from './upload';
+import { createUpload, uploadSingleFile } from './upload';
 import {
   FileDeletedAuditAction,
   FileDownloadedAuditAction,
@@ -161,7 +161,8 @@ export function getFile(repository: FileRepository, ...roles: string[]): Request
       const user = req.user;
       const { fileId } = req.params;
 
-      const fileEntity = await repository.get(fileId);
+      // Scope to the request tenant when there is one; anonymous requests (e.g. public download) have no tenant context.
+      const fileEntity = await repository.get(fileId, req.tenant?.id);
 
       if (!fileEntity) {
         throw new NotFoundError('File', fileId);
@@ -262,7 +263,7 @@ export function downloadFile(logger: Logger, auditService: AuditService): Reques
       res.setHeader('Accept-Ranges', 'bytes');
 
       if (embed === 'true') {
-        res.setHeader('Cache-Control', fileEntity.type.anonymousRead ? 'public' : 'no-store');
+        res.setHeader('Cache-Control', fileEntity.type?.anonymousRead ? 'public' : 'no-store');
         res.setHeader('Content-Disposition', `inline; filename*=UTF-8''${encodeRFC5987(fileEntity.filename)}`);
       } else {
         res.setHeader('Cache-Control', 'no-store');
@@ -408,7 +409,7 @@ export function deleteFiles(
 
       const results = [];
       for (const fileId of fileIds) {
-        const fileEntity = await repository.get(fileId);
+        const fileEntity = await repository.get(fileId, req.tenant?.id);
         if (!fileEntity) {
           throw new NotFoundError('File', fileId);
         }
@@ -450,6 +451,10 @@ export function fileOperation(
             fileType = configuration?.[type];
             if (!fileType) {
               throw new NotFoundError('File Type', type);
+            }
+
+            if (!fileType.tenantId) {
+              throw new InvalidOperationError('Cannot copy file without tenant context.');
             }
           }
 
@@ -535,7 +540,7 @@ export const createFileRouter = ({
   fileRouter.post(
     '/files',
     assertAuthenticatedHandler,
-    upload.single('file'),
+    uploadSingleFile(upload),
     uploadFile(apiId, logger, eventService, auditService),
   );
   fileRouter.delete(

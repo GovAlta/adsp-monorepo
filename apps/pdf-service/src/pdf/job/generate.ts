@@ -51,11 +51,14 @@ export function createGenerateJob({
       tenant: tenantIdValue,
     });
 
-    const tenantId = AdspId.parse(tenantIdValue);
     const auditActor = toRequesterAuditActor(requestedBy);
-    const auditTarget = { tenantId, jobId, templateId, filename, fileType, recordId };
+    let tenantId: AdspId;
+    let auditTarget = { tenantId, jobId, templateId, filename, fileType, recordId };
 
     try {
+      tenantId = AdspId.parse(tenantIdValue);
+      auditTarget = { ...auditTarget, tenantId };
+
       const token = await tokenProvider.getAccessToken();
       const [configuration] = await configurationService.getConfiguration<Record<string, PdfTemplateEntity>>(
         serviceId,
@@ -92,7 +95,11 @@ export function createGenerateJob({
       done();
     } catch (err) {
       if (!retryOnError) {
-        await repository.update(jobId, 'failed');
+        try {
+          await repository.update(jobId, 'failed');
+        } catch (updateErr) {
+          logger.warn(`Failed to update PDF job (ID: ${jobId}) status to failed. ${updateErr}`, { context });
+        }
         eventService.send(pdfGenerationFailed(tenantId, jobId, templateId, context, requestedBy, { error: err.toString() }));
         void auditService.record(PdfJobGeneratedAuditAction, {
           ...toPdfJobAuditDetails(auditActor, auditTarget, { error: toAuditError(err) }),

@@ -70,7 +70,7 @@ export const getStream = async (
   req: Request,
   tenant: string,
   stream: string,
-  next: NextFunction
+  next: NextFunction,
 ): Promise<void> => {
   try {
     const user = req.user as User;
@@ -87,7 +87,7 @@ export const getStream = async (
     });
 
     const entities = await req.getConfiguration<Record<string, StreamEntity>, Record<string, StreamEntity>>(tenantId);
-    const entity = entities[stream];
+    const entity = stream === 'webhooks' ? undefined : entities[stream];
     if (!entity) {
       throw new NotFoundError('stream', stream);
     }
@@ -115,19 +115,41 @@ export const getStreams: RequestHandler = async (req, res, next) => {
   res.send(
     Object.values(entities)
       .filter((stream) => stream.canSubscribe(user))
-      .reduce((streams, stream) => ({ ...streams, [stream.id]: mapStream(stream) }), {})
+      .reduce((streams, stream) => ({ ...streams, [stream.id]: mapStream(stream) }), {}),
   );
 };
+
+export function parseCriteria(criteriaValue: unknown): EventCriteria {
+  if (!criteriaValue) {
+    return {};
+  }
+  if (typeof criteriaValue !== 'string') {
+    throw new InvalidOperationError('criteria must be valid JSON.');
+  }
+  let criteria: unknown;
+  try {
+    criteria = JSON.parse(criteriaValue);
+  } catch {
+    throw new InvalidOperationError('criteria must be valid JSON.');
+  }
+  if (typeof criteria !== 'object' || criteria === null || Array.isArray(criteria)) {
+    throw new InvalidOperationError('criteria must be a JSON object.');
+  }
+  return criteria as EventCriteria;
+}
 
 export function subscribeBySse(logger: Logger, events: Observable<DomainEvent>): RequestHandler {
   return async (req, res, next) => {
     try {
       const user = req.user;
       const { criteria: criteriaValue } = req.query;
-      const criteria: EventCriteria = criteriaValue ? JSON.parse(criteriaValue as string) : {};
+      const criteria = parseCriteria(criteriaValue);
       const entity: StreamEntity = req[STREAM_KEY];
 
       entity.connect(events);
+      // Get the events before sending headers, so access errors are returned as an error response instead of a dropped stream.
+      const items = entity.getEvents(user, criteria);
+
       res.set({
         'Content-Type': 'text/event-stream',
         'Cache-Control': 'no-cache',
@@ -135,7 +157,7 @@ export function subscribeBySse(logger: Logger, events: Observable<DomainEvent>):
       });
       res.flushHeaders();
 
-      const sub = entity.getEvents(user, criteria).subscribe((next) => {
+      const sub = items.subscribe((next) => {
         res.write(`data: ${JSON.stringify(mapStreamItem(next))}\n\n`);
         res.flush();
       });
@@ -148,7 +170,7 @@ export function subscribeBySse(logger: Logger, events: Observable<DomainEvent>):
           ...LOG_CONTEXT,
           tenant: entity.tenantId?.toString(),
           user: user ? `${user.name} (ID: ${user.id})` : null,
-        }
+        },
       );
 
       res.on('close', () => {
@@ -179,7 +201,7 @@ export function onIoConnection(logger: Logger, events: Observable<DomainEvent>) 
       const req = socket.request as Request;
       const user = req.user;
       const { criteria: criteriaValue } = req.query;
-      const criteria: EventCriteria = criteriaValue ? JSON.parse(criteriaValue as string) : {};
+      const criteria = parseCriteria(criteriaValue);
       const entity: StreamEntity = req[STREAM_KEY];
 
       entity.connect(events);
@@ -195,7 +217,7 @@ export function onIoConnection(logger: Logger, events: Observable<DomainEvent>) 
           ...LOG_CONTEXT,
           tenant: entity.tenantId?.toString(),
           user: user ? `${user.name} (ID: ${user.id})` : null,
-        }
+        },
       );
 
       socket.on('disconnect', () => {
@@ -208,6 +230,9 @@ export function onIoConnection(logger: Logger, events: Observable<DomainEvent>) 
       });
     } catch (err) {
       logger.warn(`Error encountered on socket.io connection. ${err}`);
+      if (err instanceof InvalidOperationError) {
+        socket.emit('error', { message: err.message });
+      }
       socket.disconnect(true);
     }
   };
@@ -225,14 +250,14 @@ export const createStreamRouter = (
     eventService,
     configurationService,
     serviceId,
-  }: StreamRouterProps
+  }: StreamRouterProps,
 ): Router => {
   const events = eventServiceAmp.getItems().pipe(
     map(({ item, done }) => {
       done();
       return item;
     }),
-    share()
+    share(),
   );
 
   const webhookEvents = eventServiceAmpWebhooks.getItems().pipe(
@@ -240,7 +265,7 @@ export const createStreamRouter = (
       done();
       return item;
     }),
-    share()
+    share(),
   );
 
   events.subscribe(async (next) => {
@@ -291,7 +316,7 @@ export const createStreamRouter = (
   streamRouter.get(
     '/streams/:stream',
     (req, _res, next) => getStream(logger, tenantService, req, req.query.tenant as string, req.params.stream, next),
-    subscribeBySse(logger, events)
+    subscribeBySse(logger, events),
   );
 
   for (const io of ios) {

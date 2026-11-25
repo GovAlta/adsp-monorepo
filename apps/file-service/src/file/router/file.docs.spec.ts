@@ -56,7 +56,9 @@ describe('file router documented behaviour', () => {
     private: '5f1e2d3c-4b5a-4f6e-8d7c-9b0a1c2d3e4f',
     public: '6a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d',
     unscanned: '7b3c4d5e-6f7a-4b8c-9d0e-1f2a3b4c5d6e',
+    otherTenant: '9d5e6f7a-8b9c-4d0e-9f2a-3b4c5d6e7f8a',
   };
+  const otherTenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/other`;
   const unknownId = '8c4d5e6f-7a8b-4c9d-8e1f-2a3b4c5d6e7f';
 
   let files: Record<string, FileEntity>;
@@ -135,8 +137,20 @@ describe('file router documented behaviour', () => {
       [fileIds.unscanned]: file(fileIds.unscanned, types.private, { scanned: false }),
     };
 
-    repositoryMock.get.mockImplementation((id: string) => Promise.resolve(files[id] || null));
-    repositoryMock.find.mockResolvedValue({ results: Object.values(files), page: { size: 3 } });
+    files[fileIds.otherTenant] = file(fileIds.otherTenant, type('private', { tenantId: otherTenantId }), {
+      tenantId: otherTenantId,
+    });
+
+    repositoryMock.get.mockImplementation((id: string, scope?: AdspId) => {
+      const found = files[id];
+      return Promise.resolve(found && (!scope || found.tenantId.toString() === scope.toString()) ? found : null);
+    });
+    repositoryMock.find.mockImplementation((scope: AdspId) =>
+      Promise.resolve({
+        results: Object.values(files).filter((f) => f.tenantId.toString() === scope.toString()),
+        page: { size: 3 },
+      }),
+    );
     repositoryMock.save.mockImplementation((entity) => Promise.resolve(entity));
     storageProviderMock.readFile.mockImplementation((_entity, start: number, end: number) =>
       Promise.resolve(Readable.from([Buffer.from('0123456789').subarray(start, end + 1)])),
@@ -324,6 +338,38 @@ describe('file router documented behaviour', () => {
       expect(res.status).toBe(400);
     });
 
+    it('responds 400 for an unexpected file field', async () => {
+      const res = await request(createApp(uploader))
+        .post('/file/v1/files')
+        .field('type', 'private')
+        .attach('document', Buffer.from('content'), 'test.txt');
+
+      expect(res.status).toBe(400);
+      expect(res.body).toEqual({ errorMessage: 'Invalid file upload: Unexpected file field' });
+    });
+
+    it('responds 400 for multiple files', async () => {
+      const res = await request(createApp(uploader))
+        .post('/file/v1/files')
+        .field('type', 'private')
+        .attach('file', Buffer.from('first'), 'first.txt')
+        .attach('file', Buffer.from('second'), 'second.txt');
+
+      expect(res.status).toBe(400);
+      expect(res.body.errorMessage).toEqual(expect.stringContaining('Invalid file upload:'));
+    });
+
+    it('responds 400 when the multipart field limit is exceeded', async () => {
+      const upload = request(createApp(uploader)).post('/file/v1/files').field('type', 'private');
+      for (let index = 0; index < 10; index++) {
+        upload.field(`metadata-${index}`, 'value');
+      }
+      const res = await upload.attach('file', Buffer.from('content'), 'test.txt');
+
+      expect(res.status).toBe(400);
+      expect(res.body.errorMessage).toEqual(expect.stringContaining('Invalid file upload:'));
+    });
+
     it('responds 400 when the type is not specified', async () => {
       const res = await request(createApp(uploader))
         .post('/file/v1/files')
@@ -346,6 +392,31 @@ describe('file router documented behaviour', () => {
         .attach('file', Buffer.from('content'), 'test.txt');
       expect(res.status).toBe(401);
       expect(storageProviderMock.saveFile).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('file of another tenant', () => {
+    const id = '9d5e6f7a-8b9c-4d0e-9f2a-3b4c5d6e7f8a';
+
+    it.each([
+      ['GET /files/:fileId', (app: Express) => request(app).get(`/file/v1/files/${id}`)],
+      ['GET /files/:fileId/download', (app: Express) => request(app).get(`/file/v1/files/${id}/download`)],
+      ['DELETE /files/:fileId', (app: Express) => request(app).delete(`/file/v1/files/${id}`)],
+      ['POST /files/:fileId', (app: Express) => request(app).post(`/file/v1/files/${id}`).send({ operation: 'copy' })],
+      ['DELETE /files', (app: Express) => request(app).delete(`/file/v1/files?files=${id}`)],
+    ])('responds 404 on %s for a tenant user', async (_route, send) => {
+      const res = await send(createApp(admin));
+      expect(res.status).toBe(404);
+    });
+
+    it('responds 404 for a core user with the tenantId of another tenant', async () => {
+      const res = await request(createApp(core)).get(`/file/v1/files/${id}?tenantId=${tenantId.toString()}`);
+      expect(res.status).toBe(404);
+    });
+
+    it('finds the file for a core user with the tenantId of the file', async () => {
+      const res = await request(createApp(core)).get(`/file/v1/files/${id}?tenantId=${otherTenantId.toString()}`);
+      expect(res.status).toBe(200);
     });
   });
 
@@ -400,6 +471,28 @@ describe('file router documented behaviour', () => {
     it('inlines the file with embed=true', async () => {
       const res = await request(createApp(reader)).get(`/file/v1/files/${fileIds.private}/download?embed=true`);
       expect(res.headers['content-disposition']).toMatch(/^inline/);
+    });
+
+    it('inlines a file whose type was removed without caching it', async () => {
+      files[fileIds.private] = new FileEntity(storageProviderMock as never, repositoryMock as never, null, {
+        id: fileIds.private,
+        tenantId,
+        filename: 'test.txt',
+        mimeType: 'text/plain',
+        size: 10,
+        created: new Date(),
+        createdBy: { id: uploader.id, name: uploader.name },
+        lastAccessed: new Date(),
+        scanned: true,
+        deleted: false,
+        infected: false,
+      } as never);
+
+      const res = await request(createApp(uploader)).get(`/file/v1/files/${fileIds.private}/download?embed=true`);
+
+      expect(res.status).toBe(200);
+      expect(res.headers['content-disposition']).toMatch(/^inline/);
+      expect(res.headers['cache-control']).toBe('no-store');
     });
 
     it('responds 206 for a single byte range', async () => {
@@ -553,6 +646,17 @@ describe('file router documented behaviour', () => {
         .post(`/file/v1/files/${fileIds.private}`)
         .send({ operation: 'copy', type: 'unknown' });
       expect(res.status).toBe(404);
+    });
+
+    it('responds 400 for a core user who sets a platform type without a tenantId', async () => {
+      const app = createApp(core, { platform: type('platform', { tenantId: undefined }) });
+      const res = await request(app)
+        .post(`/file/v1/files/${fileIds.private}`)
+        .send({ operation: 'copy', type: 'platform' });
+      expect(res.status).toBe(400);
+      expect(res.body.errorMessage).toBe('Cannot copy file without tenant context.');
+      expect(repositoryMock.save).not.toHaveBeenCalled();
+      expect(storageProviderMock.copyFile).not.toHaveBeenCalled();
     });
 
     it('responds 400 for an unrecognized operation', async () => {

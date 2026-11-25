@@ -33,7 +33,8 @@ A data register is a named list of values. Each value is either a string or an o
 
 Go to Form service &rarr; Register data tab.
 
-- Click **Add register data** and enter a name, an optional description and the values. Names can contain letters, numbers, spaces, hyphens and underscores, can't start or end with a space, can be up to 50 characters long, and must be unique within your tenant. Enter the values separated by commas, new lines or semicolons, or select **Use JSON format** and enter a JSON array.
+- Click **Add register data** and enter a name, an optional description and the values. Names can contain letters, numbers, spaces, hyphens and underscores, can't start or end with a space, can be up to 50 characters long, and must be unique within your tenant. Enter the values separated by commas, new lines or semicolons, or select **Use JSON format** and enter a JSON array. Select **Allow anonymous access** if anonymous applicants or other apps need to read the register without signing in; leave it unchecked to keep the register private.
+- The **Access** column shows whether each register is **Public** (anonymous access allowed) or **Private**. Click the lock icon on a register and confirm to change it.
 - Click the eye icon on a register to view its values and copy its URN.
 - Click the edit icon on a register to change its values as a JSON array.
 - Click the delete icon on a register to delete it. Forms that reference a deleted register lose its options.
@@ -53,6 +54,7 @@ const response = await fetch('https://form-service.adsp.alberta.ca/form/v1/regis
     name: 'provinces',
     description: 'Canadian provinces',
     entries: ['Alberta', 'British Columbia', 'Saskatchewan'],
+    anonymousRead: true,
   }),
 });
 ```
@@ -127,7 +129,7 @@ The example below shows the UI schema you would need.
 
 You can also reference configuration in other namespaces, for example `urn:ads:platform:configuration:v2:/configuration/public-register/public-register-1`. Its configuration definition schema must be an array of strings or an array of objects. You set up these registers directly in configuration service. They aren't managed by the Register data tab or the form service API.
 
-By default, only signed-in users can read a register. To use a register in a form that allows anonymous applicants, go to Configuration service &rarr; Definitions. Edit the register's definition, which has the namespace `data-register` and the register's name, and select **Allow anonymous access**. The Register data tab and the form service API keep this setting when they update a register, but they never set it.
+By default, only signed-in users can read a register. To use a register in a form that allows anonymous applicants, or from another app without signing in, allow anonymous access: select **Allow anonymous access** when you add it, or use the lock icon on the Register data tab, or send `anonymousRead: true` to the form service API. Other apps then read it from configuration service with `GET /configuration/v2/configuration/data-register/<name>/active?orLatest=true&tenant=<tenant URN>`. Anyone who knows your tenant and the register's name can read a public register, so keep registers with sensitive values private.
 
 Please refer to [Configuration service](/adsp-monorepo/services/configuration-service.html) for more details.
 

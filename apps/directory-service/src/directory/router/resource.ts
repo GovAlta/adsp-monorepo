@@ -30,6 +30,14 @@ import {
   toTagAuditDetails,
 } from '../audit';
 
+function parseResourceUrn(value: string): AdspId {
+  try {
+    return AdspId.parse(value);
+  } catch {
+    throw new InvalidOperationError('Resource URN is not valid.');
+  }
+}
+
 export function getTags(apiId: AdspId, repository: DirectoryRepository): RequestHandler {
   return async (req, res, next) => {
     try {
@@ -37,7 +45,7 @@ export function getTags(apiId: AdspId, repository: DirectoryRepository): Request
       const tenantId = req.tenant?.id;
       const { top: topValue, after, resource: resourceValue } = req.query;
       const top = topValue ? parseInt(topValue as string) : 10;
-      const resource = resourceValue ? AdspId.parse(resourceValue as string) : null;
+      const resource = resourceValue ? parseResourceUrn(resourceValue as string) : null;
 
       if (!isAllowedUser(user, tenantId, [ServiceRoles.ResourceBrowser, ServiceRoles.ResourceTagger])) {
         throw new UnauthorizedUserError('get tags', user);
@@ -69,7 +77,7 @@ export function getTag(apiId: AdspId, repository: DirectoryRepository): RequestH
           user,
           tenantId,
           [ServiceRoles.ResourceBrowser, ServiceRoles.ResourceTagger, ServiceRoles.ResourceResolver],
-          true
+          true,
         )
       ) {
         throw new UnauthorizedUserError('get tag', user);
@@ -97,7 +105,7 @@ export function deleteTag(
   logger: Logger,
   repository: DirectoryRepository,
   eventService: EventService,
-  auditService: AuditService
+  auditService: AuditService,
 ): RequestHandler {
   return async (req, res, next) => {
     try {
@@ -137,7 +145,7 @@ export function tagOperation(
   directory: ServiceDirectory,
   eventService: EventService,
   auditService: AuditService,
-  repository: DirectoryRepository
+  repository: DirectoryRepository,
 ): RequestHandler {
   return async (req, res, next) => {
     try {
@@ -183,7 +191,7 @@ export function tagOperation(
       const resourceUrl = await directory.getResourceUrl(urn);
       if (!resourceUrl) {
         throw new InvalidOperationError(
-          'Resource URL cannot be resolved. Associated API must be registered in the directory.'
+          'Resource URL cannot be resolved. Associated API must be registered in the directory.',
         );
       }
 
@@ -215,7 +223,7 @@ export function tagOperation(
               ResourceTagAddedAuditAction,
               user,
               tenantId,
-              toTagAuditDetails(urn.toString(), tag)
+              toTagAuditDetails(urn.toString(), tag),
             );
           }
           break;
@@ -239,7 +247,7 @@ export function tagOperation(
               ResourceTagRemovedAuditAction,
               user,
               tenantId,
-              toTagAuditDetails(urn.toString(), tag)
+              toTagAuditDetails(urn.toString(), tag),
             );
           }
           break;
@@ -257,7 +265,7 @@ export function tagOperation(
           context: 'ResourceRouter',
           tenantId: tenantId?.toString,
           user: `${user.name} (ID: ${user.id})`,
-        }
+        },
       );
 
       if (event) {
@@ -387,7 +395,7 @@ export function getResource(apiId: AdspId, repository: DirectoryRepository): Req
       const user = req.user;
       const tenantId = req.tenant?.id;
       const { resource: resourceValue } = req.params;
-      const resource = AdspId.parse(resourceValue as string);
+      const resource = parseResourceUrn(resourceValue as string);
 
       if (!isAllowedUser(user, tenantId, [ServiceRoles.ResourceBrowser, ServiceRoles.ResourceTagger])) {
         throw new UnauthorizedUserError('get resource', user);
@@ -415,14 +423,14 @@ export function deleteResource(
   logger: Logger,
   repository: DirectoryRepository,
   eventService: EventService,
-  auditService: AuditService
+  auditService: AuditService,
 ): RequestHandler {
   return async (req, res, next) => {
     try {
       const user = req.user;
       const tenantId = req.tenant?.id;
       const { resource: resourceValue } = req.params;
-      const resource = AdspId.parse(resourceValue as string);
+      const resource = parseResourceUrn(resourceValue as string);
 
       if (!isAllowedUser(user, tenantId, ServiceRoles.DirectoryAdmin)) {
         throw new UnauthorizedUserError('delete resource', user);
@@ -445,7 +453,7 @@ export function deleteResource(
             ResourceDeletedAuditAction,
             user,
             tenantId,
-            toResourceDeletedAuditDetails(resource.toString())
+            toResourceDeletedAuditDetails(resource.toString()),
           );
         }
       }
@@ -465,7 +473,7 @@ export function getResourceTags(apiId: AdspId, repository: DirectoryRepository):
       const { resource: resourceValue } = req.params;
       const { top: topValue, after } = req.query;
       const top = topValue ? parseInt(topValue as string) : 10;
-      const resource = AdspId.parse(resourceValue as string);
+      const resource = parseResourceUrn(resourceValue as string);
 
       if (!isAllowedUser(user, tenantId, [ServiceRoles.ResourceBrowser, ServiceRoles.ResourceTagger])) {
         throw new UnauthorizedUserError('get resource tags', user);
@@ -510,9 +518,9 @@ export function createResourceRouter({
     createValidationHandler(
       query('top').optional().isInt({ min: 1, max: 500 }),
       query('after').optional().isString(),
-      query('resource').optional().isString().isLength({ min: 1, max: 2000 })
+      query('resource').optional().isString().isLength({ min: 1, max: 2000 }),
     ),
-    getTags(apiId, repository)
+    getTags(apiId, repository),
   );
   router.post(
     '/tags',
@@ -527,9 +535,9 @@ export function createResourceRouter({
       body('resource').isObject(),
       body('resource.urn').isString().isLength({ min: 1, max: 2000 }),
       body('resource.name').optional().isString().isLength({ min: 1, max: 250 }),
-      body('resource.description').optional().isString().isLength({ min: 1, max: 2000 })
+      body('resource.description').optional().isString().isLength({ min: 1, max: 2000 }),
     ),
-    tagOperation(apiId, logger, directory, eventService, auditService, repository)
+    tagOperation(apiId, logger, directory, eventService, auditService, repository),
   );
 
   router.get(
@@ -537,9 +545,9 @@ export function createResourceRouter({
     createValidationHandler(
       param('tag')
         .isString()
-        .matches(/^[0-9a-z-]{1,100}$/)
+        .matches(/^[0-9a-z-]{1,100}$/),
     ),
-    getTag(apiId, repository)
+    getTag(apiId, repository),
   );
 
   router.delete(
@@ -547,9 +555,9 @@ export function createResourceRouter({
     createValidationHandler(
       param('tag')
         .isString()
-        .matches(/^[0-9a-z-]{1,100}$/)
+        .matches(/^[0-9a-z-]{1,100}$/),
     ),
-    deleteTag(apiId, logger, repository, eventService, auditService)
+    deleteTag(apiId, logger, repository, eventService, auditService),
   );
 
   router.get(
@@ -561,9 +569,9 @@ export function createResourceRouter({
       query('top').optional().isInt({ min: 1, max: 500 }),
       query('after').optional().isString(),
       query('includeRepresents').optional().isBoolean(),
-      query('criteria').optional().isJSON()
+      query('criteria').optional().isJSON(),
     ),
-    getTaggedResources(apiId, repository)
+    getTaggedResources(apiId, repository),
   );
 
   router.get(
@@ -571,27 +579,27 @@ export function createResourceRouter({
     createValidationHandler(
       query('top').optional().isInt({ min: 1, max: 500 }),
       query('after').optional().isString(),
-      query('criteria').optional().isJSON()
+      query('criteria').optional().isJSON(),
     ),
-    getResources(apiId, repository)
+    getResources(apiId, repository),
   );
 
   router.get(
     '/resources/:resource',
     createValidationHandler(param('resource').isString().isLength({ min: 1, max: 2000 })),
-    getResource(apiId, repository)
+    getResource(apiId, repository),
   );
 
   router.delete(
     '/resources/:resource',
     createValidationHandler(param('resource').isString().isLength({ min: 1, max: 2000 })),
-    deleteResource(apiId, logger, repository, eventService, auditService)
+    deleteResource(apiId, logger, repository, eventService, auditService),
   );
 
   router.get(
     '/resources/:resource/tags',
     createValidationHandler(param('resource').isString().isLength({ min: 1, max: 2000 })),
-    getResourceTags(apiId, repository)
+    getResourceTags(apiId, repository),
   );
 
   return router;

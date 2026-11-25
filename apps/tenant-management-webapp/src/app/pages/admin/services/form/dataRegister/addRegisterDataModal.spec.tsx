@@ -74,7 +74,7 @@ describe('AddRegisterDataModal', () => {
     const saveBtn = baseElement.querySelector("goa-button[testId='data-register-add-save']");
     fireEvent(saveBtn, new CustomEvent('_click'));
 
-    expect(onSave).toHaveBeenCalledWith(['Monday', ' Tuesday'], 'weekdays', '');
+    expect(onSave).toHaveBeenCalledWith(['Monday', ' Tuesday'], 'weekdays', '', false);
   });
 
   const typeName = (baseElement: HTMLElement, value: string) => {
@@ -148,7 +148,7 @@ describe('AddRegisterDataModal', () => {
     typeName(baseElement, '  weekdays  ');
     fireEvent(saveButton(baseElement), new CustomEvent('_click'));
 
-    expect(onSave).toHaveBeenCalledWith(null, 'weekdays', '');
+    expect(onSave).toHaveBeenCalledWith(null, 'weekdays', '', false);
   });
 
   const selectJsonAndEnter = (baseElement: HTMLElement, value: string) => {
@@ -167,7 +167,7 @@ describe('AddRegisterDataModal', () => {
     selectJsonAndEnter(baseElement, '[{"label":"Alberta","value":"AB"}]');
     fireEvent(saveButton(baseElement), new CustomEvent('_click'));
 
-    expect(onSave).toHaveBeenCalledWith([{ label: 'Alberta', value: 'AB' }], 'provinces', '');
+    expect(onSave).toHaveBeenCalledWith([{ label: 'Alberta', value: 'AB' }], 'provinces', '', false);
   });
 
   it('shows an error for register data that is not valid JSON', () => {
@@ -177,6 +177,58 @@ describe('AddRegisterDataModal', () => {
 
     const formItem = baseElement.querySelector("goa-form-item[testId='data-register-add-data-formitem']");
     expect(formItem?.getAttribute('error')).toBe('Please provide valid JSON');
+  });
+
+  describe('anonymous access', () => {
+    const checkAnonymousRead = (baseElement: HTMLElement, checked: boolean) =>
+      fireEvent(
+        baseElement.querySelector("goa-checkbox[testId='data-register-add-anonymous-read']"),
+        new CustomEvent('_change', { detail: { checked } }),
+      );
+    const warning = (baseElement: HTMLElement) =>
+      baseElement.querySelector("goa-callout[testId='data-register-add-anonymous-warning']");
+
+    it('is off by default, with no warning', () => {
+      const { baseElement } = render(<AddRegisterDataModal open={true} onCancel={() => {}} onSave={() => {}} />);
+
+      expect(baseElement.querySelector("goa-checkbox[testId='data-register-add-anonymous-read']")).not.toHaveAttribute(
+        'checked',
+        'true',
+      );
+      expect(warning(baseElement)).toBeNull();
+    });
+
+    it('warns that the entries become readable without signing in once checked', () => {
+      const { baseElement } = render(<AddRegisterDataModal open={true} onCancel={() => {}} onSave={() => {}} />);
+
+      checkAnonymousRead(baseElement, true);
+
+      expect(warning(baseElement)).not.toBeNull();
+    });
+
+    it('saves the register with anonymous access when checked', () => {
+      const onSave = jest.fn();
+      const { baseElement } = render(<AddRegisterDataModal open={true} onCancel={() => {}} onSave={onSave} />);
+      typeName(baseElement, 'weekdays');
+
+      checkAnonymousRead(baseElement, true);
+      fireEvent(saveButton(baseElement), new CustomEvent('_click'));
+
+      expect(onSave).toHaveBeenCalledWith(null, 'weekdays', '', true);
+    });
+
+    it('starts unchecked again after a save', () => {
+      const onSave = jest.fn();
+      const { baseElement } = render(<AddRegisterDataModal open={true} onCancel={() => {}} onSave={onSave} />);
+      typeName(baseElement, 'weekdays');
+      checkAnonymousRead(baseElement, true);
+      fireEvent(saveButton(baseElement), new CustomEvent('_click'));
+
+      typeName(baseElement, 'colours');
+      fireEvent(saveButton(baseElement), new CustomEvent('_click'));
+
+      expect(onSave).toHaveBeenLastCalledWith(null, 'colours', '', false);
+    });
   });
 
   it('calls onCancel when cancel is clicked', () => {

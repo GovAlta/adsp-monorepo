@@ -228,6 +228,17 @@ describe('GraphClient', () => {
       );
     });
 
+    it('creates a document library and returns its ID', async () => {
+      axiosMock.post.mockResolvedValueOnce({ data: { id: 'library-9' } });
+
+      expect(await client.createList('token-1', siteId, 'Applicant documents', 'documentLibrary')).toBe('library-9');
+      expect(axiosMock.post).toHaveBeenCalledWith(
+        `${siteUrl}/lists`,
+        { displayName: 'Applicant documents', list: { template: 'documentLibrary' } },
+        writeHeaders,
+      );
+    });
+
     it.each([
       ['text', { text: {} }],
       ['multilineText', { text: { allowMultipleLines: true } }],

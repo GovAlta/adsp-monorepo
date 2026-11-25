@@ -97,7 +97,8 @@ describe('events', () => {
 
     const event = sharePointPushFailed(
       adspId`urn:ads:platform:form-service:v1`,
-      { id: 'push-1', tenantId, formId: 'form-1', submissionId: 'submission-1', attempts: 5, nextAttemptAt: timestamp },
+      { tenantId, formId: 'form-1', submissionId: 'submission-1', attempts: 5 },
+      'submission-pdf',
       'hr-intake',
       'entra:AADSTS7000222',
       timestamp,
@@ -113,6 +114,7 @@ describe('events', () => {
         formId: 'form-1',
         submissionId: 'submission-1',
         destinationId: 'hr-intake',
+        part: 'submission-pdf',
         errorCode: 'entra:AADSTS7000222',
         attempts: 5,
       },

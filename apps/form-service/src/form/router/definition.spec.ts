@@ -12,7 +12,7 @@ import {
   createFormDefinition,
   createFormDefinitionRouter,
   deleteFormDefinition,
-  deleteRegistrationSettings,
+  deleteAccessRequests,
   getFormDefinitions,
   getRegistrationByEmail,
   getRegistrations,
@@ -863,6 +863,48 @@ describe('definition router', () => {
       expect(next).not.toHaveBeenCalled();
     });
 
+    it('adds the approver group and notification email and keeps enabled and the access group', async () => {
+      const existingDefinition = {
+        id: 'test',
+        name: 'Test',
+        registration: { enabled: true, accessGroup: 'test-users' },
+      };
+      const expectedPatchedDefinition = {
+        ...existingDefinition,
+        registration: {
+          enabled: true,
+          accessGroup: 'test-users',
+          approverGroup: 'test-approvers',
+          notificationEmail: 'approvals@test.co',
+        },
+      };
+
+      axiosMock.get.mockResolvedValue({ status: HttpStatusCodes.OK, data: existingDefinition });
+      mockPatchSuccess(expectedPatchedDefinition, 2);
+
+      const req = {
+        user: { tenantId, id: 'tester', roles: [FormServiceRoles.Admin], isCore: true },
+        params: { definitionId: 'test' },
+        body: { registration: { approverGroup: 'test-approvers', notificationEmail: 'approvals@test.co' } },
+        tenant: { id: tenantId },
+      };
+      const res = { status: jest.fn().mockReturnThis(), send: jest.fn() };
+      const next = jest.fn();
+
+      await patchFormDefinition(directoryMock, tokenProviderMock)(
+        req as unknown as Request,
+        res as unknown as Response,
+        next,
+      );
+
+      expect(axiosMock.patch).toHaveBeenCalledWith(
+        expect.stringContaining('test'),
+        { operation: 'REPLACE', configuration: expectedPatchedDefinition },
+        expect.any(Object),
+      );
+      expect(next).not.toHaveBeenCalled();
+    });
+
     it('defaults enabled to false when patching registration on a definition without registration', async () => {
       const existingDefinition = { id: 'test', name: 'Test' };
       const expectedPatchedDefinition = {
@@ -1519,7 +1561,7 @@ describe('definition router', () => {
     });
   });
 
-  describe('deleteRegistrationSettings', () => {
+  describe('deleteAccessRequests', () => {
     const existingDefinition = {
       id: 'test',
       name: 'Test Form',
@@ -1534,7 +1576,8 @@ describe('definition router', () => {
     let next: jest.Mock;
 
     const runHandler = (req: Record<string, unknown>) =>
-      deleteRegistrationSettings(
+      deleteAccessRequests(
+        registrationRepositoryMock,
         directoryMock,
         tokenProviderMock,
         configurationServiceMock,
@@ -1549,6 +1592,8 @@ describe('definition router', () => {
     beforeEach(() => {
       res = { status: jest.fn().mockReturnThis(), send: jest.fn() };
       next = jest.fn();
+      registrationRepositoryMock.deleteAll.mockReset();
+      registrationRepositoryMock.deleteAll.mockResolvedValue(2);
     });
 
     it('can call next with unauthorized for a user without form-admin', async () => {
@@ -1556,6 +1601,7 @@ describe('definition router', () => {
 
       expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedUserError));
       expect(axiosMock.patch).not.toHaveBeenCalled();
+      expect(registrationRepositoryMock.deleteAll).not.toHaveBeenCalled();
     });
 
     it('can call next with not found when definition does not exist', async () => {
@@ -1564,7 +1610,27 @@ describe('definition router', () => {
       await runHandler(adminReq);
 
       expect(axiosMock.patch).not.toHaveBeenCalled();
+      expect(registrationRepositoryMock.deleteAll).not.toHaveBeenCalled();
       expect(next).toHaveBeenCalledWith(expect.any(NotFoundError));
+    });
+
+    it('deletes the access requests of the definition', async () => {
+      mockExisting();
+      mockPatchSuccess(definitionWithoutRegistration, 4);
+
+      await runHandler(adminReq);
+
+      expect(registrationRepositoryMock.deleteAll).toHaveBeenCalledWith(tenantId, 'test');
+      expect(res.status).toHaveBeenCalledWith(HttpStatusCodes.NO_CONTENT);
+    });
+
+    it('deletes the access requests when the definition has no registration settings', async () => {
+      axiosMock.get.mockResolvedValueOnce({ status: HttpStatusCodes.OK, data: definitionWithoutRegistration });
+
+      await runHandler(adminReq);
+
+      expect(registrationRepositoryMock.deleteAll).toHaveBeenCalledWith(tenantId, 'test');
+      expect(res.status).toHaveBeenCalledWith(HttpStatusCodes.NO_CONTENT);
     });
 
     it('removes the registration settings from the latest revision and responds 204', async () => {
@@ -1609,6 +1675,18 @@ describe('definition router', () => {
       await runHandler(adminReq);
 
       expect(configurationServiceMock.clearCached).toHaveBeenCalledWith(tenantId, 'form-service', 'test');
+    });
+
+    it('can call next with the error when deleting the access requests fails', async () => {
+      mockExisting();
+      mockPatchSuccess(definitionWithoutRegistration, 5);
+      const error = new Error('Database unavailable');
+      registrationRepositoryMock.deleteAll.mockRejectedValueOnce(error);
+
+      await runHandler(adminReq);
+
+      expect(next).toHaveBeenCalledWith(error);
+      expect(res.status).not.toHaveBeenCalled();
     });
   });
 
@@ -2076,6 +2154,7 @@ const registrationRepositoryMock = {
   find: jest.fn(),
   create: jest.fn(),
   updateIfPending: jest.fn(),
+  deleteAll: jest.fn(),
 };
 
 const auditServiceMock = {

@@ -4,7 +4,7 @@ import { ServiceRoles } from './roles';
 
 export const ExportQueuedDefinition: DomainEventDefinition = {
   name: 'export-queued',
-  description: '',
+  description: 'An export job was queued for processing.',
   payloadSchema: {
     type: 'object',
     properties: {
@@ -25,7 +25,7 @@ export const ExportQueuedDefinition: DomainEventDefinition = {
 
 export const ExportCompletedDefinition: DomainEventDefinition = {
   name: 'export-completed',
-  description: '',
+  description: 'An export job completed successfully.',
   payloadSchema: {
     type: 'object',
     properties: {
@@ -58,7 +58,7 @@ export const ExportCompletedDefinition: DomainEventDefinition = {
 
 export const ExportFailedDefinition: DomainEventDefinition = {
   name: 'export-failed',
-  description: '',
+  description: 'An export job failed.',
   payloadSchema: {
     type: 'object',
     properties: {
@@ -106,7 +106,7 @@ export const exportQueued = (
   jobId: string,
   resourceId: AdspId,
   format: string,
-  filename: string
+  filename: string,
 ): DomainEvent => ({
   name: ExportQueuedDefinition.name,
   tenantId,
@@ -130,7 +130,7 @@ export const exported = (
   jobId: string,
   resourceId: AdspId,
   format: string,
-  file: FileResult
+  file: FileResult,
 ): DomainEvent => ({
   name: ExportCompletedDefinition.name,
   tenantId,
@@ -159,7 +159,7 @@ export const exportFailed = (
   resourceId: string,
   format: string,
   filename: string,
-  error: string
+  error: string,
 ): DomainEvent => ({
   name: ExportFailedDefinition.name,
   tenantId,

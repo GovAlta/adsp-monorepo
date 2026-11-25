@@ -23,6 +23,7 @@ export interface SharepointFormChoice {
   id: string;
   name: string;
   sharepointConfigurationId?: string | null;
+  submissionPdfTemplate?: string;
   dataSchema?: Record<string, unknown>;
 }
 
@@ -69,6 +70,8 @@ export interface SharepointDestination {
   idempotencyFields?: string[];
   enabled?: boolean;
   folderLinkField?: string;
+  documentFilesLibraryId?: string;
+  documentFilesLibraryName?: string;
   detailLists?: SharepointDetailList[];
 }
 
@@ -118,9 +121,16 @@ export interface SharepointListReport {
   columns: SharepointColumnReport[];
 }
 
+export interface SharepointDocumentLibraryReport {
+  libraryId?: string;
+  libraryName?: string;
+  status: 'ok' | 'notCreated' | 'notFound' | 'notADocumentLibrary';
+}
+
 export interface SharepointVerifyReport {
   ready: boolean;
   lists: SharepointListReport[];
+  documentLibrary?: SharepointDocumentLibraryReport;
 }
 
 export interface SharepointCreatedList {
@@ -132,6 +142,7 @@ export interface SharepointCreatedList {
 
 export interface SharepointSetupSummary {
   createdLists: SharepointCreatedList[];
+  createdLibrary?: { libraryName: string; libraryId: string };
   createdColumns: { listId: string; name: string }[];
   indexedColumns: { listId: string; name: string }[];
   failures: { listId?: string; name?: string; errorCode: string }[];

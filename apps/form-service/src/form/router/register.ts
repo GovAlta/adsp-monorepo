@@ -1,5 +1,5 @@
 import { AdspId, AuditService, isAllowedUser, UnauthorizedUserError, User } from '@abgov/adsp-service-sdk';
-import { assertAuthenticatedHandler, createValidationHandler, InvalidOperationError } from '@core-services/core-common';
+import { assertAuthenticatedHandler, createValidationHandler } from '@core-services/core-common';
 import { RequestHandler, Router } from 'express';
 import { body, param } from 'express-validator';
 import * as HttpStatusCodes from 'http-status-codes';
@@ -13,18 +13,12 @@ import {
 } from '../audit';
 import { DataRegisterClient } from '../dataRegisterClient';
 import { ConfigurationServiceRoles, FormServiceRoles } from '../roles';
+import { getRequiredTenantId } from './tenant';
 import { DataRegisterCreateRequest, DataRegisterUpdateRequest } from '../types/register';
 
 // 1 to 50 letters, digits, hyphens, underscores and spaces, not starting or ending with a space, so a name can't be
 // blank and ' weekdays' can't exist alongside 'weekdays'.
 export const REGISTER_NAME_PATTERN = /^[a-zA-Z0-9-_](?:[a-zA-Z0-9-_ ]{0,48}[a-zA-Z0-9-_])?$/;
-
-const getRequiredTenantId = (req: Parameters<RequestHandler>[0]): AdspId => {
-  if (!req.tenant?.id) {
-    throw new InvalidOperationError('Tenant context is required for operation.');
-  }
-  return req.tenant.id;
-};
 
 const assertCanManageRegisters = (user: User, tenantId: AdspId, operation: string): void => {
   if (!isAllowedUser(user, tenantId, [FormServiceRoles.Admin, ConfigurationServiceRoles.ConfigurationAdmin], true)) {
@@ -79,7 +73,10 @@ export function createRegister(client: DataRegisterClient, logger: Logger, audit
       res.status(HttpStatusCodes.CREATED).send(register);
       logRegisterAction(logger, 'created', register.name, tenantId, user);
       recordFormAudit(auditService, logger, DataRegisterCreatedAuditAction, () =>
-        toDataRegisterAuditDetails(user, tenantId, register.name, { entryCount: register.entries?.length ?? 0 }),
+        toDataRegisterAuditDetails(user, tenantId, register.name, {
+          entryCount: register.entries?.length ?? 0,
+          anonymousRead: register.anonymousRead,
+        }),
       );
     } catch (err) {
       next(err);
@@ -104,8 +101,10 @@ export function updateRegister(client: DataRegisterClient, logger: Logger, audit
           updatedFields: [
             ...(request.entries !== undefined ? ['entries'] : []),
             ...(request.description !== undefined ? ['description'] : []),
+            ...(request.anonymousRead !== undefined ? ['anonymousRead'] : []),
           ],
           entryCount: register.entries?.length ?? 0,
+          ...(request.anonymousRead !== undefined && { anonymousRead: register.anonymousRead }),
         }),
       );
     } catch (err) {
@@ -145,6 +144,13 @@ const validateEntries = body('entries')
   .custom((entries: unknown[]) => entries.every(isEntry))
   .withMessage('entries must be strings or objects');
 
+// Stored as a real boolean: configuration-service only allows anonymous reads when anonymousRead === true.
+const validateAnonymousRead = body('anonymousRead')
+  .optional()
+  .isBoolean()
+  .withMessage('anonymousRead must be a boolean')
+  .toBoolean(true);
+
 interface RegisterRouterProps {
   client: DataRegisterClient;
   logger: Logger;
@@ -172,6 +178,7 @@ export function createRegisterRouter({ client, logger, auditService }: RegisterR
       body('name').exists().withMessage('name is required').bail().isString().matches(REGISTER_NAME_PATTERN),
       body('description').optional().isString(),
       validateEntries,
+      validateAnonymousRead,
     ),
     createRegister(client, logger, auditService),
   );
@@ -179,7 +186,12 @@ export function createRegisterRouter({ client, logger, auditService }: RegisterR
   router.patch(
     '/registers/:name',
     assertAuthenticatedHandler,
-    createValidationHandler(validateNameParam, body('description').optional().isString(), validateEntries),
+    createValidationHandler(
+      validateNameParam,
+      body('description').optional().isString(),
+      validateEntries,
+      validateAnonymousRead,
+    ),
     updateRegister(client, logger, auditService),
   );
 

@@ -81,6 +81,10 @@ export class CalendarEventEntity implements CalendarEvent {
       this.description = update.description;
     }
 
+    if ('recordId' in update) {
+      this.recordId = update.recordId;
+    }
+
     if ('isPublic' in update) {
       this.isPublic = update.isPublic;
     }
@@ -175,7 +179,13 @@ export class CalendarEventEntity implements CalendarEvent {
       throw new UnauthorizedUserError('update calendar event', user);
     }
 
-    return this.repository.saveAttendee(this, attendee);
+    return this.repository.saveAttendee(this, attendee).then((saved) => {
+      if (!saved) {
+        throw new NotFoundError('Attendee', `${attendee.id}`);
+      }
+
+      return saved;
+    });
   }
 
   deleteAttendee(user: User, id: number): Promise<boolean> {

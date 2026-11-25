@@ -56,7 +56,7 @@ All endpoints are under `https://form-service.adsp.alberta.ca/form/v1`. See the 
 | `PATCH /form/v1/definitions/{definitionId}/submission-actions`                                      | Update what happens when a form is submitted.                                                          | `form-admin`                                                                                                                                                                    |
 | `PUT /form/v1/definitions/{definitionId}/schedule`                                                  | Update the scheduled intake period.                                                                    | `form-admin`                                                                                                                                                                    |
 | `POST /form/v1/definitions/{definitionId}/access-requests`                                          | Request access to a restricted form, enabling registration on the first request.                       | `form-access-requester` or `form-admin`                                                                                                                                         |
-| `DELETE /form/v1/definitions/{definitionId}/access-requests`                                        | Remove the registration settings, so the form no longer accepts access requests.                       | `form-admin`                                                                                                                                                                    |
+| `DELETE /form/v1/definitions/{definitionId}/access-requests`                                        | Remove the registration settings and delete all access requests, so the form no longer accepts them.   | `form-admin`                                                                                                                                                                    |
 | `GET /form/v1/definitions/{definitionId}/access-requests`                                           | Find the access requests of a form, by status, newest first.                                           | `form-access-reader`, `form-access-writer` or `form-admin`                                                                                                                      |
 | `GET /form/v1/definitions/{definitionId}/access-requests/{email}`                                   | Read the latest access request of an email address.                                                    | The user with that email address, `form-access-reader`, `form-access-writer` or `form-admin`                                                                                    |
 | `PATCH /form/v1/definitions/{definitionId}/access-requests/{requestId}`                             | Approve or deny a pending access request.                                                              | `form-access-writer` or `form-admin`                                                                                                                                            |
@@ -87,7 +87,7 @@ Form represents a particular instance of an application including the informatio
 
 ### Submission
 
-When a form is submitted and its definition has submission records enabled, form service creates a _submission_ with a copy of the form data. Assessors review submissions, add notes, and record a _disposition_ using one of the definition's disposition states. A form that is set back to draft and submitted again gets a new submission.
+When a form is submitted and its definition has submission records enabled, form service creates a _submission_ with a copy of the form data. Assessors review submissions, add notes, and record a _disposition_ using one of the definition's disposition states. A form that is set back to draft and submitted again gets a new submission. When a form is read, its `submission` includes the disposition `status` and `date` of its latest submission (or `null` before a decision), so applicants can see that a decision was made; the disposition reason is only returned to assessors on the submission.
 
 ### Draft expiry
 
@@ -103,11 +103,15 @@ Some forms are restricted to a segment of the population, for example to physici
 
 - `enabled`: whether the form is restricted and accepts access requests.
 - `dataSchema` and `uiSchema`: the registration questions that help a reviewer decide whether the applicant meets the criteria. The questions can't define `firstName`, `lastName` or `email`, since every request includes them.
-- `accessGroup`: the Keycloak group containing the roles needed to access the form. It is not returned by the form APIs.
+- `accessGroup`: optional, the Keycloak group containing the roles needed to access the form. Form APIs return it only to `form-admin` users.
+- `approverGroup`: the Keycloak group whose members can approve or deny the form's access requests. It is not returned by the form APIs.
+- `notificationEmail`: the address notified when an access request is submitted. It is not returned by the form APIs.
+
+Developers configure these settings in the tenant management webapp, on the **Access requests** tab of the form definition editor. The tab builds the registration questions from a short list of text, selection and checkbox fields. Access requests aren't available for forms that allow anonymous applicants.
 
 Submitting the first access request for a form enables registration: form service sets `registration.enabled` to `true` in the latest revision of the definition, creating the `registration` settings if the definition has none. Like the other definition endpoints, it doesn't change the active revision; if an older revision is set as active, the change takes effect once the latest revision is set as active in configuration service. Use `GET /form/v1/definitions/{definitionId}?version=latest` (`form-admin` only) to read the latest revision.
 
-`DELETE /form/v1/definitions/{definitionId}/access-requests` removes the `registration` settings from the definition, the same way, so the form no longer accepts access requests until a new request enables it again. Existing access requests are kept.
+`DELETE /form/v1/definitions/{definitionId}/access-requests` removes the `registration` settings from the definition, the same way, so the form no longer accepts access requests until a new request enables it again. It also permanently deletes all access requests of the form, including approved and denied ones.
 
 An applicant submits an _access request_ with their name, email address and answers. Answers are validated against the registration questions, and answers to questions that aren't defined are rejected. The request starts as `pending`, and an administrator then approves or denies it. Each email address can have only one pending request per form; after a request is reviewed, the applicant can submit a new one. Approved or denied requests can't be reviewed again.
 
@@ -119,22 +123,22 @@ Form service provides an API to manage the data registers of a tenant. Tenant ad
 
 Form service stores each register in the [configuration service](configuration-service.md) in two parts:
 
-- **Definition**: the `data-register:<name>` entry in the tenant's `platform:configuration-service` configuration. It holds the register's schema and description.
+- **Definition**: the `data-register:<name>` entry in the tenant's `platform:configuration-service` configuration. It holds the register's schema, description and `anonymousRead` setting.
 - **Entries**: the configuration with namespace `data-register` and the register's name. It holds the array of values.
 
 ### Endpoints
 
 All endpoints require a user with the `urn:ads:platform:form-service:form-admin` role or the `urn:ads:platform:configuration-service:configuration-admin` role, in the context of a tenant. A core user must specify the tenant with the `tenantId` query parameter. Every endpoint returns 401 if the user is not authenticated, 403 if the user has neither role, and 502 if configuration service fails.
 
-| Method | Path                        | Description                                                                                             | Responses     |
-| :----- | :-------------------------- | :------------------------------------------------------------------------------------------------------ | :------------ |
-| GET    | `/form/v1/registers`        | Lists the tenant's data registers.                                                                      | 200           |
-| GET    | `/form/v1/registers/{name}` | Gets a data register.                                                                                   | 200, 404      |
-| POST   | `/form/v1/registers`        | Creates a data register from `name`, `description` and `entries`. `entries` defaults to an empty array. | 201, 400, 409 |
-| PATCH  | `/form/v1/registers/{name}` | Updates `description` and/or `entries`. A field that is not sent is left unchanged.                     | 200, 400, 404 |
-| DELETE | `/form/v1/registers/{name}` | Deletes the data register's entries and definition.                                                     | 204, 404      |
+| Method | Path                        | Description                                                                                                                                             | Responses     |
+| :----- | :-------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------ | :------------ |
+| GET    | `/form/v1/registers`        | Lists the tenant's data registers.                                                                                                                      | 200           |
+| GET    | `/form/v1/registers/{name}` | Gets a data register.                                                                                                                                   | 200, 404      |
+| POST   | `/form/v1/registers`        | Creates a data register from `name`, `description`, `entries` and `anonymousRead`. `entries` defaults to an empty array and `anonymousRead` to `false`. | 201, 400, 409 |
+| PATCH  | `/form/v1/registers/{name}` | Updates `description`, `entries` and/or `anonymousRead`. A field that is not sent is left unchanged.                                                    | 200, 400, 404 |
+| DELETE | `/form/v1/registers/{name}` | Deletes the data register's entries and definition.                                                                                                     | 204, 404      |
 
-Registers are returned as `{ namespace: 'data-register', name, description, entries }`.
+Registers are returned as `{ namespace: 'data-register', name, description, anonymousRead, entries }`.
 
 ### Rules
 
@@ -145,7 +149,7 @@ Registers are returned as `{ namespace: 'data-register', name, description, entr
 - **Entries**: an array whose items are all strings or objects.
 - **URN**: forms reference a register as `urn:ads:platform:configuration:v2:/configuration/data-register/<name>`. The name is not URL encoded in the URN.
 - **Deleting removes data**: a delete removes the register's entries, including their revision history, and its definition. Forms that reference the register lose its options.
-- **Anonymous access**: registers are not readable by anonymous applicants unless `anonymousRead` is set on the definition in configuration service. An update keeps this setting, but the API does not set it.
+- **Anonymous access**: a register is private by default, so only signed-in users of the tenant can read it. Set `anonymousRead` to `true` on create or update to let anonymous applicants and other apps read it without a token, from `GET /configuration/v2/configuration/data-register/<name>/active?orLatest=true&tenant=<tenant URN>`. Anyone who knows the tenant and the name can then read the entries, so don't make a register with sensitive entries public. An update that doesn't send `anonymousRead` keeps the current setting, including one set on the definition in configuration service. In the tenant management webapp, the Register data tab shows each register as Public or Private and asks for confirmation before changing it.
 - **Errors**: when configuration service rejects a request, form service returns 400. When configuration service fails or denies access, form service returns 502.
 - **Service account role**: form service calls configuration service with its own service account. Deleting a register and moving the active revision need that account to have the configuration service `configuration-admin` role.
 

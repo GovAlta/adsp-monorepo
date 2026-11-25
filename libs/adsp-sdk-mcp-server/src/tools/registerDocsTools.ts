@@ -1,6 +1,9 @@
 import { z } from 'zod';
 import { DocsRepository } from '../docs/docsRepository';
 import { queryTerms } from '../search/textSearch';
+import { jsonText, buildNext, definedOnly, Next, withRelatedAndNext } from './envelope';
+import { LinkIndex } from './links';
+import type { EndpointQuery } from './registerApiTools';
 import { OFFLINE_TOOL_ANNOTATIONS, ToolDefinition } from './types';
 
 const SearchArgs = z.object({
@@ -16,7 +19,23 @@ const ReadArgs = z.object({
   path: z.string(),
 });
 
-export function createDocsTools(docs: DocsRepository): ToolDefinition[] {
+// A prefix matching this few pages is specific enough to point straight at one.
+const NARROW_PREFIX_PAGES = 5;
+
+// Related references on every hit would grow a default search by more than half.
+const RELATED_RESULTS = 1;
+
+function listText(pages: object[], next: Next | undefined): string {
+  const entries = pages.map((page) => `    ${JSON.stringify(page)}`).join(',\n');
+  const nextText = next ? `,\n  "next": ${JSON.stringify(next, null, 2).replace(/\n/g, '\n  ')}` : '';
+  return `{\n  "results": [\n${entries}\n  ]${nextText}\n}`;
+}
+
+export function createDocsTools(
+  docs: DocsRepository,
+  links: () => LinkIndex,
+  endpointQuery: EndpointQuery,
+): ToolDefinition[] {
   return [
     {
       name: 'search_adsp_docs',
@@ -39,7 +58,8 @@ export function createDocsTools(docs: DocsRepository): ToolDefinition[] {
         required: ['query'],
       },
       handler: (args) => {
-        const { query, limit } = SearchArgs.parse(args);
+        const parsed = SearchArgs.parse(args);
+        const { query, limit } = parsed;
         if (queryTerms(query).length === 0) {
           return {
             content: [
@@ -65,7 +85,35 @@ export function createDocsTools(docs: DocsRepository): ToolDefinition[] {
           };
         }
 
-        return { content: [{ type: 'text', text: JSON.stringify(results, null, 2) }] };
+        const index = links();
+        const withRelated = results.map((result, position) => {
+          const related = position < RELATED_RESULTS ? index.relatedForDoc(result.path) : undefined;
+          return withRelatedAndNext(result, related, undefined);
+        });
+        const top = withRelated[0];
+        const service = top.related?.serviceApis?.[0];
+        const endpointSearch = service && endpointQuery(service, query);
+        const next = buildNext(
+          [
+            {
+              tool: 'read_adsp_doc',
+              arguments: { path: top.path },
+              why: 'Top match; read the full page.',
+            },
+            endpointSearch
+              ? {
+                  tool: 'search_service_endpoints',
+                  arguments: { query: endpointSearch, service },
+                  why:
+                    endpointSearch === query
+                      ? "Find this service's REST endpoints for the same question."
+                      : "Find this service's REST endpoints.",
+                }
+              : undefined,
+          ],
+          { tool: 'search_adsp_docs', arguments: definedOnly(parsed) },
+        );
+        return jsonText(withRelatedAndNext({ results: withRelated }, undefined, next));
       },
     },
     {
@@ -85,7 +133,8 @@ export function createDocsTools(docs: DocsRepository): ToolDefinition[] {
         },
       },
       handler: (args) => {
-        const { prefix } = ListArgs.parse(args);
+        const parsed = ListArgs.parse(args);
+        const { prefix } = parsed;
         const pages = docs.list().filter(({ path }) => !prefix || path.startsWith(prefix));
         if (pages.length === 0) {
           return {
@@ -98,7 +147,23 @@ export function createDocsTools(docs: DocsRepository): ToolDefinition[] {
           };
         }
 
-        return { content: [{ type: 'text', text: JSON.stringify(pages, null, 2) }] };
+        const next =
+          prefix && pages.length <= NARROW_PREFIX_PAGES
+            ? buildNext(
+                [
+                  {
+                    tool: 'read_adsp_doc',
+                    arguments: { path: pages[0].path },
+                    why:
+                      pages.length === 1
+                        ? 'Only page under this prefix; read it.'
+                        : 'First page under this prefix; read it.',
+                  },
+                ],
+                { tool: 'list_adsp_docs', arguments: definedOnly(parsed) },
+              )
+            : undefined;
+        return { content: [{ type: 'text', text: listText(pages, next) }] };
       },
     },
     {
@@ -118,7 +183,8 @@ export function createDocsTools(docs: DocsRepository): ToolDefinition[] {
         required: ['path'],
       },
       handler: (args) => {
-        const { path } = ReadArgs.parse(args);
+        const parsed = ReadArgs.parse(args);
+        const { path } = parsed;
         const doc = docs.read(path);
         if (!doc) {
           // clean-code-ignore: 2.18 — isError is the standard MCP CallToolResult field for a handled failure, not a hidden side effect.
@@ -133,7 +199,37 @@ export function createDocsTools(docs: DocsRepository): ToolDefinition[] {
           };
         }
 
-        return { content: [{ type: 'text', text: `# ${doc.title}\n\n${doc.content}` }] };
+        const related = links().relatedForDoc(path);
+        const service = related.serviceApis?.[0];
+        const endpointSearch = service && endpointQuery(service, doc.title);
+        const next = buildNext(
+          [
+            endpointSearch
+              ? {
+                  tool: 'search_service_endpoints',
+                  arguments: { query: endpointSearch, service },
+                  why: "Find this service's REST endpoints.",
+                }
+              : undefined,
+            related.sdkSymbols?.[0]
+              ? {
+                  tool: 'search_sdk_reference',
+                  arguments: { query: related.sdkSymbols[0] },
+                  why: 'Look up the SDK symbol this page uses.',
+                }
+              : undefined,
+            related.docs?.[0]
+              ? { tool: 'read_adsp_doc', arguments: { path: related.docs[0] }, why: 'Read a page this one links to.' }
+              : undefined,
+          ],
+          { tool: 'read_adsp_doc', arguments: definedOnly(parsed) },
+        );
+        return {
+          content: [
+            { type: 'text', text: `# ${doc.title}\n\n${doc.content}` },
+            ...jsonText(withRelatedAndNext({ path }, related, next)).content,
+          ],
+        };
       },
     },
   ];

@@ -81,11 +81,12 @@ export const getTemplates: RequestHandler = async (req, res, next) => {
 };
 
 const TEMPLATE = 'template';
+const PLATFORM_TEMPLATE = 'platformTemplate';
 export function getTemplate(templateIn: 'params' | 'body'): RequestHandler {
   return async (req, res, next) => {
     try {
       const { templateId } = req[templateIn];
-      const [configuration] = await req.getConfiguration<Record<string, PdfTemplateEntity>>();
+      const [configuration, coreConfiguration] = await req.getConfiguration<Record<string, PdfTemplateEntity>>();
 
       const template = configuration[templateId];
 
@@ -94,6 +95,7 @@ export function getTemplate(templateIn: 'params' | 'body'): RequestHandler {
       }
 
       req[TEMPLATE] = template;
+      req[PLATFORM_TEMPLATE] = Object.prototype.hasOwnProperty.call(coreConfiguration ?? {}, templateId);
 
       next();
     } catch (err) {
@@ -103,6 +105,14 @@ export function getTemplate(templateIn: 'params' | 'body'): RequestHandler {
 }
 
 const toTemplateId = (name: string): string => name.trim().toLowerCase().replace(/\s+/g, '-');
+
+// Core users act on the tenant in the tenantId query parameter; template writes need one.
+function requireTenantId(tenantId: AdspId | undefined, operation: string): AdspId {
+  if (!tenantId) {
+    throw new InvalidOperationError(`Tenant context is required to ${operation}; core users must set tenantId.`);
+  }
+  return tenantId;
+}
 
 // clean-code-ignore: 2.3 2.10
 const createPdfTemplatePatch = (
@@ -129,6 +139,11 @@ const createPdfTemplatePatch = (
     },
   },
 });
+
+const sendPlatformTemplateConflict = (res: Response, templateId: string, action: string) =>
+  res.status(HttpStatusCodes.CONFLICT).send({
+    error: `PDF template '${templateId}' is a platform template and cannot be ${action} by a tenant.`,
+  });
 
 const isTemplateIdAlreadyInUse = (configuration: Record<string, PdfTemplateEntity>, name: string): boolean =>
   Boolean(configuration[name]);
@@ -163,14 +178,14 @@ export function createPdfTemplate(
         // clean-code-ignore: 2.4
         throw new UnauthorizedUserError('create pdf template', user);
       }
+      const tenant = requireTenantId(tenantId, 'create pdf template');
       const { name, description = '', template = '', header, footer, additionalStyles, variables } = req.body;
       const id = toTemplateId(name);
       const [configuration] = await req.getConfiguration<Record<string, PdfTemplateEntity>>();
 
       if (isTemplateIdAlreadyInUse(configuration, id)) {
-        return res.status(HttpStatusCodes.CONFLICT).send({
-          error: `PDF template '${name}' already exists.`,
-        });
+        const message = `PDF template '${name}' already exists.`;
+        return res.status(HttpStatusCodes.CONFLICT).send({ errorMessage: message, error: message });
       }
 
       const patch = createPdfTemplatePatch(
@@ -184,11 +199,11 @@ export function createPdfTemplate(
         variables,
       );
 
-      await savePdfTemplate(directory, tokenProvider, req.tenant.id.toString(), patch);
+      await savePdfTemplate(directory, tokenProvider, tenant.toString(), patch);
 
       void auditService.record(
         PdfTemplateCreatedAuditAction,
-        toPdfTemplateAuditDetails(toAuditActor(user), req.tenant.id, patch.update[id]),
+        toPdfTemplateAuditDetails(toAuditActor(user), tenant, patch.update[id]),
       );
 
       res.status(HttpStatusCodes.CREATED).json(patch.update[id]);
@@ -230,8 +245,13 @@ export function updatePdfTemplate(
         // clean-code-ignore: 2.4
         throw new UnauthorizedUserError('update pdf template', user);
       }
+      const tenant = requireTenantId(tenantId, 'update pdf template');
 
       const template: PdfTemplateEntity = req[TEMPLATE];
+      if (req[PLATFORM_TEMPLATE]) {
+        return sendPlatformTemplateConflict(res, req.params.templateId, 'updated');
+      }
+
       const { name, description, template: templateBody, header, footer, additionalStyles, variables } = req.body;
 
       const updated: PdfTemplateConfiguration = {
@@ -250,16 +270,16 @@ export function updatePdfTemplate(
         update: { [template.id]: updated },
       };
 
-      await savePdfTemplate(directory, tokenProvider, req.tenant.id.toString(), patch);
+      await savePdfTemplate(directory, tokenProvider, tenant.toString(), patch);
 
       void auditService.record(
         PdfTemplateUpdatedAuditAction,
-        toPdfTemplateAuditDetails(toAuditActor(user), req.tenant.id, updated, {
+        toPdfTemplateAuditDetails(toAuditActor(user), tenant, updated, {
           changedFields: changedTemplateFields(template, updated),
         }),
       );
 
-      res.status(HttpStatusCodes.CREATED).json(updated);
+      res.status(HttpStatusCodes.OK).json(updated);
     } catch (err) {
       next(err);
     }
@@ -281,14 +301,19 @@ export function deletePdfTemplate(
         // clean-code-ignore: 2.4
         throw new UnauthorizedUserError('delete pdf template', user);
       }
+      const tenant = requireTenantId(tenantId, 'delete pdf template');
 
       const { templateId } = req.params;
       const template: PdfTemplateEntity | undefined = req[TEMPLATE];
-      await deletePdfTemplateFromConfig(directory, tokenProvider, req.tenant.id.toString(), templateId);
+      if (req[PLATFORM_TEMPLATE]) {
+        return sendPlatformTemplateConflict(res, templateId, 'deleted');
+      }
+
+      await deletePdfTemplateFromConfig(directory, tokenProvider, tenant.toString(), templateId);
 
       void auditService.record(
         PdfTemplateDeletedAuditAction,
-        toPdfTemplateAuditDetails(toAuditActor(user), req.tenant.id, { id: templateId, name: template?.name }),
+        toPdfTemplateAuditDetails(toAuditActor(user), tenant, { id: templateId, name: template?.name }),
       );
 
       res.status(HttpStatusCodes.NO_CONTENT).send();
@@ -318,6 +343,10 @@ export function generatePdf(
 
       if (!isAllowedUser(user, template.tenantId || tenantId, ServiceRoles.PdfGenerator, allowCore)) {
         throw new UnauthorizedUserError('generate pdf', user);
+      }
+
+      if (!tenantId) {
+        throw new InvalidOperationError('Tenant context is required to generate a PDF; specify tenantId.');
       }
 
       if (fileType) {
@@ -376,15 +405,19 @@ export function getGeneratedFile(serviceId: AdspId, repository: JobRepository<Fi
   return async (req, res, next) => {
     try {
       const user = req.user;
-
+      const tenantId = req.tenant?.id || (req.query.tenantId && adspId`${req.query.tenantId}`);
       const { jobId } = req.params;
 
+      if (!tenantId) {
+        throw new InvalidOperationError('Tenant context is required to get a PDF job; specify tenantId.');
+      }
+
       const job = await repository.get(jobId);
-      if (!job) {
+      if (!job || `${job.tenantId}` !== `${tenantId}`) {
         throw new NotFoundError('Generated PDF', jobId);
       }
 
-      if (!isAllowedUser(user, job.tenantId, ServiceRoles.PdfGenerator)) {
+      if (!isAllowedUser(user, tenantId, ServiceRoles.PdfGenerator, true)) {
         throw new UnauthorizedUserError('get generated pdf', user);
       }
 

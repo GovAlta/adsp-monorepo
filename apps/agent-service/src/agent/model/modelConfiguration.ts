@@ -1,7 +1,12 @@
 import { createOpenAICompatible } from '@ai-sdk/openai-compatible';
 import type { AgentExecutionOptions } from '@mastra/core/agent';
 import { environment } from '../../environments/environment';
-import { ACCESS_SERVICE_AGENT_ID, FORM_GENERATION_AGENT_ID, NOTIFICATION_TEMPLATE_AGENT_ID } from './executionLimits';
+import {
+  ACCESS_SERVICE_AGENT_ID,
+  FORM_GENERATION_AGENT_ID,
+  NOTIFICATION_TEMPLATE_AGENT_ID,
+  PDF_GENERATION_AGENT_ID,
+} from './executionLimits';
 
 export interface AgentModelConfiguration {
   id?: string;
@@ -35,14 +40,27 @@ export function getAgentModelConfiguration(modelId = environment.MODEL, modelCon
     : modelId;
 }
 
+/** The longest reply an agent's model may write in one call, for agents that set one. */
+export function getAgentMaxOutputTokens(agentId?: string): number | undefined {
+  switch (agentId) {
+    case ACCESS_SERVICE_AGENT_ID:
+      return environment.AGENT_ACCESS_MAX_OUTPUT_TOKENS;
+    case NOTIFICATION_TEMPLATE_AGENT_ID:
+      return environment.AGENT_NOTIFICATION_MAX_OUTPUT_TOKENS;
+    case PDF_GENERATION_AGENT_ID:
+      return environment.AGENT_PDF_MAX_OUTPUT_TOKENS;
+    default:
+      return undefined;
+  }
+}
+
 export function getAgentProviderOptions(
   agentId?: string,
   modelConfig?: AgentModelConfiguration,
 ): AgentExecutionOptions['providerOptions'] | undefined {
   const isFormGen = agentId === FORM_GENERATION_AGENT_ID;
-  const isAccess = agentId === ACCESS_SERVICE_AGENT_ID;
-  const isNotification = agentId === NOTIFICATION_TEMPLATE_AGENT_ID;
-  if (!isFormGen && !isAccess && !isNotification && !modelConfig?.reasoningEffort) {
+  const maxOutputTokens = getAgentMaxOutputTokens(agentId);
+  if (!isFormGen && !maxOutputTokens && !modelConfig?.reasoningEffort) {
     return undefined;
   }
 
@@ -50,11 +68,8 @@ export function getAgentProviderOptions(
 
   // Reasoning models such as gpt-5.1 reject max_tokens, which the OpenAI-compatible provider sends for
   // maxOutputTokens, so the reply limit goes on the wire as max_completion_tokens instead.
-  if (isAccess && environment.MODEL_URL) {
-    providerOpts.max_completion_tokens = environment.AGENT_ACCESS_MAX_OUTPUT_TOKENS;
-  }
-  if (isNotification && environment.MODEL_URL) {
-    providerOpts.max_completion_tokens = environment.AGENT_NOTIFICATION_MAX_OUTPUT_TOKENS;
+  if (maxOutputTokens && environment.MODEL_URL) {
+    providerOpts.max_completion_tokens = maxOutputTokens;
   }
 
   if (isFormGen) {

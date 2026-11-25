@@ -20,6 +20,18 @@ const CLIENT = 'tk_client';
 // Hosts without a top level domain (e.g. localhost) are allowed for local development.
 const REDIRECT_URI_OPTIONS = { require_tld: false, require_protocol: true, protocols: ['http', 'https'] };
 
+// Checks the role before the client is looked up, so callers without it cannot tell which client IDs exist.
+export function assertAdminUser(operation: string): RequestHandler {
+  return function (req, _res, next) {
+    const user = req.user;
+    if (!isAllowedUser(user, req.tenant?.id, ServiceRoles.Admin)) {
+      next(new UnauthorizedUserError(operation, user));
+    } else {
+      next();
+    }
+  };
+}
+
 export function getAuthenticationClient() {
   return async function (req: Request, _res: Response, next: NextFunction) {
     try {
@@ -163,14 +175,21 @@ export function startAuthenticate(passport: PassportStatic) {
   };
 }
 
-export function completeAuthenticate(passport: PassportStatic) {
+export function completeAuthenticate(passport: PassportStatic, logger?: Logger) {
   return async function (req: Request, res: Response, next: NextFunction) {
     try {
       const client: AuthenticationClient = req[CLIENT];
 
       const handler = await client.authenticate(passport, true);
-      handler(req, res, () => {
-        res.redirect(req.isAuthenticated() ? client.successRedirectUrl : client.failureRedirectUrl);
+      handler(req, res, (err?: unknown) => {
+        // Errors after the client lookup still send the user to the failure redirect, as documented, but are logged.
+        if (err) {
+          logger?.warn(`Error completing authentication on client '${client.id}': ${err}`, {
+            context: 'ClientRouter',
+            tenant: req.tenant?.id?.toString(),
+          });
+        }
+        res.redirect(!err && req.isAuthenticated() ? client.successRedirectUrl : client.failureRedirectUrl);
       });
     } catch (err) {
       next(err);
@@ -280,6 +299,7 @@ export function createClientRouter({
     ),
     passport.authenticate('tenant', { session: false }),
     tenantHandler,
+    assertAdminUser('register client'),
     configurationHandler,
     getAuthenticationClient(),
     registerClient(eventService)
@@ -296,6 +316,7 @@ export function createClientRouter({
     ),
     passport.authenticate('tenant', { session: false }),
     tenantHandler,
+    assertAdminUser('update client'),
     configurationHandler,
     getAuthenticationClient(),
     updateClient(eventService)
@@ -308,6 +329,7 @@ export function createClientRouter({
     createValidationHandler(param('id').isString().isLength({ min: 1, max: 50 })),
     passport.authenticate('tenant', { session: false }),
     tenantHandler,
+    assertAdminUser('get client'),
     configurationHandler,
     getAuthenticationClient(),
     getClient()
@@ -347,7 +369,7 @@ export function createClientRouter({
     completeTenantHandler,
     configurationHandler,
     getAuthenticationClient(),
-    completeAuthenticate(passport)
+    completeAuthenticate(passport, logger)
   );
 
   router.get(

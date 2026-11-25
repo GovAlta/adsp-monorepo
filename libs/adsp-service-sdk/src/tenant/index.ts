@@ -13,6 +13,7 @@ declare global {
 }
 
 export { createTenantHandler } from './tenantHandler';
+export { getRequestedTenant } from './requestedTenant';
 export type { Tenant, TenantService } from './tenantService';
 
 interface TenantServiceOptions {

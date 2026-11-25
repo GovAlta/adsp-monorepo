@@ -252,11 +252,25 @@ components:
               description: Whether the form is restricted and accepts access requests. Defaults to false.
             accessGroup:
               type: string
+              minLength: 1
+              maxLength: 255
+              description: >
+                Keycloak group containing the roles needed to access the form. Optional. Returned only to `form-admin`
+                callers.
+            approverGroup:
+              type: string
               writeOnly: true
               minLength: 1
               maxLength: 255
               description: >
-                Keycloak group containing the roles needed to access the form. Not returned by the form APIs.
+                Keycloak group whose members can approve or deny the form's access requests. Not returned by the
+                form APIs.
+            notificationEmail:
+              type: string
+              format: email
+              writeOnly: true
+              maxLength: 254
+              description: Address notified when an access request is submitted. Not returned by the form APIs.
             dataSchema:
               type: object
               description: >
@@ -371,11 +385,25 @@ components:
               description: Whether the form is restricted and accepts access requests.
             accessGroup:
               type: string
+              minLength: 1
+              maxLength: 255
+              description: >
+                Keycloak group containing the roles needed to access the form. Optional. Returned only to `form-admin`
+                callers.
+            approverGroup:
+              type: string
               writeOnly: true
               minLength: 1
               maxLength: 255
               description: >
-                Keycloak group containing the roles needed to access the form. Not returned by the form APIs.
+                Keycloak group whose members can approve or deny the form's access requests. Not returned by the
+                form APIs.
+            notificationEmail:
+              type: string
+              format: email
+              writeOnly: true
+              maxLength: 254
+              description: Address notified when an access request is submitted. Not returned by the form APIs.
             dataSchema:
               type: object
               description: >
@@ -487,6 +515,17 @@ components:
               type: string
             urn:
               type: string
+            disposition:
+              type: object
+              nullable: true
+              description: Decision recorded on the submission by an assessor, or null if no decision is made yet. The disposition reason is not included.
+              properties:
+                status:
+                  type: string
+                  description: Disposition state the assessor selected.
+                date:
+                  type: string
+                  format: date-time
       example:
         urn: urn:ads:platform:form-service:v1:/forms/5f1e2d3c-4b5a-4f6e-8d7c-9b0a1c2d3e4f
         id: 5f1e2d3c-4b5a-4f6e-8d7c-9b0a1c2d3e4f
@@ -1550,14 +1589,15 @@ components:
       - Form registration
     description: >
       Removes the registration settings from the latest revision of a form definition, so the form no longer accepts
-      access requests. Existing access requests are kept. Requires the `form-admin` role; core users with the role must
-      set `tenantId`. A definition without registration settings also responds 204.
+      access requests, and permanently deletes all access requests of the definition. Requires the `form-admin` role;
+      core users with the role must set `tenantId`. A definition without registration settings also responds 204, and
+      its access requests are still deleted.
     parameters:
       - $ref: '#/components/parameters/FormDefinitionIdPath'
       - $ref: '#/components/parameters/FormTenantId'
     responses:
       204:
-        description: Successfully removed the registration settings.
+        description: Successfully removed the registration settings and deleted the access requests.
       400:
         $ref: '#/components/responses/FormBadRequest'
       401:

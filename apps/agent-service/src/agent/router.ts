@@ -400,14 +400,7 @@ export function onIoConnection(logger: Logger, budget: TokenBudget = createToken
               }
             }
 
-            let userContent: CoreUserMessage['content'];
-            if (Array.isArray(content)) {
-              userContent = content;
-            } else if (typeof content === 'string') {
-              userContent = [{ type: 'text', text: content }];
-            } else {
-              throw new InvalidValueError('content', 'content must string or array of text, image, or file parts.');
-            }
+            const userContent = toUserContent(content);
 
             const replyId = uuid();
             const streamMeta = { agent, threadId, messageId: replyId, replyTo: messageId };
@@ -815,6 +808,20 @@ function tenantHandler(tenantService: TenantService) {
   };
 }
 
+/**
+ * Converts message content from a client to user message parts, rejecting anything that is not a string or an array
+ * of parts. Shared by the REST and socket.io message paths so both reject the same input with 400.
+ */
+export function toUserContent(content: unknown): CoreUserMessage['content'] {
+  if (Array.isArray(content) && content.every((part) => typeof part?.type === 'string')) {
+    return content;
+  } else if (typeof content === 'string') {
+    return [{ type: 'text', text: content }];
+  } else {
+    throw new InvalidValueError('content', 'content must string or array of text, image, or file parts.');
+  }
+}
+
 const AGENT_KEY = 'agent';
 export const getAgents: RequestHandler = async function (req, res, next) {
   try {
@@ -847,7 +854,14 @@ export function messageAgent(logger: Logger): RequestHandler {
     try {
       const tenant = req.tenant;
       const user = req.user;
-      const input = Array.isArray(req.body) ? req.body : [req.body];
+      const input: unknown[] = Array.isArray(req.body) ? req.body : [req.body];
+      if (input.length < 1) {
+        throw new InvalidValueError('body', 'body must be a message or a non-empty array of messages.');
+      }
+      const messages = input.map((message) => ({
+        content: toUserContent((message as { content?: unknown })?.content),
+        role: 'user' as const,
+      }));
       const agent = req[AGENT_KEY] as AgentBroker;
 
       logger.debug(`User ${user.name} (ID: ${user.id}) messaging agent ${agent}...`, {
@@ -859,11 +873,7 @@ export function messageAgent(logger: Logger): RequestHandler {
       // NOTE: Currently this can't persist between messages due to horizontal scaling of pods
       // Need to share agent memory via persistent storage for a thread across requests.
       const threadId = uuid();
-      const result = await agent.generate(
-        user,
-        threadId,
-        input.map(({ content }) => ({ content, role: 'user' })),
-      );
+      const result = await agent.generate(user, threadId, messages);
 
       logger.info(`Agent ${agent} responded to user ${user.name} (ID: ${user.id}) message.`, {
         context: 'AgentRouter',

@@ -463,8 +463,9 @@ components:
                   href: urn:ads:platform:file-service:v1:/files/ced3fbdd-7597-455e-84c6-1d0b3d03a274/download
       400:
         description: >
-          Invalid request, for example no file uploaded, no file type specified, an invalid filename, an extension not
-          in the type's allowedFileTypes, no tenant context, or an invalid tenantId.
+          Invalid request, for example no file uploaded, an unexpected or extra file field, too many multipart fields,
+          no file type specified, an invalid filename, an extension not in the type's allowedFileTypes, no tenant
+          context, or an invalid tenantId.
         content:
           application/json:
             schema:
@@ -475,6 +476,14 @@ components:
         $ref: '#/components/responses/FileUnauthorized'
       404:
         $ref: '#/components/responses/FileNotFound'
+      413:
+        description: The uploaded file exceeds the 3 GB limit.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FileError'
+            example:
+              errorMessage: Uploaded file exceeds the 3 GB limit.
   get:
     tags:
       - File
@@ -733,7 +742,8 @@ components:
       Executes a file operation. The copy operation copies the file to a new file, optionally of a different type.
       Requires an authenticated user who can read the source file (see GET), otherwise 403, and who has one of the
       destination file type's updateRoles or the file-service-admin role, otherwise 401. The destination type is
-      looked up in the tenant of the request, so core users who set type must also set tenantId.
+      looked up in the tenant of the request, so core users who set type must also set tenantId; otherwise the request
+      responds 400.
     parameters:
       - $ref: '#/components/parameters/FileTenantId'
     requestBody:

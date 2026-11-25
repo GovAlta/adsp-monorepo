@@ -50,7 +50,8 @@ import {
 } from '@lib/validation/checkInput';
 import useWindowDimensions from '@lib/useWindowDimensions';
 import { AppDispatch, RootState } from '@store/index';
-import { FETCH_KEYCLOAK_SERVICE_ROLES } from '@store/access/actions';
+import { FETCH_KEYCLOAK_SERVICE_ROLES, fetchKeycloakGroups } from '@store/access/actions';
+import { keycloakGroupsFailedSelector, keycloakGroupsSelector } from '@store/access/selectors';
 import { SecurityClassification } from '@store/common/models';
 import { UploadFileService, DownloadFileService, DeleteFileService, ClearNewFileList } from '@store/file/actions';
 import {
@@ -92,6 +93,8 @@ import { AddEditDispositionModal } from './addEditDispositionModal';
 import { DispositionItems } from './dispositionItems';
 import { FormConfigDefinition } from './formConfigDefinition';
 import { ReviewConfigurationTab } from './reviewConfigurationTab';
+import { AccessRequestsTab } from './accessRequestsTab';
+import { hasErrors, validateAccessRequestSettings } from './accessRequestFields';
 import { areRolesUnavailable, ROLES_UNAVAILABLE_REASON } from './rolesAvailability';
 import { SharePointDestinationSelect } from './sharePointDestinationSelect';
 import { JSONFormPreviewer } from './JsonFormPreviewer';
@@ -104,6 +107,7 @@ import {
   H3Inline,
   ToolTipAdjust,
   LifecycleLabelRow,
+  AccessRequestsTabLabel,
 } from './style-components';
 import { UpdateSearchCriteriaAndFetchEvents } from '@store/calendar/actions';
 import { CalendarEventDefault } from '@store/calendar/models';
@@ -264,6 +268,15 @@ export function AddEditFormDefinitionEditor({
   } = useSelector((state: RootState) => state.form.editor);
 
   const setDefinition = (update: Partial<FormDefinition>) => dispatch(updateEditorFormDefinition(update));
+
+  const keycloakGroups = useSelector(keycloakGroupsSelector);
+  const keycloakGroupsFailed = useSelector(keycloakGroupsFailedSelector);
+  const loadKeycloakGroups = useCallback(() => dispatch(fetchKeycloakGroups()), [dispatch]);
+  const accessRequestErrors = validateAccessRequestSettings(
+    definition?.registration,
+    !!definition?.anonymousApply,
+    keycloakGroupsFailed ? undefined : keycloakGroups?.map(({ path }) => path),
+  );
   const formDefinitions = useSelector((state: RootState) => state.form.definitions);
   const schemaError = useSelector(schemaErrorSelector);
   const eventDefinitions = useSelector((state: RootState) => state.event.definitions);
@@ -1232,6 +1245,34 @@ export function AddEditFormDefinitionEditor({
                       </EditorTabScroll>
                     </BorderBottom>
                   </Tab>
+                  <Tab
+                    label={
+                      hasErrors(accessRequestErrors) ? (
+                        <AccessRequestsTabLabel data-testid="access-requests-tab-error">
+                          Access requests{' '}
+                          <GoabIcon type="warning" size="small" fillColor="var(--goa-color-emergency-default)" />
+                        </AccessRequestsTabLabel>
+                      ) : (
+                        'Access requests'
+                      )
+                    }
+                    data-testid="form-editor-access-requests-tab"
+                    isTightContent={true}
+                  >
+                    <BorderBottom>
+                      <EditorTabScroll $height={EditorHeight + 7}>
+                        <AccessRequestsTab
+                          registration={definition.registration}
+                          anonymousApply={!!definition.anonymousApply}
+                          groups={keycloakGroups}
+                          groupsFailed={keycloakGroupsFailed}
+                          errors={accessRequestErrors}
+                          onLoadGroups={loadKeycloakGroups}
+                          onChange={(registration) => setDefinition({ registration })}
+                        />
+                      </EditorTabScroll>
+                    </BorderBottom>
+                  </Tab>
                 </Tabs>
 
                 <FinalButtonPadding>
@@ -1271,6 +1312,7 @@ export function AddEditFormDefinitionEditor({
                         !isFormUpdated ||
                         !definition.name ||
                         validators.haveErrors() ||
+                        hasErrors(accessRequestErrors) ||
                         editorErrors.dataSchemaJSON !== null ||
                         editorErrors.dataSchemaJSONSchema !== null ||
                         editorErrors.uiSchema !== null

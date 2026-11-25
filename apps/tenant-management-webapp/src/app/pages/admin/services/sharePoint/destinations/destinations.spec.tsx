@@ -108,6 +108,17 @@ describe('validateDestination', () => {
 });
 
 describe('describeTestFailure', () => {
+  it('explains a document library that cannot be used', () => {
+    expect(describeTestFailure('document-library-not-found')).toBe(
+      'The document library was not found on the site. Check the document library ID, or leave it empty to use Documents.',
+    );
+    expect(describeTestFailure('not-a-document-library')).toBe(
+      'The document library ID belongs to a list, not a document library. Use the ID of a document library.',
+    );
+    expect(describeTestFailure('library-name-taken')).toMatch(/already exists on the site/);
+    expect(describeTestFailure('library-not-created')).toMatch(/could not be created/);
+  });
+
   it('explains common failures', () => {
     expect(describeTestFailure('credential-not-set')).toMatch(/no secret/);
     expect(describeTestFailure('credential-unreadable')).toMatch(/can't be read.*Enter the secret again/);
@@ -337,7 +348,7 @@ describe('DestinationModal', () => {
     expect(onSave).toHaveBeenCalledWith(expect.objectContaining({ idempotencyFields: ['_adsp.key'] }));
   });
 
-  it('explains the destination ID, generation, mappings, folder link, detail lists and enabled flag in info bubbles', () => {
+  it('explains the destination ID, generation, mappings, detail lists, document library, folder link and enabled flag in info bubbles', () => {
     const hints = Array.from(renderModal(undefined).querySelectorAll('goa-tooltip')).map((tooltip) =>
       tooltip.getAttribute('content'),
     );
@@ -345,8 +356,10 @@ describe('DestinationModal', () => {
       'Callers use this ID to push data to this destination.',
       "Optional. Fills in the mappings, detail lists and column types below from a form's data schema.",
       'Map a form data path to a SharePoint column, for example applicant.name.first to FirstName.',
-      'A Hyperlink column on the main list that links to the folder of files uploaded with each submission.',
       'For repeating sections. Each section is a sub list with each section item as a row in the sub list.',
+      'Verify setup creates a document library with this name when there is no document library ID.',
+      "The document library for uploaded files. Files go to the site's Documents library when this and the name are empty.",
+      'A Hyperlink column on the main list that links to the folder of files uploaded with each submission.',
       'Disable pushing data to destination. Test actions can still push data.',
     ]);
   });

@@ -1,13 +1,20 @@
 import { AdspId } from '@abgov/adsp-service-sdk';
-import type { DomainEvent, EventService } from '@abgov/adsp-service-sdk';
-import { InvalidOperationError, NotFoundError } from '@core-services/core-common';
+import { InvalidOperationError } from '@core-services/core-common';
 import { runLimited } from '../concurrency';
 import { setValueAtPath } from '../dataPath';
-import { DestinationDisabledError, DetailRowsFailedError, SharePointError, toSharePointError } from '../errors';
+import { resolveDestination } from '../destinations';
+import {
+  DestinationDisabledError,
+  DestinationNotSetUpError,
+  DetailRowsFailedError,
+  SharePointError,
+  toSharePointError,
+} from '../errors';
 import { GraphFileClient, GraphTokenProvider } from '../graph';
+import { LibraryDriveResolver } from '../libraryDrives';
 import { itemKeyFor } from '../mapper';
 import { sanitizePathSegment } from '../filename';
-import { PushOptions, SharePointPusher } from '../push';
+import { prepareDetailLists, PushOptions, SharePointPusher } from '../push';
 import {
   DetailFailure,
   DetailRows,
@@ -19,13 +26,17 @@ import {
   SharePointDestination,
 } from '../types';
 import { withToken } from '../withToken';
-import { fileUploaded, fileUploadFailed } from './events';
 import { FileContent, FileSource } from './source';
 
-interface RowTarget {
-  destination: SharePointDestination;
+// Where a submission's files go: its folder, in the destination's document library or the site's default one.
+interface UploadTarget {
   connection: SharePointConnection;
   folder: string;
+  driveId?: string;
+}
+
+interface RowTarget extends UploadTarget {
+  destination: SharePointDestination;
 }
 
 export interface FileRequest {
@@ -37,6 +48,7 @@ export interface FilesUploadRequest {
   submissionId: string;
   files: FileRequest[];
   data?: Record<string, unknown>;
+  updateRowOnly?: boolean;
 }
 
 export interface UploadedFileResult {
@@ -61,7 +73,14 @@ export type FileResult = UploadedFileResult | FailedFileResult;
 
 export type RowResult =
   | { written: true; dataId: string; outcome: PushOutcome; detailRows?: DetailRows[] }
-  | { written: false; errorCode: string; retryable: boolean; dataId?: string; detailFailures?: DetailFailure[] };
+  | {
+      written: false;
+      errorCode: string;
+      retryable: boolean;
+      dataId?: string;
+      outcome?: PushOutcome;
+      detailFailures?: DetailFailure[];
+    };
 
 export interface FilesUploadResult {
   files: FileResult[];
@@ -72,34 +91,32 @@ export const MAX_FILES = 20;
 const DEFAULT_CONCURRENCY = 3;
 const REJECTED_TOKEN_CODE = 'graph:InvalidAuthenticationToken';
 
-function resolveDestination(
-  configuration: SharePointConfiguration | undefined,
-  destinationId: string,
-): { destination: SharePointDestination; connection: SharePointConnection } {
-  const destination = configuration?.destinations?.[destinationId];
-  if (!destination) {
-    throw new NotFoundError('SharePoint destination', destinationId);
-  }
-  const connection = configuration?.connections?.[destination.connectionId];
-  if (!connection) {
-    throw new NotFoundError('SharePoint connection', destination.connectionId);
-  }
-  return { destination, connection };
-}
-
 function assertFileCount(count: number): void {
   if (count > MAX_FILES) {
     throw new InvalidOperationError(`A request can have at most ${MAX_FILES} files.`);
   }
 }
 
-// Placing a placeholder at each file's path checks every path fits the data before anything is uploaded.
+// A library that is named but not created yet must not fall back to the site's Documents library.
+function documentLibraryIdOf(destination: SharePointDestination): string | undefined {
+  if (destination.documentFilesLibraryName && !destination.documentFilesLibraryId) {
+    throw new DestinationNotSetUpError(destination.id);
+  }
+  return destination.documentFilesLibraryId;
+}
+
+// Checks the row before any file is uploaded, so no file reaches SharePoint for a row that can't be written.
+// A placeholder at each file's path checks the path fits the data. Updating only the row leaves detail lists alone.
 function prepareRowData(
   destination: SharePointDestination,
   data: Record<string, unknown>,
   files: FileRequest[],
+  updateRowOnly?: boolean,
 ): Record<string, unknown> {
   itemKeyFor(destination.idempotencyFields, data);
+  if (!updateRowOnly) {
+    prepareDetailLists(destination, data);
+  }
   const copy = JSON.parse(JSON.stringify(data)) as Record<string, unknown>;
   files.forEach(({ field }) => setValueAtPath(copy, field, null));
   return copy;
@@ -174,17 +191,9 @@ export class SharePointFileService {
     private graph: GraphFileClient,
     private source: FileSource,
     private pusher: SharePointPusher,
-    private eventService: EventService,
+    private drives: LibraryDriveResolver,
     private concurrency: number = DEFAULT_CONCURRENCY,
   ) {}
-
-  private signal(event: DomainEvent): void {
-    try {
-      this.eventService.send(event);
-    } catch {
-      return;
-    }
-  }
 
   async upload(
     tenantId: AdspId,
@@ -197,18 +206,25 @@ export class SharePointFileService {
       throw new DestinationDisabledError(destinationId);
     }
     assertFileCount(request.files.length);
-    const data = request.data && prepareRowData(destination, request.data, request.files);
+    const libraryId = documentLibraryIdOf(destination);
+    const data = request.data && prepareRowData(destination, request.data, request.files, request.updateRowOnly);
 
     await this.tokens.getToken(tenantId, connection);
-    const folder = sanitizePathSegment(request.submissionId, 'submission');
+    const target: UploadTarget = {
+      connection,
+      folder: sanitizePathSegment(request.submissionId, 'submission'),
+      driveId: await this.drives.driveFor(tenantId, connection, libraryId),
+    };
     const names = new NameAssigner(request.files.length);
 
     const files = await runFileTasks(
       request.files.map((file, index) => ({ file, index })),
       this.concurrency,
-      ({ file, index }) =>
-        this.uploadOne(tenantId, connection, folder, file, index, names, destinationId, request.submissionId),
+      ({ file, index }) => this.uploadOne(tenantId, target, file, index, names),
     );
+    if (libraryId && files.some((file) => file.status === 'failed' && file.errorCode === 'graph:itemNotFound')) {
+      this.drives.evict(tenantId, connection, libraryId);
+    }
 
     if (!data || files.some(({ status }) => status === 'failed')) {
       return { files };
@@ -223,21 +239,34 @@ export class SharePointFileService {
 
     return {
       files,
-      row: await this.writeRow(tenantId, configuration, destinationId, { destination, connection, folder }, data),
+      row: await this.writeRow(
+        tenantId,
+        configuration,
+        destinationId,
+        { ...target, destination },
+        data,
+        request.updateRowOnly,
+      ),
     };
+  }
+
+  // Lets Test report a library that can't be used, since Test writes a row but uploads no files.
+  async checkDocumentLibrary(
+    tenantId: AdspId,
+    configuration: SharePointConfiguration | undefined,
+    destinationId: string,
+  ): Promise<void> {
+    const { destination, connection } = resolveDestination(configuration, destinationId);
+    await this.drives.driveFor(tenantId, connection, documentLibraryIdOf(destination), { fresh: true });
   }
 
   private async uploadOne(
     tenantId: AdspId,
-    connection: SharePointConnection,
-    folder: string,
+    target: UploadTarget,
     file: FileRequest,
     index: number,
     names: NameAssigner,
-    destinationId: string,
-    submissionId: string,
   ): Promise<FileResult> {
-    const eventRequest = { tenantId, destinationId, submissionId, field: file.field, fileId: file.fileId };
     let content: FileContent | undefined;
     let openError: unknown;
     try {
@@ -252,8 +281,7 @@ export class SharePointFileService {
       if (!content || name === null) {
         throw openError;
       }
-      const uploaded = await this.uploadWithRetry(tenantId, connection, folder, file, name, content);
-      this.signal(fileUploaded(eventRequest, uploaded.id, uploaded.size));
+      const uploaded = await this.uploadWithRetry(tenantId, target, file, name, content);
       return {
         field: file.field,
         fileId: file.fileId,
@@ -265,7 +293,6 @@ export class SharePointFileService {
       };
     } catch (err) {
       const error = err instanceof SharePointError ? err : toSharePointError(err);
-      this.signal(fileUploadFailed(eventRequest, error.errorCode, error.retryable));
       return {
         field: file.field,
         fileId: file.fileId,
@@ -278,8 +305,7 @@ export class SharePointFileService {
 
   private async uploadWithRetry(
     tenantId: AdspId,
-    connection: SharePointConnection,
-    folder: string,
+    { connection, folder, driveId }: UploadTarget,
     file: FileRequest,
     name: string,
     content: FileContent,
@@ -292,6 +318,7 @@ export class SharePointFileService {
         name,
         source.size,
         source.stream,
+        driveId,
       );
 
     try {
@@ -309,15 +336,16 @@ export class SharePointFileService {
     tenantId: AdspId,
     configuration: SharePointConfiguration | undefined,
     destinationId: string,
-    { destination, connection, folder }: RowTarget,
+    { destination, connection, folder, driveId }: RowTarget,
     data: Record<string, unknown>,
+    updateRowOnly?: boolean,
   ): Promise<RowResult> {
     try {
-      const options: PushOptions = {};
+      const options: PushOptions = { updateRowOnly };
       if (destination.folderLinkField) {
         options.folderLink = {
           Url: await withToken(this.tokens, tenantId, connection, (token) =>
-            this.graph.getFolderUrl(token, connection.siteId, folder),
+            this.graph.getFolderUrl(token, connection.siteId, folder, driveId),
           ),
           Description: folder,
         };
@@ -332,8 +360,8 @@ export class SharePointFileService {
       return { written: true, dataId: itemId, outcome, ...(detailRows ? { detailRows } : {}) };
     } catch (err) {
       if (err instanceof DetailRowsFailedError) {
-        const { errorCode, retryable, dataId, detailFailures } = err;
-        return { written: false, errorCode, retryable, dataId, detailFailures };
+        const { errorCode, retryable, dataId, outcome, detailFailures } = err;
+        return { written: false, errorCode, retryable, dataId, outcome, detailFailures };
       }
       if (err instanceof SharePointError) {
         return { written: false, errorCode: err.errorCode, retryable: err.retryable };

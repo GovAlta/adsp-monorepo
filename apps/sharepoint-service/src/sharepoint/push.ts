@@ -1,7 +1,8 @@
 import { AdspId } from '@abgov/adsp-service-sdk';
-import { InvalidOperationError, NotFoundError } from '@core-services/core-common';
+import { InvalidOperationError } from '@core-services/core-common';
 import { runLimited } from './concurrency';
 import { valueAtPath } from './dataPath';
+import { resolveDestination } from './destinations';
 import { DestinationDisabledError, DestinationNotSetUpError, DetailRowsFailedError, SharePointError } from './errors';
 import { GraphClient, GraphTokenProvider } from './graph';
 import { ITEM_KEY_COLUMN, itemKeyFor, mapFields } from './mapper';
@@ -27,6 +28,8 @@ export interface HyperlinkValue {
 
 export interface PushOptions {
   folderLink?: HyperlinkValue;
+  // Sets only the main row's columns that are in the data, on a row that must already exist; detail rows are kept.
+  updateRowOnly?: boolean;
 }
 
 interface PreparedDetailList {
@@ -40,7 +43,10 @@ interface DetailListOutcome {
   errors?: SharePointError[];
 }
 
-function prepareDetailLists(destination: SharePointDestination, data: Record<string, unknown>): PreparedDetailList[] {
+export function prepareDetailLists(
+  destination: SharePointDestination,
+  data: Record<string, unknown>,
+): PreparedDetailList[] {
   const detailLists = destination.detailLists ?? [];
   if (detailLists.length && !destination.idempotencyFields?.length) {
     throw new InvalidOperationError(
@@ -75,21 +81,6 @@ export class SharePointPusher {
     private graph: GraphClient,
   ) {}
 
-  private resolve(
-    configuration: SharePointConfiguration | undefined,
-    destinationId: string,
-  ): { destination: SharePointDestination; connection: SharePointConnection } {
-    const destination = configuration?.destinations?.[destinationId];
-    if (!destination) {
-      throw new NotFoundError('SharePoint destination', destinationId);
-    }
-    const connection = configuration?.connections?.[destination.connectionId];
-    if (!connection) {
-      throw new NotFoundError('SharePoint connection', destination.connectionId);
-    }
-    return { destination, connection };
-  }
-
   async push(
     tenantId: AdspId,
     configuration: SharePointConfiguration | undefined,
@@ -97,7 +88,7 @@ export class SharePointPusher {
     data: Record<string, unknown>,
     options: PushOptions = {},
   ): Promise<PushResult> {
-    const { destination, connection } = this.resolve(configuration, destinationId);
+    const { destination, connection } = resolveDestination(configuration, destinationId);
     if (destination.enabled === false) {
       throw new DestinationDisabledError(destinationId);
     }
@@ -110,7 +101,7 @@ export class SharePointPusher {
     destinationId: string,
     data: Record<string, unknown>,
   ): Promise<PushResult> {
-    const { destination, connection } = this.resolve(configuration, destinationId);
+    const { destination, connection } = resolveDestination(configuration, destinationId);
     return this.write(tenantId, connection, destination, data, {});
   }
 
@@ -119,14 +110,24 @@ export class SharePointPusher {
     connection: SharePointConnection,
     destination: SharePointDestination,
     data: Record<string, unknown>,
-    { folderLink }: PushOptions,
+    { folderLink, updateRowOnly }: PushOptions,
   ): Promise<PushResult> {
     const key = itemKeyFor(destination.idempotencyFields, data);
-    const detailLists = prepareDetailLists(destination, data);
     const fields = mapFields(destination.fieldMappings, data, key);
     if (folderLink && destination.folderLinkField) {
       fields[destination.folderLinkField] = folderLink;
     }
+
+    if (updateRowOnly) {
+      if (key === null) {
+        throw new SharePointError('row-identity-missing', false);
+      }
+      return this.request(tenantId, connection, isTransient, (token) =>
+        this.updateExistingRow(token, connection, destination, key, fields),
+      );
+    }
+
+    const detailLists = prepareDetailLists(destination, data);
 
     // With a key, a repeat looks the row up again, so a create that actually succeeded becomes an update.
     // Without one, a create is only repeated when SharePoint refused it, since the row may already exist after a timeout.
@@ -146,6 +147,7 @@ export class SharePointPusher {
       const errors = failed.flatMap((outcome) => outcome.errors);
       throw new DetailRowsFailedError(
         main.itemId,
+        main.outcome,
         failed.map(({ failure }) => failure),
         errors[0].errorCode,
         errors.every(({ retryable }) => retryable),
@@ -180,6 +182,22 @@ export class SharePointPusher {
     }
     const itemId = await this.graph.createItem(token, connection.siteId, destination.listId, fields);
     return { itemId, outcome: 'created' };
+  }
+
+  // The row comes from another push, which may not have arrived yet; retrying later lets it land first.
+  private async updateExistingRow(
+    token: string,
+    connection: SharePointConnection,
+    destination: SharePointDestination,
+    key: string,
+    fields: Record<string, unknown>,
+  ): Promise<PushResult> {
+    const itemId = await this.graph.findItemIdByKey(token, connection.siteId, destination.listId, ITEM_KEY_COLUMN, key);
+    if (!itemId) {
+      throw new SharePointError('row-not-found', true);
+    }
+    await this.graph.updateItemFields(token, connection.siteId, destination.listId, itemId, fields);
+    return { itemId, outcome: 'updated' };
   }
 
   // New rows are written before old ones are deleted; if any new row fails, the old ones stay and the new ones go.

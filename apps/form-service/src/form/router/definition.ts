@@ -24,6 +24,7 @@ import * as HttpStatusCodes from 'http-status-codes';
 import { Request, RequestHandler, Router } from 'express';
 import { body, param, query } from 'express-validator';
 import { Logger } from 'winston';
+import { getRequiredTenantId } from './tenant';
 import {
   RegistrationReviewedAuditAction,
   RegistrationSubmittedAuditAction,
@@ -32,7 +33,7 @@ import {
 } from '../audit';
 import { registrationReviewed, registrationSubmitted } from '../events';
 import { FormDefinitionEntity, FormRegistrationEntity, normalizeEmail } from '../model';
-import { mapFormDefinition, mapRegistration } from '../mapper';
+import { mapAdminFormDefinition, mapFormDefinition, mapRegistration } from '../mapper';
 import { FormRegistrationRepository } from '../repository';
 import { FormServiceRoles } from '../roles';
 import { FormDefinition, FormRegistrationCreate, Intake, RegistrationStatus } from '../types';
@@ -163,8 +164,8 @@ export function getFormDefinitions(directory: ServiceDirectory, tokenProvider: T
         ...data,
         results: data.results.map(({ latest, active }) =>
           active
-            ? mapFormDefinition(active.configuration, active.revision, undefined, latest.created as unknown as Date)
-            : mapFormDefinition(latest.configuration, latest.revision, undefined, latest.created as unknown as Date),
+            ? mapAdminFormDefinition(active.configuration, active.revision, undefined, latest.created as unknown as Date)
+            : mapAdminFormDefinition(latest.configuration, latest.revision, undefined, latest.created as unknown as Date),
         ),
       });
     } catch (err) {
@@ -228,7 +229,7 @@ export function getFormDefinition(
 
       if (version === 'latest') {
         const latest = await getLatestFormDefinition(directory, tokenProvider, req.tenant.id, definitionId);
-        res.send(mapFormDefinition(latest.configuration, latest.revision));
+        res.send(mapAdminFormDefinition(latest.configuration, latest.revision));
         return;
       }
 
@@ -257,7 +258,10 @@ export function getFormDefinition(
         intake = await calendarService.getScheduledIntake(definition);
       }
 
-      res.send(mapFormDefinition(definition, definition.revision, intake));
+      const map = isAllowedUser(user, req.tenant.id, FormServiceRoles.Admin, true)
+        ? mapAdminFormDefinition
+        : mapFormDefinition;
+      res.send(map(definition, definition.revision, intake));
     } catch (err) {
       next(err);
     }
@@ -324,7 +328,7 @@ export function createFormDefinition(
         definition,
       );
 
-      res.status(HttpStatusCodes.CREATED).send(mapFormDefinition(data.latest.configuration, data.latest.revision));
+      res.status(HttpStatusCodes.CREATED).send(mapAdminFormDefinition(data.latest.configuration, data.latest.revision));
     } catch (err) {
       next(err);
     }
@@ -354,7 +358,7 @@ export function updateFormDefinition(directory: ServiceDirectory, tokenProvider:
         definition,
       );
 
-      res.send(mapFormDefinition(data.latest.configuration, data.latest.revision));
+      res.send(mapAdminFormDefinition(data.latest.configuration, data.latest.revision));
     } catch (err) {
       next(err);
     }
@@ -406,7 +410,7 @@ export function patchFormDefinition(directory: ServiceDirectory, tokenProvider: 
         patchedDefinition,
       );
 
-      res.status(HttpStatusCodes.OK).send(mapFormDefinition(data.latest.configuration, data.latest.revision));
+      res.status(HttpStatusCodes.OK).send(mapAdminFormDefinition(data.latest.configuration, data.latest.revision));
     } catch (err) {
       next(err);
     }
@@ -529,7 +533,7 @@ export function updateFormDefinitionRoles(directory: ServiceDirectory, tokenProv
         updatedDefinition,
       );
 
-      res.status(HttpStatusCodes.OK).send(mapFormDefinition(data.latest.configuration, data.latest.revision));
+      res.status(HttpStatusCodes.OK).send(mapAdminFormDefinition(data.latest.configuration, data.latest.revision));
     } catch (err) {
       next(err);
     }
@@ -585,7 +589,7 @@ export function patchFormDefinitionLifecycle(
         updatedDefinition,
       );
 
-      res.send(mapFormDefinition(data.latest.configuration, data.latest.revision));
+      res.send(mapAdminFormDefinition(data.latest.configuration, data.latest.revision));
     } catch (err) {
       next(err);
     }
@@ -641,7 +645,7 @@ export function updateIntakeSchedule(calendarService: CalendarService): RequestH
   return async (req, res, next) => {
     try {
       const user = req.user;
-      const tenantId = req.tenant?.id;
+      const tenantId = getRequiredTenantId(req);
       const { start, end, name, calendarEventId } = req.body;
       const { definitionId } = req.params;
 
@@ -649,7 +653,7 @@ export function updateIntakeSchedule(calendarService: CalendarService): RequestH
         throw new UnauthorizedUserError('update schedule intake', user);
       }
 
-      const [definition] = await req.getServiceConfiguration<FormDefinitionEntity>(definitionId, req.tenant.id);
+      const [definition] = await req.getServiceConfiguration<FormDefinitionEntity>(definitionId, tenantId);
       if (!definition) {
         throw new InvalidOperationError(`Form definition not found`);
       }
@@ -663,7 +667,7 @@ export function updateIntakeSchedule(calendarService: CalendarService): RequestH
         name,
       });
 
-      const mapped = mapFormDefinition(definition, definition.revision, intake);
+      const mapped = mapAdminFormDefinition(definition, definition.revision, intake);
 
       res.status(HttpStatusCodes.OK).send(mapped);
     } catch (err) {
@@ -725,7 +729,7 @@ export function patchFormDefinitionSubmissionActions(
         updatedDefinition,
       );
 
-      res.status(HttpStatusCodes.OK).send(mapFormDefinition(data.latest.configuration, data.latest.revision));
+      res.status(HttpStatusCodes.OK).send(mapAdminFormDefinition(data.latest.configuration, data.latest.revision));
     } catch (err) {
       next(err);
     }
@@ -747,13 +751,6 @@ const hasOnlyProperties = (allowed: string[]) => (value: unknown) => {
     throw new Error(`Unsupported properties: ${extra.join(', ')}`);
   }
   return true;
-};
-
-const getRequiredTenantId = (req: Request): AdspId => {
-  if (!req.tenant?.id) {
-    throw new InvalidOperationError('Tenant context is required for operation.');
-  }
-  return req.tenant.id;
 };
 
 const assertAllowed = (user: User, tenantId: AdspId, roles: string | string[], operation: string): void => {
@@ -825,7 +822,8 @@ export function submitRegistration(
   };
 }
 
-export function deleteRegistrationSettings(
+export function deleteAccessRequests(
+  repository: FormRegistrationRepository,
   directory: ServiceDirectory,
   tokenProvider: TokenProvider,
   configurationService: ConfigurationService,
@@ -847,12 +845,18 @@ export function deleteRegistrationSettings(
         ({ registration, ...existing }) => (registration ? existing : null),
       );
 
-      if (removed) {
-        logger.info(`Registration removed from form definition '${definitionId}'.`, {
-          context: 'definition-router',
-          tenant: tenantId.toString(),
-          user: `${user.name} (ID: ${user.id})`,
-        });
+      const deletedCount = await repository.deleteAll(tenantId, definitionId);
+
+      if (removed || deletedCount > 0) {
+        logger.info(
+          `Deleted ${deletedCount} access request(s) of form definition '${definitionId}'` +
+            (removed ? ' and removed its registration settings.' : '.'),
+          {
+            context: 'definition-router',
+            tenant: tenantId.toString(),
+            user: `${user.name} (ID: ${user.id})`,
+          },
+        );
       }
       res.status(HttpStatusCodes.NO_CONTENT).send();
     } catch (err) {
@@ -1154,7 +1158,7 @@ export function createFormDefinitionRouter({
     createValidationHandler(
       param('definitionId').isString().isLength({ min: 1, max: 50 }).matches(DEFINITION_ID_REGEX),
     ),
-    deleteRegistrationSettings(directory, tokenProvider, configurationService, logger),
+    deleteAccessRequests(registrationRepository, directory, tokenProvider, configurationService, logger),
   );
 
   router.get(

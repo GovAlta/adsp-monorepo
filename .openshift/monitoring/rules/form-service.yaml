@@ -1,0 +1,86 @@
+# DRAFT: These rules are not production-ready. DEV verified the namespace/container selector and
+# JSON Error-level filter against real form-service logs. Critical-level matching has not been
+# verified against a real Critical log. Complete metric-query evaluation, Loki Ruler firing and
+# LokiStack spec.rules selection requirements also remain unverified.
+apiVersion: template.openshift.io/v1
+kind: Template
+metadata:
+  name: form-service-log-alerts
+  annotations:
+    description: >-
+      Draft Loki log-level alerts for form-service. DEV verified JSON Error-level filtering; the
+      Critical filter, complete metric queries, Loki Ruler firing and LokiStack rule selectors
+      require further runtime verification before deployment.
+parameters:
+  - name: NAMESPACE
+    description: Target namespace, e.g. adsp-dev.
+    required: true
+objects:
+  - apiVersion: loki.grafana.com/v1
+    kind: AlertingRule
+    metadata:
+      name: form-service-log-alerts
+      namespace: ${NAMESPACE}
+      # Add only the metadata labels required by LokiStack spec.rules.selector after DEV verification.
+    spec:
+      tenantID: application
+      groups:
+        - name: form-service-log-alerts
+          interval: 30s
+          rules:
+            - alert: ADSPLogCritical
+              expr: |
+                sum by (kubernetes_pod_name, kubernetes_container_name) (
+                  count_over_time(
+                    {kubernetes_namespace_name="${NAMESPACE}", kubernetes_container_name="form-service"}
+                      | json
+                      | level=~"(?i)(critical|alert|fatal|emergency)" [1m]
+                  )
+                ) > 0
+              for: 0s
+              labels:
+                service: form-service
+                namespace: ${NAMESPACE}
+                severity: critical
+              annotations:
+                summary: Critical form-service log detected
+                description: >-
+                  Form service emitted {{ $value }} critical, alert, fatal, or emergency-level
+                  log(s) in the last minute for pod {{ $labels.kubernetes_pod_name }} and container
+                  {{ $labels.kubernetes_container_name }}.
+                impact: >-
+                  Applicants may be unable to start, save or submit forms, and form-related emails,
+                  PDFs and calendar bookings may not be produced.
+                first_steps: |
+                  1. Open Pod logs and read the first critical entry after the start time.
+                  2. Check whether form-service restarted or was deployed in the last hour.
+                  3. If a dependency is named, check it; otherwise follow Mitigate in the runbook.
+                runbook_url: https://goa-dio.atlassian.net/wiki/spaces/ADSPA/pages/5226857671
+            - alert: ADSPLogError
+              expr: |
+                sum by (kubernetes_pod_name, kubernetes_container_name) (
+                  count_over_time(
+                    {kubernetes_namespace_name="${NAMESPACE}", kubernetes_container_name="form-service"}
+                      | json
+                      | level="error" [1m]
+                  )
+                ) > 0
+              for: 30s
+              labels:
+                service: form-service
+                namespace: ${NAMESPACE}
+                severity: warning
+              annotations:
+                summary: Sustained form-service error logs detected
+                description: >-
+                  Form service emitted {{ $value }} error-level log(s) in the last minute for pod
+                  {{ $labels.kubernetes_pod_name }} and container
+                  {{ $labels.kubernetes_container_name }}; the condition persisted for 30 seconds.
+                impact: >-
+                  Some applicants or administrators may see failures when saving, submitting or
+                  viewing forms; the service is usually still running.
+                first_steps: |
+                  1. Open Search logs and check whether the error affects one tenant, one form or all requests.
+                  2. Check whether form-service was deployed in the last hour or a dependency is failing.
+                  3. If only one tenant or form is affected, contact its form administrator.
+                runbook_url: https://goa-dio.atlassian.net/wiki/spaces/ADSPA/pages/5226857650

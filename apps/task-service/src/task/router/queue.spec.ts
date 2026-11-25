@@ -1,5 +1,5 @@
 import { adspId, UnauthorizedUserError } from '@abgov/adsp-service-sdk';
-import { NotFoundError } from '@core-services/core-common';
+import { InvalidOperationError, NotFoundError } from '@core-services/core-common';
 import { Request, Response } from 'express';
 import axios from 'axios';
 import { Logger } from 'winston';
@@ -28,6 +28,7 @@ describe('queue', () => {
     debug: jest.fn(),
     info: jest.fn(),
     warn: jest.fn(),
+    error: jest.fn(),
   } as unknown as Logger;
 
   const eventServiceMock = {
@@ -153,11 +154,25 @@ describe('queue', () => {
       verifyQueuedTask(req as unknown as Request, res as unknown as Response, next);
       expect(next).toHaveBeenCalledWith(expect.any(NotFoundError));
     });
+
+    it('can call next with invalid operation error for core user without tenant', async () => {
+      const req = {
+        user: { id: 'user-1', roles: [], isCore: true },
+        params: { namespace: queue.namespace, name: queue.name },
+        getConfiguration: getConfigurationMock,
+      };
+      const next = jest.fn();
+
+      await getQueue(req as unknown as Request, {} as Response, next);
+      expect(next).toHaveBeenCalledWith(expect.any(InvalidOperationError));
+      expect(getConfigurationMock).not.toHaveBeenCalled();
+    });
   });
 
   describe('getQueues', () => {
     it('can get queues', async () => {
       const req = {
+        tenant: { id: tenantId },
         user: { tenantId, id: 'user-1', roles: [] },
         getConfiguration: getConfigurationMock,
       };
@@ -171,11 +186,40 @@ describe('queue', () => {
       await getQueues(req as unknown as Request, res as unknown as Response, next);
       expect(res.send).toHaveBeenCalled();
     });
+
+    it.each([[[undefined]], [[{}]]])('can get empty queues when configuration is %j', async (config) => {
+      const req = {
+        tenant: { id: tenantId },
+        user: { tenantId, id: 'user-1', roles: [] },
+        getConfiguration: getConfigurationMock,
+      };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+
+      getConfigurationMock.mockResolvedValueOnce(config);
+
+      await getQueues(req as unknown as Request, res as unknown as Response, next);
+      expect(res.send).toHaveBeenCalledWith([]);
+    });
+
+    it('can call next with invalid operation error for core user without tenant', async () => {
+      const req = {
+        user: { id: 'user-1', roles: [], isCore: true },
+        getConfiguration: getConfigurationMock,
+      };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+
+      await getQueues(req as unknown as Request, res as unknown as Response, next);
+      expect(next).toHaveBeenCalledWith(expect.any(InvalidOperationError));
+      expect(res.send).not.toHaveBeenCalled();
+    });
   });
 
   describe('getQueue', () => {
     it('can get queue', async () => {
       const req = {
+        tenant: { id: tenantId },
         user: { tenantId, id: 'user-1', roles: [] },
         params: { namespace: queue.namespace, name: queue.name },
         getConfiguration: getConfigurationMock,
@@ -194,6 +238,7 @@ describe('queue', () => {
 
     it('can call next with not found error', async () => {
       const req = {
+        tenant: { id: tenantId },
         user: { tenantId, id: 'user-1', roles: [] },
         params: { namespace: queue.namespace, name: 'different' },
         getConfiguration: getConfigurationMock,
@@ -336,7 +381,7 @@ describe('queue', () => {
           status: expect.objectContaining({ [TaskStatus.Pending]: 3 }),
           queue: expect.objectContaining({ avg: 12, min: 10, max: 23 }),
           rate: expect.objectContaining({ since: expect.any(Date), created: 12 }),
-        })
+        }),
       );
     });
 
@@ -375,7 +420,7 @@ describe('queue', () => {
           name: queue.name,
           status: expect.objectContaining({ [TaskStatus.Pending]: 3 }),
           queue: null,
-        })
+        }),
       );
       expect(axios.get).not.toHaveBeenCalled();
     });
@@ -418,7 +463,7 @@ describe('queue', () => {
           status: expect.objectContaining({ [TaskStatus.Pending]: 0 }),
           queue: expect.objectContaining({ avg: 12, min: 10, max: 23 }),
           rate: expect.objectContaining({ since: expect.any(Date), created: 0 }),
-        })
+        }),
       );
     });
 
@@ -444,10 +489,24 @@ describe('queue', () => {
   });
 
   describe('createTask', () => {
-    const handler = createTask(apiId, loggerMock, repositoryMock, eventServiceMock, commentServiceMock, auditServiceMock);
+    const handler = createTask(
+      apiId,
+      loggerMock,
+      repositoryMock,
+      eventServiceMock,
+      commentServiceMock,
+      auditServiceMock,
+    );
 
     it('can create handler', () => {
-      const result = createTask(apiId, loggerMock, repositoryMock, eventServiceMock, commentServiceMock, auditServiceMock);
+      const result = createTask(
+        apiId,
+        loggerMock,
+        repositoryMock,
+        eventServiceMock,
+        commentServiceMock,
+        auditServiceMock,
+      );
       expect(result).toBeTruthy();
     });
 
@@ -519,8 +578,8 @@ describe('queue', () => {
 
     it('can call next with unauthorized user error', async () => {
       const req = {
-        user: { tenantId, id: 'user-1', roles: [] },
         tenant: { id: tenantId },
+        user: { tenantId, id: 'user-1', roles: [] },
         queue,
         body: { name: 'test', priority: 'High' },
       };
@@ -575,11 +634,11 @@ describe('queue', () => {
       expect(axiosMock.get).toHaveBeenCalledTimes(3);
       expect(axiosMock.get).toHaveBeenCalledWith(
         `${KEYCLOAK_ROOT_URL}/auth/admin/realms/test/clients`,
-        expect.any(Object)
+        expect.any(Object),
       );
       expect(axiosMock.get).toHaveBeenCalledWith(
         `${KEYCLOAK_ROOT_URL}/auth/admin/realms/test/clients/my-client/roles/tester/users`,
-        expect.any(Object)
+        expect.any(Object),
       );
       expect(res.send).toHaveBeenCalledTimes(1);
       expect(next).toHaveBeenCalledTimes(0);
@@ -633,12 +692,37 @@ describe('queue', () => {
 
       const error = new Error('something terribly wrong.');
       error['response'] = { status: 404 };
+      axiosMock.get.mockResolvedValue({ data: [] });
       axiosMock.get.mockRejectedValueOnce(error);
       axiosMock.isAxiosError.mockReturnValueOnce(true);
 
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(res.send).toHaveBeenCalledWith([]);
       expect(next).toHaveBeenCalledTimes(0);
+    });
+
+    it('can handle axios error from Keycloak with bad gateway', async () => {
+      const req = {
+        user: { tenantId, id: 'user-1', roles: ['test-worker'], token: { bearer: 'test' } },
+        tenant: { realm: 'test', id: tenantId },
+        queue,
+      };
+      const res = {
+        send: jest.fn(),
+      };
+      const next = jest.fn();
+
+      const error = new Error('keycloak is down.');
+      error['response'] = { status: 500 };
+      axiosMock.get.mockRejectedValueOnce(error);
+      axiosMock.isAxiosError.mockReturnValueOnce(true);
+
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(res.send).not.toHaveBeenCalled();
+      expect(loggerMock.error).toHaveBeenCalled();
+      expect(next).toHaveBeenCalledWith(
+        expect.objectContaining({ extra: expect.objectContaining({ statusCode: 502 }) }),
+      );
     });
   });
 });
