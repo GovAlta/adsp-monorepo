@@ -28,6 +28,7 @@ describe('queue', () => {
     debug: jest.fn(),
     info: jest.fn(),
     warn: jest.fn(),
+    error: jest.fn(),
   } as unknown as Logger;
 
   const eventServiceMock = {
@@ -691,12 +692,37 @@ describe('queue', () => {
 
       const error = new Error('something terribly wrong.');
       error['response'] = { status: 404 };
+      axiosMock.get.mockResolvedValue({ data: [] });
       axiosMock.get.mockRejectedValueOnce(error);
       axiosMock.isAxiosError.mockReturnValueOnce(true);
 
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(res.send).toHaveBeenCalledWith([]);
       expect(next).toHaveBeenCalledTimes(0);
+    });
+
+    it('can handle axios error from Keycloak with bad gateway', async () => {
+      const req = {
+        user: { tenantId, id: 'user-1', roles: ['test-worker'], token: { bearer: 'test' } },
+        tenant: { realm: 'test', id: tenantId },
+        queue,
+      };
+      const res = {
+        send: jest.fn(),
+      };
+      const next = jest.fn();
+
+      const error = new Error('keycloak is down.');
+      error['response'] = { status: 500 };
+      axiosMock.get.mockRejectedValueOnce(error);
+      axiosMock.isAxiosError.mockReturnValueOnce(true);
+
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(res.send).not.toHaveBeenCalled();
+      expect(loggerMock.error).toHaveBeenCalled();
+      expect(next).toHaveBeenCalledWith(
+        expect.objectContaining({ extra: expect.objectContaining({ statusCode: 502 }) }),
+      );
     });
   });
 });

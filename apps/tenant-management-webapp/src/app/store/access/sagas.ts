@@ -10,6 +10,8 @@ import {
   CreateKeycloakRoleAction,
   createKeycloakRoleSuccess,
   FETCH_KEYCLOAK_SERVICE_ROLES,
+  fetchKeycloakGroupsSuccess,
+  fetchKeycloakGroupsFailed,
 } from './actions';
 import { KeycloakApi } from './api';
 import { Role } from './models';
@@ -359,5 +361,20 @@ export function* createKeycloakClient(action: CreateKeycloakRoleAction): SagaIte
         data: null,
       })
     );
+  }
+}
+
+// Groups are read with the signed-in user's token, so Keycloak only returns them to users allowed to
+// query groups. A failure isn't reported as an error: the form editor falls back to typing the group path.
+export function* fetchKeycloakGroups(): SagaIterator {
+  const baseUrl: string = yield select((state: RootState) => state.config.keycloakApi?.url);
+  const realm: string = yield select((state: RootState) => state.session.realm);
+  try {
+    const token: string = yield call(getAccessToken);
+    const keycloakApi = new KeycloakApi(baseUrl, realm, token);
+    const groups = yield call([keycloakApi, keycloakApi.getGroups]);
+    yield put(fetchKeycloakGroupsSuccess(groups));
+  } catch {
+    yield put(fetchKeycloakGroupsFailed());
   }
 }

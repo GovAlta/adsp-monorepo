@@ -27,7 +27,8 @@ export function mapFormDefinition(entity: FormDefinition, revision: number, inta
     // Only the columns are of interest to clients; the questions email is internal routing
     // configuration and is deliberately not exposed to form applicants.
     reviewConfiguration: { columns: entity.reviewConfiguration?.columns || [] },
-    // Access group is internal provisioning configuration; only mapAdminFormDefinition exposes it.
+    // Access group, approver group and notification email are internal configuration and are not exposed here;
+    // mapAdminFormDefinition adds the access group for form-admin callers.
     registration: entity.registration
       ? {
           enabled: entity.registration.enabled,

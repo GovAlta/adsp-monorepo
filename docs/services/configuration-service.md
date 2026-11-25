@@ -28,7 +28,7 @@ Configuration is either **tenant** configuration, which belongs to one tenant, o
 - **Core users** (platform service accounts) act on the configuration of the tenant given by the `tenantId` query parameter. Without `tenantId`, they act on core configuration, including for writes.
 - **Anonymous requests** to `/active` and `/latest` name the tenant in the `tenant` query parameter, since there is no token. Without it, they read core configuration. Anonymous reads are only allowed when the configuration definition sets `anonymousRead`, and are rate limited to 200 requests per IP address in 5 minutes.
 - **Isolation.** A tenant user's requests are scoped to their tenant; there is no way for them to name another tenant's configuration. Finding configuration with `criteria` can't override the tenant.
-- **Role scope.** Roles are checked in the tenant of the configuration, and core users with a role have it for every tenant. The exception is finding configuration in a namespace, where the configuration-admin role must be held in the tenant; core users need the configured-service or export-job role.
+- **Role scope.** Roles are checked in the tenant of the configuration, and core users with a role have it for every tenant.
 
 ### Combining tenant and core configuration
 
@@ -42,7 +42,7 @@ All endpoints are under `https://configuration-service.adsp.alberta.ca/configura
 
 | Endpoint                                                     | Purpose                                                       | Required role                                                         |
 | :----------------------------------------------------------- | :------------------------------------------------------------ | :-------------------------------------------------------------------- |
-| `GET /configuration/{namespace}`                             | Find configuration in a namespace.                            | `configuration-admin` (tenant), `configured-service`, or `export-job` |
+| `GET /configuration/{namespace}`                             | Find configuration in a namespace.                            | `configuration-admin`, `configured-service`, or `export-job`          |
 | `GET /configuration/{namespace}/{name}`                      | Read configuration with its latest and active revisions.      | `configuration-reader`, `configuration-admin`, `configured-service`   |
 | `PATCH /configuration/{namespace}/{name}`                    | Update, replace, or remove properties of the latest revision. | `configuration-admin` or `configured-service`                         |
 | `POST /configuration/{namespace}/{name}`                     | Create a revision, or set the active revision.                | `configuration-admin`                                                 |

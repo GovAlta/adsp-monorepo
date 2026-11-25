@@ -30,7 +30,7 @@ describe('get_adsp_mcp_server_info', () => {
       name: 'adsp-sdk-mcp-server',
       version: readPackageVersion(),
       provenance: PROVENANCE,
-      bundled: { docPages: 2, sdkReferenceSymbols: SDK_REFERENCE.length },
+      bundled: { docPages: 3, sdkReferenceSymbols: SDK_REFERENCE.length },
       note: expect.stringContaining('as of 2026-11-12T20:00:00.000Z'),
     });
   });

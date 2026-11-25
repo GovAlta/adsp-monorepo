@@ -25,6 +25,11 @@ const owner = makeUser('owner-1', [PlannerServiceRoles.User]);
 const admin = makeUser('admin-1', [PlannerServiceRoles.Admin]);
 const stranger = makeUser('stranger-1', [PlannerServiceRoles.User]);
 const outsider = makeUser('outsider-1', []);
+const makeCoreUser = (roles: string[]): User =>
+  ({ id: 'core-1', name: 'core-1', roles, isCore: true }) as unknown as User;
+const coreAdmin = makeCoreUser([PlannerServiceRoles.Admin]);
+const coreUser = makeCoreUser([PlannerServiceRoles.User]);
+const coreOutsider = makeCoreUser([]);
 
 const makeRequest = (user: User, withTenant = true): Request =>
   ({
@@ -62,6 +67,14 @@ describe('planner access', () => {
     it('is false for a planner user', () => {
       expect(isPlannerAdmin(owner, tenantId)).toBe(false);
     });
+
+    it('is true for a core user with the planner admin role', () => {
+      expect(isPlannerAdmin(coreAdmin, tenantId)).toBe(true);
+    });
+
+    it('is false for a core user without the planner admin role', () => {
+      expect(isPlannerAdmin(coreUser, tenantId)).toBe(false);
+    });
   });
 
   describe('requirePlannerUser', () => {
@@ -85,6 +98,27 @@ describe('planner access', () => {
 
       expect(next).toHaveBeenCalledWith(expect.any(InvalidOperationError));
     });
+
+    it.each([
+      ['planner user', coreUser],
+      ['planner admin', coreAdmin],
+    ])('lets a core %s through when the request has a tenant', (_name, user) => {
+      requirePlannerUser(makeRequest(user), res, next);
+
+      expect(next).toHaveBeenCalledWith();
+    });
+
+    it('rejects a core user without a planner role', () => {
+      requirePlannerUser(makeRequest(coreOutsider), res, next);
+
+      expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedUserError));
+    });
+
+    it('rejects a core user when the request has no tenant', () => {
+      requirePlannerUser(makeRequest(coreAdmin, false), res, next);
+
+      expect(next).toHaveBeenCalledWith(expect.any(InvalidOperationError));
+    });
   });
 
   describe('requirePlannerAdmin', () => {
@@ -98,6 +132,12 @@ describe('planner access', () => {
       requirePlannerAdmin(makeRequest(owner), res, next);
 
       expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedUserError));
+    });
+
+    it('lets a core planner admin through when the request has a tenant', () => {
+      requirePlannerAdmin(makeRequest(coreAdmin), res, next);
+
+      expect(next).toHaveBeenCalledWith();
     });
   });
 
