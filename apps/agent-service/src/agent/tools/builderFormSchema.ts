@@ -1,5 +1,7 @@
-import { createTool } from '@mastra/core/tools';
+import { createTool, type ToolExecutionContext } from '@mastra/core/tools';
 import z from 'zod';
+import { FORM_GENERATION_AGENT_ID } from '../model/executionLimits';
+import type { AdspRequestContext } from '../types';
 import { validateFormSchemas } from '../agents/forms/schema';
 import { loadFormExamples } from '../agents/utils/loadFormExamples';
 
@@ -59,7 +61,15 @@ validation (required, patterns, custom messages), dataRegisters, computed, compl
         .describe('Example groups to load. At most three at a time.'),
     }),
     outputSchema: z.object({ examples: z.string() }),
-    execute: async ({ groups }) => ({ examples: loadFormExamples(groups) }),
+    // The form generation agent's own instructions carry a checklist of the anti-patterns, so it gets the examples
+    // alone, as single-line JSON: about half the tokens of a group with the best practices and anti-patterns.
+    execute: async ({ groups }, context?: ToolExecutionContext) => {
+      const requestContext = context?.requestContext as AdspRequestContext<{ agentId: string }> | undefined;
+      const formGeneration = requestContext?.get('agentId') === FORM_GENERATION_AGENT_ID;
+      return {
+        examples: loadFormExamples(groups, formGeneration ? { guidance: false, compactJson: true } : undefined),
+      };
+    },
   });
 
   return { builderFormSchemaValidate, formExamplesTool };

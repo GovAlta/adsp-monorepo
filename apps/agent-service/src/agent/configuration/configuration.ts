@@ -23,6 +23,7 @@ import {
   PDF_GENERATION_AGENT_ID,
 } from '../model/executionLimits';
 import { createAccessServiceSupervisorOptions } from '../agents/access/supervisorOptions';
+import { createFormGenerationAgentOptions } from '../agents/forms/generation/chat/stepOptions';
 import { createNotificationTemplateOptions } from '../agents/notificationOptions';
 import { createPdfSupervisorOptions } from '../agents/pdf/supervisorOptions';
 import { withContextualInstructions } from './contextualInstructions';
@@ -167,7 +168,7 @@ export class AgentServiceConfiguration {
 
       const sharedMemory = createAgentMemory(storage, environment.AGENT_OBSERVATIONAL_MEMORY);
       const agentMemory: Record<string, Memory> = {
-        [FORM_GENERATION_AGENT_ID]: createAgentMemory(storage, false),
+        [FORM_GENERATION_AGENT_ID]: createAgentMemory(storage, false, environment.AGENT_FORM_GENERATION_LAST_MESSAGES),
         [ACCESS_SERVICE_AGENT_ID]: createAgentMemory(storage, false, environment.AGENT_ACCESS_LAST_MESSAGES),
         [NOTIFICATION_TEMPLATE_AGENT_ID]: createAgentMemory(
           storage,
@@ -202,11 +203,18 @@ export class AgentServiceConfiguration {
               const supervisorOptions: Partial<AgentExecutionOptions<undefined>> =
                 key === ACCESS_SERVICE_AGENT_ID
                   ? createAccessServiceSupervisorOptions(this.logger, tenantId?.toString())
-                  : key === NOTIFICATION_TEMPLATE_AGENT_ID
-                    ? createNotificationTemplateOptions(configuration.instructions)
-                    : key === PDF_GENERATION_AGENT_ID
-                      ? createPdfSupervisorOptions(this.logger, readPdfDefinition)
-                      : {};
+                  : key === FORM_GENERATION_AGENT_ID
+                    ? createFormGenerationAgentOptions({
+                        logger: this.logger,
+                        directory: this.directory,
+                        tokenProvider: this.tokenProvider,
+                        tenantId: tenantId?.toString(),
+                      })
+                    : key === NOTIFICATION_TEMPLATE_AGENT_ID
+                      ? createNotificationTemplateOptions(configuration.instructions)
+                      : key === PDF_GENERATION_AGENT_ID
+                        ? createPdfSupervisorOptions(this.logger, readPdfDefinition)
+                        : {};
               const delegation = configuration.agents?.length
                 ? withDelegationAudit(this.auditService, tenantId, supervisorOptions.delegation)
                 : supervisorOptions.delegation;
