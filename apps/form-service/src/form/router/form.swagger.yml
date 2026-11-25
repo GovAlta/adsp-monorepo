@@ -257,6 +257,20 @@ components:
               description: >
                 Keycloak group containing the roles needed to access the form. Optional. Returned only to `form-admin`
                 callers.
+            approverGroup:
+              type: string
+              writeOnly: true
+              minLength: 1
+              maxLength: 255
+              description: >
+                Keycloak group whose members can approve or deny the form's access requests. Not returned by the
+                form APIs.
+            notificationEmail:
+              type: string
+              format: email
+              writeOnly: true
+              maxLength: 254
+              description: Address notified when an access request is submitted. Not returned by the form APIs.
             dataSchema:
               type: object
               description: >
@@ -376,6 +390,20 @@ components:
               description: >
                 Keycloak group containing the roles needed to access the form. Optional. Returned only to `form-admin`
                 callers.
+            approverGroup:
+              type: string
+              writeOnly: true
+              minLength: 1
+              maxLength: 255
+              description: >
+                Keycloak group whose members can approve or deny the form's access requests. Not returned by the
+                form APIs.
+            notificationEmail:
+              type: string
+              format: email
+              writeOnly: true
+              maxLength: 254
+              description: Address notified when an access request is submitted. Not returned by the form APIs.
             dataSchema:
               type: object
               description: >
