@@ -513,7 +513,7 @@ export const deleteEventAttendee =
 
 export const calendarEventBodySchema: Schema = {
   start: { isISO8601: true },
-  end: { isISO8601: true },
+  end: { optional: { options: { nullable: true } }, isISO8601: true },
   name: { isString: true, isLength: { options: { min: 1, max: 50 } } },
   description: { optional: true, isString: true },
   isPublic: { optional: true, isBoolean: true },

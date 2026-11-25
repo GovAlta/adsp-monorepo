@@ -365,7 +365,8 @@ components:
         end:
           type: string
           format: date-time
-          description: ISO 8601 date/time. Must not be before start.
+          nullable: true
+          description: Optional ISO 8601 date/time. Must not be before start. Events without an end have no end time.
         isPublic:
           type: boolean
           default: false
@@ -376,13 +377,16 @@ components:
           allOf:
             - $ref: '#/components/schemas/EventRecurrence'
           nullable: true
-      required: [name, start, end]
+      required: [name, start]
     CalendarEventUpdate:
       type: object
       description: >
-        Properties to change. Omitted properties are unchanged. end, name, description, and context can't be cleared,
-        and recordId can't be changed.
+        Properties to change. Omitted properties are unchanged. end, name, description, and context can't be cleared;
+        recordId can be set to null to clear it.
       properties:
+        recordId:
+          type: string
+          nullable: true
         context:
           type: object
         name:

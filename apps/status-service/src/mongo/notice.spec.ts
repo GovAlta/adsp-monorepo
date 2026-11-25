@@ -97,4 +97,9 @@ describe('Service status mongo repository', () => {
     const archived = await repo.find(10, 0, { mode: 'archived' });
     expect(archived.results.length).toEqual(1);
   });
+
+  it('returns null from get for an ID that is not an object ID', async () => {
+    expect(await repo.get('not-an-object-id', 'tenant')).toBeNull();
+    expect(await repo.get('abcdefghijkl', 'tenant')).toBeNull();
+  });
 });

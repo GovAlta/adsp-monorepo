@@ -1,4 +1,9 @@
-import { assertAuthenticatedHandler, NotFoundError, UnauthorizedError } from '@core-services/core-common';
+import {
+  assertAuthenticatedHandler,
+  InvalidOperationError,
+  NotFoundError,
+  UnauthorizedError,
+} from '@core-services/core-common';
 import { AuditService, EventService, TenantService } from '@abgov/adsp-service-sdk';
 import { Router, RequestHandler } from 'express';
 import { Logger } from 'winston';
@@ -48,11 +53,50 @@ function mapNotice(entity: NoticeApplicationEntity) {
     : null;
 }
 
+function getUserTenantId(user: User): string {
+  if (!user.tenantId) {
+    throw new InvalidOperationError('Notice requests require a token with a tenant context.');
+  }
+  return user.tenantId.toString();
+}
+
+function isValidDate(value: unknown): boolean {
+  return (typeof value === 'string' || value instanceof Date) && !isNaN(new Date(value).getTime());
+}
+
+function validateNoticeBody({ message, tennantServRef, startDate, endDate }: Record<string, unknown>) {
+  const errors: string[] = [];
+  if (typeof message !== 'string' || !message.trim()) {
+    errors.push('message is required');
+  }
+  if (!Array.isArray(tennantServRef)) {
+    errors.push('tennantServRef must be an array');
+  }
+  if (!isValidDate(startDate)) {
+    errors.push('startDate must be a valid date');
+  }
+  if (!isValidDate(endDate)) {
+    errors.push('endDate must be a valid date');
+  }
+  if (errors.length) {
+    throw new InvalidOperationError(`Notice is not valid: ${errors.join(', ')}.`);
+  }
+}
+
+function validateUpdateDates({ startDate, endDate }: Record<string, unknown>) {
+  const errors = Object.entries({ startDate, endDate })
+    .filter(([, value]) => value !== undefined && !isValidDate(value))
+    .map(([field]) => `${field} must be a valid date`);
+  if (errors.length) {
+    throw new InvalidOperationError(`Notice is not valid: ${errors.join(', ')}.`);
+  }
+}
+
 export const getNotices =
   (logger: Logger, tenantService: TenantService, noticeRepository: NoticeRepository): RequestHandler =>
   async (req, res, next) => {
     const { top, after, mode } = req.query;
-    const tenantName = req.query.name as string;
+    const tenantName = typeof req.query.name === 'string' ? req.query.name : undefined;
     const user = req.user as User;
 
     logger.info(req.method, req.url);
@@ -63,17 +107,15 @@ export const getNotices =
 
     try {
       if (!anonymous) {
-        filter.tenantId = user.tenantId.toString();
-      } else {
-        if (tenantName) {
-          // tenant is an array, but it shall only contain 1 or 0 element
-          const tenant = (await tenantService.getTenants()).filter((tenant) => {
-            return tenant.name.toLowerCase() === tenantName.toLowerCase();
-          });
-          if (tenant) {
-            filter.tenantId = tenant[0].id.toString();
-          }
+        filter.tenantId = getUserTenantId(user);
+      } else if (tenantName) {
+        const tenant = (await tenantService.getTenants()).find(
+          (tenant) => tenant.name.toLowerCase() === tenantName.toLowerCase(),
+        );
+        if (!tenant) {
+          throw new NotFoundError('tenant', tenantName);
         }
+        filter.tenantId = tenant.id.toString();
       }
 
       if (isAdmin) {
@@ -103,7 +145,7 @@ export const getNoticeById =
     try {
       const { id } = req.params;
       const user = req.user as User;
-      const notice = await noticeRepository.get(id, user.tenantId.toString());
+      const notice = await noticeRepository.get(id, getUserTenantId(user));
 
       if (!notice) {
         throw new NotFoundError('Service Notice', id);
@@ -128,7 +170,7 @@ export const deleteNotice =
     try {
       const { id } = req.params;
       const user = req.user as User;
-      const notice = await noticeRepository.get(id, user.tenantId.toString());
+      const notice = await noticeRepository.get(id, getUserTenantId(user));
 
       if (!notice) {
         throw new NotFoundError('Service Notice', id);
@@ -157,6 +199,8 @@ export const createNotice =
     try {
       const { message, startDate, endDate, isAllApplications, tennantServRef } = req.body;
       const user = req.user as User;
+      const tenantId = getUserTenantId(user);
+      validateNoticeBody(req.body);
       const tenant = await tenantService.getTenant(user.tenantId);
 
       const notice = await NoticeApplicationEntity.create(user, noticeRepository, {
@@ -168,7 +212,7 @@ export const createNotice =
         mode: 'draft',
         created: new Date(),
         isAllApplications: isAllApplications || false,
-        tenantId: user.tenantId.toString(),
+        tenantId,
       });
 
       auditStatus(auditService, logger, NoticeCreatedAuditAction, user, toNoticeAuditDetails(notice));
@@ -197,7 +241,9 @@ export const updateNotice =
 
     try {
       // TODO: this needs to be moved to a service
-      const notice = await noticeRepository.get(id, user.tenantId.toString());
+      const tenantId = getUserTenantId(user);
+      validateUpdateDates(req.body);
+      const notice = await noticeRepository.get(id, tenantId);
       if (!notice) {
         throw new NotFoundError('Service Notice', id);
       }

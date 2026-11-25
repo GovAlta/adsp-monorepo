@@ -433,6 +433,15 @@ export const getRoleUsers =
               });
             } else if (err.response?.status === HttpStatusCodes.FORBIDDEN) {
               throw new UnauthorizedUserError('get role users', user);
+            } else {
+              logger.error(`Failed to retrieve users of role '${role}' from Keycloak: ${err}`, {
+                context: 'TaskRouter',
+                tenantId: tenant.id.toString(),
+                user: `${user.name} (ID: ${user.id})`,
+              });
+              throw new InvalidOperationError(`Failed to retrieve users of role '${role}'.`, {
+                statusCode: HttpStatusCodes.BAD_GATEWAY,
+              });
             }
           } else {
             throw err;
@@ -516,6 +525,10 @@ export function createQueueRouter({
           description: { optional: true, isString: true },
           recordId: { optional: true, isString: true },
           context: { optional: true, isObject: true },
+          priority: {
+            optional: { options: { nullable: true } },
+            isIn: { options: [Object.keys(TaskPriority).filter((key) => isNaN(Number(key)))] },
+          },
         },
         ['body'],
       ),
@@ -540,6 +553,7 @@ export function createQueueRouter({
           description: { optional: true, isString: true },
           context: { optional: true, isObject: true },
           data: { optional: true, isObject: true },
+          priority: { optional: true, isInt: { options: { min: TaskPriority.Normal, max: TaskPriority.Urgent } } },
         },
         ['body'],
       ),

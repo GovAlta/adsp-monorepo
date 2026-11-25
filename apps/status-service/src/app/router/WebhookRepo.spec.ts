@@ -1,5 +1,5 @@
 import { adspId, ConfigurationService } from '@abgov/adsp-service-sdk';
-import { WebhookRepo } from '../WebhookRepo';
+import { WebhookRepo } from './WebhookRepo';
 
 describe('WebhookRepo', () => {
   afterEach(() => {
@@ -31,6 +31,18 @@ describe('WebhookRepo', () => {
   const repo = new WebhookRepo(tokenProviderMock, configurationServiceMock as unknown as ConfigurationService);
 
   describe('getWebhooks', () => {
+    it('returns no webhooks when the push service configuration has none', async () => {
+      configurationServiceMock.getConfiguration.mockResolvedValueOnce({});
+
+      await expect(repo.getWebhooks(tenantId)).resolves.toEqual({});
+    });
+
+    it('returns undefined from getWebhook when no webhooks are configured', async () => {
+      configurationServiceMock.getConfiguration.mockResolvedValueOnce(null);
+
+      await expect(repo.getWebhook('hook-1', tenantId)).resolves.toBeUndefined();
+    });
+
     it('returns push service webhooks with the tenant id applied', async () => {
       configurationServiceMock.getConfiguration.mockResolvedValueOnce({ webhooks: { 'hook-1': webhook } });
 
