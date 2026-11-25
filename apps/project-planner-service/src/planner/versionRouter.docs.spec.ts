@@ -49,6 +49,7 @@ describe('version router documented behaviour', () => {
   const admin = tenantUser('admin', [PlannerServiceRoles.Admin]);
   const plain = tenantUser('plain', []);
   const core = { id: 'core', name: 'core', isCore: true, roles: [PlannerServiceRoles.Admin] } as unknown as User;
+  const coreWithoutRole = { id: 'core-plain', name: 'core-plain', isCore: true, roles: [] } as unknown as User;
 
   const solution: Solution = {
     id: SOLUTION_ID,
@@ -171,8 +172,13 @@ describe('version router documented behaviour', () => {
       expect(res.status).toBe(403);
     });
 
-    it('returns 403 for a core user with a tenant', async () => {
+    it('succeeds for a core planner-admin who sets a tenantId', async () => {
       const res = await send(createApp(core), method, `${path}?tenantId=${tenantId}`, body);
+      expect(res.status).toBe(200);
+    });
+
+    it('returns 403 for a core user without a planner role who sets a tenantId', async () => {
+      const res = await send(createApp(coreWithoutRole), method, `${path}?tenantId=${tenantId}`, body);
       expect(res.status).toBe(403);
     });
 
