@@ -1,3 +1,4 @@
+// clean-code-ignore: RULE-19 — swagger metadata; no runtime code to test.
 module.exports = {
   openapi: '3.0.0',
   info: {

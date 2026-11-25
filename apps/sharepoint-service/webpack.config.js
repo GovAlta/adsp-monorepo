@@ -1,5 +1,5 @@
 const { composePlugins, withNx } = require('@nx/webpack');
-const SwaggerJSDocWebpackPlugin = require('swagger-jsdoc-webpack-plugin');
+const SwaggerJSDocWebpackPlugin = require('swagger-jsdoc-webpack-plugin'); // clean-code-ignore: RULE-19 — build config; the build runs it, no runtime code to test.
 const swaggerDefinition = require('./swagger.config');
 
 module.exports = composePlugins(withNx(), (config) => {
