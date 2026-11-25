@@ -181,6 +181,25 @@ objects:
           maxSurge: 25%
       revisionHistoryLimit: 10
       progressDeadlineSeconds: 600
+  - apiVersion: policy/v1
+    kind: PodDisruptionBudget
+    metadata:
+      labels:
+        app: ${APP_NAME}
+        component: api
+        apply-dev: "true"
+        apply-test: "true"
+        apply-uat: "true"
+        apply-prod: "true"
+      name: ${APP_NAME}
+      namespace: ${NAMESPACE}
+    spec:
+      # Node drains evict one API pod at a time.
+      maxUnavailable: 1
+      selector:
+        matchLabels:
+          app: ${APP_NAME}
+          component: api
   - apiVersion: v1
     kind: Service
     metadata:

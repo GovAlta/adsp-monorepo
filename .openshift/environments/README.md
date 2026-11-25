@@ -74,3 +74,19 @@ Left unchanged on purpose:
 | Prometheus and collector memory | Prometheus has OOMKilled at 2Gi; the collector limit is paired with `memory_limiter`.    |
 | Front-end apps                  | nginx gzips responses on the fly, so a lower CPU limit would slow page loads.            |
 | Other Node services (20m/100m)  | Already at the 20m minimum request; the 100m limit leaves headroom for startup.          |
+
+## Production replicas
+
+`tenant-management-gateway`, `project-planner-service`, `project-planner-app` and the
+`dashboard-metrics` API take a `REPLICAS` parameter. It defaults to 2 so a node drain does not take
+them down in production; dev and uat override it to 1. `tenant-management-api`, `form-service` and
+`file-service` have a PodDisruptionBudget with `maxUnavailable: 1` on their API pods.
+
+These stay at 1 replica on purpose:
+
+| Workload                                         | Reason                                                                 |
+| ------------------------------------------------ | ---------------------------------------------------------------------- |
+| `*-redis`                                        | Standalone Redis without replication; some use a ReadWriteOnce volume. |
+| `audit-service-job`, `tenant-management-api-job` | In-process cron schedulers; a second pod would run every job twice.    |
+| Other `*-job` Deployments                        | Run scheduled jobs in process, such as status-service health checks.   |
+| `file-av-scanner`                                | ClamAV is memory-heavy and uses the Recreate strategy.                 |
