@@ -37,7 +37,7 @@ oc process -f .openshift/observability/observability-stack.yml \
   --param-file .openshift/environments/dev/observability-stack.env \
   -p ENVIRONMENT_NAME=dev \
   -p NAMESPACE=adsp-dev \
-  -p INFRA_NAMESPACE=core-services-infra \
+  -p INFRA_NAMESPACE=adsp-build \
   -p IMAGE_TAG=latest \
   -p IMAGE_IMPORT_SCHEDULED=false \
   -p GRAFANA_SECRET_NAME=grafana \
@@ -61,8 +61,11 @@ CPU and memory for each component are template parameters (for example `PROMETHE
 default to the production values. `.openshift/environments/<env>/observability-stack.env` overrides them
 for dev and uat; omit `--param-file` for an environment without a file.
 
-The account applying the template must be allowed to create/update ImageStreams in
-`INFRA_NAMESPACE`.
+The dev, uat and prod stacks use `INFRA_NAMESPACE=adsp-build`, the namespace that holds the platform
+service images; the template default `core-services-infra` is not used. The account applying the
+template must be allowed to create/update ImageStreams in `INFRA_NAMESPACE`. An account without that
+permission can apply everything except the `ImageStream` objects, as long as the ImageStreams already
+exist there.
 
 Grafana credentials and OAuth client credentials are sourced from an existing secret
 (`GRAFANA_SECRET_NAME`). The stack template does not generate this secret.
@@ -74,9 +77,9 @@ Reference secret manifest:
 To refresh imported images on demand (instead of periodic polling):
 
 ```sh
-oc import-image -n core-services-infra tempo:latest --from=grafana/tempo:2.7.2 --confirm
-oc import-image -n core-services-infra otel-collector:latest --from=ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector-contrib:0.125.0 --confirm
-oc import-image -n core-services-infra grafana:latest --from=grafana/grafana:11.5.2 --confirm
+oc import-image -n adsp-build tempo:latest --from=grafana/tempo:2.7.2 --confirm
+oc import-image -n adsp-build otel-collector:latest --from=ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector-contrib:0.125.0 --confirm
+oc import-image -n adsp-build grafana:latest --from=grafana/grafana:11.5.2 --confirm
 ```
 
 To see the generated Grafana route host:
