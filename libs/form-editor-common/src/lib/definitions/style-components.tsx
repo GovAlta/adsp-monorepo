@@ -74,6 +74,12 @@ export const ReviewEmptyState = styled.p`
   margin: var(--goa-space-s) 0 0;
 `;
 
+export const AccessRequestsTabLabel = styled.span`
+  display: inline-flex;
+  align-items: center;
+  gap: var(--goa-space-2xs);
+`;
+
 export const LifecycleLabelRow = styled.div`
   display: flex;
   align-items: center;
