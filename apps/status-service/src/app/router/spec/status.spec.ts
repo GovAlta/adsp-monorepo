@@ -637,5 +637,46 @@ describe('Service router', () => {
       expect(auditServiceMock.record).not.toHaveBeenCalledWith(ApplicationDeletedAuditAction, expect.anything());
       expect(nextMock).toHaveBeenCalled();
     });
+    it('responds and audits without waiting for the application data cleanup', async () => {
+      const repo = {
+        getApp: jest.fn().mockResolvedValue({ name: 'Bob', url: 'http://a' }),
+        findStatus: jest.fn().mockResolvedValue(null),
+        deleteApp: jest.fn().mockResolvedValue(undefined),
+        deleteAppData: jest.fn().mockReturnValue(new Promise(() => undefined)),
+      } as unknown as ApplicationRepo;
+      const handler = deleteApplication(loggerMock, repo, eventServiceMock, auditServiceMock);
+      const req = { user: { tenantId, id: 'test', roles: ['test-updater'] }, params: { appKey: bobsAppKey } };
+      await handler(req as unknown as Request, resMock, nextMock);
+      expect(resMock.sendStatus).toHaveBeenCalledWith(204);
+      expect(auditServiceMock.record).toHaveBeenCalledWith(ApplicationDeletedAuditAction, expect.anything());
+      expect(repo.deleteAppData).toHaveBeenCalledWith(bobsAppKey, req.user);
+    });
+    it('logs a failed data cleanup without failing the delete', async () => {
+      const repo = {
+        getApp: jest.fn().mockResolvedValue({ name: 'Bob', url: 'http://a' }),
+        findStatus: jest.fn().mockResolvedValue(null),
+        deleteApp: jest.fn().mockResolvedValue(undefined),
+        deleteAppData: jest.fn().mockRejectedValue(new Error('Request timed out')),
+      } as unknown as ApplicationRepo;
+      const handler = deleteApplication(loggerMock, repo, eventServiceMock, auditServiceMock);
+      const req = { user: { tenantId, id: 'test', roles: ['test-updater'] }, params: { appKey: bobsAppKey } };
+      await handler(req as unknown as Request, resMock, nextMock);
+      await new Promise(process.nextTick);
+      expect(resMock.sendStatus).toHaveBeenCalledWith(204);
+      expect(nextMock).not.toHaveBeenCalled();
+      expect(loggerMock.error).toHaveBeenCalledWith(expect.stringContaining('Request timed out'));
+    });
+    it('does not clean up data when removing the application fails', async () => {
+      const repo = {
+        getApp: jest.fn().mockResolvedValue({ name: 'Bob', url: 'http://a' }),
+        findStatus: jest.fn().mockResolvedValue(null),
+        deleteApp: jest.fn().mockRejectedValue(new Error('boom')),
+        deleteAppData: jest.fn(),
+      } as unknown as ApplicationRepo;
+      const handler = deleteApplication(loggerMock, repo, eventServiceMock, auditServiceMock);
+      const req = { user: { tenantId, id: 'test', roles: ['test-updater'] }, params: { appKey: bobsAppKey } };
+      await handler(req as unknown as Request, resMock, nextMock);
+      expect(repo.deleteAppData).not.toHaveBeenCalled();
+    });
   });
 });

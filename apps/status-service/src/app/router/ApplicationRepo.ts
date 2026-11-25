@@ -181,17 +181,18 @@ export class ApplicationRepo {
       throw new NotFoundError('Status application', appKey);
     }
 
-    // Delete the app status
+    // Removing the app from configuration is what removes it from the application list; the rest is cleanup.
+    await this.#deleteConfigurationApp(appKey, user.tenantId);
+  };
+
+  // Removes the data of a deleted application. Can be slow, so it is run apart from the delete request.
+  deleteAppData = async (appKey: string, user: User) => {
     const appStatus = await this.getStatus(user, appKey);
     if (appStatus) {
       await appStatus.delete({ ...user } as User);
     }
 
-    // Delete its health status
-    await this.#endpointStatusEntryRepository.deleteAll(app.appKey, user.tenantId.toString());
-
-    // Delete the app itself.
-    this.#deleteConfigurationApp(appKey, user.tenantId);
+    await this.#endpointStatusEntryRepository.deleteAll(appKey, user.tenantId.toString());
   };
 
   #deleteConfigurationApp = async (id: string, tenantId: AdspId) => {
