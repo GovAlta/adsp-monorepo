@@ -80,7 +80,7 @@ console and select the `core` realm.
 1. **Clients → Create client**. Client type **OpenID Connect**, client ID `urn:ads:platform:adsp-mcp`. **Next**.
 2. Client authentication **Off**, authorization **Off**. Under authentication flow, tick only **Standard flow**:
    untick direct access grants, implicit flow, service accounts and the device and CIBA grants. **Next**.
-3. Valid redirect URIs: each URI in [Loopback redirect URIs](#loopback-redirect-uris), one per line. Web origins:
+3. Valid redirect URIs: each URI in [Loopback redirect URIs] and add the production lookback urls(#loopback-redirect-uris), one per line. Web origins:
    `https://vscode.dev` and `http://localhost:6274`. **Save**.
 4. **Settings → Login settings**: consent required **On**. **Save**.
 5. **Advanced → Advanced settings**: Proof Key for Code Exchange code challenge method **S256**. **Save**.
@@ -100,9 +100,7 @@ console and select the `core` realm.
 5. **Advanced → Advanced settings**: Proof Key for Code Exchange code challenge method **S256**. **Save**.
 6. **Client scopes**: check that `email` is listed with assigned type **Default**. If it isn't, **Add client scope
    → `email` → Add → Default**.
-7. **Client scopes → `urn:ads:platform:adsp-mcp-server-dedicated` → Scope**: full scope allowed **Off**. Then
-   **Assign role**, filter by realm roles, and assign `beta-tester` and `tenant-service-admin`.
-8. **Save**
+7. **Save**
 
 Then check both clients as below.
 
@@ -128,8 +126,9 @@ New tenant realms get `adsp-mcp` from `createAdspMcpPublicClientConfig` in
 - Dev and UAT: `<MCP_PUBLIC_URL>/oauth/callback,http://localhost:<port>/oauth/callback`.
 
 Each URL must be exact, with no wildcards, and https (plain http only on `localhost`). tenant-management-api
-refuses to start otherwise. If the variable is unset, the client has no redirect URIs and nobody can sign in
-through it.
+refuses to start otherwise. Deployed images set `NODE_ENV=production`, so there an unset variable leaves the client
+with no redirect URIs and nobody can sign in through it. Run locally, it defaults to
+`http://localhost:3000/oauth/callback`.
 
 | Setting                                                 | Value                                                                                                                                                                                                                                                                                         |
 | ------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

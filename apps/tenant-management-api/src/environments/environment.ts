@@ -39,8 +39,8 @@ export const environment = envalid.cleanEnv(
     SUBSCRIBER_APP_HOST: envalid.str({ default: 'http://localhost:4200' }),
     API_APP_HOST: envalid.str({ default: 'http://localhost:4200' }),
     // Comma separated. Production: only https://<public-url>/oauth/callback; dev and UAT also add the localhost one.
-    // Unset leaves adsp-mcp with no redirect URIs, so no sign-in is possible rather than a localhost one.
-    MCP_SERVER_CALLBACK_URLS: callbackUrls({ default: [] }),
+    // Deployed images set NODE_ENV=production, so there an unset value gives no redirect URIs, never a localhost one.
+    MCP_SERVER_CALLBACK_URLS: callbackUrls({ default: [], devDefault: ['http://localhost:3000/oauth/callback'] }),
     CLIENT_ID: envalid.str({ default: 'urn:ads:platform:tenant-service' }),
     CLIENT_SECRET: envalid.str({ default: '' }),
     APP_ENVIRONMENT: envalid.str({ default: 'dev' }),
