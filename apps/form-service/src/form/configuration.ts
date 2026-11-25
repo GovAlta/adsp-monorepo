@@ -90,6 +90,8 @@ export const configurationSchema = {
       properties: {
         enabled: { type: 'boolean' },
         accessGroup: { type: 'string', minLength: 1, maxLength: 255 },
+        approverGroup: { type: 'string', minLength: 1, maxLength: 255 },
+        notificationEmail: { type: 'string', pattern: '^\\S+@\\S+\\.\\S+$', maxLength: 254 },
         dataSchema: {
           allOf: [
             { $ref: 'http://json-schema.org/draft-07/schema#' },

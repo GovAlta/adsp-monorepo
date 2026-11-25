@@ -33,6 +33,30 @@ describe('mapper', () => {
         enabled: false,
       });
     });
+
+    it('does not return the approver group and notification email', () => {
+      const dataSchema = { type: 'object', properties: { licence: { type: 'string' } } };
+      const uiSchema = { type: 'VerticalLayout', elements: [{ type: 'Control', scope: '#/properties/licence' }] };
+      const withQuestions = {
+        ...definition,
+        registration: {
+          enabled: true,
+          accessGroup: 'test-access',
+          approverGroup: 'test-approvers',
+          notificationEmail: 'approvals@test.co',
+          dataSchema,
+          uiSchema,
+        },
+      } as unknown as FormDefinition;
+
+      expect(mapFormDefinition(withQuestions, 1).registration).toEqual({ enabled: true, dataSchema, uiSchema });
+      expect(mapAdminFormDefinition(withQuestions, 1).registration).toEqual({
+        enabled: true,
+        accessGroup: 'test-access',
+        dataSchema,
+        uiSchema,
+      });
+    });
   });
 
   const repositoryMock = {

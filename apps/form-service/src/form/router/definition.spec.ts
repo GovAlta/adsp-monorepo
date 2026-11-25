@@ -863,6 +863,48 @@ describe('definition router', () => {
       expect(next).not.toHaveBeenCalled();
     });
 
+    it('adds the approver group and notification email and keeps enabled and the access group', async () => {
+      const existingDefinition = {
+        id: 'test',
+        name: 'Test',
+        registration: { enabled: true, accessGroup: 'test-users' },
+      };
+      const expectedPatchedDefinition = {
+        ...existingDefinition,
+        registration: {
+          enabled: true,
+          accessGroup: 'test-users',
+          approverGroup: 'test-approvers',
+          notificationEmail: 'approvals@test.co',
+        },
+      };
+
+      axiosMock.get.mockResolvedValue({ status: HttpStatusCodes.OK, data: existingDefinition });
+      mockPatchSuccess(expectedPatchedDefinition, 2);
+
+      const req = {
+        user: { tenantId, id: 'tester', roles: [FormServiceRoles.Admin], isCore: true },
+        params: { definitionId: 'test' },
+        body: { registration: { approverGroup: 'test-approvers', notificationEmail: 'approvals@test.co' } },
+        tenant: { id: tenantId },
+      };
+      const res = { status: jest.fn().mockReturnThis(), send: jest.fn() };
+      const next = jest.fn();
+
+      await patchFormDefinition(directoryMock, tokenProviderMock)(
+        req as unknown as Request,
+        res as unknown as Response,
+        next,
+      );
+
+      expect(axiosMock.patch).toHaveBeenCalledWith(
+        expect.stringContaining('test'),
+        { operation: 'REPLACE', configuration: expectedPatchedDefinition },
+        expect.any(Object),
+      );
+      expect(next).not.toHaveBeenCalled();
+    });
+
     it('defaults enabled to false when patching registration on a definition without registration', async () => {
       const existingDefinition = { id: 'test', name: 'Test' };
       const expectedPatchedDefinition = {

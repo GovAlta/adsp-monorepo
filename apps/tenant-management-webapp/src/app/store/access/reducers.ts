@@ -3,6 +3,8 @@ import {
   FETCH_SERVICE_ROLES_SUCCESS,
   FETCH_KEYCLOAK_SERVICE_ROLES_SUCCESS,
   CREATE_KEYCLOAK_ROLE_SUCCESS,
+  FETCH_KEYCLOAK_GROUPS_SUCCESS,
+  FETCH_KEYCLOAK_GROUPS_FAILED,
 } from './actions';
 import { ACCESS_INIT, AccessState, SERVICE_ROLES_INIT, ServiceRoleState } from './models';
 
@@ -19,6 +21,10 @@ export default function accessReducer(state: AccessState = ACCESS_INIT, action: 
       };
     case 'tenant/access/RESET':
       return { ...ACCESS_INIT };
+    case FETCH_KEYCLOAK_GROUPS_SUCCESS:
+      return { ...state, groups: action.payload, groupsFailed: false };
+    case FETCH_KEYCLOAK_GROUPS_FAILED:
+      return { ...state, groups: [], groupsFailed: true };
     default:
       return state;
   }
