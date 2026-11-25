@@ -33,6 +33,8 @@ import { Feedback } from './types';
 import { FeedbackSummaryQueryParameters, ReadQueryParameters, ValueService } from './value';
 import { FeedbackSiteService } from './feedbackSiteService';
 
+const toTenantName = (nameInUrl: string): string => nameInUrl.replace(/-/g, ' ');
+
 export function resolveFeedbackContext(
   tenantService: TenantService,
   rateLimitHandler: RateLimitRequestHandler,
@@ -44,7 +46,7 @@ export function resolveFeedbackContext(
       if (!req.tenant && tenantValue) {
         req.tenant = AdspId.isAdspId(tenantValue)
           ? await tenantService.getTenant(AdspId.parse(tenantValue))
-          : await tenantService.getTenantByName(tenantValue.replace('-', ' '));
+          : await tenantService.getTenantByName(toTenantName(tenantValue));
       }
 
       if (!req.tenant) {
@@ -202,7 +204,7 @@ export const getSites =
       const tenantName = (req.query?.tenant as string) || null;
       const doCount = req.query?.count === 'true';
       if (tenantName && doCount) {
-        const tenant = await tenantService.getTenantByName(tenantName.replace('-', ' '));
+        const tenant = await tenantService.getTenantByName(toTenantName(tenantName));
         if (tenant) {
           const sites = await feedbackSiteService.countTenantSites([tenant.id]);
           res.json(sites);
@@ -211,7 +213,7 @@ export const getSites =
           throw new InvalidOperationError(`Tenant '${tenantName}' not found.`);
         }
       } else if (tenantName) {
-        const tenant = await tenantService.getTenantByName(tenantName.replace('-', ' '));
+        const tenant = await tenantService.getTenantByName(toTenantName(tenantName));
         if (tenant) {
           const sites = await feedbackSiteService.getTenantSites([tenant.id]);
           res.json(sites);
