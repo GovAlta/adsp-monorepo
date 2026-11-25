@@ -3,6 +3,8 @@ const mockEnvironment = {
   MODEL_URL: 'https://models.test/openai/v1',
   MODEL_API_KEY: 'model-key',
   AGENT_ACCESS_MAX_OUTPUT_TOKENS: 1000,
+  AGENT_FORM_GENERATION_MAX_OUTPUT_TOKENS: 4000,
+  AGENT_FORM_GENERATION_REASONING_EFFORT: '',
   AGENT_NOTIFICATION_MAX_OUTPUT_TOKENS: 6000,
   AGENT_PDF_MAX_OUTPUT_TOKENS: 10000,
 };
@@ -11,7 +13,12 @@ jest.mock('../../environments/environment', () => ({ environment: mockEnvironmen
 
 import type { LanguageModelV3 } from '@ai-sdk/provider';
 import { getAgentModelConfiguration, getAgentProviderOptions } from './modelConfiguration';
-import { ACCESS_SERVICE_AGENT_ID, NOTIFICATION_TEMPLATE_AGENT_ID, PDF_GENERATION_AGENT_ID } from './executionLimits';
+import {
+  ACCESS_SERVICE_AGENT_ID,
+  FORM_GENERATION_AGENT_ID,
+  NOTIFICATION_TEMPLATE_AGENT_ID,
+  PDF_GENERATION_AGENT_ID,
+} from './executionLimits';
 
 const PROMPT = [
   { role: 'user' as const, content: [{ type: 'text' as const, text: 'Which clients are in the realm?' }] },
@@ -152,6 +159,26 @@ describe('getAgentProviderOptions', () => {
 
     // Assert
     expect(options).toBeUndefined();
+  });
+
+  it('limits form generation chat replies and keeps tool calls sequential', () => {
+    // Act
+    const options = getAgentProviderOptions(FORM_GENERATION_AGENT_ID);
+
+    // Assert
+    expect(options).toEqual({ openai: { max_completion_tokens: 4000, parallel_tool_calls: false } });
+  });
+
+  it('leaves form generation replies unlimited when its limit is 0', () => {
+    // Arrange
+    mockEnvironment.AGENT_FORM_GENERATION_MAX_OUTPUT_TOKENS = 0;
+
+    // Act
+    const options = getAgentProviderOptions(FORM_GENERATION_AGENT_ID);
+
+    // Assert
+    expect(options).toEqual({ openai: { parallel_tool_calls: false } });
+    mockEnvironment.AGENT_FORM_GENERATION_MAX_OUTPUT_TOKENS = 4000;
   });
 
   it('adds nothing for other agents without a reasoning effort', () => {
