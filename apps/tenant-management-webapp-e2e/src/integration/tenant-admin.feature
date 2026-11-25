@@ -213,7 +213,8 @@ Feature: Tenant admin
     And a GET request to the Keycloak auth endpoint for realm "<Tenant Name>" should return "400", "Realm not enabled"
     And the tenant with id "<Tenant ID>" and name "<Tenant Name>" should appear in the list for "GET /api/tenant/v2/tenants?status=archived"
     And the event log should contain a "tenant-service:tenant-archived" event for tenant with id "<Tenant ID>" in the last 5 minutes
-    And the audit log should contain a "tenant.archived" action for tenant with id "<Tenant ID>" in the last 5 minutes
+    ## No audit service access from adsp build agent and can't be verified in e2e nightly run
+    # And the audit log should contain a "tenant.archived" action for tenant with id "<Tenant ID>" in the last 5 minutes
     # Step 2: Restore
     When a user with tenant-service-admin role sends a POST request to "/api/tenant/v2/tenants/<Tenant ID>/restore"
     Then "200" is returned with a response having "active" as status, "<Tenant ID>" in id, "<Tenant Name>" as name and no deletedAt record

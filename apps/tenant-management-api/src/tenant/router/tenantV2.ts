@@ -156,7 +156,9 @@ export function updateTenantName(
       const newTenant = await repository.save(tenant);
 
       if (newTenant) {
-        eventService.send(tenantNameUpdated(req.user, { ...newTenant, id: AdspId.parse(mapTenant(newTenant).id) }));
+        // Map the entity first: spreading the TenantEntity would copy its repository into the event payload.
+        const updated = mapTenant(newTenant);
+        eventService.send(tenantNameUpdated(user, { ...updated, id: AdspId.parse(updated.id) }));
         void auditService.record(
           TenantUpdatedAuditAction,
           toTenantAuditDetails(user, mapTenant(tenant), {

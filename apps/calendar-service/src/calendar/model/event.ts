@@ -81,6 +81,10 @@ export class CalendarEventEntity implements CalendarEvent {
       this.description = update.description;
     }
 
+    if ('recordId' in update) {
+      this.recordId = update.recordId;
+    }
+
     if ('isPublic' in update) {
       this.isPublic = update.isPublic;
     }

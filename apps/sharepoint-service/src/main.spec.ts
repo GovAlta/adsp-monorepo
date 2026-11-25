@@ -9,6 +9,7 @@ const mockLocalFileSource = jest.fn();
 const mockFileServiceSource = jest.fn();
 const mockSharePointFileService = jest.fn();
 const mockLibraryDriveResolver = jest.fn();
+const mockCreateShutdownHandler = jest.fn();
 const mockLogger = { info: jest.fn(), error: jest.fn(), debug: jest.fn(), warn: jest.fn() };
 const mockEnvironment: Record<string, unknown> = {};
 
@@ -38,13 +39,15 @@ jest.mock('@abgov/adsp-service-sdk', () => ({
 jest.mock('@core-services/core-common', () => ({
   createLogger: () => mockLogger,
   createErrorHandler: jest.fn(),
+  createShutdownHandler: mockCreateShutdownHandler,
 }));
 jest.mock('./environments/environment', () => ({ environment: mockEnvironment }));
 jest.mock('./mongo', () => ({ connectMongo: mockConnectMongo }));
 jest.mock('./sharepoint', () => ({
   ...jest.requireActual('./sharepoint/configuration'),
   ...jest.requireActual('./sharepoint/roles'),
-  ...jest.requireActual('./sharepoint/files/events'),
+  SharePointAuditActions: 'audit-actions',
+  SharePointEventDefinitions: 'event-definitions',
   createSharePointRouter: mockCreateSharePointRouter,
   CredentialStore: jest.fn(),
   FileServiceSource: mockFileServiceSource,
@@ -59,9 +62,17 @@ jest.mock('./sharepoint', () => ({
   parseEncryptionKeyring: jest.fn(() => ({ current: { version: 1, key: Buffer.alloc(32) } })),
 }));
 
+// The first test compiles main and type-checks the modules it imports, which outlasts the default on a cold cache.
+jest.setTimeout(20000);
+
 describe('main', () => {
   const healthCheck = jest.fn();
   const clearCached = jest.fn();
+  const shutdownTelemetry = jest.fn();
+  const auditService = { record: jest.fn(), flush: jest.fn() };
+  const server = { on: jest.fn() };
+  const shutdown = jest.fn();
+  let processOnce: jest.SpyInstance;
   const platform = {
     coreStrategy: 'core-strategy',
     tenantStrategy: 'tenant-strategy',
@@ -69,11 +80,13 @@ describe('main', () => {
     configurationHandler: 'configuration-handler',
     configurationService: { clearCached },
     directory: 'directory',
+    auditService,
     eventService: 'event-service',
     tokenProvider: 'token-provider',
     healthCheck,
     metricsHandler: 'metrics-handler',
     traceHandler: 'trace-handler',
+    shutdownTelemetry,
   };
 
   const startMain = async () => {
@@ -108,8 +121,15 @@ describe('main', () => {
     mockConnectMongo.mockResolvedValue({ credentialRepository: {}, isConnected: () => true });
     mockCreateSharePointRouter.mockReturnValue('sharepoint-router');
     mockGraphTokenProvider.mockImplementation(() => ({ getToken: mockGetToken, evict: jest.fn() }));
-    mockApp.listen.mockReturnValue({ on: jest.fn() });
+    mockApp.listen.mockReturnValue(server);
     healthCheck.mockResolvedValue({ access: true });
+    mockCreateShutdownHandler.mockReturnValue(shutdown);
+    // Keep test runs from registering real signal listeners.
+    processOnce = jest.spyOn(process, 'once').mockImplementation(() => process);
+  });
+
+  afterEach(() => {
+    processOnce.mockRestore();
   });
 
   it('registers roles and configuration with the platform, with cache invalidation on', async () => {
@@ -151,16 +171,42 @@ describe('main', () => {
 
     expect(mockFileServiceSource).toHaveBeenCalledWith('directory', 'token-provider');
     expect(mockLocalFileSource).not.toHaveBeenCalled();
-    expect(mockSharePointFileService.mock.calls[0][4]).toBe('event-service');
-    expect(mockSharePointFileService.mock.calls[0][5]).toBeInstanceOf(mockLibraryDriveResolver);
-    expect(mockSharePointFileService.mock.calls[0][6]).toBe(3);
+    expect(mockSharePointFileService.mock.calls[0][4]).toBeInstanceOf(mockLibraryDriveResolver);
+    expect(mockSharePointFileService.mock.calls[0][5]).toBe(3);
   });
 
-  it('registers the file upload events with the platform', async () => {
+  it('registers the audit actions and the events admins can be notified of', async () => {
     await startMain();
     const [options] = mockInitializePlatform.mock.calls[0];
 
-    expect(options.events.map(({ name }) => name)).toEqual(['file-uploaded', 'file-upload-failed']);
+    expect(options.auditActions).toBe('audit-actions');
+    expect(options.events).toBe('event-definitions');
+  });
+
+  it('gives the router the audit and event clients', async () => {
+    await startMain();
+
+    expect(mockCreateSharePointRouter.mock.calls[0][0]).toEqual(
+      expect.objectContaining({ auditService, eventService: 'event-service' }),
+    );
+  });
+
+  it('creates the shutdown handler with the server, audit client and telemetry', async () => {
+    await startMain();
+
+    expect(mockCreateShutdownHandler).toHaveBeenCalledWith({
+      serviceName: 'SharePoint service',
+      server,
+      auditService,
+      shutdownTelemetry,
+      logger: mockLogger,
+    });
+  });
+
+  it.each(['SIGTERM', 'SIGINT'])('shuts down gracefully on %s', async (signal) => {
+    await startMain();
+
+    expect(processOnce).toHaveBeenCalledWith(signal, shutdown);
   });
 
   it('reads files from a local directory when one is configured', async () => {
