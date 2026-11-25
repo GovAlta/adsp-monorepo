@@ -18,6 +18,9 @@ export default class MongoNoticeRepository implements NoticeRepository {
   }
 
   async get(id: string, tenantId: string): Promise<NoticeApplicationEntity> {
+    if (!/^[0-9a-fA-F]{24}$/.test(id)) {
+      return null;
+    }
     const doc = await this.model.findOne({ _id: id });
     if (tenantId && doc && doc.tenantId !== tenantId) {
       return Promise.resolve(null);
