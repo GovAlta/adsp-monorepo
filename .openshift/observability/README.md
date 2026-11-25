@@ -50,13 +50,22 @@ Each deploy job:
 1. Renders the template with `render-stack.sh <env>` and dry-runs it against `adsp-<env>`.
 2. Points the environment's ImageStream tags in `adsp-build` at the source images (`oc tag`) and imports
    them, failing if an import does not succeed.
-3. Applies everything except the ImageStreams to `adsp-<env>`, with each Deployment's image set to the
-   imported digest so it rolls once.
+3. Applies everything except the ImageStreams and the RoleBinding to `adsp-<env>`, with each Deployment's
+   image set to the imported digest so it rolls once.
 4. Restarts a Deployment whose ConfigMap changed but whose pods were not replaced by the apply. The
    components, the collector included, read their config only at startup.
 5. Waits for the four Deployments to roll out and checks that they run the imported images.
 
 It does not back up Grafana's database or apply the dashboards; see [Dashboards](#dashboards).
+
+The deploy account has `edit` in `adsp-<env>`, which cannot read or write RoleBindings, so the job skips
+RoleBinding `grafana-metrics-view` (see [Cluster metrics](#cluster-metrics)). It exists in dev, uat and
+prod. A namespace admin applies it when it is new or changes:
+
+```sh
+ENV=dev
+.openshift/observability/render-stack.sh $ENV | jq '.items |= map(select(.kind == "RoleBinding"))' | oc apply -n adsp-$ENV -f -
+```
 
 ### Parameters
 
@@ -125,7 +134,8 @@ jq -r '.items[] | select(.kind == "ImageStream") | "\(.metadata.name):\(.spec.ta
   oc tag -n adsp-build --source=docker "$source" "$tag" --reference-policy=local
   oc import-image -n adsp-build "$tag" --reference-policy=local
 done
-jq '.items |= map(select(.kind != "ImageStream"))' observability.$ENV.json > objects.$ENV.json
+# Add RoleBinding objects back if the account is a namespace admin.
+jq '.items |= map(select(.kind | IN("ImageStream", "RoleBinding") | not))' observability.$ENV.json > objects.$ENV.json
 oc diff -n adsp-$ENV -f objects.$ENV.json   # review before applying
 oc apply -n adsp-$ENV -f objects.$ENV.json
 oc rollout restart deployment/otel-collector -n adsp-$ENV   # if only its ConfigMap changed
