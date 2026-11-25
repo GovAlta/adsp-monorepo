@@ -24,7 +24,8 @@ import { ClientSecretRotationRoles } from './roles';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const DAY_SECONDS = 24 * 60 * 60;
-const EMAIL = /^[^\s@,]+@[^\s@,]+\.[^\s@,]+$/;
+// Domain labels exclude '.', so the pattern cannot backtrack polynomially.
+const EMAIL = /^[^\s@,]+@[^\s@,.]+(?:\.[^\s@,.]+)+$/;
 // Keycloak limits the length of a client attribute value.
 const MAX_CONTACTS_LENGTH = 255;
 const TENANT_ROTATION_MODES: RotationMode[] = ['off', 'selected'];
