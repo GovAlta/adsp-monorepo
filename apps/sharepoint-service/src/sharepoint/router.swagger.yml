@@ -1,0 +1,892 @@
+components:
+  parameters:
+    SharePointTenantId:
+      name: tenantId
+      description: >-
+        ID of the tenant to act on. Only used for core (platform) service accounts, which must set it; tenant users and
+        service accounts always act on the tenant of their token and this parameter is ignored. Must be the full URN
+        of an existing tenant.
+      in: query
+      required: false
+      schema:
+        type: string
+      example: urn:ads:platform:tenant-service:v2:/tenants/61f2e3a8c9b1d2e3f4a5b6c7
+    ConnectionId:
+      name: connectionId
+      description: ID of the connection, as configured under connections in the tenant's SharePoint configuration.
+      in: path
+      required: true
+      schema:
+        type: string
+        pattern: '^[a-zA-Z0-9-_]{1,50}$'
+      example: intake-site
+    DestinationId:
+      name: destinationId
+      description: ID of the destination, as configured under destinations in the tenant's SharePoint configuration.
+      in: path
+      required: true
+      schema:
+        type: string
+        pattern: '^[a-zA-Z0-9-_]{1,50}$'
+      example: grant-applications
+  requestBodies:
+    SharePointData:
+      description: >-
+        The data to write as a row. Mappings read values from it by data path. Send _adsp.key to identify the row
+        when the destination updates existing rows (idempotencyFields ["_adsp.key"]).
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            additionalProperties: true
+            properties:
+              _adsp:
+                type: object
+                properties:
+                  key:
+                    type: string
+                    description: >-
+                      Unique key of the row, chosen by the caller, for example a submission ID. Written to the
+                      AdspItemKey column and used to find the row to update.
+          example:
+            applicant:
+              firstName: Test
+              lastName: User
+              email: test.user@gov.ab.ca
+            program: Community grant
+            dependents:
+              - name: Test Dependent
+                age: 7
+            _adsp:
+              key: 64f1c2a3b4c5d6e7f8a9b0c1
+  responses:
+    SharePointBadRequest:
+      description: >-
+        Request is invalid. For example, an ID does not match the allowed pattern, the body is not a JSON object, a
+        core service account did not set tenantId, the data has no value for a row identity field, or a detail list
+        path does not hold an array of at most 100 items.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/SharePointErrorMessage'
+          example:
+            errorMessage: Data must have a value at row identity field '_adsp.key'.
+    SharePointUnauthorized:
+      description: Request does not include a valid bearer token.
+      content:
+        text/plain:
+          schema:
+            type: string
+          example: Unauthorized
+    SharePointAdminForbidden:
+      description: User does not have the sharepoint-admin role in the tenant.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/SharePointErrorMessage'
+          example:
+            errorMessage: 'User Test User (ID: 7d2b6c3e-1f4a-4b8e-9c0d-2a5e6f7b8c9d) not permitted to test SharePoint destination.'
+    SharePointWriterForbidden:
+      description: User does not have the sharepoint-writer role in the tenant, or as a core service account.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/SharePointErrorMessage'
+          example:
+            errorMessage: 'User Test User (ID: 7d2b6c3e-1f4a-4b8e-9c0d-2a5e6f7b8c9d) not permitted to push SharePoint data.'
+    SharePointDestinationNotFound:
+      description: >-
+        The tenant has no destination with the ID, or the destination's connection is not configured. IDs of another
+        tenant's destinations respond 404.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/SharePointErrorMessage'
+          example:
+            errorMessage: SharePoint destination with ID 'grant-applications' could not be found.
+    SharePointWriteConflict:
+      description: >-
+        The destination can't be written to until a tenant administrator changes it. destination-disabled: the
+        destination is turned off. destination-not-set-up: a detail list or the document library has a name but no
+        ID yet. credential-not-set: the connection has no client secret. credential-unreadable: the saved client
+        secret can no longer be decrypted and must be entered again.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/SharePointFailure'
+          examples:
+            disabled:
+              summary: Destination is disabled
+              value:
+                errorCode: destination-disabled
+            noSecret:
+              summary: Connection has no client secret
+              value:
+                errorCode: credential-not-set
+    SharePointCredentialConflict:
+      description: >-
+        The connection's client secret can't be used. credential-not-set: no secret is set. credential-unreadable: the
+        saved secret can no longer be decrypted and must be entered again.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/SharePointFailure'
+          example:
+            errorCode: credential-not-set
+    SharePointUpstreamFailure:
+      description: >-
+        Microsoft Entra or Graph rejected or failed the request after the service's retries. retryable is true when a
+        later attempt may succeed, for example after throttling or an outage.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/SharePointFailure'
+          example:
+            errorCode: graph:accessDenied
+            retryable: false
+  schemas:
+    SharePointErrorMessage:
+      type: object
+      properties:
+        errorMessage:
+          type: string
+      required: [errorMessage]
+      example:
+        errorMessage: SharePoint destination with ID 'grant-applications' could not be found.
+    SharePointFailure:
+      type: object
+      properties:
+        errorCode:
+          type: string
+          description: >-
+            Why the request failed. entra:AADSTS<code> and graph:<code> come from Microsoft Entra sign-in and Microsoft
+            Graph; file:<code> is about reading a file from File Service; network and unknown are failures without a
+            response. Other codes are described on the response.
+        retryable:
+          type: boolean
+          description: Whether a later attempt of the whole request may succeed.
+        column:
+          type: string
+          description: Internal name of the list column that Graph rejected, when it names one.
+      required: [errorCode]
+      example:
+        errorCode: graph:invalidRequest
+        retryable: false
+        column: ProgramName
+    CredentialStatus:
+      type: object
+      properties:
+        isSet:
+          type: boolean
+        updatedAt:
+          type: string
+          format: date-time
+          description: When the secret was last set. Absent when no secret is set.
+      required: [isSet]
+      example:
+        isSet: true
+        updatedAt: '2026-11-18T17:24:05.112Z'
+    DetailRows:
+      type: object
+      description: The rows written to one detail list.
+      properties:
+        listId:
+          type: string
+        rowIds:
+          type: array
+          items:
+            type: string
+      required: [listId, rowIds]
+      example:
+        listId: 6b1e7c2d-4f3a-4e8b-9c0d-1a2b3c4d5e6f
+        rowIds: ['31', '32']
+    DetailFailure:
+      type: object
+      description: The detail rows of one detail list that a push could not write or clean up.
+      properties:
+        listId:
+          type: string
+        indexes:
+          type: array
+          description: Indexes of the array items that were not written.
+          items:
+            type: integer
+        oldRowsLeft:
+          type: integer
+          description: Rows from before this push that could not be deleted.
+        newRowsLeft:
+          type: integer
+          description: Rows written by this push that could not be removed after the failure.
+        column:
+          type: string
+      required: [listId, indexes]
+      example:
+        listId: 6b1e7c2d-4f3a-4e8b-9c0d-1a2b3c4d5e6f
+        indexes: [1]
+    PushResult:
+      type: object
+      properties:
+        dataId:
+          type: string
+          description: SharePoint item ID of the main row.
+        outcome:
+          type: string
+          enum: [created, updated]
+        date:
+          type: string
+          format: date-time
+        detailRows:
+          type: array
+          description: Only for destinations with detail lists.
+          items:
+            $ref: '#/components/schemas/DetailRows'
+      required: [dataId, outcome, date]
+      example:
+        dataId: '42'
+        outcome: created
+        date: '2026-11-18T17:30:12.418Z'
+    TestResult:
+      type: object
+      properties:
+        ok:
+          type: boolean
+        outcome:
+          type: string
+          enum: [created, updated]
+          description: Only when ok is true.
+        detailRows:
+          type: array
+          items:
+            $ref: '#/components/schemas/DetailRows'
+        errorCode:
+          type: string
+          description: >-
+            Only when ok is false. Besides the Entra, Graph and network codes, row-identity-missing means the data has
+            no value for a row identity field, destination-not-set-up means a detail list or the document library
+            isn't created yet, document-library-not-found and not-a-document-library mean the destination's document
+            library can't be used, and credential-not-set or credential-unreadable mean the connection's secret must
+            be entered.
+        column:
+          type: string
+        detailFailures:
+          type: array
+          items:
+            $ref: '#/components/schemas/DetailFailure'
+      required: [ok]
+      example:
+        ok: true
+        outcome: created
+    FileUploadRequest:
+      type: object
+      properties:
+        submissionId:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Folder that the files are uploaded to in the destination's document library.
+        files:
+          type: array
+          minItems: 1
+          maxItems: 20
+          items:
+            type: object
+            properties:
+              field:
+                type: string
+                minLength: 1
+                maxLength: 200
+                description: Data path that the file's link is written to in data.
+              fileId:
+                type: string
+                minLength: 1
+                maxLength: 300
+                description: File Service file ID, or its urn:ads:platform:file-service URN.
+            required: [field, fileId]
+        data:
+          type: object
+          additionalProperties: true
+          description: Data to write as a row once every file has uploaded. Without it, only the files are uploaded.
+        updateRowOnly:
+          type: boolean
+          description: >-
+            Set only the main row's columns that are in data, on the row that already has the key, and leave detail
+            lists alone. The row write fails with row-not-found (retryable) when no row has the key yet, or
+            row-identity-missing when the destination doesn't update rows by key.
+      required: [submissionId, files]
+      example:
+        submissionId: 64f1c2a3b4c5d6e7f8a9b0c1
+        files:
+          - field: proofOfIncome
+            fileId: urn:ads:platform:file-service:v1:/files/64f1c2a3b4c5d6e7f8a9b0d1
+        data:
+          applicant:
+            firstName: Test
+            lastName: User
+          _adsp:
+            key: 64f1c2a3b4c5d6e7f8a9b0c1
+    FileUploadResult:
+      type: object
+      properties:
+        files:
+          type: array
+          items:
+            type: object
+            properties:
+              field:
+                type: string
+              fileId:
+                type: string
+              status:
+                type: string
+                enum: [uploaded, failed]
+              id:
+                type: string
+                description: SharePoint item ID of the uploaded file.
+              name:
+                type: string
+              url:
+                type: string
+              size:
+                type: integer
+              errorCode:
+                type: string
+              retryable:
+                type: boolean
+            required: [field, fileId, status]
+        row:
+          type: object
+          description: >-
+            The row write. Absent when data was not sent or a file failed. A row whose detail rows failed is reported
+            as not written, with the main row's dataId.
+          properties:
+            written:
+              type: boolean
+            dataId:
+              type: string
+            outcome:
+              type: string
+              enum: [created, updated]
+            detailRows:
+              type: array
+              items:
+                $ref: '#/components/schemas/DetailRows'
+            errorCode:
+              type: string
+            retryable:
+              type: boolean
+            detailFailures:
+              type: array
+              items:
+                $ref: '#/components/schemas/DetailFailure'
+          required: [written]
+      required: [files]
+      example:
+        files:
+          - field: proofOfIncome
+            fileId: urn:ads:platform:file-service:v1:/files/64f1c2a3b4c5d6e7f8a9b0d1
+            status: uploaded
+            id: 01ABCDEFGHIJKLMNOPQRSTUVWXYZ
+            name: pay-stub.pdf
+            url: https://contoso.sharepoint.com/sites/intake/Shared%20Documents/64f1c2a3b4c5d6e7f8a9b0c1/pay-stub.pdf
+            size: 48213
+        row:
+          written: true
+          dataId: '42'
+          outcome: created
+    VerifyResult:
+      type: object
+      properties:
+        ready:
+          type: boolean
+          description: Whether every list exists and every column is as expected.
+        lists:
+          type: array
+          items:
+            type: object
+            properties:
+              kind:
+                type: string
+                enum: [main, detail]
+              listId:
+                type: string
+              listName:
+                type: string
+              dataPath:
+                type: string
+              status:
+                type: string
+                enum: [ok, notCreated, notFound]
+              columns:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                    displayName:
+                      type: string
+                    purpose:
+                      type: string
+                      enum: [key, parent, folder, mapped]
+                    expectedType:
+                      type: string
+                      enum: [text, multilineText, number, dateTime, boolean, multiChoice, hyperlink]
+                    status:
+                      type: string
+                      enum: [ok, missing, notIndexed, wrongType]
+                    actualType:
+                      type: string
+                    matchingName:
+                      type: string
+                      description: Internal name of a column whose display name matches, when the name doesn't.
+                  required: [name, displayName, purpose, status]
+            required: [kind, status, columns]
+        documentLibrary:
+          type: object
+          description: >-
+            Only when the destination sets a document library ID or name. ready is false unless its status is ok.
+          properties:
+            libraryId:
+              type: string
+            libraryName:
+              type: string
+            status:
+              type: string
+              enum: [ok, notCreated, notFound, notADocumentLibrary]
+          required: [status]
+      required: [ready, lists]
+      example:
+        ready: false
+        lists:
+          - kind: main
+            listId: 0c1d2e3f-4a5b-4c6d-8e7f-9a0b1c2d3e4f
+            status: ok
+            columns:
+              - name: AdspItemKey
+                displayName: AdspItemKey
+                purpose: key
+                expectedType: text
+                status: notIndexed
+                actualType: text
+    SetupResult:
+      type: object
+      properties:
+        createdLists:
+          type: array
+          description: Detail lists that were created. Save their list IDs on the destination.
+          items:
+            type: object
+            properties:
+              index:
+                type: integer
+                description: Index of the detail list in the destination's detailLists.
+              dataPath:
+                type: string
+              listName:
+                type: string
+              listId:
+                type: string
+        createdLibrary:
+          type: object
+          description: The document library that was created from documentFilesLibraryName. Save its ID on the destination.
+          properties:
+            libraryName:
+              type: string
+            libraryId:
+              type: string
+        createdColumns:
+          type: array
+          items:
+            type: object
+            properties:
+              listId:
+                type: string
+              name:
+                type: string
+        indexedColumns:
+          type: array
+          items:
+            type: object
+            properties:
+              listId:
+                type: string
+              name:
+                type: string
+        failures:
+          type: array
+          items:
+            type: object
+            properties:
+              listId:
+                type: string
+              name:
+                type: string
+              errorCode:
+                type: string
+                description: >-
+                  For example library-name-taken, when a list or library already has the document library's name.
+                  It is never taken over.
+        permissionDenied:
+          type: boolean
+          description: >-
+            The app registration's grant can't change lists or columns. report then shows what the site owner has to
+            add.
+        report:
+          $ref: '#/components/schemas/VerifyResult'
+      required: [createdLists, createdColumns, indexedColumns, failures, permissionDenied, report]
+      example:
+        createdLists:
+          - index: 0
+            dataPath: dependents
+            listName: Grant dependents
+            listId: 6b1e7c2d-4f3a-4e8b-9c0d-1a2b3c4d5e6f
+        createdColumns:
+          - listId: 6b1e7c2d-4f3a-4e8b-9c0d-1a2b3c4d5e6f
+            name: ParentItem
+        indexedColumns:
+          - listId: 0c1d2e3f-4a5b-4c6d-8e7f-9a0b1c2d3e4f
+            name: AdspItemKey
+        failures: []
+        permissionDenied: false
+        report:
+          ready: true
+          lists: []
+
+/sharepoint/v1/connections/{connectionId}/credentials:
+  parameters:
+    - $ref: '#/components/parameters/ConnectionId'
+  get:
+    tags:
+      - Connection
+    description: >-
+      Gets whether the connection has a client secret, and when it was set. Never returns the secret. Requires the
+      sharepoint-admin role in the tenant. A connection that isn't configured reports isSet false.
+    responses:
+      200:
+        description: Status successfully retrieved.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CredentialStatus'
+      400:
+        $ref: '#/components/responses/SharePointBadRequest'
+      401:
+        $ref: '#/components/responses/SharePointUnauthorized'
+      403:
+        $ref: '#/components/responses/SharePointAdminForbidden'
+  put:
+    tags:
+      - Connection
+    description: >-
+      Sets the client secret of the connection's Microsoft Entra app registration. The secret is encrypted and stored
+      by the service, and can't be read back. Replaces any earlier secret, and the next push signs in with the new one.
+      Reads the tenant's configuration fresh, so a connection saved a moment before is found. Requires the
+      sharepoint-admin role in the tenant.
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              clientSecret:
+                type: string
+                minLength: 1
+                maxLength: 1024
+                writeOnly: true
+            required: [clientSecret]
+          example:
+            clientSecret: example-client-secret-value
+    responses:
+      200:
+        description: Secret successfully set.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CredentialStatus'
+      400:
+        $ref: '#/components/responses/SharePointBadRequest'
+      401:
+        $ref: '#/components/responses/SharePointUnauthorized'
+      403:
+        $ref: '#/components/responses/SharePointAdminForbidden'
+      404:
+        description: The tenant has no connection with the ID.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SharePointErrorMessage'
+            example:
+              errorMessage: SharePoint connection with ID 'intake-site' could not be found.
+  delete:
+    tags:
+      - Connection
+    description: >-
+      Deletes the connection's client secret, so pushes through it fail with credential-not-set until a new one is set.
+      Requires the sharepoint-admin role in the tenant. Responds 204 whether or not a secret was set.
+    responses:
+      204:
+        description: Secret deleted.
+      400:
+        $ref: '#/components/responses/SharePointBadRequest'
+      401:
+        $ref: '#/components/responses/SharePointUnauthorized'
+      403:
+        $ref: '#/components/responses/SharePointAdminForbidden'
+
+/sharepoint/v1/destinations/{destinationId}/data:
+  parameters:
+    - $ref: '#/components/parameters/DestinationId'
+    - $ref: '#/components/parameters/SharePointTenantId'
+  post:
+    tags:
+      - Destination
+    description: >-
+      Writes the data as a row in the destination's list, using its field mappings, and the items of each detail list
+      path as rows in that detail list. When the destination updates existing rows, a push with the same key updates
+      the row instead of adding one, so a push can safely be repeated. Nothing is stored by the service. Sends
+      push-failed when a retry won't fix the failure. Requires the sharepoint-writer role, in the tenant or as a core
+      service account with tenantId.
+    requestBody:
+      $ref: '#/components/requestBodies/SharePointData'
+    responses:
+      200:
+        description: Row successfully written.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PushResult'
+      400:
+        $ref: '#/components/responses/SharePointBadRequest'
+      401:
+        $ref: '#/components/responses/SharePointUnauthorized'
+      403:
+        $ref: '#/components/responses/SharePointWriterForbidden'
+      404:
+        $ref: '#/components/responses/SharePointDestinationNotFound'
+      409:
+        $ref: '#/components/responses/SharePointWriteConflict'
+      502:
+        description: >-
+          Microsoft Entra or Graph rejected or failed the write after the service's retries. When the main row was
+          written but some detail rows were not, the response also has dataId and detailFailures; repeating the push
+          corrects the detail rows.
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/SharePointFailure'
+                - type: object
+                  properties:
+                    dataId:
+                      type: string
+                    detailFailures:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/DetailFailure'
+            examples:
+              throttled:
+                summary: Graph kept throttling the requests
+                value:
+                  errorCode: graph:TooManyRequests
+                  retryable: true
+              detailRows:
+                summary: A detail row failed
+                value:
+                  errorCode: graph:invalidRequest
+                  retryable: false
+                  dataId: '42'
+                  detailFailures:
+                    - listId: 6b1e7c2d-4f3a-4e8b-9c0d-1a2b3c4d5e6f
+                      indexes: [1]
+                      column: Age
+
+/sharepoint/v1/destinations/{destinationId}/files:
+  parameters:
+    - $ref: '#/components/parameters/DestinationId'
+    - $ref: '#/components/parameters/SharePointTenantId'
+  post:
+    tags:
+      - Destination
+    description: >-
+      Reads each file from File Service and uploads it to the destination's document library (the site's Documents
+      library unless the destination sets another) under {submissionId}/{filename}, then writes data as a row with
+      each file's link at its field. The row is written only when every file uploaded, so the whole request can safely
+      be repeated: files are overwritten by path, and the row is updated when its key matches. Sends
+      file-upload-failed, and push-failed for the row, when a retry won't fix the failure. Requires the
+      sharepoint-writer role, in the tenant or as a core service account with tenantId.
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/FileUploadRequest'
+    responses:
+      200:
+        description: Every file uploaded, and the row was written if data was sent.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FileUploadResult'
+      400:
+        $ref: '#/components/responses/SharePointBadRequest'
+      401:
+        $ref: '#/components/responses/SharePointUnauthorized'
+      403:
+        $ref: '#/components/responses/SharePointWriterForbidden'
+      404:
+        $ref: '#/components/responses/SharePointDestinationNotFound'
+      409:
+        $ref: '#/components/responses/SharePointWriteConflict'
+      502:
+        description: >-
+          A file failed or the row could not be written. The body reports each file and the row; failed items have an
+          errorCode and retryable. A failure before any file was tried, such as Entra sign-in or a document library
+          that can't be used (document-library-not-found, not-a-document-library), has only errorCode and retryable.
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - $ref: '#/components/schemas/FileUploadResult'
+                - $ref: '#/components/schemas/SharePointFailure'
+            example:
+              files:
+                - field: proofOfIncome
+                  fileId: urn:ads:platform:file-service:v1:/files/64f1c2a3b4c5d6e7f8a9b0d1
+                  status: failed
+                  errorCode: file:not-ready
+                  retryable: true
+
+/sharepoint/v1/destinations/{destinationId}/test:
+  parameters:
+    - $ref: '#/components/parameters/DestinationId'
+  post:
+    tags:
+      - Destination
+    description: >-
+      Pushes the data through the same logic as a real push, including to a disabled destination, and reports the
+      result rather than failing. The row is really written, so use test data. Reads the tenant's configuration fresh,
+      so a destination saved a moment before is used. Requires the sharepoint-admin role in the tenant.
+    requestBody:
+      $ref: '#/components/requestBodies/SharePointData'
+    responses:
+      200:
+        description: Test completed; ok reports whether the push succeeded.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TestResult'
+            examples:
+              created:
+                summary: Row was written
+                value:
+                  ok: true
+                  outcome: created
+              rejected:
+                summary: Graph rejected a column
+                value:
+                  ok: false
+                  errorCode: graph:invalidRequest
+                  column: ProgramName
+      400:
+        $ref: '#/components/responses/SharePointBadRequest'
+      401:
+        $ref: '#/components/responses/SharePointUnauthorized'
+      403:
+        $ref: '#/components/responses/SharePointAdminForbidden'
+      404:
+        $ref: '#/components/responses/SharePointDestinationNotFound'
+
+/sharepoint/v1/destinations/{destinationId}/verify:
+  parameters:
+    - $ref: '#/components/parameters/DestinationId'
+  post:
+    tags:
+      - Destination
+    description: >-
+      Checks that the destination's main list and detail lists exist and have the columns its mappings need, with the
+      right types and indexes, and that its document library can be used. Reads column definitions only, never rows.
+      Reads the tenant's configuration fresh. Requires the sharepoint-admin role in the tenant.
+    responses:
+      200:
+        description: Lists successfully checked.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VerifyResult'
+      400:
+        $ref: '#/components/responses/SharePointBadRequest'
+      401:
+        $ref: '#/components/responses/SharePointUnauthorized'
+      403:
+        $ref: '#/components/responses/SharePointAdminForbidden'
+      404:
+        $ref: '#/components/responses/SharePointDestinationNotFound'
+      409:
+        $ref: '#/components/responses/SharePointCredentialConflict'
+      502:
+        $ref: '#/components/responses/SharePointUpstreamFailure'
+
+/sharepoint/v1/destinations/{destinationId}/setup:
+  parameters:
+    - $ref: '#/components/parameters/DestinationId'
+  post:
+    tags:
+      - Destination
+    description: >-
+      Creates the detail lists that have a list name but no list ID and the document library named in
+      documentFilesLibraryName when it has no ID, adds the missing columns, and indexes the row key and parent
+      reference columns. Only adds; existing columns are never changed or deleted. The caller saves the new list and
+      library IDs on the destination. Needs an owner or fullcontrol grant on the site; with a write grant it reports
+      permissionDenied instead. Reads the tenant's configuration fresh. Requires the sharepoint-admin role in the
+      tenant.
+    responses:
+      200:
+        description: Setup completed. failures and permissionDenied report what could not be done.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SetupResult'
+      400:
+        $ref: '#/components/responses/SharePointBadRequest'
+      401:
+        $ref: '#/components/responses/SharePointUnauthorized'
+      403:
+        $ref: '#/components/responses/SharePointAdminForbidden'
+      404:
+        $ref: '#/components/responses/SharePointDestinationNotFound'
+      409:
+        description: >-
+          credential-not-set or credential-unreadable: the connection's secret must be entered. list-name-taken: a list
+          with a detail list's name already exists on the site. It is never reused by name; enter its ID on the detail
+          list instead.
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/SharePointFailure'
+                - type: object
+                  properties:
+                    lists:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          index:
+                            type: integer
+                          dataPath:
+                            type: string
+                          listName:
+                            type: string
+                          listId:
+                            type: string
+            example:
+              errorCode: list-name-taken
+              lists:
+                - index: 0
+                  dataPath: dependents
+                  listName: Grant dependents
+                  listId: 6b1e7c2d-4f3a-4e8b-9c0d-1a2b3c4d5e6f
+      502:
+        $ref: '#/components/responses/SharePointUpstreamFailure'

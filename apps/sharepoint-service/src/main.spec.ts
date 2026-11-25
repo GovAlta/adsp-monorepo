@@ -12,7 +12,9 @@ const mockLibraryDriveResolver = jest.fn();
 const mockCreateShutdownHandler = jest.fn();
 const mockLogger = { info: jest.fn(), error: jest.fn(), debug: jest.fn(), warn: jest.fn() };
 const mockEnvironment: Record<string, unknown> = {};
+const mockReadFile = jest.fn();
 
+jest.mock('fs/promises', () => ({ readFile: mockReadFile }));
 jest.mock('express', () => mockExpress);
 jest.mock('compression', () => jest.fn());
 jest.mock('helmet', () => jest.fn());
@@ -126,10 +128,22 @@ describe('main', () => {
     mockCreateShutdownHandler.mockReturnValue(shutdown);
     // Keep test runs from registering real signal listeners.
     processOnce = jest.spyOn(process, 'once').mockImplementation(() => process);
+    mockReadFile.mockResolvedValue('{"openapi":"3.0.0"}');
   });
 
   afterEach(() => {
     processOnce.mockRestore();
+  });
+
+  it('serves the bundled OpenAPI document', async () => {
+    await startMain();
+    const [, handler] = mockApp.use.mock.calls.find(([path]) => path === '/swagger/docs/v1');
+    const res = { json: jest.fn() };
+
+    handler({}, res);
+
+    expect(mockReadFile).toHaveBeenCalledWith(expect.stringMatching(/swagger\.json$/), 'utf8');
+    expect(res.json).toHaveBeenCalledWith({ openapi: '3.0.0' });
   });
 
   it('registers roles and configuration with the platform, with cache invalidation on', async () => {

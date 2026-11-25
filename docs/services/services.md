@@ -35,6 +35,7 @@ Requests to a service are scoped to the tenant of the caller's access token. Pla
 | [Calendar service](calendar-service.md)               | Look up dates and holidays, and schedule calendar events.                       |
 | [PDF service](pdf-service.md)                         | Generate PDFs from templates.                                                   |
 | [Export service](export-service.md)                   | Export another service's API resources to a file.                               |
+| [SharePoint service](sharepoint-service.md)           | Push data and files to SharePoint lists and libraries owned by your team.       |
 | [Verify service](verify-service.md)                   | Generate and check time-limited verification codes.                             |
 | [Feedback service](feedback-service.md)               | Collect user feedback with an embeddable widget.                                |
 | [Status service](status-service.md)                   | Monitor application health, publish status and post service notices.            |

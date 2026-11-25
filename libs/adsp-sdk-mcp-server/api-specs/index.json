@@ -136,6 +136,14 @@
     "file": "push-service.json"
   },
   {
+    "app": "sharepoint-service",
+    "urn": "urn:ads:platform:sharepoint-service",
+    "name": "SharePoint service",
+    "title": "SharePoint service",
+    "operations": 8,
+    "file": "sharepoint-service.json"
+  },
+  {
     "app": "status-service",
     "urn": "urn:ads:platform:status-service",
     "name": "Status service",
