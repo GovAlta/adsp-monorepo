@@ -5,6 +5,13 @@ export type GenerationStepType = (typeof GENERATION_STEP_TYPES)[number];
 
 export type FormComplexity = 'SIMPLE' | 'COMPLEX';
 
+/**
+ * Words that ask for a calculated value, which needs the computed field guidance and examples. A bare "total" is left
+ * out: it usually names an amount the applicant enters, such as "total budget amount".
+ */
+export const MENTIONS_CALCULATION =
+  /\b(sums?|summ?ing|summed|calculat\w*|computed?|formula|average|percent(age)?|multipl\w*|subtract\w*|add(s|ed)? up|totals? of|expression)\b/i;
+
 // JSON Forms compares a rule `const` against a stored answer, so the value is a primitive.
 export const ruleValueSchema = z.union([z.string(), z.number(), z.boolean()]);
 

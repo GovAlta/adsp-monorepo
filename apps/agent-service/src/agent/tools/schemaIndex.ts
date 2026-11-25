@@ -293,7 +293,8 @@ export async function createSchemaIndexTools({ directory, tokenProvider, logger 
     id: 'get-form-schema-index',
     description: `Retrieve a lightweight structural index of the form's dataSchema and uiSchema.
 
-Call this at the START of every conversation instead of formConfigurationRetrievalTool.
+The current form is already described in your instructions. Call this only for detail that description leaves out,
+or when it says it was cut short or could not be loaded. Use it instead of formConfigurationRetrievalTool.
 The index gives you:
 - Every category (page) with its JSON Pointer into the uiSchema
 - Every data property with its type, required status, and which category it belongs to
