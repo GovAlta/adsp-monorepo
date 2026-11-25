@@ -2,6 +2,8 @@ import { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { z } from 'zod';
 import { ApiServiceSummary, ApiSpecsRepository } from '../api-specs/apiSpecsRepository';
 import { queryTerms } from '../search/textSearch';
+import { buildNext, definedOnly, jsonText, withRelatedAndNext } from './envelope';
+import { LinkIndex, RELATED_CAP } from './links';
 import { OFFLINE_TOOL_ANNOTATIONS, ToolDefinition } from './types';
 
 const SearchArgs = z.object({
@@ -20,13 +22,27 @@ function text(value: string): CallToolResult {
   return { content: [{ type: 'text', text: value }] };
 }
 
-function json(value: unknown): CallToolResult {
-  return text(JSON.stringify(value, null, 2));
-}
-
 function toolError(message: string): CallToolResult {
   // clean-code-ignore: 2.18 — isError is the standard MCP CallToolResult field for a handled failure, not a hidden side effect.
   return { isError: true, content: [{ type: 'text', text: message }] };
+}
+
+export type EndpointQuery = (service: string, query: string) => string | undefined;
+
+function findsEndpoints(apis: ApiSpecsRepository, query: string, service: ApiServiceSummary): boolean {
+  return queryTerms(query).length > 0 && apis.search(query, { service, limit: 1 }).length > 0;
+}
+
+/**
+ * The query a search_service_endpoints suggestion should carry: the given one when that search finds endpoints, else
+ * the service's name when it does, else undefined.
+ */
+export function createEndpointQuery(loadApis: () => ApiSpecsRepository): EndpointQuery {
+  return (serviceName, query) => {
+    const apis = loadApis();
+    const service = apis.findService(serviceName);
+    return service && [query, service.name].find((candidate) => findsEndpoints(apis, candidate, service));
+  };
 }
 
 function unknownService(name: string, apis: ApiSpecsRepository): CallToolResult {
@@ -41,7 +57,7 @@ function unknownService(name: string, apis: ApiSpecsRepository): CallToolResult 
  * Tools over the bundled OpenAPI specs. `loadApis` is called on first use, so the specs are only parsed when an
  * agent asks about an API.
  */
-export function createApiTools(loadApis: () => ApiSpecsRepository): ToolDefinition[] {
+export function createApiTools(loadApis: () => ApiSpecsRepository, links: () => LinkIndex): ToolDefinition[] {
   const resolveService = (name: string): ApiServiceSummary | undefined => loadApis().findService(name);
 
   return [
@@ -53,11 +69,11 @@ export function createApiTools(loadApis: () => ApiSpecsRepository): ToolDefiniti
         'comes from the OpenAPI specs each service serves at /swagger/docs/v1, bundled offline.',
       inputSchema: { type: 'object', properties: {} },
       handler: () =>
-        json(
-          loadApis()
+        jsonText({
+          results: loadApis()
             .list()
             .map(({ app, urn, name, operations }) => ({ service: app, urn, name, operations })),
-        ),
+        }),
     },
     {
       name: 'search_service_endpoints',
@@ -79,7 +95,8 @@ export function createApiTools(loadApis: () => ApiSpecsRepository): ToolDefiniti
         required: ['query'],
       },
       handler: (args) => {
-        const { query, service: serviceName, limit } = SearchArgs.parse(args);
+        const parsed = SearchArgs.parse(args);
+        const { query, service: serviceName, limit } = parsed;
         const service = serviceName === undefined ? undefined : resolveService(serviceName);
         if (serviceName !== undefined && !service) {
           return unknownService(serviceName, loadApis());
@@ -92,9 +109,27 @@ export function createApiTools(loadApis: () => ApiSpecsRepository): ToolDefiniti
         }
 
         const results = loadApis().search(query, { service, limit });
-        return results.length > 0
-          ? json(results)
-          : text(`No endpoints match "${query}". Try other keywords, or call list_service_apis.`);
+        if (results.length === 0) {
+          return text(`No endpoints match "${query}". Try other keywords, or call list_service_apis.`);
+        }
+
+        const index = links();
+        const docs = [...new Set(results.flatMap((result) => index.docsForService(result.service)))].slice(
+          0,
+          RELATED_CAP,
+        );
+        const top = results[0];
+        const next = buildNext(
+          [
+            {
+              tool: 'read_service_endpoint',
+              arguments: { service: top.service, method: top.method, path: top.path },
+              why: "Read the top endpoint's parameters and schemas.",
+            },
+          ],
+          { tool: 'search_service_endpoints', arguments: definedOnly(parsed) },
+        );
+        return jsonText(withRelatedAndNext({ results }, docs.length > 0 ? { docs } : undefined, next));
       },
     },
     {
@@ -113,7 +148,8 @@ export function createApiTools(loadApis: () => ApiSpecsRepository): ToolDefiniti
         required: ['service', 'method', 'path'],
       },
       handler: (args) => {
-        const { service: serviceName, method, path } = ReadArgs.parse(args);
+        const parsed = ReadArgs.parse(args);
+        const { service: serviceName, method, path } = parsed;
         const apis = loadApis();
         const service = resolveService(serviceName);
         if (!service) {
@@ -121,11 +157,22 @@ export function createApiTools(loadApis: () => ApiSpecsRepository): ToolDefiniti
         }
 
         const endpoint = apis.read(service, method, path);
-        return endpoint
-          ? json(endpoint)
-          : toolError(
-              `${service.app} has no ${method.toUpperCase()} ${path}. Its endpoints: ${apis.paths(service).join(', ')}.`,
-            );
+        if (!endpoint) {
+          return toolError(
+            `${service.app} has no ${method.toUpperCase()} ${path}. Its endpoints: ${apis.paths(service).join(', ')}.`,
+          );
+        }
+
+        const docs = links().docsForService(service.app);
+        const next = buildNext(
+          [
+            docs[0]
+              ? { tool: 'read_adsp_doc', arguments: { path: docs[0] }, why: "Read this service's documentation." }
+              : undefined,
+          ],
+          { tool: 'read_service_endpoint', arguments: definedOnly(parsed) },
+        );
+        return jsonText(withRelatedAndNext(endpoint, docs.length > 0 ? { docs } : undefined, next));
       },
     },
   ];
