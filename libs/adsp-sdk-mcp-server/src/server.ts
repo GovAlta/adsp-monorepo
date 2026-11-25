@@ -10,6 +10,7 @@ import { OFFLINE_ENDPOINT_INSTRUCTIONS, SERVER_INSTRUCTIONS } from './instructio
 import { getMetrics, ToolErrorType } from './metrics';
 import { buildLinkIndex } from './tools/links';
 import { createApiTools, createEndpointQuery } from './tools/registerApiTools';
+import { createAppQuickstartTool } from './tools/registerAppQuickstartTool';
 import { createConfigurationSchemaTools } from './tools/registerConfigurationSchemaTool';
 import { isBusyResult } from './tools/liveToolLimit';
 import { createDocsTools } from './tools/registerDocsTools';
@@ -80,6 +81,7 @@ export function loadAdspMcpTools(options: CreateAdspMcpServerOptions = {}): Adsp
     ...createDocsTools(docs, links, endpointQuery),
     ...createSdkTools(links),
     ...createQuickstartTool(),
+    ...createAppQuickstartTool(),
     ...createServiceRolesTools(),
     ...createConfigurationSchemaTools(),
     ...createServerInfoTool(docs),
