@@ -431,7 +431,7 @@ components:
                   - https://my-application.alberta.ca
                   - https://other-application.alberta.ca
               tenantCount:
-                summary: Number of sites of a tenant (count=true and tenant set)
+                summary: Number of sites scoped to one tenant (count=true)
                 value: 2
               allCount:
                 summary: Number of sites of all tenants (count=true)
