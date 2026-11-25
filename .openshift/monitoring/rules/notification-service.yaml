@@ -1,0 +1,96 @@
+# DRAFT: Alert timing and thresholds remain implementation candidates pending team approval.
+# DEV verified explicit extraction of the JSON message field, anchored Winston Error matching,
+# optional ANSI handling, and the complete three-minute Error metric expression across API and
+# background-job pods. Critical positive matching, Loki Ruler evaluation, pending-to-firing
+# transitions, recovery, and end-to-end notification delivery remain to be validated.
+apiVersion: template.openshift.io/v1
+kind: Template
+metadata:
+  name: notification-service-log-alerts
+  annotations:
+    description: >-
+      Candidate Loki log alerts for actual notification-service Winston Critical, Alert and Error
+      severity. Collector-generated severity is not used because it may disagree with application
+      severity.
+parameters:
+  - name: NAMESPACE
+    description: Target namespace, e.g. adsp-dev.
+    required: true
+objects:
+  - apiVersion: loki.grafana.com/v1
+    kind: AlertingRule
+    metadata:
+      name: notification-service-log-alerts
+      namespace: ${NAMESPACE}
+      # Add only labels required by the LokiStack rule selector after runtime verification.
+    spec:
+      tenantID: application
+      groups:
+        - name: notification-service-log-alerts
+          interval: 30s
+          rules:
+            - alert: ADSPLogCritical
+              expr: |
+                sum by (kubernetes_pod_name, kubernetes_container_name) (
+                  count_over_time(
+                    {kubernetes_namespace_name="${NAMESPACE}", kubernetes_container_name="notification-service"}
+                      | json app_message="message"
+                      | __error__=""
+                      | line_format "{{.app_message}}"
+                      |~ `^(\x1b\[[0-9;]*m)?(critical|alert)(\x1b\[[0-9;]*m)?:[[:space:]]`
+                      [1m]
+                  )
+                ) > 0
+              for: 0s
+              labels:
+                service: notification-service
+                namespace: ${NAMESPACE}
+                severity: critical
+              annotations:
+                summary: Critical notification-service application log detected
+                description: >-
+                  Notification service emitted {{ $value }} Winston critical- or alert-severity
+                  log(s) in the last minute for pod {{ $labels.kubernetes_pod_name }} and container
+                  {{ $labels.kubernetes_container_name }}.
+                impact: >-
+                  Notification generation or delivery through one or more configured providers may
+                  be unavailable or severely disrupted. API and background-job processing may both
+                  be affected.
+                first_steps: |
+                  1. Confirm the application message begins with critical: or alert: and identify whether the affected pod belongs to the API or background-job deployment.
+                  2. Check pod health, RabbitMQ and the dependency or provider named in the log.
+                  3. Do not replay or requeue notifications until provider acceptance and duplicate-delivery risk are understood.
+                runbook_url: https://goa-dio.atlassian.net/wiki/spaces/ADSPA/pages/5230428220
+            - alert: ADSPLogError
+              expr: |
+                sum by (kubernetes_pod_name, kubernetes_container_name) (
+                  count_over_time(
+                    {kubernetes_namespace_name="${NAMESPACE}", kubernetes_container_name="notification-service"}
+                      | json app_message="message"
+                      | __error__=""
+                      | line_format "{{.app_message}}"
+                      |~ `^(\x1b\[[0-9;]*m)?error(\x1b\[[0-9;]*m)?:[[:space:]]`
+                      [3m]
+                  )
+                ) > 0
+              for: 30s
+              labels:
+                service: notification-service
+                namespace: ${NAMESPACE}
+                severity: warning
+              annotations:
+                summary: Recent notification-service application error logs detected
+                description: >-
+                  Notification service emitted {{ $value }} Winston error-severity log(s) in the
+                  last three minutes for pod {{ $labels.kubernetes_pod_name }} and container
+                  {{ $labels.kubernetes_container_name }}; the condition persisted for at least 30
+                  seconds. The lookback and threshold remain candidate settings.
+                impact: >-
+                  Notification generation, queue processing, provider submission or configuration
+                  readiness may be affected. An isolated Error does not by itself prove failed final
+                  delivery, a service-wide outage or an after-hours incident.
+                first_steps: |
+                  1. Confirm the application message begins with error: and classify it as configuration readiness or an operational failure.
+                  2. Identify whether the affected pod belongs to the API or background-job deployment, then check RabbitMQ and the named provider or dependency.
+                  3. Check dead-letter queues and retry history; do not replay messages until provider acceptance and duplicate-delivery risk are understood.
+                runbook_url: https://goa-dio.atlassian.net/wiki/spaces/ADSPA/pages/5230198905
