@@ -163,7 +163,7 @@ export const ADSP_CLI_CLIENT_SCOPE_MAPPINGS = [
   { client: 'urn:ads:platform:directory-service', roles: ['directory-admin'] },
 ];
 
-export const ADSP_MCP_CLIENT_ID = 'adsp-mcp';
+export const ADSP_MCP_CLIENT_ID = 'urn:ads:platform:adsp-mcp';
 
 const audienceMapper = (
   name: string,
@@ -215,6 +215,25 @@ export const ADSP_CLI_CI_CLIENT_ID = 'adsp-cli-ci';
 export const ADSP_CLI_CI_CLIENT_SCOPE_MAPPINGS = [
   { client: 'urn:ads:platform:configuration-service', roles: ['configuration-admin'] },
   { client: 'realm-management', roles: ['manage-clients', 'manage-users'] },
+];
+
+/** The Adsp-Mcp client roles we are allowing for this client to interact with ADSP */
+export const ADSP_MCP_CLIENT_SCOPE_MAPPINGS = [
+  { client: 'urn:ads:platform:audit-service', roles: ['audit-admin'] },
+  { client: 'urn:ads:platform:configuration-service', roles: ['configuration-admin'] },
+  { client: 'urn:ads:platform:calendar-service', roles: ['calendar-admin'] },
+  { client: 'urn:ads:platform:directory-service', roles: ['directory-admin'] },
+  { client: 'urn:ads:platform:event-service', roles: ['event-admin'] },
+  { client: 'urn:ads:platform:file-service', roles: ['file-service-admin'] },
+  { client: 'urn:ads:platform:form-service', roles: ['form-admin'] },
+  { client: 'urn:ads:platform:notification-service', roles: ['subscription-admin'] },
+  { client: 'urn:ads:platform:project-planner-service', roles: ['planner-admin'] },
+  { client: 'urn:ads:platform:script-service', roles: ['script-service'] },
+  { client: 'urn:ads:platform:sharepoint-service', roles: ['sharepoint-admin'] },
+  { client: 'urn:ads:platform:task-service', roles: ['task-admin'] },
+  { client: 'urn:ads:platform:tenant-service', roles: ['tenant-admin'] },
+  { client: 'urn:ads:platform:task-service', roles: ['task-admin'] },
+  { client: 'urn:ads:platform:value-service', roles: ['value-writer', 'value-reader'] },
 ];
 
 /**
