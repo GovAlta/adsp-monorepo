@@ -201,6 +201,13 @@ export const getSites =
       }
       const tenantName = (req.query?.tenant as string) || null;
       const doCount = req.query?.count === 'true';
+      if (!req.user?.isCore) {
+        const sites = doCount
+          ? await feedbackSiteService.countTenantSites([req.tenant.id])
+          : await feedbackSiteService.getTenantSites([req.tenant.id]);
+        res.json(sites);
+        return;
+      }
       if (tenantName && doCount) {
         const tenant = await tenantService.getTenantByName(tenantName.replace('-', ' '));
         if (tenant) {

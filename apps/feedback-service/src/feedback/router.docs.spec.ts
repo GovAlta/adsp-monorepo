@@ -289,6 +289,29 @@ describe('feedback router documented behaviour', () => {
       expect(res.status).toBe(400);
     });
 
+    it('lists only the sites of the tenant for a tenant reader', async () => {
+      tenantServiceMock.getTenantByName.mockResolvedValueOnce({
+        id: adspId`urn:ads:platform:tenant-service:v2:/tenants/other`,
+        name: 'Other Tenant',
+      });
+      feedbackSiteServiceMock.getTenantSites.mockResolvedValueOnce([site]);
+
+      const res = await request(await createApp(reader)).get('/feedback/v1/sites?tenant=other-tenant');
+
+      expect(res.status).toBe(200);
+      expect(res.body).toEqual([site]);
+      expect(feedbackSiteServiceMock.getTenantSites).toHaveBeenCalledWith([tenantId]);
+    });
+
+    it('counts only the sites of the tenant for a tenant reader', async () => {
+      feedbackSiteServiceMock.countTenantSites.mockResolvedValueOnce(2);
+
+      const res = await request(await createApp(reader)).get('/feedback/v1/sites?count=true');
+
+      expect(res.status).toBe(200);
+      expect(res.body).toBe(2);
+    });
+
     it('returns 401 for a user without the feedback-reader role', async () => {
       const res = await request(await createApp(plain)).get('/feedback/v1/sites');
 
