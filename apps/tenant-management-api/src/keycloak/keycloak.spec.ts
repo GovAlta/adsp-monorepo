@@ -236,9 +236,8 @@ describe('KeycloakRealmService', () => {
         .mockResolvedValueOnce([{ id: 'config-service-client-123' }])
         .mockResolvedValueOnce([])
         .mockResolvedValueOnce([{ id: 'directory-service-client-123' }])
-        // grantClientScopeMappings for adsp-mcp: adsp-mcp, config-service
+        // grantClientScopeMappings for adsp-mcp: adsp-mcp only, it has no mappings
         .mockResolvedValueOnce([{ id: 'adsp-mcp-client-123' }])
-        .mockResolvedValueOnce([{ id: 'config-service-client-123' }])
         .mockResolvedValueOnce([{ id: 'realm-management-client-123' }])
         .mockResolvedValueOnce([{ id: 'adsp-cli-ci-client-123' }])
         .mockResolvedValueOnce([{ id: 'config-service-client-123' }])
@@ -252,7 +251,6 @@ describe('KeycloakRealmService', () => {
         // grantClientScopeMappings for adsp-cli: configuration-admin from config-service, directory-admin from directory-service
         .mockResolvedValueOnce({ id: 'config-admin-role-123', name: 'configuration-admin' })
         .mockResolvedValueOnce({ id: 'directory-admin-role-123', name: 'directory-admin' })
-        .mockResolvedValueOnce({ id: 'config-admin-role-123', name: 'configuration-admin' })
         .mockResolvedValueOnce({ id: 'config-admin-role-123', name: 'configuration-admin' })
         .mockResolvedValueOnce({ id: 'manage-clients-role-123', name: 'manage-clients' })
         .mockResolvedValueOnce({ id: 'manage-users-role-123', name: 'manage-users' });
@@ -373,23 +371,17 @@ describe('KeycloakRealmService', () => {
         (c: { clientId: string }) => c.clientId === 'adsp-mcp',
       );
       expect(adspMcpClient.description.length).toBeLessThanOrEqual(255);
-      // configuration-admin only: the MCP server's live tools read configuration and nothing else.
       expect(
         keycloakClientMock.clients.addClientScopeMappings.mock.calls.filter(
           ([target]) => target.id === 'adsp-mcp-client-123',
         ),
-      ).toEqual([
-        [
-          { realm, id: 'adsp-mcp-client-123', client: 'config-service-client-123' },
-          [{ id: 'config-admin-role-123', name: 'configuration-admin' }],
-        ],
-      ]);
-      // The adsp-cli grant, the adsp-mcp grant and the CI service account each look up configuration-admin once.
+      ).toEqual([]);
+      // The adsp-cli grant and the CI service account each look up configuration-admin once.
       expect(
         keycloakClientMock.clients.findRole.mock.calls.filter(
           ([query]) => query.id === 'config-service-client-123' && query.roleName === 'configuration-admin',
         ),
-      ).toHaveLength(3);
+      ).toHaveLength(2);
 
       axiosMock.get.mockResolvedValueOnce({ data: [{ id: 'execution-123' }] });
 
@@ -446,9 +438,8 @@ describe('KeycloakRealmService', () => {
         .mockResolvedValueOnce([{ id: 'config-service-client-123' }])
         .mockResolvedValueOnce([])
         .mockResolvedValueOnce([{ id: 'directory-service-client-123' }])
-        // grantClientScopeMappings for adsp-mcp: adsp-mcp, config-service
+        // grantClientScopeMappings for adsp-mcp: adsp-mcp only, it has no mappings
         .mockResolvedValueOnce([{ id: 'adsp-mcp-client-123' }])
-        .mockResolvedValueOnce([{ id: 'config-service-client-123' }])
         .mockResolvedValueOnce([{ id: 'realm-management-client-123' }])
         .mockResolvedValueOnce([{ id: 'adsp-cli-ci-client-123' }])
         .mockResolvedValueOnce([{ id: 'config-service-client-123' }])
@@ -461,7 +452,6 @@ describe('KeycloakRealmService', () => {
         .mockResolvedValueOnce({ id: 'manage-users-role-123', name: 'manage-users' })
         .mockResolvedValueOnce({ id: 'config-admin-role-123', name: 'configuration-admin' })
         .mockResolvedValueOnce({ id: 'directory-admin-role-123', name: 'directory-admin' })
-        .mockResolvedValueOnce({ id: 'config-admin-role-123', name: 'configuration-admin' })
         .mockResolvedValueOnce({ id: 'config-admin-role-123', name: 'configuration-admin' })
         .mockResolvedValueOnce({ id: 'manage-clients-role-123', name: 'manage-clients' })
         .mockResolvedValueOnce({ id: 'manage-users-role-123', name: 'manage-users' });
@@ -506,9 +496,8 @@ describe('KeycloakRealmService', () => {
         .mockResolvedValueOnce([{ id: 'config-service-client-123' }])
         .mockResolvedValueOnce([])
         .mockResolvedValueOnce([{ id: 'directory-service-client-123' }])
-        // grantClientScopeMappings for adsp-mcp: adsp-mcp, config-service
+        // grantClientScopeMappings for adsp-mcp: adsp-mcp only, it has no mappings
         .mockResolvedValueOnce([{ id: 'adsp-mcp-client-123' }])
-        .mockResolvedValueOnce([{ id: 'config-service-client-123' }])
         .mockResolvedValueOnce([{ id: 'realm-management-client-123' }])
         .mockResolvedValueOnce([{ id: 'adsp-cli-ci-client-123' }])
         .mockResolvedValueOnce([{ id: 'config-service-client-123' }])
@@ -521,7 +510,6 @@ describe('KeycloakRealmService', () => {
         .mockResolvedValueOnce({ id: 'manage-users-role-123', name: 'manage-users' })
         .mockResolvedValueOnce({ id: 'config-admin-role-123', name: 'configuration-admin' })
         .mockResolvedValueOnce({ id: 'directory-admin-role-123', name: 'directory-admin' })
-        .mockResolvedValueOnce({ id: 'config-admin-role-123', name: 'configuration-admin' })
         .mockResolvedValueOnce({ id: 'config-admin-role-123', name: 'configuration-admin' })
         .mockResolvedValueOnce({ id: 'manage-clients-role-123', name: 'manage-clients' })
         .mockResolvedValueOnce({ id: 'manage-users-role-123', name: 'manage-users' });
