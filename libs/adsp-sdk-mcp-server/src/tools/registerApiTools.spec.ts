@@ -1,12 +1,25 @@
+import { mkdtempSync, rmSync, writeFileSync } from 'fs';
+import { tmpdir } from 'os';
 import { join } from 'path';
 import { ApiSpecsRepository } from '../api-specs/apiSpecsRepository';
-import { createApiTools } from './registerApiTools';
+import { LinkIndex } from './links';
+import { createApiTools, createEndpointQuery } from './registerApiTools';
 
 const FIXTURE_ROOT = join(__dirname, '../fixtures/api-specs');
 
-function setup() {
+function stubLinks(serviceDocs: string[] = ['services/demo-service.md']): LinkIndex {
+  return {
+    relatedForDoc: () => ({}),
+    relatedForSymbol: () => ({}),
+    docsForService: (app) => (app === 'demo-service' ? serviceDocs : []),
+    hasDoc: () => true,
+    hasServiceApi: () => true,
+  };
+}
+
+function setup(links: LinkIndex = stubLinks()) {
   const load = jest.fn(() => new ApiSpecsRepository(FIXTURE_ROOT));
-  const tools = new Map(createApiTools(load).map((tool) => [tool.name, tool]));
+  const tools = new Map(createApiTools(load, () => links).map((tool) => [tool.name, tool]));
   const call = async (name: string, args: Record<string, unknown> = {}) => {
     const result = await tools.get(name)!.handler(args);
     return { isError: result.isError, text: (result.content[0] as { text: string }).text };
@@ -24,19 +37,48 @@ describe('API tools', () => {
     expect(load).toHaveBeenCalled();
   });
 
-  it('list_service_apis lists each service with its URN and operation count', async () => {
+  it('lists service APIs inside results', async () => {
     const { call } = setup();
 
-    expect(JSON.parse((await call('list_service_apis')).text)).toEqual([
-      { service: 'demo-service', urn: 'urn:ads:platform:demo-service', name: 'Demo service', operations: 3 },
-    ]);
+    expect(JSON.parse((await call('list_service_apis')).text)).toEqual({
+      results: [{ service: 'demo-service', urn: 'urn:ads:platform:demo-service', name: 'Demo service', operations: 3 }],
+    });
   });
 
   it('search_service_endpoints returns matching endpoints', async () => {
     const { call } = setup();
-    const results = JSON.parse((await call('search_service_endpoints', { query: 'send event' })).text);
+    const { results } = JSON.parse((await call('search_service_endpoints', { query: 'send event' })).text);
 
     expect(results[0]).toMatchObject({ method: 'POST', path: '/demo/v1/events' });
+  });
+
+  it("adds the services' docs once at the top level of an endpoint search", async () => {
+    const { call } = setup(stubLinks(['services/demo-service.md', 'tutorials/demo.md']));
+    const body = JSON.parse((await call('search_service_endpoints', { query: 'demo' })).text);
+
+    expect(body.results.length).toBeGreaterThan(1);
+    expect(body.related).toEqual({ docs: ['services/demo-service.md', 'tutorials/demo.md'] });
+    expect(body.results.every((result: object) => !('related' in result))).toBe(true);
+  });
+
+  it('suggests reading the top endpoint', async () => {
+    const { call } = setup();
+    const body = JSON.parse((await call('search_service_endpoints', { query: 'send event' })).text);
+
+    expect(body.next.suggested_calls).toEqual([
+      {
+        tool: 'read_service_endpoint',
+        arguments: { service: 'demo-service', method: 'POST', path: '/demo/v1/events' },
+        why: "Read the top endpoint's parameters and schemas.",
+      },
+    ]);
+  });
+
+  it('leaves out related when the services have no docs', async () => {
+    const { call } = setup(stubLinks([]));
+    const body = JSON.parse((await call('search_service_endpoints', { query: 'send event' })).text);
+
+    expect(body).not.toHaveProperty('related');
   });
 
   it('search_service_endpoints explains a query of only stop words and a query with no match', async () => {
@@ -72,6 +114,34 @@ describe('API tools', () => {
     expect(endpoint).toMatchObject({ service: 'demo-service', method: 'POST', summary: 'Upload a file.' });
   });
 
+  it('adds the service doc and suggests reading it from an endpoint', async () => {
+    const { call } = setup();
+    const endpoint = JSON.parse(
+      (await call('read_service_endpoint', { service: 'demo-service', method: 'POST', path: '/demo/v1/files' })).text,
+    );
+
+    expect(endpoint.related).toEqual({ docs: ['services/demo-service.md'] });
+    expect(endpoint.next.suggested_calls).toEqual([
+      {
+        tool: 'read_adsp_doc',
+        arguments: { path: 'services/demo-service.md' },
+        why: "Read this service's documentation.",
+      },
+    ]);
+  });
+
+  it('keeps the unknown-service and unknown-endpoint errors unchanged', async () => {
+    const { call } = setup(stubLinks([]));
+
+    expect(await call('read_service_endpoint', { service: 'nope', method: 'GET', path: '/x' })).toEqual({
+      isError: true,
+      text: 'No service API named "nope". Use an app name or URN from list_service_apis: demo-service.',
+    });
+    expect((await call('read_service_endpoint', { service: 'demo-service', method: 'GET', path: '/x' })).isError).toBe(
+      true,
+    );
+  });
+
   it('read_service_endpoint lists the service endpoints when the path is wrong', async () => {
     const { call } = setup();
 
@@ -81,5 +151,47 @@ describe('API tools', () => {
       isError: true,
       text: 'demo-service has no GET /demo/v1/nope. Its endpoints: GET /demo/v1/files, POST /demo/v1/files, POST /demo/v1/events.',
     });
+  });
+});
+
+describe('createEndpointQuery', () => {
+  let emptyRoot: string;
+
+  beforeAll(() => {
+    emptyRoot = mkdtempSync(join(tmpdir(), 'api-specs-'));
+    const service = { app: 'empty-service', urn: 'urn:ads:platform:empty-service', name: 'Empty service' };
+    writeFileSync(join(emptyRoot, 'index.json'), JSON.stringify([{ ...service, operations: 0, file: 'empty.json' }]));
+    writeFileSync(join(emptyRoot, 'empty.json'), JSON.stringify({ openapi: '3.0.0', paths: {} }));
+  });
+
+  afterAll(() => rmSync(emptyRoot, { recursive: true, force: true }));
+
+  const endpointQuery = createEndpointQuery(() => new ApiSpecsRepository(FIXTURE_ROOT));
+
+  it('does not load the specs until asked', () => {
+    const load = jest.fn(() => new ApiSpecsRepository(FIXTURE_ROOT));
+    createEndpointQuery(load);
+
+    expect(load).not.toHaveBeenCalled();
+  });
+
+  it('keeps a query that finds endpoints', () => {
+    expect(endpointQuery('demo-service', 'send event')).toBe('send event');
+  });
+
+  it("falls back to the service's name when the query finds nothing or has only common words", async () => {
+    const { call } = setup();
+
+    expect(endpointQuery('demo-service', 'kubernetes')).toBe('Demo service');
+    expect(endpointQuery('demo-service', 'how do i')).toBe('Demo service');
+    const body = JSON.parse(
+      (await call('search_service_endpoints', { query: 'Demo service', service: 'demo-service' })).text,
+    );
+    expect(body.results.length).toBeGreaterThan(0);
+  });
+
+  it('gives nothing when even the service name finds nothing, or the service is unknown', () => {
+    expect(createEndpointQuery(() => new ApiSpecsRepository(emptyRoot))('empty-service', 'kubernetes')).toBeUndefined();
+    expect(endpointQuery('nope', 'send event')).toBeUndefined();
   });
 });
