@@ -48,8 +48,8 @@ that can update ImageStreams in `adsp-build`, which personal accounts usually ca
 Each deploy job:
 
 1. Renders the template with `render-stack.sh <env>` and dry-runs it against `adsp-<env>`.
-2. Points the environment's ImageStream tags in `adsp-build` at the source images (`oc tag`) and imports
-   them, failing if an import does not succeed.
+2. Points the environment's ImageStream tags in `adsp-build` at the source images (`oc tag`), which starts
+   their import, and waits for it, failing if an import does not succeed.
 3. Applies everything except the ImageStreams and the RoleBinding to `adsp-<env>`, with each Deployment's
    image set to the imported digest so it rolls once.
 4. Restarts a Deployment whose ConfigMap changed but whose pods were not replaced by the apply. The
@@ -131,9 +131,9 @@ ENV=dev
 .openshift/observability/render-stack.sh $ENV > observability.$ENV.json
 jq -r '.items[] | select(.kind == "ImageStream") | "\(.metadata.name):\(.spec.tags[0].name) \(.spec.tags[0].from.name)"' \
   observability.$ENV.json | while read -r tag source; do
-  oc tag -n adsp-build --source=docker "$source" "$tag" --reference-policy=local
-  oc import-image -n adsp-build "$tag" --reference-policy=local
+  oc tag -n adsp-build --source=docker "$source" "$tag" --reference-policy=local   # starts the import
 done
+oc get istag -n adsp-build tempo:$ENV otel-collector:$ENV prometheus:$ENV grafana:$ENV   # wait until all four resolve
 # Add RoleBinding objects back if the account is a namespace admin.
 jq '.items |= map(select(.kind | IN("ImageStream", "RoleBinding") | not))' observability.$ENV.json > objects.$ENV.json
 oc diff -n adsp-$ENV -f objects.$ENV.json   # review before applying
