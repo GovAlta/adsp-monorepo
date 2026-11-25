@@ -58,8 +58,8 @@ Audit data is isolated by tenant: every stored event, failed event and tenant ca
 - **Tenant callers** always act on the tenant of their token. Setting the `tenantId` query parameter to any other
   tenant responds 403; a value that is not a tenant URN (`urn:ads:platform:tenant-service:v2:/tenants/<id>`)
   responds 400.
-- **Core callers** select the tenant with `tenantId`. It is required to write events (400 without it), to read,
-  list namespaces or export history (403 without it), to add actions (400) and to administer failed events (400).
+- **Core callers** select the tenant with `tenantId`. Without it, writing events, reading, listing
+  namespaces, exporting history, adding actions and administering failed events all respond 400.
   Without it, `GET /actions` and `GET /{namespace}/actions` return only Core catalogs and `GET /retention` returns
   empty settings.
 - **Namespace ownership.** A tenant writer can write only to the namespace that matches the service part of its

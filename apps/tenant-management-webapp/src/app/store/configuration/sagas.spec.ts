@@ -113,6 +113,17 @@ describe('configuration data register sagas', () => {
       ]);
     });
 
+    it('posts anonymousRead when anonymous access is chosen', async () => {
+      const { calls } = await runSaga(
+        createDataRegister,
+        createDataRegisterAction('weekdays', 'Days of the week', ['Monday'], true),
+        createRegisterApi,
+        weekdays,
+      );
+
+      expect(calls[0][2]).toEqual(expect.objectContaining({ name: 'weekdays', anonymousRead: true }));
+    });
+
     it('adds the created register to state', async () => {
       const { actions } = await runSaga(
         createDataRegister,
@@ -147,6 +158,19 @@ describe('configuration data register sagas', () => {
 
       expect(calls).toEqual([
         [token, formApiUrl, 'weekdays', { description: undefined, entries: ['Monday', 'Tuesday'] }],
+      ]);
+    });
+
+    it('patches only anonymousRead when the access is changed', async () => {
+      const { calls } = await runSaga(
+        updateDataRegister,
+        updateDataRegisterAction('weekdays', undefined, undefined, false),
+        updateRegisterApi,
+        weekdays,
+      );
+
+      expect(calls).toEqual([
+        [token, formApiUrl, 'weekdays', { description: undefined, entries: undefined, anonymousRead: false }],
       ]);
     });
 

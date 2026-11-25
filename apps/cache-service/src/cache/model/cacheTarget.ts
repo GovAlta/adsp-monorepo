@@ -145,14 +145,28 @@ export class CacheTarget implements Target {
     ];
   }
 
+  private async resolveUpstreamUrl(): Promise<URL> {
+    let upstreamUrl: URL;
+    try {
+      upstreamUrl = await this.directory.getServiceUrl(this.serviceId);
+    } catch (err) {
+      // ServiceDirectory throws this plain Error when it can't resolve the entry (it also covers a failed directory fetch, which the SDK logs and swallows).
+      if (!(err instanceof Error) || !err.message.startsWith('Failed to find directory entry')) {
+        throw err;
+      }
+    }
+
+    if (!upstreamUrl) {
+      throw new NotFoundError('service or api', this.serviceId.toString());
+    }
+    return upstreamUrl;
+  }
+
   private async getUpstream(req: Request, res: Response): Promise<CachedResponse> {
     const { user, query } = req;
     const trace = getContextTrace();
 
-    const upstreamUrl = await this.directory.getServiceUrl(this.serviceId);
-    if (!upstreamUrl) {
-      throw new NotFoundError('service or api', this.serviceId.toString());
-    }
+    const upstreamUrl = await this.resolveUpstreamUrl();
 
     const relative = req.originalUrl.substring(`${req.baseUrl}/cache/${this.serviceId}`.length);
     const targetPath = path.join(upstreamUrl.pathname, relative);

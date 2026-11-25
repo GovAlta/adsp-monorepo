@@ -93,6 +93,7 @@ class PdfServiceImpl implements PdfService {
           trigger: `form-service:${FormStatusSubmittedDefinition.name}`,
           formDefinitionId: form.definition.id,
           formId: form.id,
+          submissionId: submission?.id,
         },
       };
 

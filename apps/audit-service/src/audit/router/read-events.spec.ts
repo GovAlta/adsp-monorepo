@@ -231,6 +231,15 @@ describe('read events', () => {
     expect(all.status).toBe(403);
   });
 
+  it.each(['/audit/v1/events', '/audit/v1/case-service/events', `/audit/v1/case-service/events/${eventId}`, '/audit/v1/namespaces'])(
+    'responds 400 to a Core caller without a tenant on %s',
+    async (path) => {
+      const res = await request(createApp({ ...user, isCore: true, tenantId: undefined })).get(path);
+      expect(res.status).toBe(400);
+      expect(reader.find).not.toHaveBeenCalled();
+    },
+  );
+
   it('lists the namespaces that have events for the caller tenant', async () => {
     reader.findNamespaces.mockResolvedValue(['case-service', 'mcp-gateway-service']);
 

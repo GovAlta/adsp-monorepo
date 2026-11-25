@@ -175,6 +175,11 @@ describe('queue router documented behaviour', () => {
       expect(res.status).toBe(400);
     });
 
+    it('responds 400 for a core user without tenantId', async () => {
+      const res = await request(createApp(coreReader)).get('/task/v1/queues');
+      expect(res.status).toBe(400);
+    });
+
     it('responds 401 without a token', async () => {
       const res = await request(createApp(null)).get('/task/v1/queues');
       expect(res.status).toBe(401);
@@ -190,6 +195,11 @@ describe('queue router documented behaviour', () => {
 
     it('responds 400 for a name that is too long', async () => {
       const res = await request(createApp(plain)).get(`/task/v1/queues/support/${longName}`);
+      expect(res.status).toBe(400);
+    });
+
+    it('responds 400 for a core user without tenantId', async () => {
+      const res = await request(createApp(coreReader)).get(queuePath);
       expect(res.status).toBe(400);
     });
 
@@ -287,6 +297,13 @@ describe('queue router documented behaviour', () => {
       expect(res.status).toBe(400);
     });
 
+    it('responds 400 for an unrecognized priority', async () => {
+      const res = await request(createApp(writerOnly))
+        .post(`${queuePath}/tasks`)
+        .send({ ...newTask, priority: 'Low' });
+      expect(res.status).toBe(400);
+    });
+
     it('responds 401 without a token', async () => {
       const res = await request(createApp(null)).post(`${queuePath}/tasks`).send(newTask);
       expect(res.status).toBe(401);
@@ -345,6 +362,11 @@ describe('queue router documented behaviour', () => {
 
     it('responds 400 for a context that is not an object', async () => {
       const res = await request(createApp(admin)).patch(`${queuePath}/tasks/${taskId}`).send({ context: 'intake' });
+      expect(res.status).toBe(400);
+    });
+
+    it('responds 400 for a priority that is not 1, 2, or 3', async () => {
+      const res = await request(createApp(admin)).patch(`${queuePath}/tasks/${taskId}`).send({ priority: 7 });
       expect(res.status).toBe(400);
     });
 
@@ -469,6 +491,14 @@ describe('queue router documented behaviour', () => {
       axiosMock.isAxiosError.mockReturnValueOnce(true);
       const res = await request(createApp(plain)).get(`${queuePath}/${resource}`);
       expect(res.status).toBe(403);
+    });
+
+    it('responds 502 when Keycloak fails with another error', async () => {
+      axiosMock.get.mockRejectedValueOnce({ response: { status: 500 } });
+      axiosMock.isAxiosError.mockReturnValueOnce(true);
+      const res = await request(createApp(admin)).get(`${queuePath}/${resource}`);
+      expect(res.status).toBe(502);
+      expect(res.body.errorMessage).toEqual(expect.stringContaining('Failed to retrieve users of role'));
     });
 
     it('responds 404 for an unknown queue', async () => {

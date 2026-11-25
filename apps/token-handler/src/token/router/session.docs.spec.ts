@@ -9,13 +9,33 @@ import { join } from 'path';
 import * as request from 'supertest';
 import { Logger } from 'winston';
 
+import { ServiceRoles } from '../roles';
 import { UserSessionData } from '../types';
 import { createSessionRouter } from './session';
 
-// Bearer tokens are resolved by the tenant strategy of the SDK; no bearer token is accepted here.
+// Stands in for the tenant strategy of the SDK: accepts 'Bearer user-token' as a user and 'Bearer admin-token' as a
+// token-handler-admin of the tenant.
 class TestTenantStrategy extends Strategy {
-  authenticate() {
-    this.fail(401);
+  constructor(private readonly tenantId: AdspId) {
+    super();
+  }
+
+  authenticate(req: express.Request) {
+    if (req.headers.authorization === 'Bearer user-token') {
+      this.success({ id: 'user', name: 'User', email: 'user@gov.ab.ca', tenantId: this.tenantId, isCore: false, roles: [], token: null });
+    } else if (req.headers.authorization === 'Bearer admin-token') {
+      this.success({
+        id: 'admin',
+        name: 'Admin',
+        email: 'admin@gov.ab.ca',
+        tenantId: this.tenantId,
+        isCore: false,
+        roles: [ServiceRoles.Admin],
+        token: null,
+      });
+    } else {
+      this.fail(401);
+    }
   }
 }
 
@@ -23,6 +43,7 @@ class TestTenantStrategy extends Strategy {
 // in the service, with the real error handler.
 describe('session router documented behaviour', () => {
   const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/61f2e3a8c9b1d2e3f4a5b6c7`;
+  const serviceId = adspId`urn:ads:platform:token-handler`;
   const documented = createDocumentedResponseRecorder(join(__dirname, 'session.swagger.yml'));
   const loggerMock = { debug: jest.fn(), info: jest.fn(), warn: jest.fn(), error: jest.fn() } as unknown as Logger;
 
@@ -43,7 +64,7 @@ describe('session router documented behaviour', () => {
 
   function createApp(): Express {
     const passport = new Passport();
-    passport.use('tenant', new TestTenantStrategy());
+    passport.use('tenant', new TestTenantStrategy(tenantId));
     // The tenant ID is serialized to the session as a string, as in configurePassport.
     passport.serializeUser((user, done) => done(null, { ...user, tenantId: user.tenantId.toString() }));
     passport.deserializeUser((user: Record<string, unknown>, done) =>
@@ -62,7 +83,7 @@ describe('session router documented behaviour', () => {
     );
 
     app.use('/token-handler/v1', documented.middleware);
-    app.use('/token-handler/v1', createSessionRouter({ passport: passport as never, sessionStore }));
+    app.use('/token-handler/v1', createSessionRouter({ passport: passport as never, serviceId, sessionStore }));
     app.use(createErrorHandler(loggerMock));
     return app;
   }
@@ -90,6 +111,29 @@ describe('session router documented behaviour', () => {
           expiry: expect.any(String),
         }),
       ]);
+    });
+
+    it('accepts a bearer token and lists the sessions of the tenant for token-handler-admin', async () => {
+      const app = createApp();
+      await request.agent(app).get('/test/sign-in');
+
+      const res = await request(app).get('/token-handler/v1/sessions').set('Authorization', 'Bearer admin-token');
+
+      expect(res.status).toBe(200);
+      expect(res.body).toEqual([expect.objectContaining({ tenantId: tenantId.toString(), id: sessionUser.id })]);
+    });
+
+    it('returns no sessions for a bearer token without the admin role or a session cookie', async () => {
+      const res = await request(createApp()).get('/token-handler/v1/sessions').set('Authorization', 'Bearer user-token');
+
+      expect(res.status).toBe(200);
+      expect(res.body).toEqual([]);
+    });
+
+    it('returns 401 for an invalid bearer token', async () => {
+      const res = await request(createApp()).get('/token-handler/v1/sessions').set('Authorization', 'Bearer bad');
+
+      expect(res.status).toBe(401);
     });
 
     it('returns 401 when no user is signed in', async () => {

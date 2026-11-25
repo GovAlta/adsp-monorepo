@@ -145,9 +145,14 @@ objects:
                 *First steps:*
                 {{ .Annotations.first_steps | trimSpace }}{{ end }}{{ end }}
                 *Runbook:* <{{ or .Annotations.runbook_url "${RUNBOOK_BASE_URL}" }}|{{ .Labels.alertname }}>
-                *Service:* {{ or .Labels.service "-" }}   *Severity:* {{ or .Labels.severity "-" }}
-                *Pod:* {{ or .Labels.kubernetes_pod_name "-" }}   *Container:* {{ or .Labels.kubernetes_container_name "-" }}
-                *Started:* {{ .StartsAt.UTC.Format "2006-01-02 15:04:05 MST" }}{{ if eq .Status "resolved" }}   *Ended:* {{ .EndsAt.UTC.Format "2006-01-02 15:04:05 MST" }}{{ end }}
+                *Service:* {{ or .Labels.service "-" }}
+                *Namespace:* ${NAMESPACE}
+                *Pod:* {{ or .Labels.kubernetes_pod_name "-" }}
+                *Container:* {{ or .Labels.kubernetes_container_name "-" }}
+                *Severity:* {{ or .Labels.severity "-" }}
+                *Started:* {{ .StartsAt.UTC.Format "2006-01-02 15:04:05 MST" }}
+                {{- if eq .Status "resolved" }}
+                *Ended:* {{ .EndsAt.UTC.Format "2006-01-02 15:04:05 MST" }}{{ end }}
                 {{ if .Labels.kubernetes_pod_name }}<${CONSOLE_URL}/k8s/ns/${NAMESPACE}/pods/{{ .Labels.kubernetes_pod_name }}/logs|Pod logs> | <${CONSOLE_URL}/monitoring/logs?tenant=application&q={{ printf "{kubernetes_namespace_name=\"${NAMESPACE}\", kubernetes_pod_name=\"%s\"}" .Labels.kubernetes_pod_name | urlquery }}|Search logs>{{ end }}
 
                 {{ end }}

@@ -1,5 +1,5 @@
 import { AdspId, AuditActionDefinition, ConfigurationService } from '@abgov/adsp-service-sdk';
-import { InvalidOperationError } from '@core-services/core-common';
+import { InvalidOperationError, UnauthorizedError } from '@core-services/core-common';
 import type { Logger } from 'winston';
 import * as HttpStatusCodes from 'http-status-codes';
 import { ActionCatalog, AuditConfiguration } from '../configuration';
@@ -104,10 +104,24 @@ export class CatalogService {
       throw new ActionConflictError(`Action "${name}" already exists in the ${namespace} catalog.`);
     }
 
-    await this.store.saveAction(namespace, name, definition, token, tenantId);
+    await this.writeCatalog(namespace, name, tenantId, () => this.store?.saveAction(namespace, name, definition, token, tenantId));
     await this.resolveConcurrentAdd(namespace, name, token, tenantId);
     // The next read must see the new action rather than the cached catalog.
     this.configuration.clearCached?.(tenantId, 'audit-service', `actions-${namespace}`);
+  }
+
+  // A permission failure stays a 401; any other configuration failure (5xx, network) is reported as unavailable.
+  private async writeCatalog(namespace: string, name: string, tenantId: AdspId, write: () => Promise<void> | undefined) {
+    try {
+      await write();
+    } catch (err) {
+      if (err instanceof UnauthorizedError) throw err;
+      this.logger.warn(`Unable to write action ${name} of ${namespace}: ${err}`, {
+        context: 'AuditCatalog',
+        tenant: tenantId.toString(),
+      });
+      throw new CatalogUnavailableError();
+    }
   }
 
   /**
@@ -130,7 +144,7 @@ export class CatalogService {
       (existingName) => existingName !== name && sameName(existingName, name) && existingName < name,
     );
     if (twin) {
-      await this.store?.removeAction(namespace, name, token, tenantId);
+      await this.writeCatalog(namespace, name, tenantId, () => this.store?.removeAction(namespace, name, token, tenantId));
       this.configuration.clearCached?.(tenantId, 'audit-service', `actions-${namespace}`);
       throw new ActionConflictError(`Action "${name}" already exists in the ${namespace} catalog.`);
     }

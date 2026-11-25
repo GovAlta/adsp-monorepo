@@ -1,6 +1,13 @@
 import { adspId } from '@abgov/adsp-service-sdk';
 import { InvalidOperationError, NotFoundError } from '@core-services/core-common';
-import { DestinationDisabledError, DestinationNotSetUpError, DetailRowsFailedError, SharePointError } from './errors';
+import {
+  ConnectionNotFoundError,
+  DestinationDisabledError,
+  DestinationNotFoundError,
+  DestinationNotSetUpError,
+  DetailRowsFailedError,
+  SharePointError,
+} from './errors';
 import { GraphClient, GraphTokenProvider } from './graph';
 import { RowIdentityMissingError } from './mapper';
 import { MAX_DETAIL_ROWS, SharePointPusher } from './push';
@@ -121,13 +128,17 @@ describe('SharePointPusher', () => {
   });
 
   it('throws not found for an unknown destination', async () => {
-    await expect(pusher.push(tenantId, configuration, 'missing', {})).rejects.toBeInstanceOf(NotFoundError);
+    const error = await pusher.push(tenantId, configuration, 'missing', {}).catch((err) => err);
+    expect(error).toBeInstanceOf(NotFoundError);
+    expect(error).toBeInstanceOf(DestinationNotFoundError);
   });
 
   it('throws not found when the connection is missing', async () => {
-    await expect(
-      pusher.push(tenantId, { ...configuration, connections: {} }, 'hr-intake', { applicationNumber: 'A-1' }),
-    ).rejects.toBeInstanceOf(NotFoundError);
+    const error = await pusher
+      .push(tenantId, { ...configuration, connections: {} }, 'hr-intake', { applicationNumber: 'A-1' })
+      .catch((err) => err);
+    expect(error).toBeInstanceOf(NotFoundError);
+    expect(error).toBeInstanceOf(ConnectionNotFoundError);
   });
 
   it('retries once with a new token when Graph rejects the cached token', async () => {
@@ -480,6 +491,7 @@ describe('SharePointPusher', () => {
         errorCode: 'graph:serviceNotAvailable',
         retryable: true,
         dataId: 'item-7',
+        outcome: 'updated',
         detailFailures: [{ listId: 'members', indexes: [1] }],
       });
       expect(createdIn('members')).toHaveLength(3);
@@ -532,6 +544,7 @@ describe('SharePointPusher', () => {
 
       await expect(pusher.push(tenantId, config, 'household', data(1))).rejects.toMatchObject({
         dataId: 'item-7',
+        outcome: 'updated',
         retryable: true,
         detailFailures: [{ listId: 'members', indexes: [], oldRowsLeft: 1 }],
       });
@@ -630,6 +643,59 @@ describe('SharePointPusher', () => {
       const result = await pusher.test(tenantId, config, 'household', data(2));
 
       expect(result.detailRows).toEqual([{ listId: 'members', rowIds: ['m-1', 'm-2'] }]);
+    });
+  });
+
+  describe('updating the row only', () => {
+    const household: SharePointDestination = {
+      ...intake,
+      id: 'household',
+      detailLists: [
+        {
+          listId: 'members',
+          dataPath: 'householdMembers',
+          parentRefField: 'ParentItemId',
+          fieldMappings: [{ source: 'name', target: 'MemberName' }],
+        },
+      ],
+    };
+    const config = { ...configuration, destinations: { ...configuration.destinations, household } };
+
+    it('updates only the columns in the data and leaves the detail rows alone', async () => {
+      graph.findItemIdByKey.mockResolvedValueOnce('item-7');
+
+      const result = await pusher.push(
+        tenantId,
+        config,
+        'household',
+        { applicationNumber: 'A-1', amount: 6 },
+        {
+          updateRowOnly: true,
+        },
+      );
+
+      expect(result).toEqual({ itemId: 'item-7', outcome: 'updated' });
+      expect(graph.updateItemFields).toHaveBeenCalledWith('token-1', siteId, 'list-1', 'item-7', {
+        Amount: 6,
+        AdspItemKey: 'A-1',
+      });
+      expect(graph.findItemIdsByField).not.toHaveBeenCalled();
+      expect(graph.createItem).not.toHaveBeenCalled();
+      expect(graph.deleteItem).not.toHaveBeenCalled();
+    });
+
+    it('fails, so it can be retried, when no row has the key yet', async () => {
+      await expect(
+        pusher.push(tenantId, config, 'household', { applicationNumber: 'A-1' }, { updateRowOnly: true }),
+      ).rejects.toMatchObject({ errorCode: 'row-not-found', retryable: true });
+      expect(graph.createItem).not.toHaveBeenCalled();
+    });
+
+    it('fails without retry when the destination has no row identity to find the row by', async () => {
+      await expect(
+        pusher.push(tenantId, configuration, 'hr-log', { amount: 1 }, { updateRowOnly: true }),
+      ).rejects.toMatchObject({ errorCode: 'row-identity-missing', retryable: false });
+      expect(tokens.getToken).not.toHaveBeenCalled();
     });
   });
 });

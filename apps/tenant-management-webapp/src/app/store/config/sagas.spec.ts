@@ -10,6 +10,7 @@ const axiosGet = axios.get as jest.Mock;
 const configJson = {
   keycloakApi: { realm: 'core', url: 'https://access.example/auth', clientId: 'tenant-management-webapp' },
   serviceUrls: { directoryServiceApiUrl: 'https://directory-service.example' },
+  supportEmail: 'support@example.gov.ab.ca',
 };
 
 const mockDirectory = (directoryEntries: { service: string; url: string }[]) => {
@@ -88,5 +89,23 @@ describe('fetchConfig sharepoint url and feature flags', () => {
     process.env.NX_PUBLIC_FEATURE_FLAGS = 'not json';
     mockDirectory(entries);
     expect((await runConfig()).featureFlags.SharePoint).toBe(false);
+  });
+});
+
+describe('fetchConfig support and directory', () => {
+  afterEach(() => {
+    jest.resetAllMocks();
+  });
+
+  it('reads the support email from config.json', async () => {
+    mockDirectory(entries);
+
+    expect((await runConfig()).supportEmail).toBe('support@example.gov.ab.ca');
+  });
+
+  it('keeps the platform directory so errors can name the failing service', async () => {
+    mockDirectory(entries);
+
+    expect((await runConfig()).directory).toEqual({ 'tenant-service': 'https://tenant-service.example' });
   });
 });

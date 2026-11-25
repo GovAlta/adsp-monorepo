@@ -12,4 +12,5 @@ export interface FormRegistrationRepository {
   create(entity: FormRegistrationEntity): Promise<FormRegistrationEntity>;
   // Applies the review only if the stored registration is still pending; resolves null otherwise.
   updateIfPending(entity: FormRegistrationEntity): Promise<FormRegistrationEntity>;
+  deleteAll(tenantId: AdspId, definitionId: string): Promise<number>;
 }

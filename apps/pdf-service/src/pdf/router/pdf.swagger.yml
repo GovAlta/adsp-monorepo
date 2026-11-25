@@ -32,6 +32,23 @@ components:
             $ref: '#/components/schemas/PdfError'
           example:
             errorMessage: 'Validation failed with error(s): name (body) - name is required'
+    PdfTemplateWriteBadRequest:
+      description: >
+        Request is invalid. Either a parameter or the request body failed validation, or a core (platform) caller did
+        not set tenantId. Template writes always act on a tenant's templates, so core callers must name the tenant.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/PdfError'
+          examples:
+            ValidationFailed:
+              summary: A parameter or the request body failed validation.
+              value:
+                errorMessage: 'Validation failed with error(s): name (body) - name is required'
+            TenantRequired:
+              summary: Core caller without tenantId.
+              value:
+                errorMessage: 'Tenant context is required to create pdf template; core users must set tenantId.'
     PdfUnauthorized:
       description: Request does not include a valid bearer token.
     PdfForbidden:
@@ -107,11 +124,16 @@ components:
         variables: '{"applicant": {"name": "Test User"}}'
     TemplateConflict:
       type: object
-      description: Response body when a template with the same ID already exists. Note that the property is `error`.
+      description: Response body when a template with the same ID already exists.
       properties:
+        errorMessage:
+          type: string
         error:
           type: string
+          deprecated: true
+          description: Duplicate of `errorMessage`, kept for existing clients.
       example:
+        errorMessage: "PDF template 'Submission summary' already exists."
         error: "PDF template 'Submission summary' already exists."
     Job:
       type: object
@@ -243,7 +265,7 @@ components:
       - Templates
     description: >
       Creates a new PDF template for the tenant. Requires the `urn:ads:platform:pdf-service:pdf-admin` role, in the
-      tenant or as a core user. The template ID is derived from the name. Core callers must set tenantId.
+      tenant or as a core user. The template ID is derived from the name. Core callers must set tenantId; a core caller without it gets 400.
     parameters:
       - $ref: '#/components/parameters/PdfTenantId'
     requestBody:
@@ -298,7 +320,7 @@ components:
             schema:
               $ref: '#/components/schemas/Template'
       400:
-        $ref: '#/components/responses/PdfBadRequest'
+        $ref: '#/components/responses/PdfTemplateWriteBadRequest'
       401:
         $ref: '#/components/responses/PdfUnauthorized'
       403:
@@ -340,8 +362,7 @@ components:
       Update an existing PDF template of the tenant. Only the fields included in the request body are updated; all
       other fields are left unchanged, and the ID does not change when the name does. Requires the
       `urn:ads:platform:pdf-service:pdf-admin` role, in the tenant or as a core user. The template is looked up before
-      the role is checked, so an unknown ID responds 404 to any caller. Core callers must set tenantId. Responds 201,
-      not 200, on success.
+      the role is checked, so an unknown ID responds 404 to any caller. Core callers must set tenantId; a core caller without it gets 400.
     parameters:
       - $ref: '#/components/parameters/PdfTemplateId'
       - $ref: '#/components/parameters/PdfTenantId'
@@ -386,27 +407,29 @@ components:
             template: <p>Submitted by {{data.applicant.name}} on {{formatDate data.submitted}}</p>
             additionalStyles: '.label { font-weight: bold; }'
     responses:
-      201:
+      200:
         description: The PDF template was successfully updated.
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/Template'
       400:
-        $ref: '#/components/responses/PdfBadRequest'
+        $ref: '#/components/responses/PdfTemplateWriteBadRequest'
       401:
         $ref: '#/components/responses/PdfUnauthorized'
       403:
         $ref: '#/components/responses/PdfForbidden'
       404:
         $ref: '#/components/responses/PdfTemplateNotFound'
+      409:
+        description: The template is a platform template, which a tenant cannot update.
   delete:
     tags:
       - Templates
     description: >
       Delete the specified PDF template of the tenant. Requires the `urn:ads:platform:pdf-service:pdf-admin` role, in
       the tenant or as a core user. The template is looked up before the role is checked, so an unknown ID responds
-      404 to any caller. Core callers must set tenantId.
+      404 to any caller. Core callers must set tenantId; a core caller without it gets 400.
     parameters:
       - $ref: '#/components/parameters/PdfTemplateId'
       - $ref: '#/components/parameters/PdfTenantId'
@@ -414,13 +437,15 @@ components:
       204:
         description: The PDF template was successfully deleted.
       400:
-        $ref: '#/components/responses/PdfBadRequest'
+        $ref: '#/components/responses/PdfTemplateWriteBadRequest'
       401:
         $ref: '#/components/responses/PdfUnauthorized'
       403:
         $ref: '#/components/responses/PdfForbidden'
       404:
         $ref: '#/components/responses/PdfTemplateNotFound'
+      409:
+        description: The template is a platform template, which a tenant cannot delete.
 
 /pdf/v1/jobs:
   post:
@@ -496,11 +521,12 @@ components:
       - Generator
     description: >
       Retrieve the specified job's status and, once completed, the generated file. Requires the
-      `urn:ads:platform:pdf-service:pdf-generator` role in the job's tenant. Core users and service accounts are not
-      allowed (403), and a job of another tenant responds 403. Jobs expire about 24 hours after their last update and
-      then respond 404.
+      `urn:ads:platform:pdf-service:pdf-generator` role, in the job's tenant or as a core user (for example a platform
+      service account). Core callers must set tenantId. A job of another tenant responds 404, the same as an unknown
+      job. Jobs expire about 24 hours after their last update and then respond 404.
     operationId: getJob
     parameters:
+      - $ref: '#/components/parameters/PdfTenantId'
       - name: jobId
         description: ID of job to retrieve.
         in: path
@@ -523,7 +549,7 @@ components:
       403:
         $ref: '#/components/responses/PdfForbidden'
       404:
-        description: Job not found, or expired.
+        description: Job not found, expired, or belongs to another tenant.
         content:
           application/json:
             schema:

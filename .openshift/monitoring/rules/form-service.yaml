@@ -1,15 +1,16 @@
-# DRAFT: These rules are not production-ready. DEV confirmed that Loki wraps the application log
-# in JSON and serializes Winston's ANSI level colours in the message field. Before deployment,
-# confirm the stream labels and values below, validate the Critical regex against DEV logs, and
-# confirm the LokiStack spec.rules selectors; this resource may need matching metadata labels.
+# DRAFT: These rules are not production-ready. DEV verified the namespace/container selector and
+# JSON Error-level filter against real form-service logs. Critical-level matching has not been
+# verified against a real Critical log. Complete metric-query evaluation, Loki Ruler firing and
+# LokiStack spec.rules selection requirements also remain unverified.
 apiVersion: template.openshift.io/v1
 kind: Template
 metadata:
   name: form-service-log-alerts
   annotations:
     description: >-
-      Draft Loki log-level alerts for form-service. The Critical query, Loki stream labels and
-      LokiStack rule selectors require DEV verification before deployment.
+      Draft Loki log-level alerts for form-service. DEV verified JSON Error-level filtering; the
+      Critical filter, complete metric queries, Loki Ruler firing and LokiStack rule selectors
+      require further runtime verification before deployment.
 parameters:
   - name: NAMESPACE
     description: Target namespace, e.g. adsp-dev.
@@ -32,7 +33,8 @@ objects:
                 sum by (kubernetes_pod_name, kubernetes_container_name) (
                   count_over_time(
                     {kubernetes_namespace_name="${NAMESPACE}", kubernetes_container_name="form-service"}
-                      |~ `"message":"\\u001b\[31m(critical|alert|fatal|emergency)\\u001b\[39m:` [1m]
+                      | json
+                      | level=~"(?i)(critical|alert|fatal|emergency)" [1m]
                   )
                 ) > 0
               for: 0s
@@ -59,7 +61,8 @@ objects:
                 sum by (kubernetes_pod_name, kubernetes_container_name) (
                   count_over_time(
                     {kubernetes_namespace_name="${NAMESPACE}", kubernetes_container_name="form-service"}
-                      |= `"message":"\u001b[31merror\u001b[39m:` [1m]
+                      | json
+                      | level="error" [1m]
                   )
                 ) > 0
               for: 30s

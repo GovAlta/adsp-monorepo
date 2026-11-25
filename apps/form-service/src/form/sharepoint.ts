@@ -3,8 +3,15 @@ import { FormEntity, FormSubmissionEntity } from './model';
 
 export type SharePointPushResult = { success: true } | { success: false; errorCode: string; retryable: boolean };
 
+// The submission's row and files, or the submission PDF, which is generated later and pushed separately.
+export type SharePointPushPart = 'submission' | 'submission-pdf';
+
 export interface SharePointService {
-  push(form: FormEntity, submission?: FormSubmissionEntity): Promise<SharePointPushResult>;
+  push(
+    form: FormEntity,
+    submission?: FormSubmissionEntity,
+    submissionPdfFileId?: string,
+  ): Promise<SharePointPushResult>;
 }
 
 export interface SharePointRetryService extends SharePointService {
@@ -18,6 +25,8 @@ export interface SharePointPush {
   tenantId: AdspId;
   formId: string;
   submissionId?: string;
+  // Set when this is a push of the submission PDF rather than of the submission.
+  submissionPdfFileId?: string;
   // Attempts started so far, counted when an attempt is claimed so that a crashing pod cannot retry forever.
   attempts: number;
   // The next time the push is due. While an attempt runs it is pushed out as a lease, so another pod leaves it alone.

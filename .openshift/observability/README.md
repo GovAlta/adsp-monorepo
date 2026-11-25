@@ -6,7 +6,8 @@ the shared collector endpoint and should not deploy their own tracing stack.
 
 Files in this folder:
 
-- `observability-stack.yml`: one-template deployment of Tempo + Collector + Grafana.
+- `observability-stack.yml`: one-template deployment of Tempo + Collector + Prometheus + Grafana.
+- `render-stack.sh`: renders the template for dev, uat or prod with the parameters it is deployed with.
 
 ## Topology
 
@@ -23,40 +24,62 @@ Run one stack per environment, owned by the platform team.
 - Tempo with persistent local storage and OTLP ingest (`4317`/`4318`)
 - OpenTelemetry Collector with retry queue, batching, and environment tagging
 - Grafana with a pre-provisioned Tempo datasource and route
+- A Cluster Prometheus datasource for OpenShift cluster monitoring, scoped to the namespace; see
+  [Cluster metrics](#cluster-metrics)
 
 Application services should target the collector service, not Tempo directly.
 
 ## Deploy
 
-Fastest path: deploy the whole stack with one template.
+`.github/workflows/observability.yml` deploys the stack, the same way `.github/workflows/monitoring.yml`
+applies alerting:
 
-```sh
-oc process -f .openshift/observability/observability-stack.yml \
-  --param-file .openshift/environments/dev/observability-stack.env \
-  -p ENVIRONMENT_NAME=dev \
-  -p INFRA_NAMESPACE=core-services-infra \
-  -p IMAGE_TAG=latest \
-  -p IMAGE_IMPORT_SCHEDULED=false \
-  -p GRAFANA_SECRET_NAME=grafana \
-  -p GRAFANA_OAUTH_ENABLED=true \
-  -p GRAFANA_ROOT_URL=https://grafana-<env-route-host> \
-  -p GRAFANA_OAUTH_AUTH_URL=https://access.<env-domain>/auth/realms/core/protocol/openid-connect/auth \
-  -p GRAFANA_OAUTH_TOKEN_URL=https://access.<env-domain>/auth/realms/core/protocol/openid-connect/token \
-  -p GRAFANA_OAUTH_API_URL=https://access.<env-domain>/auth/realms/core/protocol/openid-connect/userinfo \
-  | oc apply -f -
-```
+| Trigger | Deploys |
+|---|---|
+| Pull request changing the template, `render-stack.sh`, an `observability-stack.env` or the workflow | Nothing. Renders the stack for dev, uat and prod. |
+| Push to `main` changing the template, `render-stack.sh` or the workflow | dev, then uat after `Staging-gate` approval. Prod is skipped with a notice. |
+| Push to `main` changing `.openshift/environments/<env>/observability-stack.env` | That environment (dev, or uat after approval). |
+| Manual run (Actions > Observability stack > Run workflow) on `main` | The chosen environment. The only way to deploy prod. |
 
-The template imports source images into ImageStreams in `INFRA_NAMESPACE` and
-deployments pull from the internal OpenShift registry to avoid direct Docker Hub pulls.
-By default, scheduled imports are disabled to minimize upstream registry requests.
-Set `IMAGE_IMPORT_SCHEDULED=true` only if you want periodic automatic refreshes.
+The deploy jobs run in the `Dev`, `Staging` and `Production` GitHub Environments and log in with their
+`ARO_SERVER` and `ARO_TOKEN` secrets, the account Delivery CI deploys with. Deploying needs an account
+that can update ImageStreams in `adsp-build`, which personal accounts usually cannot.
 
-CPU and memory for each component are template parameters (for example `PROMETHEUS_CPU_LIMIT`) that
-default to the production values. `.openshift/environments/<env>/observability-stack.env` overrides them
-for dev and uat; omit `--param-file` for an environment without a file.
+Each deploy job:
 
-The account applying the template must be allowed to create/update ImageStreams in
-`INFRA_NAMESPACE`.
+1. Renders the template with `render-stack.sh <env>` and dry-runs it against `adsp-<env>`.
+2. Points the environment's ImageStream tags in `adsp-build` at the source images (`oc tag`) and imports
+   them, failing if an import does not succeed.
+3. Applies everything except the ImageStreams to `adsp-<env>`, with each Deployment's image set to the
+   imported digest so it rolls once.
+4. Restarts a Deployment whose ConfigMap changed but whose pods were not replaced by the apply. The
+   components, the collector included, read their config only at startup.
+5. Waits for the four Deployments to roll out and checks that they run the imported images.
+
+It does not back up Grafana's database or apply the dashboards; see [Dashboards](#dashboards).
+
+### Parameters
+
+`render-stack.sh <env>` renders the template with:
+
+- `ENVIRONMENT_NAME=<env>`, `NAMESPACE=adsp-<env>` and `INFRA_NAMESPACE=adsp-build`.
+- `IMAGE_TAG=<env>`. The ImageStreams in `adsp-build` are shared by every environment, so with a shared
+  tag such as `latest`, importing a new image for dev would also roll uat and prod through their image
+  triggers. Each environment has its own tag instead. For the same reason the workflow sets tags with
+  `oc tag` rather than applying the ImageStream objects: applying one environment's ImageStream would
+  remove the other environments' tags.
+- `.openshift/environments/<env>/observability-stack.env`, which holds the values that differ by
+  environment:
+
+| Parameter | dev | uat | prod |
+|---|---|---|---|
+| `GRAFANA_ROOT_URL` | `https://grafana-adsp-dev.apps.aro-01.int.gov.ab.ca` | `https://grafana-adsp-uat.apps.aro-01.int.gov.ab.ca` | `https://grafana-adsp-prod.apps.aro-01.int.gov.ab.ca` |
+| `GRAFANA_OAUTH_*_URL` (core realm) | `access.adsp-dev.gov.ab.ca` | `access-uat.alberta.ca` | `access.alberta.ca` |
+| `GRAFANA_DISABLE_LOGIN_FORM` | `true` | `false` | `false` |
+| CPU requests and limits | reduced | reduced | template defaults |
+
+`GRAFANA_ROOT_URL` is the host OpenShift generates for the `grafana` route. If it is unset, OAuth login
+redirects to `localhost`; `render-stack.sh` refuses to render OAuth without https URLs.
 
 Grafana credentials and OAuth client credentials are sourced from an existing secret
 (`GRAFANA_SECRET_NAME`). The stack template does not generate this secret.
@@ -65,14 +88,60 @@ Reference secret manifest:
 
 - `.openshift/configuration/grafana.yml`
 
-To refresh imported images on demand (instead of periodic polling):
+### Images
+
+The template imports source images into ImageStreams in `INFRA_NAMESPACE` and
+deployments pull from the internal OpenShift registry to avoid direct Docker Hub pulls.
+By default, scheduled imports are disabled to minimize upstream registry requests.
+Set `IMAGE_IMPORT_SCHEDULED=true` only if you want periodic automatic refreshes.
+
+Source images and registries (the `*_IMAGE` template parameters):
+
+| Component | Source image |
+|---|---|
+| Tempo | `docker.io/grafana/tempo:2.10.10` |
+| OpenTelemetry Collector | `ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector-contrib:0.166.0` |
+| Prometheus | `quay.io/prometheus/prometheus:v3.16.0` |
+| Grafana | `docker.io/grafana/grafana:12.4.16` |
+
+Grafana Labs publishes Tempo and Grafana images only on Docker Hub, so those two imports still pull
+from `docker.io`. Upgrading Grafana migrates its database on the `grafana-storage` volume and cannot
+be rolled back by changing the image tag; back up `/var/lib/grafana/grafana.db` first if its data
+matters.
+
+The `latest` tags that the stacks used before the workflow are left in place; nothing tracks them once
+every environment has been deployed by the workflow.
+
+### Deploying manually
+
+Without the workflow, an account that can update ImageStreams in `adsp-build` can do the same steps by
+hand. Tag and import the images, then apply the rest:
 
 ```sh
-oc import-image -n core-services-infra tempo:latest --from=grafana/tempo:2.7.2 --confirm
-oc import-image -n core-services-infra otel-collector:latest --from=ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector-contrib:0.125.0 --confirm
-oc import-image -n core-services-infra grafana:latest --from=grafana/grafana:11.5.2 --confirm
+ENV=dev
+.openshift/observability/render-stack.sh $ENV > observability.$ENV.json
+jq -r '.items[] | select(.kind == "ImageStream") | "\(.metadata.name):\(.spec.tags[0].name) \(.spec.tags[0].from.name)"' \
+  observability.$ENV.json | while read -r tag source; do
+  oc tag -n adsp-build --source=docker "$source" "$tag" --reference-policy=local
+  oc import-image -n adsp-build "$tag" --reference-policy=local
+done
+jq '.items |= map(select(.kind != "ImageStream"))' observability.$ENV.json > objects.$ENV.json
+oc diff -n adsp-$ENV -f objects.$ENV.json   # review before applying
+oc apply -n adsp-$ENV -f objects.$ENV.json
+oc rollout restart deployment/otel-collector -n adsp-$ENV   # if only its ConfigMap changed
 ```
 
+`NAMESPACE` must be the namespace being applied to. It has no default, so omitting it fails instead of
+scoping one environment's Grafana to another environment's namespace.
+
+To re-import an environment's images on demand (instead of periodic polling), for example dev:
+
+```sh
+for name in tempo otel-collector prometheus grafana; do oc import-image -n adsp-build $name:dev; done
+```
+
+`oc import-image` refuses to change a tag's source; change the `*_IMAGE` parameter and deploy, or use
+`oc tag --source=docker <image> <name>:<env>`.
 To see the generated Grafana route host:
 
 ```sh
@@ -98,6 +167,44 @@ Application services should export traces to:
 Grafana reaches Tempo internally at:
 
 - `http://tempo:3200`
+
+## Cluster metrics
+
+The `Cluster Prometheus` datasource (uid `cluster-prometheus`) reads pod, container and deployment
+metrics from OpenShift cluster monitoring: kube-state-metrics (`kube_pod_*`, `kube_deployment_*`,
+`kube_resourcequota`) and cAdvisor (`container_cpu_*`, `container_memory_*`, `container_network_*`).
+The SDK metrics are not there; they stay in the `Prometheus` datasource.
+
+It queries `https://thanos-querier.openshift-monitoring.svc:9092`, the tenancy port. Port 9091 needs
+cluster-wide `cluster-monitoring-view`, which an environment's Grafana should not have. Port 9092
+requires a `namespace` query parameter, checks that the token can view that namespace, and injects
+`namespace="<NAMESPACE>"` into every selector. So:
+
+- Queries need no namespace selector, and cannot read another namespace. Asking for one returns 403.
+- The datasource must use `GET`. Access is checked with the verb mapped from the HTTP method, and the
+  `create` that `POST` maps to is not in `view`.
+- `/api/v1/query`, `/query_range`, `/labels`, `/label/<name>/values` and `/series` work, so template
+  variables (`label_values(...)`) do. `/api/v1/metadata` returns 404, so the query editor shows no
+  metric help text.
+
+The template creates what the datasource authenticates with:
+
+| Object | Purpose |
+|---|---|
+| ServiceAccount `${GRAFANA_NAME}-metrics` | Identity for the queries. Not the Grafana pod's own account, so the pod gains no API access. |
+| RoleBinding `${GRAFANA_NAME}-metrics-view` | ClusterRole `view` in `NAMESPACE` only. |
+| Secret `${GRAFANA_NAME}-metrics-token` | Long-lived `kubernetes.io/service-account-token`; the token controller fills in `token`. |
+| ConfigMap `${GRAFANA_NAME}-service-ca` | Annotated `service.beta.openshift.io/inject-cabundle`, so it receives the service CA that signs thanos-querier's certificate. TLS is verified, not skipped. |
+
+The account, binding and token Secret are created in `NAMESPACE` explicitly, so the binding always
+grants to an account in its own namespace. The token and CA reach Grafana as the
+`CLUSTER_METRICS_TOKEN` and `CLUSTER_METRICS_CA_CERT` environment variables, which the datasource file
+interpolates. Grafana reads them only at startup: after the token Secret is recreated or the service
+CA rotates, restart it with `oc rollout restart deployment/grafana`.
+
+To check the datasource, open it under Connections > Data sources and choose Test, or run a query in
+Explore such as `sum(kube_pod_status_phase{phase="Running"})`. The `adsp-workload-health` dashboard
+(see [Dashboards](#dashboards)) is built on it.
 
 ## Evaluation Notes
 
@@ -181,11 +288,22 @@ overwritten. Export and commit when you are happy with a change.
 | `configuration-service-performance.json` | The same, narrowed to configuration-service, plus its internal benchmark phases. |
 | `adsp-service-dependencies.json` | What is a service waiting on? Outbound latency per callee, service graph edges, event bus depth. |
 | `adsp-event-bus-rabbitmq.json` | Is the event bus about to block, and are domain events flowing without loss? Broker-side view. |
+| `adsp-workload-health.json` | Are pods running, restarting or short of replicas, and what CPU, memory and network do they use? From `Cluster Prometheus`, so it covers every workload in the namespace, not only SDK services. |
 
 `adsp-event-bus-rabbitmq.json` covers only per-node aggregates, because
 `prometheus.return_per_object_metrics` is deliberately off -- per-object series scale with
 queues x channels x connections. It can show that the bus is backing up but not which queue is
 responsible; use the management UI on the affected node for that.
+
+`adsp-workload-health.json` works in any environment unchanged, because the datasource supplies
+the namespace. Its Namespace CPU % is usage against the ResourceQuota `limits.cpu`, and reads No data
+in a namespace without one. The replicas table lists Deployments only; DeploymentConfigs and
+StatefulSets are not in it. The Network panel draws receive above the axis and transmit below it,
+per workload: pods are mapped to their Deployment through `kube_pod_owner` and
+`kube_replicaset_owner`, to their DeploymentConfig through `kube_replicationcontroller_owner`, and
+otherwise to their direct owner (a StatefulSet, for example), so no pod is dropped. The Deployment
+filter lists Deployments only, so DeploymentConfigs and StatefulSets appear in the panel only under
+All.
 
 ### Conventions
 

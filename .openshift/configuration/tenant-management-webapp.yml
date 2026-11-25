@@ -12,6 +12,7 @@ metadata:
 data:
   configuration: |-
     {
+      "supportEmail": "adsp@gov.ab.ca",
       "keycloakApi": {
         "realm": "core",
         "url": "https://access.adsp-dev.gov.ab.ca/auth" ,

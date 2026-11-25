@@ -1,5 +1,25 @@
+import { NotFoundError } from '@core-services/core-common';
 import axios from 'axios';
-import type { DetailFailure } from './types';
+import type { DetailFailure, PushOutcome } from './types';
+
+// Still a 404, with an error code so a push to a destination an admin removed can be signalled.
+export class DestinationNotFoundError extends NotFoundError {
+  readonly errorCode = 'destination-not-found';
+
+  constructor(destinationId: string) {
+    super('SharePoint destination', destinationId);
+    Object.setPrototypeOf(this, DestinationNotFoundError.prototype);
+  }
+}
+
+export class ConnectionNotFoundError extends NotFoundError {
+  readonly errorCode = 'connection-not-found';
+
+  constructor(connectionId: string) {
+    super('SharePoint connection', connectionId);
+    Object.setPrototypeOf(this, ConnectionNotFoundError.prototype);
+  }
+}
 
 export class SharePointError extends Error {
   constructor(
@@ -47,6 +67,7 @@ export class DestinationNotSetUpError extends Error {
 export class DetailRowsFailedError extends SharePointError {
   constructor(
     public readonly dataId: string,
+    public readonly outcome: PushOutcome,
     public readonly detailFailures: DetailFailure[],
     errorCode: string,
     retryable: boolean,

@@ -1,5 +1,5 @@
 import { AdspId } from '@abgov/adsp-service-sdk';
-import { NotFoundError } from '@core-services/core-common';
+import { resolveDestination } from './destinations';
 import { SharePointError } from './errors';
 import { ColumnKind, GraphClient, GraphTokenProvider, ListColumn } from './graph';
 import { LibraryDriveResolver } from './libraryDrives';
@@ -213,21 +213,6 @@ export class SharePointSetup {
     private drives: LibraryDriveResolver,
   ) {}
 
-  private resolve(
-    configuration: SharePointConfiguration | undefined,
-    destinationId: string,
-  ): { destination: SharePointDestination; connection: SharePointConnection } {
-    const destination = configuration?.destinations?.[destinationId];
-    if (!destination) {
-      throw new NotFoundError('SharePoint destination', destinationId);
-    }
-    const connection = configuration?.connections?.[destination.connectionId];
-    if (!connection) {
-      throw new NotFoundError('SharePoint connection', destination.connectionId);
-    }
-    return { destination, connection };
-  }
-
   private call<T>(tenantId: AdspId, connection: SharePointConnection, call: (token: string) => Promise<T>) {
     return withToken(this.tokens, tenantId, connection, call);
   }
@@ -307,7 +292,7 @@ export class SharePointSetup {
     configuration: SharePointConfiguration | undefined,
     destinationId: string,
   ): Promise<VerifyResult> {
-    const { destination, connection } = this.resolve(configuration, destinationId);
+    const { destination, connection } = resolveDestination(configuration, destinationId);
     return (await this.check(tenantId, connection, planLists(destination, new Map()), planLibrary(destination))).report;
   }
 
@@ -316,7 +301,7 @@ export class SharePointSetup {
     configuration: SharePointConfiguration | undefined,
     destinationId: string,
   ): Promise<SetupResult> {
-    const { destination, connection } = this.resolve(configuration, destinationId);
+    const { destination, connection } = resolveDestination(configuration, destinationId);
     const { siteId } = connection;
     const result: Omit<SetupResult, 'report'> = {
       createdLists: [],

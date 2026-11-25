@@ -7,7 +7,7 @@ paths:
       description: |
         Requires the `audit-reader` role, held in the tenant or as a Core role. Any reader in the tenant may read any
         namespace; ownership is not required for reads. Tenant callers read their token's tenant. Core callers must select a tenant with `tenantId`; without it the
-        request responds 403.
+        request responds 400.
 
         Filters combine with AND; time bounds are inclusive. Paginate with `top` and `after`. Repeating a query
         parameter responds 400.
@@ -232,7 +232,7 @@ paths:
         Requires the `audit-reader` role, held in the tenant or as a Core role. Returns only the resolved tenant's
         events and accepts the same filters as the namespace listing. Actor `name` and `email` are included as
         recorded. Tenant callers read their token's tenant. Core callers must select a tenant with `tenantId`; without it the
-        request responds 403.
+        request responds 400.
       parameters:
         - $ref: '#/components/parameters/TenantId'
         - $ref: '#/components/parameters/Top'
@@ -269,7 +269,7 @@ paths:
         Requires the `audit-reader` role, held in the tenant or as a Core role. Returns every namespace the tenant
         has recorded events for, whether or not an action catalog is visible to the tenant (for example core,
         platform-level catalogs). Use it to populate a namespace picker. Tenant callers read their token's tenant. Core callers must select a tenant with `tenantId`; without it the
-        request responds 403.
+        request responds 400.
       parameters:
         - $ref: '#/components/parameters/TenantId'
       responses:
@@ -301,7 +301,7 @@ paths:
       summary: Export events across every namespace in the caller's tenant as CSV, newest first.
       description: |
         Requires the `audit-reader` role, held in the tenant or as a Core role. Tenant callers read their token's tenant. Core callers must select a tenant with `tenantId`; without it the
-        request responds 403.
+        request responds 400.
 
         Accepts the same filters as the event listing (`top` and `after` are ignored)
         and streams every matching event as CSV, so the export is not capped and is not held in memory.
@@ -342,7 +342,7 @@ paths:
       description: |
         Requires the `audit-reader` role, held in the tenant or as a Core role. Behaves as the export across all
         namespaces, limited to the namespace. Tenant callers read their token's tenant. Core callers must select a tenant with `tenantId`; without it the
-        request responds 403.
+        request responds 400.
       parameters:
         - $ref: '#/components/parameters/AuditNamespace'
         - $ref: '#/components/parameters/TenantId'
@@ -378,7 +378,7 @@ paths:
         Requires the `audit-reader` role, held in the tenant or as a Core role. Use the service-generated `id` of a
         listed event, not the writer's `eventId`. An id belonging to another tenant returns 404. Actor `name` and
         `email` are included as recorded. Tenant callers read their token's tenant. Core callers must select a tenant with `tenantId`; without it the
-        request responds 403.
+        request responds 400.
       parameters:
         - $ref: '#/components/parameters/AuditNamespace'
         - $ref: '#/components/parameters/TenantId'

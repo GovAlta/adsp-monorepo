@@ -7,7 +7,7 @@ import {
   UnauthorizedUserError,
   adspId,
 } from '@abgov/adsp-service-sdk';
-import { createValidationHandler, NotFoundError, decodeAfter } from '@core-services/core-common';
+import { createValidationHandler, InvalidOperationError, NotFoundError, decodeAfter } from '@core-services/core-common';
 import axios from 'axios';
 import { Request, RequestHandler, Response, Router } from 'express';
 import { body, checkSchema, param, query } from 'express-validator';
@@ -62,9 +62,18 @@ export const verifyQueuedTask: RequestHandler = (req, _res, next) => {
   }
 };
 
+async function getConfiguredQueues(req: Request): Promise<Record<string, QueueEntity>> {
+  if (!req.tenant?.id) {
+    throw new InvalidOperationError('Cannot retrieve queues without tenant context. Core users must specify tenantId.');
+  }
+
+  const [{ queues = {} } = {}] = await req.getConfiguration<TaskServiceConfiguration>();
+  return queues;
+}
+
 export const getQueues: RequestHandler = async (req, res, next) => {
   try {
-    const [{ queues = {} }] = await req.getConfiguration<TaskServiceConfiguration>();
+    const queues = await getConfiguredQueues(req);
     const queueCollection = Object.entries(queues).map(([_, q]) => mapQueue(q));
 
     res.send(queueCollection);
@@ -78,7 +87,7 @@ export const getQueue: RequestHandler = async (req, res, next) => {
     const { namespace, name } = req.params;
     const key = `${namespace}:${name}`;
 
-    const [{ queues = {} }] = await req.getConfiguration<TaskServiceConfiguration>();
+    const queues = await getConfiguredQueues(req);
 
     const queue = queues[key];
     if (!queue) {
@@ -97,7 +106,7 @@ export function getQueueMetrics(
   serviceId: AdspId,
   directory: ServiceDirectory,
   tokenProvider: TokenProvider,
-  repository: TaskRepository
+  repository: TaskRepository,
 ): RequestHandler {
   return async (req, res, next) => {
     try {
@@ -142,7 +151,7 @@ export function getQueueMetrics(
         ...(metrics || {}),
         priority: Object.entries(metrics.priority).reduce(
           (counts, [key, number]) => ({ ...counts, [TaskPriority[key]]: number }),
-          {} as Record<TaskPriority, number>
+          {} as Record<TaskPriority, number>,
         ),
         queue: null,
         completion: null,
@@ -161,7 +170,7 @@ export function getQueueMetrics(
         } = await axios.get<{ values: { avg: number; min: number; max: number }[] }>(
           new URL(
             `value/v1/event-service/values/event/metrics/${serviceId.service}:${queue.namespace}:${queue.name}:queue:duration`,
-            valueServiceUrl
+            valueServiceUrl,
           ).href,
           {
             headers: { Authorization: `Bearer ${token}` },
@@ -170,7 +179,7 @@ export function getQueueMetrics(
               interval: 'weekly',
               top: 1,
             },
-          }
+          },
         );
 
         token = await tokenProvider.getAccessToken();
@@ -182,7 +191,7 @@ export function getQueueMetrics(
         } = await axios.get<{ values: { avg: number; min: number; max: number }[] }>(
           new URL(
             `value/v1/event-service/values/event/metrics/${serviceId.service}:${queue.namespace}:${queue.name}:completion:duration`,
-            valueServiceUrl
+            valueServiceUrl,
           ).href,
           {
             headers: { Authorization: `Bearer ${token}` },
@@ -191,7 +200,7 @@ export function getQueueMetrics(
               interval: 'weekly',
               top: 1,
             },
-          }
+          },
         );
 
         result.queue = queueDuration;
@@ -217,7 +226,7 @@ export function getQueueMetrics(
                 queueName: queue.name,
               }),
             },
-          }
+          },
         );
 
         token = await tokenProvider.getAccessToken();
@@ -237,7 +246,7 @@ export function getQueueMetrics(
                 queueName: queue.name,
               }),
             },
-          }
+          },
         );
 
         token = await tokenProvider.getAccessToken();
@@ -258,7 +267,7 @@ export function getQueueMetrics(
                 queueName: queue.name,
               }),
             },
-          }
+          },
         );
 
         result.rate = {
@@ -302,7 +311,7 @@ export function createTask(
   repository: TaskRepository,
   eventService: EventService,
   commentService: CommentService,
-  auditService: AuditService
+  auditService: AuditService,
 ): RequestHandler {
   return async (req, res, next) => {
     try {
@@ -386,7 +395,7 @@ export const getRoleUsers =
               {
                 headers: { Authorization: `Bearer ${user.token.bearer}` },
                 params: { clientId },
-              }
+              },
             );
 
             client = clients?.[0]?.id;
@@ -401,7 +410,7 @@ export const getRoleUsers =
               {
                 headers: { Authorization: `Bearer ${user.token.bearer}` },
                 params: { first, max },
-              }
+              },
             );
 
             roleUsers.forEach((roleUser) => {
@@ -424,6 +433,15 @@ export const getRoleUsers =
               });
             } else if (err.response?.status === HttpStatusCodes.FORBIDDEN) {
               throw new UnauthorizedUserError('get role users', user);
+            } else {
+              logger.error(`Failed to retrieve users of role '${role}' from Keycloak: ${err}`, {
+                context: 'TaskRouter',
+                tenantId: tenant.id.toString(),
+                user: `${user.name} (ID: ${user.id})`,
+              });
+              throw new InvalidOperationError(`Failed to retrieve users of role '${role}'.`, {
+                statusCode: HttpStatusCodes.BAD_GATEWAY,
+              });
             }
           } else {
             throw err;
@@ -436,7 +454,7 @@ export const getRoleUsers =
           id: user.id,
           name: user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : user.username,
           email: user.email,
-        }))
+        })),
       );
     } catch (err) {
       next(err);
@@ -458,13 +476,13 @@ export function createQueueRouter({
 
   const validateNamespaceNameHandler = createValidationHandler(
     param('namespace').isString().isLength({ min: 1, max: 50 }),
-    param('name').isString().isLength({ min: 1, max: 50 })
+    param('name').isString().isLength({ min: 1, max: 50 }),
   );
 
   const validateNamespaceNameAndTaskIdHandler = createValidationHandler(
     param('namespace').isString().isLength({ min: 1, max: 50 }),
     param('name').isString().isLength({ min: 1, max: 50 }),
-    param('id').isUUID()
+    param('id').isUUID(),
   );
 
   router.get('/queues', getQueues);
@@ -477,10 +495,10 @@ export function createQueueRouter({
     validateNamespaceNameHandler,
     createValidationHandler(
       query('notEnded').optional().isBoolean(),
-      query('includeEventMetrics').optional().isBoolean()
+      query('includeEventMetrics').optional().isBoolean(),
     ),
     getQueue,
-    getQueueMetrics(apiId, directory, tokenProvider, repository)
+    getQueueMetrics(apiId, directory, tokenProvider, repository),
   );
   router.get(
     '/queues/:namespace/:name/tasks',
@@ -492,10 +510,10 @@ export function createQueueRouter({
         .isString()
         .custom((val) => {
           return !isNaN(decodeAfter(val));
-        })
+        }),
     ),
     getQueue,
-    getQueuedTasks(apiId, repository)
+    getQueuedTasks(apiId, repository),
   );
   router.post(
     '/queues/:namespace/:name/tasks',
@@ -507,19 +525,23 @@ export function createQueueRouter({
           description: { optional: true, isString: true },
           recordId: { optional: true, isString: true },
           context: { optional: true, isObject: true },
+          priority: {
+            optional: { options: { nullable: true } },
+            isIn: { options: [Object.keys(TaskPriority).filter((key) => isNaN(Number(key)))] },
+          },
         },
-        ['body']
-      )
+        ['body'],
+      ),
     ),
     getQueue,
-    createTask(apiId, logger, repository, eventService, commentService, auditService)
+    createTask(apiId, logger, repository, eventService, commentService, auditService),
   );
   router.get(
     '/queues/:namespace/:name/tasks/:id',
     validateNamespaceNameAndTaskIdHandler,
     getTask(repository),
     verifyQueuedTask,
-    (req: Request, res: Response) => res.send(mapTask(apiId, req[TASK_KEY]))
+    (req: Request, res: Response) => res.send(mapTask(apiId, req[TASK_KEY])),
   );
   router.patch(
     '/queues/:namespace/:name/tasks/:id',
@@ -531,23 +553,22 @@ export function createQueueRouter({
           description: { optional: true, isString: true },
           context: { optional: true, isObject: true },
           data: { optional: true, isObject: true },
+          priority: { optional: true, isInt: { options: { min: TaskPriority.Normal, max: TaskPriority.Urgent } } },
         },
-        ['body']
-      )
+        ['body'],
+      ),
     ),
     getTask(repository),
     verifyQueuedTask,
-    updateTask(apiId, logger, eventService, auditService)
+    updateTask(apiId, logger, eventService, auditService),
   );
   router.patch(
     '/queues/:namespace/:name/tasks/:id/data',
     validateNamespaceNameAndTaskIdHandler,
-    createValidationHandler(
-      body().isObject()
-    ),
+    createValidationHandler(body().isObject()),
     getTask(repository),
     verifyQueuedTask,
-    updateTaskData(apiId, logger, eventService)
+    updateTaskData(apiId, logger, eventService),
   );
   router.post(
     '/queues/:namespace/:name/tasks/:id',
@@ -569,25 +590,25 @@ export function createQueueRouter({
             isObject: true,
           },
         },
-        ['body']
-      )
+        ['body'],
+      ),
     ),
     getTask(repository),
     verifyQueuedTask,
-    taskOperation(apiId, logger, eventService, auditService)
+    taskOperation(apiId, logger, eventService, auditService),
   );
 
   router.get(
     '/queues/:namespace/:name/assigners',
     validateNamespaceNameHandler,
     getQueue,
-    getRoleUsers(logger, KEYCLOAK_ROOT_URL, 'assignerRoles')
+    getRoleUsers(logger, KEYCLOAK_ROOT_URL, 'assignerRoles'),
   );
   router.get(
     '/queues/:namespace/:name/workers',
     validateNamespaceNameHandler,
     getQueue,
-    getRoleUsers(logger, KEYCLOAK_ROOT_URL, 'workerRoles')
+    getRoleUsers(logger, KEYCLOAK_ROOT_URL, 'workerRoles'),
   );
 
   return router;

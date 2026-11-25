@@ -277,6 +277,7 @@ describe('pdf', () => {
 
       expect(res.status).toHaveBeenCalledWith(HttpStatusCodes.CONFLICT);
       expect(res.send).toHaveBeenCalledWith({
+        errorMessage: "PDF template 'we are the mushrooms' already exists.",
         error: "PDF template 'we are the mushrooms' already exists.",
       });
       expect(serviceDirectoryMock.getServiceUrl).not.toHaveBeenCalled();
@@ -442,6 +443,28 @@ describe('pdf', () => {
       expect(req['template']).toBe(configuration.test);
     });
 
+    it('marks a tenant template with a platform template ID as a platform template', async () => {
+      const req = {
+        params: { templateId: 'test' },
+        getConfiguration: jest.fn().mockResolvedValueOnce([configuration, { test: configuration.test }]),
+      };
+      const next = jest.fn();
+      await getTemplate('params')(req as unknown as Request, {} as Response, next);
+      expect(next).toHaveBeenCalledWith();
+      expect(req['platformTemplate']).toBe(true);
+    });
+
+    it('does not mark a tenant-only template, including inherited property names, as a platform template', async () => {
+      const req = {
+        params: { templateId: 'constructor' },
+        getConfiguration: jest.fn().mockResolvedValueOnce([{ constructor: configuration.test }, {}]),
+      };
+      const next = jest.fn();
+      await getTemplate('params')(req as unknown as Request, {} as Response, next);
+      expect(next).toHaveBeenCalledWith();
+      expect(req['platformTemplate']).toBe(false);
+    });
+
     it('can call next with not found', async () => {
       const req = {
         params: {
@@ -475,7 +498,7 @@ describe('pdf', () => {
       expect(handler).toBeTruthy();
     });
 
-    it('updates a PDF template and returns 201', async () => {
+    it('updates a PDF template and returns 200', async () => {
       const req = {
         tenant: { id: tenantId },
         user: { tenantId, id: 'test', name: 'tester', roles: [ServiceRoles.Admin] },
@@ -516,7 +539,7 @@ describe('pdf', () => {
           params: { tenantId: tenantId.toString() },
         },
       );
-      expect(res.status).toHaveBeenCalledWith(HttpStatusCodes.CREATED);
+      expect(res.status).toHaveBeenCalledWith(HttpStatusCodes.OK);
       expect(res.json).toHaveBeenCalledWith({
         id: 'test',
         name: 'Test template',
@@ -635,6 +658,31 @@ describe('pdf', () => {
       expect(next).not.toHaveBeenCalled();
     });
 
+    it('returns conflict and does not save when the template is a platform template', async () => {
+      const req = {
+        platformTemplate: true,
+        tenant: { id: tenantId },
+        user: { tenantId, id: 'test', name: 'tester', roles: [ServiceRoles.Admin] },
+        params: { templateId: 'test' },
+        body: { template: '<p>New body</p>' },
+        template: existingTemplate,
+      };
+      const res = createMockResponse();
+      const next = jest.fn();
+
+      await updatePdfTemplate(serviceDirectoryMock, tokenProviderMock, auditServiceMock)(
+        req as unknown as Request,
+        res as unknown as Response,
+        next,
+      );
+
+      expect(res.status).toHaveBeenCalledWith(409);
+      expect(res.send).toHaveBeenCalledWith({ error: expect.stringContaining('platform template') });
+      expect(axiosMock.patch).not.toHaveBeenCalled();
+      expect(auditServiceMock.record).not.toHaveBeenCalled();
+      expect(next).not.toHaveBeenCalled();
+    });
+
     it('calls next with unauthorized when user does not have Admin role', async () => {
       const req = {
         tenant: { id: tenantId },
@@ -748,6 +796,29 @@ describe('pdf', () => {
       );
       expect(res.status).toHaveBeenCalledWith(HttpStatusCodes.NO_CONTENT);
       expect(res.send).toHaveBeenCalledWith();
+      expect(next).not.toHaveBeenCalled();
+    });
+
+    it('returns conflict and does not save when the template is a platform template', async () => {
+      const req = {
+        platformTemplate: true,
+        tenant: { id: tenantId },
+        user: { tenantId, id: 'test', name: 'tester', roles: [ServiceRoles.Admin] },
+        params: { templateId: 'test' },
+      };
+      const res = createMockResponse();
+      const next = jest.fn();
+
+      await deletePdfTemplate(serviceDirectoryMock, tokenProviderMock, auditServiceMock)(
+        req as unknown as Request,
+        res as unknown as Response,
+        next,
+      );
+
+      expect(res.status).toHaveBeenCalledWith(409);
+      expect(res.send).toHaveBeenCalledWith({ error: expect.stringContaining('platform template') });
+      expect(axiosMock.patch).not.toHaveBeenCalled();
+      expect(auditServiceMock.record).not.toHaveBeenCalled();
       expect(next).not.toHaveBeenCalled();
     });
 
@@ -1291,6 +1362,49 @@ describe('pdf', () => {
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(res.send).not.toHaveBeenCalled();
       expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedUserError));
+    });
+
+    const coreUser = { isCore: true, id: 'core', name: 'core', roles: [ServiceRoles.PdfGenerator] };
+
+    it('can get file for core user with tenantId', async () => {
+      const req = { user: coreUser, query: { tenantId: `${tenantId}` }, params: { jobId: 'job1' } };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+
+      repositoryMock.get.mockResolvedValueOnce({ tenantId, id: 'job1', status: 'completed' });
+      const handler = getGeneratedFile(serviceId, repositoryMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ id: 'job1' }));
+      expect(next).not.toHaveBeenCalled();
+    });
+
+    it('can call next with invalid operation for core user without tenantId', async () => {
+      const req = { user: coreUser, query: {}, params: { jobId: 'job1' } };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+
+      const handler = getGeneratedFile(serviceId, repositoryMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(res.send).not.toHaveBeenCalled();
+      expect(next).toHaveBeenCalledWith(expect.any(InvalidOperationError));
+      expect(repositoryMock.get).not.toHaveBeenCalled();
+    });
+
+    it('can call next with not found for job of another tenant', async () => {
+      const otherTenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/other`;
+      const req = {
+        tenant: { id: tenantId },
+        user: { tenantId, id: 'test', name: 'tester', roles: [ServiceRoles.PdfGenerator] },
+        params: { jobId: 'job1' },
+      };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+
+      repositoryMock.get.mockResolvedValueOnce({ tenantId: otherTenantId, id: 'job1', status: 'completed' });
+      const handler = getGeneratedFile(serviceId, repositoryMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(res.send).not.toHaveBeenCalled();
+      expect(next).toHaveBeenCalledWith(expect.any(NotFoundError));
     });
   });
 });

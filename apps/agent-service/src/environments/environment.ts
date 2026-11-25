@@ -65,6 +65,11 @@ export const environment = envalid.cleanEnv(
     AGENT_NOTIFICATION_LAST_MESSAGES: envalid.num({ default: 8 }),
     // A reply can carry a whole email body in its tool call, so the limit is higher than the Access agent's.
     AGENT_NOTIFICATION_MAX_OUTPUT_TOKENS: envalid.num({ default: 6000 }),
+    // The PDF template agent gets the saved template with every message, so it keeps a short history without
+    // observational memory; earlier copies of the template would only repeat it.
+    AGENT_PDF_LAST_MESSAGES: envalid.num({ default: 8 }),
+    // A save writes whole template fields, so the limit leaves room for a long template.
+    AGENT_PDF_MAX_OUTPUT_TOKENS: envalid.num({ default: 10000 }),
     // Token budget for the model key shared by every agent; 0 turns a limit off. Each pod enforces its own budget,
     // so with several pods set these to the key's limit divided by the number of pods.
     AGENT_TOKEN_LIMIT_PER_MINUTE: envalid.num({ default: 0 }),
