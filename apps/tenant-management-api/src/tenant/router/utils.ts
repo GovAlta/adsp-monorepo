@@ -15,6 +15,13 @@ export const validateEmailInDB = async (logger: Logger, repository: TenantReposi
 };
 
 /**
+ * Trims a tenant name and collapses repeated spaces, so the name is checked and stored in one form.
+ * Anything that isn't a string is returned as is, for validateName to reject.
+ */
+export const normalizeTenantName = <T>(name: T): T =>
+  (typeof name === 'string' ? name.trim().replace(/\s+/g, ' ') : name) as T;
+
+/**
  * Checks that a tenant name is valid and not used by another tenant (ignoring case).
  * Pass excludeTenantId when renaming, so the tenant's own current name (or a change of case) is allowed.
  */
@@ -61,7 +68,7 @@ export const validateName = async (
     }
   });
 
-  if (name.length === 0) {
+  if (name.trim().length === 0) {
     const errorMessage = `Enter a tenant name.`;
     throw new InvalidValueError('Tenant name', errorMessage);
   }

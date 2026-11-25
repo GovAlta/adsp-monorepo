@@ -739,6 +739,53 @@ describe('createTenantV2Router', () => {
       expect(() => JSON.stringify(event)).not.toThrow();
     });
 
+    it('can trim and collapse spaces in the new tenant name', async () => {
+      const req = {
+        params: { id: 'tenant-a' },
+        body: {
+          name: '  New   mock  name ',
+        },
+        user: { isCore: true },
+      };
+      const res = {
+        send: jest.fn(),
+      };
+      const next = jest.fn();
+      const handler = updateTenantName(loggerMock, repositoryMock, eventServiceMock, auditServiceMock);
+
+      const entity = new TenantEntity(repositoryMock, tenant);
+      repositoryMock.get.mockResolvedValueOnce(entity);
+      repositoryMock.find.mockResolvedValueOnce([]);
+      repositoryMock.save.mockResolvedValueOnce({ ...entity, name: 'New mock name' });
+
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(next).not.toHaveBeenCalled();
+      expect(repositoryMock.find).toHaveBeenCalledWith(expect.objectContaining({ nameEquals: 'New mock name' }));
+      expect(repositoryMock.save).toHaveBeenCalledWith(expect.objectContaining({ name: 'New mock name' }));
+    });
+
+    it('can call next with invalid value for a new tenant name of only spaces', async () => {
+      const req = {
+        params: { id: 'tenant-a' },
+        body: {
+          name: '   ',
+        },
+        user: { isCore: true },
+      };
+      const res = {
+        send: jest.fn(),
+      };
+      const next = jest.fn();
+      const handler = updateTenantName(loggerMock, repositoryMock, eventServiceMock, auditServiceMock);
+
+      repositoryMock.get.mockResolvedValueOnce(new TenantEntity(repositoryMock, tenant));
+
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(next).toHaveBeenCalledWith(expect.any(InvalidValueError));
+      expect(repositoryMock.save).not.toHaveBeenCalled();
+      expect(res.send).not.toHaveBeenCalled();
+    });
+
     it('can call next with not found', async () => {
       const req = {
         params: { id: 'tenant-a' },
@@ -950,6 +997,56 @@ describe('createTenantV2Router', () => {
       expect(auditServiceMock.record.mock.invocationCallOrder[0]).toBeLessThan(
         repositoryMock.delete.mock.invocationCallOrder[0],
       );
+    });
+
+    it('can trim and collapse spaces in the tenant name before checking and saving it', async () => {
+      const req = {
+        body: {
+          name: '  Child   Care  ',
+        },
+        user: { isCore: true, roles: [TenantServiceRoles.BetaTester], email: 'beta-tester@test.co' },
+        getConfiguration: jest.fn(),
+      };
+      const res = {
+        send: jest.fn(),
+        status: jest.fn().mockReturnThis(),
+      };
+      const next = jest.fn();
+      const handler = createTenant(loggerMock, repositoryMock, realmServiceMock, eventServiceMock, auditServiceMock);
+
+      repositoryMock.find.mockResolvedValueOnce([]);
+      repositoryMock.find.mockResolvedValueOnce([]);
+      req.getConfiguration.mockResolvedValueOnce([[], []]);
+      repositoryMock.save.mockResolvedValueOnce(
+        new TenantEntity(repositoryMock, { ...tenant, name: 'Child Care', status: 'provisioning' }),
+      );
+
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(next).not.toHaveBeenCalled();
+      expect(repositoryMock.find).toHaveBeenCalledWith(expect.objectContaining({ nameEquals: 'Child Care' }));
+      expect(repositoryMock.save).toHaveBeenCalledWith(expect.objectContaining({ name: 'Child Care' }));
+      expect(res.status).toHaveBeenCalledWith(202);
+    });
+
+    it('can call next with invalid value for a tenant name of only spaces', async () => {
+      const req = {
+        body: {
+          name: '   ',
+        },
+        user: { isCore: true, roles: [TenantServiceRoles.BetaTester], email: 'beta-tester@test.co' },
+        getConfiguration: jest.fn(),
+      };
+      const res = {
+        send: jest.fn(),
+        status: jest.fn().mockReturnThis(),
+      };
+      const next = jest.fn();
+      const handler = createTenant(loggerMock, repositoryMock, realmServiceMock, eventServiceMock, auditServiceMock);
+
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(next).toHaveBeenCalledWith(expect.any(InvalidValueError));
+      expect(repositoryMock.save).not.toHaveBeenCalled();
+      expect(res.send).not.toHaveBeenCalled();
     });
 
     it('can call next with bad request for duplicate tenant name', async () => {
