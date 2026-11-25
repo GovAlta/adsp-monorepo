@@ -77,6 +77,19 @@ describe('ConfigurationClient', () => {
     );
   });
 
+  it('can update several entries in one request', async () => {
+    axiosMock.patch.mockResolvedValueOnce({ data: { latest: { configuration: { test: entry, other: entry } } } });
+
+    const result = await client.updateEntries(tenantId, { test: entry, other: entry });
+
+    expect(result).toEqual({ test: entry, other: entry });
+    expect(axiosMock.patch).toHaveBeenCalledWith(
+      configurationUrl,
+      { operation: 'UPDATE', update: { test: entry, other: entry } },
+      { headers, params: { tenantId: tenantId.toString() } },
+    );
+  });
+
   it('can delete entry', async () => {
     axiosMock.patch.mockResolvedValueOnce({ data: {} });
 

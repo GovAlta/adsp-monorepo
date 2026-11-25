@@ -25,25 +25,26 @@ Requests to a service are scoped to the tenant of the caller's access token. Pla
 
 ## Application capabilities
 
-| Service                                               | Use it to                                                                       |
-| :---------------------------------------------------- | :------------------------------------------------------------------------------ |
-| [Form service](form-service.md)                       | Define forms, and let applicants draft and submit them.                         |
-| [File service](file-service.md)                       | Upload, scan and download files, with access controlled by file type.           |
-| [Notification service](notification-service.md)       | Send email, SMS and bot notifications to subscribers when domain events happen. |
-| [Task service](task-service.md)                       | Queue work and assign it to workers.                                            |
-| [Comment service](comment-service.md)                 | Add topics and comments to application records.                                 |
-| [Calendar service](calendar-service.md)               | Look up dates and holidays, and schedule calendar events.                       |
-| [PDF service](pdf-service.md)                         | Generate PDFs from templates.                                                   |
-| [Export service](export-service.md)                   | Export another service's API resources to a file.                               |
-| [Verify service](verify-service.md)                   | Generate and check time-limited verification codes.                             |
-| [Feedback service](feedback-service.md)               | Collect user feedback with an embeddable widget.                                |
-| [Status service](status-service.md)                   | Monitor application health, publish status and post service notices.            |
-| [Audit service](audit-service.md)                     | Record and search audit records of who did what to which resource.              |
-| [PII service](pii-service.md)                         | Find and anonymize personally identifiable information in text.                 |
-| [Cache service](cache-service.md)                     | Cache reads from upstream APIs within the tenant security model.                |
-| [Token handler](token-handler.md)                     | Sign users in to a browser application with a session cookie instead of tokens. |
-| [Agent service](agent-service.md)                     | Run configurable AI agents with tools and role-based access.                    |
-| [Project planner service](project-planner-service.md) | Turn a business problem into a plan for using ADSP services.                    |
+| Service                                                             | Use it to                                                                       |
+| :------------------------------------------------------------------ | :------------------------------------------------------------------------------ |
+| [Form service](form-service.md)                                     | Define forms, and let applicants draft and submit them.                         |
+| [File service](file-service.md)                                     | Upload, scan and download files, with access controlled by file type.           |
+| [Notification service](notification-service.md)                     | Send email, SMS and bot notifications to subscribers when domain events happen. |
+| [Task service](task-service.md)                                     | Queue work and assign it to workers.                                            |
+| [Comment service](comment-service.md)                               | Add topics and comments to application records.                                 |
+| [Calendar service](calendar-service.md)                             | Look up dates and holidays, and schedule calendar events.                       |
+| [PDF service](pdf-service.md)                                       | Generate PDFs from templates.                                                   |
+| [Export service](export-service.md)                                 | Export another service's API resources to a file.                               |
+| [Verify service](verify-service.md)                                 | Generate and check time-limited verification codes.                             |
+| [Client secret rotation service](client-secret-rotation-service.md) | Rotate Keycloak client secrets before they expire.                              |
+| [Feedback service](feedback-service.md)                             | Collect user feedback with an embeddable widget.                                |
+| [Status service](status-service.md)                                 | Monitor application health, publish status and post service notices.            |
+| [Audit service](audit-service.md)                                   | Record and search audit records of who did what to which resource.              |
+| [PII service](pii-service.md)                                       | Find and anonymize personally identifiable information in text.                 |
+| [Cache service](cache-service.md)                                   | Cache reads from upstream APIs within the tenant security model.                |
+| [Token handler](token-handler.md)                                   | Sign users in to a browser application with a session cookie instead of tokens. |
+| [Agent service](agent-service.md)                                   | Run configurable AI agents with tools and role-based access.                    |
+| [Project planner service](project-planner-service.md)               | Turn a business problem into a plan for using ADSP services.                    |
 
 ## Operations
 

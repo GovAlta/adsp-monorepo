@@ -1,0 +1,64 @@
+{
+  "name": "client-secret-rotation-api",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/client-secret-rotation-api/src",
+  "projectType": "application",
+  "tags": [],
+  "targets": {
+    "build": {
+      "executor": "@nx/webpack:webpack",
+      "outputs": ["{options.outputPath}"],
+      "defaultConfiguration": "production",
+      "options": {
+        "target": "node",
+        "compiler": "tsc",
+        "outputPath": "dist/apps/client-secret-rotation-api",
+        "main": "apps/client-secret-rotation-api/src/main.ts",
+        "tsConfig": "apps/client-secret-rotation-api/tsconfig.app.json",
+        "assets": [],
+        "webpackConfig": "apps/client-secret-rotation-api/webpack.config.js",
+        "sourceMap": true
+      },
+      "configurations": {
+        "development": {},
+        "production": {
+          "optimization": true,
+          "extractLicenses": true,
+          "inspect": false,
+          "sourceMap": false,
+          "fileReplacements": []
+        }
+      }
+    },
+    "serve": {
+      "executor": "@nx/js:node",
+      "defaultConfiguration": "development",
+      "options": {
+        "buildTarget": "client-secret-rotation-api:build"
+      },
+      "configurations": {
+        "development": {
+          "buildTarget": "client-secret-rotation-api:build:development"
+        },
+        "production": {
+          "buildTarget": "client-secret-rotation-api:build:production"
+        }
+      }
+    },
+    "lint": {
+      "inputs": [
+        "default",
+        "^default",
+        "{workspaceRoot}/eslint.config.mjs",
+        "{workspaceRoot}/tools/eslint-rules/**/*"
+      ]
+    },
+    "test": {
+      "executor": "@nx/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+      "options": {
+        "jestConfig": "apps/client-secret-rotation-api/jest.config.ts"
+      }
+    }
+  }
+}

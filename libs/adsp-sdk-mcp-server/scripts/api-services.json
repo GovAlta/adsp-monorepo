@@ -5,6 +5,11 @@
     { "app": "audit-service", "urn": "urn:ads:platform:audit-service", "name": "Audit service" },
     { "app": "cache-service", "urn": "urn:ads:platform:cache-service", "name": "Cache service" },
     { "app": "calendar-service", "urn": "urn:ads:platform:calendar-service", "name": "Calendar service" },
+    {
+      "app": "client-secret-rotation-api",
+      "urn": "urn:ads:platform:client-secret-rotation-service",
+      "name": "Client secret rotation service"
+    },
     { "app": "comment-service", "urn": "urn:ads:platform:comment-service", "name": "Comment service" },
     {
       "app": "configuration-service",

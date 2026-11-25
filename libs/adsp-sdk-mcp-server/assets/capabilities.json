@@ -658,6 +658,19 @@
       "patterns": []
     },
     {
+      "id": "client-secret-rotation-service",
+      "name": "Client secret rotation service",
+      "use": "Rotate Keycloak client secrets before they expire.",
+      "doc": "services/client-secret-rotation-service.md",
+      "specialist": false,
+      "purpose": null,
+      "fitQuestions": [],
+      "dependsOn": [],
+      "risks": [],
+      "registrationFields": [],
+      "patterns": []
+    },
+    {
       "id": "feedback-service",
       "name": "Feedback service",
       "use": "Collect user feedback with an embeddable widget.",
