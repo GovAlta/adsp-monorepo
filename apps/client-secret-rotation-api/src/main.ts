@@ -23,19 +23,14 @@ const logger = createLogger('client-secret-rotation-api', environment.LOG_LEVEL)
 // The admin client package is ESM only; see tenant-management-api/src/keycloak/index.ts.
 const dynamicImport = async (packageName: string) => new Function(`return import('${packageName}')`)();
 
-async function createAdminClient(): Promise<{ client: KcAdminClient; authenticate: () => Promise<void> }> {
-  const Client = (await dynamicImport('@keycloak/keycloak-admin-client')).default;
-  const client: KcAdminClient = new Client({ baseUrl: `${environment.KEYCLOAK_ROOT_URL}/auth`, realmName: 'master' });
-  const authenticate = () =>
-    client.auth({
-      username: null,
-      password: null,
-      grantType: 'client_credentials',
-      clientId: environment.KEYCLOAK_ROTATION_CLIENT_ID,
-      clientSecret: environment.KEYCLOAK_ROTATION_CLIENT_SECRET,
-    } as never);
-  await authenticate();
-  return { client, authenticate };
+// Keycloak client that acts with the signed-in admin's own token, so Keycloak enforces that admin's permissions.
+async function createKeycloakFactory(): Promise<(realm: string, bearer: string) => RotationKeycloakClient> {
+  const Client: typeof KcAdminClient = (await dynamicImport('@keycloak/keycloak-admin-client')).default;
+  return (realm, bearer) => {
+    const client = new Client({ baseUrl: `${environment.KEYCLOAK_ROOT_URL}/auth`, realmName: realm });
+    client.setAccessToken(bearer);
+    return new RotationKeycloakClient(client);
+  };
 }
 
 const initializeApp = async () => {
@@ -54,7 +49,6 @@ const initializeApp = async () => {
     coreStrategy,
     tenantStrategy,
     tenantHandler,
-    tenantService,
     configurationService,
     eventService,
     auditService,
@@ -95,7 +89,7 @@ const initializeApp = async () => {
     { logger },
   );
 
-  const { client, authenticate } = await createAdminClient();
+  const createKeycloak = await createKeycloakFactory();
 
   passport.use('core', coreStrategy);
   passport.use('tenant', tenantStrategy);
@@ -120,13 +114,11 @@ const initializeApp = async () => {
     tenantHandler,
     createRotationRouter({
       logger,
-      keycloak: new RotationKeycloakClient(client),
-      tenantService,
+      createKeycloak,
       settingsStore: createRealmSettingsStore(directory, tokenProvider, serviceId),
       eventService,
       getConfiguration,
-      refresh: authenticate,
-      skipClientIds: [environment.KEYCLOAK_ROTATION_CLIENT_ID],
+      skipClientIds: [],
     }),
   );
 

@@ -6,9 +6,9 @@ parent: Services
 
 # Client secret rotation service
 
-Client secret rotation service lets a tenant rotate the secrets of its confidential Keycloak clients before they expire. A scheduled job rotates opted-in clients, notifies their contacts, and revokes the previous secret at the end of an overlap period. The API and the **Client secrets** tab of the Access page in the tenant management webapp let tenant admins choose which clients rotate, rotate a client on demand, and set the contacts that are notified.
+Client secret rotation service lets a tenant rotate the secrets of its confidential Keycloak clients before they expire. The API and the **Client secrets** tab of the Access page in the tenant management webapp let tenant admins turn rotation on for their realm, choose which clients rotate, rotate a client on demand, invalidate a previous secret, and set the contacts that are notified.
 
-Rotation depends on the Keycloak client secret rotation policy, which is supported in Keycloak 26.8.2 and later. Clients keep working during the overlap period because both the new and the previous secret are valid.
+Rotation depends on the Keycloak client secret rotation policy, which is supported in Keycloak 26.8.2 and later. Clients keep working while the previous secret is still valid, because both the new and the previous secret are accepted.
 
 ## Client roles
 
@@ -20,9 +20,10 @@ client `urn:ads:platform:client-secret-rotation-service`
 
 ## Tenancy
 
-- **Which realm is used.** Tenant users and service accounts manage the realm of their token. A `realm` query parameter that names another realm is refused with 403.
-- **Core users.** Core (platform) users with the role must set the `realm` query parameter to the realm to manage. The `master` realm is never available.
-- **Isolation.** The rotation job's own client is hidden from the list and can't be changed through the API.
+- **Which realm is used.** The API acts on the realm of the caller's token. There is no way to name another realm.
+- **Core users.** Core (platform) users are refused with 403, and the `master` realm is never reachable.
+- **User token.** The API calls the Keycloak Admin API with the signed-in admin's own token, so Keycloak enforces that admin's realm-management permissions. The service holds no Keycloak credential. A tenant admin needs the Keycloak realm roles `manage-realm` (the client policy), `manage-clients`, `view-clients`, `query-clients`, `view-users`, `query-users` and `view-realm`. Grant them as one composite realm role. `manage-realm` is a broad permission, so give it only to admins who may change realm settings.
+- **Isolation.** The service's own client is hidden from the list and can't be changed through the API.
 
 ## API overview
 
@@ -30,8 +31,8 @@ All endpoints are under `/rotation/v1`. See the [API documentation](https://api.
 
 | Endpoint                                                   | Purpose                                                    |
 | :--------------------------------------------------------- | :--------------------------------------------------------- |
-| `GET /rotation/v1/realm`                                   | Read the rotation settings of the realm.                   |
-| `PUT /rotation/v1/realm`                                   | Set the realm mode and the schedule overrides.             |
+| `GET /rotation/v1/realm`                                   | Read the rotation mode and schedule of the realm.          |
+| `PUT /rotation/v1/realm`                                   | Set the realm mode and the schedule.                       |
 | `GET /rotation/v1/clients`                                 | List clients with their rotation status.                   |
 | `PATCH /rotation/v1/clients/{clientId}`                    | Set the contacts notified for a client.                    |
 | `PUT /rotation/v1/clients/{clientId}/opt-in`               | Opt a client in or out (`selected` mode only).             |
@@ -39,17 +40,17 @@ All endpoints are under `/rotation/v1`. See the [API documentation](https://api.
 | `POST /rotation/v1/clients/{clientId}/invalidate-previous` | End the overlap early by invalidating the previous secret. |
 | `POST /rotation/v1/clients/{clientId}/notify`              | Send the expiry notice now.                                |
 
-All endpoints need the `client-secret-admin` role. `{clientId}` is the URL-encoded Keycloak client ID.
+All endpoints need the `client-secret-admin` role (or the tenant admin role for realms that predate it). `{clientId}` is the URL-encoded Keycloak client ID.
 
 ## Concepts
 
 ### Realm mode
 
-Each tenant realm is either On or Off, and the realm's Keycloak client policy holds that state. Turning rotation on in the portal creates the `secret-rotation` policy and its `secret-rotation-profile` profile the first time and enables them afterwards; turning it off disables the policy. The job only follows the policy: it rotates nothing in a realm whose policy is missing or disabled (it only clears leftover expiry attributes), and never creates or re-enables one. While On, only opted-in clients rotate (`selected`); `all` (every confidential client) is for the core realm only. Turning rotation on needs at least one realm admin with an email address, so there is someone to notify.
+Each tenant realm is either On or Off, and the realm's Keycloak client policy holds that state. Turning rotation on in the portal creates the `secret-rotation` policy and its `secret-rotation-profile` profile the first time and enables them afterwards; turning it off disables the policy. While On, only opted-in clients rotate (`selected`), or every confidential client does (`all`).
 
 ### Schedule
 
-`expiryDays` is the secret lifetime, `noticeWindowDays` is how long before expiry contacts are notified, and `rotatedSecretOverlapDays` is how long the previous secret keeps working after a rotation. The notice window must be shorter than the lifetime. Defaults come from the service configuration; a realm can override them.
+The schedule is set in seconds. `expirationPeriod` is the secret lifetime, and `rotatedExpirationPeriod` is how long the previous secret keeps working after a rotation. Both live in the Keycloak policy executor, so Keycloak is the source of truth. `noticePeriod` is how long before expiry contacts are notified and is stored in the tenant configuration of this service. The notice period must be shorter than the lifetime. A rotated expiration of `0` means the previous secret stops working immediately.
 
 ### Contacts
 
@@ -68,6 +69,5 @@ Events are sent in the tenant of the realm, and never contain a secret.
 
 ## Operations
 
-- The API service account needs `configuration-admin` on the configuration service, to store the realm settings.
-- The scheduled job and the API need the Keycloak grants described in the design for the realm's master client; `createRealm` in tenant management API grants them for new realms.
-- Register the API in the directory as `urn:ads:platform:client-secret-rotation-service` so the Access page can find it.
+- The API service account needs `configuration-admin` on the configuration service, to store the tenant settings.
+- No Keycloak credential is configured for the API. Grant tenant admins the realm roles listed under Tenancy.

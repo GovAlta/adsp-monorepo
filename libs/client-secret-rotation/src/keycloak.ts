@@ -16,8 +16,6 @@ import {
 
 export * from './constants';
 
-const DAY_SECONDS = 24 * 60 * 60;
-
 // Key-order-insensitive comparison; Keycloak reorders keys and adds defaults when it returns policies.
 function stableStringify(value: unknown): string {
   return JSON.stringify(value, (_key, v) =>
@@ -74,11 +72,12 @@ export class RotationKeycloakClient {
   /**
    * Creates or updates the realm's profile and policy for the mode: `selected` limits it to clients with the
    * opt-in role, `all` covers every confidential client. For `off` it only disables an existing policy.
+   * The periods are in seconds, as Keycloak stores them.
    */
   async ensurePolicy(
     realm: string,
-    expiryDays: number,
-    rotatedSecretOverlapDays: number,
+    expirationPeriod: number,
+    rotatedExpirationPeriod: number,
     mode: RotationMode = 'selected',
   ): Promise<boolean> {
     if (mode === 'off') {
@@ -95,10 +94,10 @@ export class RotationKeycloakClient {
         {
           executor: ROTATION_EXECUTOR,
           configuration: {
-            'expiration-period': String(expiryDays * DAY_SECONDS),
-            'rotated-expiration-period': String(rotatedSecretOverlapDays * DAY_SECONDS),
+            'expiration-period': String(expirationPeriod),
+            'rotated-expiration-period': String(rotatedExpirationPeriod),
             // Keycloak 25 rejects the profile without this; equal to the expiry period lets rotation happen at any time.
-            'remaining-rotation-period': String(expiryDays * DAY_SECONDS),
+            'remaining-rotation-period': String(expirationPeriod),
           },
         },
       ],
@@ -157,6 +156,25 @@ export class RotationKeycloakClient {
       return 'off';
     }
     return current.conditions?.some(({ condition }) => condition === CONDITION_CLIENT_ROLES) ? 'selected' : 'all';
+  }
+
+  /** The expiration and rotated-secret expiration (seconds) the realm's rotation profile enforces, or undefined if it has none. */
+  async getPolicySchedule(
+    realm: string,
+  ): Promise<{ expirationPeriod: number; rotatedExpirationPeriod: number } | undefined> {
+    const { profiles } = await this.client.clientPolicies.listProfiles({ realm });
+    const configuration = profiles
+      ?.find(({ name }) => name === ROTATION_PROFILE)
+      ?.executors?.find(({ executor }) => executor === ROTATION_EXECUTOR)?.configuration;
+    const toSeconds = (value: unknown) => {
+      const seconds = Number(value);
+      return value !== undefined && value !== '' && Number.isInteger(seconds) && seconds >= 0 ? seconds : undefined;
+    };
+    const expirationPeriod = toSeconds(configuration?.['expiration-period']);
+    const rotatedExpirationPeriod = toSeconds(configuration?.['rotated-expiration-period']);
+    return expirationPeriod !== undefined && rotatedExpirationPeriod !== undefined
+      ? { expirationPeriod, rotatedExpirationPeriod }
+      : undefined;
   }
 
   /** Whether the ADSP rotation policy exists but has been switched off (a missing policy is not disabled). */

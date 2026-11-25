@@ -14,9 +14,6 @@ export const environment = envalid.cleanEnv(
     // One ID shared with the rotation job, so events and configuration have a single owner.
     CLIENT_ID: envalid.str({ default: 'urn:ads:platform:client-secret-rotation-service' }),
     CLIENT_SECRET: envalid.str(),
-    // Dedicated confidential client in the master realm, the same one the job uses (spec section 8).
-    KEYCLOAK_ROTATION_CLIENT_ID: envalid.str({ default: 'client-secret-rotation-job' }),
-    KEYCLOAK_ROTATION_CLIENT_SECRET: envalid.str(),
     OTEL_EXPORTER_OTLP_ENDPOINT: envalid.str({ default: '' }),
     LOG_LEVEL: envalid.str({ default: 'debug' }),
   },

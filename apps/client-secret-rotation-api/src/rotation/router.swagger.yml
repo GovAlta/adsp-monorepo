@@ -1,14 +1,5 @@
 components:
   parameters:
-    Realm:
-      name: realm
-      in: query
-      description: >
-        Realm to act on. Required for core users, who name any realm except master. Tenant admins act on their own
-        realm; naming another realm is forbidden.
-      schema:
-        type: string
-      example: my-tenant
     ClientId:
       name: clientId
       in: path
@@ -20,16 +11,16 @@ components:
   responses:
     RotationBadRequest:
       description: >
-        Request is invalid: a core user did not give a realm, a value is not valid (mode, schedule, contacts), the
+        Request is invalid: a value is not valid (mode, schedule, contacts), the
         action is not allowed in the current mode, or the realm has no admin with an email address.
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/RotationError'
           example:
-            errorMessage: The realm query parameter is required.
+            errorMessage: 'mode must be one of off, selected.'
     RotationUnauthorized:
-      description: Request does not include a valid bearer token from the core realm or a tenant realm.
+      description: Request does not include a valid bearer token from a tenant realm.
       content:
         text/plain:
           schema:
@@ -37,7 +28,7 @@ components:
           example: Unauthorized
     RotationForbidden:
       description: >
-        User has neither the client-secret-admin nor the tenant-admin role, or is a tenant user acting on a realm other than their own.
+        User has neither the client-secret-admin nor the tenant-admin role, is a core user, or has no bearer token.
       content:
         application/json:
           schema:
@@ -69,45 +60,42 @@ components:
       properties:
         mode:
           $ref: '#/components/schemas/RotationMode'
-        expiryDays:
+        expirationPeriod:
           type: integer
-          description: Days a secret lives before it is rotated.
-        noticeWindowDays:
+          description: Secret expiration in seconds, the time between generating new secrets. Stored in the Keycloak rotation profile.
+        noticePeriod:
           type: integer
-          description: Days before expiry that contacts are notified.
-        rotatedSecretOverlapDays:
+          description: Seconds before expiry that contacts are notified. Stored in the tenant configuration.
+        rotatedExpirationPeriod:
           type: integer
-          description: Days the previous secret keeps working after a rotation.
+          description: >
+            Rotated secret expiration in seconds, the time the previous secret keeps working after a rotation. Always
+            smaller than expirationPeriod. When 0, the previous secret is removed immediately.
         minNoticeGapDays:
           type: integer
           description: Minimum days between notices. Set by platform administrators.
           readOnly: true
-        editable:
-          type: boolean
-          description: False for the core realm, which platform administrators configure in the service configuration.
-          readOnly: true
         defaults:
           type: object
-          description: Platform defaults used for schedule values the realm does not set.
+          description: Platform defaults used until the realm has a rotation profile in Keycloak.
           readOnly: true
           properties:
-            expiryDays:
+            expirationPeriod:
               type: integer
-            noticeWindowDays:
+            noticePeriod:
               type: integer
-            rotatedSecretOverlapDays:
+            rotatedExpirationPeriod:
               type: integer
       example:
         mode: selected
-        expiryDays: 90
-        noticeWindowDays: 60
-        rotatedSecretOverlapDays: 7
+        expirationPeriod: 7776000
+        noticePeriod: 5184000
+        rotatedExpirationPeriod: 604800
         minNoticeGapDays: 7
-        editable: true
         defaults:
-          expiryDays: 90
-          noticeWindowDays: 60
-          rotatedSecretOverlapDays: 7
+          expirationPeriod: 7776000
+          noticePeriod: 5184000
+          rotatedExpirationPeriod: 604800
     RotationClient:
       type: object
       properties:
@@ -170,10 +158,8 @@ paths:
       summary: Get realm rotation settings
       description: >
         Returns the rotation mode and schedule that apply to the realm. Requires the client-secret-admin role.
-        Tenant admins read their own realm; core users name the realm with the realm parameter.
+        Tenant admins read their own realm.
       operationId: getRealmRotation
-      parameters:
-        - $ref: '#/components/parameters/Realm'
       responses:
         '200':
           description: Settings of the realm.
@@ -193,14 +179,13 @@ paths:
       tags: [Realm]
       summary: Change realm rotation settings
       description: >
-        Sets the rotation mode and schedule of the realm. Send only the values to change. Values must be whole numbers
-        above zero, noticeWindowDays and rotatedSecretOverlapDays must be less than expiryDays, and turning rotation on
-        needs at least one realm admin with an email address. The rotation policy in Keycloak is updated right away.
-        The core realm cannot be changed here. Requires the
-        client-secret-admin role.
+        Sets the rotation mode and schedule of the realm. Send only the values to change. The expiration periods are
+        whole seconds and are stored in the Keycloak rotation profile; the notice period is also whole seconds but is
+        stored in the tenant configuration. Expirations
+        must be above zero (the rotated secret expiration may be 0), the rotated secret expiration and the notice
+        period must be shorter than the secret expiration, and turning rotation on needs at least one realm admin with
+        an email address. The rotation policy in Keycloak is updated right away. Requires the client-secret-admin role.
       operationId: setRealmRotation
-      parameters:
-        - $ref: '#/components/parameters/Realm'
       requestBody:
         required: true
         content:
@@ -210,15 +195,15 @@ paths:
               properties:
                 mode:
                   $ref: '#/components/schemas/RotationMode'
-                expiryDays:
+                expirationPeriod:
                   type: integer
-                noticeWindowDays:
+                noticePeriod:
                   type: integer
-                rotatedSecretOverlapDays:
+                rotatedExpirationPeriod:
                   type: integer
             example:
               mode: selected
-              expiryDays: 90
+              expirationPeriod: 7776000
       responses:
         '200':
           description: Settings of the realm after the change.
@@ -242,8 +227,6 @@ paths:
         Lists the confidential clients of the realm with their rotation status. Secrets are never returned. Requires
         the client-secret-admin role.
       operationId: getRotationClients
-      parameters:
-        - $ref: '#/components/parameters/Realm'
       responses:
         '200':
           description: Clients of the realm.
@@ -270,7 +253,6 @@ paths:
         addresses together may be at most 255 characters. Requires the client-secret-admin role.
       operationId: setRotationClientContacts
       parameters:
-        - $ref: '#/components/parameters/Realm'
         - $ref: '#/components/parameters/ClientId'
       requestBody:
         required: true
@@ -310,7 +292,6 @@ paths:
         opting in needs at least one realm admin with an email address. Requires the client-secret-admin role.
       operationId: setRotationClientOptIn
       parameters:
-        - $ref: '#/components/parameters/Realm'
         - $ref: '#/components/parameters/ClientId'
       requestBody:
         required: true
@@ -349,7 +330,6 @@ paths:
         Requires the client-secret-admin role.
       operationId: rotateClientSecret
       parameters:
-        - $ref: '#/components/parameters/Realm'
         - $ref: '#/components/parameters/ClientId'
       responses:
         '200':
@@ -386,7 +366,6 @@ paths:
         Requires the client-secret-admin role.
       operationId: invalidatePreviousClientSecret
       parameters:
-        - $ref: '#/components/parameters/Realm'
         - $ref: '#/components/parameters/ClientId'
       responses:
         '200':
@@ -416,7 +395,6 @@ paths:
         window. The client must be covered and have an expiry. Requires the client-secret-admin role.
       operationId: notifyClientSecretExpiry
       parameters:
-        - $ref: '#/components/parameters/Realm'
         - $ref: '#/components/parameters/ClientId'
       responses:
         '200':

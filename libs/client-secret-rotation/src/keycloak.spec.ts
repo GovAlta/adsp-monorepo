@@ -1,6 +1,7 @@
 import {
   ATTRIBUTES,
   parseTimestamp,
+  ROTATION_EXECUTOR,
   ROTATION_POLICY,
   ROTATION_PROFILE,
   RotationKeycloakClient,
@@ -62,7 +63,7 @@ describe('RotationKeycloakClient', () => {
       kc.clientPolicies.listProfiles.mockResolvedValueOnce({ profiles: [{ name: 'other' }] });
       kc.clientPolicies.listPolicies.mockResolvedValueOnce({ policies: [{ name: 'other-policy' }] });
 
-      expect(await client.ensurePolicy(realm, 90, 7)).toBe(true);
+      expect(await client.ensurePolicy(realm, 90 * 86400, 7 * 86400)).toBe(true);
 
       const { profiles } = kc.clientPolicies.createProfiles.mock.calls[0][0];
       expect(profiles).toHaveLength(2);
@@ -82,14 +83,14 @@ describe('RotationKeycloakClient', () => {
     it('does nothing when already up to date', async () => {
       kc.clientPolicies.listProfiles.mockResolvedValueOnce({ profiles: [] });
       kc.clientPolicies.listPolicies.mockResolvedValueOnce({ policies: [] });
-      await client.ensurePolicy(realm, 90, 7);
+      await client.ensurePolicy(realm, 90 * 86400, 7 * 86400);
       const profile = kc.clientPolicies.createProfiles.mock.calls[0][0].profiles[0];
       const policy = kc.clientPolicies.updatePolicy.mock.calls[0][0].policies[0];
       jest.resetAllMocks();
       kc.clientPolicies.listProfiles.mockResolvedValueOnce({ profiles: [profile] });
       kc.clientPolicies.listPolicies.mockResolvedValueOnce({ policies: [policy] });
 
-      expect(await client.ensurePolicy(realm, 90, 7)).toBe(false);
+      expect(await client.ensurePolicy(realm, 90 * 86400, 7 * 86400)).toBe(false);
       expect(kc.clientPolicies.createProfiles).not.toHaveBeenCalled();
       expect(kc.clientPolicies.updatePolicy).not.toHaveBeenCalled();
     });
@@ -98,7 +99,7 @@ describe('RotationKeycloakClient', () => {
       kc.clientPolicies.listProfiles.mockResolvedValueOnce({ profiles: [] });
       kc.clientPolicies.listPolicies.mockResolvedValueOnce({ policies: [] });
 
-      await client.ensurePolicy(realm, 90, 7, 'all');
+      await client.ensurePolicy(realm, 90 * 86400, 7 * 86400, 'all');
 
       const { policies } = kc.clientPolicies.updatePolicy.mock.calls[0][0];
       expect(policies[0].conditions.map((c: { condition: string }) => c.condition)).toEqual(['client-access-type']);
@@ -107,7 +108,7 @@ describe('RotationKeycloakClient', () => {
     it('only disables an enabled policy when off', async () => {
       kc.clientPolicies.listPolicies.mockResolvedValueOnce({ policies: [{ name: ROTATION_POLICY, enabled: true }] });
 
-      expect(await client.ensurePolicy(realm, 90, 7, 'off')).toBe(true);
+      expect(await client.ensurePolicy(realm, 90 * 86400, 7 * 86400, 'off')).toBe(true);
 
       expect(kc.clientPolicies.updatePolicy.mock.calls[0][0].policies).toEqual([
         { name: ROTATION_POLICY, enabled: false },
@@ -118,7 +119,7 @@ describe('RotationKeycloakClient', () => {
     it('does nothing when off and there is no enabled policy', async () => {
       kc.clientPolicies.listPolicies.mockResolvedValueOnce({ policies: [] });
 
-      expect(await client.ensurePolicy(realm, 90, 7, 'off')).toBe(false);
+      expect(await client.ensurePolicy(realm, 90 * 86400, 7 * 86400, 'off')).toBe(false);
       expect(kc.clientPolicies.updatePolicy).not.toHaveBeenCalled();
     });
 
@@ -148,6 +149,20 @@ describe('RotationKeycloakClient', () => {
       expect(await client.getPolicyMode(realm)).toBe('off');
       expect(await client.getPolicyMode(realm)).toBe('selected');
       expect(await client.getPolicyMode(realm)).toBe('all');
+    });
+
+    it('reads the expiration and rotated expiration in seconds from the profile executor', async () => {
+      const executor = (configuration: Record<string, string>) => ({
+        profiles: [{ name: ROTATION_PROFILE, executors: [{ executor: ROTATION_EXECUTOR, configuration }] }],
+      });
+      kc.clientPolicies.listProfiles
+        .mockResolvedValueOnce({ profiles: [] })
+        .mockResolvedValueOnce(executor({ 'expiration-period': '7776000', 'rotated-expiration-period': '432000' }))
+        .mockResolvedValueOnce(executor({ 'expiration-period': '300' }));
+
+      expect(await client.getPolicySchedule(realm)).toBeUndefined();
+      expect(await client.getPolicySchedule(realm)).toEqual({ expirationPeriod: 7776000, rotatedExpirationPeriod: 432000 });
+      expect(await client.getPolicySchedule(realm)).toBeUndefined();
     });
 
     it('uses the expected names', () => {

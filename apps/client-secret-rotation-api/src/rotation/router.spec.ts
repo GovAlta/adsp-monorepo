@@ -42,12 +42,12 @@ describe('rotation router', () => {
     countRealmAdminContacts: jest.fn(),
     ensurePolicy: jest.fn(),
     isPolicyEnabled: jest.fn(),
+    getPolicySchedule: jest.fn(),
   };
-  const tenantService = { getTenantByRealm: jest.fn() };
+  const createKeycloak = jest.fn();
   const settingsStore = { get: jest.fn(), update: jest.fn() };
   const eventService = { send: jest.fn() };
   const getConfiguration = jest.fn();
-  const refresh = jest.fn();
 
   const createApp = (user: unknown, tenant?: unknown) => {
     const app = express();
@@ -60,12 +60,10 @@ describe('rotation router', () => {
     app.use(
       createRotationRouter({
         logger,
-        keycloak,
-        tenantService,
+        createKeycloak,
         settingsStore,
         eventService,
         getConfiguration,
-        refresh,
         skipClientIds: ['job'],
         now: () => now,
       } as unknown as RotationRouterProps),
@@ -74,19 +72,26 @@ describe('rotation router', () => {
     return app;
   };
 
-  const admin = { id: 'u', name: 'admin', roles: ['client-secret-admin'], isCore: false, tenantId };
-  const coreAdmin = { id: 'c', name: 'core', roles: ['client-secret-admin'], isCore: true };
+  const admin = {
+    id: 'u',
+    name: 'admin',
+    roles: ['client-secret-admin'],
+    isCore: false,
+    tenantId,
+    token: { bearer: 'user-token' },
+  };
+  const coreAdmin = { ...admin, id: 'c', name: 'core', isCore: true };
   const tenant = { id: tenantId, name: 'test', realm: 'test' };
 
   beforeEach(() => {
     jest.resetAllMocks();
     getConfiguration.mockResolvedValue(config);
     settingsStore.get.mockResolvedValue({ realmMode: 'selected' });
+    createKeycloak.mockReturnValue(keycloak);
     keycloak.countRealmAdminContacts.mockResolvedValue(1);
     keycloak.isPolicyEnabled.mockResolvedValue(true);
     keycloak.getClient.mockResolvedValue(client());
     keycloak.listClients.mockResolvedValue([client()]);
-    tenantService.getTenantByRealm.mockResolvedValue(tenant);
   });
 
   describe('access', () => {
@@ -104,32 +109,22 @@ describe('rotation router', () => {
       expect(keycloak.listClients).toHaveBeenCalled();
     });
 
-    it('rejects a tenant admin asking for another realm', async () => {
-      await request(createApp(admin, tenant)).get('/clients?realm=other').expect(403);
-      expect(keycloak.listClients).not.toHaveBeenCalled();
-    });
-
-    it('uses the realm of the tenant admin', async () => {
-      await request(createApp(admin, tenant)).get('/clients').expect(200);
+    it('acts on the realm of the tenant admin with the admin token, ignoring a realm query', async () => {
+      await request(createApp(admin, tenant)).get('/clients?realm=other').expect(200);
+      expect(createKeycloak).toHaveBeenCalledWith('test', 'user-token');
       expect(keycloak.listClients).toHaveBeenCalledWith('test', ['job']);
     });
 
-    it('requires a realm for core users', async () => {
-      await request(createApp(coreAdmin)).get('/clients').expect(400);
+    it('rejects a request without a bearer token', async () => {
+      await request(createApp({ ...admin, token: undefined }, tenant))
+        .get('/clients')
+        .expect(403);
+      expect(createKeycloak).not.toHaveBeenCalled();
     });
 
-    it('lets core users name a tenant realm', async () => {
-      await request(createApp(coreAdmin)).get('/clients?realm=test').expect(200);
-      expect(keycloak.listClients).toHaveBeenCalledWith('test', ['job']);
-    });
-
-    it('never reaches the master realm', async () => {
-      await request(createApp(coreAdmin)).get('/clients?realm=master').expect(403);
-    });
-
-    it('returns 404 for an unknown realm', async () => {
-      tenantService.getTenantByRealm.mockResolvedValue(undefined);
-      await request(createApp(coreAdmin)).get('/clients?realm=nope').expect(404);
+    it('rejects core users', async () => {
+      await request(createApp(coreAdmin, tenant)).get('/clients').expect(403);
+      expect(createKeycloak).not.toHaveBeenCalled();
     });
   });
 
@@ -151,6 +146,19 @@ describe('rotation router', () => {
   });
 
   describe('GET /realm', () => {
+    it('reports the expiration periods enforced by the Keycloak executor in seconds', async () => {
+      keycloak.getPolicySchedule.mockResolvedValue({ expirationPeriod: 300, rotatedExpirationPeriod: 120 });
+      const res = await request(createApp(admin, tenant)).get('/realm').expect(200);
+      expect(res.body).toEqual(expect.objectContaining({ expirationPeriod: 300, rotatedExpirationPeriod: 120 }));
+    });
+
+    it('falls back to the platform defaults, in seconds, when the realm has no profile', async () => {
+      const res = await request(createApp(admin, tenant)).get('/realm').expect(200);
+      expect(res.body).toEqual(
+        expect.objectContaining({ expirationPeriod: 7776000, rotatedExpirationPeriod: 604800, noticePeriod: 5184000 }),
+      );
+    });
+
     it('reports Off when the Keycloak policy is disabled', async () => {
       keycloak.isPolicyEnabled.mockResolvedValue(false);
       const res = await request(createApp(admin, tenant)).get('/realm').expect(200);
@@ -165,15 +173,15 @@ describe('rotation router', () => {
   });
 
   describe('PUT /realm', () => {
-    it('saves mode and schedule and applies the policy', async () => {
+    it('stores only the mode and notice period in configuration and applies the periods to the policy', async () => {
       const res = await request(createApp(admin, tenant))
         .put('/realm')
-        .send({ mode: 'selected', expiryDays: 120 })
+        .send({ mode: 'selected', expirationPeriod: 10000000, noticePeriod: 2592000 })
         .expect(200);
 
-      expect(settingsStore.update).toHaveBeenCalledWith(tenantId, { realmMode: 'selected', expiryDays: 120 });
-      expect(keycloak.ensurePolicy).toHaveBeenCalledWith('test', 120, 7, 'selected');
-      expect(res.body).toEqual(expect.objectContaining({ mode: 'selected', expiryDays: 120, editable: true }));
+      expect(settingsStore.update).toHaveBeenCalledWith(tenantId, { realmMode: 'selected', noticePeriod: 2592000 });
+      expect(keycloak.ensurePolicy).toHaveBeenCalledWith('test', 10000000, 604800, 'selected');
+      expect(res.body).toEqual(expect.objectContaining({ mode: 'selected', expirationPeriod: 10000000 }));
     });
 
     it('creates the profile and policy when rotation is turned on for a realm that has none', async () => {
@@ -181,17 +189,30 @@ describe('rotation router', () => {
 
       const res = await request(createApp(admin, tenant)).put('/realm').send({ mode: 'selected' }).expect(200);
 
-      expect(keycloak.ensurePolicy).toHaveBeenCalledWith('test', 90, 7, 'selected');
+      expect(keycloak.ensurePolicy).toHaveBeenCalledWith('test', 7776000, 604800, 'selected');
       expect(res.body.mode).toBe('selected');
+    });
+
+    it('keeps the executor value of the period that is not submitted', async () => {
+      keycloak.getPolicySchedule.mockResolvedValue({ expirationPeriod: 10000000, rotatedExpirationPeriod: 600 });
+
+      await request(createApp(admin, tenant)).put('/realm').send({ rotatedExpirationPeriod: 1200 }).expect(200);
+
+      expect(keycloak.ensurePolicy).toHaveBeenCalledWith('test', 10000000, 1200, 'selected');
     });
 
     it('does not enable a disabled policy when only the schedule is saved', async () => {
       keycloak.isPolicyEnabled.mockResolvedValue(false);
       settingsStore.get.mockResolvedValue({ realmMode: 'selected' });
 
-      await request(createApp(admin, tenant)).put('/realm').send({ expiryDays: 120 }).expect(200);
+      await request(createApp(admin, tenant)).put('/realm').send({ expirationPeriod: 10000000 }).expect(200);
 
-      expect(keycloak.ensurePolicy).toHaveBeenCalledWith('test', 120, 7, 'off');
+      expect(keycloak.ensurePolicy).toHaveBeenCalledWith('test', 10000000, 604800, 'off');
+    });
+
+    it('allows a rotated secret expiration of 0', async () => {
+      await request(createApp(admin, tenant)).put('/realm').send({ rotatedExpirationPeriod: 0 }).expect(200);
+      expect(keycloak.ensurePolicy).toHaveBeenCalledWith('test', 7776000, 0, 'selected');
     });
 
     it('refuses the retired all mode', async () => {
@@ -201,10 +222,11 @@ describe('rotation router', () => {
 
     it.each([
       [{ mode: 'sometimes' }],
-      [{ expiryDays: 0 }],
-      [{ expiryDays: 1.5 }],
-      [{ noticeWindowDays: 90 }],
-      [{ rotatedSecretOverlapDays: 90 }],
+      [{ expirationPeriod: 0 }],
+      [{ expirationPeriod: 1.5 }],
+      [{ rotatedExpirationPeriod: -1 }],
+      [{ noticePeriod: 7776000 }],
+      [{ rotatedExpirationPeriod: 7776000 }],
     ])('rejects invalid values %j', async (body) => {
       await request(createApp(admin, tenant)).put('/realm').send(body).expect(400);
       expect(settingsStore.update).not.toHaveBeenCalled();
@@ -256,10 +278,6 @@ describe('rotation router', () => {
     it('does not clear expiries for other modes', async () => {
       await request(createApp(admin, tenant)).put('/realm').send({ mode: 'selected' }).expect(200);
       expect(keycloak.setAttributes).not.toHaveBeenCalled();
-    });
-
-    it('rejects changing the core realm', async () => {
-      await request(createApp(coreAdmin)).put('/realm?realm=core').send({ mode: 'all' }).expect(400);
     });
   });
 
@@ -356,19 +374,6 @@ describe('rotation router', () => {
       keycloak.getClient.mockResolvedValue(client({ optedIn: false }));
       await request(createApp(admin, tenant)).post('/clients/c/rotate').expect(400);
       expect(keycloak.regenerateSecret).not.toHaveBeenCalled();
-    });
-
-    it('rotates any client when the core realm rotates all', async () => {
-      getConfiguration.mockResolvedValue({ ...config, coreRealmMode: 'all' });
-      keycloak.getClient.mockResolvedValue(client({ optedIn: false }));
-      await request(createApp(coreAdmin)).post('/clients/c/rotate?realm=core').expect(200);
-      expect(keycloak.regenerateSecret).toHaveBeenCalled();
-    });
-
-    it('skips the event for the core realm when no tenant is configured', async () => {
-      getConfiguration.mockResolvedValue({ ...config, coreRealmMode: 'all', coreNotificationTenantId: undefined });
-      await request(createApp(coreAdmin)).post('/clients/c/rotate?realm=core').expect(200);
-      expect(eventService.send).not.toHaveBeenCalled();
     });
   });
 

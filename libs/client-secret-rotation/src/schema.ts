@@ -7,16 +7,10 @@ export const ClientSecretRotationConfigurationSchema = {
       enum: ['off', 'selected', 'all'],
       description: 'Tenant realm rotation mode: off (default), selected clients (rotation-enabled role) or all.',
     },
-    expiryDays: { type: 'number', minimum: 1, description: 'Secret lifetime for this tenant realm, in days.' },
-    noticeWindowDays: {
+    noticePeriod: {
       type: 'number',
       minimum: 1,
-      description: 'Days before expiry that contacts of this tenant realm are notified.',
-    },
-    rotatedSecretOverlapDays: {
-      type: 'number',
-      minimum: 1,
-      description: 'Days the previous secret keeps working after rotation in this tenant realm.',
+      description: 'Seconds before expiry that contacts of this tenant realm are notified.',
     },
     clientSecretRotation: {
       type: 'object',
@@ -35,10 +29,12 @@ export const ClientSecretRotationConfigurationSchema = {
   },
 };
 
-/** Tenant-scoped configuration written by realm admins through the rotation API. */
+/**
+ * Tenant-scoped configuration written by realm admins through the rotation API. Only the notice period is stored
+ * here; the expiration periods live in the realm's Keycloak rotation profile.
+ */
 export interface TenantRotationConfiguration {
   realmMode?: string;
-  expiryDays?: number;
-  noticeWindowDays?: number;
-  rotatedSecretOverlapDays?: number;
+  /** Seconds before expiry that contacts are notified. */
+  noticePeriod?: number;
 }

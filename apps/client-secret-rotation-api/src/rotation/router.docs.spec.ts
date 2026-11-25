@@ -13,7 +13,14 @@ describe('rotation router documented behaviour', () => {
   const logger = { info: jest.fn(), warn: jest.fn(), error: jest.fn(), debug: jest.fn() };
   const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
   const tenant = { id: tenantId, name: 'test', realm: 'test' };
-  const admin = { id: 'u', name: 'admin', roles: ['client-secret-admin'], isCore: false, tenantId };
+  const admin = {
+    id: 'u',
+    name: 'admin',
+    roles: ['client-secret-admin'],
+    isCore: false,
+    tenantId,
+    token: { bearer: 'user-token' },
+  };
   const now = new Date('2026-06-01T00:00:00Z');
 
   const config = {
@@ -46,6 +53,7 @@ describe('rotation router documented behaviour', () => {
     countRealmAdminContacts: jest.fn(),
     ensurePolicy: jest.fn(),
     isPolicyEnabled: jest.fn().mockResolvedValue(true),
+    getPolicySchedule: jest.fn(),
   };
   const settingsStore = { get: jest.fn(), update: jest.fn() };
 
@@ -62,12 +70,10 @@ describe('rotation router documented behaviour', () => {
       '/rotation/v1',
       createRotationRouter({
         logger,
-        keycloak,
-        tenantService: { getTenantByRealm: jest.fn().mockResolvedValue(tenant) },
+        createKeycloak: () => keycloak,
         settingsStore,
         eventService: { send: jest.fn() },
         getConfiguration: jest.fn().mockResolvedValue(config),
-        refresh: jest.fn(),
         skipClientIds: [],
         now: () => now,
       } as unknown as RotationRouterProps),
@@ -103,11 +109,11 @@ describe('rotation router documented behaviour', () => {
     await request(createApp()).put('/rotation/v1/realm').send({ mode: 'bogus' }).expect(400);
   });
 
-  it('GET /clients lists the clients, or 400 for a core user without a realm', async () => {
+  it('GET /clients lists the clients, or 403 for a core user', async () => {
     await request(createApp()).get('/rotation/v1/clients').expect(200);
-    await request(createApp({ id: 'c', name: 'core', roles: ['client-secret-admin'], isCore: true }))
+    await request(createApp({ ...admin, isCore: true }))
       .get('/rotation/v1/clients')
-      .expect(400);
+      .expect(403);
   });
 
   it('PATCH /clients/{clientId} sets the contacts, or 400 for an invalid email', async () => {

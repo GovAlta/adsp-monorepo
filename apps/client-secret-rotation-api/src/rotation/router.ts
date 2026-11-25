@@ -2,19 +2,14 @@ import {
   AdspId,
   DomainEvent,
   hasRequiredRole,
-  Tenant,
-  TenantService,
   UnauthorizedUserError,
   User,
 } from '@abgov/adsp-service-sdk';
 import {
-  assertValidOverrides,
   ATTRIBUTES,
   ClientSecretRotationConfiguration,
   deriveStatus,
   revokePreviousSecret,
-  RealmRotationOverrides,
-  resolveRealmSettings,
   rotateClient,
   RotationClient,
   RotationKeycloakClient,
@@ -28,6 +23,7 @@ import type { Logger } from 'winston';
 import { ClientSecretRotationRoles } from './roles';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
+const DAY_SECONDS = 24 * 60 * 60;
 const EMAIL = /^[^\s@,]+@[^\s@,]+\.[^\s@,]+$/;
 // Keycloak limits the length of a client attribute value.
 const MAX_CONTACTS_LENGTH = 255;
@@ -44,13 +40,14 @@ export interface RotationEventSender {
 
 export interface RotationRouterProps {
   logger: Logger;
-  keycloak: RotationKeycloakClient;
-  tenantService: Pick<TenantService, 'getTenantByRealm'>;
+  /**
+   * Creates the Keycloak client for a request. It acts with the signed-in admin's own token, so Keycloak enforces
+   * that admin's realm-management permissions and the rotation service holds no Keycloak credential.
+   */
+  createKeycloak: (realm: string, bearer: string) => RotationKeycloakClient;
   settingsStore: RealmSettingsStore;
   eventService: RotationEventSender;
   getConfiguration: () => Promise<ClientSecretRotationConfiguration>;
-  /** Renews the short-lived Keycloak token, called before each request. */
-  refresh: () => Promise<void>;
   /** Client ids hidden from the API, such as the rotation service's own client. */
   skipClientIds: string[];
   now?: () => Date;
@@ -58,14 +55,18 @@ export interface RotationRouterProps {
 
 interface RealmContext {
   realm: string;
-  tenantId?: AdspId;
+  tenantId: AdspId;
+  keycloak: RotationKeycloakClient;
 }
 
 interface RealmSettings {
   mode: RotationMode;
-  expiryDays: number;
-  noticeWindowDays: number;
-  rotatedSecretOverlapDays: number;
+  /** Seconds, as in the Keycloak executor. */
+  expirationPeriod: number;
+  /** Seconds the previous secret keeps working after a rotation. */
+  rotatedExpirationPeriod: number;
+  /** Seconds before expiry that contacts are notified. */
+  noticePeriod: number;
   minNoticeGapDays: number;
 }
 
@@ -88,58 +89,36 @@ const invalid = (action: () => void) => {
 
 export function createRotationRouter({
   logger,
-  keycloak,
-  tenantService,
+  createKeycloak,
   settingsStore,
   eventService,
   getConfiguration,
-  refresh,
   skipClientIds,
   now = () => new Date(),
 }: RotationRouterProps): Router {
-  // Admins act on their own realm. Core users name the realm. Nobody reaches the master realm.
+  // Tenant admins act on their own realm with their own token. Core users and the master realm are not reachable.
   const resolveRealm: RequestHandler = (req, _res, next) => {
-    (async () => {
+    try {
       const user = req.user as User;
+      const tenant = req.tenant;
       if (
-        !hasRequiredRole(user, [ClientSecretRotationRoles.ClientSecretAdmin, ClientSecretRotationRoles.TenantAdmin])
+        user.isCore ||
+        !hasRequiredRole(user, [ClientSecretRotationRoles.ClientSecretAdmin, ClientSecretRotationRoles.TenantAdmin]) ||
+        !tenant?.realm ||
+        !user.token?.bearer
       ) {
         throw new UnauthorizedUserError('manage client secret rotation', user);
       }
 
-      const requested = typeof req.query.realm === 'string' ? req.query.realm : undefined;
-      let context: RealmContext;
-      if (user.isCore) {
-        if (!requested) {
-          throw new InvalidOperationError('The realm query parameter is required.');
-        }
-        if (requested === 'master') {
-          throw new UnauthorizedUserError('manage client secret rotation', user);
-        }
-        if (requested === 'core') {
-          const { coreNotificationTenantId } = await getConfiguration();
-          context = {
-            realm: requested,
-            tenantId: coreNotificationTenantId ? AdspId.parse(coreNotificationTenantId) : undefined,
-          };
-        } else {
-          const tenant: Tenant = await tenantService.getTenantByRealm(requested);
-          if (!tenant) {
-            throw new NotFoundError('Realm', requested);
-          }
-          context = { realm: tenant.realm, tenantId: tenant.id };
-        }
-      } else {
-        const tenant = req.tenant;
-        if (!tenant?.realm || (requested && requested !== tenant.realm)) {
-          throw new UnauthorizedUserError('manage client secret rotation', user);
-        }
-        context = { realm: tenant.realm, tenantId: tenant.id };
-      }
-
-      (req as RotationRequest)[rotationContext] = context;
-      await refresh();
-    })().then(() => next(), next);
+      (req as RotationRequest)[rotationContext] = {
+        realm: tenant.realm,
+        tenantId: tenant.id,
+        keycloak: createKeycloak(tenant.realm, user.token.bearer),
+      };
+      next();
+    } catch (err) {
+      next(err);
+    }
   };
 
   const withRealm = (
@@ -149,25 +128,44 @@ export function createRotationRouter({
     wrap((req, res) => handler(req, res, (req as RotationRequest)[rotationContext])),
   ];
 
-  const getSettings = async ({ realm, tenantId }: RealmContext) => {
+  const getSettings = async ({ keycloak, realm, tenantId }: RealmContext) => {
     const config = await getConfiguration();
-    if (realm === 'core') {
-      return { config, tenantConfig: undefined, settings: toSettings(config.coreRealmMode, config, undefined) };
-    }
     const tenantConfig = await settingsStore.get(tenantId);
     // Keycloak's policy is the source of truth: tenants only choose On (opt-in per client) or Off,
     // and a stored legacy 'all' is read as On.
     const policyEnabled = await keycloak.isPolicyEnabled(realm);
     const stored = tenantConfig?.realmMode === 'all' ? 'selected' : tenantConfig?.realmMode;
     const realmMode = policyEnabled ? (toRotationMode(stored) === 'off' ? 'selected' : stored) : 'off';
-    return { config, tenantConfig, settings: toSettings(realmMode, config, tenantConfig) };
+    // The executor in Keycloak holds the expiration periods; the platform defaults apply until one exists.
+    const enforced = await keycloak.getPolicySchedule(realm);
+    const noticePeriod = tenantConfig?.noticePeriod > 0 ? tenantConfig.noticePeriod : config.noticeWindowDays * DAY_SECONDS;
+    const settings: RealmSettings = {
+      mode: toRotationMode(realmMode),
+      expirationPeriod: enforced?.expirationPeriod ?? config.expiryDays * DAY_SECONDS,
+      rotatedExpirationPeriod: enforced?.rotatedExpirationPeriod ?? config.rotatedSecretOverlapDays * DAY_SECONDS,
+      noticePeriod,
+      minNoticeGapDays: config.minNoticeGapDays,
+    };
+    return { config, tenantConfig, settings };
   };
 
-  const toSettings = (
-    mode: unknown,
-    config: ClientSecretRotationConfiguration,
-    overrides: RealmRotationOverrides | undefined,
-  ): RealmSettings => ({ mode: toRotationMode(mode), ...resolveRealmSettings(config, overrides) });
+  // All three periods are seconds, as in Keycloak.
+  const assertValidSettings = ({ expirationPeriod, rotatedExpirationPeriod, noticePeriod }: RealmSettings) => {
+    if (rotatedExpirationPeriod >= expirationPeriod) {
+      throw new Error('rotatedExpirationPeriod must be less than expirationPeriod.');
+    }
+    if (noticePeriod >= expirationPeriod) {
+      throw new Error('noticePeriod must be shorter than expirationPeriod.');
+    }
+  };
+
+  const assertWholeNumber = (name: string, value: unknown, minimum: number) => {
+    if (value !== undefined && !(Number.isInteger(value) && (value as number) >= minimum)) {
+      throw new Error(
+        minimum === 0 ? `${name} must be a whole number of 0 or more.` : `${name} must be a whole number above zero.`,
+      );
+    }
+  };
 
   const raise = async (
     { realm, tenantId }: RealmContext,
@@ -175,10 +173,6 @@ export function createRotationRouter({
     clientId: string,
     payload: Record<string, unknown> = {},
   ) => {
-    if (!tenantId) {
-      logger.warn(`No tenant to raise ${name} for realm ${realm}.`);
-      return;
-    }
     await eventService.send({
       tenantId,
       name,
@@ -188,7 +182,7 @@ export function createRotationRouter({
     });
   };
 
-  const getClient = async (realm: string, clientId: string) => {
+  const getClient = async ({ keycloak, realm }: RealmContext, clientId: string) => {
     const client = await keycloak.getClient(realm, clientId);
     if (!client || skipClientIds.includes(client.clientId)) {
       throw new NotFoundError('Client', clientId);
@@ -219,18 +213,16 @@ export function createRotationRouter({
     };
   };
 
-  const toRealmResponse = (realm: string, settings: RealmSettings, config: ClientSecretRotationConfiguration) => ({
+  const toRealmResponse = (settings: RealmSettings, config: ClientSecretRotationConfiguration) => ({
     mode: settings.mode,
-    expiryDays: settings.expiryDays,
-    noticeWindowDays: settings.noticeWindowDays,
-    rotatedSecretOverlapDays: settings.rotatedSecretOverlapDays,
+    expirationPeriod: settings.expirationPeriod,
+    rotatedExpirationPeriod: settings.rotatedExpirationPeriod,
+    noticePeriod: settings.noticePeriod,
     minNoticeGapDays: settings.minNoticeGapDays,
-    // The core realm is configured by platform administrators in the service configuration.
-    editable: realm !== 'core',
     defaults: {
-      expiryDays: config.expiryDays,
-      noticeWindowDays: config.noticeWindowDays,
-      rotatedSecretOverlapDays: config.rotatedSecretOverlapDays,
+      expirationPeriod: config.expiryDays * DAY_SECONDS,
+      rotatedExpirationPeriod: config.rotatedSecretOverlapDays * DAY_SECONDS,
+      noticePeriod: config.noticeWindowDays * DAY_SECONDS,
     },
   });
 
@@ -238,7 +230,7 @@ export function createRotationRouter({
   // response; a failure is logged and left for the next job run, which clears the same attributes for clients
   // in realms whose policy is off or missing.
   const clearAttributes = { [ATTRIBUTES.expiry]: null, [ATTRIBUTES.rotatedExpiry]: null };
-  const clearExpiries = async (realm: string) => {
+  const clearExpiries = async ({ keycloak, realm }: RealmContext) => {
     const clients = await keycloak.listClients(realm, skipClientIds);
     for (const client of clients) {
       if (!client.state.expiry && !client.state.rotatedExpiry) {
@@ -258,48 +250,51 @@ export function createRotationRouter({
     '/realm',
     ...withRealm(async (_req, res, context) => {
       const { config, settings } = await getSettings(context);
-      res.json(toRealmResponse(context.realm, settings, config));
+      res.json(toRealmResponse(settings, config));
     }),
   );
 
   router.put(
     '/realm',
     ...withRealm(async (req, res, context) => {
-      const { realm, tenantId } = context;
-      if (realm === 'core') {
-        throw new InvalidOperationError('Rotation of the core realm is configured in the service configuration.');
-      }
-
-      const { mode, expiryDays, noticeWindowDays, rotatedSecretOverlapDays } = req.body ?? {};
+      const { keycloak, realm, tenantId } = context;
+      const { mode, expirationPeriod, rotatedExpirationPeriod, noticePeriod } = req.body ?? {};
       if (mode !== undefined && !TENANT_ROTATION_MODES.includes(mode)) {
         throw new InvalidOperationError(`mode must be one of ${TENANT_ROTATION_MODES.join(', ')}.`);
       }
-      const submitted: RealmRotationOverrides = { expiryDays, noticeWindowDays, rotatedSecretOverlapDays };
-      invalid(() => assertValidOverrides(submitted));
+      invalid(() => {
+        assertWholeNumber('expirationPeriod', expirationPeriod, 1);
+        assertWholeNumber('rotatedExpirationPeriod', rotatedExpirationPeriod, 0);
+        assertWholeNumber('noticePeriod', noticePeriod, 1);
+      });
 
-      const { config, tenantConfig, settings: current } = await getSettings(context);
+      const { config, settings: current } = await getSettings(context);
       const values: TenantRotationConfiguration = {
         ...(mode !== undefined ? { realmMode: mode } : {}),
-        ...Object.fromEntries(Object.entries(submitted).filter(([, value]) => value !== undefined)),
+        ...(noticePeriod !== undefined ? { noticePeriod } : {}),
       };
       // Check the combined schedule before saving, so a bad value never reaches the Keycloak policy.
       // A schedule-only save keeps the mode Keycloak is in, so it never re-enables a disabled policy.
-      let settings!: RealmSettings;
-      invalid(() => {
-        settings = toSettings(values.realmMode ?? current.mode, config, { ...tenantConfig, ...values });
-      });
+      const settings: RealmSettings = {
+        ...current,
+        mode: toRotationMode(mode ?? current.mode),
+        ...(expirationPeriod !== undefined ? { expirationPeriod } : {}),
+        ...(rotatedExpirationPeriod !== undefined ? { rotatedExpirationPeriod } : {}),
+        ...(noticePeriod !== undefined ? { noticePeriod } : {}),
+      };
+      invalid(() => assertValidSettings(settings));
 
       if (mode && mode !== 'off' && (await keycloak.countRealmAdminContacts(realm)) < 1) {
         throw new InvalidOperationError('Rotation requires at least one realm admin with an email address.');
       }
 
       await settingsStore.update(tenantId, values);
-      await keycloak.ensurePolicy(realm, settings.expiryDays, settings.rotatedSecretOverlapDays, settings.mode);
+      await keycloak.ensurePolicy(realm, settings.expirationPeriod, settings.rotatedExpirationPeriod, settings.mode);
       if (mode === 'off') {
-        clearExpiries(realm).catch((err) => logger.warn(`Failed to clear expiries in realm ${realm}: ${err}`));
+        clearExpiries(context).catch((err) => logger.warn(`Failed to clear expiries in realm ${realm}: ${err}`));
       }
       logger.info(`Rotation settings changed for realm ${realm} (mode ${settings.mode}).`);
-      res.json(toRealmResponse(realm, settings, config));
+      res.json(toRealmResponse(settings, config));
     }),
   );
 
@@ -307,7 +302,7 @@ export function createRotationRouter({
     '/clients',
     ...withRealm(async (_req, res, context) => {
       const { settings } = await getSettings(context);
-      const clients = await keycloak.listClients(context.realm, skipClientIds);
+      const clients = await context.keycloak.listClients(context.realm, skipClientIds);
       const at = now();
       res.json(clients.map((client) => toClientResponse(client, settings.mode, at)));
     }),
@@ -324,7 +319,8 @@ export function createRotationRouter({
       if (settings.mode !== 'selected') {
         throw new InvalidOperationError('Clients opt in only when the realm rotates selected clients.');
       }
-      const client = await getClient(context.realm, req.params.clientId);
+      const { keycloak } = context;
+      const client = await getClient(context, req.params.clientId);
       if (enabled && (await keycloak.countRealmAdminContacts(context.realm)) < 1) {
         throw new InvalidOperationError('Rotation requires at least one realm admin with an email address.');
       }
@@ -333,7 +329,7 @@ export function createRotationRouter({
         await keycloak.setAttributes(context.realm, client.id, clearAttributes);
       }
       logger.info(`Rotation ${enabled ? 'enabled' : 'disabled'} for ${context.realm}/${client.clientId}.`);
-      res.json(toClientResponse({ ...(await getClient(context.realm, client.clientId)) }, settings.mode, now()));
+      res.json(toClientResponse(await getClient(context, client.clientId), settings.mode, now()));
     }),
   );
 
@@ -351,10 +347,10 @@ export function createRotationRouter({
       if (value.length > MAX_CONTACTS_LENGTH) {
         throw new InvalidOperationError(`contacts must total no more than ${MAX_CONTACTS_LENGTH} characters.`);
       }
-      const client = await getClient(context.realm, req.params.clientId);
-      await keycloak.setAttributes(context.realm, client.id, { [ATTRIBUTES.contact]: value || null });
+      const client = await getClient(context, req.params.clientId);
+      await context.keycloak.setAttributes(context.realm, client.id, { [ATTRIBUTES.contact]: value || null });
       const { settings } = await getSettings(context);
-      res.json(toClientResponse(await getClient(context.realm, client.clientId), settings.mode, now()));
+      res.json(toClientResponse(await getClient(context, client.clientId), settings.mode, now()));
     }),
   );
 
@@ -362,10 +358,10 @@ export function createRotationRouter({
     '/clients/:clientId/rotate',
     ...withRealm(async (req, res, context) => {
       const { settings } = await getSettings(context);
-      const client = await getClient(context.realm, req.params.clientId);
+      const client = await getClient(context, req.params.clientId);
       assertCovered(settings.mode, client);
 
-      const { expiry, overlapEndsAt } = await rotateClient(keycloak, context.realm, client, now());
+      const { expiry, overlapEndsAt } = await rotateClient(context.keycloak, context.realm, client, now());
       await raise(context, 'client-secret-rotated', client.clientId, {
         newExpiry: expiry?.toISOString(),
         overlapEndsAt: overlapEndsAt?.toISOString(),
@@ -380,12 +376,12 @@ export function createRotationRouter({
   router.post(
     '/clients/:clientId/invalidate-previous',
     ...withRealm(async (req, res, context) => {
-      const client = await getClient(context.realm, req.params.clientId);
+      const client = await getClient(context, req.params.clientId);
       const at = now();
       if (!client.state.rotatedExpiry || client.state.rotatedExpiry <= at) {
         throw new InvalidOperationError('Client has no previous secret to invalidate.');
       }
-      await revokePreviousSecret(keycloak, context.realm, client, at);
+      await revokePreviousSecret(context.keycloak, context.realm, client, at);
       await raise(context, 'client-secret-revoked', client.clientId, { revokedAt: at.toISOString() });
       logger.info(
         `Previous secret invalidated for ${context.realm}/${client.clientId} by ${(req.user as User)?.name}.`,
@@ -398,7 +394,7 @@ export function createRotationRouter({
     '/clients/:clientId/notify',
     ...withRealm(async (req, res, context) => {
       const { settings } = await getSettings(context);
-      const client = await getClient(context.realm, req.params.clientId);
+      const client = await getClient(context, req.params.clientId);
       assertCovered(settings.mode, client);
       const { expiry } = client.state;
       if (!expiry) {
@@ -409,7 +405,7 @@ export function createRotationRouter({
         expiry: expiry.toISOString(),
         daysRemaining: Math.max(0, Math.ceil((expiry.getTime() - at.getTime()) / DAY_MS)),
       });
-      await keycloak.setAttributes(context.realm, client.id, {
+      await context.keycloak.setAttributes(context.realm, client.id, {
         [ATTRIBUTES.noticeSentFor]: expiry.toISOString(),
         [ATTRIBUTES.noticeSentAt]: at.toISOString(),
       });
