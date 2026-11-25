@@ -113,7 +113,10 @@ jobs:
           .openshift/observability/render-stack.sh "$TARGET" > "$RUNNER_TEMP/stack.json"
           # The ImageStreams in adsp-build are shared by every environment, so their tags are set
           # one at a time below rather than applied: applying would replace the other environments' tags.
-          jq '.items |= map(select(.kind != "ImageStream"))' "$RUNNER_TEMP/stack.json" > "$RUNNER_TEMP/objects.json"
+          # The deploy account has edit in adsp-<env>, which cannot read or write RoleBindings, so
+          # grafana-metrics-view is left to a namespace admin; see .openshift/observability/README.md.
+          jq '.items |= map(select(.kind | IN("ImageStream", "RoleBinding") | not))' "$RUNNER_TEMP/stack.json" > "$RUNNER_TEMP/objects.json"
+          jq -r '.items[] | select(.kind == "RoleBinding") | "::notice::Not applied: RoleBinding/\(.metadata.name) needs a namespace admin"' "$RUNNER_TEMP/stack.json"
           oc apply -n "adsp-$TARGET" --dry-run=server --validate=strict -f "$RUNNER_TEMP/objects.json" > /dev/null
       # Each environment has its own tag (IMAGE_TAG=<env>), so importing for dev does not roll uat or prod.
       - name: Import images
