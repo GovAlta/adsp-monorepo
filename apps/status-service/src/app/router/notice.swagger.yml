@@ -127,7 +127,7 @@ components:
       Retrieves notices, newest first. Anonymous requests are accepted.
 
       - Anonymous requests read published notices; set `name` to read only the notices of that tenant (the name must
-        be the name of an existing tenant).
+        be the name of an existing tenant, otherwise the request responds 404).
 
       - Authenticated tenant users read the published notices of the tenant of their token; `name` is ignored.
 
@@ -204,6 +204,22 @@ components:
                 size: 1
                 next: null
                 total: 1
+      400:
+        description: The token has no tenant context, such as a core user token.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StatusError'
+            example:
+              errorMessage: Notice requests require a token with a tenant context.
+      404:
+        description: No tenant has the name in `name`.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StatusError'
+            example:
+              errorMessage: tenant with ID 'unknown-tenant' could not be found.
   post:
     tags: [Notices]
     description: >
@@ -247,6 +263,15 @@ components:
           application/json:
             schema:
               $ref: '#/components/schemas/Notice'
+      400:
+        description: >
+          A required field is missing or not valid, or the token has no tenant context.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StatusError'
+            example:
+              errorMessage: 'Notice is not valid: message is required, startDate must be a valid date.'
       401:
         $ref: '#/components/responses/StatusUnauthorized'
 
@@ -265,6 +290,14 @@ components:
           application/json:
             schema:
               $ref: '#/components/schemas/Notice'
+      400:
+        description: The token has no tenant context, such as a core user token.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StatusError'
+            example:
+              errorMessage: Notice requests require a token with a tenant context.
       401:
         $ref: '#/components/responses/StatusUnauthorized'
       404:
@@ -321,7 +354,9 @@ components:
             schema:
               $ref: '#/components/schemas/Notice'
       400:
-        description: The mode is not valid, or the change is not allowed for the current mode of the notice.
+        description: >
+          The mode or a date is not valid, the change is not allowed for the current mode of the notice, or the token
+          has no tenant context.
         content:
           application/json:
             schema:
@@ -344,6 +379,14 @@ components:
           application/json:
             schema:
               $ref: '#/components/schemas/Notice'
+      400:
+        description: The token has no tenant context, such as a core user token.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StatusError'
+            example:
+              errorMessage: Notice requests require a token with a tenant context.
       401:
         $ref: '#/components/responses/StatusUnauthorized'
       404:
