@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { ApiServiceSummary, ApiSpecsRepository } from '../api-specs/apiSpecsRepository';
 import { diagnose } from '../diagnostics/diagnose';
+import { buildNext, jsonText, withRelatedAndNext } from './envelope';
 import { OFFLINE_TOOL_ANNOTATIONS, ToolDefinition } from './types';
 
 const DiagnoseArgs = z.object({
@@ -55,8 +56,18 @@ export function createDiagnoseTool(loadApis: () => ApiSpecsRepository): ToolDefi
         }
 
         const diagnoses = diagnose(parsed.data.symptom, listServices(loadApis));
-        const text = diagnoses.length > 0 ? JSON.stringify({ diagnoses }, null, 2) : NO_MATCH;
-        return { content: [{ type: 'text', text }] };
+        if (diagnoses.length === 0) {
+          return { content: [{ type: 'text', text: NO_MATCH }] };
+        }
+
+        // followUp stays on each diagnosis because it says which calls need sign-in; buildNext drops those.
+        const next = buildNext(
+          diagnoses.flatMap(({ followUp = [] }) =>
+            followUp.map(({ tool, arguments: args, why }) => ({ tool, arguments: args, why })),
+          ),
+          { tool: 'diagnose_adsp_error', arguments: { symptom: parsed.data.symptom } },
+        );
+        return jsonText(withRelatedAndNext({ diagnoses }, undefined, next));
       },
     },
   ];

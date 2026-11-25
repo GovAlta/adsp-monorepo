@@ -27,7 +27,7 @@ It bundles the ADSP documentation site content, the OpenAPI specs of ADSP servic
   [Building a browser app](#building-a-browser-app).
 - `diagnose_adsp_error` — turn an error from a Node service calling ADSP (a status code, an SDK message or a short
   description) into the likely causes, most likely first, each with its fix, a check and the tool to call next. See
-  [Diagnosing errors](#diagnosing-errors).
+  [Diagnosing errors](#diagnosing-errors). Returns `next`.
 - `list_service_roles` — **live: talks to a real ADSP environment**, not bundled/offline data. Reads every platform
   service's registered RBAC role from tenant-service configuration, so an agent can pick a least-privileged role
   instead of defaulting to an admin role.
@@ -118,6 +118,8 @@ For a `401` or `403` between services, the fix always names both Keycloak change
 service's URN and the service-account role, because neither alone is enough. Both come from the same text as
 `get_platform_quickstart`. The `check` says how to see which change is missing, and which side's Keycloak client to
 change. A service named in the symptom is matched exactly against the bundled API index, so its URN goes into the fix.
+The result also carries `next.suggested_calls` for any follow-up that works offline, as other tools do;
+follow-ups that need sign-in stay in `followUp` only.
 A symptom it doesn't recognise, such as a single generic word, gets a plain-text answer listing what it does know.
 
 Abridged output for `401 calling file-service`:

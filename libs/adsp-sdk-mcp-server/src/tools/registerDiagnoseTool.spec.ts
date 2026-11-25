@@ -29,6 +29,43 @@ describe('diagnose_adsp_error', () => {
     expect(JSON.stringify(diagnoses[0].causes)).toContain('urn:ads:platform:demo-service');
   });
 
+  it('suggests an offline follow-up as next.suggested_calls, and keeps it in followUp', async () => {
+    const result = await tool.handler({ symptom: 'Failed to find directory entry for urn:ads:platform:demo-service' });
+    const { diagnoses, next } = JSON.parse(textOf(result));
+    const followUp = diagnoses[0].followUp.find((call: { tool: string }) => call.tool === 'list_service_apis');
+
+    expect(diagnoses[0].id).toBe('directory-lookup-failed');
+    expect(followUp).toMatchObject({ needsSignIn: false });
+    expect(next.suggested_calls).toContainEqual({
+      tool: followUp.tool,
+      arguments: followUp.arguments,
+      why: followUp.why,
+    });
+  });
+
+  it('leaves follow-ups that need sign-in out of next, but keeps them in followUp', async () => {
+    const result = await tool.handler({ symptom: '401 calling demo-service' });
+    const { diagnoses, next } = JSON.parse(textOf(result));
+    const suggestedTools = (next?.suggested_calls ?? []).map((call: { tool: string }) => call.tool);
+
+    expect(diagnoses[0].followUp).toContainEqual(
+      expect.objectContaining({ tool: 'list_service_roles', needsSignIn: true }),
+    );
+    expect(suggestedTools).not.toContain('list_service_roles');
+    expect(suggestedTools).not.toContain('get_service_configuration_schema');
+  });
+
+  it('adds no next when no follow-up can be called offline', async () => {
+    const result = await tool.handler({ symptom: 'User demo-user not permitted to read file' });
+    const parsed = JSON.parse(textOf(result));
+
+    expect(parsed.diagnoses.length).toBeGreaterThan(0);
+    expect(
+      parsed.diagnoses.flatMap((d: { followUp?: { needsSignIn: boolean }[] }) => d.followUp ?? []),
+    ).not.toContainEqual(expect.objectContaining({ needsSignIn: false }));
+    expect(parsed).not.toHaveProperty('next');
+  });
+
   it('returns the no-match text for an unknown symptom', async () => {
     const result = await tool.handler({ symptom: 'kubernetes pod crashloop' });
     const text = textOf(result);
