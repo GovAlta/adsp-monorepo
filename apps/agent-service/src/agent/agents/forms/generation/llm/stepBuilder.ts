@@ -10,6 +10,7 @@ import {
   categoryIncrementSchema,
   type GenerationPlan,
   type IncrementPayload,
+  MENTIONS_CALCULATION,
   type PlannedStep,
 } from '../types';
 
@@ -43,8 +44,8 @@ export async function generateStepPayload({
   usage,
 }: GenerateStepInput): Promise<IncrementPayload> {
   const isBranch = step.type === 'branch';
-  const builder = isBranch ? agents.branchStepBuilder : agents.categoryStepBuilder;
   const prompt = buildStepPrompt({ plan, step, documents, context, previousErrors, log });
+  const builder = selectStepBuilder(agents, step, documents);
   log.record('step-prompt', { index: step.index, stepType: step.type, label: step.label, prompt });
 
   const result = await builder.generate(prompt, {
@@ -68,6 +69,18 @@ export async function generateStepPayload({
     conditionalRequired: payload?.conditionalRequired ?? [],
     ...(payload?.branch ? { branch: payload.branch } : {}),
   };
+}
+
+/** The branch builder for a branch; for a page, the builder with the computed examples only if the page calculates. */
+export function selectStepBuilder(agents: GenerationAgents, step: PlannedStep, documents: DocumentOutline[]) {
+  if (step.type === 'branch') {
+    return agents.branchStepBuilder;
+  }
+
+  const { text: source } = stepSourceText(documents, step.sectionId);
+  return MENTIONS_CALCULATION.test([step.label, step.detail, source].join('\n'))
+    ? agents.computedCategoryStepBuilder
+    : agents.categoryStepBuilder;
 }
 
 function buildStepPrompt({

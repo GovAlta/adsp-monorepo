@@ -1,4 +1,9 @@
-import { loadFormExamples } from './loadFormExamples';
+import {
+  formatDocumentUseCases,
+  formatLayoutSelection,
+  formatSchemaChecklist,
+  loadFormExamples,
+} from './loadFormExamples';
 
 describe('loadFormExamples', () => {
   let output: string;
@@ -702,6 +707,58 @@ describe('loadFormExamples', () => {
   describe('snapshot', () => {
     it('matches the expected full output snapshot', () => {
       expect(output).toMatchSnapshot();
+    });
+  });
+
+  // ============================================================
+  // 11. Options and compact sections for prompts sent on every call
+  // ============================================================
+  describe('options', () => {
+    it('leaves out the best practices and anti-patterns without guidance', () => {
+      // Act
+      const examples = loadFormExamples(['controls'], { guidance: false });
+
+      // Assert
+      expect(examples).toContain('# UI Control Examples');
+      expect(examples).not.toContain('# Best Practices');
+      expect(examples).not.toContain('# Anti-Patterns');
+    });
+
+    it('renders schemas as single-line JSON with compactJson', () => {
+      // Act
+      const examples = loadFormExamples(['controls'], { guidance: false, compactJson: true });
+
+      // Assert
+      expect(examples).toContain('{"type":"object","properties":');
+      expect(examples.length).toBeLessThan(loadFormExamples(['controls'], { guidance: false }).length);
+    });
+  });
+
+  describe('formatSchemaChecklist', () => {
+    const checklist = formatSchemaChecklist();
+
+    it('lists each anti-pattern on one line with how to avoid it', () => {
+      expect(checklist).toContain('- Required String Without minLength Workaround:');
+      expect(checklist).toContain('Always add `minLength: 1` to required string fields');
+    });
+
+    it('leaves out the worked bad and good pairs', () => {
+      expect(checklist).not.toContain('```json');
+    });
+
+    it('leaves out the items about tools and chat replies', () => {
+      expect(checklist).not.toContain('Including formDefinitionId in Tool Input');
+      expect(checklist).not.toContain('Including Full JSON in Chat Response');
+    });
+  });
+
+  describe('best practice sections', () => {
+    it('renders the document use cases on their own', () => {
+      expect(formatDocumentUseCases()).toMatch(/^## Document use cases/);
+    });
+
+    it('renders the layout selection on its own', () => {
+      expect(formatLayoutSelection()).toMatch(/^## Layout Selection/);
     });
   });
 });
