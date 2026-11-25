@@ -18,12 +18,12 @@ export const getTenantId = (req: Request): AdspId => {
 };
 
 export const isPlannerAdmin = (user: User, tenantId: AdspId) =>
-  isAllowedUser(user, tenantId, PlannerServiceRoles.Admin);
+  isAllowedUser(user, tenantId, PlannerServiceRoles.Admin, true);
 
 export const requirePlannerUser: RequestHandler = (req, _res, next) => {
   try {
     const tenantId = getTenantId(req);
-    if (!isAllowedUser(req.user, tenantId, ALL_ROLES)) {
+    if (!isAllowedUser(req.user, tenantId, ALL_ROLES, true)) {
       throw new UnauthorizedUserError('access planner', req.user);
     }
     next();
