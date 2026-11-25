@@ -380,7 +380,15 @@ components:
             schema:
               $ref: '#/components/schemas/FeedbackSummary'
       400:
-        $ref: '#/components/responses/FeedbackBadRequest'
+        description: >
+          Request is invalid: a query parameter failed validation, or there is no tenant context because a core user
+          did not set tenantId.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FeedbackError'
+            example:
+              errorMessage: Tenant context is required; core users must set tenantId.
 
 /feedback/v1/sites:
   get:

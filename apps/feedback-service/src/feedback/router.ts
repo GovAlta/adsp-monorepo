@@ -179,6 +179,10 @@ export const readSummary =
   (valueService: ValueService): RequestHandler =>
   async (req, res, next) => {
     try {
+      if (!req.tenant) {
+        throw new InvalidOperationError('Tenant context is required; core users must set tenantId.');
+      }
+
       const queryParameters: FeedbackSummaryQueryParameters = {
         site: req.query.site as string,
         start: req.query.start as string | undefined,
