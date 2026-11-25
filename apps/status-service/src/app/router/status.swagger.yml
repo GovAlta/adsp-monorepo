@@ -315,6 +315,8 @@ components:
           application/json:
             schema:
               $ref: '#/components/schemas/Application'
+      400:
+        $ref: '#/components/responses/StatusBadRequest'
       401:
         $ref: '#/components/responses/StatusUnauthorized'
       403:
@@ -433,6 +435,8 @@ components:
           application/json:
             schema:
               $ref: '#/components/schemas/Application'
+      400:
+        $ref: '#/components/responses/StatusBadRequest'
       401:
         $ref: '#/components/responses/StatusUnauthorized'
       403:
@@ -468,6 +472,8 @@ components:
               type: array
               items:
                 $ref: '#/components/schemas/PingData'
+      401:
+        $ref: '#/components/responses/StatusUnauthorized'
       404:
         $ref: '#/components/responses/StatusNotFound'
 
@@ -496,6 +502,8 @@ components:
               type: array
               items:
                 $ref: '#/components/schemas/PingData'
+      401:
+        $ref: '#/components/responses/StatusUnauthorized'
 
 /status/v1/webhook/{id}/test/{eventName}:
   get:
