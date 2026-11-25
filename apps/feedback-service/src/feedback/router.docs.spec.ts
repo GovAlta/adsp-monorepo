@@ -290,10 +290,6 @@ describe('feedback router documented behaviour', () => {
     });
 
     it('lists only the sites of the tenant for a tenant reader', async () => {
-      tenantServiceMock.getTenantByName.mockResolvedValueOnce({
-        id: adspId`urn:ads:platform:tenant-service:v2:/tenants/other`,
-        name: 'Other Tenant',
-      });
       feedbackSiteServiceMock.getTenantSites.mockResolvedValueOnce([site]);
 
       const res = await request(await createApp(reader)).get('/feedback/v1/sites?tenant=other-tenant');
