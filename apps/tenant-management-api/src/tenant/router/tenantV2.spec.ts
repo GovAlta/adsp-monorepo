@@ -728,6 +728,15 @@ describe('createTenantV2Router', () => {
           { changeSet: { before: { name: tenant.name }, after: { name: 'New mock name' } } },
         ),
       );
+      expect(eventServiceMock.send).toHaveBeenCalledWith(
+        expect.objectContaining({
+          name: 'tenant-name-updated',
+          payload: expect.objectContaining({ tenant: expect.objectContaining({ name: 'New mock name' }) }),
+        }),
+      );
+      const event = eventServiceMock.send.mock.calls[eventServiceMock.send.mock.calls.length - 1][0];
+      expect(event.payload.tenant).not.toHaveProperty('repository');
+      expect(() => JSON.stringify(event)).not.toThrow();
     });
 
     it('can call next with not found', async () => {
