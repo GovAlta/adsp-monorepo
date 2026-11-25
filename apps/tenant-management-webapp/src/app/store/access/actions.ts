@@ -1,4 +1,4 @@
-import { Role, ServiceRoleState } from './models';
+import { KeycloakGroup, Role, ServiceRoleState } from './models';
 
 /**
  * Types
@@ -18,6 +18,10 @@ const FETCH_KEYCLOAK_SERVICE_ROLES_SUCCESS = 'tenant/keycloak/service/roles/succ
 const CREATE_KEYCLOAK_ROLE = 'create/tenant/keycloak/service/role';
 const CREATE_KEYCLOAK_ROLE_SUCCESS = 'create/tenant/keycloak/service/role/success';
 
+const FETCH_KEYCLOAK_GROUPS = 'tenant/access/FETCH_KEYCLOAK_GROUPS';
+const FETCH_KEYCLOAK_GROUPS_SUCCESS = 'tenant/access/FETCH_KEYCLOAK_GROUPS_SUCCESS';
+const FETCH_KEYCLOAK_GROUPS_FAILED = 'tenant/access/FETCH_KEYCLOAK_GROUPS_FAILED';
+
 export {
   FETCH_ACCESS_ACTION,
   FETCH_ACCESS_SUCCESS_ACTION,
@@ -28,6 +32,9 @@ export {
   FETCH_KEYCLOAK_SERVICE_ROLES_SUCCESS,
   CREATE_KEYCLOAK_ROLE,
   CREATE_KEYCLOAK_ROLE_SUCCESS,
+  FETCH_KEYCLOAK_GROUPS,
+  FETCH_KEYCLOAK_GROUPS_SUCCESS,
+  FETCH_KEYCLOAK_GROUPS_FAILED,
 };
 
 export interface FetchAccessAction {
@@ -83,6 +90,19 @@ export interface CreateKeycloakRoleSuccessAction {
   };
 }
 
+export interface FetchKeycloakGroupsAction {
+  type: typeof FETCH_KEYCLOAK_GROUPS;
+}
+
+export interface FetchKeycloakGroupsSuccessAction {
+  type: typeof FETCH_KEYCLOAK_GROUPS_SUCCESS;
+  payload: KeycloakGroup[];
+}
+
+export interface FetchKeycloakGroupsFailedAction {
+  type: typeof FETCH_KEYCLOAK_GROUPS_FAILED;
+}
+
 export type ActionTypes =
   | FetchAccessAction
   | FetchAccessSuccessAction
@@ -93,7 +113,10 @@ export type ActionTypes =
   | FetchServiceRolesSuccessAction
   | CreateKeycloakRoleAction
   | CreateKeycloakRoleSuccessAction
-  | FetchKeycloakServiceRolesAction;
+  | FetchKeycloakServiceRolesAction
+  | FetchKeycloakGroupsAction
+  | FetchKeycloakGroupsSuccessAction
+  | FetchKeycloakGroupsFailedAction;
 
 /**
  * Functions
@@ -166,4 +189,17 @@ export const createKeycloakRoleSuccess = (
     id,
     role,
   },
+});
+
+export const fetchKeycloakGroups = (): FetchKeycloakGroupsAction => ({
+  type: FETCH_KEYCLOAK_GROUPS,
+});
+
+export const fetchKeycloakGroupsSuccess = (groups: KeycloakGroup[]): FetchKeycloakGroupsSuccessAction => ({
+  type: FETCH_KEYCLOAK_GROUPS_SUCCESS,
+  payload: groups,
+});
+
+export const fetchKeycloakGroupsFailed = (): FetchKeycloakGroupsFailedAction => ({
+  type: FETCH_KEYCLOAK_GROUPS_FAILED,
 });
