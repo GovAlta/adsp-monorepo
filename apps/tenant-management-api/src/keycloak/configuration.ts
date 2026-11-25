@@ -165,17 +165,6 @@ export const ADSP_CLI_CLIENT_SCOPE_MAPPINGS = [
 
 export const ADSP_MCP_CLIENT_ID = 'urn:ads:platform:adsp-mcp';
 
-const audienceMapper = (
-  name: string,
-  audience: 'included.client.audience' | 'included.custom.audience',
-  value: string,
-) => ({
-  name,
-  protocol: 'openid-connect',
-  protocolMapper: 'oidc-audience-mapper',
-  config: { [audience]: value, 'id.token.claim': 'false', 'access.token.claim': 'true' },
-});
-
 export const createAdspMcpPublicClientConfig = (id: string): ClientRepresentation => ({
   id,
   clientId: ADSP_MCP_CLIENT_ID,
@@ -186,18 +175,17 @@ export const createAdspMcpPublicClientConfig = (id: string): ClientRepresentatio
   directAccessGrantsEnabled: false,
   serviceAccountsEnabled: false,
   consentRequired: true,
-  fullScopeAllowed: false,
+  fullScopeAllowed: true,
   attributes: {
     'pkce.code.challenge.method': 'S256',
+    // ADSP_MCP_CLIENT_ID configured to expect these lifespans in seconds.
+    // instead of using the realm settings
+    'access.token.lifespan': '600',
+    'client.session.idle.timeout': '3600',
   },
   // Only the hosted MCP server signs in here; loopback URIs would let any local process obtain the same token.
   redirectUris: environment.MCP_SERVER_CALLBACK_URLS,
   webOrigins: [],
-  // One audience mapper honours either a client or a custom audience, not both.
-  protocolMappers: [
-    audienceMapper('adsp-sdk-mcp-server-aud', 'included.custom.audience', 'urn:ads:platform:adsp-sdk-mcp-server'),
-    audienceMapper('configuration-service-aud', 'included.client.audience', 'urn:ads:platform:configuration-service'),
-  ],
   description:
     'Public client for the hosted ADSP SDK MCP server signing in to tenant realms. PKCE-only, consent required. ' +
     'Scope restricted to configuration-admin via clientScopeMappings.',
@@ -215,25 +203,6 @@ export const ADSP_CLI_CI_CLIENT_ID = 'adsp-cli-ci';
 export const ADSP_CLI_CI_CLIENT_SCOPE_MAPPINGS = [
   { client: 'urn:ads:platform:configuration-service', roles: ['configuration-admin'] },
   { client: 'realm-management', roles: ['manage-clients', 'manage-users'] },
-];
-
-/** The Adsp-Mcp client roles we are allowing for this client to interact with ADSP */
-export const ADSP_MCP_CLIENT_SCOPE_MAPPINGS = [
-  { client: 'urn:ads:platform:audit-service', roles: ['audit-admin'] },
-  { client: 'urn:ads:platform:configuration-service', roles: ['configuration-admin'] },
-  { client: 'urn:ads:platform:calendar-service', roles: ['calendar-admin'] },
-  { client: 'urn:ads:platform:directory-service', roles: ['directory-admin'] },
-  { client: 'urn:ads:platform:event-service', roles: ['event-admin'] },
-  { client: 'urn:ads:platform:file-service', roles: ['file-service-admin'] },
-  { client: 'urn:ads:platform:form-service', roles: ['form-admin'] },
-  { client: 'urn:ads:platform:notification-service', roles: ['subscription-admin'] },
-  { client: 'urn:ads:platform:project-planner-service', roles: ['planner-admin'] },
-  { client: 'urn:ads:platform:script-service', roles: ['script-service'] },
-  { client: 'urn:ads:platform:sharepoint-service', roles: ['sharepoint-admin'] },
-  { client: 'urn:ads:platform:task-service', roles: ['task-admin'] },
-  { client: 'urn:ads:platform:tenant-service', roles: ['tenant-admin'] },
-  { client: 'urn:ads:platform:task-service', roles: ['task-admin'] },
-  { client: 'urn:ads:platform:value-service', roles: ['value-writer', 'value-reader'] },
 ];
 
 /**

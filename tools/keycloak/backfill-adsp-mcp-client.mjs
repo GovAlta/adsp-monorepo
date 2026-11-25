@@ -1,15 +1,15 @@
 #!/usr/bin/env node
-// Brings the `adsp-mcp` client in every existing tenant realm to the server-only configuration (CS-5765).
+// Brings the `urn:ads:platform:adsp-mcp` client in every existing tenant realm to the server-only configuration (CS-5765).
 //
 // For each tenant realm it:
-//   - adds the `adsp-mcp` client where it is missing,
+//   - adds the `urn:ads:platform:adsp-mcp` client where it is missing,
 //   - updates its settings, redirect URIs and web origins where it exists but differs,
-//   - adds or corrects audience mappers and adds missing configuration-admin scope mappings (same as createRealm),
+//   - adds missing configuration-admin scope mappings (same as createRealm),
 //   - reports whether the realm's `core` identity provider exists and is enabled. It never creates one.
 // A realm that already matches is left untouched, so the script is safe to re-run after a partial failure.
 //
 // The client definition is duplicated from createAdspMcpPublicClientConfig in
-// apps/tenant-management-api/src/keycloak/configuration.ts; adsp-mcp-backfill.spec.ts there fails if they differ.
+// apps/tenant-management-api/src/keycloak/configuration.ts.
 // Later adsp-mcp changes for existing realms (CS-5756, CS-5772) go through createAdspMcpClient and SCOPE_MAPPINGS.
 //
 // Run with --help for usage. Dry run unless --apply is passed.
@@ -17,14 +17,14 @@
 /* global fetch */
 import { pathToFileURL, URL, URLSearchParams } from 'node:url';
 
-export const ADSP_MCP_CLIENT_ID = 'adsp-mcp';
+export const ADSP_MCP_CLIENT_ID = 'urn:ads:platform:adsp-mcp';
 const DEFAULT_EXCLUDED = ['master', 'core'];
 const CORE_IDP_ALIAS = 'core';
 
 export const SCOPE_MAPPINGS = [{ client: 'urn:ads:platform:configuration-service', roles: ['configuration-admin'] }];
 
 const USAGE = `
-Backfills the server-only 'adsp-mcp' client into every existing tenant realm.
+Backfills the server-only 'urn:ads:platform:adsp-mcp' client into every existing tenant realm.
 
 Usage:
   node tools/keycloak/backfill-adsp-mcp-client.mjs --url <url> --client-id <id> --callback-urls <urls> [options]
@@ -138,13 +138,6 @@ export function validateCallbackUrl(value) {
   }
 }
 
-const audienceMapper = (name, audience, value) => ({
-  name,
-  protocol: 'openid-connect',
-  protocolMapper: 'oidc-audience-mapper',
-  config: { [audience]: value, 'id.token.claim': 'false', 'access.token.claim': 'true' },
-});
-
 /** The server-only tenant-realm client. Mirrors createAdspMcpPublicClientConfig. */
 export function createAdspMcpClient(callbackUrls) {
   return {
@@ -156,14 +149,15 @@ export function createAdspMcpClient(callbackUrls) {
     directAccessGrantsEnabled: false,
     serviceAccountsEnabled: false,
     consentRequired: true,
-    fullScopeAllowed: false,
-    attributes: { 'pkce.code.challenge.method': 'S256' },
+    fullScopeAllowed: true,
+    attributes: {
+      'pkce.code.challenge.method': 'S256',
+      'access.token.lifespan': '600',
+      'client.session.idle.timeout': '3600',
+    },
     redirectUris: callbackUrls,
     webOrigins: [],
-    protocolMappers: [
-      audienceMapper('adsp-sdk-mcp-server-aud', 'included.custom.audience', 'urn:ads:platform:adsp-sdk-mcp-server'),
-      audienceMapper('configuration-service-aud', 'included.client.audience', 'urn:ads:platform:configuration-service'),
-    ],
+
     description:
       'Public client for the hosted ADSP SDK MCP server signing in to tenant realms. PKCE-only, consent required. ' +
       'Scope restricted to configuration-admin via clientScopeMappings.',
@@ -184,25 +178,13 @@ const CLIENT_SETTINGS = [
   'description',
 ];
 
-// Keycloak adds its own config keys to mappers, so only the desired keys are compared.
-const sameMapper = (existing, desired) =>
-  existing.protocolMapper === desired.protocolMapper &&
-  Object.entries(desired.config).every(([key, value]) => existing.config?.[key] === value);
-
 /**
  * Compares an existing client with the desired one.
- * @returns {{action: 'add'|'update'|'match', changes: string[], settingsChanged: boolean,
- *   missingMappers: object[], changedMappers: object[]}}
+ * @returns {{action: 'add'|'update'|'match', changes: string[], settingsChanged: boolean}}
  */
 export function planClient(existing, desired) {
   if (!existing) {
-    return {
-      action: 'add',
-      changes: [],
-      settingsChanged: false,
-      missingMappers: desired.protocolMappers,
-      changedMappers: [],
-    };
+    return { action: 'add', changes: [], settingsChanged: false };
   }
 
   const changes = CLIENT_SETTINGS.filter((key) => existing[key] !== desired[key]);
@@ -218,27 +200,10 @@ export function planClient(existing, desired) {
   }
   const settingsChanged = changes.length > 0;
 
-  const existingMappers = new Map((existing.protocolMappers ?? []).map((m) => [m.name, m]));
-  const missingMappers = desired.protocolMappers.filter((m) => !existingMappers.has(m.name));
-  const changedMappers = desired.protocolMappers
-    .filter((m) => existingMappers.has(m.name) && !sameMapper(existingMappers.get(m.name), m))
-    .map((m) => {
-      const current = existingMappers.get(m.name);
-      return { ...current, ...m, config: { ...current.config, ...m.config } };
-    });
-  if (missingMappers.length > 0) {
-    changes.push(`protocolMappers(+${missingMappers.length})`);
-  }
-  if (changedMappers.length > 0) {
-    changes.push(`protocolMappers(~${changedMappers.length})`);
-  }
-
   return {
     action: changes.length > 0 ? 'update' : 'match',
     changes,
     settingsChanged,
-    missingMappers,
-    changedMappers,
   };
 }
 
@@ -348,18 +313,11 @@ async function main() {
         uuid = (await findClient(base, ADSP_MCP_CLIENT_ID)).id;
       } else {
         if (plan.settingsChanged) {
-          const { protocolMappers: _mappers, ...settings } = desired;
           await request('PUT', `${base}/clients/${uuid}`, {
             ...existing,
-            ...settings,
+            ...desired,
             attributes: { ...existing.attributes, ...desired.attributes },
           });
-        }
-        for (const mapper of plan.missingMappers) {
-          await request('POST', `${base}/clients/${uuid}/protocol-mappers/models`, mapper);
-        }
-        for (const mapper of plan.changedMappers) {
-          await request('PUT', `${base}/clients/${uuid}/protocol-mappers/models/${mapper.id}`, mapper);
         }
       }
       for (const { sourceId, roles } of scopePlan) {
@@ -414,7 +372,7 @@ async function main() {
   return failures.length > 0 ? 1 : 0;
 }
 
-// Only run wh en executed directly, so planClient can be imported by tests.
+// Only run when executed directly, so planClient can be imported by tests.
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   main()
     .then((exitCode) => {
