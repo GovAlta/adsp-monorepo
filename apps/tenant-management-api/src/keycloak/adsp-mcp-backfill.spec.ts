@@ -31,8 +31,6 @@ interface Plan {
   action: 'add' | 'update' | 'match';
   changes: string[];
   settingsChanged: boolean;
-  missingMappers: unknown[];
-  changedMappers: { id: string; config: Record<string, string> }[];
 }
 
 describe('backfill-adsp-mcp-client', () => {
@@ -50,11 +48,6 @@ describe('backfill-adsp-mcp-client', () => {
     ...newRealmClient,
     id: 'adsp-mcp-uuid',
     attributes: { ...newRealmClient.attributes, 'post.logout.redirect.uris': '+' },
-    protocolMappers: newRealmClient.protocolMappers.map((mapper, index) => ({
-      ...mapper,
-      id: `mapper-${index}`,
-      config: { ...mapper.config, 'introspection.token.claim': 'true' },
-    })),
     ...overrides,
   });
 
@@ -70,15 +63,12 @@ describe('backfill-adsp-mcp-client', () => {
     const result = plan(undefined);
 
     expect(result.action).toBe('add');
-    expect(result.missingMappers).toHaveLength(2);
   });
 
   it('leaves a client matching a new realm unchanged', () => {
     const result = plan(keycloakClient());
 
-    expect(result).toEqual(
-      expect.objectContaining({ action: 'match', changes: [], missingMappers: [], changedMappers: [] }),
-    );
+    expect(result).toEqual(expect.objectContaining({ action: 'match', changes: [] }));
   });
 
   it('replaces the CS-5617 loopback redirect URIs and web origins', () => {
@@ -96,33 +86,12 @@ describe('backfill-adsp-mcp-client', () => {
 
   it('corrects drifted client settings', () => {
     const result = plan(
-      keycloakClient({ fullScopeAllowed: true, consentRequired: false, attributes: {} as Client['attributes'] }),
+      keycloakClient({ fullScopeAllowed: false, consentRequired: false, attributes: {} as Client['attributes'] }),
     );
 
     expect(result.changes).toEqual(
       expect.arrayContaining(['fullScopeAllowed', 'consentRequired', 'attributes.pkce.code.challenge.method']),
     );
-  });
-
-  it('adds missing mappers and corrects drifted mapper config', () => {
-    const existing = keycloakClient();
-    existing.protocolMappers = [
-      {
-        ...existing.protocolMappers[0],
-        config: { ...existing.protocolMappers[0].config, 'access.token.claim': 'false' },
-      },
-    ];
-
-    const result = plan(existing);
-
-    expect(result.changes).toEqual(['protocolMappers(+1)', 'protocolMappers(~1)']);
-    expect(result.settingsChanged).toBe(false);
-    expect(result.changedMappers).toEqual([
-      expect.objectContaining({
-        id: 'mapper-0',
-        config: expect.objectContaining({ 'access.token.claim': 'true', 'introspection.token.claim': 'true' }),
-      }),
-    ]);
   });
 
   describe('parseArgs', () => {
