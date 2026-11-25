@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { GoabButton, GoabFileUploadCard, GoabFileUploadInput } from '@abgov/react-components';
 import { formatAllowedFileTypes, getFileUploadErrorMessage } from '@abgov/adsp-components-core';
 import { useAdspThemeStyle } from '../theme/adsp-theme-provider';
+import { useCapability } from '../capability';
 import { useFileUpload, type FileUploadItem } from './useFileUpload';
 import type { ADSPFileUploadProps } from './types';
 
@@ -39,12 +40,14 @@ function toCardProgress(item: FileUploadItem): number {
 export const ADSPFileUpload = ({
   fileTypeId,
   client,
-  canUpload = true,
+  canUpload: canUploadOverride,
+  fallback,
   recordId,
   onUpload,
   themeOverrides,
   testId,
 }: ADSPFileUploadProps) => {
+  const canUpload = useCapability('file.upload', canUploadOverride);
   const themeStyle = useAdspThemeStyle('fileUpload', themeOverrides);
   // Without permission, the hook gets no client, so nothing is requested.
   const { fileType, loading, typeError, ready, uploads, upload, retry, remove, reloadType } = useFileUpload(
@@ -74,7 +77,8 @@ export const ADSPFileUpload = ({
   }, [restoreFocus, loading, uploads]);
 
   if (!canUpload) {
-    return null;
+    // The application writes any message; the component doesn't know why access is denied.
+    return fallback ?? null;
   }
 
   const childTestId = (suffix: string) => (testId ? `${testId}-${suffix}` : undefined);

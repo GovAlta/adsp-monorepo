@@ -147,6 +147,29 @@ Things to know:
 
 The hook `ADSPCalendar` uses to load data. It returns `{ calendarEvents, loading, error }`, reloads when the calendar or range changes, and fetches nothing while `range` is `undefined`. The client must be stable across renders.
 
+#### Capabilities
+
+`AdspCapabilityProvider` is the application's one place for deciding what the current user may do. Components ask it for a capability (`file.upload`, `file.download`) through `useCapability` and never read Keycloak roles themselves.
+
+```tsx
+import { useMemo } from 'react';
+import { AdspCapabilityProvider } from '@abgov/adsp-components-react';
+
+// The roles your File Type grants; File client's getFileType() doesn't return them.
+const capabilities = useMemo(() => ({ 'file.download': ['case-reader'], 'file.upload': ['case-worker'] }), []);
+
+<AdspCapabilityProvider roles={userRoles /* from the app's token, memoized */} capabilities={capabilities}>
+  <CaseFiles />
+</AdspCapabilityProvider>;
+```
+
+- A role in a capability's list grants it, and so does File service's `file-service-admin` role (realm or `urn:ads:platform:file-service:file-service-admin`).
+- Under a provider, a capability not in `capabilities` is granted only to `file-service-admin`. With no provider at all, everything is allowed and File service decides on the request, as before.
+- Wrap only the part of the app that uses one File Type. If File Types grant different roles, give each its own provider; the nearest one applies.
+- A component's own `canDownload` / `canUpload` prop always wins over the provider.
+- A denied component renders nothing unless you pass `fallback`, for example `fallback={<p>Only case workers can add documents.</p>}`. The component doesn't know why access is denied, so the application writes the message.
+- `useCapability(capability, override?)` gives the same answer to the application's own components.
+
 #### `ADSPFileDownload`
 
 Downloads a File service file. With only `client` and `fileId`, it shows the filename and size from File service as a tertiary download button. It shows progress while downloading and explains a missing file, a permission failure, an infected file or a pending virus scan, with **Try again** where trying again can help.
@@ -170,7 +193,8 @@ const client = useMemo(() => new FileClient({ serviceUrl, getAccessToken }), [se
 | ---------------- | --------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `client`         | `IFileClient`                                 | Loads and downloads the file, usually a `FileClient` from core built with the app's `getAccessToken`. Create it once or memoize it.                                                                                                                                                             |
 | `fileId`         | `string`                                      | ID of the File service file.                                                                                                                                                                                                                                                                    |
-| `canDownload`    | `boolean`                                     | Whether the application lets the current user download. `false` renders nothing and sends no request. Defaults to `true`; File service still authorizes the download.                                                                                                                           |
+| `canDownload`    | `boolean`                                     | Whether the application lets the current user download. `false` renders nothing and sends no request. Overrides `AdspCapabilityProvider`; without either it's `true`. File service still authorizes it.                                                                                         |
+| `fallback`       | `ReactNode`                                   | Shown in place of the component when the user can't download, such as why and who to ask. Nothing by default.                                                                                                                                                                                   |
 | `children`       | `ReactElement`                                | A trigger to use in place of the default control, such as a `GoabButton` or a link. The component sets its `onClick`, and `disabled` while downloading (`aria-disabled` on a link, which can't be disabled). Metadata isn't loaded up front, so a list of files doesn't send a request per row. |
 | `themeOverrides` | `AdspComponentThemeOverrides<'fileDownload'>` | File download tokens for this instance only.                                                                                                                                                                                                                                                    |
 | `testId`         | `string`                                      | `data-testid` on the root element.                                                                                                                                                                                                                                                              |
@@ -183,7 +207,7 @@ const client = useMemo(() => new FileClient({ serviceUrl, getAccessToken }), [se
 
 Things to know:
 
-- **Permissions.** There is no shared ADSP permission resolver yet, so the application passes `canDownload`. With the default control, File service's answer to the metadata request also tells the component before any click whether the user may download: a 403 shows a permission message instead of the button.
+- **Permissions.** The component asks `AdspCapabilityProvider` for `file.download` (see [Capabilities](#capabilities)); `canDownload` overrides it. With the default control, File service's answer to the metadata request also tells the component before any click whether the user may download: a 403 shows a permission message instead of the button.
 - **The file is held in memory** as a `Blob` before the browser saves it, because a plain link can't send the user's token. See the [core File client README](../adsp-components-core/src/lib/file/README.md).
 - **Pending scans aren't bypassed.** The component never sends `unsafe=true`.
 - **Changing `fileId` mid-download** doesn't cancel it: the file the user clicked is still saved, but its progress and any error belong to that file, so the new one can be downloaded straight away.
@@ -214,7 +238,8 @@ const client = useMemo(() => new FileClient({ serviceUrl, getAccessToken }), [se
 | ---------------- | ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `client`         | `IFileUploadClient`                         | Loads the File Type and uploads files, usually a `FileClient` from core built with the app's `getAccessToken`. Create it once or memoize it.                       |
 | `fileTypeId`     | `string`                                    | ID of the File service File Type the files are uploaded as.                                                                                                        |
-| `canUpload`      | `boolean`                                   | Whether the application lets the current user upload. `false` renders nothing and sends no request. Defaults to `true`; File service still authorizes the upload.  |
+| `canUpload`      | `boolean`                                   | Whether the user may upload. `false` renders nothing and sends no request. Overrides `AdspCapabilityProvider`; without either it's `true`.                         |
+| `fallback`       | `ReactNode`                                 | Shown in place of the component when the user can't upload, such as why and who to ask. Nothing by default.                                                        |
 | `recordId`       | `string`                                    | Ties each uploaded file to a record in the application, such as a form submission.                                                                                 |
 | `onUpload`       | `(file: FileMetadata) => void`              | Called with the file as File service stored it, once for each upload that succeeds.                                                                                |
 | `themeOverrides` | `AdspComponentThemeOverrides<'fileUpload'>` | File upload tokens for this instance only.                                                                                                                         |
@@ -229,7 +254,7 @@ const client = useMemo(() => new FileClient({ serviceUrl, getAccessToken }), [se
 
 Things to know:
 
-- **Permissions.** There is no shared ADSP permission resolver yet, so the application passes `canUpload`. File service's answer to the File Type request also tells the component before any upload whether the user may use the type: a 403 shows a permission message instead of the drop area.
+- **Permissions.** The component asks `AdspCapabilityProvider` for `file.upload` (see [Capabilities](#capabilities)); `canUpload` overrides it. File service's answer to the File Type request also tells the component before any upload whether the user may use the type: a 403 shows a permission message instead of the drop area.
 - **Allowed formats.** When the File Type lists `allowedFileTypes`, the component shows them under the drop area and fails a file with another extension at once, without sending it and without offering Try again. File service still checks the content and its answer is authoritative; its own format rejection gets the same message. The component also applies File service's 3 GB upload limit (the GoA input would otherwise reject anything over 5 MB).
 - **Several files.** Every file dropped or picked is uploaded, each with its own card, and the drop area stays available for more.
 - **Progress** stops at 99% until File service answers, because File service only accepts or rejects the file once it has received all of it.

@@ -2,6 +2,7 @@ import { cloneElement, isValidElement, useEffect, useRef, useState } from 'react
 import { GoabButton } from '@abgov/react-components';
 import { formatFileSize, getFileErrorMessage } from '@abgov/adsp-components-core';
 import { useAdspThemeStyle } from '../theme/adsp-theme-provider';
+import { useCapability } from '../capability';
 import { useFileDownload } from './useFileDownload';
 import type { ADSPFileDownloadProps, ADSPFileDownloadTriggerProps } from './types';
 
@@ -21,11 +22,13 @@ function tryFocus(element: HTMLElement | null | undefined): boolean {
 export const ADSPFileDownload = ({
   fileId,
   client,
-  canDownload = true,
+  canDownload: canDownloadOverride,
+  fallback,
   children,
   themeOverrides,
   testId,
 }: ADSPFileDownloadProps) => {
+  const canDownload = useCapability('file.download', canDownloadOverride);
   const themeStyle = useAdspThemeStyle('fileDownload', themeOverrides);
   const trigger = isValidElement<ADSPFileDownloadTriggerProps>(children) ? children : null;
   const rootRef = useRef<HTMLDivElement>(null);
@@ -61,7 +64,8 @@ export const ADSPFileDownload = ({
   }, [restoreFocus, busy, error]);
 
   if (!canDownload) {
-    return null;
+    // The application writes any message; the component doesn't know why access is denied.
+    return fallback ?? null;
   }
 
   const handleRetry = () => {

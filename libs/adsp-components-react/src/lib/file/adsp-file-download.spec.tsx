@@ -4,6 +4,7 @@ import { GoabButton } from '@abgov/react-components';
 import { FileServiceError, type FileMetadata, type IFileClient } from '@abgov/adsp-components-core';
 import { ADSPFileDownload } from './adsp-file-download';
 import { AdspThemeProvider } from '../theme/adsp-theme-provider';
+import { AdspCapabilityProvider } from '../capability';
 import { saveFile } from './saveFile';
 
 jest.mock('./saveFile', () => ({ saveFile: jest.fn() }));
@@ -359,6 +360,82 @@ describe('ADSPFileDownload', () => {
       // Assert
       expect(screen.queryByText('Download')).not.toBeInTheDocument();
       expect(client.downloadFile).not.toHaveBeenCalled();
+    });
+
+    test('renders nothing and sends no request when the capability provider denies file.download', () => {
+      // Arrange
+      const client = createClient();
+
+      // Act
+      const { container } = render(
+        <AdspCapabilityProvider roles={['other']} capabilities={{ 'file.download': ['reader'] }}>
+          <ADSPFileDownload client={client} fileId={fileId} />
+        </AdspCapabilityProvider>,
+      );
+
+      // Assert
+      expect(container).toBeEmptyDOMElement();
+      expect(client.getFile).not.toHaveBeenCalled();
+    });
+
+    test('shows the fallback instead when the user cannot download', () => {
+      // Arrange
+      const client = createClient();
+
+      // Act
+      render(
+        <AdspCapabilityProvider roles={[]} capabilities={{ 'file.download': ['reader'] }}>
+          <ADSPFileDownload client={client} fileId={fileId} fallback={<p>Ask your supervisor for access.</p>} />
+        </AdspCapabilityProvider>,
+      );
+
+      // Assert
+      expect(screen.getByText('Ask your supervisor for access.')).toBeInTheDocument();
+      expect(client.getFile).not.toHaveBeenCalled();
+    });
+
+    test('ignores the fallback when the user can download', async () => {
+      // Arrange
+      const client = createClient();
+
+      // Act
+      render(<ADSPFileDownload client={client} fileId={fileId} fallback={<p>No access</p>} />);
+
+      // Assert
+      expect(await screen.findByText('Annual report.pdf')).toBeInTheDocument();
+      expect(screen.queryByText('No access')).not.toBeInTheDocument();
+    });
+
+    test('downloads when the capability provider grants file.download', async () => {
+      // Arrange
+      const client = createClient();
+      render(
+        <AdspCapabilityProvider roles={['reader']} capabilities={{ 'file.download': ['reader'] }}>
+          <ADSPFileDownload client={client} fileId={fileId} />
+        </AdspCapabilityProvider>,
+      );
+      await screen.findByText('Annual report.pdf');
+
+      // Act
+      clickGoabButton('Annual report.pdf');
+
+      // Assert
+      await waitFor(() => expect(client.downloadFile).toHaveBeenCalledWith(fileId));
+    });
+
+    test('lets canDownload override the capability provider', async () => {
+      // Arrange
+      const client = createClient();
+
+      // Act
+      render(
+        <AdspCapabilityProvider roles={[]} capabilities={{ 'file.download': ['reader'] }}>
+          <ADSPFileDownload client={client} fileId={fileId} canDownload />
+        </AdspCapabilityProvider>,
+      );
+
+      // Assert
+      expect(await screen.findByText('Annual report.pdf')).toBeInTheDocument();
     });
   });
 
