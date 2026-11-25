@@ -1,0 +1,96 @@
+# DRAFT PROPOSAL: This template is intentionally outside rules/ and is not rendered or deployed.
+# DEV confirmed the namespace, API and purge-job workloads, shared container name, runtime debug
+# level, and ANSI/plain Winston text. The collector JSON wrapper, explicit message extraction,
+# positive Error/Critical metric evaluation, seven-day baseline, Ruler evaluation, and notification
+# delivery remain unverified. Published Critical and Error runbooks are also required before this
+# proposal can be promoted to rules/.
+apiVersion: template.openshift.io/v1
+kind: Template
+metadata:
+  name: tenant-management-api-log-alerts
+  annotations:
+    description: >-
+      Candidate Loki log alerts for actual tenant-management-api Winston Critical, Alert and Error
+      severity. Collector-generated severity is not used because it may disagree with application
+      severity.
+parameters:
+  - name: NAMESPACE
+    description: Target namespace, e.g. adsp-dev.
+    required: true
+objects:
+  - apiVersion: loki.grafana.com/v1
+    kind: AlertingRule
+    metadata:
+      name: tenant-management-api-log-alerts
+      namespace: ${NAMESPACE}
+      # Add only labels required by the LokiStack rule selector after runtime verification.
+    spec:
+      tenantID: application
+      groups:
+        - name: tenant-management-api-log-alerts
+          interval: 30s
+          rules:
+            - alert: ADSPLogCritical
+              expr: |
+                sum by (kubernetes_pod_name, kubernetes_container_name) (
+                  count_over_time(
+                    {kubernetes_namespace_name="${NAMESPACE}", kubernetes_container_name="tenant-management-api"}
+                      | json app_message="message"
+                      | __error__=""
+                      | line_format "{{.app_message}}"
+                      |~ `^(\x1b\[[0-9;]*m)?(critical|alert)(\x1b\[[0-9;]*m)?:[[:space:]]`
+                      [1m]
+                  )
+                ) > 0
+              for: 0s
+              labels:
+                service: tenant-management-api
+                namespace: ${NAMESPACE}
+                severity: critical
+              annotations:
+                summary: Critical tenant-management-api application log detected
+                description: >-
+                  Tenant Management API emitted {{ $value }} Winston critical- or alert-severity
+                  log(s) in the last minute for pod {{ $labels.kubernetes_pod_name }} and container
+                  {{ $labels.kubernetes_container_name }}.
+                impact: >-
+                  Tenant resolution, tenant provisioning, realm administration or lifecycle
+                  operations may be unavailable or severely disrupted, potentially affecting
+                  authentication and downstream tenant-scoped services.
+                first_steps: |
+                  1. Confirm the application message begins with critical: or alert: and identify whether the affected pod belongs to the API or purge-job deployment.
+                  2. Check pod health and the dependency named in the log, especially MongoDB, Keycloak, Directory, Configuration, Event or Audit Service.
+                  3. Do not retry provisioning or purge, or manually alter MongoDB or Keycloak, until partial-state and duplicate-resource risks are understood.
+            - alert: ADSPLogError
+              expr: |
+                sum by (kubernetes_pod_name, kubernetes_container_name) (
+                  count_over_time(
+                    {kubernetes_namespace_name="${NAMESPACE}", kubernetes_container_name="tenant-management-api"}
+                      | json app_message="message"
+                      | __error__=""
+                      | line_format "{{.app_message}}"
+                      |~ `^(\x1b\[[0-9;]*m)?error(\x1b\[[0-9;]*m)?:[[:space:]]`
+                      [3m]
+                  )
+                ) > 0
+              for: 30s
+              labels:
+                service: tenant-management-api
+                namespace: ${NAMESPACE}
+                severity: warning
+              annotations:
+                summary: Recent tenant-management-api application error logs detected
+                description: >-
+                  Tenant Management API emitted {{ $value }} Winston error-severity log(s) in the
+                  last three minutes for pod {{ $labels.kubernetes_pod_name }} and container
+                  {{ $labels.kubernetes_container_name }}; the condition persisted for at least 30
+                  seconds. The lookback and threshold remain candidate settings pending DEV baseline
+                  validation.
+                impact: >-
+                  The log may represent an expected business or HTTP 4xx outcome, or an operational
+                  failure affecting MongoDB, Keycloak, tenant lifecycle processing or downstream
+                  coordination. An isolated Error does not establish an after-hours outage.
+                first_steps: |
+                  1. Confirm the application message begins with error: and classify it as expected business validation, operational failure, dependency failure or tenant lifecycle partial failure.
+                  2. Identify whether the affected pod belongs to the API or purge-job deployment, then check MongoDB, Keycloak and any named platform dependency.
+                  3. For provisioning, archive, restore or purge failures, compare persisted tenant state with Keycloak state before any approved retry or recovery action.
