@@ -243,6 +243,17 @@ describe('rotation router', () => {
       await request(createApp(admin, tenant)).put('/realm').send({ mode: 'off' }).expect(200);
     });
 
+    it('leaves the stored settings untouched when the policy cannot be changed', async () => {
+      keycloak.ensurePolicy.mockRejectedValue(new Error('forbidden'));
+
+      await request(createApp(admin, tenant))
+        .put('/realm')
+        .send({ mode: 'selected', noticePeriod: 2592000 })
+        .expect(500);
+
+      expect(settingsStore.update).not.toHaveBeenCalled();
+    });
+
     const flush = () => new Promise((resolve) => setImmediate(resolve));
 
     it('clears client expiries in the background when turning rotation off', async () => {
@@ -368,6 +379,17 @@ describe('rotation router', () => {
       keycloak.getClient.mockResolvedValue(client({ optedIn: false }));
       await request(createApp(admin, tenant)).post('/clients/c/rotate').expect(400);
       expect(keycloak.regenerateSecret).not.toHaveBeenCalled();
+    });
+
+    it('still succeeds when the event cannot be sent after the secret changed', async () => {
+      keycloak.getClient
+        .mockResolvedValueOnce(client())
+        .mockResolvedValueOnce(client({ state: { expiry: future, rotatedExpiry: overlap } }));
+      eventService.send.mockRejectedValue(new Error('event service down'));
+
+      await request(createApp(admin, tenant)).post('/clients/c/rotate').expect(200);
+
+      expect(keycloak.regenerateSecret).toHaveBeenCalledTimes(1);
     });
   });
 

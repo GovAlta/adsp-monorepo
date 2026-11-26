@@ -1,10 +1,4 @@
-import {
-  AdspId,
-  DomainEvent,
-  hasRequiredRole,
-  UnauthorizedUserError,
-  User,
-} from '@abgov/adsp-service-sdk';
+import { AdspId, DomainEvent, hasRequiredRole, UnauthorizedUserError, User } from '@abgov/adsp-service-sdk';
 import {
   ATTRIBUTES,
   ClientSecretRotationConfiguration,
@@ -136,7 +130,8 @@ export function createRotationRouter({
     const policyEnabled = await keycloak.isPolicyEnabled(realm);
     // The executor in Keycloak holds the expiration periods; the platform defaults apply until one exists.
     const enforced = await keycloak.getPolicySchedule(realm);
-    const noticePeriod = tenantConfig?.noticePeriod > 0 ? tenantConfig.noticePeriod : config.noticeWindowDays * DAY_SECONDS;
+    const noticePeriod =
+      tenantConfig?.noticePeriod > 0 ? tenantConfig.noticePeriod : config.noticeWindowDays * DAY_SECONDS;
     const settings: RealmSettings = {
       mode: policyEnabled ? 'selected' : 'off',
       expirationPeriod: enforced?.expirationPeriod ?? config.expiryDays * DAY_SECONDS,
@@ -178,6 +173,15 @@ export function createRotationRouter({
       context: { realm, clientId },
       payload: { realm, clientId, ...payload },
     });
+  };
+
+  // The change is already applied in Keycloak, so a failed event must not fail the request and invite a retry.
+  const raiseAfterChange = async (...args: Parameters<typeof raise>) => {
+    try {
+      await raise(...args);
+    } catch (err) {
+      logger.warn(`Failed to send ${args[1]} event for ${args[0].realm}/${args[2]}: ${err}`);
+    }
   };
 
   const getClient = async ({ keycloak, realm }: RealmContext, clientId: string) => {
@@ -286,8 +290,9 @@ export function createRotationRouter({
         throw new InvalidOperationError('Rotation requires at least one realm admin with an email address.');
       }
 
-      await settingsStore.update(tenantId, values);
+      // Keycloak is the source of truth, so change it first: a failure then leaves the stored settings untouched.
       await keycloak.ensurePolicy(realm, settings.expirationPeriod, settings.rotatedExpirationPeriod, settings.mode);
+      await settingsStore.update(tenantId, values);
       if (mode === 'off') {
         clearExpiries(context).catch((err) => logger.warn(`Failed to clear expiries in realm ${realm}: ${err}`));
       }
@@ -360,7 +365,7 @@ export function createRotationRouter({
       assertCovered(settings.mode, client);
 
       const { expiry, overlapEndsAt } = await rotateClient(context.keycloak, context.realm, client, now());
-      await raise(context, 'client-secret-rotated', client.clientId, {
+      await raiseAfterChange(context, 'client-secret-rotated', client.clientId, {
         newExpiry: expiry?.toISOString(),
         overlapEndsAt: overlapEndsAt?.toISOString(),
         emergency: false,
@@ -380,7 +385,7 @@ export function createRotationRouter({
         throw new InvalidOperationError('Client has no previous secret to invalidate.');
       }
       await revokePreviousSecret(context.keycloak, context.realm, client, at);
-      await raise(context, 'client-secret-revoked', client.clientId, { revokedAt: at.toISOString() });
+      await raiseAfterChange(context, 'client-secret-revoked', client.clientId, { revokedAt: at.toISOString() });
       logger.info(
         `Previous secret invalidated for ${context.realm}/${client.clientId} by ${(req.user as User)?.name}.`,
       );
