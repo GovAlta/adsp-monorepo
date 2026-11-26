@@ -15,6 +15,7 @@ import {
   DataRegisterResponse,
   DataRegisterUpdateRequest,
 } from './types/register';
+import { mapConfigurationError } from './configurationError';
 
 export const DATA_REGISTER_NAMESPACE = 'data-register';
 
@@ -52,28 +53,6 @@ interface DataListResponse {
 const resolveEntries = (document: DataDocument): DataRegisterEntry[] | undefined => {
   const configuration = (document.active ?? document.latest)?.configuration;
   return Array.isArray(configuration) ? configuration : undefined;
-};
-
-// A configuration-service 4xx (other than 401/403, which mean form-service's own service account is missing a
-// role) is the caller's fault and maps to 400. Anything else configuration-service does wrong is not the caller's
-// fault, so it maps to 502 rather than a plain GoAError, which createErrorHandler would otherwise turn into a 500.
-const mapConfigurationError = (err: unknown): Error => {
-  if (err instanceof NotFoundError || err instanceof InvalidOperationError) {
-    return err;
-  }
-
-  if (axios.isAxiosError(err)) {
-    const status = err.response?.status;
-    const message = (err.response?.data as { errorMessage?: string })?.errorMessage || err.message;
-    const isCallerFault =
-      status >= 400 && status < 500 && status !== HttpStatusCodes.UNAUTHORIZED && status !== HttpStatusCodes.FORBIDDEN;
-
-    return isCallerFault
-      ? new InvalidOperationError(message)
-      : new InvalidOperationError(message, { statusCode: HttpStatusCodes.BAD_GATEWAY });
-  }
-
-  return err as Error;
 };
 
 /**
