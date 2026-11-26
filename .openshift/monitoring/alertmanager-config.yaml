@@ -137,14 +137,28 @@ objects:
               color: '{{ if eq .Status "resolved" }}good{{ else if eq .CommonLabels.severity "critical" }}danger{{ else if eq .CommonLabels.severity "warning" }}warning{{ else }}#439fe0{{ end }}'
               text: |
                 {{ range .Alerts -}}
-                *{{ .Labels.alertname }}*{{ if .Annotations.summary }} - {{ .Annotations.summary }}{{ end }}
-                {{ if eq .Status "resolved" }}Alert condition is no longer firing.{{ else }}*What's happening:* {{ .Annotations.description }}
+                {{ if .Annotations.summary }}{{ .Annotations.summary }}
+
+                {{ end -}}
+                {{ if eq .Status "resolved" -}}
+                Alert condition is no longer firing.
+                {{- else -}}
+                *What's happening*
+                {{ .Annotations.description }}
                 {{- if .Annotations.impact }}
-                *Impact:* {{ .Annotations.impact }}{{ end }}
+
+                *Impact*
+                {{ .Annotations.impact }}
+                {{- end }}
                 {{- if .Annotations.first_steps }}
-                *First steps:*
-                {{ .Annotations.first_steps | trimSpace }}{{ end }}{{ end }}
-                *Runbook:* <{{ or .Annotations.runbook_url "${RUNBOOK_BASE_URL}" }}|{{ .Labels.alertname }}>
+
+                *First steps*
+                {{ .Annotations.first_steps | trimSpace }}
+                {{- end }}
+                {{- end }}
+
+                *<{{ or .Annotations.runbook_url "${RUNBOOK_BASE_URL}" }}|Runbook: {{ .Labels.alertname }}>*
+
                 *Service:* {{ or .Labels.service "-" }}
                 *Namespace:* ${NAMESPACE}
                 *Pod:* {{ or .Labels.kubernetes_pod_name "-" }}
@@ -153,6 +167,7 @@ objects:
                 *Started:* {{ .StartsAt.UTC.Format "2006-01-02 15:04:05 MST" }}
                 {{- if eq .Status "resolved" }}
                 *Ended:* {{ .EndsAt.UTC.Format "2006-01-02 15:04:05 MST" }}{{ end }}
-                {{ if .Labels.kubernetes_pod_name }}<${CONSOLE_URL}/k8s/ns/${NAMESPACE}/pods/{{ .Labels.kubernetes_pod_name }}/logs|Pod logs> | <${CONSOLE_URL}/monitoring/logs?tenant=application&q={{ printf "{kubernetes_namespace_name=\"${NAMESPACE}\", kubernetes_pod_name=\"%s\"}" .Labels.kubernetes_pod_name | urlquery }}|Search logs>{{ end }}
+
+                {{ if .Labels.kubernetes_pod_name }}<${CONSOLE_URL}/k8s/ns/${NAMESPACE}/pods/{{ .Labels.kubernetes_pod_name }}/logs|Pod logs> | <${CONSOLE_URL}/monitoring/logs?tenant=application&q={{ printf "{kubernetes_namespace_name=\"${NAMESPACE}\", kubernetes_pod_name=\"%s\"}" .Labels.kubernetes_pod_name | urlquery }}|Search logs> | {{ end }}<${CONSOLE_URL}/dev-monitoring/ns/${NAMESPACE}/alerts|Alerts in console>
 
                 {{ end }}

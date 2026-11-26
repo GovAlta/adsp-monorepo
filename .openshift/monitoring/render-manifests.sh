@@ -41,6 +41,13 @@ jq --arg namespace "$namespace" '
   | if length > 0 then error("Unexpected objects: \(join(", "))") else empty end
 ' <<< "$items"
 
+# LokiStack silently ignores AlertingRules without this label, so their alerts would never fire.
+jq '
+  [.[] | select(.kind == "AlertingRule" and .metadata.labels["loki.grafana.com/rules"] != "true")
+    | "\(.kind)/\(.metadata.name)"]
+  | if length > 0 then error("Missing label loki.grafana.com/rules=true: \(join(", "))") else empty end
+' <<< "$items"
+
 # Every alert must be actionable: see "Writing rules" in README.md.
 jq -r '
   [.[] | select(.kind | IN("AlertingRule", "PrometheusRule")) | .kind as $kind | .metadata.name as $name
