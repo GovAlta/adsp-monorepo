@@ -1,5 +1,5 @@
 import { adspId, ServiceDirectory } from '@abgov/adsp-service-sdk';
-import { UnauthorizedError } from '@core-services/core-common';
+import { InvalidOperationError, UnauthorizedError } from '@core-services/core-common';
 import axios from 'axios';
 import * as HttpStatusCodes from 'http-status-codes';
 import { EventMetrics, MetricResult } from '../types';
@@ -185,11 +185,41 @@ function isDistinctCountUnavailable(err: unknown): boolean {
   return status === HttpStatusCodes.BAD_REQUEST && typeof message === 'string' && message.includes(NOT_ROLLED_UP_MESSAGE);
 }
 
+/**
+ * Value-service answers for the token the gateway forwarded and the request it built from the
+ * caller's parameters, so a 4xx from it is about the caller rather than the gateway failing: the
+ * upstream message is passed on instead of becoming an opaque 500.
+ *
+ * A 404 is the exception. Nothing the caller sends can make value-service not have the endpoint, so
+ * it means the resolved base URL is wrong -- a server fault, which belongs in the 500 branch. The
+ * one legitimate 404, a value-service without the distinct count endpoint, never reaches here:
+ * isDistinctCountUnavailable intercepts it first.
+ *
+ * Other 4xx statuses are reported as 400 rather than passed through verbatim, so the reports API
+ * answers only the statuses it documents.
+ */
 function rethrowValueServiceError(err: unknown): never {
   if (axios.isAxiosError(err)) {
     const status = err.response?.status;
-    if (status === HttpStatusCodes.UNAUTHORIZED || status === HttpStatusCodes.FORBIDDEN) {
+    if (status === HttpStatusCodes.UNAUTHORIZED) {
       throw new UnauthorizedError('Not authorized to read report data.');
+    }
+    if (status === HttpStatusCodes.FORBIDDEN) {
+      // A token without the value-reader role was accepted and then refused, which is a 403, not a
+      // 401. core-common has no ForbiddenError; GoAError carries the status it responds with in
+      // extra, and that is what createErrorHandler reads.
+      throw new UnauthorizedError('Not authorized to read report data.', {
+        statusCode: HttpStatusCodes.FORBIDDEN,
+      });
+    }
+    if (
+      status &&
+      status >= HttpStatusCodes.BAD_REQUEST &&
+      status < HttpStatusCodes.INTERNAL_SERVER_ERROR &&
+      status !== HttpStatusCodes.NOT_FOUND
+    ) {
+      const { errorMessage } = (err.response?.data as { errorMessage?: unknown } | undefined) || {};
+      throw new InvalidOperationError(typeof errorMessage === 'string' ? errorMessage : err.message);
     }
   }
   throw err;

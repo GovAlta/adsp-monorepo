@@ -2,8 +2,9 @@ components:
   responses:
     ReportBadRequest:
       description: >
-        Request is invalid. A path or query parameter failed validation, `from` or `to` is not a real calendar date, or
-        `from` is after `to`.
+        Request is invalid. A path or query parameter failed validation, `from` or `to` is not a real calendar date,
+        `from` is after `to`, or value-service rejected the request the gateway forwarded, for example because the
+        token is a core (platform) token with no tenant context.
       content:
         application/json:
           schema:
@@ -21,11 +22,14 @@ components:
               summary: from is after to
               value:
                 errorMessage: from must be on or before to.
+            upstream:
+              summary: value-service rejected the request
+              value:
+                errorMessage: Tenant context is required for operation.
     ReportUnauthorized:
       description: >
-        Request has no bearer token, or value-service rejected the forwarded token (responded 401 or 403), for example
-        because the user does not have the value-service `value-reader` role. Both cases respond with 401 rather than
-        403.
+        Request has no bearer token, or value-service did not accept the forwarded token (responded 401), for example
+        because it is expired.
       content:
         application/json:
           schema:
@@ -36,9 +40,19 @@ components:
               value:
                 errorMessage: Bearer token is required.
             rejected:
-              summary: value-service rejected the token
+              summary: value-service did not accept the token
               value:
                 errorMessage: Not authorized to read report data.
+    ReportForbidden:
+      description: >
+        value-service accepted the forwarded token and refused the read (responded 403), for example because the user
+        does not have the value-service `urn:ads:platform:value-service:value-reader` role.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ReportError'
+          example:
+            errorMessage: Not authorized to read report data.
     ReportNotFound:
       description: The service has no report, or does not offer that section yet.
       content:
@@ -163,8 +177,9 @@ components:
       **Roles and tenancy:** the gateway only checks that the request has a bearer token; it does not verify the token
       or check roles itself. It forwards the token to value-service, which requires a tenant user or service account
       with the `urn:ads:platform:value-service:value-reader` role, and reads the data of the token's tenant. There is
-      no `tenantId` parameter, so core (platform) tokens are not supported. A token that value-service rejects responds
-      with 401.
+      no `tenantId` parameter, so core (platform) tokens are not supported. A token value-service does not accept
+      responds with 401, one it accepts without the `value-reader` role responds with 403, and a request value-service
+      rejects for any other reason responds with 400 carrying its message.
 
       Implemented now:
       - `pdf` / `summary`
@@ -266,5 +281,7 @@ components:
         $ref: '#/components/responses/ReportBadRequest'
       401:
         $ref: '#/components/responses/ReportUnauthorized'
+      403:
+        $ref: '#/components/responses/ReportForbidden'
       404:
         $ref: '#/components/responses/ReportNotFound'

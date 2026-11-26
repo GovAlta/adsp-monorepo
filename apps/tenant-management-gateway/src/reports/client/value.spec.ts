@@ -174,14 +174,46 @@ describe('createValueServiceClient', () => {
     );
   });
 
-  it.each([401, 403])('reports a %s from value-service as unauthorized', async (status) => {
-    mockedAxios.get.mockRejectedValue({ response: { status } });
+  // A token value-service refuses for want of the value-reader role was accepted and then refused,
+  // which is a 403. Reporting it as 401 told the caller to authenticate again, which never helps.
+  it.each([
+    [401, 401],
+    [403, 403],
+  ])('reports a %s from value-service as %s', async (upstream, responded) => {
+    mockedAxios.get.mockRejectedValue({ response: { status: upstream } });
     mockedAxios.isAxiosError.mockReturnValue(true);
     const client = createValueServiceClient({ valueServiceUrl: 'https://value-service.example/value/v1' });
 
-    await expect(client.readEventMetrics('t', 'pdf-service', '2026-09-15', '2026-09-16')).rejects.toThrow(
-      'Not authorized to read report data.'
-    );
+    await expect(client.readEventMetrics('t', 'pdf-service', '2026-09-15', '2026-09-16')).rejects.toMatchObject({
+      message: 'Not authorized to read report data.',
+      extra: { statusCode: responded },
+    });
+  });
+
+  // value-service rejects a core token with 400 'Tenant context is required for operation.'; the raw
+  // axios error used to reach the error handler's catch-all and answer 500 with an empty body.
+  it('reports another 4xx from value-service as a bad request carrying the upstream message', async () => {
+    mockedAxios.get.mockRejectedValue({
+      response: { status: 400, data: { errorMessage: 'Tenant context is required for operation.' } },
+    });
+    mockedAxios.isAxiosError.mockReturnValue(true);
+    const client = createValueServiceClient({ valueServiceUrl: 'https://value-service.example/value/v1' });
+
+    await expect(client.readEventMetrics('t', 'pdf-service', '2026-09-15', '2026-09-16')).rejects.toMatchObject({
+      message: 'Tenant context is required for operation.',
+      extra: { statusCode: 400 },
+    });
+  });
+
+  // Nothing the caller sends can make value-service not have the endpoint, so a 404 is a wrong base
+  // URL: a server fault, and still a 500.
+  it('passes a 404 from value-service through', async () => {
+    const rejection = { response: { status: 404 } };
+    mockedAxios.get.mockRejectedValue(rejection);
+    mockedAxios.isAxiosError.mockReturnValue(true);
+    const client = createValueServiceClient({ valueServiceUrl: 'https://value-service.example/value/v1' });
+
+    await expect(client.readEventMetrics('t', 'pdf-service', '2026-09-15', '2026-09-16')).rejects.toBe(rejection);
   });
 
   const pdfTemplates = {
@@ -244,12 +276,31 @@ describe('createValueServiceClient', () => {
   // A 400 for any other reason, such as the old period cap, used to fall back too and turned a
   // two second report into a thirty second one with nothing to say why.
   it.each([
-    ['a period value-service rejects', { status: 400, data: { errorMessage: 'Period cannot be longer than 731 days.' } }],
-    ['no error message', { status: 400 }],
-    ['a server error', { status: 500 }],
-  ])('passes on a rejection for %s instead of paging the event log', async (_label, response) => {
+    [
+      'a period value-service rejects',
+      { response: { status: 400, data: { errorMessage: 'Period cannot be longer than 731 days.' } } },
+      'Period cannot be longer than 731 days.',
+    ],
+    [
+      'no error message',
+      { response: { status: 400 }, message: 'Request failed with status code 400' },
+      'Request failed with status code 400',
+    ],
+  ])('reports a rejection for %s as a bad request instead of paging the log', async (_label, rejection, message) => {
     mockedAxios.isAxiosError.mockReturnValue(true);
-    const rejection = { response };
+    mockedAxios.get.mockRejectedValueOnce(rejection);
+    const client = createValueServiceClient({ valueServiceUrl: 'https://value-service.example/value/v1/' });
+
+    await expect(client.countDistinctContext('t', pdfTemplates, '2023-11-15', '2026-11-16')).rejects.toMatchObject({
+      message,
+      extra: { statusCode: 400 },
+    });
+    expect(mockedAxios.get).toHaveBeenCalledTimes(1);
+  });
+
+  it('passes a value-service server error through instead of paging the event log', async () => {
+    mockedAxios.isAxiosError.mockReturnValue(true);
+    const rejection = { response: { status: 500 } };
     mockedAxios.get.mockRejectedValueOnce(rejection);
     const client = createValueServiceClient({ valueServiceUrl: 'https://value-service.example/value/v1/' });
 
@@ -257,14 +308,18 @@ describe('createValueServiceClient', () => {
     expect(mockedAxios.get).toHaveBeenCalledTimes(1);
   });
 
-  it.each([401, 403])('reports a %s from the rolled-up count as unauthorized', async (status) => {
+  it.each([
+    [401, 401],
+    [403, 403],
+  ])('reports a %s from the rolled-up count as %s', async (upstream, responded) => {
     mockedAxios.isAxiosError.mockReturnValue(true);
-    mockedAxios.get.mockRejectedValueOnce({ response: { status } });
+    mockedAxios.get.mockRejectedValueOnce({ response: { status: upstream } });
     const client = createValueServiceClient({ valueServiceUrl: 'https://value-service.example/value/v1/' });
 
-    await expect(client.countDistinctContext('t', pdfTemplates, '2026-09-01', '2026-09-16')).rejects.toThrow(
-      'Not authorized to read report data.'
-    );
+    await expect(client.countDistinctContext('t', pdfTemplates, '2026-09-01', '2026-09-16')).rejects.toMatchObject({
+      message: 'Not authorized to read report data.',
+      extra: { statusCode: responded },
+    });
     expect(mockedAxios.get).toHaveBeenCalledTimes(1);
   });
 

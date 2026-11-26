@@ -60,8 +60,9 @@ One success shape, always:
 | `200` + data      | Here's the payload                        | Renders it                    |
 | `200` + all zeros | No activity that period                   | Shows`0`s, not an error     |
 | `404`             | Unknown service, or section not built yet | Falls back to the placeholder |
-| `400`             | Bad dates, or from after to              | Error callout                 |
-| `401`             | No token, or value-service rejected it    | Error callout                 |
+| `400`             | Bad dates, from after to, or value-service rejected the request | Error callout |
+| `401`             | No token, or value-service did not accept it | Error callout              |
+| `403`             | Token accepted, but no `value-reader` role | Error callout                |
 
 **Three rules that never change:**
 
