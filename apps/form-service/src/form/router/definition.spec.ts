@@ -13,6 +13,7 @@ import {
   createFormDefinitionRouter,
   deleteFormDefinition,
   deleteAccessRequests,
+  getFormDefinition,
   getFormDefinitions,
   getRegistrationByEmail,
   getRegistrations,
@@ -23,6 +24,7 @@ import {
   updateFormDefinition,
   updateFormDefinitionRoles,
   updateFormDefinitionSchemas,
+  updateIntakeSchedule,
   updateRegistration,
 } from './definition';
 
@@ -277,6 +279,115 @@ describe('definition router', () => {
         expect.objectContaining({ results: expect.arrayContaining([expect.objectContaining({ created })]) }),
       );
     });
+
+    it('calls next with 502 when configuration service cannot be reached', async () => {
+      // Arrange
+      const connectionError = Object.assign(new Error('connect ECONNREFUSED'), { isAxiosError: true });
+      jest.mocked(axiosMock.isAxiosError).mockReturnValue(true);
+      axiosMock.get.mockRejectedValue(connectionError);
+
+      const req = {
+        user: { tenantId, id: 'tester', roles: [FormServiceRoles.Admin] },
+        query: {},
+        tenant: { id: tenantId },
+      };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+
+      // Act
+      const handler = getFormDefinitions(directoryMock, tokenProviderMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      // Assert
+      expect(next).toHaveBeenCalledWith(
+        expect.objectContaining({ extra: expect.objectContaining({ statusCode: 502 }) }),
+      );
+    });
+
+    it('calls next with 502 when configuration service denies the service account', async () => {
+      // Arrange
+      const forbiddenError = Object.assign(new Error('Forbidden'), {
+        isAxiosError: true,
+        response: { status: 403, data: { errorMessage: 'User not permitted to read configuration.' } },
+      });
+      jest.mocked(axiosMock.isAxiosError).mockReturnValue(true);
+      axiosMock.get.mockRejectedValue(forbiddenError);
+
+      const req = {
+        user: { tenantId, id: 'tester', roles: [FormServiceRoles.Admin] },
+        query: {},
+        tenant: { id: tenantId },
+      };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+
+      // Act
+      const handler = getFormDefinitions(directoryMock, tokenProviderMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      // Assert
+      expect(next).toHaveBeenCalledWith(
+        expect.objectContaining({ extra: expect.objectContaining({ statusCode: 502 }) }),
+      );
+    });
+
+    it('calls next with 400 when configuration service rejects the query', async () => {
+      // Arrange
+      const axiosError = Object.assign(new Error('Bad Request'), {
+        isAxiosError: true,
+        response: { status: 400, data: { errorMessage: 'top must be an integer between 1 and 1000.' } },
+      });
+      jest.mocked(axiosMock.isAxiosError).mockReturnValue(true);
+      axiosMock.get.mockRejectedValue(axiosError);
+
+      const req = {
+        user: { tenantId, id: 'tester', roles: [FormServiceRoles.Admin] },
+        query: { top: '5000' },
+        tenant: { id: tenantId },
+      };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+
+      // Act
+      const handler = getFormDefinitions(directoryMock, tokenProviderMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      // Assert
+      expect(next).toHaveBeenCalledWith(
+        expect.objectContaining({ extra: expect.objectContaining({ statusCode: 400 }) }),
+      );
+    });
+  });
+
+  describe('getFormDefinition', () => {
+    it('calls next with 400 when configuration service rejects the latest revision lookup', async () => {
+      // Arrange
+      const axiosError = Object.assign(new Error('Bad Request'), {
+        isAxiosError: true,
+        response: { status: 400, data: { errorMessage: 'Definition id is not valid.' } },
+      });
+      jest.mocked(axiosMock.isAxiosError).mockReturnValue(true);
+      axiosMock.get.mockRejectedValue(axiosError);
+
+      const req = {
+        user: { tenantId, id: 'tester', roles: [FormServiceRoles.Admin] },
+        params: { definitionId: 'test' },
+        query: { version: 'latest' },
+        tenant: { id: tenantId },
+        getServiceConfiguration: jest.fn().mockResolvedValue([definition]),
+      };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+
+      // Act
+      const handler = getFormDefinition(tenantServiceMock, calendarServiceMock, directoryMock, tokenProviderMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      // Assert
+      expect(next).toHaveBeenCalledWith(
+        expect.objectContaining({ extra: expect.objectContaining({ statusCode: 400 }) }),
+      );
+    });
   });
 
   describe('createFormDefinition', () => {
@@ -358,7 +469,7 @@ describe('definition router', () => {
     it('calls next with 400 when configuration service rejects the patch', async () => {
       const axiosError = Object.assign(new Error('Bad Request'), {
         isAxiosError: true,
-        response: { data: { errorMessage: 'Schema validation failed.' } },
+        response: { status: 400, data: { errorMessage: 'Schema validation failed.' } },
       });
       jest.mocked(axiosMock.isAxiosError).mockReturnValue(true);
       axiosMock.patch.mockRejectedValue(axiosError);
@@ -943,7 +1054,7 @@ describe('definition router', () => {
 
       const axiosError = Object.assign(new Error('Bad Request'), {
         isAxiosError: true,
-        response: { data: { errorMessage: 'Schema validation failed.' } },
+        response: { status: 400, data: { errorMessage: 'Schema validation failed.' } },
       });
       jest.mocked(axiosMock.isAxiosError).mockReturnValue(true);
       axiosMock.patch.mockRejectedValue(axiosError);
@@ -1060,6 +1171,60 @@ describe('definition router', () => {
       expect(res.status).toHaveBeenCalledWith(204);
       expect(res.send).toHaveBeenCalled();
       expect(next).not.toHaveBeenCalled();
+    });
+
+    it('calls next with 404 when configuration service reports the definition as gone', async () => {
+      // Arrange
+      const axiosError = Object.assign(new Error('Not Found'), {
+        isAxiosError: true,
+        response: { status: 404, data: { errorMessage: 'Configuration not found.' } },
+      });
+      jest.mocked(axiosMock.isAxiosError).mockReturnValue(true);
+      axiosMock.delete.mockRejectedValue(axiosError);
+
+      const req = {
+        user: { tenantId, id: 'tester', roles: [FormServiceRoles.Admin], isCore: true },
+        params: { definitionId: 'test' },
+        tenant: { id: tenantId },
+      };
+      const res = { status: jest.fn().mockReturnThis(), send: jest.fn() };
+      const next = jest.fn();
+
+      // Act
+      const handler = deleteFormDefinition(directoryMock, tokenProviderMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      // Assert
+      expect(next).toHaveBeenCalledWith(
+        expect.objectContaining({ extra: expect.objectContaining({ statusCode: 404 }) }),
+      );
+    });
+
+    it('calls next with 400 when configuration service rejects the delete', async () => {
+      // Arrange
+      const axiosError = Object.assign(new Error('Bad Request'), {
+        isAxiosError: true,
+        response: { status: 400, data: { errorMessage: 'Configuration is not deletable.' } },
+      });
+      jest.mocked(axiosMock.isAxiosError).mockReturnValue(true);
+      axiosMock.delete.mockRejectedValue(axiosError);
+
+      const req = {
+        user: { tenantId, id: 'tester', roles: [FormServiceRoles.Admin], isCore: true },
+        params: { definitionId: 'test' },
+        tenant: { id: tenantId },
+      };
+      const res = { status: jest.fn().mockReturnThis(), send: jest.fn() };
+      const next = jest.fn();
+
+      // Act
+      const handler = deleteFormDefinition(directoryMock, tokenProviderMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      // Assert
+      expect(next).toHaveBeenCalledWith(
+        expect.objectContaining({ extra: expect.objectContaining({ statusCode: 400 }) }),
+      );
     });
   });
 
@@ -1322,7 +1487,7 @@ describe('definition router', () => {
 
       const axiosError = Object.assign(new Error('Bad Request'), {
         isAxiosError: true,
-        response: { data: { errorMessage: 'Schema validation failed.' } },
+        response: { status: 400, data: { errorMessage: 'Schema validation failed.' } },
       });
       jest.mocked(axiosMock.isAxiosError).mockReturnValue(true);
       axiosMock.patch.mockRejectedValue(axiosError);
@@ -1539,7 +1704,7 @@ describe('definition router', () => {
 
       const axiosError = Object.assign(new Error('Bad Request'), {
         isAxiosError: true,
-        response: { data: { errorMessage: 'Role validation failed.' } },
+        response: { status: 400, data: { errorMessage: 'Role validation failed.' } },
       });
       jest.mocked(axiosMock.isAxiosError).mockReturnValue(true);
       axiosMock.patch.mockRejectedValue(axiosError);
@@ -1900,7 +2065,7 @@ describe('definition router', () => {
 
       const axiosError = Object.assign(new Error('Bad Request'), {
         isAxiosError: true,
-        response: { data: { errorMessage: 'Validation failed.' } },
+        response: { status: 400, data: { errorMessage: 'Validation failed.' } },
       });
       jest.mocked(axiosMock.isAxiosError).mockReturnValue(true);
       axiosMock.patch.mockRejectedValue(axiosError);
@@ -1919,6 +2084,63 @@ describe('definition router', () => {
         expect.objectContaining({ extra: expect.objectContaining({ statusCode: 400 }) }),
       );
       expect(res.send).not.toHaveBeenCalled();
+    });
+
+    it('calls next with 400 when configuration service rejects the definition lookup', async () => {
+      // Arrange
+      const axiosError = Object.assign(new Error('Bad Request'), {
+        isAxiosError: true,
+        response: { status: 400, data: { errorMessage: 'Definition id is not valid.' } },
+      });
+      jest.mocked(axiosMock.isAxiosError).mockReturnValue(true);
+      axiosMock.get.mockRejectedValue(axiosError);
+
+      const req = {
+        user: { tenantId, id: 'tester', roles: [FormServiceRoles.Admin] },
+        params: { definitionId: 'test' },
+        body: { allowAnonymousApplication: true },
+        tenant: { id: tenantId },
+      };
+
+      // Act
+      const handler = patchFormDefinitionLifecycle(directoryMock, tokenProviderMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      // Assert
+      expect(next).toHaveBeenCalledWith(
+        expect.objectContaining({ extra: expect.objectContaining({ statusCode: 400 }) }),
+      );
+    });
+  });
+
+  describe('updateIntakeSchedule', () => {
+    const scheduleBody = {
+      start: '2026-12-01T09:00:00Z',
+      end: '2026-12-31T17:00:00Z',
+      name: 'Winter intake',
+      calendarEventId: '10',
+    };
+
+    it('calls next with 404 when the form definition does not exist', async () => {
+      // Arrange
+      const req = {
+        user: { tenantId, id: 'tester', roles: [FormServiceRoles.Admin] },
+        params: { definitionId: 'unknown-definition' },
+        body: scheduleBody,
+        tenant: { id: tenantId },
+        getServiceConfiguration: jest.fn().mockResolvedValue([null]),
+      };
+      const res = { status: jest.fn().mockReturnThis(), send: jest.fn() };
+      const next = jest.fn();
+
+      // Act
+      const handler = updateIntakeSchedule(calendarServiceMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      // Assert
+      expect(next).toHaveBeenCalledWith(
+        expect.objectContaining({ extra: expect.objectContaining({ statusCode: 404 }) }),
+      );
     });
   });
 
@@ -2125,7 +2347,7 @@ describe('definition router', () => {
 
       const axiosError = Object.assign(new Error('Bad Request'), {
         isAxiosError: true,
-        response: { data: { errorMessage: 'Validation failed.' } },
+        response: { status: 400, data: { errorMessage: 'Validation failed.' } },
       });
       jest.mocked(axiosMock.isAxiosError).mockReturnValue(true);
       axiosMock.patch.mockRejectedValue(axiosError);

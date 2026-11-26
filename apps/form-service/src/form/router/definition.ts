@@ -38,6 +38,7 @@ import { FormRegistrationRepository } from '../repository';
 import { FormServiceRoles } from '../roles';
 import { FormDefinition, FormRegistrationCreate, Intake, RegistrationStatus } from '../types';
 import { CalendarService } from '../calendar';
+import { mapConfigurationError } from '../configurationError';
 
 const configurationApiId = adspId`urn:ads:platform:configuration-service:v2`;
 
@@ -67,14 +68,19 @@ async function fetchExistingDefinition(
   tenantId: string,
   definitionId: string,
 ): Promise<FormDefinition> {
-  const response = await axios.get(
-    new URL(`v2/configuration/form-service/${encodedDefinitionId}/latest`, configurationApiUrl).href,
-    {
-      headers: { Authorization: `Bearer ${token}` },
-      params: { tenantId },
-      validateStatus: (status) => status === HttpStatusCodes.OK || status === HttpStatusCodes.NOT_FOUND,
-    },
-  );
+  let response: { status: number; data?: unknown };
+  try {
+    response = await axios.get(
+      new URL(`v2/configuration/form-service/${encodedDefinitionId}/latest`, configurationApiUrl).href,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+        params: { tenantId },
+        validateStatus: (status) => status === HttpStatusCodes.OK || status === HttpStatusCodes.NOT_FOUND,
+      },
+    );
+  } catch (err) {
+    throw mapConfigurationError(err, { type: 'form definition', id: definitionId });
+  }
 
   if (isDefinitionNotFound(response)) {
     throw new NotFoundError('form definition', definitionId);
@@ -101,11 +107,7 @@ async function patchConfigurationDefinition(
     );
     return response.data;
   } catch (err) {
-    if (axios.isAxiosError(err)) {
-      const message = err.response?.data?.errorMessage || 'Configuration service rejected the request.';
-      throw new InvalidOperationError(message, { statusCode: HttpStatusCodes.BAD_REQUEST });
-    }
-    throw err;
+    throw mapConfigurationError(err, { type: 'form definition', id: definitionId });
   }
 }
 
@@ -150,15 +152,19 @@ export function getFormDefinitions(directory: ServiceDirectory, tokenProvider: T
         params.criteria = JSON.stringify(criteria);
       }
 
-      const { data } = await axios.get<
-        Results<{
-          latest: { revision: number; configuration: FormDefinition; created?: string };
-          active: { revision: number; configuration: FormDefinition; created?: string };
-        }>
-      >(new URL('v2/configuration/form-service', configurationApiUrl).href, {
-        headers: { Authorization: `Bearer ${token}` },
-        params,
-      });
+      const { data } = await axios
+        .get<
+          Results<{
+            latest: { revision: number; configuration: FormDefinition; created?: string };
+            active: { revision: number; configuration: FormDefinition; created?: string };
+          }>
+        >(new URL('v2/configuration/form-service', configurationApiUrl).href, {
+          headers: { Authorization: `Bearer ${token}` },
+          params,
+        })
+        .catch((err) => {
+          throw mapConfigurationError(err);
+        });
 
       res.send({
         ...data,
@@ -192,10 +198,14 @@ async function getLatestFormDefinition(
 ): Promise<{ revision: number; configuration: FormDefinition }> {
   const configurationApiUrl = await directory.getServiceUrl(configurationApiId);
   const token = await tokenProvider.getAccessToken();
-  const { data } = await axios.get<{ latest?: { revision: number; configuration: FormDefinition } }>(
-    new URL(`v2/configuration/form-service/${encodeURIComponent(definitionId)}`, configurationApiUrl).href,
-    { headers: { Authorization: `Bearer ${token}` }, params: { tenantId: tenantId.toString() } },
-  );
+  const { data } = await axios
+    .get<{ latest?: { revision: number; configuration: FormDefinition } }>(
+      new URL(`v2/configuration/form-service/${encodeURIComponent(definitionId)}`, configurationApiUrl).href,
+      { headers: { Authorization: `Bearer ${token}` }, params: { tenantId: tenantId.toString() } },
+    )
+    .catch((err) => {
+      throw mapConfigurationError(err, { type: 'form definition', id: definitionId });
+    });
 
   if (!data?.latest?.configuration) {
     throw new NotFoundError('form definition', definitionId);
@@ -430,13 +440,17 @@ export function deleteFormDefinition(directory: ServiceDirectory, tokenProvider:
 
       const configurationApiUrl = await directory.getServiceUrl(configurationApiId);
       const token = await tokenProvider.getAccessToken();
-      await axios.delete(
-        new URL(`v2/configuration/form-service/${encodeURIComponent(definitionId)}`, configurationApiUrl).href,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-          params: { tenantId: tenantId?.toString() },
-        },
-      );
+      try {
+        await axios.delete(
+          new URL(`v2/configuration/form-service/${encodeURIComponent(definitionId)}`, configurationApiUrl).href,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+            params: { tenantId: tenantId?.toString() },
+          },
+        );
+      } catch (err) {
+        throw mapConfigurationError(err, { type: 'form definition', id: definitionId });
+      }
 
       res.status(HttpStatusCodes.NO_CONTENT).send();
     } catch (err) {
@@ -655,7 +669,7 @@ export function updateIntakeSchedule(calendarService: CalendarService): RequestH
 
       const [definition] = await req.getServiceConfiguration<FormDefinitionEntity>(definitionId, tenantId);
       if (!definition) {
-        throw new InvalidOperationError(`Form definition not found`);
+        throw new NotFoundError('form definition', definitionId);
       }
 
       // Calendar service doesn't have a PUT method, so we need to use PATCH instead.
@@ -976,6 +990,7 @@ export function createFormDefinitionRouter({
   router.get(
     '/definitions',
     createValidationHandler(
+      query('top').optional().isInt({ min: 1, max: 1000 }),
       query('createDateAfter').optional().isISO8601(),
       query('createDateBefore').optional().isISO8601(),
     ),

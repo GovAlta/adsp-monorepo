@@ -43,7 +43,10 @@ export function mapFormDefinition(entity: FormDefinition, revision: number, inta
 
 // Only for responses to form-admin callers.
 export function mapAdminFormDefinition(entity: FormDefinition, revision: number, intake?: Intake, created?: Date) {
-  const mapped = mapFormDefinition(entity, revision, intake, created);
+  const mapped = {
+    ...mapFormDefinition(entity, revision, intake, created),
+    securityClassification: entity.securityClassification,
+  };
   const accessGroup = entity.registration?.accessGroup;
   return accessGroup ? { ...mapped, registration: { ...mapped.registration, accessGroup } } : mapped;
 }

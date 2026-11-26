@@ -34,6 +34,28 @@ describe('mapper', () => {
       });
     });
 
+    it('returns the security classification for administrators', () => {
+      // Arrange
+      const classified = { ...definition, securityClassification: 'protected b' } as FormDefinition;
+
+      // Act
+      const mapped = mapAdminFormDefinition(classified, 1);
+
+      // Assert
+      expect(mapped.securityClassification).toBe('protected b');
+    });
+
+    it('does not return the security classification to applicants', () => {
+      // Arrange
+      const classified = { ...definition, securityClassification: 'protected b' } as FormDefinition;
+
+      // Act
+      const mapped = mapFormDefinition(classified, 1);
+
+      // Assert
+      expect(mapped).not.toHaveProperty('securityClassification');
+    });
+
     it('does not return the approver group and notification email', () => {
       const dataSchema = { type: 'object', properties: { licence: { type: 'string' } } };
       const uiSchema = { type: 'VerticalLayout', elements: [{ type: 'Control', scope: '#/properties/licence' }] };

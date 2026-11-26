@@ -75,6 +75,16 @@ components:
             $ref: '#/components/schemas/FormError'
           example:
             errorMessage: form definition with ID 'business-licence-application' could not be found.
+    FormConfigurationUnavailable:
+      description: >
+        configuration-service could not be reached, or denied form-service's own service account. The request was
+        not applied and can be retried.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/FormError'
+          example:
+            errorMessage: connect ECONNREFUSED configuration-service
   schemas:
     FormError:
       type: object
@@ -192,8 +202,9 @@ components:
         securityClassification:
           type: string
           enum: [public, 'protected a', 'protected b', 'protected c']
-          writeOnly: true
-          description: The security classification for the form definition. Not returned by the form definition APIs.
+          description: >
+            The security classification for the form definition. Only returned to form-admin callers; responses to
+            applicants and assessors omit it.
         queueTaskToProcess:
           type: object
           writeOnly: true
@@ -963,7 +974,7 @@ components:
       respond 403.
     parameters:
       - name: top
-        description: Number of definitions to return in a page. Passed to the configuration service, which accepts 1 to 1000.
+        description: Number of definitions to return in a page, between 1 and 1000. A value outside that range responds 400.
         in: query
         required: false
         schema:
@@ -1007,6 +1018,8 @@ components:
         $ref: '#/components/responses/FormBadRequest'
       403:
         $ref: '#/components/responses/FormForbidden'
+      502:
+        $ref: '#/components/responses/FormConfigurationUnavailable'
   post:
     tags:
       - Form
@@ -1056,6 +1069,8 @@ components:
               $ref: '#/components/schemas/FormError'
             example:
               errorMessage: Form definition with ID 'business-licence-application' already exists.
+      502:
+        $ref: '#/components/responses/FormConfigurationUnavailable'
 
 /form/v1/definitions/{definitionId}:
   get:
@@ -1118,6 +1133,8 @@ components:
         $ref: '#/components/responses/FormForbidden'
       404:
         $ref: '#/components/responses/FormDefinitionNotFound'
+      502:
+        $ref: '#/components/responses/FormConfigurationUnavailable'
   patch:
     tags:
       - Form
@@ -1149,6 +1166,8 @@ components:
         $ref: '#/components/responses/FormForbidden'
       404:
         $ref: '#/components/responses/FormDefinitionNotFound'
+      502:
+        $ref: '#/components/responses/FormConfigurationUnavailable'
   put:
     tags:
       - Form
@@ -1194,6 +1213,8 @@ components:
         $ref: '#/components/responses/FormUnauthorized'
       403:
         $ref: '#/components/responses/FormForbidden'
+      502:
+        $ref: '#/components/responses/FormConfigurationUnavailable'
   delete:
     tags:
       - Form
@@ -1212,6 +1233,8 @@ components:
         $ref: '#/components/responses/FormUnauthorized'
       403:
         $ref: '#/components/responses/FormForbidden'
+      502:
+        $ref: '#/components/responses/FormConfigurationUnavailable'
 
 /form/v1/definitions/{definitionId}/schemas:
   put:
@@ -1259,6 +1282,8 @@ components:
         $ref: '#/components/responses/FormForbidden'
       404:
         $ref: '#/components/responses/FormDefinitionNotFound'
+      502:
+        $ref: '#/components/responses/FormConfigurationUnavailable'
 
 /form/v1/definitions/{definitionId}/roles:
   put:
@@ -1313,6 +1338,8 @@ components:
         $ref: '#/components/responses/FormForbidden'
       404:
         $ref: '#/components/responses/FormDefinitionNotFound'
+      502:
+        $ref: '#/components/responses/FormConfigurationUnavailable'
 
 /form/v1/definitions/{definitionId}/lifecycle:
   patch:
@@ -1369,6 +1396,8 @@ components:
         $ref: '#/components/responses/FormForbidden'
       404:
         $ref: '#/components/responses/FormDefinitionNotFound'
+      502:
+        $ref: '#/components/responses/FormConfigurationUnavailable'
 
 /form/v1/definitions/{definitionId}/submission-actions:
   patch:
@@ -1449,6 +1478,8 @@ components:
         $ref: '#/components/responses/FormForbidden'
       404:
         $ref: '#/components/responses/FormDefinitionNotFound'
+      502:
+        $ref: '#/components/responses/FormConfigurationUnavailable'
 
 /form/v1/definitions/{definitionId}/schedule:
   put:
@@ -1457,8 +1488,8 @@ components:
     description: >
       Updates the scheduled intake period of a form definition, by updating its event in the calendar service.
       Requires the form-service admin role (`urn:ads:platform:form-service:form-admin`); core users with the role must
-      set `tenantId`. Responds with the form definition and its updated intake. A definition that does not exist
-      responds 400.
+      set `tenantId`. Responds with the form definition and its updated intake. A definition or calendar event that
+      does not exist responds 404, and a calendar service rejection responds 400.
     parameters:
       - $ref: '#/components/parameters/FormDefinitionIdPath'
       - $ref: '#/components/parameters/FormTenantId'
@@ -1476,17 +1507,25 @@ components:
             schema:
               $ref: '#/components/schemas/FormDefinition'
       400:
-        description: Request is invalid, or the form definition does not exist.
+        description: Request is invalid, or the calendar service rejected the schedule update.
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/FormError'
             example:
-              errorMessage: Form definition not found
+              errorMessage: Calendar service rejected the intake schedule update.
       401:
         $ref: '#/components/responses/FormUnauthorized'
       403:
         $ref: '#/components/responses/FormForbidden'
+      404:
+        description: Form definition not found, or the calendar event being rescheduled does not exist.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FormError'
+            example:
+              errorMessage: form definition with ID 'business-licence-application' could not be found.
 
 /form/v1/definitions/{definitionId}/access-requests:
   post:
@@ -1538,6 +1577,8 @@ components:
               $ref: '#/components/schemas/FormError'
             example:
               errorMessage: A pending registration already exists for this email address and form.
+      502:
+        $ref: '#/components/responses/FormConfigurationUnavailable'
   get:
     tags:
       - Form registration
@@ -1606,6 +1647,8 @@ components:
         $ref: '#/components/responses/FormForbidden'
       404:
         $ref: '#/components/responses/FormDefinitionNotFound'
+      502:
+        $ref: '#/components/responses/FormConfigurationUnavailable'
 
 /form/v1/definitions/{definitionId}/access-requests/{id}:
   get:

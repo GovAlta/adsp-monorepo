@@ -1,5 +1,5 @@
 import { adspId } from '@abgov/adsp-service-sdk';
-import { ValidationService } from '@core-services/core-common';
+import { InvalidOperationError, NotFoundError, ValidationService } from '@core-services/core-common';
 import axios from 'axios';
 import * as NodeCache from 'node-cache';
 import { Logger } from 'winston';
@@ -66,6 +66,7 @@ describe('calendar', () => {
     axiosMock.get.mockReset();
     axiosMock.patch.mockReset();
     axiosMock.isAxiosError.mockReset();
+    jest.mocked(loggerMock.error).mockClear();
     cacheMock.get.mockReset();
     cacheMock.set.mockReset();
   });
@@ -417,7 +418,7 @@ describe('calendar', () => {
         );
       });
 
-      it('returns undefined when the calendar service reports the event as not found', async () => {
+      it('throws not found when the calendar service reports the event as not found', async () => {
         // Arrange
         const service = await createCalendarService(
           loggerMock,
@@ -429,7 +430,7 @@ describe('calendar', () => {
         axiosMock.patch.mockResolvedValueOnce({ status: 404, data: null });
 
         // Act
-        const intake = await service.updateScheduleIntake(tenantId.toString(), {
+        const update = service.updateScheduleIntake(tenantId.toString(), {
           name: 'Updated intake',
           calendarEventId: 'missing-event',
           start: new Date(),
@@ -438,10 +439,10 @@ describe('calendar', () => {
         });
 
         // Assert
-        expect(intake).toBeUndefined();
+        await expect(update).rejects.toThrow(NotFoundError);
       });
 
-      it('returns undefined when the calendar service responds with no data', async () => {
+      it('throws not found when the calendar service responds with no data', async () => {
         // Arrange
         const service = await createCalendarService(
           loggerMock,
@@ -453,7 +454,7 @@ describe('calendar', () => {
         axiosMock.patch.mockResolvedValueOnce({ status: 200, data: null });
 
         // Act
-        const intake = await service.updateScheduleIntake(tenantId.toString(), {
+        const update = service.updateScheduleIntake(tenantId.toString(), {
           name: 'Updated intake',
           calendarEventId: '123',
           start: new Date(),
@@ -462,10 +463,10 @@ describe('calendar', () => {
         });
 
         // Assert
-        expect(intake).toBeUndefined();
+        await expect(update).rejects.toThrow(NotFoundError);
       });
 
-      it('returns undefined and logs an error on axios error', async () => {
+      it('throws invalid operation when the calendar service rejects the request', async () => {
         // Arrange
         const service = await createCalendarService(
           loggerMock,
@@ -474,13 +475,15 @@ describe('calendar', () => {
           INTAKE_CALENDAR_NAME,
           cacheMock as unknown as NodeCache,
         );
-        const error = new Error('oh noes!');
-        error['response'] = { data: { errorMessage: 'Something went wrong!' } };
+        const error = Object.assign(new Error('Bad Request'), {
+          isAxiosError: true,
+          response: { status: 400, data: { errorMessage: 'End must be after start.' } },
+        });
         axiosMock.patch.mockRejectedValueOnce(error);
-        axiosMock.isAxiosError.mockReturnValueOnce(true);
+        jest.mocked(axiosMock.isAxiosError).mockReturnValue(true);
 
         // Act
-        const intake = await service.updateScheduleIntake(tenantId.toString(), {
+        const update = service.updateScheduleIntake(tenantId.toString(), {
           name: 'Updated intake',
           calendarEventId: '123',
           start: new Date(),
@@ -489,10 +492,10 @@ describe('calendar', () => {
         });
 
         // Assert
-        expect(intake).toBeUndefined();
+        await expect(update).rejects.toThrow(new InvalidOperationError('End must be after start.'));
       });
 
-      it('returns undefined and logs an error on unexpected error', async () => {
+      it('logs an error when the calendar service rejects the request', async () => {
         // Arrange
         const service = await createCalendarService(
           loggerMock,
@@ -501,10 +504,44 @@ describe('calendar', () => {
           INTAKE_CALENDAR_NAME,
           cacheMock as unknown as NodeCache,
         );
-        axiosMock.patch.mockRejectedValueOnce(new Error('oh noes!'));
+        const error = Object.assign(new Error('Bad Request'), {
+          isAxiosError: true,
+          response: { status: 400, data: { errorMessage: 'End must be after start.' } },
+        });
+        axiosMock.patch.mockRejectedValueOnce(error);
+        jest.mocked(axiosMock.isAxiosError).mockReturnValue(true);
 
         // Act
-        const intake = await service.updateScheduleIntake(tenantId.toString(), {
+        await service
+          .updateScheduleIntake(tenantId.toString(), {
+            name: 'Updated intake',
+            calendarEventId: '123',
+            start: new Date(),
+            end: new Date(),
+            definitionId,
+          })
+          .catch(() => undefined);
+
+        // Assert
+        expect(loggerMock.error).toHaveBeenCalledWith(
+          expect.stringContaining('End must be after start.'),
+          expect.any(Object),
+        );
+      });
+
+      it('rethrows an unexpected error from the calendar service', async () => {
+        // Arrange
+        const service = await createCalendarService(
+          loggerMock,
+          directoryMock,
+          tokenProviderMock,
+          INTAKE_CALENDAR_NAME,
+          cacheMock as unknown as NodeCache,
+        );
+        axiosMock.patch.mockRejectedValueOnce(new Error('Socket hang up'));
+
+        // Act
+        const update = service.updateScheduleIntake(tenantId.toString(), {
           name: 'Updated intake',
           calendarEventId: '123',
           start: new Date(),
@@ -513,7 +550,7 @@ describe('calendar', () => {
         });
 
         // Assert
-        expect(intake).toBeUndefined();
+        await expect(update).rejects.toThrow('Socket hang up');
       });
     });
   });
