@@ -15,11 +15,30 @@ const ErrorResponseHelper = (res, err: GoAError) => {
   });
 };
 
-// body-parser raises a SyntaxError carrying the raw body when it cannot parse the request, and
-// tags it with a status (400 for a malformed entity, 413 for one over the size limit). These are
-// client errors, so report them as such instead of letting them fall through to a 500.
-const isBodyParseError = (err: unknown): err is Error & { status?: number; statusCode?: number } =>
-  err instanceof SyntaxError && 'body' in err;
+type BodyParseError = Error & { type?: string; status?: number; statusCode?: number };
+
+// body-parser rejects a request body it cannot accept with an http-errors error tagged with its
+// own `type` and a 4xx status: 400 for a malformed entity, 413 for one over the size limit. Only
+// the malformed case is a SyntaxError carrying the raw body -- the oversized one is a plain
+// PayloadTooLargeError with no body -- so match the type and status as well, or every oversized
+// body falls through to the 500 branch. The status is required so that an unrelated error that
+// happens to carry a `type` is not mistaken for one of these.
+const isBodyParseError = (err: unknown): err is BodyParseError => {
+  if (err instanceof SyntaxError && 'body' in err) {
+    return true;
+  }
+
+  const { type, status, statusCode } = (err ?? {}) as BodyParseError;
+  const code = status ?? statusCode;
+  return typeof type === 'string' && typeof code === 'number' && code >= 400 && code < 500;
+};
+
+// A body over the limit is not malformed, so say what actually happened. The client can only act
+// on the difference: shrink the payload, or fix the JSON.
+const bodyParseMessage = (err: BodyParseError) =>
+  err.type === 'entity.too.large'
+    ? `Request body exceeds the size limit: ${err.message}`
+    : `Malformed request body: ${err.message}`;
 
 export const createErrorHandler =
   (logger: Logger): ErrorRequestHandler =>
@@ -36,7 +55,7 @@ export const createErrorHandler =
       ErrorResponseHelper(res, err);
     } else if (isBodyParseError(err)) {
       res.status(err.status || err.statusCode || HttpStatusCodes.BAD_REQUEST).json({
-        errorMessage: `Malformed request body: ${err.message}`,
+        errorMessage: bodyParseMessage(err),
       });
     } else {
       // Log the status the client actually receives. res.statusCode alone is misleading: for a
@@ -50,9 +69,12 @@ export const createErrorHandler =
       const preset =
         !res.headersSent && res.statusCode !== HttpStatusCodes.OK ? ` (handler had set ${res.statusCode})` : '';
 
-      logger.warn(
-        `Unexpected error encountered in handler for request ${req.path} (status: ${sent})${preset}. ${err}`
-      );
+      const message = `Unexpected error encountered in handler for request ${req.path} (status: ${sent})${preset}. ${err}`;
+      if (sent >= HttpStatusCodes.INTERNAL_SERVER_ERROR) {
+        logger.error(message);
+      } else {
+        logger.warn(message);
+      }
 
       if (!res.headersSent) {
         res.sendStatus(HttpStatusCodes.INTERNAL_SERVER_ERROR);

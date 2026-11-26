@@ -2,11 +2,15 @@ import { AppState } from './store';
 import {
   countActiveFilters,
   extractFileReferences,
+  findForms,
+  formReducer,
+  initialFormState,
   formFilesSelector,
   formFilterCountSelector,
   getDefaultFormCriteria,
   resolveResultTotal,
   selectedDataValuesSelector,
+  toAppliedFilters,
 } from './form.slice';
 
 describe('countActiveFilters', () => {
@@ -40,12 +44,40 @@ describe('countActiveFilters', () => {
 });
 
 describe('formFilterCountSelector', () => {
-  it('should count the current form criteria', () => {
-    const state = { form: { formCriteria: getDefaultFormCriteria() } } as Parameters<
-      typeof formFilterCountSelector
-    >[0];
+  const stateWith = (form: Record<string, unknown>) => ({ form }) as Parameters<typeof formFilterCountSelector>[0];
+
+  it('should count the criteria of the last search', () => {
+    const state = stateWith({ formCriteria: {}, appliedFormCriteria: getDefaultFormCriteria() });
 
     expect(formFilterCountSelector(state)).toBe(2);
+  });
+
+  it('should not count criteria that are still being edited in the filter panel', () => {
+    const state = stateWith({ formCriteria: { ...getDefaultFormCriteria(), tag: 'urgent' }, appliedFormCriteria: {} });
+
+    expect(formFilterCountSelector(state)).toBe(0);
+  });
+});
+
+describe('findForms.pending', () => {
+  it('should record the criteria of the search as the applied criteria', () => {
+    const criteria = { statusEquals: 'draft' };
+
+    const state = formReducer(
+      { ...initialFormState, appliedFormCriteria: {} },
+      findForms.pending('', { definitionId: 'test', criteria }),
+    );
+
+    expect(state.appliedFormCriteria).toEqual(criteria);
+  });
+
+  it('should treat a search without criteria as no filters applied', () => {
+    const state = formReducer(
+      { ...initialFormState, appliedFormCriteria: getDefaultFormCriteria() },
+      findForms.pending('', { definitionId: 'test' }),
+    );
+
+    expect(state.appliedFormCriteria).toEqual({});
   });
 });
 
@@ -194,5 +226,49 @@ describe('selectedDataValuesSelector', () => {
     } as unknown as AppState;
 
     expect(selectedDataValuesSelector(state)).toEqual([]);
+  });
+});
+
+describe('toAppliedFilters', () => {
+  it('should label a from date filter with the date in the criteria', () => {
+    expect(toAppliedFilters({ createDateAfter: '2026-11-02T00:00:00.000Z' }, [])).toEqual([
+      { key: 'createDateAfter', label: 'From date', value: 'Nov 2, 2026' },
+    ]);
+  });
+
+  it('should describe each criteria field in the order of the filter panel', () => {
+    const criteria = {
+      statusEquals: 'submitted',
+      createDateAfter: '2026-11-02T00:00:00.000Z',
+      createDateBefore: '2026-11-20T23:59:59.999Z',
+      dataCriteria: { 'applicant.region': 'North' },
+    };
+
+    expect(toAppliedFilters(criteria, [{ name: 'Region', path: 'applicant.region' }])).toEqual([
+      { key: 'createDateAfter', label: 'From date', value: 'Nov 2, 2026' },
+      { key: 'createDateBefore', label: 'To date', value: 'Nov 20, 2026' },
+      { key: 'statusEquals', label: 'Status', value: 'Submitted' },
+      { key: 'dataCriteria.applicant.region', label: 'Region', value: 'North' },
+    ]);
+  });
+
+  it('should fall back to the data value path when the definition column is not loaded', () => {
+    expect(toAppliedFilters({ dataCriteria: { 'applicant.region': 'North' } }, [])).toEqual([
+      { key: 'dataCriteria.applicant.region', label: 'applicant.region', value: 'North' },
+    ]);
+  });
+
+  it('should skip data value criteria that were cleared', () => {
+    expect(toAppliedFilters({ dataCriteria: { 'applicant.region': undefined } }, [])).toEqual([]);
+  });
+
+  it('should describe only the tag when results are resolved by tag', () => {
+    const criteria = { tag: 'Urgent review', statusEquals: 'submitted', createDateAfter: '2026-11-02T00:00:00.000Z' };
+
+    expect(toAppliedFilters(criteria, [])).toEqual([{ key: 'tag', label: 'Tag', value: 'Urgent review' }]);
+  });
+
+  it('should return nothing when no criteria are applied', () => {
+    expect(toAppliedFilters({}, [])).toEqual([]);
   });
 });

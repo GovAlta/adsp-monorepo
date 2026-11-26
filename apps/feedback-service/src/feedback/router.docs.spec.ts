@@ -236,6 +236,31 @@ describe('feedback router documented behaviour', () => {
       expect(res.status).toBe(400);
     });
 
+    it('returns 400 for a core user without tenantId', async () => {
+      const res = await request(await createApp(coreUser([ServiceRoles.FeedbackReader]))).get(
+        `/feedback/v1/feedback/summary?site=${site}`
+      );
+
+      expect(res.status).toBe(400);
+      expect(valueServiceMock.readSummary).not.toHaveBeenCalled();
+    });
+
+    it('returns the summary of the requested tenant for a core user with tenantId', async () => {
+      valueServiceMock.readSummary.mockResolvedValueOnce({
+        totalResponses: 1,
+        averageRating: 4,
+        responsesWithComments: 1,
+        responsesWithIssues: 0,
+      });
+
+      const res = await request(await createApp(coreUser([ServiceRoles.FeedbackReader]))).get(
+        `/feedback/v1/feedback/summary?site=${site}&tenantId=${tenantId}`
+      );
+
+      expect(res.status).toBe(200);
+      expect(valueServiceMock.readSummary).toHaveBeenCalledWith(tenantId, expect.objectContaining({ site }));
+    });
+
     it('returns the summary for a user without the feedback-reader role', async () => {
       valueServiceMock.readSummary.mockResolvedValueOnce({
         totalResponses: 1,
@@ -287,6 +312,25 @@ describe('feedback router documented behaviour', () => {
       const res = await request(await createApp(core)).get('/feedback/v1/sites?tenant=unknown');
 
       expect(res.status).toBe(400);
+    });
+
+    it('lists only the sites of the tenant for a tenant reader', async () => {
+      feedbackSiteServiceMock.getTenantSites.mockResolvedValueOnce([site]);
+
+      const res = await request(await createApp(reader)).get('/feedback/v1/sites?tenant=other-tenant');
+
+      expect(res.status).toBe(200);
+      expect(res.body).toEqual([site]);
+      expect(feedbackSiteServiceMock.getTenantSites).toHaveBeenCalledWith([tenantId]);
+    });
+
+    it('counts only the sites of the tenant for a tenant reader', async () => {
+      feedbackSiteServiceMock.countTenantSites.mockResolvedValueOnce(2);
+
+      const res = await request(await createApp(reader)).get('/feedback/v1/sites?count=true');
+
+      expect(res.status).toBe(200);
+      expect(res.body).toBe(2);
     });
 
     it('returns 401 for a user without the feedback-reader role', async () => {

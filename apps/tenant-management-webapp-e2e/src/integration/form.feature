@@ -379,4 +379,62 @@ Feature: Form
     And the user views form data of "false" as "citizen" for "residencyOptions" object on data page
     And the user views form data of "Ben:Bond:2011-05-15" as "givenName:surname:dob" for "dependant" array on data page
 
-
+  # TEST DATA: a form definition named "autotest-access-request" is precreated.
+  # TEST DATA: "autotest-testformapp" is an existing form defintion without access requests enabled
+  # The access request registration is deleted at the start so the scenario can be re-run every night
+  @TEST_CS-5929 @REQ_CS-5567 @regression
+  Scenario: As a tenant admin, I can configure access requests for a form definition and the settings are saved
+    Given the user deletes the access request registration of "autotest-access-request" form definition via API
+    And a tenant admin user is on form definitions page
+    When the user clicks "Edit" button for the form definition of "autotest-access-request", "DO NOT DELETE"
+    Then the user views form definition editor for "autotest-access-request", "DO NOT DELETE"
+    When the user clicks "Access requests" tab in form definition editor
+    # Enable access requests with access groups and notification email
+    And the user "checks" the checkbox of "Users must request access to this form" in Access requests tab
+    Then the user views the error messages of "User group, Approver group, Notification email" in Access requests tab
+    When the user selects "/autotest-user-group" as "User group" in Access requests tab
+    And the user selects "/autotest-approver-group" as "Approver group" in Access requests tab
+    And the user enters "not an email" as "Notification email" in Access requests tab
+    Then the user views the error message of "Enter a valid email address." in Access requests tab
+    When the user enters "autotest-reviewer@gov.ab.ca" as "Notification email" in Access requests tab
+    # Questions: the applicant name and email are always collected, so "email" cannot be a question
+    When the user clicks "Add question" button in Access requests tab
+    And the user enters "email" as question name in Add question modal
+    And the user clicks Save button in Add question modal
+    Then the user views the error message of "email is always collected; choose another name." in Add question modal
+    When the user clicks Cancel button in Add question modal
+    And the user clicks "Add question" button in Access requests tab
+    And the user enters "phone_number" as question name, "Phone number" as label and "Text" as type in Add question modal
+    And the user clicks Save button in Add question modal
+    When the user clicks "Add question" button in Access requests tab
+    And the user enters "profession" as question name, "What's your profession?" as label and "Selection" as type in Add question modal
+    And the user enters "Doctor, Nurse" as options and checks Required in Add question modal
+    And the user clicks Save button in Add question modal
+    When the user clicks "Add question" button in Access requests tab
+    And the user enters "residence" as question name, "Are you an Alberta resident?" as label and "Checkbox" as type in Add question modal
+    And the user clicks Save button in Add question modal
+    Then the user views questions "phone_number, profession, residence" in Access requests tab
+    And the user views the question of "profession" with options "Doctor, Nurse" and Required "Yes" in Access requests tab
+    # Add and delete a question
+    When the user clicks "Add question" button in Access requests tab
+    And the user enters "notes" as question name, "Notes" as label and "Text" as type in Add question modal
+    And the user clicks Save button in Add question modal
+    And the user deletes the question of "notes" in Access requests tab
+    Then the user should not view the question of "notes" in Access requests tab
+    # Save and verify the settings are kept
+    When the user clicks Save button in form definition editor
+    And the user clicks Back button in form definition editor
+    And the user clicks "Edit" button for the form definition of "autotest-access-request", "DO NOT DELETE"
+    And the user clicks "Access requests" tab in form definition editor
+    Then the user views "Users must request access to this form" checkbox as "checked" in Access requests tab
+    And the user views "/autotest-user-group" as "User group" in Access requests tab
+    And the user views "/autotest-approver-group" as "Approver group" in Access requests tab
+    And the user views "autotest-reviewer@gov.ab.ca" as "Notification email" in Access requests tab
+    And the user views questions "phone_number, profession, residence" in Access requests tab
+    # Verify another form definition has no access request data
+    When the user clicks Back button in form definition editor
+    And the user clicks "Edit" button for the form definition of "autotest-testformapp", "DO NOT DELETE"
+    And the user clicks "Access requests" tab in form definition editor
+    Then the user views "Users must request access to this form" checkbox as "unchecked" in Access requests tab
+    And the user should not view the settings "User group, Approver group, Notification email" in Access requests tab
+    And the user should not view any questions in Access requests tab

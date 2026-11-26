@@ -322,6 +322,25 @@ objects:
         type: Recreate
       revisionHistoryLimit: 3
       progressDeadlineSeconds: 600
+  - apiVersion: policy/v1
+    kind: PodDisruptionBudget
+    metadata:
+      labels:
+        app: tenant-management
+        component: api
+        apply-dev: 'true'
+        apply-test: 'true'
+        apply-uat: 'true'
+        apply-prod: 'true'
+      name: ${APP_NAME}
+      namespace: ${NAMESPACE}
+    spec:
+      # Node drains evict one API pod at a time; the job pod is not selected.
+      maxUnavailable: 1
+      selector:
+        matchLabels:
+          app: tenant-management
+          component: api
   - apiVersion: v1
     kind: Service
     metadata:

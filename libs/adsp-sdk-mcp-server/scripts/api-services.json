@@ -31,6 +31,7 @@
       "name": "Project planner service"
     },
     { "app": "push-service", "urn": "urn:ads:platform:push-service", "name": "Push service" },
+    { "app": "sharepoint-service", "urn": "urn:ads:platform:sharepoint-service", "name": "SharePoint service" },
     { "app": "status-service", "urn": "urn:ads:platform:status-service", "name": "Status service" },
     { "app": "task-service", "urn": "urn:ads:platform:task-service", "name": "Task service" },
     { "app": "tenant-management-api", "urn": "urn:ads:platform:tenant-service", "name": "Tenant service" },

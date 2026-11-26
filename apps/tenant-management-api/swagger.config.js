@@ -11,6 +11,14 @@ module.exports = {
       name: 'Tenant service',
       description: 'Tenant API to store and read tenant information.',
     },
+    {
+      name: 'Realm',
+      description: 'Client secret rotation mode and schedule of a realm.',
+    },
+    {
+      name: 'Client',
+      description: 'Clients of a realm and their secret rotation status and actions.',
+    },
   ],
   components: {
     securitySchemes: {

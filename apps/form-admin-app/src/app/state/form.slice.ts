@@ -32,7 +32,7 @@ interface DefinitionCriteria {
   tag?: string;
 }
 
-interface FormCriteria {
+export interface FormCriteria {
   statusEquals?: string;
   createDateAfter?: string;
   createDateBefore?: string;
@@ -75,6 +75,64 @@ const hasFilterValue = (value: unknown): boolean => value !== undefined && value
 export const countActiveFilters = (criteria: { dataCriteria?: Record<string, unknown> } = {}): number => {
   const { dataCriteria, ...fields } = criteria;
   return [...Object.values(fields), ...Object.values(dataCriteria || {})].filter(hasFilterValue).length;
+};
+
+export interface AppliedFilter {
+  key: string;
+  label: string;
+  value: string;
+}
+
+const toCriteriaDateLabel = (value: string): string => DateTime.fromISO(value, { zone: 'utc' }).toFormat('LLL d, yyyy');
+
+export const DATA_CRITERIA_KEY_PREFIX = 'dataCriteria.';
+
+const toStatusLabel = (value: string): string => `${value.charAt(0).toUpperCase()}${value.slice(1)}`;
+
+
+const toDataValueFilters = (
+  dataCriteria: Record<string, unknown>,
+  dataValues: ReviewColumnValue[],
+): AppliedFilter[] => {
+  const ordered = [
+    ...dataValues.map(({ path }) => path).filter((path) => path in dataCriteria),
+    ...Object.keys(dataCriteria).filter((path) => !dataValues.some((value) => value.path === path)),
+  ];
+
+  return ordered
+    .filter((path) => hasFilterValue(dataCriteria[path]))
+    .map((path) => ({
+      key: `${DATA_CRITERIA_KEY_PREFIX}${path}`,
+      label: dataValues.find((value) => value.path === path)?.name || path,
+      value: String(dataCriteria[path]),
+    }));
+};
+
+const omitKey = <T extends Record<string, unknown>>(source: T, key: string): T =>
+  Object.fromEntries(Object.entries(source).filter(([entry]) => entry !== key)) as T;
+
+export const removeAppliedFilter = (criteria: FormCriteria, key: string): FormCriteria =>
+  key.startsWith(DATA_CRITERIA_KEY_PREFIX)
+    ? { ...criteria, dataCriteria: omitKey(criteria.dataCriteria || {}, key.slice(DATA_CRITERIA_KEY_PREFIX.length)) }
+    : omitKey(criteria as Record<string, unknown>, key) as FormCriteria;
+
+export const toAppliedFilters = (criteria: FormCriteria, dataValues: ReviewColumnValue[]): AppliedFilter[] => {
+  const { createDateAfter, createDateBefore, statusEquals, tag, dataCriteria } = criteria;
+
+  if (tag) {
+    return [{ key: 'tag', label: 'Tag', value: tag }];
+  }
+
+  return [
+    ...(createDateAfter
+      ? [{ key: 'createDateAfter', label: 'From date', value: toCriteriaDateLabel(createDateAfter) }]
+      : []),
+    ...(createDateBefore
+      ? [{ key: 'createDateBefore', label: 'To date', value: toCriteriaDateLabel(createDateBefore) }]
+      : []),
+    ...(statusEquals ? [{ key: 'statusEquals', label: 'Status', value: toStatusLabel(statusEquals) }] : []),
+    ...toDataValueFilters(dataCriteria || {}, dataValues),
+  ];
 };
 
 // Tag based searches resolve results via the directory service, which doesn't include a total in the page.
@@ -129,6 +187,7 @@ export interface FormState {
   };
   definitionCriteria: DefinitionCriteria;
   formCriteria: FormCriteria;
+  appliedFormCriteria: FormCriteria;
   formSort: ResultsSort;
   next: {
     definitions: string;
@@ -166,6 +225,7 @@ export const initialFormState: FormState = {
   },
   definitionCriteria: getDefaultDefinitionCriteria(),
   formCriteria: getDefaultFormCriteria(),
+  appliedFormCriteria: getDefaultFormCriteria(),
   formSort: getDefaultResultsSort(),
   next: {
     definitions: null,
@@ -823,8 +883,9 @@ const formSlice = createSlice({
       .addCase(loadSubmission.rejected, (state) => {
         state.busy.loading = false;
       })
-      .addCase(findForms.pending, (state) => {
+      .addCase(findForms.pending, (state, { meta }) => {
         state.busy.loading = true;
+        state.appliedFormCriteria = meta.arg.criteria || {};
       })
       .addCase(findForms.fulfilled, (state, { payload }) => {
         state.busy.loading = false;
@@ -1045,7 +1106,15 @@ export const formSortSelector = (state: AppState) => state.form.formSort;
 
 export const formCriteriaSelector = (state: AppState) => state.form.formCriteria;
 
-export const formFilterCountSelector = createSelector(formCriteriaSelector, countActiveFilters);
+export const appliedFormCriteriaSelector = (state: AppState) => state.form.appliedFormCriteria;
+
+export const appliedFormFiltersSelector = createSelector(
+  appliedFormCriteriaSelector,
+  selectedDataValuesSelector,
+  toAppliedFilters,
+);
+
+export const formFilterCountSelector = createSelector(appliedFormCriteriaSelector, countActiveFilters);
 
 export const definitionCriteriaSelector = (state: AppState) => state.form.definitionCriteria;
 

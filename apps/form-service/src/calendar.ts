@@ -1,9 +1,9 @@
 import { adspId, LimitToOne, ServiceDirectory, TokenProvider } from '@abgov/adsp-service-sdk';
-import axios, { isAxiosError } from 'axios';
+import axios, { AxiosError, isAxiosError } from 'axios';
 import * as NodeCache from 'node-cache';
 import { Logger } from 'winston';
 import { CalendarService, FormDefinitionEntity, Intake } from './form';
-import { NotFoundError } from '@core-services/core-common';
+import { InvalidOperationError, NotFoundError } from '@core-services/core-common';
 import * as HttpStatusCodes from 'http-status-codes';
 
 type IntakeResponse = Omit<Intake, 'isUpcoming' | 'start' | 'end'> & { start: string; end?: string };
@@ -46,7 +46,7 @@ class CalendarServiceImpl implements CalendarService {
       );
 
       if (response.status === HttpStatusCodes.NOT_FOUND || !response.data || response.data === undefined) {
-        throw new NotFoundError('Update intake schedule ', calendarEventId);
+        throw new NotFoundError('calendar event', calendarEventId);
       }
 
       const mapped = this.mapIntake(response.data, false);
@@ -61,7 +61,18 @@ class CalendarServiceImpl implements CalendarService {
           tenantId: tenantId.toString(),
         },
       );
-      return;
+
+      const status = isAxiosError(err) ? err.response?.status : undefined;
+      if (status === HttpStatusCodes.NOT_FOUND) {
+        throw new NotFoundError('calendar event', calendarEventId);
+      } else if (status >= HttpStatusCodes.BAD_REQUEST && status < HttpStatusCodes.INTERNAL_SERVER_ERROR) {
+        throw new InvalidOperationError(
+          (err as AxiosError<{ errorMessage?: string }>).response?.data?.errorMessage ||
+            'Calendar service rejected the intake schedule update.',
+        );
+      }
+
+      throw err;
     }
   }
 

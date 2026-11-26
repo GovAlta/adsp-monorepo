@@ -380,18 +380,29 @@ components:
             schema:
               $ref: '#/components/schemas/FeedbackSummary'
       400:
-        $ref: '#/components/responses/FeedbackBadRequest'
+        description: >
+          Request is invalid: a query parameter failed validation, or there is no tenant context because a core user
+          did not set tenantId.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FeedbackError'
+            example:
+              errorMessage: Tenant context is required; core users must set tenantId.
 
 /feedback/v1/sites:
   get:
     tags:
       - Feedback
     description: >
-      Lists the URLs of configured feedback sites, or counts them, across all tenants or for one tenant. Intended for
-      core users with the feedback-reader role, for example to report platform usage.
+      Lists the URLs of configured feedback sites, or counts them. Core users with the feedback-reader role list or
+      count the sites across all tenants or for one tenant, for example to report platform usage. A tenant user with the
+      feedback-reader role lists or counts only the sites of their own tenant.
     parameters:
       - name: tenant
-        description: Name of the tenant to list sites for. Lists the sites of all tenants if not set.
+        description: >
+          Name of the tenant to list sites for. Lists the sites of all tenants if not set. Only used for core users;
+          tenant users always get the sites of their own tenant and this parameter is ignored.
         in: query
         required: false
         schema:
@@ -399,8 +410,9 @@ components:
           example: my-tenant
       - name: count
         description: >
-          If true, return the number of sites instead of their URLs. The count is returned as a number when tenant is
-          set, and as an object with a count property when it isn't.
+          If true, return the number of sites instead of their URLs. The count is returned as a number when the request
+          is scoped to one tenant (a core user setting tenant, or any tenant user), and as an object with a count
+          property for a core user counting the sites of all tenants.
         in: query
         required: false
         schema:
@@ -427,7 +439,7 @@ components:
                   - https://my-application.alberta.ca
                   - https://other-application.alberta.ca
               tenantCount:
-                summary: Number of sites of a tenant (count=true and tenant set)
+                summary: Number of sites scoped to one tenant (count=true)
                 value: 2
               allCount:
                 summary: Number of sites of all tenants (count=true)
