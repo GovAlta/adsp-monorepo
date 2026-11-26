@@ -36,6 +36,10 @@ parameters:
     description: Host for the route.
     displayName: Route Host
     value: ''
+  - name: REPLICAS
+    description: Number of replicas. Production runs 2 so a node drain does not take the app down.
+    displayName: Replicas
+    value: '2'
 objects:
   # ImageStream is here for reference.
   # There is a single ImageStream created in the infra project.
@@ -86,7 +90,7 @@ objects:
             }
           ]
     spec:
-      replicas: 1
+      replicas: ${{REPLICAS}}
       selector:
         matchLabels:
           app: ${APP_NAME}
