@@ -1,4 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+// Marks the file as a module so its top-level names don't collide with other specs.
+export {};
+
 const migration = require('../../migrations/20261110120000_create_event_resource_rollups');
 
 const createTableBuilder = (columns: string[], keys: string[][]) => {
