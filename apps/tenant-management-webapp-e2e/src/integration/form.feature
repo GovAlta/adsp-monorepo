@@ -381,6 +381,7 @@ Feature: Form
 
   # TEST DATA: a form definition named "autotest-access-request" is precreated.
   # TEST DATA: "autotest-testformapp" is an existing form defintion without access requests enabled
+  # TEST DATA: autotest-user-group and autotest-approver-group are precreated as user groups in corresponding keycloak
   # The access request registration is deleted at the start so the scenario can be re-run every night
   @TEST_CS-5929 @REQ_CS-5567 @regression
   Scenario: As a tenant admin, I can configure access requests for a form definition and the settings are saved
