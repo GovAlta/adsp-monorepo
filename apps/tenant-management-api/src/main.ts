@@ -1,4 +1,5 @@
 import { AdspId, initializePlatform, User } from '@abgov/adsp-service-sdk';
+import { ClientSecretRotationEvents, resolveConfiguration } from '@core-services/client-secret-rotation';
 import { createErrorHandler } from '@core-services/core-common';
 import * as cors from 'cors';
 import * as compression from 'compression';
@@ -26,6 +27,7 @@ import {
   scheduleTenantPurgeJob,
 } from './tenant';
 import { createKeycloakRealmService } from './keycloak';
+import { applyRotationMiddleware, ClientSecretRotationRoles, createRotationKeycloakFactory } from './rotation';
 
 async function initializeApp(): Promise<express.Application> {
   const repositories = await createRepositories({ ...environment, logger });
@@ -41,8 +43,17 @@ async function initializeApp(): Promise<express.Application> {
   }
 
   const serviceId = AdspId.parse(environment.CLIENT_ID);
-  const { coreStrategy, tenantStrategy, eventService, auditService, configurationHandler, traceHandler } =
-    await initializePlatform(
+  const {
+    coreStrategy,
+    tenantStrategy,
+    tenantHandler,
+    eventService,
+    auditService,
+    configurationHandler,
+    directory,
+    tokenProvider,
+    traceHandler,
+  } = await initializePlatform(
       {
         serviceId,
         displayName: 'Tenant service',
@@ -55,13 +66,18 @@ async function initializeApp(): Promise<express.Application> {
             'Service roles with name, description, and whether the role is part of the tenant administrator role.',
           schema: configurationSchema,
         },
-        configurationConverter: (c) => Object.entries(c).map(([k, v]) => ({ serviceId: AdspId.parse(k), ...v })),
+        // Only urn entries register service roles; other keys are realm rotation settings.
+        configurationConverter: (c) =>
+          Object.entries(c)
+            .filter(([k]) => k.startsWith('urn:'))
+            .map(([k, v]) => ({ serviceId: AdspId.parse(k), ...v })),
         events: [
           TenantCreatedDefinition,
           TenantDeletedDefinition,
           TenantArchivedDefinition,
           TenantRestoredDefinition,
           TenantNameUpdatedDefinition,
+          ...ClientSecretRotationEvents,
         ],
         auditActions: TenantAuditActions,
         roles: [
@@ -73,6 +89,12 @@ async function initializeApp(): Promise<express.Application> {
           {
             role: TenantServiceRoles.PlatformService,
             description: 'Service role for backend services for reading tenants.',
+          },
+          {
+            role: ClientSecretRotationRoles.ClientSecretAdmin,
+            description: 'Client secret admin role that grants permission to manage client secret rotation in a realm.',
+            // Tenant admins manage the rotation of their own realm.
+            inTenantAdmin: true,
           },
         ],
       },
@@ -104,6 +126,19 @@ async function initializeApp(): Promise<express.Application> {
     auditService,
     realmService,
     configurationHandler,
+  });
+
+  const createKeycloak = await createRotationKeycloakFactory(environment.KEYCLOAK_ROOT_URL);
+  applyRotationMiddleware(app, {
+    logger,
+    serviceId,
+    directory,
+    tokenProvider,
+    tenantHandler,
+    eventService,
+    createKeycloak,
+    // Rotation windows use the platform defaults; tenants set their own schedule per realm.
+    getConfiguration: async () => resolveConfiguration(undefined),
   });
 
   if (environment.TENANT_PURGE_ENABLED) {

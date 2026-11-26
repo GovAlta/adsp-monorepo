@@ -1,6 +1,7 @@
 // clean-code-ignore: RULE-19 (types only; no runtime code to test)
-import type { ReactElement } from 'react';
-import type { // clean-code-ignore: RULE-19 (types only; no runtime code to test)
+import type { ReactElement, ReactNode } from 'react';
+import type {
+  // clean-code-ignore: RULE-19 (types only; no runtime code to test)
   AdspComponentThemeOverrides,
   FileMetadata,
   IFileClient,
@@ -24,9 +25,11 @@ export interface ADSPFileDownloadProps {
   client: IFileClient;
   /**
    * Whether the application allows the current user to download files. False renders nothing and sends no request.
-   * File service still authorizes every request, so true only means "try".
+   * Overrides `AdspCapabilityProvider` when set. File service still authorizes every request, so true only means "try".
    */
   canDownload?: boolean;
+  /** Shown in place of the component when the user can't download, such as why and who to ask. Nothing by default. */
+  fallback?: ReactNode;
   /**
    * A custom trigger, such as `<GoabButton type="secondary">Download</GoabButton>`, in place of the default control.
    * The component sets its onClick, and disabled while a download runs. File metadata isn't loaded up front.
@@ -43,9 +46,11 @@ export interface ADSPFileUploadProps {
   client: IFileUploadClient;
   /**
    * Whether the application allows the current user to upload files. False renders nothing and sends no request.
-   * File service still authorizes every request, so true only means "try".
+   * Overrides `AdspCapabilityProvider` when set. File service still authorizes every request, so true only means "try".
    */
   canUpload?: boolean;
+  /** Shown in place of the component when the user can't upload, such as why and who to ask. Nothing by default. */
+  fallback?: ReactNode;
   /** Associates uploaded files with a record in the application, such as a form submission. */
   recordId?: string;
   /** Called with the file as File service stored it, once an upload succeeds. */

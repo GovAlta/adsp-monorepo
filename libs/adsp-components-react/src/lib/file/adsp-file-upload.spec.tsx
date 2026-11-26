@@ -3,6 +3,7 @@ import '@testing-library/jest-dom';
 import { FileServiceError, type FileMetadata, type IFileUploadClient } from '@abgov/adsp-components-core';
 import { ADSPFileUpload, FILE_SERVICE_MAX_FILE_SIZE } from './adsp-file-upload';
 import { AdspThemeProvider } from '../theme/adsp-theme-provider';
+import { AdspCapabilityProvider } from '../capability';
 
 const fileTypeId = 'supporting-docs';
 const fileType = {
@@ -248,6 +249,85 @@ describe('ADSPFileUpload', () => {
     expect(client.getFileType).not.toHaveBeenCalled();
   });
 
+  test('renders nothing and requests nothing when the capability provider denies file.upload', () => {
+    // Arrange
+    const client = createClient();
+
+    // Act
+    const { container } = render(
+      <AdspCapabilityProvider roles={['reader']} capabilities={{ 'file.upload': ['writer'] }}>
+        <ADSPFileUpload client={client} fileTypeId={fileTypeId} />
+      </AdspCapabilityProvider>,
+    );
+
+    // Assert
+    expect(container).toBeEmptyDOMElement();
+    expect(client.getFileType).not.toHaveBeenCalled();
+  });
+
+  test('loads the File Type when the capability provider grants file.upload', async () => {
+    // Arrange
+    const client = createClient();
+
+    // Act
+    render(
+      <AdspCapabilityProvider roles={['writer']} capabilities={{ 'file.upload': ['writer'] }}>
+        <ADSPFileUpload client={client} fileTypeId={fileTypeId} testId="upload" />
+      </AdspCapabilityProvider>,
+    );
+
+    // Assert
+    expect(await findGoa('upload-input')).not.toBeNull();
+    expect(client.getFileType).toHaveBeenCalledWith(fileTypeId);
+  });
+
+  test('shows the fallback instead when the user cannot upload', () => {
+    // Arrange
+    const client = createClient();
+
+    // Act
+    render(
+      <ADSPFileUpload
+        client={client}
+        fileTypeId={fileTypeId}
+        canUpload={false}
+        fallback={<p>Uploads are closed.</p>}
+      />,
+    );
+
+    // Assert
+    expect(screen.getByText('Uploads are closed.')).toBeInTheDocument();
+    expect(client.getFileType).not.toHaveBeenCalled();
+  });
+
+  test('ignores the fallback when the user can upload', async () => {
+    // Arrange
+    const client = createClient();
+
+    // Act
+    render(<ADSPFileUpload client={client} fileTypeId={fileTypeId} testId="upload" fallback={<p>No access</p>} />);
+
+    // Assert
+    expect(await findGoa('upload-input')).not.toBeNull();
+    expect(screen.queryByText('No access')).not.toBeInTheDocument();
+  });
+
+  test('lets canUpload override the capability provider', () => {
+    // Arrange
+    const client = createClient();
+
+    // Act
+    const { container } = render(
+      <AdspCapabilityProvider roles={['writer']} capabilities={{ 'file.upload': ['writer'] }}>
+        <ADSPFileUpload client={client} fileTypeId={fileTypeId} canUpload={false} />
+      </AdspCapabilityProvider>,
+    );
+
+    // Assert
+    expect(container).toBeEmptyDOMElement();
+    expect(client.getFileType).not.toHaveBeenCalled();
+  });
+
   test('applies the theme and per-instance overrides as CSS variables', async () => {
     // Arrange
     const client = createClient();
@@ -359,4 +439,3 @@ describe('ADSPFileUpload', () => {
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
 });
-
