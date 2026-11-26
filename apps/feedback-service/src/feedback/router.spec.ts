@@ -617,72 +617,75 @@ describe('router', () => {
   });
 
   describe('get feedback sites', () => {
-    it('can get feedback sites', async () => {
-      const req = {
-        tenant: { id: tenantId },
-        user: { tenantId, id: 'tester', roles: [ServiceRoles.FeedbackReader] },
-      };
-      const res = {
-        json: jest.fn(),
-      };
+    const coreUser = { id: 'core', name: 'Core User', isCore: true, roles: [ServiceRoles.FeedbackReader] };
+    const tenantUser = {
+      tenantId,
+      id: 'tester',
+      name: 'Test User',
+      isCore: false,
+      roles: [ServiceRoles.FeedbackReader],
+    };
+    const mockTenant = { id: 'urn:ads:automobiles:bobs-automobiles', name: 'bobs-automobiles' };
+
+    const callGetSites = async (user: unknown, query?: Record<string, string>) => {
+      const req = { tenant: { id: tenantId }, user, query };
+      const res = { json: jest.fn() };
       const next = jest.fn();
 
       const handler = getSites(feedbackSiteServiceMock, tenantServiceMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
+      return { res, next };
+    };
+
+    it('can get feedback sites', async () => {
+      await callGetSites(coreUser);
       expect(feedbackSiteServiceMock.getAllSites).toHaveBeenCalledWith();
     });
 
     it('can get count for all sites', async () => {
-      const req = {
-        tenant: { id: tenantId },
-        user: { tenantId, id: 'tester', roles: [ServiceRoles.FeedbackReader] },
-        query: { count: 'true' },
-      };
-      const res = {
-        json: jest.fn(),
-      };
-      const next = jest.fn();
-
-      const handler = getSites(feedbackSiteServiceMock, tenantServiceMock);
-      await handler(req as unknown as Request, res as unknown as Response, next);
+      await callGetSites(coreUser, { count: 'true' });
       expect(feedbackSiteServiceMock.countAllSites).toHaveBeenCalledWith();
     });
-  });
 
-  it('can get sites for a specific tenant', async () => {
-    const mockTenant = { id: 'urn:ads:automobiles:bobs-automobiles', name: 'bobs-automobiles' };
-    tenantServiceMock.getTenantByName.mockResolvedValueOnce(mockTenant);
-    const req = {
-      tenant: { id: tenantId },
-      user: { tenantId, id: 'tester', roles: [ServiceRoles.FeedbackReader] },
-      query: { tenant: 'bobs-automobiles' },
-    };
-    const res = {
-      json: jest.fn(),
-    };
-    const next = jest.fn();
+    it('can get sites for a specific tenant', async () => {
+      tenantServiceMock.getTenantByName.mockResolvedValueOnce(mockTenant);
+      await callGetSites(coreUser, { tenant: 'bobs-automobiles' });
+      expect(feedbackSiteServiceMock.getTenantSites).toHaveBeenCalledWith([mockTenant.id]);
+    });
 
-    const handler = getSites(feedbackSiteServiceMock, tenantServiceMock);
-    await handler(req as unknown as Request, res as unknown as Response, next);
-    expect(feedbackSiteServiceMock.getTenantSites).toHaveBeenCalledWith([mockTenant.id]);
-  });
+    it('can get the count for a specific tenant', async () => {
+      tenantServiceMock.getTenantByName.mockResolvedValueOnce(mockTenant);
+      await callGetSites(coreUser, { tenant: 'bobs-automobiles', count: 'true' });
+      expect(feedbackSiteServiceMock.countTenantSites).toHaveBeenCalledWith([mockTenant.id]);
+    });
 
-  it('can get the count for a specific tenant', async () => {
-    const mockTenant = { id: 'urn:ads:automobiles:bobs-automobiles', name: 'bobs-automobiles' };
-    tenantServiceMock.getTenantByName.mockResolvedValueOnce(mockTenant);
-    const req = {
-      tenant: { id: tenantId },
-      user: { tenantId, id: 'tester', roles: [ServiceRoles.FeedbackReader] },
-      query: { tenant: 'bobs-automobiles', count: 'true' },
-    };
-    const res = {
-      json: jest.fn(),
-    };
-    const next = jest.fn();
+    it('returns only the tenant sites of a tenant user', async () => {
+      feedbackSiteServiceMock.getTenantSites.mockResolvedValueOnce(['https://my-application.alberta.ca']);
+      const { res } = await callGetSites(tenantUser, {});
+      expect(feedbackSiteServiceMock.getTenantSites).toHaveBeenCalledWith([tenantId]);
+      expect(feedbackSiteServiceMock.getAllSites).not.toHaveBeenCalled();
+      expect(res.json).toHaveBeenCalledWith(['https://my-application.alberta.ca']);
+    });
 
-    const handler = getSites(feedbackSiteServiceMock, tenantServiceMock);
-    await handler(req as unknown as Request, res as unknown as Response, next);
-    expect(feedbackSiteServiceMock.countTenantSites).toHaveBeenCalledWith([mockTenant.id]);
+    it('ignores the tenant query parameter for a tenant user', async () => {
+      await callGetSites(tenantUser, { tenant: 'bobs-automobiles' });
+      expect(feedbackSiteServiceMock.getTenantSites).toHaveBeenCalledWith([tenantId]);
+      expect(tenantServiceMock.getTenantByName).not.toHaveBeenCalled();
+    });
+
+    it('returns the tenant sites of a tenant user for an unknown tenant query parameter', async () => {
+      const { next } = await callGetSites(tenantUser, { tenant: 'unknown' });
+      expect(feedbackSiteServiceMock.getTenantSites).toHaveBeenCalledWith([tenantId]);
+      expect(next).not.toHaveBeenCalled();
+    });
+
+    it('counts only the tenant sites of a tenant user', async () => {
+      feedbackSiteServiceMock.countTenantSites.mockResolvedValueOnce(2);
+      const { res } = await callGetSites(tenantUser, { count: 'true' });
+      expect(feedbackSiteServiceMock.countTenantSites).toHaveBeenCalledWith([tenantId]);
+      expect(feedbackSiteServiceMock.countAllSites).not.toHaveBeenCalled();
+      expect(res.json).toHaveBeenCalledWith(2);
+    });
   });
 
   it('can get sites for a specific tenant with multiple hyphens in the name', async () => {
@@ -690,7 +693,7 @@ describe('router', () => {
     tenantServiceMock.getTenantByName.mockResolvedValueOnce(mockTenant);
     const req = {
       tenant: { id: tenantId },
-      user: { tenantId, id: 'tester', roles: [ServiceRoles.FeedbackReader] },
+      user: { tenantId, id: 'tester', isCore: true, roles: [ServiceRoles.FeedbackReader] },
       query: { tenant: 'my-test-tenant' },
     };
     const res = {
@@ -709,7 +712,7 @@ describe('router', () => {
     tenantServiceMock.getTenantByName.mockResolvedValueOnce(mockTenant);
     const req = {
       tenant: { id: tenantId },
-      user: { tenantId, id: 'tester', roles: [ServiceRoles.FeedbackReader] },
+      user: { tenantId, id: 'tester', isCore: true, roles: [ServiceRoles.FeedbackReader] },
       query: { tenant: 'my-test-tenant', count: 'true' },
     };
     const res = {
