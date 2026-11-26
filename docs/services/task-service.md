@@ -52,7 +52,8 @@ retrieve a task by ID, and the export service `export-job` role can retrieve tas
   `GET /tasks` list accepts only the export service export-job role from core users. Only tenant users can update,
   assign, work on, or delete tasks.
 - **Assigners and workers lists** are read from the tenant's Keycloak realm with the caller's own token, so they only
-  work for tenant users who can view users of the realm.
+  work for tenant users who can view users of the realm. If Keycloak fails with an error other than 403 or 404, the
+  request responds 502.
 
 ## API overview
 

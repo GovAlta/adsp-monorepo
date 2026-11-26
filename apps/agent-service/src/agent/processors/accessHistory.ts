@@ -32,10 +32,15 @@ export function trimEarlierToolResults(prompt: Prompt): Prompt {
   return trimmed ? (result as Prompt) : prompt;
 }
 
-export function createAccessHistoryProcessor(): InputProcessor {
+/** A processor that trims earlier tool results from every model request of an agent whose results are shown as cards. */
+export function createToolResultHistoryProcessor(id: string, name: string): InputProcessor {
   return {
-    id: 'access-history',
-    name: 'Access Service history',
+    id,
+    name,
     processLLMRequest: ({ prompt }) => ({ prompt: trimEarlierToolResults(prompt) }),
   };
+}
+
+export function createAccessHistoryProcessor(): InputProcessor {
+  return createToolResultHistoryProcessor('access-history', 'Access Service history');
 }

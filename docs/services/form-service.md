@@ -104,6 +104,10 @@ Some forms are restricted to a segment of the population, for example to physici
 - `enabled`: whether the form is restricted and accepts access requests.
 - `dataSchema` and `uiSchema`: the registration questions that help a reviewer decide whether the applicant meets the criteria. The questions can't define `firstName`, `lastName` or `email`, since every request includes them.
 - `accessGroup`: optional, the Keycloak group containing the roles needed to access the form. Form APIs return it only to `form-admin` users.
+- `approverGroup`: the Keycloak group whose members can approve or deny the form's access requests. It is not returned by the form APIs.
+- `notificationEmail`: the address notified when an access request is submitted. It is not returned by the form APIs.
+
+Developers configure these settings in the tenant management webapp, on the **Access requests** tab of the form definition editor. The tab builds the registration questions from a short list of text, selection and checkbox fields. Access requests aren't available for forms that allow anonymous applicants.
 
 Submitting the first access request for a form enables registration: form service sets `registration.enabled` to `true` in the latest revision of the definition, creating the `registration` settings if the definition has none. Like the other definition endpoints, it doesn't change the active revision; if an older revision is set as active, the change takes effect once the latest revision is set as active in configuration service. Use `GET /form/v1/definitions/{definitionId}?version=latest` (`form-admin` only) to read the latest revision.
 
@@ -112,6 +116,12 @@ Submitting the first access request for a form enables registration: form servic
 An applicant submits an _access request_ with their name, email address and answers. Answers are validated against the registration questions, and answers to questions that aren't defined are rejected. The request starts as `pending`, and an administrator then approves or denies it. Each email address can have only one pending request per form; after a request is reviewed, the applicant can submit a new one. Approved or denied requests can't be reviewed again.
 
 Form service only records requests and reviews. It doesn't create Keycloak accounts, add users to the access group, or notify the applicant.
+
+### SharePoint destination
+
+A form definition can send its submitted forms to a SharePoint list by setting `sharepointConfigurationId` to the ID of a [SharePoint service](sharepoint-service.md) destination. After each submit, form service pushes the form data and files to the destination, keyed by the submission ID (or the form ID when the definition has no submission records), so a repeated push updates the same row when the destination updates existing rows. When the definition generates a submission PDF, form service adds its link to that row once PDF service has generated it, which also needs a destination that updates existing rows. The push runs after the submit response and never fails the submission.
+
+A failed push that may pass is retried after 1 minute, 5 minutes, 30 minutes and 2 hours. When the retries run out, or the failure can't be fixed by retrying, form service sends `sharepoint-push-failed`. See [Form service integration](sharepoint-service.md#form-service-integration) for the data that is sent.
 
 ## Data registers
 
@@ -155,24 +165,27 @@ Form service does not emit its own events for data registers. Configuration serv
 
 Form service sends these domain events in the `form-service` namespace. Form events use the form ID as the correlation ID.
 
-| name                      | sent when                                                                                                                          |
-| :------------------------ | :--------------------------------------------------------------------------------------------------------------------------------- |
-| form-created              | A draft form is created. When a form is created with `submit: true`, `form-submitted` is sent instead.                             |
-| form-locked               | The draft expiry job locks a draft that has not been accessed.                                                                     |
-| form-unlocked             | An administrator unlocks a locked form.                                                                                            |
-| form-submitted            | A form is submitted. The form data is included when the definition sets `includeDataInSubmission`.                                 |
-| form-to-draft             | A submitted form is set back to draft.                                                                                             |
-| form-archived             | A form is archived.                                                                                                                |
-| form-deleted              | A form is deleted through the API or by the draft expiry job.                                                                      |
-| submission-dispositioned  | A submission is dispositioned.                                                                                                     |
-| submission-deleted        | A submission is deleted.                                                                                                           |
-| form-message-to-applicant | A reviewer posts a message on a form's questions topic.                                                                            |
-| form-message-to-reviewer  | An applicant posts a message and a reviewer is part of the conversation.                                                           |
-| form-message-forwarded    | An applicant posts a message, no reviewer is part of the conversation, and the definition sets an address to forward questions to. |
-| registration-submitted    | An access request for a restricted form is submitted.                                                                              |
-| registration-reviewed     | An access request is approved or denied.                                                                                           |
+| name                      | sent when                                                                                                                                               |
+| :------------------------ | :------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| form-created              | A draft form is created. When a form is created with `submit: true`, `form-submitted` is sent instead.                                                  |
+| form-locked               | The draft expiry job locks a draft that has not been accessed.                                                                                          |
+| form-unlocked             | An administrator unlocks a locked form.                                                                                                                 |
+| form-submitted            | A form is submitted. The form data is included when the definition sets `includeDataInSubmission`.                                                      |
+| form-to-draft             | A submitted form is set back to draft.                                                                                                                  |
+| form-archived             | A form is archived.                                                                                                                                     |
+| form-deleted              | A form is deleted through the API or by the draft expiry job.                                                                                           |
+| submission-dispositioned  | A submission is dispositioned.                                                                                                                          |
+| submission-deleted        | A submission is deleted.                                                                                                                                |
+| form-message-to-applicant | A reviewer posts a message on a form's questions topic.                                                                                                 |
+| form-message-to-reviewer  | An applicant posts a message and a reviewer is part of the conversation.                                                                                |
+| form-message-forwarded    | An applicant posts a message, no reviewer is part of the conversation, and the definition sets an address to forward questions to.                      |
+| registration-submitted    | An access request for a restricted form is submitted.                                                                                                   |
+| registration-reviewed     | An access request is approved or denied.                                                                                                                |
+| sharepoint-push-failed    | A submitted form or its submission PDF could not be pushed to its SharePoint destination, after the retries ran out or on a failure retrying can't fix. |
 
 Access request events use the request ID as the correlation ID, and include its `id`, `formDefinitionId`, `status`, `submittedAt`, `reviewedAt` and `reviewedBy`. The applicant's name, email address and answers are not included.
+
+`sharepoint-push-failed` includes the `formId`, `submissionId`, `destinationId`, `errorCode` and number of `attempts`, and no form data. Its `part` is `submission` for the submission row and its files, or `submission-pdf` for the PDF. When the PDF couldn't be generated, `errorCode` is `pdf-generation-failed` and `attempts` is left out.
 
 When a definition sets a custom submission event (`event` in the submission actions), form service also sends that event, in the namespace and with the name it configures, each time a form is submitted.
 

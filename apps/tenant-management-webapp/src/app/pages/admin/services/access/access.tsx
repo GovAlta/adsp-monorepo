@@ -7,6 +7,7 @@ import { ServiceRoles } from './serviceRoles';
 import { TenantIdp } from './TenantIDP';
 import { AccessServiceAgent } from './AccessServiceAgent';
 import { TokenHandlerTab } from './tokenHandler/TokenHandlerTab';
+import { ClientSecretsTab } from './clientSecrets/ClientSecretsTab';
 import { useSelector } from 'react-redux';
 import { RootState } from '@store/index';
 
@@ -34,6 +35,10 @@ export default function (): JSX.Element {
 
           <Tab label="Token handler" data-testid="access-token-handler-tab">
             <TokenHandlerTab />
+          </Tab>
+
+          <Tab label="Client secrets" data-testid="access-client-secrets-tab">
+            <ClientSecretsTab />
           </Tab>
 
           {accessServiceAIEnabled && (

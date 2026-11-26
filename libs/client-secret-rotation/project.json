@@ -1,0 +1,24 @@
+{
+  "name": "client-secret-rotation",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/client-secret-rotation/src",
+  "projectType": "library",
+  "tags": [],
+  "targets": {
+    "lint": {
+      "inputs": [
+        "default",
+        "^default",
+        "{workspaceRoot}/eslint.config.mjs",
+        "{workspaceRoot}/tools/eslint-rules/**/*"
+      ]
+    },
+    "test": {
+      "executor": "@nx/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/libs/client-secret-rotation"],
+      "options": {
+        "jestConfig": "libs/client-secret-rotation/jest.config.ts"
+      }
+    }
+  }
+}

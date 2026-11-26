@@ -645,10 +645,36 @@
       "patterns": []
     },
     {
+      "id": "sharepoint-service",
+      "name": "SharePoint service",
+      "use": "Push data and files to SharePoint lists and libraries owned by your team.",
+      "doc": "services/sharepoint-service.md",
+      "specialist": false,
+      "purpose": null,
+      "fitQuestions": [],
+      "dependsOn": [],
+      "risks": [],
+      "registrationFields": [],
+      "patterns": []
+    },
+    {
       "id": "verify-service",
       "name": "Verify service",
       "use": "Generate and check time-limited verification codes.",
       "doc": "services/verify-service.md",
+      "specialist": false,
+      "purpose": null,
+      "fitQuestions": [],
+      "dependsOn": [],
+      "risks": [],
+      "registrationFields": [],
+      "patterns": []
+    },
+    {
+      "id": "client-secret-rotation-service",
+      "name": "Client secret rotation service",
+      "use": "Rotate Keycloak client secrets before they expire.",
+      "doc": "services/client-secret-rotation-service.md",
       "specialist": false,
       "purpose": null,
       "fitQuestions": [],

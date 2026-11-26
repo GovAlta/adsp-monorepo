@@ -26,6 +26,26 @@ describe('mapFields', () => {
     });
   });
 
+  it.each([
+    ['a Hyperlink column', { columnType: 'hyperlink' as const }],
+    ['an older mapping that writes Hyperlink values', { linkFormat: 'hyperlink' as const }],
+  ])('clears %s with null for an empty value, since SharePoint rejects text there', (_case, mapping) => {
+    expect(mapFields([{ source: 'proof', target: 'Proof', ...mapping }], { proof: '' }, null)).toEqual({ Proof: null });
+  });
+
+  it('keeps an empty value for a text column, even one whose file links are written as Hyperlink values', () => {
+    expect(
+      mapFields([{ source: 'note', target: 'Note', columnType: 'text', linkFormat: 'hyperlink' }], { note: '' }, null),
+    ).toEqual({ Note: '' });
+  });
+
+  it('writes a link value to a Hyperlink column', () => {
+    const link = { Url: 'https://example.com/proof.pdf', Description: 'proof.pdf' };
+    expect(mapFields([{ source: 'proof', target: 'Proof', columnType: 'hyperlink' }], { proof: link }, null)).toEqual({
+      Proof: link,
+    });
+  });
+
   it('does not let a mapping overwrite the key column', () => {
     const fields = mapFields([{ source: 'other', target: ITEM_KEY_COLUMN }], { other: 'spoofed' }, 'real-key');
     expect(fields[ITEM_KEY_COLUMN]).toBe('real-key');

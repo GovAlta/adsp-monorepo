@@ -47,6 +47,7 @@ export interface ServiceUrls {
   agentServiceApiUrl: string;
   auditServiceApiUrl?: string;
   tokenHandlerApiUrl?: string;
+  clientSecretRotationApiUrl?: string;
   sharepointServiceApiUrl?: string;
 }
 

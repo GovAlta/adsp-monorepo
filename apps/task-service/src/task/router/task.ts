@@ -384,6 +384,7 @@ export function createTaskRouter({
           description: { optional: true, isString: true },
           context: { optional: true, isObject: true },
           data: { optional: true, isObject: true },
+          priority: { optional: true, isInt: { options: { min: TaskPriority.Normal, max: TaskPriority.Urgent } } },
         },
         ['body'],
       ),

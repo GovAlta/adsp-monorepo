@@ -216,6 +216,12 @@ components:
           type: boolean
           writeOnly: true
           description: Whether submitted data is included in the form-submitted event. Not returned by the form APIs.
+        sharepointConfigurationId:
+          type: string
+          nullable: true
+          writeOnly: true
+          description: >-
+            ID of the SharePoint service destination that submitted forms are pushed to. Not returned by the form APIs.
         reviewConfiguration:
           type: object
           description: Ordered form data fields shown as columns in the Form Admin submission and form lists.
@@ -257,6 +263,20 @@ components:
               description: >
                 Keycloak group containing the roles needed to access the form. Optional. Returned only to `form-admin`
                 callers.
+            approverGroup:
+              type: string
+              writeOnly: true
+              minLength: 1
+              maxLength: 255
+              description: >
+                Keycloak group whose members can approve or deny the form's access requests. Not returned by the
+                form APIs.
+            notificationEmail:
+              type: string
+              format: email
+              writeOnly: true
+              maxLength: 254
+              description: Address notified when an access request is submitted. Not returned by the form APIs.
             dataSchema:
               type: object
               description: >
@@ -376,6 +396,20 @@ components:
               description: >
                 Keycloak group containing the roles needed to access the form. Optional. Returned only to `form-admin`
                 callers.
+            approverGroup:
+              type: string
+              writeOnly: true
+              minLength: 1
+              maxLength: 255
+              description: >
+                Keycloak group whose members can approve or deny the form's access requests. Not returned by the
+                form APIs.
+            notificationEmail:
+              type: string
+              format: email
+              writeOnly: true
+              maxLength: 254
+              description: Address notified when an access request is submitted. Not returned by the form APIs.
             dataSchema:
               type: object
               description: >

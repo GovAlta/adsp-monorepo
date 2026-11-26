@@ -46,6 +46,11 @@ export class ConfigurationClient<C extends object = Record<string, unknown>> {
     return this.patchConfiguration(tenantId, { operation: 'UPDATE', update: { [key]: value } });
   }
 
+  /** Changes several keys of an object document in one request, so the change is applied together. */
+  public async updateEntries(tenantId: AdspId, update: Partial<C>): Promise<C> {
+    return this.patchConfiguration(tenantId, { operation: 'UPDATE', update });
+  }
+
   public async deleteEntry(tenantId: AdspId, key: keyof C & string): Promise<C> {
     return this.patchConfiguration(tenantId, { operation: 'DELETE', property: key });
   }

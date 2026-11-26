@@ -136,6 +136,61 @@ describe('notice router handlers', () => {
     });
   });
 
+  describe('deleteNotice', () => {
+    const handler = () => deleteNotice(logger, repository as unknown as NoticeRepository, auditService);
+    const notice = () => ({
+      id: noticeId,
+      message: 'Maintenance',
+      mode: 'published',
+      tenantId,
+      isAllApplications: true,
+      tennantServRef: [],
+      delete: jest.fn(),
+    });
+
+    it('responds only after the delete completes', async () => {
+      const existing = notice();
+      let finishDelete: () => void;
+      existing.delete.mockReturnValueOnce(new Promise<void>((resolve) => (finishDelete = resolve)));
+      repository.get.mockResolvedValueOnce(existing);
+
+      const res = { json: jest.fn(), status: jest.fn() };
+      const next = jest.fn();
+      const done = handler()(
+        {
+          method: 'DELETE',
+          url: '/',
+          params: { id: noticeId },
+          query: {},
+          body: {},
+          user: admin,
+        } as unknown as Request,
+        res as unknown as Response,
+        next,
+      );
+      await new Promise((resolve) => setImmediate(resolve));
+      expect(res.json).not.toHaveBeenCalled();
+
+      finishDelete();
+      await done;
+
+      expect(res.json).toHaveBeenCalled();
+      expect(next).not.toHaveBeenCalled();
+    });
+
+    it('passes a failed delete to next without responding', async () => {
+      const existing = notice();
+      const error = new Error('Delete failed.');
+      existing.delete.mockRejectedValueOnce(error);
+      repository.get.mockResolvedValueOnce(existing);
+
+      const { res, next } = await call(handler(), { user: admin, params: { id: noticeId } });
+
+      expect(next).toHaveBeenCalledWith(error);
+      expect(res.json).not.toHaveBeenCalled();
+    });
+  });
+
   describe.each([
     ['getNoticeById', () => getNoticeById(logger, repository as unknown as NoticeRepository)],
     ['deleteNotice', () => deleteNotice(logger, repository as unknown as NoticeRepository, auditService)],
