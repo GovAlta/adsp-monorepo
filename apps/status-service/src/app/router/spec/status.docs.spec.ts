@@ -373,7 +373,7 @@ describe('status router documented behaviour', () => {
 
       expect(res.status).toBe(200);
       expect(res.body).toHaveLength(1);
-      expect(endpointStatusEntryRepositoryMock.findRecent).toHaveBeenCalledWith(20);
+      expect(endpointStatusEntryRepositoryMock.findRecent).toHaveBeenCalledWith(tenantId.toString(), 20);
     });
   });
 
