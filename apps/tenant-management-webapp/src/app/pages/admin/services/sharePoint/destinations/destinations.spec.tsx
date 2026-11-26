@@ -194,6 +194,18 @@ describe('sampleTestData', () => {
     });
   });
 
+  it('uses a link value for Hyperlink columns, which reject text', () => {
+    const link = { Url: 'https://example.com', Description: 'Sample link' };
+    expect(
+      sampleTestData([
+        { source: 'proof', target: 'Proof', columnType: 'hyperlink' },
+        { source: 'older', target: 'Older', linkFormat: 'hyperlink' },
+        { source: 'note', target: 'Note', columnType: 'text', linkFormat: 'hyperlink' },
+        { source: 'url', target: 'Url', linkFormat: 'text' },
+      ]),
+    ).toEqual({ proof: link, older: link, note: '', url: '' });
+  });
+
   it('reads list positions written with brackets or with dots', () => {
     expect(
       sampleTestData([

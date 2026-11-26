@@ -16,6 +16,13 @@ export class RowIdentityMissingError extends InvalidOperationError {
 const isPlainValueArray = (value: unknown): value is (string | number)[] =>
   Array.isArray(value) && value.every((item) => typeof item === 'string' || typeof item === 'number');
 
+// Mappings saved before column types existed mark a Hyperlink column with linkFormat instead.
+const isHyperlinkColumn = ({ columnType, linkFormat }: FieldMapping) =>
+  columnType ? columnType === 'hyperlink' : linkFormat === 'hyperlink';
+
+// SharePoint rejects any text in a Hyperlink column, so an empty answer, such as an optional file left blank, clears it with null.
+const isEmptyLink = (mapping: FieldMapping, value: unknown) => value === '' && isHyperlinkColumn(mapping);
+
 export function itemKeyFor(idempotencyFields: string[] | undefined, data: Record<string, unknown>): string | null {
   if (!idempotencyFields?.length) {
     return null;
@@ -37,13 +44,14 @@ export function mapFields(
   key: string | null,
 ): Record<string, unknown> {
   const fields: Record<string, unknown> = {};
-  for (const { source, target } of mappings) {
+  for (const mapping of mappings) {
+    const { source, target } = mapping;
     const value = valueAtPath(data, source);
     if (isPlainValueArray(value)) {
       fields[`${target}@odata.type`] = COLLECTION_TYPE;
       fields[target] = value.map(String);
     } else if (value !== undefined) {
-      fields[target] = value;
+      fields[target] = isEmptyLink(mapping, value) ? null : value;
     }
   }
   delete fields[`${ITEM_KEY_COLUMN}@odata.type`];
