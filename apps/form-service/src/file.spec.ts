@@ -18,10 +18,45 @@ describe('FileServiceImpl', () => {
     jest.resetAllMocks();
     directory.getResourceUrl.mockResolvedValue(new URL('https://file-service/files/orphaned-file'));
     tokenProvider.getAccessToken.mockResolvedValue('token');
+    axiosMock.isAxiosError.mockReturnValue(false);
   });
 
-  it('logs an error and preserves the return value when required file cleanup fails', async () => {
-    axiosMock.delete.mockRejectedValue(new Error('File service unavailable'));
+  it('returns the File Service deletion result without logging', async () => {
+    axiosMock.delete.mockResolvedValue({ data: { deleted: true } });
+
+    const result = await service.delete(tenantId, fileId);
+
+    expect(result).toBe(true);
+    expect(logger.error).not.toHaveBeenCalled();
+    expect(logger.warn).not.toHaveBeenCalled();
+  });
+
+  it('preserves a false deletion result from File Service', async () => {
+    axiosMock.delete.mockResolvedValue({ data: { deleted: false } });
+
+    const result = await service.delete(tenantId, fileId);
+
+    expect(result).toBe(false);
+    expect(logger.error).not.toHaveBeenCalled();
+    expect(logger.warn).not.toHaveBeenCalled();
+  });
+
+  it('treats an HTTP 404 as already deleted without logging', async () => {
+    const error = { response: { status: 404 } };
+    axiosMock.isAxiosError.mockImplementation((value) => value === error);
+    axiosMock.delete.mockRejectedValue(error);
+
+    const result = await service.delete(tenantId, fileId);
+
+    expect(result).toBe(true);
+    expect(logger.error).not.toHaveBeenCalled();
+    expect(logger.warn).not.toHaveBeenCalled();
+  });
+
+  it('logs an HTTP 500 deletion failure and preserves the return value', async () => {
+    const error = { response: { status: 500 } };
+    axiosMock.isAxiosError.mockImplementation((value) => value === error);
+    axiosMock.delete.mockRejectedValue(error);
 
     const result = await service.delete(tenantId, fileId);
 
@@ -31,6 +66,16 @@ describe('FileServiceImpl', () => {
       expect.stringContaining(`Error encountered deleting file ${fileId}`),
       { context: 'FileService', tenant: tenantId.toString() },
     );
+    expect(logger.warn).not.toHaveBeenCalled();
+  });
+
+  it('logs a network failure even when its message contains 404', async () => {
+    axiosMock.delete.mockRejectedValue(new Error('Network failed after 404 ms'));
+
+    const result = await service.delete(tenantId, fileId);
+
+    expect(result).toBeUndefined();
+    expect(logger.error).toHaveBeenCalledTimes(1);
     expect(logger.warn).not.toHaveBeenCalled();
   });
 });
