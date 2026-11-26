@@ -57,11 +57,11 @@ Calendar definition changes (`POST`, `PUT`, and `DELETE /calendars`) respond `40
 ### Dates
 Calendar service provides informational endpoints for Dates that includes information like which days are business days and which are holidays. Each date has an ID in the format `yyyyMMdd` (for example, `20261111`).
 
-Holidays have a `holidayType`:
+Holidays have a `holidayType`. Holiday names and dates follow [Alberta general holidays](https://www.alberta.ca/alberta-general-holidays).
 
 | holidayType | Meaning | Holidays |
 |:-|:-|:-|
-| `general` | Alberta general (statutory) holiday. | New Year's Day, Family Day, Good Friday, Victoria Day, Canada Day, Labour Day, Thanksgiving, Remembrance Day, Christmas Day |
+| `general` | Alberta general (statutory) holiday. | New Year's Day, Alberta Family Day, Good Friday, Victoria Day, Canada Day, Labour Day, Thanksgiving Day, Remembrance Day, Christmas Day |
 | `optional` | Alberta optional general holiday; employers choose whether to observe it. | Easter Monday, Heritage Day, National Day for Truth and Reconciliation (September 30), Boxing Day |
 | `staff` | Government of Alberta (GoA) staff holiday that isn't a public holiday. | Christmas Closure, Christmas Floater |
 
