@@ -40,17 +40,17 @@ The SDK reads the active revision, falling back to the latest revision (`/active
 
 All endpoints are under `https://configuration-service.adsp.alberta.ca/configuration/v2`. See the [API documentation](https://api.adsp.alberta.ca) for request and response schemas.
 
-| Endpoint                                                     | Purpose                                                       | Required role                                                         |
-| :----------------------------------------------------------- | :------------------------------------------------------------ | :-------------------------------------------------------------------- |
-| `GET /configuration/{namespace}`                             | Find configuration in a namespace.                            | `configuration-admin`, `configured-service`, or `export-job`          |
-| `GET /configuration/{namespace}/{name}`                      | Read configuration with its latest and active revisions.      | `configuration-reader`, `configuration-admin`, `configured-service`   |
-| `PATCH /configuration/{namespace}/{name}`                    | Update, replace, or remove properties of the latest revision. | `configuration-admin` or `configured-service`                         |
-| `POST /configuration/{namespace}/{name}`                     | Create a revision, or set the active revision.                | `configuration-admin`                                                 |
-| `DELETE /configuration/{namespace}/{name}`                   | Delete configuration and all its revisions.                   | `configuration-admin`                                                 |
-| `GET /configuration/{namespace}/{name}/latest`               | Read the configuration of the latest revision.                | Any read role, or anonymous if the definition allows it               |
-| `GET /configuration/{namespace}/{name}/active`               | Read the active revision.                                     | Any read role, or anonymous if the definition allows it               |
-| `GET /configuration/{namespace}/{name}/revisions`            | List revisions, newest first.                                 | `configuration-reader`, `configuration-admin`, `configured-service`   |
-| `GET /configuration/{namespace}/{name}/revisions/{revision}` | Read the configuration of a revision.                         | `configuration-reader`, `configuration-admin`, `configured-service`   |
+| Endpoint                                                     | Purpose                                                       | Required role                                                       |
+| :----------------------------------------------------------- | :------------------------------------------------------------ | :------------------------------------------------------------------ |
+| `GET /configuration/{namespace}`                             | Find configuration in a namespace.                            | `configuration-admin`, `configured-service`, or `export-job`        |
+| `GET /configuration/{namespace}/{name}`                      | Read configuration with its latest and active revisions.      | `configuration-reader`, `configuration-admin`, `configured-service` |
+| `PATCH /configuration/{namespace}/{name}`                    | Update, replace, or remove properties of the latest revision. | `configuration-admin` or `configured-service`                       |
+| `POST /configuration/{namespace}/{name}`                     | Create a revision, or set the active revision.                | `configuration-admin`                                               |
+| `DELETE /configuration/{namespace}/{name}`                   | Delete configuration and all its revisions.                   | `configuration-admin`                                               |
+| `GET /configuration/{namespace}/{name}/latest`               | Read the configuration of the latest revision.                | Any read role, or anonymous if the definition allows it             |
+| `GET /configuration/{namespace}/{name}/active`               | Read the active revision.                                     | Any read role, or anonymous if the definition allows it             |
+| `GET /configuration/{namespace}/{name}/revisions`            | List revisions, newest first.                                 | `configuration-reader`, `configuration-admin`, `configured-service` |
+| `GET /configuration/{namespace}/{name}/revisions/{revision}` | Read the configuration of a revision.                         | `configuration-reader`, `configuration-admin`, `configured-service` |
 
 The read roles also include the directory service `resource-resolver` and export service `export-job` roles. Configuration definitions have no endpoints of their own; they are configuration under `platform:configuration-service` (see [Configuration definition](#configuration-definition)).
 
