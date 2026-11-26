@@ -149,6 +149,16 @@ describe('status application handlers', () => {
 
       expect(next).toHaveBeenCalledWith(expect.any(Error));
     });
+
+    it('reads the recent entries of the tenant of the user', async () => {
+      entryRepository.findRecent.mockResolvedValueOnce([]);
+
+      const { res, done } = run(handler(), { user: admin, query: { ageInMinutes: '10' } });
+      await done;
+
+      expect(entryRepository.findRecent).toHaveBeenCalledWith(tenantId.toString(), 10);
+      expect(res.send).toHaveBeenCalledWith([]);
+    });
   });
 
   describe('deleteApplication', () => {

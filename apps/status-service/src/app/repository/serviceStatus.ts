@@ -4,6 +4,7 @@ import { ServiceStatusApplicationFilter, ServiceStatusApplication } from '../typ
 
 export interface ServiceStatusRepository extends Repository<ServiceStatusApplicationEntity, ServiceStatusApplication> {
   findEnabledApplications(tenantId: string): Promise<ServiceStatusApplicationEntity[]>;
+  get(appKey: string, tenantId?: string): Promise<ServiceStatusApplicationEntity>;
   find(filter: Partial<ServiceStatusApplicationFilter>): Promise<ServiceStatusApplicationEntity[]>;
   enable(entity: ServiceStatusApplicationEntity): Promise<ServiceStatusApplicationEntity>;
   disable(entity: ServiceStatusApplicationEntity): Promise<ServiceStatusApplicationEntity>;

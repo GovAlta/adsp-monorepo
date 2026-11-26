@@ -55,7 +55,8 @@ export class ApplicationRepo {
    * is that this method is being called because the status is now needed.
    */
   getStatus = async (user: User, appKey: string): Promise<ServiceStatusApplicationEntity> => {
-    const statuses = await this.#repository.find({ appKey: appKey });
+    const tenantId = user.tenantId.toString();
+    const statuses = await this.#repository.find({ appKey, tenantId });
     return statuses.length == 1
       ? statuses[0]
       : ServiceStatusApplicationEntity.create(user, this.#repository, {
@@ -65,12 +66,12 @@ export class ApplicationRepo {
           statusTimestamp: 0,
           status: '',
           enabled: false,
-          tenantId: user.tenantId.toString(),
+          tenantId,
         });
   };
 
-  findStatus = async (appKey: string): Promise<ServiceStatusApplicationEntity> => {
-    const statuses = await this.#repository.find({ appKey: appKey });
+  findStatus = async (appKey: string, tenantId: string): Promise<ServiceStatusApplicationEntity> => {
+    const statuses = await this.#repository.find({ appKey, tenantId });
     return statuses.length == 1 ? statuses[0] : null;
   };
 
@@ -191,7 +192,7 @@ export class ApplicationRepo {
     await this.#endpointStatusEntryRepository.deleteAll(app.appKey, user.tenantId.toString());
 
     // Delete the app itself.
-    this.#deleteConfigurationApp(appKey, user.tenantId);
+    await this.#deleteConfigurationApp(appKey, user.tenantId);
   };
 
   #deleteConfigurationApp = async (id: string, tenantId: AdspId) => {
