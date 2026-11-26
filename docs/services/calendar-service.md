@@ -57,6 +57,22 @@ Calendar definition changes (`POST`, `PUT`, and `DELETE /calendars`) respond `40
 ### Dates
 Calendar service provides informational endpoints for Dates that includes information like which days are business days and which are holidays. Each date has an ID in the format `yyyyMMdd` (for example, `20261111`).
 
+Holidays have a `holidayType`:
+
+| holidayType | Meaning | Holidays |
+|:-|:-|:-|
+| `general` | Alberta general (statutory) holiday. | New Year's Day, Family Day, Good Friday, Victoria Day, Canada Day, Labour Day, Thanksgiving, Remembrance Day, Christmas Day |
+| `optional` | Alberta optional general holiday; employers choose whether to observe it. | Easter Monday, Heritage Day, National Day for Truth and Reconciliation (September 30), Boxing Day |
+| `staff` | Government of Alberta (GoA) staff holiday that isn't a public holiday. | Christmas Closure, Christmas Floater |
+
+`isHoliday` is `true` when GoA offices are closed, so it's a day off for GoA staff: general and staff holidays, and the optional holidays GoA observes. GoA offices are open on National Day for Truth and Reconciliation, so it has `isHoliday: false`, stays a business day, and has no in-lieu day when it falls on a weekend.
+
+Use the `criteria` query parameter of `GET /calendar/v1/dates` to select holidays:
+- Alberta general holidays: `{"holidayType":"general"}`
+- Alberta optional holidays: `{"holidayType":"optional"}`
+- All Alberta public holidays: `{"holidayType":["general","optional"]}`
+- Every day off for GoA staff: `{"isHoliday":true}`
+
 ### Calendar
 A calendar is a container for *events*. Each calendar has a name, display name, and description, which are publicly accessible, and the `readRoles` and `updateRoles` that control access to its events.
 

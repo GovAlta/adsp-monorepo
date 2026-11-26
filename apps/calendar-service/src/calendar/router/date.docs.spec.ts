@@ -24,6 +24,7 @@ describe('date router documented behaviour', () => {
     isHoliday: true,
     isBusinessDay: false,
     holiday: 'Remembrance Day',
+    holidayType: 'general',
     isInLieuOfDay: false,
   };
 
@@ -64,6 +65,29 @@ describe('date router documented behaviour', () => {
 
         expect(res.status).toBe(400);
         expect(repositoryMock.getDates).not.toHaveBeenCalled();
+      },
+    );
+
+    it.each([['public'], [['general', 'stat']], [1]])('responds 400 for holidayType %j', async (holidayType) => {
+      const res = await request(createApp())
+        .get('/calendar/v1/dates')
+        .query({ criteria: JSON.stringify({ holidayType }) });
+
+      expect(res.status).toBe(400);
+      expect(repositoryMock.getDates).not.toHaveBeenCalled();
+    });
+
+    it.each([['optional'], [['general', 'optional']]])(
+      'responds 200 with dates of holidayType %j',
+      async (holidayType) => {
+        repositoryMock.getDates.mockResolvedValueOnce({ results: [], page: { size: 0 } });
+
+        const res = await request(createApp())
+          .get('/calendar/v1/dates')
+          .query({ criteria: JSON.stringify({ holidayType }) });
+
+        expect(res.status).toBe(200);
+        expect(repositoryMock.getDates).toHaveBeenCalledWith(10, undefined, { holidayType });
       },
     );
   });

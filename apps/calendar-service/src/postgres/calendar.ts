@@ -195,6 +195,7 @@ export class PostgresCalendarRepository implements CalendarRepository {
           isHoliday: record.is_holiday,
           isBusinessDay: record.is_business_day,
           holiday: record.holiday,
+          holidayType: record.holiday_type || null,
           isInLieuOfDay: record.is_in_lieu_day,
         }
       : null;
@@ -253,6 +254,13 @@ export class PostgresCalendarRepository implements CalendarRepository {
       }
 
       query.where(queryCriteria);
+
+      if (criteria.holidayType) {
+        query = query.whereIn(
+          'holiday_type',
+          Array.isArray(criteria.holidayType) ? criteria.holidayType : [criteria.holidayType],
+        );
+      }
 
       if (criteria.max) {
         query = query.where('id', '<=', criteria.max);

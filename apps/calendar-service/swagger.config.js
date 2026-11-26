@@ -26,7 +26,7 @@ Events can also be associated with a list of attendees, with each attendee defin
 The service also includes an API you can use to populate a calendar with special dates, so that you can display them on your calendars.
 Any date returned by the API will indicate whether or not;
 - it's a weekend,
-- it's a holiday,
+- it's a holiday, and whether it's an Alberta general, Alberta optional, or GoA staff holiday,
 - it's a business day,
 - it's an in-lieu day
 

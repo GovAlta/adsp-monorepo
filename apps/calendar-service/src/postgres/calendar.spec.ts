@@ -2,7 +2,7 @@ import { adspId } from '@abgov/adsp-service-sdk';
 import { InvalidOperationError } from '@core-services/core-common';
 import { knex, Knex } from 'knex';
 import { DateTime } from 'luxon';
-import { CalendarEntity, CalendarEventCriteria, CalendarEventEntity } from '../calendar';
+import { CalendarDateCriteria, CalendarEntity, CalendarEventCriteria, CalendarEventEntity } from '../calendar';
 import { toDateId, toTimeId } from '../utils';
 import { PostgresCalendarRepository } from './calendar';
 import { DateRecord, EventRecord } from './types';
@@ -140,6 +140,7 @@ describe('PostgresCalendarRepository', () => {
       is_business_day: false,
       is_in_lieu_day: false,
       holiday: null,
+      holiday_type: null,
     };
 
     beforeEach(() => {
@@ -199,6 +200,49 @@ describe('PostgresCalendarRepository', () => {
       const result = await queryRepository.getDates(10);
 
       expect(result.results).toEqual([]);
+    });
+
+    it('maps the holiday type of a date', async () => {
+      rows.mockReturnValueOnce([
+        {
+          ...dateRecord,
+          id: 20260930,
+          is_weekend: false,
+          is_business_day: true,
+          holiday: 'National Day for Truth and Reconciliation',
+          holiday_type: 'optional',
+        },
+      ]);
+
+      const result = await queryRepository.getDate(20260930);
+
+      expect(result).toEqual(
+        expect.objectContaining({
+          holiday: 'National Day for Truth and Reconciliation',
+          holidayType: 'optional',
+          isHoliday: false,
+          isBusinessDay: true,
+        }),
+      );
+    });
+
+    it('maps a date that is not a holiday with a null holiday type', async () => {
+      rows.mockReturnValueOnce([dateRecord]);
+
+      const result = await queryRepository.getDate(20261101);
+
+      expect(result.holidayType).toBeNull();
+    });
+
+    it.each([
+      ['a holiday type', 'general', ['general']],
+      ['holiday types', ['general', 'optional'], ['general', 'optional']],
+    ])('can get dates with %s', async (_, holidayType, expected) => {
+      await queryRepository.getDates(10, null, { holidayType } as CalendarDateCriteria);
+
+      const [statement] = execute.mock.calls.map(([, query]) => query as DriverQuery & { bindings: unknown[] });
+      expect(statement.sql).toContain('"holiday_type" in (');
+      expect(statement.bindings).toEqual(expect.arrayContaining(expected));
     });
 
     it('can get calendar events and load exclusions for series', async () => {
