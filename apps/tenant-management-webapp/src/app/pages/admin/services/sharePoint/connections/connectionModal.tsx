@@ -29,8 +29,9 @@ const HINTS: Record<ConnectionField | 'clientSecret', string> = {
   siteId:
     'The Microsoft Graph site ID: host name, site collection ID and site ID separated by commas, in the format <host_name>,<site_collection_id>,<site_id>.',
   clientSecret:
-    "The client secret value of the app registration. ADSP stores it encrypted and it can't be viewed again. Leave this blank to keep the current secret.",
+    "The client secret value of the app registration. ADSP stores it encrypted and it can't be read again after saving, so keep a copy in a secure location.",
 };
+const KEEP_SECRET_HINT = 'Leave this blank to keep the current secret.';
 
 export const ConnectionModal = ({ connectionId, open, onCancel, onSave }: ConnectionModalProps): JSX.Element => {
   const dispatch = useDispatch();
@@ -44,6 +45,7 @@ export const ConnectionModal = ({ connectionId, open, onCancel, onSave }: Connec
   const connections = useSelector((state: RootState) => state.sharepoint?.connections || {});
   const [connection, setConnection] = useState<SharepointConnection>(initialValue || defaultConnection);
   const [clientSecret, setClientSecret] = useState('');
+  const [confirmingSecret, setConfirmingSecret] = useState(false);
 
   useEffect(() => {
     if (connectionId) {
@@ -66,6 +68,16 @@ export const ConnectionModal = ({ connectionId, open, onCancel, onSave }: Connec
     validators.checkAll({ [field]: fieldValue, ...(id !== undefined ? { duplicate: id } : {}) });
   };
 
+  // Asks while the status is still loading too, since the current secret may be set.
+  const replacesSecret = !isNew && !!clientSecret && credentialStatus?.isSet !== false;
+
+  const commit = () => {
+    onSave(connection, clientSecret || undefined);
+    setConfirmingSecret(false);
+    validators.clear();
+    onCancel();
+  };
+
   const save = () => {
     const valid = validators.checkAll({
       name: connection.name,
@@ -77,9 +89,11 @@ export const ConnectionModal = ({ connectionId, open, onCancel, onSave }: Connec
     if (!valid) {
       return;
     }
-    onSave(connection, clientSecret || undefined);
-    validators.clear();
-    onCancel();
+    if (replacesSecret) {
+      setConfirmingSecret(true);
+    } else {
+      commit();
+    }
   };
 
   const site = splitSiteId(connection.siteId);
@@ -120,103 +134,141 @@ export const ConnectionModal = ({ connectionId, open, onCancel, onSave }: Connec
   );
 
   return (
-    <GoabModal
-      testId="add-connection-modal"
-      open={open}
-      heading={isNew ? 'Add connection' : 'Edit connection'}
-      actions={
-        <GoabButtonGroup alignment="end">
-          <GoabButton
-            size="compact"
-            type="secondary"
-            testId="connection-modal-cancel"
-            onClick={() => {
-              validators.clear();
-              onCancel();
-            }}
-          >
-            Cancel
-          </GoabButton>
-          <GoabButton
-            size="compact"
-            type="primary"
-            testId="connection-modal-save"
-            disabled={validators.haveErrors() || unchanged}
-            onClick={save}
-          >
-            Save
-          </GoabButton>
-        </GoabButtonGroup>
-      }
-    >
-      {input(
-        'name',
-        'Connection name',
-        'connection-name',
-        connection.name,
-        (value) => update('name', value),
-        errors?.['name'] || errors?.['duplicate'],
-      )}
-      <ConnectionPadding>
-        <GoabFormItem label="Connection ID">
-          <GoabInput
-            size="compact"
-            name="connection-id"
-            value={connection.id}
-            disabled={true}
-            width="100%"
-            onChange={() => undefined}
+    <>
+      <GoabModal
+        testId="add-connection-modal"
+        open={open && !confirmingSecret}
+        heading={isNew ? 'Add connection' : 'Edit connection'}
+        actions={
+          <GoabButtonGroup alignment="end">
+            <GoabButton
+              size="compact"
+              type="secondary"
+              testId="connection-modal-cancel"
+              onClick={() => {
+                validators.clear();
+                onCancel();
+              }}
+            >
+              Cancel
+            </GoabButton>
+            <GoabButton
+              size="compact"
+              type="primary"
+              testId="connection-modal-save"
+              disabled={validators.haveErrors() || unchanged}
+              onClick={save}
+            >
+              Save
+            </GoabButton>
+          </GoabButtonGroup>
+        }
+      >
+        {input(
+          'name',
+          'Connection name',
+          'connection-name',
+          connection.name,
+          (value) => update('name', value),
+          errors?.['name'] || errors?.['duplicate'],
+        )}
+        <ConnectionPadding>
+          <GoabFormItem label="Connection ID">
+            <GoabInput
+              size="compact"
+              name="connection-id"
+              value={connection.id}
+              disabled={true}
+              width="100%"
+              onChange={() => undefined}
+            />
+          </GoabFormItem>
+        </ConnectionPadding>
+        {input(
+          'entraTenantId',
+          'Entra tenant ID',
+          'entra-tenant-id',
+          connection.entraTenantId,
+          (value) => update('entraTenantId', value),
+          errors?.['entraTenantId'],
+        )}
+        {input(
+          'clientId',
+          'Client ID',
+          'client-id',
+          connection.clientId,
+          (value) => update('clientId', value),
+          errors?.['clientId'],
+        )}
+        {input(
+          'siteId',
+          'SharePoint site ID',
+          'site-id',
+          connection.siteId,
+          (value) => update('siteId', value),
+          errors?.['siteId'],
+          !errors?.['siteId'] && site.webId && (
+            <SiteIdParts>
+              <dt>Host name</dt>
+              <dd>{site.host}</dd>
+              <dt>Site collection ID</dt>
+              <dd>{site.siteCollectionId}</dd>
+              <dt>Site ID</dt>
+              <dd>{site.webId}</dd>
+            </SiteIdParts>
+          ),
+        )}
+        <ConnectionPadding>
+          <FieldLabel
+            label="Client secret"
+            hint={isNew ? HINTS.clientSecret : `${HINTS.clientSecret} ${KEEP_SECRET_HINT}`}
           />
-        </GoabFormItem>
-      </ConnectionPadding>
-      {input(
-        'entraTenantId',
-        'Entra tenant ID',
-        'entra-tenant-id',
-        connection.entraTenantId,
-        (value) => update('entraTenantId', value),
-        errors?.['entraTenantId'],
+          <GoabFormItem label="" helpText={secretStatus}>
+            <GoabInput
+              size="compact"
+              type="password"
+              name="client-secret"
+              testId="client-secret"
+              value={clientSecret}
+              width="100%"
+              onChange={(detail: GoabInputOnChangeDetail) => setClientSecret(detail.value)}
+            />
+          </GoabFormItem>
+        </ConnectionPadding>
+      </GoabModal>
+      {open && confirmingSecret && (
+        <GoabModal
+          testId="replace-secret-confirmation"
+          open={true}
+          heading="Replace client secret"
+          maxWidth="640px"
+          actions={
+            <GoabButtonGroup alignment="end">
+              <GoabButton
+                size="compact"
+                type="secondary"
+                testId="replace-secret-cancel"
+                onClick={() => setConfirmingSecret(false)}
+              >
+                Cancel
+              </GoabButton>
+              <GoabButton
+                size="compact"
+                type="primary"
+                variant="destructive"
+                testId="replace-secret-confirm"
+                onClick={commit}
+              >
+                Replace secret
+              </GoabButton>
+            </GoabButtonGroup>
+          }
+        >
+          Replacing the client secret could be destructive. The current secret is overwritten and can't be recovered,
+          and pushes to SharePoint fail if the new secret is wrong. Make sure you have the current secret saved as a
+          backup before you continue.
+        </GoabModal>
       )}
-      {input(
-        'clientId',
-        'Client ID',
-        'client-id',
-        connection.clientId,
-        (value) => update('clientId', value),
-        errors?.['clientId'],
-      )}
-      {input(
-        'siteId',
-        'SharePoint site ID',
-        'site-id',
-        connection.siteId,
-        (value) => update('siteId', value),
-        errors?.['siteId'],
-        !errors?.['siteId'] && site.webId && (
-          <SiteIdParts>
-            <dt>Host name</dt>
-            <dd>{site.host}</dd>
-            <dt>Site collection ID</dt>
-            <dd>{site.siteCollectionId}</dd>
-            <dt>Site ID</dt>
-            <dd>{site.webId}</dd>
-          </SiteIdParts>
-        ),
-      )}
-      <ConnectionPadding>
-        <FieldLabel label="Client secret" hint={HINTS.clientSecret} />
-        <GoabFormItem label="" helpText={secretStatus}>
-          <GoabInput
-            size="compact"
-            type="password"
-            name="client-secret"
-            testId="client-secret"
-            value={clientSecret}
-            width="100%"
-            onChange={(detail: GoabInputOnChangeDetail) => setClientSecret(detail.value)}
-          />
-        </GoabFormItem>
-      </ConnectionPadding>
-    </GoabModal>
+    </>
   );
 };

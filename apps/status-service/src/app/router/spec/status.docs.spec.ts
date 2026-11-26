@@ -367,7 +367,9 @@ describe('status router documented behaviour', () => {
     it('retrieves the recent ping results', async () => {
       endpointStatusEntryRepositoryMock.findRecent.mockResolvedValueOnce([entry]);
 
-      const res = await request(createApp(tenantUser)).get('/status/v1/applications/endpoint-status-entries?ageInMinutes=20');
+      const res = await request(createApp(tenantUser)).get(
+        '/status/v1/applications/endpoint-status-entries?ageInMinutes=20',
+      );
 
       expect(res.status).toBe(200);
       expect(res.body).toHaveLength(1);
@@ -414,6 +416,63 @@ describe('status router documented behaviour', () => {
       const res = await request(createApp(null)).get(`/status/v1/webhook/${webhook.id}/test/monitored-service-down`);
 
       expect(res.status).toBe(401);
+    });
+  });
+
+  describe('CS-5728 input and tenant validation', () => {
+    const endpoint = { url: 'https://my-application.alberta.ca/health' };
+
+    it.each([
+      ['patch', `/status/v1/applications/${appKey}/enable`],
+      ['patch', `/status/v1/applications/${appKey}/disable`],
+      ['patch', `/status/v1/applications/${appKey}/toggle`],
+      ['patch', `/status/v1/applications/${appKey}/status`],
+      ['post', '/status/v1/applications'],
+      ['put', `/status/v1/applications/${appKey}`],
+      ['delete', `/status/v1/applications/${appKey}`],
+      ['get', `/status/v1/applications/${appKey}/endpoint-status-entries`],
+      ['get', '/status/v1/applications/endpoint-status-entries'],
+    ])('returns 401 on %s %s for a token without a tenant context', async (method, path) => {
+      const coreAdmin = { ...coreUser, roles: ['status-admin'] } as unknown as User;
+      const res = await request(createApp(coreAdmin))[method](path).send({ status: 'operational' });
+
+      expect(res.status).toBe(401);
+    });
+
+    it.each([
+      ['no endpoint', { name: 'New Application' }],
+      ['an invalid endpoint url', { name: 'New Application', endpoint: { url: 'not-a-url' } }],
+      ['a name that is not kebab-case', { name: '!!!', endpoint }],
+      ['an invalid status', { name: 'New Application', endpoint, status: 'bogus' }],
+    ])('POST returns 400 for %s', async (_, body) => {
+      const res = await request(createApp(user)).post('/status/v1/applications').send(body);
+
+      expect(res.status).toBe(400);
+      expect(axiosMock.patch).not.toHaveBeenCalled();
+    });
+
+    it('PUT returns 400 without a name', async () => {
+      const res = await request(createApp(user)).put(`/status/v1/applications/${appKey}`).send({ endpoint });
+
+      expect(res.status).toBe(400);
+      expect(axiosMock.patch).not.toHaveBeenCalled();
+    });
+
+    it('PATCH status returns 400 for an unknown status', async () => {
+      const res = await request(createApp(user))
+        .patch(`/status/v1/applications/${appKey}/status`)
+        .send({ status: 'bogus' });
+
+      expect(res.status).toBe(400);
+      expect(eventServiceMock.send).not.toHaveBeenCalled();
+    });
+
+    it('webhook test returns 404 when the push service has no webhooks configured', async () => {
+      configurationServiceMock.getConfiguration.mockResolvedValue({});
+
+      const res = await request(createApp(user)).get(`/status/v1/webhook/${webhook.id}/test/monitored-service-down`);
+
+      expect(res.status).toBe(404);
     });
   });
 });

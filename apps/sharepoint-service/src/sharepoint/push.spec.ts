@@ -1,6 +1,13 @@
 import { adspId } from '@abgov/adsp-service-sdk';
 import { InvalidOperationError, NotFoundError } from '@core-services/core-common';
-import { DestinationDisabledError, DestinationNotSetUpError, DetailRowsFailedError, SharePointError } from './errors';
+import {
+  ConnectionNotFoundError,
+  DestinationDisabledError,
+  DestinationNotFoundError,
+  DestinationNotSetUpError,
+  DetailRowsFailedError,
+  SharePointError,
+} from './errors';
 import { GraphClient, GraphTokenProvider } from './graph';
 import { RowIdentityMissingError } from './mapper';
 import { MAX_DETAIL_ROWS, SharePointPusher } from './push';
@@ -69,6 +76,27 @@ describe('SharePointPusher', () => {
     });
   });
 
+  it('clears the link on the existing row when a file is removed', async () => {
+    graph.findItemIdByKey.mockResolvedValueOnce('item-7');
+    const withProof: SharePointConfiguration = {
+      ...configuration,
+      destinations: {
+        'hr-proof': {
+          ...intake,
+          id: 'hr-proof',
+          fieldMappings: [{ source: 'proof', target: 'Proof', columnType: 'hyperlink' }],
+        },
+      },
+    };
+
+    await pusher.push(tenantId, withProof, 'hr-proof', { applicationNumber: 'A-1', proof: '' });
+
+    expect(graph.updateItemFields).toHaveBeenCalledWith('token-1', siteId, 'list-1', 'item-7', {
+      Proof: null,
+      AdspItemKey: 'A-1',
+    });
+  });
+
   it('overwrites the row that already has the key', async () => {
     graph.findItemIdByKey.mockResolvedValueOnce('item-7');
 
@@ -121,13 +149,17 @@ describe('SharePointPusher', () => {
   });
 
   it('throws not found for an unknown destination', async () => {
-    await expect(pusher.push(tenantId, configuration, 'missing', {})).rejects.toBeInstanceOf(NotFoundError);
+    const error = await pusher.push(tenantId, configuration, 'missing', {}).catch((err) => err);
+    expect(error).toBeInstanceOf(NotFoundError);
+    expect(error).toBeInstanceOf(DestinationNotFoundError);
   });
 
   it('throws not found when the connection is missing', async () => {
-    await expect(
-      pusher.push(tenantId, { ...configuration, connections: {} }, 'hr-intake', { applicationNumber: 'A-1' }),
-    ).rejects.toBeInstanceOf(NotFoundError);
+    const error = await pusher
+      .push(tenantId, { ...configuration, connections: {} }, 'hr-intake', { applicationNumber: 'A-1' })
+      .catch((err) => err);
+    expect(error).toBeInstanceOf(NotFoundError);
+    expect(error).toBeInstanceOf(ConnectionNotFoundError);
   });
 
   it('retries once with a new token when Graph rejects the cached token', async () => {
@@ -480,6 +512,7 @@ describe('SharePointPusher', () => {
         errorCode: 'graph:serviceNotAvailable',
         retryable: true,
         dataId: 'item-7',
+        outcome: 'updated',
         detailFailures: [{ listId: 'members', indexes: [1] }],
       });
       expect(createdIn('members')).toHaveLength(3);
@@ -532,6 +565,7 @@ describe('SharePointPusher', () => {
 
       await expect(pusher.push(tenantId, config, 'household', data(1))).rejects.toMatchObject({
         dataId: 'item-7',
+        outcome: 'updated',
         retryable: true,
         detailFailures: [{ listId: 'members', indexes: [], oldRowsLeft: 1 }],
       });

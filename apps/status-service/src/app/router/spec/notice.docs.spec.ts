@@ -46,6 +46,7 @@ describe('notice router documented behaviour', () => {
     roles: [ServiceUserRoles.StatusAdmin],
   } as unknown as User;
   const user = { id: 'tester', name: 'Test User', tenantId, isCore: false, roles: [] } as unknown as User;
+  const coreUser = { id: 'core', name: 'Core User', isCore: true, roles: [ServiceUserRoles.StatusAdmin] } as unknown as User;
   const noticeId = '6730c4f1a2b3c4d5e6f70812';
   const body = {
     message: 'My Application will be down for weekly maintenance during the following hours.',
@@ -121,6 +122,29 @@ describe('notice router documented behaviour', () => {
       });
     });
 
+    it('returns 404 for an anonymous request with an unknown tenant name', async () => {
+      const res = await request(createApp(null)).get('/notice/v1/notices?name=unknown-tenant');
+
+      expect(res.status).toBe(404);
+      expect(res.body.errorMessage).toContain('unknown-tenant');
+      expect(noticeRepositoryMock.find).not.toHaveBeenCalled();
+    });
+
+    it('ignores a repeated name parameter instead of failing', async () => {
+      const res = await request(createApp(null)).get('/notice/v1/notices?name=a&name=b');
+
+      expect(res.status).toBe(200);
+      expect(noticeRepositoryMock.find).toHaveBeenCalledWith(50, 0, { mode: 'published' });
+    });
+
+    it('returns 400 for a token without a tenant', async () => {
+      const res = await request(createApp(coreUser)).get('/notice/v1/notices');
+
+      expect(res.status).toBe(400);
+      expect(res.body.errorMessage).toContain('tenant context');
+      expect(noticeRepositoryMock.find).not.toHaveBeenCalled();
+    });
+
     it('retrieves notices in a mode for a status-admin', async () => {
       const res = await request(createApp(admin)).get('/notice/v1/notices?mode=draft&top=10&after=10');
 
@@ -137,6 +161,32 @@ describe('notice router documented behaviour', () => {
       expect(res.body).toEqual(
         expect.objectContaining({ mode: 'draft', tennantServRef: body.tennantServRef, tenantName: 'My Tenant' }),
       );
+    });
+
+    it.each(['message', 'tennantServRef', 'startDate', 'endDate'])('returns 400 when %s is missing', async (field) => {
+      const res = await request(createApp(admin))
+        .post('/notice/v1/notices')
+        .send({ ...body, [field]: undefined });
+
+      expect(res.status).toBe(400);
+      expect(res.body.errorMessage).toContain(field);
+      expect(noticeRepositoryMock.save).not.toHaveBeenCalled();
+    });
+
+    it('returns 400 for a date that is not valid', async () => {
+      const res = await request(createApp(admin))
+        .post('/notice/v1/notices')
+        .send({ ...body, startDate: 'tomorrow' });
+
+      expect(res.status).toBe(400);
+      expect(res.body.errorMessage).toContain('startDate must be a valid date');
+    });
+
+    it('returns 400 for a token without a tenant', async () => {
+      const res = await request(createApp(coreUser)).post('/notice/v1/notices').send(body);
+
+      expect(res.status).toBe(400);
+      expect(tenantServiceMock.getTenant).not.toHaveBeenCalled();
     });
 
     it('returns 401 for a user without the status-admin role', async () => {
@@ -178,6 +228,13 @@ describe('notice router documented behaviour', () => {
 
       expect(res.status).toBe(404);
     });
+
+    it('returns 400 for a token without a tenant', async () => {
+      const res = await request(createApp(coreUser)).get(`/notice/v1/notices/${noticeId}`);
+
+      expect(res.status).toBe(400);
+      expect(noticeRepositoryMock.get).not.toHaveBeenCalled();
+    });
   });
 
   describe('PATCH /notice/v1/notices/{id}', () => {
@@ -216,6 +273,23 @@ describe('notice router documented behaviour', () => {
 
       expect(res.status).toBe(404);
     });
+
+    it('returns 400 for an end date that is not valid', async () => {
+      const res = await request(createApp(admin)).patch(`/notice/v1/notices/${noticeId}`).send({ endDate: 'later' });
+
+      expect(res.status).toBe(400);
+      expect(res.body.errorMessage).toContain('endDate must be a valid date');
+      expect(noticeRepositoryMock.get).not.toHaveBeenCalled();
+    });
+
+    it('returns 400 for a token without a tenant', async () => {
+      const res = await request(createApp(coreUser))
+        .patch(`/notice/v1/notices/${noticeId}`)
+        .send({ mode: 'published' });
+
+      expect(res.status).toBe(400);
+      expect(noticeRepositoryMock.get).not.toHaveBeenCalled();
+    });
   });
 
   describe('DELETE /notice/v1/notices/{id}', () => {
@@ -242,6 +316,13 @@ describe('notice router documented behaviour', () => {
       const res = await request(createApp(admin)).delete(`/notice/v1/notices/${noticeId}`);
 
       expect(res.status).toBe(404);
+    });
+
+    it('returns 400 for a token without a tenant', async () => {
+      const res = await request(createApp(coreUser)).delete(`/notice/v1/notices/${noticeId}`);
+
+      expect(res.status).toBe(400);
+      expect(noticeRepositoryMock.get).not.toHaveBeenCalled();
     });
   });
 });

@@ -45,7 +45,9 @@ The error types extend `GoAError` from `@abgov/adsp-service-sdk` and carry their
 | `NotFoundError`                                                            | 404       | `{ errorMessage }`                                |
 | Any of the above given a different `extra.statusCode`                      | That code | `{ errorMessage }`                                |
 | Request body that body-parser can't parse (malformed JSON)                 | 400       | `{ errorMessage: 'Malformed request body: ...' }` |
-| Anything else, including other `GoAError` subclasses and an oversized body | 500       | Text `Internal Server Error`; the error is logged |
+| Request body over the `express.json` size limit                            | 413       | `{ errorMessage: 'Request body exceeds the size limit: ...' }` |
+| Any other body-parser rejection, such as an unsupported charset            | Its own   | `{ errorMessage: 'Malformed request body: ...' }` |
+| Anything else, including other `GoAError` subclasses                       | 500       | Text `Internal Server Error`; the error is logged |
 
 Only the listed classes keep their status code. A `GoAError` of another class, such as a service's own error type, is a 500 unless the service handles it in its own error handler first.
 

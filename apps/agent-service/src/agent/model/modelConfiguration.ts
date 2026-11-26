@@ -49,6 +49,9 @@ export function getAgentMaxOutputTokens(agentId?: string): number | undefined {
       return environment.AGENT_NOTIFICATION_MAX_OUTPUT_TOKENS;
     case PDF_GENERATION_AGENT_ID:
       return environment.AGENT_PDF_MAX_OUTPUT_TOKENS;
+    case FORM_GENERATION_AGENT_ID:
+      // 0 turns the form generation chat's limit off; the planner and step builder are not limited by it.
+      return environment.AGENT_FORM_GENERATION_MAX_OUTPUT_TOKENS || undefined;
     default:
       return undefined;
   }

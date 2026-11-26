@@ -32,12 +32,14 @@ const createState = ({
   forms = {},
   formResults = [],
   formCriteria = getDefaultFormCriteria(),
+  appliedFormCriteria = formCriteria,
   formSort = getDefaultResultsSort(),
   roles = ['urn:ads:platform:form-service:form-admin'],
 }: {
   forms?: Record<string, unknown>;
   formResults?: string[];
   formCriteria?: ReturnType<typeof getDefaultFormCriteria>;
+  appliedFormCriteria?: ReturnType<typeof getDefaultFormCriteria>;
   formSort?: ReturnType<typeof getDefaultResultsSort>;
   roles?: string[];
 } = {}) => ({
@@ -87,6 +89,7 @@ const createState = ({
     },
     definitionCriteria: {},
     formCriteria,
+    appliedFormCriteria,
     formSort,
     next: {
       definitions: null,
@@ -213,6 +216,62 @@ describe('Responses', () => {
     expect(baseElement.querySelector("goa-badge[testId='active-filter-count']").getAttribute('content')).toBe(
       '2 active',
     );
+  });
+
+  it('should show the applied filters above the results', () => {
+    const criteria = { statusEquals: 'submitted', createDateAfter: '2026-11-02T00:00:00.000Z' };
+    const { baseElement } = renderResponses(createState({ appliedFormCriteria: criteria }));
+
+    const contents = Array.from(baseElement.querySelectorAll("goa-filter-chip[testid^='applied-filter-']")).map(
+      (chip) => chip.getAttribute('content'),
+    );
+    expect(contents).toEqual(['From date: Nov 2, 2026', 'Status: Submitted']);
+  });
+
+  it('should keep the applied filters visible when nothing matches', () => {
+    const criteria = { statusEquals: 'submitted' };
+    const { baseElement } = renderResponses(createState({ formResults: [], appliedFormCriteria: criteria }));
+
+    expect(baseElement.querySelector("goa-filter-chip[testid='applied-filter-statusEquals']")).toBeTruthy();
+  });
+
+  it('should drop the criteria of a removed filter and search again', () => {
+    const criteria = { statusEquals: 'submitted', createDateAfter: '2026-11-02T00:00:00.000Z' };
+    const { baseElement, store } = renderResponses(
+      createState({ formCriteria: criteria, appliedFormCriteria: criteria }),
+    );
+
+    fireEvent(
+      baseElement.querySelector("goa-filter-chip[testid='applied-filter-statusEquals']"),
+      new CustomEvent('_click'),
+    );
+
+    expect(store.getActions()).toContainEqual({
+      type: 'form/setFormCriteria',
+      payload: { createDateAfter: '2026-11-02T00:00:00.000Z' },
+    });
+    expect(findForms).toHaveBeenCalledWith({
+      definitionId,
+      criteria: { createDateAfter: '2026-11-02T00:00:00.000Z' },
+      sort: getDefaultResultsSort(),
+    });
+  });
+
+  it('should drop a removed data value filter from the data criteria', () => {
+    const criteria = { dataCriteria: { 'applicant.region': 'North', 'applicant.office': 'Calgary' } };
+    const { baseElement, store } = renderResponses(
+      createState({ formCriteria: criteria, appliedFormCriteria: criteria }),
+    );
+
+    fireEvent(
+      baseElement.querySelector("goa-filter-chip[testid='applied-filter-dataCriteria.applicant.region']"),
+      new CustomEvent('_click'),
+    );
+
+    expect(store.getActions()).toContainEqual({
+      type: 'form/setFormCriteria',
+      payload: { dataCriteria: { 'applicant.office': 'Calgary' } },
+    });
   });
 
   it('should keep filter controls mounted and find responses from the drawer', () => {

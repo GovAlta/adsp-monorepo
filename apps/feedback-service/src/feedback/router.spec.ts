@@ -138,6 +138,28 @@ describe('router', () => {
       expect(req.tenant.id.toString()).toBe(tenantId.toString());
     });
 
+    it('can resolve tenant from request body as name with multiple hyphens', async () => {
+      const req = {
+        tenant: null,
+        user: { tenantId, id: 'tester', roles: [ServiceRoles.FeedbackProvider] },
+        body: {
+          tenant: 'my-test-tenant',
+        },
+      };
+      const res = {};
+      const next = jest.fn();
+
+      tenantServiceMock.getTenantByName.mockResolvedValueOnce({ id: tenantId });
+      const handler = resolveFeedbackContext(
+        tenantServiceMock as unknown as TenantService,
+        jest.fn() as unknown as RateLimitRequestHandler,
+      );
+      await handler(req as Request, res as Response, next);
+      expect(next).toHaveBeenCalledWith();
+      expect(tenantServiceMock.getTenantByName).toHaveBeenCalledWith('my test tenant');
+      expect(req.tenant.id.toString()).toBe(tenantId.toString());
+    });
+
     it('can ignore tenant from request body', async () => {
       const req = {
         tenant: { id: tenantId },
@@ -664,6 +686,44 @@ describe('router', () => {
       expect(feedbackSiteServiceMock.countAllSites).not.toHaveBeenCalled();
       expect(res.json).toHaveBeenCalledWith(2);
     });
+  });
+
+  it('can get sites for a specific tenant with multiple hyphens in the name', async () => {
+    const mockTenant = { id: 'urn:ads:my-test-tenant:feedback-service', name: 'My Test Tenant' };
+    tenantServiceMock.getTenantByName.mockResolvedValueOnce(mockTenant);
+    const req = {
+      tenant: { id: tenantId },
+      user: { tenantId, id: 'tester', isCore: true, roles: [ServiceRoles.FeedbackReader] },
+      query: { tenant: 'my-test-tenant' },
+    };
+    const res = {
+      json: jest.fn(),
+    };
+    const next = jest.fn();
+
+    const handler = getSites(feedbackSiteServiceMock, tenantServiceMock);
+    await handler(req as unknown as Request, res as unknown as Response, next);
+    expect(tenantServiceMock.getTenantByName).toHaveBeenCalledWith('my test tenant');
+    expect(feedbackSiteServiceMock.getTenantSites).toHaveBeenCalledWith([mockTenant.id]);
+  });
+
+  it('can get the count for a specific tenant with multiple hyphens in the name', async () => {
+    const mockTenant = { id: 'urn:ads:my-test-tenant:feedback-service', name: 'My Test Tenant' };
+    tenantServiceMock.getTenantByName.mockResolvedValueOnce(mockTenant);
+    const req = {
+      tenant: { id: tenantId },
+      user: { tenantId, id: 'tester', isCore: true, roles: [ServiceRoles.FeedbackReader] },
+      query: { tenant: 'my-test-tenant', count: 'true' },
+    };
+    const res = {
+      json: jest.fn(),
+    };
+    const next = jest.fn();
+
+    const handler = getSites(feedbackSiteServiceMock, tenantServiceMock);
+    await handler(req as unknown as Request, res as unknown as Response, next);
+    expect(tenantServiceMock.getTenantByName).toHaveBeenCalledWith('my test tenant');
+    expect(feedbackSiteServiceMock.countTenantSites).toHaveBeenCalledWith([mockTenant.id]);
   });
   describe('readValues tenantId query logic', () => {
     const anotherTenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/another`;

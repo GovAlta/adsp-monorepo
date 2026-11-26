@@ -236,6 +236,31 @@ describe('feedback router documented behaviour', () => {
       expect(res.status).toBe(400);
     });
 
+    it('returns 400 for a core user without tenantId', async () => {
+      const res = await request(await createApp(coreUser([ServiceRoles.FeedbackReader]))).get(
+        `/feedback/v1/feedback/summary?site=${site}`
+      );
+
+      expect(res.status).toBe(400);
+      expect(valueServiceMock.readSummary).not.toHaveBeenCalled();
+    });
+
+    it('returns the summary of the requested tenant for a core user with tenantId', async () => {
+      valueServiceMock.readSummary.mockResolvedValueOnce({
+        totalResponses: 1,
+        averageRating: 4,
+        responsesWithComments: 1,
+        responsesWithIssues: 0,
+      });
+
+      const res = await request(await createApp(coreUser([ServiceRoles.FeedbackReader]))).get(
+        `/feedback/v1/feedback/summary?site=${site}&tenantId=${tenantId}`
+      );
+
+      expect(res.status).toBe(200);
+      expect(valueServiceMock.readSummary).toHaveBeenCalledWith(tenantId, expect.objectContaining({ site }));
+    });
+
     it('returns the summary for a user without the feedback-reader role', async () => {
       valueServiceMock.readSummary.mockResolvedValueOnce({
         totalResponses: 1,

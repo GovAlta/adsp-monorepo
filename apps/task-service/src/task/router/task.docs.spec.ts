@@ -233,6 +233,11 @@ describe('task router documented behaviour', () => {
       expect(res.status).toBe(400);
     });
 
+    it('responds 400 for a priority that is not a number', async () => {
+      const res = await request(createApp(writer)).patch(`/task/v1/tasks/${taskId}`).send({ priority: 'High' });
+      expect(res.status).toBe(400);
+    });
+
     it('responds 401 without a token', async () => {
       const res = await request(createApp(null)).patch(`/task/v1/tasks/${taskId}`).send({});
       expect(res.status).toBe(401);

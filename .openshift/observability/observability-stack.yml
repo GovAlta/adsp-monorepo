@@ -45,7 +45,7 @@ parameters:
     description: Source Docker image for Tempo import.
     displayName: Tempo Image
     required: true
-    value: grafana/tempo:2.7.2
+    value: docker.io/grafana/tempo:2.10.10
   - name: TEMPO_STORAGE_CLASS_NAME
     description: Storage class for Tempo data.
     displayName: Tempo Storage Class
@@ -71,7 +71,7 @@ parameters:
     description: Source Docker image for Collector import.
     displayName: Collector Image
     required: true
-    value: ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector-contrib:0.125.0
+    value: ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector-contrib:0.166.0
   - name: COLLECTOR_REPLICAS
     description: Number of collector replicas.
     displayName: Collector Replicas
@@ -87,7 +87,7 @@ parameters:
     description: Source Docker image for Prometheus import.
     displayName: Prometheus Image
     required: true
-    value: prom/prometheus:v3.2.1
+    value: quay.io/prometheus/prometheus:v3.16.0
   - name: PROMETHEUS_STORAGE_CLASS_NAME
     description: Storage class for Prometheus data.
     displayName: Prometheus Storage Class
@@ -113,7 +113,7 @@ parameters:
     description: Source Docker image for Grafana import.
     displayName: Grafana Image
     required: true
-    value: grafana/grafana:11.5.2
+    value: docker.io/grafana/grafana:12.4.16
   - name: GRAFANA_SECRET_NAME
     description: Name of an existing secret containing Grafana credentials.
     displayName: Grafana Secret Name
@@ -550,7 +550,7 @@ objects:
             send_batch_max_size: 1024
 
         exporters:
-          otlp:
+          otlp_grpc:
             endpoint: ${TEMPO_NAME}:4317
             tls:
               insecure: true
@@ -565,11 +565,15 @@ objects:
               max_elapsed_time: 300s
           prometheus:
             endpoint: 0.0.0.0:8889
-            resource_to_telemetry_conversion:
-              enabled: true
+            # Every resource attribute becomes a label; the audit alerts group by deployment_environment.
+            resource_constant_labels:
+              included: ['*']
+            # Keeps the label set collector 0.125 produced. Scope labels would add three labels to
+            # every series, which counts against the scrape's label_limit.
+            without_scope_info: true
 
         connectors:
-          servicegraph:
+          service_graph:
             dimensions:
               - http.method
               - http.status_code
@@ -584,7 +588,7 @@ objects:
           # NOTE: these buckets and dimensions multiply the spanmetrics series count. Do not apply
           # them to an environment until every service runs an adsp-service-sdk with bounded span
           # names (the route-template fix), or Prometheus will OOM on span_name cardinality.
-          spanmetrics:
+          span_metrics:
             # Without this the connector exports every span name it has ever seen, forever. Measured
             # before the change: 113 of 127 span names in dev (89%) and 245 of 319 in uat (77%) had
             # seen no call in 15 minutes yet were still being scraped every interval -- so they never
@@ -592,6 +596,8 @@ objects:
             # stop being exported and age out normally.
             metrics_expiration: 15m
             histogram:
+              # The connector defaults to seconds; dashboards query traces_span_metrics_duration_milliseconds_*.
+              unit: ms
               explicit:
                 buckets: [2ms, 5ms, 10ms, 50ms, 100ms, 250ms, 500ms, 1s, 2s, 5s]
             dimensions:
@@ -618,9 +624,9 @@ objects:
             traces:
               receivers: [otlp]
               processors: [memory_limiter, filter/drop-low-value-http-spans, resource, batch]
-              exporters: [otlp, servicegraph, spanmetrics]
+              exporters: [otlp_grpc, service_graph, span_metrics]
             metrics:
-              receivers: [otlp, servicegraph, spanmetrics]
+              receivers: [otlp, service_graph, span_metrics]
               processors: [memory_limiter, resource, batch]
               exporters: [prometheus]
   - apiVersion: apps/v1

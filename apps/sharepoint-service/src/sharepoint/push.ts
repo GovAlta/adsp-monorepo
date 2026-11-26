@@ -1,7 +1,8 @@
 import { AdspId } from '@abgov/adsp-service-sdk';
-import { InvalidOperationError, NotFoundError } from '@core-services/core-common';
+import { InvalidOperationError } from '@core-services/core-common';
 import { runLimited } from './concurrency';
 import { valueAtPath } from './dataPath';
+import { resolveDestination } from './destinations';
 import { DestinationDisabledError, DestinationNotSetUpError, DetailRowsFailedError, SharePointError } from './errors';
 import { GraphClient, GraphTokenProvider } from './graph';
 import { ITEM_KEY_COLUMN, itemKeyFor, mapFields } from './mapper';
@@ -42,7 +43,10 @@ interface DetailListOutcome {
   errors?: SharePointError[];
 }
 
-function prepareDetailLists(destination: SharePointDestination, data: Record<string, unknown>): PreparedDetailList[] {
+export function prepareDetailLists(
+  destination: SharePointDestination,
+  data: Record<string, unknown>,
+): PreparedDetailList[] {
   const detailLists = destination.detailLists ?? [];
   if (detailLists.length && !destination.idempotencyFields?.length) {
     throw new InvalidOperationError(
@@ -77,21 +81,6 @@ export class SharePointPusher {
     private graph: GraphClient,
   ) {}
 
-  private resolve(
-    configuration: SharePointConfiguration | undefined,
-    destinationId: string,
-  ): { destination: SharePointDestination; connection: SharePointConnection } {
-    const destination = configuration?.destinations?.[destinationId];
-    if (!destination) {
-      throw new NotFoundError('SharePoint destination', destinationId);
-    }
-    const connection = configuration?.connections?.[destination.connectionId];
-    if (!connection) {
-      throw new NotFoundError('SharePoint connection', destination.connectionId);
-    }
-    return { destination, connection };
-  }
-
   async push(
     tenantId: AdspId,
     configuration: SharePointConfiguration | undefined,
@@ -99,7 +88,7 @@ export class SharePointPusher {
     data: Record<string, unknown>,
     options: PushOptions = {},
   ): Promise<PushResult> {
-    const { destination, connection } = this.resolve(configuration, destinationId);
+    const { destination, connection } = resolveDestination(configuration, destinationId);
     if (destination.enabled === false) {
       throw new DestinationDisabledError(destinationId);
     }
@@ -112,7 +101,7 @@ export class SharePointPusher {
     destinationId: string,
     data: Record<string, unknown>,
   ): Promise<PushResult> {
-    const { destination, connection } = this.resolve(configuration, destinationId);
+    const { destination, connection } = resolveDestination(configuration, destinationId);
     return this.write(tenantId, connection, destination, data, {});
   }
 
@@ -158,6 +147,7 @@ export class SharePointPusher {
       const errors = failed.flatMap((outcome) => outcome.errors);
       throw new DetailRowsFailedError(
         main.itemId,
+        main.outcome,
         failed.map(({ failure }) => failure),
         errors[0].errorCode,
         errors.every(({ retryable }) => retryable),

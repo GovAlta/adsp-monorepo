@@ -215,7 +215,11 @@ const computedExamples: FormExample[] = [
   mixedComputedOverview,
 ] as FormExample[];
 
-function formatExample(example: FormExample): string {
+function formatJson(value: unknown, compact: boolean): string {
+  return compact ? JSON.stringify(value) : JSON.stringify(value, null, 2);
+}
+
+function formatExample(example: FormExample, compactJson = false): string {
   const lines: string[] = [];
   lines.push(`## ${example.name}`);
   lines.push(example.summary);
@@ -232,7 +236,7 @@ function formatExample(example: FormExample): string {
   if (example.dataSchema) {
     lines.push('### Data schema');
     lines.push('```json');
-    lines.push(JSON.stringify(example.dataSchema, null, 2));
+    lines.push(formatJson(example.dataSchema, compactJson));
     lines.push('```');
     lines.push('');
   }
@@ -240,7 +244,7 @@ function formatExample(example: FormExample): string {
   if (example.uiSchema) {
     lines.push('### UI schema');
     lines.push('```json');
-    lines.push(JSON.stringify(example.uiSchema, null, 2));
+    lines.push(formatJson(example.uiSchema, compactJson));
     lines.push('```');
     lines.push('');
   }
@@ -344,33 +348,45 @@ function formatAntiPatterns(data: AntiPatternsData): string {
   return lines.join('\n');
 }
 
+function formatLayoutSelectionLines(data: BestPracticesData): string[] {
+  return [
+    '## Layout Selection',
+    data.layoutSelection.description,
+    ...data.layoutSelection.rules.map((rule) => `- **${rule.condition}**: ${rule.recommendation}`),
+  ];
+}
+
+function formatDocumentUseCaseLines(data: BestPracticesData): string[] {
+  if (!data.documentUseCases) {
+    return [];
+  }
+
+  return [
+    '## Document use cases',
+    data.documentUseCases.description,
+    '',
+    '### Requirements document conventions',
+    ...data.documentUseCases.conventions.map((convention) => `- **${convention.signal}**: ${convention.meaning}`),
+    '',
+    '### Form types in a document',
+    ...data.documentUseCases.formTypes.flatMap((formType) => [
+      `- **${formType.name}** (${formType.layout})`,
+      `  - Signals: ${formType.documentSignals.join('; ')}`,
+      `  - Use examples: ${formType.useExamples.join('; ')}`,
+    ]),
+  ];
+}
+
 function formatBestPractices(data: BestPracticesData): string {
   const lines: string[] = [];
   lines.push('# Best Practices');
   lines.push('');
 
-  lines.push('## Layout Selection');
-  lines.push(data.layoutSelection.description);
-  for (const rule of data.layoutSelection.rules) {
-    lines.push(`- **${rule.condition}**: ${rule.recommendation}`);
-  }
+  lines.push(...formatLayoutSelectionLines(data));
   lines.push('');
 
   if (data.documentUseCases) {
-    lines.push('## Document use cases');
-    lines.push(data.documentUseCases.description);
-    lines.push('');
-    lines.push('### Requirements document conventions');
-    for (const convention of data.documentUseCases.conventions) {
-      lines.push(`- **${convention.signal}**: ${convention.meaning}`);
-    }
-    lines.push('');
-    lines.push('### Form types in a document');
-    for (const formType of data.documentUseCases.formTypes) {
-      lines.push(`- **${formType.name}** (${formType.layout})`);
-      lines.push(`  - Signals: ${formType.documentSignals.join('; ')}`);
-      lines.push(`  - Use examples: ${formType.useExamples.join('; ')}`);
-    }
+    lines.push(...formatDocumentUseCaseLines(data));
     lines.push('');
   }
 
@@ -419,6 +435,47 @@ const exampleGroups = {
 
 export type FormExampleGroup = keyof typeof exampleGroups;
 
+export interface FormExampleOptions {
+  /** Best practices before the examples and anti-patterns after them. On by default. */
+  guidance?: boolean;
+  /** Schemas as single-line JSON, which is a third smaller for the model than indented JSON. */
+  compactJson?: boolean;
+}
+
+// About tools and chat replies rather than schemas, which the agent's own instructions cover.
+const CHECKLIST_EXCLUDED_IDS = new Set(['including-form-definition-id', 'dumping-json-in-response']);
+
+function leadingSentences(text: string, count: number): string {
+  const sentences = text.match(/[^.!?]+[.!?]+(\s|$)/g) ?? [text];
+  return sentences.slice(0, count).join('').trim();
+}
+
+/**
+ * The anti-patterns as a one-line-per-item checklist: the problem and how to avoid it, without the worked bad and
+ * good pairs. A fraction of the size of the full anti-patterns section, for prompts that are sent on every call.
+ */
+export function formatSchemaChecklist(): string {
+  const data = antiPatterns as unknown as AntiPatternsData;
+  const schemaItems = [...data.schemaAntiPatterns, ...(data.schemaAntiPatterns2 ?? [])]
+    .filter((item) => !CHECKLIST_EXCLUDED_IDS.has(item.id))
+    .map((item) => `- ${item.name}: ${leadingSentences(item.explanation, 2)}`);
+  const designItems = data.designAntiPatterns
+    .filter((item) => !CHECKLIST_EXCLUDED_IDS.has(item.id))
+    .map((item) => `- ${item.name}: ${leadingSentences(item.solution, 1)}`);
+
+  return ['## Schema checklist', ...schemaItems, ...designItems].join('\n');
+}
+
+/** How a requirements document's notation and form type map to layouts and examples. */
+export function formatDocumentUseCases(): string {
+  return formatDocumentUseCaseLines(bestPractices as unknown as BestPracticesData).join('\n');
+}
+
+/** When to use a single page, sections, or Categorization pages. */
+export function formatLayoutSelection(): string {
+  return formatLayoutSelectionLines(bestPractices as unknown as BestPracticesData).join('\n');
+}
+
 /**
  * Loads form example JSON files and formats them into instruction text.
  * This follows the pattern used in the GoA Design System MCP server: rich data
@@ -431,23 +488,30 @@ export type FormExampleGroup = keyof typeof exampleGroups;
  * Pass `groups` to load only the examples relevant to one increment; every step of a
  * generation run re-sends its prompt, so the full catalogue is too expensive per step.
  */
-export function loadFormExamples(groups?: readonly FormExampleGroup[]): string {
+export function loadFormExamples(
+  groups?: readonly FormExampleGroup[],
+  { guidance = true, compactJson = false }: FormExampleOptions = {},
+): string {
   const sections: string[] = [];
   const selected = groups ?? (Object.keys(exampleGroups) as FormExampleGroup[]);
 
-  sections.push(formatBestPractices(bestPractices as unknown as BestPracticesData));
+  if (guidance) {
+    sections.push(formatBestPractices(bestPractices as unknown as BestPracticesData));
+  }
 
   for (const group of selected) {
     const { examples, heading } = exampleGroups[group];
     if (examples.length > 0) {
       sections.push(`# ${heading}\n`);
       for (const example of examples) {
-        sections.push(formatExample(example));
+        sections.push(formatExample(example, compactJson));
       }
     }
   }
 
-  sections.push(formatAntiPatterns(antiPatterns as unknown as AntiPatternsData));
+  if (guidance) {
+    sections.push(formatAntiPatterns(antiPatterns as unknown as AntiPatternsData));
+  }
 
   return sections.join('\n');
 }
