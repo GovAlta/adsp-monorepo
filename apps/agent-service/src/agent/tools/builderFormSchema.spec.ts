@@ -1,3 +1,4 @@
+import { RequestContext } from '@mastra/core/request-context';
 import { createBuilderFormSchemaTools } from './builderFormSchema';
 
 // The tools take no request context, so an empty one satisfies the executor signature.
@@ -63,6 +64,25 @@ describe('createBuilderFormSchemaTools', () => {
 
       expect(result.examples).toContain('UI Control Examples');
       expect(result.examples).not.toContain('Rule Examples');
+    });
+
+    it('gives the builder agent the best practices and anti-patterns with the examples', async () => {
+      const result = await formExamplesTool.execute({ groups: ['controls'] }, ctx);
+
+      expect(result.examples).toContain('# Best Practices');
+      expect(result.examples).toContain('# Anti-Patterns');
+    });
+
+    it('gives the form generation agent the examples alone, as single-line JSON', async () => {
+      const requestContext = new RequestContext<Record<string, unknown>>();
+      requestContext.set('agentId', 'formGenerationAgent');
+
+      const result = await formExamplesTool.execute({ groups: ['controls'] }, { requestContext } as never);
+
+      expect(result.examples).toContain('UI Control Examples');
+      expect(result.examples).not.toContain('# Best Practices');
+      expect(result.examples).not.toContain('# Anti-Patterns');
+      expect(result.examples).not.toMatch(/\n {2}"type"/);
     });
 
     it('rejects an unknown group', async () => {

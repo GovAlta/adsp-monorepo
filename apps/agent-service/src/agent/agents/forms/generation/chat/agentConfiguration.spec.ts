@@ -7,9 +7,10 @@ describe('formGenerationAgent', () => {
     expect(instructions.length).toBeGreaterThan(0);
   });
 
-  it('embeds best practices in instructions', () => {
-    expect(formGenerationAgent.instructions).toContain('Best Practices');
-    expect(formGenerationAgent.instructions).toContain('Layout Selection');
+  it('includes the layout selection and document use cases of the best practices, not the whole section', () => {
+    expect(formGenerationAgent.instructions).toContain('## Layout Selection');
+    expect(formGenerationAgent.instructions).toContain('## Document use cases');
+    expect(formGenerationAgent.instructions).not.toContain('# Best Practices');
   });
 
   it('leaves the worked examples other than data registers out of the instructions', () => {
@@ -18,7 +19,8 @@ describe('formGenerationAgent', () => {
     expect(instructions).not.toContain('# Computed Field Examples');
     expect(instructions).not.toContain('# Rule Examples');
     // Every model call re-sends the instructions; with the worked examples inline they were over 130k characters.
-    expect(instructions.length).toBeLessThan(60000);
+    // These full instructions are only the fallback: a call normally gets the core and the sections it needs.
+    expect(instructions.length).toBeLessThan(40000);
   });
 
   it('keeps the data register examples in the instructions', () => {
@@ -67,9 +69,10 @@ describe('formGenerationAgent', () => {
     expect(formGenerationAgent.instructions).toContain('Address (Common Field)');
   });
 
-  it('embeds anti-patterns in instructions', () => {
-    expect(formGenerationAgent.instructions).toContain('Anti-Patterns');
-    expect(formGenerationAgent.instructions).toContain('Scope Mismatch');
+  it('includes the anti-patterns as a one-line checklist instead of worked pairs', () => {
+    expect(formGenerationAgent.instructions).toContain('## Schema checklist');
+    expect(formGenerationAgent.instructions).toContain('- UI Schema Scope Mismatch:');
+    expect(formGenerationAgent.instructions).not.toContain('# Anti-Patterns');
   });
 
   it('includes HelpContent behavioral rules section', () => {
@@ -202,8 +205,9 @@ describe('formGenerationAgent', () => {
 
   it('retains core instruction sections alongside examples', () => {
     const instructions = formGenerationAgent.instructions;
-    // Session workflow
-    expect(instructions).toContain('## Session start');
+    // The saved form is described in the instructions instead of being read with a tool at session start
+    expect(instructions).toContain('## The current form');
+    expect(instructions).not.toContain('## Session start');
     expect(instructions).toContain('formConfigurationRetrievalTool');
     // Tool required inputs
     expect(instructions).toContain('## Tool required inputs');
@@ -255,21 +259,23 @@ describe('formGenerationAgent', () => {
   });
 
   it('has the correct tools configured', () => {
-    expect(formGenerationAgent.tools).toEqual([
-      'formSchemaIndex',
-      'formGenerationRun',
-      'formSchemaValidate',
-      'formSchemaPatch',
-      'schemaDefinitionTool',
-      'fileDownloadTool',
-      'documentExtractTool',
-      'rendererCatalogTool',
-      'formExamplesTool',
-      'dataRegisterListTool',
-      'dataRegisterCreateTool',
-      'dataRegisterGetTool',
-      'dataRegisterUpdateTool',
-    ]);
+    expect([...(formGenerationAgent.tools as string[])].sort()).toEqual(
+      [
+        'formSchemaIndex',
+        'formGenerationRun',
+        'formSchemaValidate',
+        'formSchemaPatch',
+        'schemaDefinitionTool',
+        'fileDownloadTool',
+        'documentExtractTool',
+        'rendererCatalogTool',
+        'formExamplesTool',
+        'dataRegisterListTool',
+        'dataRegisterCreateTool',
+        'dataRegisterGetTool',
+        'dataRegisterUpdateTool',
+      ].sort(),
+    );
   });
 
   it('has the correct user roles', () => {

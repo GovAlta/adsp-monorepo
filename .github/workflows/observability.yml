@@ -113,7 +113,10 @@ jobs:
           .openshift/observability/render-stack.sh "$TARGET" > "$RUNNER_TEMP/stack.json"
           # The ImageStreams in adsp-build are shared by every environment, so their tags are set
           # one at a time below rather than applied: applying would replace the other environments' tags.
-          jq '.items |= map(select(.kind != "ImageStream"))' "$RUNNER_TEMP/stack.json" > "$RUNNER_TEMP/objects.json"
+          # The deploy account has edit in adsp-<env>, which cannot read or write RoleBindings, so
+          # grafana-metrics-view is left to a namespace admin; see .openshift/observability/README.md.
+          jq '.items |= map(select(.kind | IN("ImageStream", "RoleBinding") | not))' "$RUNNER_TEMP/stack.json" > "$RUNNER_TEMP/objects.json"
+          jq -r '.items[] | select(.kind == "RoleBinding") | "::notice::Not applied: RoleBinding/\(.metadata.name) needs a namespace admin"' "$RUNNER_TEMP/stack.json"
           oc apply -n "adsp-$TARGET" --dry-run=server --validate=strict -f "$RUNNER_TEMP/objects.json" > /dev/null
       # Each environment has its own tag (IMAGE_TAG=<env>), so importing for dev does not roll uat or prod.
       - name: Import images
@@ -129,13 +132,21 @@ jobs:
             tag=$(jq -r ".[$i].tag" <<< "$streams")
             source=$(jq -r ".[$i].source" <<< "$streams")
             oc tag -n adsp-build --source=docker "$source" "$name:$tag" --reference-policy=local
-            oc import-image -n adsp-build "$name:$tag" --reference-policy=local > /dev/null
-            # A status item older than the spec means the import of $source has not succeeded.
-            image=$(oc get imagestream "$name" -n adsp-build -o json | jq -er --arg tag "$tag" '
-              (.spec.tags[] | select(.name == $tag) | .generation) as $generation
-              | (.status.tags[] | select(.tag == $tag) | .items[0]) as $item
-              | if $item.generation >= $generation then "\(.status.dockerImageRepository)@\($item.image)"
-                else error("\($tag) has not been imported from its current source") end')
+            # Setting the tag starts an import. Wait for it: a second import started now conflicts with it.
+            image=
+            for _ in $(seq 60); do
+              image=$(oc get imagestream "$name" -n adsp-build -o json | jq -r --arg tag "$tag" '
+                (.spec.tags[] | select(.name == $tag) | .generation) as $generation
+                | .status.dockerImageRepository as $repository
+                | .status.tags[]? | select(.tag == $tag)
+                | if (.items[0].generation // -1) >= $generation then "\($repository)@\(.items[0].image)"
+                  elif any(.conditions[]?; .type == "ImportSuccess" and .status == "False" and .generation >= $generation)
+                  then error("import failed: \(.conditions[] | select(.type == "ImportSuccess") | .message)")
+                  else empty end')
+              [[ -n "$image" ]] && break
+              sleep 5
+            done
+            [[ -n "$image" ]] || { echo "::error::$name:$tag was not imported from $source within 5 minutes"; exit 1; }
             echo "$name:$tag <- $source ($image)"
             images=$(jq -c --arg key "$name:$tag" --arg image "$image" '.[$key] = $image' <<< "$images")
           done

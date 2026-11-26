@@ -6,10 +6,11 @@ import { getAgentModelConfiguration, getAgentModelId } from '../model/modelConfi
 import { withUsageRecording } from '../model/usageRecordingModel';
 import {
   ACCESS_SERVICE_AGENT_ID,
+  FORM_GENERATION_AGENT_ID,
   NOTIFICATION_TEMPLATE_AGENT_ID,
   PDF_GENERATION_AGENT_ID,
 } from '../model/executionLimits';
-import { createAccessHistoryProcessor } from './accessHistory';
+import { createAccessHistoryProcessor, createToolResultHistoryProcessor } from './accessHistory';
 import { createNotificationHistoryProcessor } from './notificationHistory';
 import { createPdfHistoryProcessor } from './pdfHistory';
 import { BrokerInputProcessor } from '../types';
@@ -26,6 +27,8 @@ export function createInputProcessors({ requestContext }: InputProcessorProps): 
 
   if (agentId === ACCESS_SERVICE_AGENT_ID) {
     processors.push(createAccessHistoryProcessor());
+  } else if (agentId === FORM_GENERATION_AGENT_ID) {
+    processors.push(createToolResultHistoryProcessor('form-generation-history', 'Form generation history'));
   } else if (agentId === NOTIFICATION_TEMPLATE_AGENT_ID) {
     processors.push(createNotificationHistoryProcessor());
   } else if (agentId === PDF_GENERATION_AGENT_ID) {
