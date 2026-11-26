@@ -437,6 +437,7 @@ When(
   function (namespace: string, eventName: string) {
     tenantAdminObj.eventLogNamespaceFilter().select(namespace).should('have.value', namespace);
     tenantAdminObj.eventLogNameFilter().select(eventName).should('have.value', eventName);
+    cy.wait(1000);
     tenantAdminObj.eventLogSearchBtn().shadow().find('button').click({ force: true });
     cy.wait(4000);
   }
@@ -517,9 +518,10 @@ When('the user searches with {string} as minimum timestamp, {string} as maximum 
   cy.log(timestampMin);
   cy.log(timestampMax);
 
-  tenantAdminObj.eventLogMinTimeStamp().type(timestampMin);
-  tenantAdminObj.eventLogMaxTimeStamp().type(timestampMax);
-  tenantAdminObj.eventLogSearchBtn().shadow().find('button').click({ force: true });
+  tenantAdminObj.eventLogDateRangeFilter().select('custom').should('have.value', 'custom');
+  tenantAdminObj.eventLogFromFilter().clear().type(timestampMin).blur();
+  tenantAdminObj.eventLogToFilter().clear().type(timestampMax).blur();
+  tenantAdminObj.eventLogSearchBtn().shadow().find('button').should('be.enabled').click({ force: true });
   cy.wait(2000);
 });
 

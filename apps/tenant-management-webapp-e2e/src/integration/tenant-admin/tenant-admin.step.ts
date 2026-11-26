@@ -511,6 +511,7 @@ Then('the user should not have regular admin view', function () {
 
 When('the user clicks Filters button on event log page', function () {
   tenantAdminObj.eventLogFiltersBtn().shadow().find('button').click({ force: true });
+  cy.wait(1000);
 });
 
 When('the user clicks Close button on event log filters pane', function () {
@@ -566,10 +567,10 @@ Then(
     // For example: search with now+1min may have the time of 1:10 (59th second) and validation with now+1min may be 1:11(1st second), which is 2 second later.
     let searchMinTimestamp;
     tenantAdminObj
-      .eventLogMinTimeStamp()
-      .invoke('attr', 'value')
+      .eventLogFromFilter()
+      .invoke('val')
       .then((value) => {
-        searchMinTimestamp = value;
+        searchMinTimestamp = String(value);
         cy.log('search minimum timestamp: ' + searchMinTimestamp);
         cy.log('user validation minimum timestamp: ' + userMinTimestamp);
         if (userMinTimestamp != searchMinTimestamp && searchMinTimestamp.includes('T')) {
@@ -578,10 +579,10 @@ Then(
       });
     let searchMaxTimestamp;
     tenantAdminObj
-      .eventLogMaxTimeStamp()
-      .invoke('attr', 'value')
+      .eventLogToFilter()
+      .invoke('val')
       .then((value) => {
-        searchMaxTimestamp = value;
+        searchMaxTimestamp = String(value);
         cy.log('search maximum timestamp: ' + searchMaxTimestamp);
         cy.log('user validation maximum timestamp: ' + userMaxTimestamp);
         if (userMaxTimestamp != searchMaxTimestamp && searchMaxTimestamp.includes('T')) {
@@ -618,8 +619,9 @@ When('the user searches with {string} as minimum timestamp', function (submin) {
   const timestampMin = timestampUtil(submin);
   cy.log(timestampMin);
 
-  tenantAdminObj.eventLogMinTimeStamp().type(timestampMin);
-  tenantAdminObj.eventLogSearchBtn().shadow().find('button').click({ force: true });
+  tenantAdminObj.eventLogDateRangeFilter().select('custom').should('have.value', 'custom');
+  tenantAdminObj.eventLogFromFilter().clear().type(timestampMin).blur();
+  tenantAdminObj.eventLogSearchBtn().shadow().find('button').should('be.enabled').click({ force: true });
   cy.wait(2000);
 });
 
@@ -633,10 +635,10 @@ Then('the user views the events matching the search filter of {string} as min ti
   // For example: search with now+1min may have the time of 1:10 (59th second) and validation with now+1min may be 1:11(1st second), which is 2 second later.
   let searchMinTimestamp;
   tenantAdminObj
-    .eventLogMinTimeStamp()
-    .invoke('attr', 'value')
+    .eventLogFromFilter()
+    .invoke('val')
     .then((value) => {
-      searchMinTimestamp = value;
+      searchMinTimestamp = String(value);
       cy.log('search minimum timestamp: ' + searchMinTimestamp);
       cy.log('user validation minimum timestamp: ' + userTimestamp);
       if (userTimestamp != searchMinTimestamp && searchMinTimestamp.includes('T')) {
@@ -666,8 +668,9 @@ When('the user searches with {string} as maximum timestamp', function (addmin) {
   const timestampMax = timestampUtil(addmin);
   cy.log(timestampMax);
 
-  tenantAdminObj.eventLogMaxTimeStamp().type(timestampMax);
-  tenantAdminObj.eventLogSearchBtn().shadow().find('button').click({ force: true });
+  tenantAdminObj.eventLogDateRangeFilter().select('custom').should('have.value', 'custom');
+  tenantAdminObj.eventLogToFilter().clear().type(timestampMax).blur();
+  tenantAdminObj.eventLogSearchBtn().shadow().find('button').should('be.enabled').click({ force: true });
   cy.wait(2000);
 });
 
@@ -681,10 +684,10 @@ Then('the user views the events matching the search filter of {string} as maximu
   // For example: search with now+1min may have the time of 1:10 (59th second) and validation with now+1min may be 1:11(1st second), which is 2 second later.
   let searchMaxTimestamp;
   tenantAdminObj
-    .eventLogMaxTimeStamp()
-    .invoke('attr', 'value')
+    .eventLogToFilter()
+    .invoke('val')
     .then((value) => {
-      searchMaxTimestamp = value;
+      searchMaxTimestamp = String(value);
       cy.log('search maximum timestamp: ' + searchMaxTimestamp);
       cy.log('user validation maximum timestamp: ' + userTimestamp);
       if (userTimestamp != searchMaxTimestamp && searchMaxTimestamp.includes('T')) {
@@ -792,6 +795,7 @@ Then('the user resets event log views', function () {
       tenantAdminObj.eventLogFiltersBtn().shadow().find('button').click({ force: true });
     }
   });
+  cy.wait(1000);
   tenantAdminObj.eventLogFiltersPane().should('have.attr', 'open');
   tenantAdminObj.eventLogResetBtn().shadow().find('button').click({ force: true });
   cy.wait(2000);
@@ -1083,23 +1087,26 @@ afterEach(function () {
   }
 });
 
-When('a user with tenant-service-admin role sends a DELETE request to {string} for tenant with id {string} and name {string}', function (path: string, id: string, name: string) {
-  tenantPath = `/api/tenant/v2/tenants/${id}`;
-  tenantUrn = `urn:ads:platform:tenant-service:v2:/tenants/${id}`;
-  expect(path, 'test tenant archive path').to.equal(tenantPath);
-  tenantRequest('GET', path).then((response) => {
-    expect(response.body.id, 'disposable test tenant ID').to.equal(tenantUrn);
-    expect(response.body.name, 'disposable test tenant name').to.equal(name);
-    expect(response.body.status, 'initial tenant status').to.equal('active');
-    expect(response.body.realm, 'tenant realm').to.be.a('string').and.not.be.empty;
-    tenant = response.body;
-    restoreRequired = true;
-    operationStartedAt = Date.now();
-    return tenantRequest('DELETE', path).then((archived) => {
-      lastResponse = archived;
+When(
+  'a user with tenant-service-admin role sends a DELETE request to {string} for tenant with id {string} and name {string}',
+  function (path: string, id: string, name: string) {
+    tenantPath = `/api/tenant/v2/tenants/${id}`;
+    tenantUrn = `urn:ads:platform:tenant-service:v2:/tenants/${id}`;
+    expect(path, 'test tenant archive path').to.equal(tenantPath);
+    tenantRequest('GET', path).then((response) => {
+      expect(response.body.id, 'disposable test tenant ID').to.equal(tenantUrn);
+      expect(response.body.name, 'disposable test tenant name').to.equal(name);
+      expect(response.body.status, 'initial tenant status').to.equal('active');
+      expect(response.body.realm, 'tenant realm').to.be.a('string').and.not.be.empty;
+      tenant = response.body;
+      restoreRequired = true;
+      operationStartedAt = Date.now();
+      return tenantRequest('DELETE', path).then((archived) => {
+        lastResponse = archived;
+      });
     });
-  });
-});
+  }
+);
 
 Then(
   '{string} is returned with a response having {string} as status, {string} in id, {string} as name and today timestamp as deletedAt',
@@ -1125,68 +1132,77 @@ Then(
   }
 );
 
-Then('the tenant with id {string} and name {string} should appear in the list for {string}', function (id: string, name: string, request: string) {
-  const tenantUrn = `urn:ads:platform:tenant-service:v2:/tenants/${id}`;
-  expect(request).to.equal('GET /api/tenant/v2/tenants?status=archived');
-  cy.request<{ results: Tenant[] }>({
-    method: 'GET',
-    url: `${Cypress.env('tenantManagementApi')}/api/tenant/v2/tenants`,
-    qs: { status: 'archived', name },
-    auth: { bearer: Cypress.env('core-api-token') },
-  }).then((response) => {
-    const archived = response.body.results.find((result) => result.id === tenantUrn);
-    expect(archived, 'tenant in archived list').to.exist;
-    expect(archived!.status).to.equal('archived');
-  });
-});
-
-Then('the event log should contain a {string} event for tenant with id {string} in the last 5 minutes', function (eventName: string, id: string) {
-  const tenantUrn = `urn:ads:platform:tenant-service:v2:/tenants/${id}`;
-  const [namespace, name] = eventName.split(':');
-  const deadline = Date.now() + 30000;
-  function checkEvent(): void {
-    cy.request<{ 'event-service': { event: LoggedEvent[] } }>({
+Then(
+  'the tenant with id {string} and name {string} should appear in the list for {string}',
+  function (id: string, name: string, request: string) {
+    const tenantUrn = `urn:ads:platform:tenant-service:v2:/tenants/${id}`;
+    expect(request).to.equal('GET /api/tenant/v2/tenants?status=archived');
+    cy.request<{ results: Tenant[] }>({
       method: 'GET',
-      url: `${Cypress.env('valueServiceApiUrl')}/value/v1/event-service/values/event`,
-      qs: { tenantId: tenantUrn, context: JSON.stringify({ namespace, name }), top: 10 },
+      url: `${Cypress.env('tenantManagementApi')}/api/tenant/v2/tenants`,
+      qs: { status: 'archived', name },
       auth: { bearer: Cypress.env('core-api-token') },
     }).then((response) => {
-      const events = response.body['event-service']?.event || [];
-      const found = events.some(
-        (event) => event.context.namespace === namespace && event.context.name === name && isRecent(event.timestamp)
-      );
-      if (!found && Date.now() < deadline) {
-        cy.wait(1000).then(checkEvent);
-      } else {
-        expect(found, `recent ${eventName} event for ${tenantUrn}`).to.be.true;
-      }
+      const archived = response.body.results.find((result) => result.id === tenantUrn);
+      expect(archived, 'tenant in archived list').to.exist;
+      expect(archived!.status).to.equal('archived');
     });
   }
-  checkEvent();
-});
+);
 
-Then('the audit log should contain a {string} action for tenant with id {string} in the last 5 minutes', function (action: string, id: string) {
-  const tenantUrn = `urn:ads:platform:tenant-service:v2:/tenants/${id}`;
-  const deadline = Date.now() + 30000;
-  function checkAudit(): void {
-    cy.request<{ results: AuditEvent[] }>({
-      method: 'GET',
-      url: `${Cypress.env('auditServiceApiUrl')}/audit/v1/tenant-service/events`,
-      qs: { tenantId: tenantUrn, resourceId: tenantUrn, action, top: 10 },
-      auth: { bearer: Cypress.env('core-api-token') },
-    }).then((response) => {
-      const found = response.body.results.some(
-        (event) => event.action === action && event.resource?.id === tenantUrn && isRecent(event.occurredAt)
-      );
-      if (!found && Date.now() < deadline) {
-        cy.wait(1000).then(checkAudit);
-      } else {
-        expect(found, `recent ${action} audit record for ${tenantUrn}`).to.be.true;
-      }
-    });
+Then(
+  'the event log should contain a {string} event for tenant with id {string} in the last 5 minutes',
+  function (eventName: string, id: string) {
+    const tenantUrn = `urn:ads:platform:tenant-service:v2:/tenants/${id}`;
+    const [namespace, name] = eventName.split(':');
+    const deadline = Date.now() + 30000;
+    function checkEvent(): void {
+      cy.request<{ 'event-service': { event: LoggedEvent[] } }>({
+        method: 'GET',
+        url: `${Cypress.env('valueServiceApiUrl')}/value/v1/event-service/values/event`,
+        qs: { tenantId: tenantUrn, context: JSON.stringify({ namespace, name }), top: 10 },
+        auth: { bearer: Cypress.env('core-api-token') },
+      }).then((response) => {
+        const events = response.body['event-service']?.event || [];
+        const found = events.some(
+          (event) => event.context.namespace === namespace && event.context.name === name && isRecent(event.timestamp)
+        );
+        if (!found && Date.now() < deadline) {
+          cy.wait(1000).then(checkEvent);
+        } else {
+          expect(found, `recent ${eventName} event for ${tenantUrn}`).to.be.true;
+        }
+      });
+    }
+    checkEvent();
   }
-  checkAudit();
-});
+);
+
+Then(
+  'the audit log should contain a {string} action for tenant with id {string} in the last 5 minutes',
+  function (action: string, id: string) {
+    const tenantUrn = `urn:ads:platform:tenant-service:v2:/tenants/${id}`;
+    const deadline = Date.now() + 30000;
+    function checkAudit(): void {
+      cy.request<{ results: AuditEvent[] }>({
+        method: 'GET',
+        url: `${Cypress.env('auditServiceApiUrl')}/audit/v1/tenant-service/events`,
+        qs: { tenantId: tenantUrn, resourceId: tenantUrn, action, top: 10 },
+        auth: { bearer: Cypress.env('core-api-token') },
+      }).then((response) => {
+        const found = response.body.results.some(
+          (event) => event.action === action && event.resource?.id === tenantUrn && isRecent(event.occurredAt)
+        );
+        if (!found && Date.now() < deadline) {
+          cy.wait(1000).then(checkAudit);
+        } else {
+          expect(found, `recent ${action} audit record for ${tenantUrn}`).to.be.true;
+        }
+      });
+    }
+    checkAudit();
+  }
+);
 
 When('a user with tenant-service-admin role sends a POST request to {string}', function (path: string) {
   expect(path, 'disposable test tenant restore path').to.equal(`${tenantPath}/restore`);
