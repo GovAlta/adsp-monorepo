@@ -27,7 +27,7 @@ import { TenantServiceRoles } from '../roles';
 import { RealmService } from '../services/realm';
 import { ServiceClient, TenantCriteria } from '../types';
 import { mapTenant } from './mappers';
-import { validateEmailInDB, validateName } from './utils';
+import { normalizeTenantName, validateEmailInDB, validateName } from './utils';
 import { rateLimit } from 'express-rate-limit';
 
 interface TenantRouterProps {
@@ -137,7 +137,7 @@ export function updateTenantName(
     try {
       const user = req.user;
       const { id } = req.params;
-      const { name } = req.body;
+      const name = normalizeTenantName(req.body.name);
 
       const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/${id}`;
       if (!user.isCore && user.tenantId.toString() !== tenantId.toString()) {
@@ -393,7 +393,8 @@ export function createTenant(
   return async (req, res, next) => {
     try {
       const user = req.user;
-      const { name, realm: existingRealm, adminEmail }: New<Tenant> = req.body;
+      const { name: requestedName, realm: existingRealm, adminEmail }: New<Tenant> = req.body;
+      const name = normalizeTenantName(requestedName);
 
       const email = adminEmail || user.email;
 

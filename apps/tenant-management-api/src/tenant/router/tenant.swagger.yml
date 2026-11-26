@@ -184,7 +184,8 @@ components:
                 type: string
                 description: >
                   Name of the tenant. Must be unique (ignoring case) and must not contain special characters such as
-                  ! & % - or /.
+                  ! & % - or /. Leading and trailing spaces are removed and repeated spaces are collapsed to one; a
+                  name of only spaces is rejected.
               realm:
                 type: string
                 description: Existing realm to associate with the tenant. Requires the tenant-service-admin role.
@@ -751,7 +752,9 @@ components:
                 minLength: 1
                 maxLength: 50
                 pattern: '^[0-9a-zA-Z _]{1,50}$'
-                description: Name of the tenant. Must be unique, ignoring case.
+                description: >
+                  Name of the tenant. Must be unique, ignoring case. Leading and trailing spaces are removed and
+                  repeated spaces are collapsed to one; a name of only spaces is rejected.
               realm:
                 type: string
                 nullable: true
@@ -861,6 +864,9 @@ components:
                 minLength: 1
                 maxLength: 50
                 pattern: '^[0-9a-zA-Z _]{1,50}$'
+                description: >
+                  New name of the tenant. Must be unique, ignoring case. Leading and trailing spaces are removed and
+                  repeated spaces are collapsed to one; a name of only spaces is rejected.
           example:
             name: Renamed Tenant
     responses:

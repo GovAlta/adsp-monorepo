@@ -1,7 +1,7 @@
 import { InvalidOperationError, InvalidValueError } from '@core-services/core-common';
 import { Logger } from 'winston';
 import { TenantRepository } from '../repository';
-import { validateEmailInDB, validateName } from './utils';
+import { normalizeTenantName, validateEmailInDB, validateName } from './utils';
 
 describe('utils', () => {
   const repositoryMock = {
@@ -92,6 +92,29 @@ describe('utils', () => {
       await expect(
         validateName(loggerMock as Logger, repositoryMock as unknown as TenantRepository, name)
       ).rejects.toThrow(InvalidValueError);
+    });
+
+    it('can throw for name of only spaces', async () => {
+      await expect(
+        validateName(loggerMock as Logger, repositoryMock as unknown as TenantRepository, '   ')
+      ).rejects.toThrow(InvalidValueError);
+      expect(repositoryMock.find).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('normalizeTenantName', () => {
+    it.each([
+      ['  Child Care  ', 'Child Care'],
+      ['Child   Care', 'Child Care'],
+      [' Child  Care  Subsidy ', 'Child Care Subsidy'],
+      ['Child Care', 'Child Care'],
+      ['   ', ''],
+    ])('can normalize %p to %p', (name, expected) => {
+      expect(normalizeTenantName(name)).toBe(expected);
+    });
+
+    it.each([123, undefined, null])('can leave non-string name %p for validation to reject', (name) => {
+      expect(normalizeTenantName(name)).toBe(name);
     });
   });
 });
