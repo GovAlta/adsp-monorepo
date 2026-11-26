@@ -8,7 +8,28 @@ grand_parent: Tutorials
 
 # Client secret rotation in Access service
 
-This guide is for application owners and tenant admins who rotate the secret of a confidential client by hand in the Keycloak admin console of Access service. It covers enabling the rotation policy in a realm, choosing which clients it covers, rotating a secret, handling a leaked secret, and responding to the rotation notifications.
+This guide is for application owners and tenant admins who rotate the secret of a confidential client in Access service. Most tasks can be done two ways: **Option 1** in the ADSP portal (**Access > Client secrets**), or **Option 2** in the Keycloak admin console. It covers enabling rotation in a realm, choosing which clients it covers, rotating a secret, handling a leaked secret, and responding to the rotation notifications.
+
+{: .warning }
+The ADSP portal option depends on the client secret rotation service, which is not yet available in production. Use the Keycloak option until it is.
+
+| Task | ADSP portal | Keycloak admin console |
+|:-|:-|:-|
+| Turn rotation on for the realm | Yes | Yes |
+| Set periods | Secret expiration, rotated secret expiration, notice period | Secret expiration, rotated secret expiration, remain expiration time |
+| Opt a client in | Yes | Yes (`rotation-enabled` role) |
+| Client contacts and Send notification | Yes | No |
+| Rotate a secret | Yes | Yes (Regenerate) |
+| Invalidate the previous secret | Yes | Yes |
+| View the new secret value | No | Yes (Credentials tab) |
+
+The portal needs the `client-secret-admin` or `tenant-admin` role. It never shows secret values, so always read the new secret from the client's Credentials tab in Keycloak.
+
+| If you need to... | Go to |
+|:-|:-|
+| Set up rotation for a realm, or a rotation is due | Scheduled rotation: [Enable the rotation policy](#enable-the-rotation-policy-in-a-realm) to [Rollback](#rollback) |
+| Respond to a leaked secret | [Emergency rotation for a leaked secret](#emergency-rotation-for-a-leaked-secret) |
+| Find out who owns what and how stale secrets are monitored | [Ownership and monitoring](#ownership-and-monitoring) |
 
 {: .note }
 Rotation is event-driven, not timed. Keycloak rotates a secret only when the client is updated (for example, **Regenerate**). It does not rotate on a timer, and it does not renew an expired secret. Notification emails come from the ADSP Notification service, not from Keycloak.
@@ -45,16 +66,28 @@ Existing clients get an expiry only after their first Regenerate once the policy
 
 ## Enable the rotation policy in a realm
 
-Do this in the realm that holds the clients. A profile holds the rotation rules, and a policy decides which clients get the profile.
+Do this in the realm that holds the clients.
 
-### Create the profile with the executor
+### Option 1: ADSP portal
+
+1. Open **Access > Client secrets**.
+2. Under **Automatic rotation**, select **On**, click **Save** and confirm. The first time, this creates the rotation policy and profile in the realm.
+3. In **Rotation schedule**, set **Secret expiration**, **Rotated secret expiration** and **Notice period** in seconds (see [Choose the periods](#choose-the-periods)) and save. The rotated secret expiration must be smaller than the secret expiration, and the notice period shorter than the secret lifetime.
+
+To turn rotation off, select **Off** and save.
+
+### Option 2: Keycloak admin console
+
+A profile holds the rotation rules, and a policy decides which clients get the profile.
+
+#### Create the profile with the executor
 
 1. Select the realm, then **Realm settings > Client policies > Profiles**.
 2. Click **Create client profile**, name it (for example `secret-rotation`) and save.
 3. In the profile, under Executors, click **Add executor** and choose `secret-rotation`.
 4. Set the periods (see [Choose the periods](#choose-the-periods)) and click **Add**.
 
-### Create the policy that applies it
+#### Create the policy that applies it
 
 1. Go to **Realm settings > Client policies > Policies** and click **Create client policy**. Name it (for example `secret-rotation-policy`) and save.
 2. Under Conditions, click **Add condition**, choose the condition type `client-access-type`, set the access type to `confidential` and save.
@@ -78,6 +111,16 @@ To turn rotation off for the realm, set the policy to Disabled or delete it. Exi
 
 Do this for each client the policy should cover.
 
+### Option 1: ADSP portal
+
+1. Open **Access > Client secrets** and expand the client.
+2. Tick **Automatic rotation**. It is disabled while realm rotation is Off.
+3. Under contacts, click **Add contact** and enter the emails to notify. Realm admins are always notified as well.
+
+Unticking **Automatic rotation** stops rotating the client and removes its expiry date.
+
+### Option 2: Keycloak admin console
+
 1. Go to **Clients** and open the client. Confirm **Client authentication** is On.
 2. Open the **Roles** tab, click **Create role** and enter `rotation-enabled` exactly.
 3. Open the **Credentials** tab and click **Regenerate** so the client gets its first expiry. Update the application as described in [Update the application](#update-the-application-with-the-new-secret).
@@ -85,6 +128,8 @@ Do this for each client the policy should cover.
 To stop rotating a client, delete its `rotation-enabled` role. Its current secret keeps its expiry.
 
 ## Choose the periods
+
+The portal's **Secret expiration** and **Rotated secret expiration** map to the executor fields below. **Notice period** is portal only and sets how long before expiry the due notification is sent. **Remain Expiration Time** is Keycloak only.
 
 | Executor field | Meaning | Suggested start |
 |:-|:-|:-|
@@ -96,6 +141,15 @@ To stop rotating a client, delete its `rotation-enabled` role. Its current secre
 Rotated Secret expiration and Remain Expiration Time must each be smaller than Secret expiration. Otherwise Keycloak rejects the profile with "proposed client profile contains the executor... invalid configuration".
 
 ## Rotate a secret manually
+
+### Option 1: ADSP portal
+
+1. Open **Access > Client secrets** and expand the client. Check the current and previous secret expiry.
+2. Click **Rotate secret** and confirm. The client must be opted in and realm rotation On.
+3. Open the client's **Credentials** tab in Keycloak and copy the new secret. The portal never shows it.
+4. Update the application ([below](#update-the-application-with-the-new-secret)).
+
+### Option 2: Keycloak admin console
 
 1. Go to **Clients > your client > Credentials**.
 2. Note the current secret expiry, and the rotated secret if there is one.
@@ -110,15 +164,55 @@ If the secret is still outside the Remain Expiration Time, a plain client update
 {: .warning }
 Invalidating the rotated secret cannot be undone. Any application still using it fails until it is updated.
 
-1. **Contact.** Tell the application owner and the ADSP team right away.
+### Contacts
+
+| Role | Who | When |
+|:-|:-|:-|
+| App team owner | The client's owner (see [Ownership and monitoring](#ownership-and-monitoring)) | Immediately. They must update the application. |
+| Tenant admin | The tenant's admin | Immediately. They hold the realm. |
+| ADSP platform team | ADSP support channel (add link) | The executor is missing, emails are not sent, or the leak affects more than one client or realm. |
+| Security contact | Your organisation's security contact (add link) | Any confirmed leak. |
+
+### Trigger an out-of-band rotation
+
+1. **Contact.** Tell the contacts above right away.
 2. **Contain.** Remove the secret from where it leaked (repository, log, chat).
-3. **Rotate now.** **Clients > your client > Credentials > Regenerate**.
-4. **Update the application.** Store the new secret, deploy and verify.
-5. **Invalidate the old secret.** On the Credentials tab, click **Invalidate rotated secret** and confirm. The rotated secret stops working immediately and a `client-secret-revoked` notification is raised.
+3. **Rotate now.**
+   - Option 1, ADSP portal: **Access > Client secrets**, expand the client, click **Rotate secret**. This needs the client opted in. If it is not, use Option 2.
+   - Option 2, Keycloak: **Clients > your client > Credentials > Regenerate**. This works at any time, regardless of the schedule.
+4. **Update the application.** Copy the new secret from Keycloak's Credentials tab, store it, deploy and verify.
+5. **Invalidate the old secret.**
+   - Option 1: in the portal, click **Invalidate previous secret** (enabled while a previous secret is valid) and confirm.
+   - Option 2: on the Keycloak Credentials tab, click **Invalidate rotated secret** and confirm.
+
+   The rotated secret stops working immediately.
 6. **Verify the old secret is dead.** A token request with it must return 401.
-7. **Document the incident.** Record the timeline (detected, rotated, invalidated), the cause and the clients affected. Check Events and Admin events for unexpected use.
 
 For a confirmed leak, do not wait for the rotated-secret window to end.
+
+### Compressed notification sequence
+
+The normal `client-secret-rotation-due` step is skipped in an emergency.
+
+| Step | Event | Action |
+|:-|:-|:-|
+| 1 | `client-secret-rotated` | Regenerate now. Tenant admins and client contacts are notified. |
+| 2 | | The app team updates the application and verifies the new secret (200). |
+| 3 | `client-secret-revoked` | Invalidate the rotated secret. The old secret stops working and the notification goes out. |
+| 4 | | Verify the old secret returns 401 and start the incident record. |
+
+### Document the incident
+
+Record the following in your incident ticket:
+
+| Item | Detail |
+|:-|:-|
+| What leaked | Where, when it was found, and who found it. |
+| Scope | Client ID, realm and environment. |
+| Timeline | Times of Regenerate, application update, verification and Invalidate. |
+| Evidence | Events and Admin events (`CLIENT` / `ACTION`) reviewed for unexpected use of the old secret. |
+| Communication | Who was told (app team, tenant admin, security) and when. |
+| Follow-up | Actions to prevent a repeat. |
 
 ## Update the application with the new secret
 
@@ -164,7 +258,7 @@ The **Client secret rotation** notification type emails tenant admins and the cl
 | `client-secret-rotated` | After the secret is rotated. | Get the new secret from Credentials, update and redeploy the application, then verify before the old secret stops. |
 | `client-secret-revoked` | After the old secret is invalidated. | Confirm the application already uses the new secret. If not, update it immediately. If the revoke was unexpected, check who invalidated it and whether a leak response is in progress. |
 
-To receive the emails, subscribe in the Notification service to the **Client secret rotation** type (the subscriber needs the `client-secret-admin` role), and keep each client's contact emails up to date.
+To receive the emails, subscribe in the Notification service to the **Client secret rotation** type (the subscriber needs the `client-secret-admin` role), and keep each client's contact emails up to date. In the ADSP portal, set contacts on the client card and use **Send notification** to send the due notice on demand (needs the client opted in and at least one contact).
 
 ## Troubleshooting
 
@@ -186,6 +280,18 @@ To receive the emails, subscribe in the Notification service to the **Client sec
 
 ## Ownership and monitoring
 
-- The application team owns rotation of its clients, including updating the secret wherever it is used. ADSP does not rotate or update secrets on their behalf.
-- ADSP provides the guideline and the policy mechanism, and escalation support for leaks or a missing executor.
-- ADSP checks for clients with stale or never-rotated secrets, and notifies the owners of non-compliant clients after the grace period for adopting this guideline ends.
+| Area | Owner | Responsibility |
+|:-|:-|:-|
+| Rotating each client's secret | App team that owns the client | Regenerate, update the secret store, redeploy and verify. ADSP does not rotate or update secrets on their behalf. |
+| Realm policy and executor | Tenant admin | Keep the policy enabled with sensible periods. |
+| Keycloak feature and platform | ADSP platform team | Keep the preview feature enabled and support escalations. |
+| Stale secrets | ADSP platform team | Monitor and notify (below). |
+
+### Monitoring stale secrets
+
+1. After a 6-month grace period for adopting this guideline, ADSP scans for clients whose secrets have not rotated.
+2. ADSP notifies the owners of non-compliant tenants.
+3. The app team rotates the client as described above and confirms to ADSP.
+
+{: .note }
+The 6-month period is a proposal from the CS-5843 discussion. The start date and scan tooling are not yet decided.
