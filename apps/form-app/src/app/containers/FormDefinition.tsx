@@ -23,7 +23,7 @@ import { Form } from './Form';
 import { ContinueApplication } from '../components/ContinueApplication';
 import { StartApplication } from '../components/StartApplication';
 import { Forms } from './Forms';
-import { FormDoesNotExist } from '../components/FormDoesNotExist';
+import { AccessRequest, RestrictedForm } from './AccessRequest';
 
 interface FormDefinitionStart {
   definition: FormDefinitionObject;
@@ -83,7 +83,7 @@ export const FormDefinitionStart: FunctionComponent<FormDefinitionStart> = ({ de
 export const FormDefinition: FunctionComponent = () => {
   const dispatch = useDispatch<AppDispatch>();
 
-  const { definitionId } = useParams();
+  const { tenant: tenantName, definitionId } = useParams();
 
   const tenant = useSelector(tenantSelector);
   const { user } = useSelector(userSelector);
@@ -107,13 +107,17 @@ export const FormDefinition: FunctionComponent = () => {
             <Routes>
               <Route path="/draft" element={<AnonymousForm />} />
               <Route path="/forms" element={<Forms definition={definition} />} />
+              <Route path="/access-request" element={<Navigate to={`/${tenantName}/${definitionId}`} replace />} />
               <Route path="/:formId" element={<Form />} />
               <Route path="/" element={<FormDefinitionStart definition={definition} user={user} />} />
               <Route path="*" element={<Navigate to="/" />} />
             </Routes>
           </ScheduledIntake>
         ) : user ? (
-          <FormDoesNotExist />
+          <Routes>
+            <Route path="/access-request" element={<AccessRequest definitionId={definitionId} />} />
+            <Route path="*" element={<RestrictedForm definitionId={definitionId} />} />
+          </Routes>
         ) : (
           <SignInStartApplication />
         ))}

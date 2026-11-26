@@ -1,3 +1,4 @@
+export * from './accessRequest.slice';
 export * from './agent.slice';
 export * from './comment.slice';
 export * from './config.slice';
