@@ -2,6 +2,7 @@ import React, { useCallback, useState } from 'react';
 import { GoabText } from '@abgov/react-components';
 import type { FileMetadata, IFileClient, IFileUploadClient } from '@abgov/adsp-components-core';
 import { ADSPFileDownload, ADSPFileUpload } from '@abgov/adsp-components-react';
+import { UploadDenied, UploadPermission, type FileTypeCapabilities } from './useFileTypeCapabilities';
 
 // No File Type has this ID, so File service answers 404.
 export const SIDE_BY_SIDE_MISSING_FILE_TYPE_ID = 'adsp-sandbox-missing-file-type';
@@ -11,6 +12,10 @@ interface AdspFileUploadSideBySideProps {
   client: IFileUploadClient & IFileClient;
   /** The File Type the examples upload to; empty until one is picked. */
   fileTypeId: string;
+  /** Who may upload to that File Type, so a user without the role is told before choosing a file. */
+  capabilities: FileTypeCapabilities;
+  /** The signed-in user's roles. */
+  roles: string[];
 }
 
 const MINIMAL_CODE = `import { useMemo } from 'react';
@@ -119,10 +124,25 @@ const SideBySide = ({
 
 const PickAFileType = () => <GoabText size="body-s">Pick a file type above to see this example.</GoabText>;
 
-export const AdspFileUploadSideBySide = ({ client, fileTypeId }: AdspFileUploadSideBySideProps) => {
+export const AdspFileUploadSideBySide = ({
+  client,
+  fileTypeId,
+  capabilities,
+  roles,
+}: AdspFileUploadSideBySideProps) => {
   const [recordFiles, setRecordFiles] = useState<FileMetadata[]>([]);
   const [uploaded, setUploaded] = useState<FileMetadata | null>(null);
   const addRecordFile = useCallback((file: FileMetadata) => setRecordFiles((current) => [...current, file]), []);
+
+  // Only the picked File Type is checked; the missing type keeps File service's own 404 message.
+  const forPickedType = (children: React.ReactNode) =>
+    fileTypeId ? (
+      <UploadPermission capabilities={capabilities} roles={roles}>
+        {children}
+      </UploadPermission>
+    ) : (
+      <PickAFileType />
+    );
 
   return (
     <>
@@ -137,10 +157,13 @@ export const AdspFileUploadSideBySide = ({ client, fileTypeId }: AdspFileUploadS
         code={MINIMAL_CODE}
         testId="side-by-side-minimal"
       >
-        {fileTypeId ? (
-          <ADSPFileUpload client={client} fileTypeId={fileTypeId} testId="side-by-side-minimal-upload" />
-        ) : (
-          <PickAFileType />
+        {forPickedType(
+          <ADSPFileUpload
+            client={client}
+            fileTypeId={fileTypeId}
+            fallback={<UploadDenied testId="side-by-side-minimal-denied" />}
+            testId="side-by-side-minimal-upload"
+          />,
         )}
       </SideBySide>
 
@@ -150,13 +173,14 @@ export const AdspFileUploadSideBySide = ({ client, fileTypeId }: AdspFileUploadS
         code={RECORD_CODE}
         testId="side-by-side-record"
       >
-        {fileTypeId ? (
+        {forPickedType(
           <>
             <ADSPFileUpload
               client={client}
               fileTypeId={fileTypeId}
               recordId={SIDE_BY_SIDE_RECORD_ID}
               onUpload={addRecordFile}
+              fallback={<UploadDenied testId="side-by-side-record-denied" />}
               testId="side-by-side-record-upload"
             />
             {recordFiles.length > 0 && (
@@ -166,9 +190,7 @@ export const AdspFileUploadSideBySide = ({ client, fileTypeId }: AdspFileUploadS
                 ))}
               </ul>
             )}
-          </>
-        ) : (
-          <PickAFileType />
+          </>,
         )}
       </SideBySide>
 
@@ -178,22 +200,20 @@ export const AdspFileUploadSideBySide = ({ client, fileTypeId }: AdspFileUploadS
         code={UPLOAD_THEN_DOWNLOAD_CODE}
         testId="side-by-side-upload-download"
       >
-        {fileTypeId ? (
-          <>
-            <ADSPFileUpload
-              client={client}
-              fileTypeId={fileTypeId}
-              onUpload={setUploaded}
-              testId="side-by-side-upload-download-upload"
-            />
-            {uploaded && (
-              <div style={{ marginTop: '1rem' }}>
-                <ADSPFileDownload client={client} fileId={uploaded.id} testId="side-by-side-upload-download-download" />
-              </div>
-            )}
-          </>
-        ) : (
-          <PickAFileType />
+        {forPickedType(
+          <ADSPFileUpload
+            client={client}
+            fileTypeId={fileTypeId}
+            onUpload={setUploaded}
+            fallback={<UploadDenied testId="side-by-side-upload-download-denied" />}
+            testId="side-by-side-upload-download-upload"
+          />,
+        )}
+        {/* Outside the upload permission: File service lets the uploader download their own file. */}
+        {fileTypeId && uploaded && (
+          <div style={{ marginTop: '1rem' }}>
+            <ADSPFileDownload client={client} fileId={uploaded.id} testId="side-by-side-upload-download-download" />
+          </div>
         )}
       </SideBySide>
 
@@ -203,15 +223,14 @@ export const AdspFileUploadSideBySide = ({ client, fileTypeId }: AdspFileUploadS
         code={THEMED_CODE}
         testId="side-by-side-themed"
       >
-        {fileTypeId ? (
+        {forPickedType(
           <ADSPFileUpload
             client={client}
             fileTypeId={fileTypeId}
             themeOverrides={UPLOAD_THEME}
+            fallback={<UploadDenied testId="side-by-side-themed-denied" />}
             testId="side-by-side-themed-upload"
-          />
-        ) : (
-          <PickAFileType />
+          />,
         )}
         <div style={{ marginTop: '1rem' }}>
           <ADSPFileUpload

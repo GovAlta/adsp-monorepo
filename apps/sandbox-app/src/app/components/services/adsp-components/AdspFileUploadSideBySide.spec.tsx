@@ -6,6 +6,7 @@ import {
   SIDE_BY_SIDE_MISSING_FILE_TYPE_ID,
   SIDE_BY_SIDE_RECORD_ID,
 } from './AdspFileUploadSideBySide';
+import type { FileTypeCapabilities } from './useFileTypeCapabilities';
 
 type UploadProps = {
   client: unknown;
@@ -13,6 +14,8 @@ type UploadProps = {
   testId?: string;
   recordId?: string;
   themeOverrides?: unknown;
+  canUpload?: boolean;
+  fallback?: React.ReactNode;
   onUpload?: (file: unknown) => void;
 };
 
@@ -23,13 +26,25 @@ const mockFileDownload = jest.fn((props: { client: unknown; fileId: string; test
   <div data-testid={props.testId} data-file-id={props.fileId} />
 ));
 
-jest.mock('@abgov/adsp-components-react', () => ({
-  ADSPFileUpload: (props) => mockFileUpload(props),
-  ADSPFileDownload: (props) => mockFileDownload(props),
-}));
+// The real capability provider, with an upload stand-in that asks it like ADSPFileUpload does.
+jest.mock('@abgov/adsp-components-react', () => {
+  // The capability module on its own, so the rest of the library (the calendar) isn't loaded.
+  const actual = jest.requireActual('../../../../../../../libs/adsp-components-react/src/lib/capability');
+  return {
+    AdspCapabilityProvider: actual.AdspCapabilityProvider,
+    ADSPFileUpload: (props) =>
+      actual.useCapability('file.upload', props.canUpload) ? mockFileUpload(props) : (props.fallback ?? null),
+    ADSPFileDownload: (props) => mockFileDownload(props),
+  };
+});
+
+jest.mock('../../../state', () => ({ getAccessToken: jest.fn() }));
 
 const client = { getFile: jest.fn(), downloadFile: jest.fn(), getFileType: jest.fn(), uploadFile: jest.fn() };
 const fileTypeId = 'supporting-docs';
+const roles = ['urn:ads:platform:file-service:applicant'];
+const uploaders: FileTypeCapabilities = { status: 'resolved', capabilities: { 'file.upload': roles } };
+const readersOnly: FileTypeCapabilities = { status: 'resolved', capabilities: { 'file.upload': ['clerk'] } };
 const storedFile = (id: string, filename: string) => ({
   id,
   filename,
@@ -52,7 +67,7 @@ describe('AdspFileUploadSideBySide', () => {
 
   test('shows four examples, each with its result and its code', () => {
     // Arrange, Act
-    render(<AdspFileUploadSideBySide client={client} fileTypeId={fileTypeId} />);
+    render(<AdspFileUploadSideBySide client={client} fileTypeId={fileTypeId} capabilities={uploaders} roles={roles} />);
 
     // Assert
     ['minimal', 'record', 'upload-download', 'themed'].forEach((name) => {
@@ -64,7 +79,7 @@ describe('AdspFileUploadSideBySide', () => {
 
   test('uploads to the picked file type with the client in the minimal example', () => {
     // Arrange, Act
-    render(<AdspFileUploadSideBySide client={client} fileTypeId={fileTypeId} />);
+    render(<AdspFileUploadSideBySide client={client} fileTypeId={fileTypeId} capabilities={uploaders} roles={roles} />);
 
     // Assert
     expect(screen.getByTestId('side-by-side-minimal-upload')).toHaveAttribute('data-file-type-id', fileTypeId);
@@ -75,7 +90,7 @@ describe('AdspFileUploadSideBySide', () => {
 
   test('lists the File service URL for each environment in the minimal example code', () => {
     // Arrange, Act
-    render(<AdspFileUploadSideBySide client={client} fileTypeId={fileTypeId} />);
+    render(<AdspFileUploadSideBySide client={client} fileTypeId={fileTypeId} capabilities={uploaders} roles={roles} />);
 
     // Assert
     const code = within(screen.getByTestId('side-by-side-minimal')).getByText(
@@ -88,7 +103,7 @@ describe('AdspFileUploadSideBySide', () => {
 
   test('passes the client to every upload', () => {
     // Arrange, Act
-    render(<AdspFileUploadSideBySide client={client} fileTypeId={fileTypeId} />);
+    render(<AdspFileUploadSideBySide client={client} fileTypeId={fileTypeId} capabilities={uploaders} roles={roles} />);
 
     // Assert
     expect(mockFileUpload.mock.calls.length).toBeGreaterThan(0);
@@ -97,7 +112,7 @@ describe('AdspFileUploadSideBySide', () => {
 
   test('lists each file uploaded for the record', () => {
     // Arrange
-    render(<AdspFileUploadSideBySide client={client} fileTypeId={fileTypeId} />);
+    render(<AdspFileUploadSideBySide client={client} fileTypeId={fileTypeId} capabilities={uploaders} roles={roles} />);
     expect(latestProps('side-by-side-record-upload').recordId).toBe(SIDE_BY_SIDE_RECORD_ID);
 
     // Act
@@ -112,7 +127,7 @@ describe('AdspFileUploadSideBySide', () => {
 
   test('offers the uploaded file for download with the same client', () => {
     // Arrange
-    render(<AdspFileUploadSideBySide client={client} fileTypeId={fileTypeId} />);
+    render(<AdspFileUploadSideBySide client={client} fileTypeId={fileTypeId} capabilities={uploaders} roles={roles} />);
     expect(screen.queryByTestId('side-by-side-upload-download-download')).not.toBeInTheDocument();
 
     // Act
@@ -125,7 +140,7 @@ describe('AdspFileUploadSideBySide', () => {
 
   test('themes both a working upload and a missing file type so the overrides are visible', () => {
     // Arrange, Act
-    render(<AdspFileUploadSideBySide client={client} fileTypeId={fileTypeId} />);
+    render(<AdspFileUploadSideBySide client={client} fileTypeId={fileTypeId} capabilities={uploaders} roles={roles} />);
 
     // Assert
     expect(screen.getByTestId('side-by-side-themed-missing')).toHaveAttribute(
@@ -138,9 +153,63 @@ describe('AdspFileUploadSideBySide', () => {
     });
   });
 
+  test('tells a user without an update role that they cannot upload, before any file is chosen', () => {
+    // Arrange, Act
+    render(
+      <AdspFileUploadSideBySide client={client} fileTypeId={fileTypeId} capabilities={readersOnly} roles={roles} />,
+    );
+
+    // Assert
+    ['minimal', 'record', 'upload-download', 'themed'].forEach((name) => {
+      expect(screen.queryByTestId(`side-by-side-${name}-upload`)).not.toBeInTheDocument();
+      expect(document.querySelector(`[testid="side-by-side-${name}-denied"]`)).toBeInTheDocument();
+    });
+  });
+
+  test('keeps File service answering for the missing file type when the user cannot upload', () => {
+    // Arrange, Act
+    render(
+      <AdspFileUploadSideBySide client={client} fileTypeId={fileTypeId} capabilities={readersOnly} roles={roles} />,
+    );
+
+    // Assert
+    expect(screen.getByTestId('side-by-side-themed-missing')).toBeInTheDocument();
+  });
+
+  test('lets a File service admin upload whatever the File Type roles are', () => {
+    // Arrange, Act
+    render(
+      <AdspFileUploadSideBySide
+        client={client}
+        fileTypeId={fileTypeId}
+        capabilities={readersOnly}
+        roles={['urn:ads:platform:file-service:file-service-admin']}
+      />,
+    );
+
+    // Assert
+    expect(screen.getByTestId('side-by-side-minimal-upload')).toBeInTheDocument();
+  });
+
+  test('says it is checking permission while the File Type roles load', () => {
+    // Arrange, Act
+    render(
+      <AdspFileUploadSideBySide
+        client={client}
+        fileTypeId={fileTypeId}
+        capabilities={{ status: 'loading' }}
+        roles={roles}
+      />,
+    );
+
+    // Assert
+    expect(screen.getAllByText('Checking your upload permission…')).toHaveLength(4);
+    expect(screen.queryByTestId('side-by-side-minimal-upload')).not.toBeInTheDocument();
+  });
+
   test('asks for a file type to be picked before showing the examples', () => {
     // Arrange, Act
-    render(<AdspFileUploadSideBySide client={client} fileTypeId="" />);
+    render(<AdspFileUploadSideBySide client={client} fileTypeId="" capabilities={{ status: 'none' }} roles={roles} />);
 
     // Assert
     expect(screen.getAllByText('Pick a file type above to see this example.')).toHaveLength(4);
