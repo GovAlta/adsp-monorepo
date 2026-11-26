@@ -958,6 +958,38 @@ components:
             $ref: '#/components/schemas/FormRegistration'
         page:
           $ref: '#/components/schemas/FormResultsPageInfo'
+    FormRegistrationForm:
+      type: object
+      description: The questions a user answers to request access to a restricted form.
+      properties:
+        definitionId:
+          type: string
+        name:
+          type: string
+          description: Name of the form definition.
+        dataSchema:
+          type: object
+          description: JSON schema (draft-07) of the registration questions.
+        uiSchema:
+          type: object
+          description: Layout of the registration questions.
+      example:
+        definitionId: medical-intake
+        name: Medical intake
+        dataSchema:
+          type: object
+          properties:
+            profession:
+              type: string
+              title: Profession
+              enum: [physician, nurse]
+          required: [profession]
+        uiSchema:
+          type: VerticalLayout
+          elements:
+            - type: Control
+              scope: '#/properties/profession'
+              label: Profession
     FormRegistrationReview:
       type: object
       additionalProperties: false
@@ -1532,6 +1564,40 @@ components:
               $ref: '#/components/schemas/FormError'
             example:
               errorMessage: form definition with ID 'business-licence-application' could not be found.
+
+/form/v1/definitions/{definitionId}/registration:
+  get:
+    tags:
+      - Form registration
+    description: >
+      Retrieves the questions a user answers to request access to a restricted form. Users who can't access the form
+      definition itself can use this to fill in an access request. Requires the `form-access-requester` or `form-admin`
+      role; core users with either role must set `tenantId`. Only the questions are returned; the user group, approver
+      group and notification email of the registration settings are not.
+    parameters:
+      - $ref: '#/components/parameters/FormDefinitionIdPath'
+      - $ref: '#/components/parameters/FormTenantId'
+    responses:
+      200:
+        description: Successfully retrieved the access request questions.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FormRegistrationForm'
+      400:
+        $ref: '#/components/responses/FormBadRequest'
+      401:
+        $ref: '#/components/responses/FormUnauthorized'
+      403:
+        $ref: '#/components/responses/FormForbidden'
+      404:
+        description: Form definition not found, or it doesn't accept access requests.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FormError'
+            example:
+              errorMessage: registration form with ID 'medical-intake' could not be found.
 
 /form/v1/definitions/{definitionId}/access-requests:
   post:

@@ -16,6 +16,7 @@ import {
   getFormDefinition,
   getFormDefinitions,
   getRegistrationByEmail,
+  getRegistrationForm,
   getRegistrations,
   patchFormDefinition,
   patchFormDefinitionLifecycle,
@@ -2622,6 +2623,60 @@ describe('definition router registrations', () => {
       );
 
       expect(next).toHaveBeenCalledWith(expect.any(InvalidOperationError));
+    });
+  });
+
+  describe('getRegistrationForm', () => {
+    const registration = {
+      enabled: true,
+      accessGroup: '/medical-intake/applicants',
+      approverGroup: '/medical-intake/reviewers',
+      notificationEmail: 'reviewers@gov.ab.ca',
+      dataSchema: { type: 'object', properties: { profession: { type: 'string', enum: ['nurse'] } } },
+      uiSchema: { type: 'VerticalLayout', elements: [{ type: 'Control', scope: '#/properties/profession' }] },
+    };
+    const reqFor = (roles: string[]) =>
+      createReq(roles, {
+        getServiceConfiguration: jest
+          .fn()
+          .mockResolvedValue([{ ...definitionMock, name: 'Medical intake', registration }]),
+      });
+
+    it.each([FormServiceRoles.RegistrationRequester, FormServiceRoles.Admin])(
+      'returns only the questions to a user with %s',
+      async (role) => {
+        const res = createRes();
+        const next = jest.fn();
+
+        await getRegistrationForm()(reqFor([role]), res, next);
+
+        expect(next).not.toHaveBeenCalled();
+        expect(res.send).toHaveBeenCalledWith({
+          definitionId,
+          name: 'Medical intake',
+          dataSchema: registration.dataSchema,
+          uiSchema: registration.uiSchema,
+        });
+      },
+    );
+
+    it('rejects a user without the requester role', async () => {
+      const next = jest.fn();
+
+      await getRegistrationForm()(reqFor([]), createRes(), next);
+
+      expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedUserError));
+    });
+
+    it('responds not found when the form does not accept access requests', async () => {
+      definitionMock.isRegistrationEnabled.mockReturnValueOnce(false);
+      const res = createRes();
+      const next = jest.fn();
+
+      await getRegistrationForm()(reqFor([FormServiceRoles.RegistrationRequester]), res, next);
+
+      expect(next).toHaveBeenCalledWith(expect.any(NotFoundError));
+      expect(res.send).not.toHaveBeenCalled();
     });
   });
 

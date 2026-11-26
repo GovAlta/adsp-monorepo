@@ -836,6 +836,27 @@ export function submitRegistration(
   };
 }
 
+// Users who can't access a restricted form still need its questions to request access, so only the questions are
+// returned; the groups and notification email of the registration settings stay private.
+export function getRegistrationForm(): RequestHandler {
+  return async (req, res, next) => {
+    try {
+      const tenantId = getRequiredTenantId(req);
+      assertAllowed(req.user, tenantId, registrationRequesterRoles, 'get registration form');
+
+      const definition = await getRequiredDefinition(req, tenantId);
+      if (!definition.isRegistrationEnabled()) {
+        throw new NotFoundError('registration form', definition.id);
+      }
+
+      const { dataSchema, uiSchema } = definition.registration;
+      res.send({ definitionId: definition.id, name: definition.name, dataSchema, uiSchema });
+    } catch (err) {
+      next(err);
+    }
+  };
+}
+
 export function deleteAccessRequests(
   repository: FormRegistrationRepository,
   directory: ServiceDirectory,
@@ -1144,6 +1165,15 @@ export function createFormDefinitionRouter({
   );
 
   const registrationStatuses = Object.values(RegistrationStatus);
+
+  router.get(
+    '/definitions/:definitionId/registration',
+    assertAuthenticatedHandler,
+    createValidationHandler(
+      param('definitionId').isString().isLength({ min: 1, max: 50 }).matches(DEFINITION_ID_REGEX),
+    ),
+    getRegistrationForm(),
+  );
 
   router.post(
     '/definitions/:definitionId/access-requests',
