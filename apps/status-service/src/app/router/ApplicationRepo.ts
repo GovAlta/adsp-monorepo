@@ -192,7 +192,7 @@ export class ApplicationRepo {
     await this.#endpointStatusEntryRepository.deleteAll(app.appKey, user.tenantId.toString());
 
     // Delete the app itself.
-    this.#deleteConfigurationApp(appKey, user.tenantId);
+    await this.#deleteConfigurationApp(appKey, user.tenantId);
   };
 
   #deleteConfigurationApp = async (id: string, tenantId: AdspId) => {

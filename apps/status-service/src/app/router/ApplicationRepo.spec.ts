@@ -1,8 +1,12 @@
 import { adspId, ConfigurationService, ServiceDirectory, TokenProvider, User } from '@abgov/adsp-service-sdk';
+import axios from 'axios';
 import { ServiceStatusApplicationEntity } from '../model';
 import { EndpointStatusEntryRepository } from '../repository/endpointStatusEntry';
 import { ServiceStatusRepository } from '../repository/serviceStatus';
 import { ApplicationRepo } from './ApplicationRepo';
+
+jest.mock('axios');
+const axiosMock = axios as jest.Mocked<typeof axios>;
 
 describe('ApplicationRepo', () => {
   const tenantA = adspId`urn:ads:platform:tenant-service:v2:/tenants/61e9adcc9423490012a9ae46`;
@@ -10,14 +14,18 @@ describe('ApplicationRepo', () => {
   const userA = { id: 'a', name: 'A', tenantId: tenantA, roles: ['status-admin'] } as unknown as User;
   const userB = { id: 'b', name: 'B', tenantId: tenantB, roles: ['status-admin'] } as unknown as User;
 
-  const repository = { find: jest.fn(), save: jest.fn() };
+  const repository = { find: jest.fn(), save: jest.fn(), delete: jest.fn() };
+  const endpointRepository = { deleteAll: jest.fn() };
+  const directory = { getServiceUrl: jest.fn() };
+  const tokenProvider = { getAccessToken: jest.fn() };
+  const configurationService = { getConfiguration: jest.fn() };
   const applicationRepo = new ApplicationRepo(
     repository as unknown as ServiceStatusRepository,
-    {} as EndpointStatusEntryRepository,
+    endpointRepository as unknown as EndpointStatusEntryRepository,
     adspId`urn:ads:platform:status-service`,
-    {} as ServiceDirectory,
-    {} as TokenProvider,
-    {} as ConfigurationService,
+    directory as unknown as ServiceDirectory,
+    tokenProvider as unknown as TokenProvider,
+    configurationService as unknown as ConfigurationService,
   );
 
   const createStatus = (tenantId: string, status: 'operational' | 'outage') =>
@@ -42,6 +50,42 @@ describe('ApplicationRepo', () => {
       ),
     );
     repository.save.mockImplementation((entity) => Promise.resolve(entity));
+    repository.delete.mockResolvedValue(true);
+    endpointRepository.deleteAll.mockResolvedValue(0);
+    directory.getServiceUrl.mockResolvedValue(new URL('https://configuration-service.test'));
+    tokenProvider.getAccessToken.mockResolvedValue('token');
+    configurationService.getConfiguration.mockResolvedValue({
+      portal: { appKey: 'portal', name: 'Portal', url: 'https://portal.test/health' },
+    });
+  });
+
+  describe('deleteApp', () => {
+    it('completes only after the configuration delete completes', async () => {
+      let finishDelete: () => void;
+      axiosMock.patch.mockReturnValueOnce(new Promise((resolve) => (finishDelete = () => resolve({ data: {} }))));
+
+      let completed = false;
+      const deleting = applicationRepo.deleteApp('portal', userA).then(() => (completed = true));
+      await new Promise((resolve) => setImmediate(resolve));
+
+      expect(axiosMock.patch).toHaveBeenCalledWith(
+        expect.stringContaining('/configuration/v2/configuration/platform/status-service'),
+        { operation: 'DELETE', property: 'portal' },
+        expect.anything(),
+      );
+      expect(completed).toBe(false);
+
+      finishDelete();
+      await deleting;
+
+      expect(completed).toBe(true);
+    });
+
+    it('rejects when the configuration delete fails', async () => {
+      axiosMock.patch.mockRejectedValueOnce(new Error('Configuration service unavailable.'));
+
+      await expect(applicationRepo.deleteApp('portal', userA)).rejects.toThrow('Configuration service unavailable.');
+    });
   });
 
   describe('findStatus', () => {
