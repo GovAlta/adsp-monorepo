@@ -29,11 +29,12 @@ client `urn:ads:platform:tenant-service`
 
 All endpoints are under `/api/rotation/v1`. See the [API documentation](https://api.adsp.alberta.ca) for request and response schemas. No endpoint returns a client secret.
 
-| Endpoint                                                   | Purpose                                                    |
-| :--------------------------------------------------------- | :--------------------------------------------------------- |
+| Endpoint                                                       | Purpose                                                    |
+| :------------------------------------------------------------- | :--------------------------------------------------------- |
 | `GET /api/rotation/v1/realm`                                   | Read the rotation mode and schedule of the realm.          |
 | `PUT /api/rotation/v1/realm`                                   | Set the realm mode and the schedule.                       |
 | `GET /api/rotation/v1/clients`                                 | List clients with their rotation status.                   |
+| `GET /api/rotation/v1/users?search={text}`                     | Search users (with an email), 3+ characters, for contacts. |
 | `PATCH /api/rotation/v1/clients/{clientId}`                    | Set the contacts notified for a client.                    |
 | `PUT /api/rotation/v1/clients/{clientId}/opt-in`               | Opt a client in or out (`selected` mode only).             |
 | `POST /api/rotation/v1/clients/{clientId}/rotate`              | Rotate the secret now.                                     |
@@ -54,18 +55,28 @@ The schedule is set in seconds. `expirationPeriod` is the secret lifetime, and `
 
 ### Contacts
 
-Contacts are email addresses stored with the client. Realm admins are always notified in addition to the client contacts.
+Contacts are email addresses stored with the client. Realm admins are always notified in addition to the client contacts. Tenant admins add or edit them on the **Client secrets** tab, in the **Edit contacts** dialog of each client. The dialog shows the contacts as chips: search the realm's users by name or email and select them, or type an email address and press Enter. Select a chip to remove it.
+
+## Notifications
+
+The service registers the **Client secret rotation** notification type. It sends an email for these events: `client-secret-rotation-due` (before the secret expires, by the realm's notice period), `client-secret-rotated` (a new secret is in place; the subject is prefixed with "Emergency" when the rotation was out of schedule), `client-secret-revoked` (the previous secret stopped working), and `client-secret-rotation-enabled` / `client-secret-rotation-disabled` (a tenant admin turned rotation on or off for the client). Each email names the client and links to the client in Keycloak and, when the `CLIENT_SECRET_ROTATION_RUNBOOK_URL` setting is configured, to the rotation runbook. Emails never contain the secret; read the new secret from the client's Credentials tab in Keycloak.
+
+Subscribers need the `client-secret-admin` role, which tenant admins have. The service keeps the subscriptions up to date itself: when a tenant admin turns rotation on, changes a client's opt-in, or edits contacts, it subscribes every realm admin with an email address to all clients of the realm, and each contact to the clients they are a contact of. Contacts that are no longer listed are unsubscribed. Subscription criteria it creates are labelled "Managed by client secret rotation"; criteria added in the Notification service by other means are never changed. A tenant admin added in Keycloak is subscribed at the next of these changes.
+
+For the manual Keycloak steps, emergency response and troubleshooting, see the [client secret rotation runbook](https://goa-dio.atlassian.net/wiki/spaces/ADSPA/pages/5230921156/Runbook+Client+secret+rotation+in+Keycloak+manual+steps). Set the `CLIENT_SECRET_ROTATION_RUNBOOK_URL` setting of the tenant service to this address to link it from the emails.
 
 ## Events
 
 Events are sent in the tenant of the realm, and never contain a secret.
 
-| name                          | description                                                                   |
-| :---------------------------- | :---------------------------------------------------------------------------- |
-| client-secret-rotation-due    | A client secret will expire and be rotated within the notice window.          |
-| client-secret-rotated         | A client secret was rotated. The previous secret works until `overlapEndsAt`. |
-| client-secret-revoked         | The previous client secret stopped working at the end of the overlap period.  |
-| client-secret-rotation-failed | A step of client secret rotation failed.                                      |
+| name                            | description                                                                   |
+| :------------------------------ | :---------------------------------------------------------------------------- |
+| client-secret-rotation-due      | A client secret will expire and be rotated within the notice window.          |
+| client-secret-rotated           | A client secret was rotated. The previous secret works until `overlapEndsAt`. |
+| client-secret-revoked           | The previous client secret stopped working at the end of the overlap period.  |
+| client-secret-rotation-enabled  | Automatic secret rotation was turned on for a client.                         |
+| client-secret-rotation-disabled | Automatic secret rotation was turned off for a client.                        |
+| client-secret-rotation-failed   | A step of client secret rotation failed.                                      |
 
 ## Operations
 

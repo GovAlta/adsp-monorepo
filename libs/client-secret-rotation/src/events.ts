@@ -3,6 +3,9 @@ import type { DomainEventDefinition } from '@abgov/adsp-service-sdk';
 const base = {
   realm: { type: 'string' },
   clientId: { type: 'string' },
+  portalUrl: { type: 'string' },
+  keycloakUrl: { type: 'string' },
+  runbookUrl: { type: 'string' },
 };
 
 export const ClientSecretRotationDueDefinition: DomainEventDefinition = {
@@ -14,7 +17,6 @@ export const ClientSecretRotationDueDefinition: DomainEventDefinition = {
       ...base,
       expiry: { type: 'string' },
       daysRemaining: { type: 'number' },
-      portalUrl: { type: 'string' },
     },
   },
 };
@@ -29,7 +31,6 @@ export const ClientSecretRotatedDefinition: DomainEventDefinition = {
       newExpiry: { type: 'string' },
       overlapEndsAt: { type: 'string' },
       emergency: { type: 'boolean' },
-      portalUrl: { type: 'string' },
     },
   },
 };
@@ -41,6 +42,18 @@ export const ClientSecretRevokedDefinition: DomainEventDefinition = {
     type: 'object',
     properties: { ...base, revokedAt: { type: 'string' } },
   },
+};
+
+export const ClientSecretRotationEnabledDefinition: DomainEventDefinition = {
+  name: 'client-secret-rotation-enabled',
+  description: 'Automatic secret rotation was turned on for a client.',
+  payloadSchema: { type: 'object', properties: base },
+};
+
+export const ClientSecretRotationDisabledDefinition: DomainEventDefinition = {
+  name: 'client-secret-rotation-disabled',
+  description: 'Automatic secret rotation was turned off for a client.',
+  payloadSchema: { type: 'object', properties: base },
 };
 
 export const ClientSecretRotationFailedDefinition: DomainEventDefinition = {
@@ -56,5 +69,7 @@ export const ClientSecretRotationEvents = [
   ClientSecretRotationDueDefinition,
   ClientSecretRotatedDefinition,
   ClientSecretRevokedDefinition,
+  ClientSecretRotationEnabledDefinition,
+  ClientSecretRotationDisabledDefinition,
   ClientSecretRotationFailedDefinition,
 ];

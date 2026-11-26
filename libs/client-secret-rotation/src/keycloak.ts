@@ -25,6 +25,13 @@ function stableStringify(value: unknown): string {
   );
 }
 
+export interface RealmUser {
+  id: string;
+  username: string;
+  name?: string;
+  email: string;
+}
+
 export interface RotationClient {
   id: string;
   clientId: string;
@@ -242,9 +249,14 @@ export class RotationKeycloakClient {
 
   /** Number of tenant admins with an email address. They are always notified, so rotation needs at least one. */
   async countRealmAdminContacts(realm: string): Promise<number> {
+    return (await this.listRealmAdmins(realm)).length;
+  }
+
+  /** Enabled tenant admins of the realm that have an email address. */
+  async listRealmAdmins(realm: string): Promise<Omit<RealmUser, 'username'>[]> {
     const [tenantService] = await this.client.clients.find({ realm, clientId: TENANT_SERVICE_CLIENT_ID });
     if (!tenantService?.id) {
-      return 0;
+      return [];
     }
     const admins = await this.client.clients.findUsersWithRole({
       realm,
@@ -252,7 +264,26 @@ export class RotationKeycloakClient {
       roleName: TENANT_ADMIN_ROLE,
       max: 1000,
     });
-    return admins.filter(({ email, enabled }) => !!email && enabled !== false).length;
+    return admins
+      .filter(({ email, enabled }) => !!email && enabled !== false)
+      .map(({ id, firstName, lastName, email }) => ({
+        id: id as string,
+        name: [firstName, lastName].filter((part) => !!part).join(' ') || undefined,
+        email: email as string,
+      }));
+  }
+
+  /** Enabled users of the realm with an email address whose name, username or email matches the text. */
+  async searchUsers(realm: string, search: string, max = 10): Promise<RealmUser[]> {
+    const users = await this.client.users.find({ realm, search, max, briefRepresentation: true });
+    return users
+      .filter(({ email, enabled }) => !!email && enabled !== false)
+      .map(({ id, username, firstName, lastName, email }) => ({
+        id: id as string,
+        username: username as string,
+        name: [firstName, lastName].filter((part) => !!part).join(' ') || undefined,
+        email: email as string,
+      }));
   }
 
   private async hasRole(realm: string, client: ClientRepresentation): Promise<boolean> {

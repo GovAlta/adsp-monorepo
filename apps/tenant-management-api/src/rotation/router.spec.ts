@@ -40,6 +40,8 @@ describe('rotation router', () => {
     regenerateSecret: jest.fn(),
     invalidatePreviousSecret: jest.fn(),
     countRealmAdminContacts: jest.fn(),
+    searchUsers: jest.fn(),
+    listRealmAdmins: jest.fn(),
     ensurePolicy: jest.fn(),
     isPolicyEnabled: jest.fn(),
     getPolicySchedule: jest.fn(),
@@ -48,6 +50,7 @@ describe('rotation router', () => {
   const settingsStore = { get: jest.fn(), update: jest.fn() };
   const eventService = { send: jest.fn() };
   const getConfiguration = jest.fn();
+  const subscriptions = { sync: jest.fn() };
 
   const createApp = (user: unknown, tenant?: unknown) => {
     const app = express();
@@ -64,6 +67,12 @@ describe('rotation router', () => {
         settingsStore,
         eventService,
         getConfiguration,
+        subscriptions,
+        links: {
+          portalUrl: 'https://portal.test/admin/access',
+          runbookUrl: 'https://runbook.test',
+          keycloakUrl: 'https://kc.test/auth',
+        },
         skipClientIds: ['job'],
         now: () => now,
       } as unknown as RotationRouterProps),
@@ -92,7 +101,11 @@ describe('rotation router', () => {
     keycloak.isPolicyEnabled.mockResolvedValue(true);
     keycloak.getClient.mockResolvedValue(client());
     keycloak.listClients.mockResolvedValue([client()]);
+    keycloak.listRealmAdmins.mockResolvedValue([{ id: 'a1', email: 'admin@example.com', name: 'Ad Min' }]);
+    subscriptions.sync.mockResolvedValue(undefined);
   });
+
+  const flush = () => new Promise((resolve) => setImmediate(resolve));
 
   describe('access', () => {
     it('rejects users without the role', async () => {
@@ -299,6 +312,22 @@ describe('rotation router', () => {
         .send({ enabled: true })
         .expect(200);
       expect(keycloak.setOptIn).toHaveBeenCalledWith('test', 'urn:ads:test:client', true);
+      expect(eventService.send).toHaveBeenCalledWith(
+        expect.objectContaining({
+          name: 'client-secret-rotation-enabled',
+          context: { realm: 'test', clientId: 'urn:ads:test:client' },
+        }),
+      );
+    });
+
+    it('notifies when a client is opted out', async () => {
+      await request(createApp(admin, tenant))
+        .put(`/clients/${encodeURIComponent('urn:ads:test:client')}/opt-in`)
+        .send({ enabled: false })
+        .expect(200);
+      expect(eventService.send).toHaveBeenCalledWith(
+        expect.objectContaining({ name: 'client-secret-rotation-disabled' }),
+      );
     });
 
     it('removes the expiry of a client when it is opted out', async () => {
@@ -331,6 +360,23 @@ describe('rotation router', () => {
     });
   });
 
+  describe('GET /users', () => {
+    it('searches the realm users', async () => {
+      const users = [{ id: 'u1', username: 'jo', name: 'Jo Smith', email: 'jo@example.com' }];
+      keycloak.searchUsers.mockResolvedValue(users);
+
+      const res = await request(createApp(admin, tenant)).get('/users').query({ search: ' joe ' }).expect(200);
+
+      expect(res.body).toEqual(users);
+      expect(keycloak.searchUsers).toHaveBeenCalledWith('test', 'joe', 10);
+    });
+
+    it('rejects a search that is too short', async () => {
+      await request(createApp(admin, tenant)).get('/users').query({ search: 'jo' }).expect(400);
+      expect(keycloak.searchUsers).not.toHaveBeenCalled();
+    });
+  });
+
   describe('PATCH /clients/:clientId', () => {
     it('stores contacts', async () => {
       await request(createApp(admin, tenant))
@@ -340,6 +386,37 @@ describe('rotation router', () => {
       expect(keycloak.setAttributes).toHaveBeenCalledWith('test', 'kc-1', {
         'rotation-contact': 'a@example.com,b@example.com',
       });
+    });
+
+    it('syncs notification subscriptions with the admin token', async () => {
+      keycloak.listClients.mockResolvedValue([
+        client({ clientId: 'c', contacts: ['a@example.com'] }),
+        client({ clientId: 'x', contacts: [] }),
+      ]);
+      await request(createApp(admin, tenant))
+        .patch('/clients/c')
+        .send({ contacts: ['a@example.com'] })
+        .expect(200);
+      await flush();
+      expect(subscriptions.sync).toHaveBeenCalledWith(
+        tenantId,
+        {
+          realm: 'test',
+          admins: [{ email: 'admin@example.com', name: 'Ad Min' }],
+          clients: [{ clientId: 'c', contacts: ['a@example.com'] }],
+        },
+        'user-token',
+      );
+    });
+
+    it('does not fail the request when the sync fails', async () => {
+      subscriptions.sync.mockRejectedValue(new Error('down'));
+      await request(createApp(admin, tenant))
+        .patch('/clients/c')
+        .send({ contacts: ['a@example.com'] })
+        .expect(200);
+      await flush();
+      expect(logger.warn).toHaveBeenCalled();
     });
 
     it('clears contacts', async () => {
@@ -370,7 +447,13 @@ describe('rotation router', () => {
         expect.objectContaining({
           tenantId,
           name: 'client-secret-rotated',
-          payload: expect.objectContaining({ clientId: 'urn:ads:test:client', emergency: false }),
+          payload: expect.objectContaining({
+            clientId: 'urn:ads:test:client',
+            emergency: false,
+            portalUrl: 'https://portal.test/admin/access',
+            runbookUrl: 'https://runbook.test',
+            keycloakUrl: 'https://kc.test/auth/admin/test/console/#/test/clients/kc-1/credentials',
+          }),
         }),
       );
     });

@@ -2,8 +2,10 @@ import type { AdspId, ServiceDirectory, TokenProvider } from '@abgov/adsp-servic
 import type { Application, RequestHandler } from 'express';
 import * as passport from 'passport';
 import { createRotationRouter, RotationRouterProps } from './router';
+import { createSubscriptionSync } from './subscriptions';
 import { createRealmSettingsStore } from './settings';
 
+export * from './constants';
 export * from './keycloak';
 export * from './roles';
 export * from './router';
@@ -27,6 +29,7 @@ export function applyRotationMiddleware(
     createRotationRouter({
       ...props,
       settingsStore: createRealmSettingsStore(directory, tokenProvider, serviceId),
+      subscriptions: createSubscriptionSync(props.logger, directory),
       skipClientIds: [],
     }),
   );

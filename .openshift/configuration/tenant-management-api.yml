@@ -17,6 +17,7 @@ items:
       TENANT_WEB_APP_HOST: "https://tenant-management-webapp-core-services-dev.os99.gov.ab.ca"
       SUBSCRIBER_APP_HOST: "https://subscriber-app-core-services-dev.os99.gov.ab.ca"
       API_APP_HOST: "https://api-core-services-dev.os99.gov.ab.ca"
+      CLIENT_SECRET_ROTATION_RUNBOOK_URL: "https://goa-dio.atlassian.net/wiki/spaces/ADSPA/pages/5230921156/Runbook+Client+secret+rotation+in+Keycloak+manual+steps"
       LOG_LEVEL: info
   - apiVersion: v1
     kind: Secret

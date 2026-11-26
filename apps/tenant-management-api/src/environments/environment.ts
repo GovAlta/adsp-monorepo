@@ -47,6 +47,11 @@ export const environment = envalid.cleanEnv(
     TRUSTED_PROXY: envalid.str({ default: 'uniquelocal' }),
     DIRECTORY_URL: envalid.str({ default: 'https://directory-service.adsp-dev.gov.ab.ca' }),
     TENANT_RETENTION_DAYS: envalid.num({ default: 30 }),
+    // Link to the rotation runbook shown in notifications; set to an empty value to omit it from emails.
+    CLIENT_SECRET_ROTATION_RUNBOOK_URL: envalid.str({
+      default:
+        'https://goa-dio.atlassian.net/wiki/spaces/ADSPA/pages/5230921156/Runbook+Client+secret+rotation+in+Keycloak+manual+steps',
+    }),
     TENANT_PURGE_ENABLED: envalid.bool({ default: false }),
     TENANT_PURGE_SCHEDULE: envalid.str({ default: '0 2 * * *' }),
   },

@@ -9,6 +9,7 @@ import {
   GoabContainer,
   GoabDropdown,
   GoabDropdownItem,
+  GoabFormItem,
   GoabIcon,
   GoabInput,
   GoabModal,
@@ -38,7 +39,8 @@ import {
   RotationSettings,
 } from './clientSecretsApi';
 import { createClientSecretsApi } from './clientSecretsHttpApi';
-import { ROTATION_POLICY_NAME, ROTATION_PROFILE_NAME } from './constants';
+import { ContactsModal } from './ContactsModal';
+import { CLIENT_EXPIRY_NOTE, ROTATION_POLICY_NAME, ROTATION_PROFILE_NAME, VISIBLE_CONTACTS } from './constants';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const DAY_SECONDS = 24 * 60 * 60;
@@ -96,6 +98,10 @@ export function validateSchedule(schedule: RotationSchedule): string | undefined
 
 type Section = 'mode' | 'schedule' | 'clients';
 
+interface ContactsEdit {
+  client: ClientSecretClient;
+}
+
 interface SectionError {
   section: Section;
   message: string;
@@ -110,6 +116,8 @@ interface Confirmation {
   destructive?: boolean;
   failure: string;
   success?: string;
+  /** Skip reloading when the action changes nothing the page shows, such as sending a notification. */
+  skipReload?: boolean;
   run: () => Promise<void>;
 }
 
@@ -195,6 +203,7 @@ const ClientSecretsView: FunctionComponent<{ api: ClientSecretsApi; keycloakClie
   const [loading, setLoading] = useState(true);
   const [working, setWorking] = useState(false);
   const [confirmation, setConfirmation] = useState<Confirmation | null>(null);
+  const [contactsEdit, setContactsEdit] = useState<ContactsEdit | null>(null);
   const [checkboxEpoch, setCheckboxEpoch] = useState(0);
 
   const refresh = useCallback(async () => {
@@ -250,13 +259,16 @@ const ClientSecretsView: FunctionComponent<{ api: ClientSecretsApi; keycloakClie
     failure: string,
     successMessage?: string,
     section: Section = 'clients',
+    skipReload = false,
   ) => {
     setWorking(true);
     try {
       await action();
       // The save is done. Hide its overlay before the clients reload shows its own loader.
       setWorking(false);
-      await reload();
+      if (!skipReload) {
+        await reload();
+      }
       if (successMessage) {
         TemporaryNotification.show(successMessage, { type: 'success', duration: 'long' });
       }
@@ -280,7 +292,7 @@ const ClientSecretsView: FunctionComponent<{ api: ClientSecretsApi; keycloakClie
     const pending = confirmation;
     setConfirmation(null);
     if (pending) {
-      await act(pending.run, pending.failure, pending.success, pending.section);
+      await act(pending.run, pending.failure, pending.success, pending.section, pending.skipReload);
     }
   };
 
@@ -348,12 +360,13 @@ const ClientSecretsView: FunctionComponent<{ api: ClientSecretsApi; keycloakClie
       message: (
         <p>
           Rotate the secret for <strong>{clientLabel(client)}</strong>? A new secret is generated, and the previous
-          secret keeps working for {graceDays} so you can update your application.
+          secret keeps working for {graceDays} so you can update your application. The client's contacts and the realm
+          admins are notified by email.
         </p>
       ),
       confirmLabel: 'Rotate',
       failure: `Failed to rotate ${clientLabel(client)}.`,
-      success: `The secret of ${clientLabel(client)} was rotated. The previous secret keeps working for ${graceDays}.`,
+      success: `The secret of ${clientLabel(client)} was rotated and subscribers were notified. The previous secret keeps working for ${graceDays}.`,
       run: () => api.rotate(client.id),
     });
 
@@ -364,13 +377,13 @@ const ClientSecretsView: FunctionComponent<{ api: ClientSecretsApi; keycloakClie
         <p>
           The previous secret for <strong>{clientLabel(client)}</strong> is removed immediately instead of at the end of
           the grace period. Applications still using it will stop working until they are updated with the current
-          secret.
+          secret. The client's contacts and the realm admins are notified by email.
         </p>
       ),
       confirmLabel: 'Invalidate',
       destructive: true,
       failure: `Failed to invalidate the previous secret of ${clientLabel(client)}.`,
-      success: `The previous secret of ${clientLabel(client)} was invalidated.`,
+      success: `The previous secret of ${clientLabel(client)} was invalidated and subscribers were notified.`,
       run: () => api.invalidateRotated(client.id),
     });
 
@@ -387,7 +400,21 @@ const ClientSecretsView: FunctionComponent<{ api: ClientSecretsApi; keycloakClie
       failure: `Failed to notify ${clientLabel(client)}.`,
       success: `The expiry notification for ${clientLabel(client)} was sent to ${client.contacts.join(', ')}.`,
       run: () => api.notify(client.id),
+      skipReload: true,
     });
+
+  const saveContacts = async (contacts: string[]) => {
+    if (!contactsEdit) {
+      return;
+    }
+    const { client } = contactsEdit;
+    setContactsEdit(null);
+    await act(
+      () => api.setContacts(client.id, contacts),
+      `Failed to save the contacts of ${clientLabel(client)}.`,
+      `The contacts of ${clientLabel(client)} were saved.`,
+    );
+  };
 
   const schedule: RotationSchedule | null = draft && {
     expirationPeriod: Number(draft.expirationPeriod),
@@ -620,6 +647,12 @@ const ClientSecretsView: FunctionComponent<{ api: ClientSecretsApi; keycloakClie
         </SectionHeader>
       )}
 
+      {!clientsHidden && (
+        <GoabCallout type="information" size="medium" testId="client-expiry-note">
+          {CLIENT_EXPIRY_NOTE}
+        </GoabCallout>
+      )}
+
       {error?.section === 'clients' && (
         <GoabCallout type="emergency" heading="Something went wrong" size="medium" testId="client-secrets-error">
           {error.message}
@@ -719,7 +752,24 @@ const ClientSecretsView: FunctionComponent<{ api: ClientSecretsApi; keycloakClie
                         </Fact>
                         <Fact>
                           <FactLabel>Contact</FactLabel>
-                          <span>{client.contacts.join(', ') || <Unsaved>Add contact</Unsaved>}</span>
+                          <span data-testid={`contacts-${client.id}`}>
+                            {client.contacts.length === 0 ? (
+                              <Unsaved>None</Unsaved>
+                            ) : (
+                              <>
+                                {client.contacts.slice(0, VISIBLE_CONTACTS).join(', ')}
+                                {client.contacts.length > VISIBLE_CONTACTS &&
+                                  ` +${client.contacts.length - VISIBLE_CONTACTS} more`}
+                              </>
+                            )}
+                          </span>
+                          <ActionButton
+                            type="button"
+                            onClick={() => setContactsEdit({ client })}
+                            data-testid={`edit-contacts-${client.id}`}
+                          >
+                            {client.contacts.length > 0 ? 'Edit contacts' : 'Add contacts'}
+                          </ActionButton>
                         </Fact>
                         <Fact>
                           <FactLabel>Automatic rotation</FactLabel>
@@ -863,6 +913,15 @@ const ClientSecretsView: FunctionComponent<{ api: ClientSecretsApi; keycloakClie
         >
           {confirmation.message}
         </GoabModal>
+      )}
+      {contactsEdit && (
+        <ContactsModal
+          heading={`Contacts for ${clientLabel(contactsEdit.client)}`}
+          contacts={contactsEdit.client.contacts}
+          searchUsers={api.searchUsers}
+          onSave={saveContacts}
+          onClose={() => setContactsEdit(null)}
+        />
       )}
     </Layout>
   );

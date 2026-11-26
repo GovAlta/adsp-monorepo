@@ -39,4 +39,15 @@ export interface ClientSecretsApi {
   /** Removes the previous secret before its grace period ends, for example if it may have been exposed. */
   invalidateRotated(id: string): Promise<void>;
   notify(id: string): Promise<void>;
+  /** Replaces the email addresses notified about this client's secret; an empty list clears them. */
+  setContacts(id: string, contacts: string[]): Promise<void>;
+  /** Enabled users of the realm with an email address whose name, username or email matches the text. */
+  searchUsers(search: string): Promise<RealmUser[]>;
+}
+
+export interface RealmUser {
+  id: string;
+  username: string;
+  name?: string;
+  email: string;
 }

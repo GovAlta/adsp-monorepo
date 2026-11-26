@@ -282,6 +282,51 @@ paths:
           $ref: '#/components/responses/RotationForbidden'
         '404':
           $ref: '#/components/responses/RotationNotFound'
+  /api/rotation/v1/users:
+    get:
+      tags: [Client]
+      summary: Search realm users
+      description: >
+        Searches the enabled users of the realm that have an email address, by name, username or email, so an admin
+        can pick client contacts. Returns at most 10 users. Requires the client-secret-admin role.
+      operationId: searchRotationUsers
+      parameters:
+        - name: search
+          in: query
+          required: true
+          description: Text to match, at least 3 characters.
+          schema:
+            type: string
+            minLength: 3
+      responses:
+        '200':
+          description: Matching users.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                    username:
+                      type: string
+                    name:
+                      type: string
+                    email:
+                      type: string
+              example:
+                - id: 0a1b2c3d-0000-0000-0000-000000000000
+                  username: test.user
+                  name: Test User
+                  email: test.user@gov.ab.ca
+        '400':
+          $ref: '#/components/responses/RotationBadRequest'
+        '401':
+          $ref: '#/components/responses/RotationUnauthorized'
+        '403':
+          $ref: '#/components/responses/RotationForbidden'
   /api/rotation/v1/clients/{clientId}/opt-in:
     put:
       tags: [Client]

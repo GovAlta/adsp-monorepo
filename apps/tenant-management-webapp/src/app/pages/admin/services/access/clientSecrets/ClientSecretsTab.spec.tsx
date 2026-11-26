@@ -58,6 +58,8 @@ describe('ClientSecretsTab', () => {
     notify: jest.fn().mockResolvedValue(undefined),
     setMode: jest.fn().mockResolvedValue(undefined),
     saveSchedule: jest.fn().mockResolvedValue(undefined),
+    setContacts: jest.fn().mockResolvedValue(undefined),
+    searchUsers: jest.fn().mockResolvedValue([]),
     settings: jest.fn().mockResolvedValue({
       mode: 'selected',
 
@@ -195,6 +197,90 @@ describe('ClientSecretsTab', () => {
     expect(link.getAttribute('target')).toBe('_blank');
   });
 
+  const typeContact = (value: string) =>
+    fireEvent(goaElement('contacts-input'), new CustomEvent('_change', { detail: { name: 'contact-search', value } }));
+  const pressEnter = () =>
+    fireEvent(
+      goaElement('contacts-input'),
+      new CustomEvent('_keyPress', { detail: { name: 'contact-search', key: 'Enter' } }),
+    );
+
+  it('adds searched users and typed emails as chips and saves them', async () => {
+    const api = createApi([client({ contacts: [] })]);
+    api.searchUsers.mockResolvedValue([
+      { id: 'u1', username: 'jo', name: 'Jo Smith', email: 'jo@example.com' },
+      { id: 'u2', username: 'al', email: 'al@example.com' },
+    ]);
+    render(<ClientSecretsTab api={api} />);
+    await openRow();
+
+    click('edit-contacts-c1');
+    typeContact('joe');
+    await waitFor(() => expect(api.searchUsers).toHaveBeenCalledWith('joe'));
+    fireEvent.click(await screen.findByTestId('contact-result-u1'));
+    typeContact('b@example.com');
+    pressEnter();
+
+    expect(goaElement('contact-chip-jo@example.com')).toBeTruthy();
+    expect(goaElement('contact-chip-b@example.com')).toBeTruthy();
+    click('contacts-save');
+
+    await waitFor(() => expect(api.setContacts).toHaveBeenCalledWith('c1', ['jo@example.com', 'b@example.com']));
+    await expectNotified('contacts of urn:ads:test:one were saved');
+  });
+
+  it('collapses a long contact list on the row into a count', async () => {
+    const contacts = ['a@x.ca', 'b@x.ca', 'c@x.ca', 'd@x.ca'];
+    render(<ClientSecretsTab api={createApi([client({ contacts })])} />);
+    await openRow();
+
+    expect(screen.getByTestId('contacts-c1').textContent).toBe('a@x.ca, b@x.ca +2 more');
+  });
+
+  it('does not search users until three characters are typed', async () => {
+    const api = createApi();
+    render(<ClientSecretsTab api={api} />);
+    await openRow();
+
+    click('edit-contacts-c1');
+    typeContact('jo');
+    await new Promise((resolve) => setTimeout(resolve, 400));
+
+    expect(api.searchUsers).not.toHaveBeenCalled();
+  });
+
+  it('removes a contact chip and ignores a duplicate address', async () => {
+    const api = createApi([client({ contacts: ['a@example.com', 'b@example.com'] })]);
+    render(<ClientSecretsTab api={api} />);
+    await openRow();
+
+    click('edit-contacts-c1');
+    typeContact('A@example.com');
+    pressEnter();
+    click('contact-chip-b@example.com');
+
+    expect(goaElement('contact-chip-b@example.com')).toBeNull();
+    typeContact('c@example.com');
+    pressEnter();
+    click('contacts-save');
+
+    await waitFor(() => expect(api.setContacts).toHaveBeenCalledWith('c1', ['a@example.com', 'c@example.com']));
+  });
+
+  it('does not add an invalid typed email address', async () => {
+    const api = createApi();
+    render(<ClientSecretsTab api={api} />);
+    await openRow();
+
+    click('edit-contacts-c1');
+    typeContact('not-an-email');
+    pressEnter();
+
+    await waitFor(() => expect(goaElement('contacts-input').getAttribute('error')).toBe('true'));
+    expect(goaElement('contact-chip-not-an-email')).toBeNull();
+    expect(goaElement('contacts-save').getAttribute('disabled')).toBe('true');
+  });
+
   it('shows no Keycloak link without a console URL', async () => {
     render(<ClientSecretsTab api={createApi([client()])} />);
     await openRow();
@@ -289,6 +375,8 @@ describe('ClientSecretsTab', () => {
     click('confirm-ok');
     await waitFor(() => expect(api.notify).toHaveBeenCalledWith('c1'));
     await expectNotified('notification for urn:ads:test:one');
+    // Nothing on the page changes, so the clients are not fetched again.
+    expect(api.list).toHaveBeenCalledTimes(1);
   });
 
   it('disables the notification action without a contact', async () => {
@@ -306,6 +394,13 @@ describe('ClientSecretsTab', () => {
 
     await openRow();
     expect(screen.queryByTestId('panel-days-c1')).toBeNull();
+  });
+
+  it('shows the expiry note above the client list', async () => {
+    render(<ClientSecretsTab api={createApi()} />);
+
+    await waitFor(() => expect(screen.getByTestId('secret-row-c1')).toBeTruthy());
+    expect(goaElement('client-expiry-note').textContent).toContain('starts the expiry clock');
   });
 
   it('opens one client at a time', async () => {

@@ -48,6 +48,7 @@ describe('RotationKeycloakClient', () => {
       invalidateSecret: jest.fn(),
       findUsersWithRole: jest.fn(),
     },
+    users: { find: jest.fn() },
   };
   const client = new RotationKeycloakClient(kc as never);
 
@@ -147,7 +148,10 @@ describe('RotationKeycloakClient', () => {
         .mockResolvedValueOnce(executor({ 'expiration-period': '300' }));
 
       expect(await client.getPolicySchedule(realm)).toBeUndefined();
-      expect(await client.getPolicySchedule(realm)).toEqual({ expirationPeriod: 7776000, rotatedExpirationPeriod: 432000 });
+      expect(await client.getPolicySchedule(realm)).toEqual({
+        expirationPeriod: 7776000,
+        rotatedExpirationPeriod: 432000,
+      });
       expect(await client.getPolicySchedule(realm)).toBeUndefined();
     });
 
@@ -217,6 +221,33 @@ describe('RotationKeycloakClient', () => {
   it('deletes only the previous secret', async () => {
     await client.invalidatePreviousSecret(realm, '1');
     expect(kc.clients.invalidateSecret).toHaveBeenCalledWith({ realm, id: '1' });
+  });
+
+  describe('listRealmAdmins', () => {
+    it('lists enabled tenant admins with an email and their names', async () => {
+      kc.clients.find.mockResolvedValueOnce([{ id: 'ts' }]);
+      kc.clients.findUsersWithRole.mockResolvedValueOnce([
+        { id: 'u1', firstName: 'Jo', lastName: 'Smith', email: 'jo@x.ca' },
+        { id: 'u2', email: 'off@x.ca', enabled: false },
+      ]);
+
+      expect(await client.listRealmAdmins(realm)).toEqual([{ id: 'u1', name: 'Jo Smith', email: 'jo@x.ca' }]);
+    });
+  });
+
+  describe('searchUsers', () => {
+    it('returns enabled users that have an email', async () => {
+      kc.users.find.mockResolvedValueOnce([
+        { id: 'u1', username: 'jo', firstName: 'Jo', email: 'jo@x.ca' },
+        { id: 'u2', username: 'nomail' },
+        { id: 'u3', username: 'off', email: 'off@x.ca', enabled: false },
+      ]);
+
+      expect(await client.searchUsers(realm, 'jo', 5)).toEqual([
+        { id: 'u1', username: 'jo', name: 'Jo', email: 'jo@x.ca' },
+      ]);
+      expect(kc.users.find).toHaveBeenCalledWith(expect.objectContaining({ realm, search: 'jo', max: 5 }));
+    });
   });
 
   describe('countRealmAdminContacts', () => {

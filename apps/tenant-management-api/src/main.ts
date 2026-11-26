@@ -1,5 +1,9 @@
 import { AdspId, initializePlatform, User } from '@abgov/adsp-service-sdk';
-import { ClientSecretRotationEvents, resolveConfiguration } from '@core-services/client-secret-rotation';
+import {
+  ClientSecretRotationEvents,
+  ClientSecretRotationNotificationType,
+  resolveConfiguration,
+} from '@core-services/client-secret-rotation';
 import { createErrorHandler } from '@core-services/core-common';
 import * as cors from 'cors';
 import * as compression from 'compression';
@@ -27,7 +31,12 @@ import {
   scheduleTenantPurgeJob,
 } from './tenant';
 import { createKeycloakRealmService } from './keycloak';
-import { applyRotationMiddleware, ClientSecretRotationRoles, createRotationKeycloakFactory } from './rotation';
+import {
+  ACCESS_PAGE_PATH,
+  applyRotationMiddleware,
+  ClientSecretRotationRoles,
+  createRotationKeycloakFactory,
+} from './rotation';
 
 async function initializeApp(): Promise<express.Application> {
   const repositories = await createRepositories({ ...environment, logger });
@@ -54,55 +63,56 @@ async function initializeApp(): Promise<express.Application> {
     tokenProvider,
     traceHandler,
   } = await initializePlatform(
-      {
-        serviceId,
-        displayName: 'Tenant service',
-        description: 'Service for management of ADSP tenants.',
-        clientSecret: environment.CLIENT_SECRET,
-        directoryUrl: new URL(environment.DIRECTORY_URL),
-        accessServiceUrl: new URL(environment.KEYCLOAK_ROOT_URL),
-        configuration: {
-          description:
-            'Service roles with name, description, and whether the role is part of the tenant administrator role.',
-          schema: configurationSchema,
+    {
+      serviceId,
+      displayName: 'Tenant service',
+      description: 'Service for management of ADSP tenants.',
+      clientSecret: environment.CLIENT_SECRET,
+      directoryUrl: new URL(environment.DIRECTORY_URL),
+      accessServiceUrl: new URL(environment.KEYCLOAK_ROOT_URL),
+      configuration: {
+        description:
+          'Service roles with name, description, and whether the role is part of the tenant administrator role.',
+        schema: configurationSchema,
+      },
+      // Only urn entries register service roles; other keys are realm rotation settings.
+      configurationConverter: (c) =>
+        Object.entries(c)
+          .filter(([k]) => k.startsWith('urn:'))
+          .map(([k, v]) => ({ serviceId: AdspId.parse(k), ...v })),
+      events: [
+        TenantCreatedDefinition,
+        TenantDeletedDefinition,
+        TenantArchivedDefinition,
+        TenantRestoredDefinition,
+        TenantNameUpdatedDefinition,
+        ...ClientSecretRotationEvents,
+      ],
+      notifications: [ClientSecretRotationNotificationType],
+      auditActions: TenantAuditActions,
+      roles: [
+        // Note: Tenant Admin role is a special composite role.
+        {
+          role: TenantServiceRoles.TenantAdmin,
+          description: 'Administrator role for accessing the ADSP tenant admin.',
         },
-        // Only urn entries register service roles; other keys are realm rotation settings.
-        configurationConverter: (c) =>
-          Object.entries(c)
-            .filter(([k]) => k.startsWith('urn:'))
-            .map(([k, v]) => ({ serviceId: AdspId.parse(k), ...v })),
-        events: [
-          TenantCreatedDefinition,
-          TenantDeletedDefinition,
-          TenantArchivedDefinition,
-          TenantRestoredDefinition,
-          TenantNameUpdatedDefinition,
-          ...ClientSecretRotationEvents,
-        ],
-        auditActions: TenantAuditActions,
-        roles: [
-          // Note: Tenant Admin role is a special composite role.
-          {
-            role: TenantServiceRoles.TenantAdmin,
-            description: 'Administrator role for accessing the ADSP tenant admin.',
-          },
-          {
-            role: TenantServiceRoles.PlatformService,
-            description: 'Service role for backend services for reading tenants.',
-          },
-          {
-            role: ClientSecretRotationRoles.ClientSecretAdmin,
-            description: 'Client secret admin role that grants permission to manage client secret rotation in a realm.',
-            // Tenant admins manage the rotation of their own realm.
-            inTenantAdmin: true,
-          },
-        ],
-      },
-      { logger },
-      {
-        tenantService: new TenantServiceImpl(repositories.tenantRepository),
-      },
-    );
+        {
+          role: TenantServiceRoles.PlatformService,
+          description: 'Service role for backend services for reading tenants.',
+        },
+        {
+          role: ClientSecretRotationRoles.ClientSecretAdmin,
+          description: 'Client secret admin role that grants permission to manage client secret rotation in a realm.',
+          // Tenant admins manage the rotation of their own realm.
+          inTenantAdmin: true,
+        },
+      ],
+    },
+    { logger },
+    {
+      tenantService: new TenantServiceImpl(repositories.tenantRepository),
+    },
+  );
 
   passport.use('jwt', coreStrategy);
   passport.use('jwt-tenant', tenantStrategy);
@@ -139,6 +149,11 @@ async function initializeApp(): Promise<express.Application> {
     createKeycloak,
     // Rotation windows use the platform defaults; tenants set their own schedule per realm.
     getConfiguration: async () => resolveConfiguration(undefined),
+    links: {
+      portalUrl: new URL(ACCESS_PAGE_PATH, environment.TENANT_WEB_APP_HOST).href,
+      runbookUrl: environment.CLIENT_SECRET_ROTATION_RUNBOOK_URL || undefined,
+      keycloakUrl: `${environment.KEYCLOAK_ROOT_URL}/auth`,
+    },
   });
 
   if (environment.TENANT_PURGE_ENABLED) {

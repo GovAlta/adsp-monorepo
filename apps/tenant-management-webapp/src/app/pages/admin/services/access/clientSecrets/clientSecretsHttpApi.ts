@@ -2,6 +2,7 @@ import axios from 'axios';
 import type {
   ClientSecretClient,
   ClientSecretsApi,
+  RealmUser,
   RealmRotationMode,
   RotationSchedule,
   RotationSettings,
@@ -9,6 +10,7 @@ import type {
 
 const REALM_PATH = '/api/rotation/v1/realm';
 const CLIENTS_PATH = '/api/rotation/v1/clients';
+const USERS_PATH = '/api/rotation/v1/users';
 
 // Surfaces the API's own message, which explains the failure (for example an invalid schedule).
 function toError(err: unknown): Error {
@@ -82,6 +84,12 @@ export function createClientSecretsApi(
     },
     async notify(id) {
       await request('post', clientPath(id, '/notify'));
+    },
+    async setContacts(id, contacts) {
+      await request('patch', clientPath(id), { contacts });
+    },
+    searchUsers(search) {
+      return request<RealmUser[]>('get', `${USERS_PATH}?search=${encodeURIComponent(search)}`);
     },
   };
 }
