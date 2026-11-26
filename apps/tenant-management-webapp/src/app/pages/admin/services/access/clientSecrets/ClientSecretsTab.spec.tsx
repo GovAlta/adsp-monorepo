@@ -185,6 +185,22 @@ describe('ClientSecretsTab', () => {
     expect(goaElement('opt-in-c1').getAttribute('checked')).toBe('true');
   });
 
+  it('links a client to its Credentials tab in Keycloak when the console URL is known', async () => {
+    const url = 'https://keycloak.test/auth/admin/realm1/console/#/realm1/clients';
+    render(<ClientSecretsTab api={createApi([client()])} keycloakClientsUrl={url} />);
+    await openRow();
+
+    const link = screen.getByTestId('keycloak-link-c1');
+    expect(link.getAttribute('href')).toBe(`${url}/c1/credentials`);
+    expect(link.getAttribute('target')).toBe('_blank');
+  });
+
+  it('shows no Keycloak link without a console URL', async () => {
+    render(<ClientSecretsTab api={createApi([client()])} />);
+    await openRow();
+    expect(screen.queryByTestId('keycloak-link-c1')).toBeNull();
+  });
+
   it('hides the rotation schedule while rotation is off', async () => {
     render(<ClientSecretsTab api={createApi([client()], { mode: 'off' })} />);
     await waitFor(() => expect(goaElement('rotation-state').getAttribute('content')).toBe('Rotation off'));

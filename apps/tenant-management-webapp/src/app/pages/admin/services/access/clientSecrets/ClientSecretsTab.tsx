@@ -151,11 +151,19 @@ function describeExpiry(value?: string): string {
 
 interface Props {
   api?: ClientSecretsApi;
+  /** Keycloak admin console clients URL; defaults to the one built from the session when no api is given. */
+  keycloakClientsUrl?: string;
 }
 
 const ConnectedClientSecretsTab: FunctionComponent = () => {
   const dispatch = useDispatch<AppDispatch>();
   const baseUrl = useSelector((state: RootState) => state.config.serviceUrls?.clientSecretRotationApiUrl);
+  const keycloakClientsUrl = useSelector((state: RootState) => {
+    const { realm } = state.session;
+    return realm && state.config.keycloakApi?.url
+      ? `${state.config.keycloakApi.url}/admin/${realm}/console/#/${realm}/clients`
+      : undefined;
+  });
   const api = useMemo(
     () =>
       createClientSecretsApi(
@@ -164,13 +172,17 @@ const ConnectedClientSecretsTab: FunctionComponent = () => {
       ),
     [baseUrl, dispatch],
   );
-  return <ClientSecretsView api={api} />;
+  return <ClientSecretsView api={api} keycloakClientsUrl={keycloakClientsUrl} />;
 };
 
-export const ClientSecretsTab: FunctionComponent<Props> = ({ api }) =>
-  api ? <ClientSecretsView api={api} /> : <ConnectedClientSecretsTab />;
+export const ClientSecretsTab: FunctionComponent<Props> = ({ api, keycloakClientsUrl }) =>
+  api ? <ClientSecretsView api={api} keycloakClientsUrl={keycloakClientsUrl} /> : <ConnectedClientSecretsTab />;
 
-const ClientSecretsView: FunctionComponent<{ api: ClientSecretsApi }> = ({ api }) => {
+// Where each client's Credentials tab in the Keycloak admin console is; omitted when the realm or console is unknown.
+const ClientSecretsView: FunctionComponent<{ api: ClientSecretsApi; keycloakClientsUrl?: string }> = ({
+  api,
+  keycloakClientsUrl,
+}) => {
   const [clients, setClients] = useState<ClientSecretClient[] | null>(null);
   const [settings, setSettings] = useState<RotationSettings | null>(null);
   const [draft, setDraft] = useState<Record<keyof RotationSchedule, string> | null>(null);
@@ -770,6 +782,17 @@ const ClientSecretsView: FunctionComponent<{ api: ClientSecretsApi }> = ({ api }
                             Send notification
                           </ActionButton>
                         </GoabTooltip>
+                        {keycloakClientsUrl && (
+                          <KeycloakLink
+                            href={`${keycloakClientsUrl}/${client.id}/credentials`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            data-testid={`keycloak-link-${client.id}`}
+                          >
+                            Open in Keycloak
+                            <GoabIcon type="open" size="small" />
+                          </KeycloakLink>
+                        )}
                       </PanelActions>
                     </ClientPanel>
                   )}
@@ -961,6 +984,14 @@ const ActionButton = styled.button<{ $danger?: boolean }>`
     color: var(--goa-color-greyscale-400);
     cursor: not-allowed;
   }
+`;
+
+const KeycloakLink = styled.a`
+  display: inline-flex;
+  align-items: center;
+  gap: var(--goa-space-2xs, 0.25rem);
+  margin-left: auto;
+  color: var(--goa-color-interactive-default);
 `;
 
 const SectionHeader = styled.div`
