@@ -1,4 +1,3 @@
-// clean-code-ignore: RULE-19 app entry point that only mounts the root component
 import { GoabCircularProgress } from '@abgov/react-components';
 import '@abgov/web-components';
 import { configureStore } from '@reduxjs/toolkit';

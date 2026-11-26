@@ -1,4 +1,3 @@
-// clean-code-ignore: RULE-19 app entry point that only mounts the root component
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
