@@ -146,6 +146,21 @@ describe('value router documented behaviour', () => {
       const res = await request(createApp(reader)).get(`/value/v1/${'a'.repeat(51)}/values`);
       expect(res.status).toBe(400);
     });
+
+    it('reads only the requested tenant for a core user with tenantId', async () => {
+      const coreReader = user([ServiceUserRoles.Reader], { isCore: true, tenantId: undefined });
+      const res = await request(createApp(coreReader)).get(
+        `/value/v1/test-service/values?tenantId=${encodeURIComponent(tenantId.toString())}`,
+      );
+      expect(res.status).toBe(200);
+      expect(repositoryMock.readValues).toHaveBeenCalledWith(1, undefined, expect.objectContaining({ tenantId }));
+    });
+
+    it('responds 400 for a tenant user without a tenant context', async () => {
+      const res = await request(createApp(reader, false)).get('/value/v1/test-service/values');
+      expect(res.status).toBe(400);
+      expect(res.body.errorMessage).toBe('Tenant context is required for operation.');
+    });
   });
 
   describe('GET /:namespace/values/:name', () => {

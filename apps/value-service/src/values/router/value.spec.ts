@@ -579,6 +579,7 @@ describe('event router', () => {
   describe('readValues', () => {
     it('can read definition values', async () => {
       const req = {
+        tenant: { id: tenantId },
         user: {
           tenantId,
           id: 'test-reader',
@@ -608,6 +609,7 @@ describe('event router', () => {
 
     it('can call next with not found', async () => {
       const req = {
+        tenant: { id: tenantId },
         user: {
           tenantId,
           id: 'test-reader',
@@ -630,6 +632,7 @@ describe('event router', () => {
 
     it('can read value by names', async () => {
       const req = {
+        tenant: { id: tenantId },
         user: {
           tenantId,
           id: 'test-reader',
@@ -655,6 +658,53 @@ describe('event router', () => {
           'test-service': expect.objectContaining({ 'test-value': expect.objectContaining({ value }) }),
         })
       );
+    });
+
+    it('can read values of the requested tenant for a core user', async () => {
+      const req = {
+        tenant: { id: tenantId },
+        user: {
+          id: 'test-core-reader',
+          isCore: true,
+          roles: [ServiceUserRoles.Reader],
+        },
+        params: { namespace: 'test-service' },
+        query: { tenantId: tenantId.toString() },
+        getConfiguration: jest.fn(),
+      };
+      const res = {
+        send: jest.fn(),
+      };
+      const next = jest.fn();
+
+      req.getConfiguration.mockResolvedValue([{ 'test-service': namespace }]);
+      repositoryMock.readValues.mockResolvedValueOnce({
+        results: [{ timestamp: new Date(), context: {}, correlationId: null, value: {} }],
+      });
+      await readValues(req as unknown as Request, res as unknown as Response, next);
+      expect(next).not.toHaveBeenCalled();
+      expect(repositoryMock.readValues).toHaveBeenCalledWith(1, undefined, expect.objectContaining({ tenantId }));
+    });
+
+    it('can call next with invalid operation when there is no tenant context', async () => {
+      const req = {
+        user: {
+          id: 'test-reader',
+          roles: [ServiceUserRoles.Reader],
+        },
+        params: { namespace: 'test-service' },
+        query: {},
+        getConfiguration: jest.fn(),
+      };
+      const res = {
+        send: jest.fn(),
+      };
+      const next = jest.fn();
+
+      req.getConfiguration.mockResolvedValue([{ 'test-service': namespace }]);
+      await readValues(req as unknown as Request, res as unknown as Response, next);
+      expect(res.send).not.toHaveBeenCalled();
+      expect(next).toHaveBeenCalledWith(expect.any(InvalidOperationError));
     });
   });
 
