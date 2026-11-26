@@ -1,4 +1,4 @@
-import { InvalidOperationError, NotFoundError } from '@core-services/core-common';
+import { InvalidOperationError, InvalidValueError, NotFoundError } from '@core-services/core-common';
 import { TenantCriteria } from '../tenant/types';
 import { connect, disconnect, createMockData } from '@core-services/core-common/mongo';
 import { connection } from 'mongoose';
@@ -222,6 +222,39 @@ describe('Mongo: Tenant', () => {
       const restored = await archived.save();
       expect(restored.status).toBe('active');
       expect(restored.deletedAt).toBeFalsy();
+    });
+  });
+
+  describe('save with a name another tenant uses', () => {
+    const tenantNamed = (name: string, realm: string) =>
+      new TenantEntity(repo, { name, realm, adminEmail: `${realm}@test.co` });
+
+    beforeEach(async () => {
+      // The unique name index is what catches a duplicate that slips past validateName.
+      await connection.model('tenant').createIndexes();
+    });
+
+    it('throws InvalidValueError, not the raw duplicate-key error', async () => {
+      await repo.save(tenantNamed('Duplicate Tenant', 'realm-a'));
+
+      const duplicate = repo.save(tenantNamed('Duplicate Tenant', 'realm-b'));
+      await expect(duplicate).rejects.toThrow(InvalidValueError);
+      await expect(repo.save(tenantNamed('Duplicate Tenant', 'realm-c'))).rejects.toThrow(
+        'This tenant name has already been used',
+      );
+      expect(await repo.find({ nameEquals: 'Duplicate Tenant' })).toHaveLength(1);
+    });
+
+    it('lets one of two concurrent saves with the same name succeed and rejects the other', async () => {
+      const results = await Promise.allSettled([
+        repo.save(tenantNamed('Concurrent Tenant', 'realm-x')),
+        repo.save(tenantNamed('Concurrent Tenant', 'realm-y')),
+      ]);
+
+      expect(results.filter(({ status }) => status === 'fulfilled')).toHaveLength(1);
+      const rejected = results.filter((result): result is PromiseRejectedResult => result.status === 'rejected');
+      expect(rejected).toHaveLength(1);
+      expect(rejected[0].reason).toBeInstanceOf(InvalidValueError);
     });
   });
 });

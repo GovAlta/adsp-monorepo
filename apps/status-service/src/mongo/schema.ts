@@ -38,6 +38,8 @@ export const endpointStatusEntrySchema = new Schema({
   },
 });
 
+endpointStatusEntrySchema.index({ tenantId: 1, applicationId: 1, timestamp: -1 });
+
 export const serviceStatusApplicationSchema = new Schema(
   {
     appKey: {

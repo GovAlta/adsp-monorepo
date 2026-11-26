@@ -1,9 +1,9 @@
-import { Doc, InvalidOperationError, NotFoundError } from '@core-services/core-common';
+import { Doc, InvalidOperationError, InvalidValueError, NotFoundError } from '@core-services/core-common';
 import { Document, isValidObjectId, Model, model, Types } from 'mongoose';
 import { Logger } from 'winston';
 import { TenantEntity, Tenant } from '../tenant/models';
 import { TenantRepository } from '../tenant/repository';
-import { TenantCriteria } from '../tenant/types';
+import { TENANT_NAME_IN_USE_MESSAGE, TenantCriteria } from '../tenant/types';
 import { tenantSchema } from './schema';
 import { escapeRegExp } from 'lodash';
 
@@ -28,16 +28,24 @@ export class MongoTenantRepository implements TenantRepository {
   }
 
   async save(tenant: TenantEntity): Promise<TenantEntity> {
-    const doc = await this.tenantModel.findOneAndUpdate(
-      { _id: tenant.id || new Types.ObjectId() },
-      this.toDoc(tenant),
-      {
-        upsert: true,
-        new: true,
-        lean: true,
-      },
-    );
-    return Promise.resolve(this.fromDoc(doc));
+    try {
+      const doc = await this.tenantModel.findOneAndUpdate(
+        { _id: tenant.id || new Types.ObjectId() },
+        this.toDoc(tenant),
+        {
+          upsert: true,
+          new: true,
+          lean: true,
+        },
+      );
+      return this.fromDoc(doc);
+    } catch (err) {
+      // Two saves can both pass validateName; the unique name index rejects the second.
+      if (err?.code === 11000 && err?.keyPattern?.name) {
+        throw new InvalidValueError('Tenant name', TENANT_NAME_IN_USE_MESSAGE);
+      }
+      throw err;
+    }
   }
 
   async delete(id: string): Promise<boolean> {
