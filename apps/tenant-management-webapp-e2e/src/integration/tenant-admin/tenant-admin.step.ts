@@ -9,7 +9,6 @@ const tenantAdminObj = new tenantAdminPage();
 const commonObj = new commonPage();
 const welcomPageObj = new WelcomPage();
 let responseObj: Cypress.Response<any>;
-let numOfRows: number;
 
 Given('the user goes to tenant management login link', function () {
   const urlToTenantLogin = Cypress.config().baseUrl + '/' + Cypress.env('realm') + '/login?kc_idp_hint=';
