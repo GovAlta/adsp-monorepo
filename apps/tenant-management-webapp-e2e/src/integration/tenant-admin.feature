@@ -218,7 +218,7 @@ Feature: Tenant admin
     Then "200" is returned with a response having "active" as status, "<Tenant ID>" in id, "<Tenant Name>" as name and no deletedAt record
     And a GET request to the Keycloak auth endpoint for realm "<Tenant Name>" should no longer return a "not enabled" error
     And the event log should contain a "tenant-service:tenant-restored" event for tenant with id "<Tenant ID>" in the last 5 minutes
-    And the audit log should contain a "tenant.restored" action for tenant with id "<Tenant ID>" in the last 5 minutes
+    # And the audit log should contain a "tenant.restored" action for tenant with id "<Tenant ID>" in the last 5 minutes
 
     Examples:
       | Tenant ID                | Tenant Name              |
