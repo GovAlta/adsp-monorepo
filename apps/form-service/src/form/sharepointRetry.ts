@@ -94,7 +94,7 @@ export class SharePointPushRetryService implements SharePointRetryService {
       return pending;
     } catch (err) {
       // The push is still attempted once, it just can't be repeated.
-      this.props.logger.warn(
+      this.props.logger.error(
         `Failed to store push of form (ID: ${form.id}) to SharePoint for retries: ${err}`,
         LOG_CONTEXT,
       );
@@ -167,7 +167,7 @@ export class SharePointPushRetryService implements SharePointRetryService {
     await repository.delete(pending.id);
     const part = pending.submissionPdfFileId ? 'submission-pdf' : 'submission';
     eventService.send(sharePointPushFailed(apiId, pending, part, destinationId, errorCode, new Date()));
-    logger.warn(
+    logger.error(
       `Gave up pushing form (ID: ${pending.formId}) to SharePoint after ${pending.attempts} attempt(s): ${errorCode}.`,
       LOG_CONTEXT,
     );

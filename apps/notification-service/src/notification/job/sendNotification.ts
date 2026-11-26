@@ -35,6 +35,7 @@ export const createSendNotificationJob =
         );
         done();
       } catch (err) {
+        // The work queue logs the terminal dead-letter failure at error level.
         logger.warn(`Error encountered in ${notification.channel} provider. ${err}`, {
           ...LOG_CONTEXT,
           tenant: notification.tenantId?.toString(),

@@ -21,7 +21,7 @@ export class FileServiceImpl implements FileService {
 
       return data.deleted;
     } catch (err) {
-      this.logger.warn(`Error encountered deleting file ${fileId}. ${err}`, {
+      this.logger.error(`Error encountered deleting file ${fileId}. ${err}`, {
         ...LOG_CONTEXT,
         tenant: tenantId?.toString(),
       });
