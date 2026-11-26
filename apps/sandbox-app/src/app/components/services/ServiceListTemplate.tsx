@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link } from 'react-router-dom-v7';
+import { Link } from 'react-router-dom';
 
 export interface ServicePage {
   id: string;

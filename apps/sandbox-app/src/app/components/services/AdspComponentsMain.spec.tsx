@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import { MemoryRouter } from 'react-router-dom-v7';
+import { MemoryRouter } from 'react-router-dom';
 import { AdspComponentsMain } from './AdspComponentsMain';
 
 describe('AdspComponentsMain', () => {

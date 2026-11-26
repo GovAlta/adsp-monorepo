@@ -7,7 +7,7 @@ export const ProjectPlannerRouter = () => {
     <Routes>
       <Route path="/solutions/:id" element={<ProjectPlanner />} />
       <Route path="/:tab" element={<ProjectPlanner />} />
-      <Route path="*" element={<Navigate to="overview" />} />
+      <Route path="*" element={<Navigate to="/overview" />} />
     </Routes>
   );
 };

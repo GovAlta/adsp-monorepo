@@ -1,5 +1,5 @@
+// clean-code-ignore: RULE-19 barrel file with re-exports only
 export * from './components/AuthCallback';
-export * from './components/AuthCallbackV2';
 export * from './components/Band';
 export * from './components/CommentsViewer';
 export * from './components/Container';

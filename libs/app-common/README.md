@@ -12,7 +12,7 @@ Import from the `@core-services/app-common` path alias, defined in `tsconfig.bas
 import { Band, Container, Grid, GridItem, PageLoader } from '@core-services/app-common';
 ```
 
-Components are built on the [GoA design system](https://design.alberta.ca) (`@abgov/react-components`) and `styled-components`. `AuthCallback` needs `react-router-dom`, and `AuthCallbackV2` needs `react-router-dom-v7`.
+Components are built on the [GoA design system](https://design.alberta.ca) (`@abgov/react-components`) and `styled-components`. `AuthCallback` needs `react-router-dom` (v7).
 
 ## Usage
 
@@ -51,7 +51,7 @@ Main exports from `src/index.ts`, by module:
 
 - **Layout** (`components/`): `Band`, `Container`, `Grid`, `GridItem`, `Footer`, `ResizableSplitPane`.
 - **Loading and tables**: `PageLoader`, `CenterWidthPageLoader`, `TextGoASkeleton`, `RowSkeleton`, `RowLoadMore`, and `Pagination` (same props as `GoabPagination`, with a native page select so very large page counts stay responsive).
-- **Auth**: `AuthCallback` and `AuthCallbackV2` redirect to the `from` query parameter after sign-in.
+- **Auth**: `AuthCallback` redirects to the `from` query parameter after sign-in.
 - **Comments**: `CommentsViewer`, a comment thread with a draft field, used by the task and form apps.
 - **Agent chat**: `AgentChat` (chat UI for agent-service threads, with slash commands, attachments and tool call rendering), `ConversationStatusBar`, `ResetChatButton`, the `formatTokens`, `formatContextTokens`, `contextPercent`, `describeUsage` and `describeConversationStatus` helpers, and the message types in `types/agent.ts` (`Message`, `UserMessage`, `AgentMessage`, `UserContent`, `ToolCall`, `Attachment`, `AgentUsage`, `ConversationStatus`).
 - **Other components**: `Recaptcha` loads the reCAPTCHA v3 script for a `siteKey`.

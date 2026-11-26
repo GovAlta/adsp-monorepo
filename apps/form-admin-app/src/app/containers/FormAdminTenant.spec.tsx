@@ -1,12 +1,12 @@
 import { render } from '@testing-library/react';
 import { Provider } from 'react-redux';
-import { MemoryRouter, Route, Routes } from 'react-router-dom-v7';
+import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import configureStore from 'redux-mock-store';
 import { FormAdminTenant } from './FormAdminTenant';
 
 const mockNavigate = jest.fn();
-jest.mock('react-router-dom-v7', () => ({
-  ...jest.requireActual('react-router-dom-v7'),
+jest.mock('react-router-dom', () => ({
+  ...jest.requireActual('react-router-dom'),
   useNavigate: () => mockNavigate,
 }));
 

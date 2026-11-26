@@ -1,6 +1,6 @@
 import { FunctionComponent, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { useNavigate } from 'react-router-dom-v7';
+import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import { QueuesHeader } from '../components/QueuesHeader';
 import { QueueList } from '../components/QueueList';

@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom-v7';
+import { useParams, useNavigate } from 'react-router-dom';
 
 const SmsRedirect = (): JSX.Element => {
   const { realm, code } = useParams<{ code: string; realm: string }>();

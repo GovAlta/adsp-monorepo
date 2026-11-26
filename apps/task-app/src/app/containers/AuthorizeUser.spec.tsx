@@ -2,7 +2,7 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { useSelector, useDispatch } from 'react-redux';
-import { useSearchParams, useLocation } from 'react-router-dom-v7';
+import { useSearchParams, useLocation } from 'react-router-dom';
 import { AuthorizeUser } from './AuthorizeUser';
 import {
   userSelector,
@@ -18,7 +18,7 @@ jest.mock('react-redux', () => ({
   useDispatch: jest.fn(),
 }));
 
-jest.mock('react-router-dom-v7', () => ({
+jest.mock('react-router-dom', () => ({
   useSearchParams: jest.fn(),
   useLocation: jest.fn(),
 }));

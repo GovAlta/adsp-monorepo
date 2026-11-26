@@ -1,5 +1,6 @@
+// clean-code-ignore: RULE-19 app entry point that only mounts the root component
 import { createRoot } from 'react-dom/client';
-import { BrowserRouter } from 'react-router-dom-v7';
+import { BrowserRouter } from 'react-router-dom';
 import { Provider } from 'react-redux';
 import '@abgov/web-components';
 import App from './app/app';

@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import { MemoryRouter } from 'react-router-dom-v7';
+import { MemoryRouter } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import TaskQueue from './TaskQueue';
 import {
@@ -27,8 +27,8 @@ jest.mock('react-redux', () => ({
   useSelector: jest.fn(),
 }));
 
-jest.mock('react-router-dom-v7', () => ({
-  ...jest.requireActual('react-router-dom-v7'),
+jest.mock('react-router-dom', () => ({
+  ...jest.requireActual('react-router-dom'),
   useParams: () => ({ tenant: 'autotest', namespace: 'camps', name: 'intake' }),
   useNavigate: () => mockNavigate,
 }));
