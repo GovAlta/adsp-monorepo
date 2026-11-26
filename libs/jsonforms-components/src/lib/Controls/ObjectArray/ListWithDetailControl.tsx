@@ -16,10 +16,11 @@ import {
   LabelDescription,
 } from '@jsonforms/core';
 
-import React, { useRef, useLayoutEffect } from 'react';
+import React, { useContext, useRef, useLayoutEffect } from 'react';
 import type { ErrorObject } from 'ajv';
 import { WithDeleteDialogSupport } from './DeleteDialog';
 import ObjectArrayToolBar from './ObjectArrayToolBar';
+import { JsonFormContext } from '../../Context';
 
 import { GoabButton, GoabGrid, GoabIconButton, GoabFormItem, GoabTable } from '@abgov/react-components-ds1';
 import {
@@ -457,13 +458,14 @@ function generateSummaryPairs(
   rowData: Record<string, unknown>,
   detailUiSchema?: UISchemaElement,
   schema?: JsonSchema,
-): Array<{ label: string; value: unknown }> {
+): Array<{ path: string; label: string; value: unknown }> {
   const paths = extractPaths(detailUiSchema);
 
   if (paths.length === 0) {
     return Object.entries(rowData)
       .filter(([, value]) => value !== undefined && value !== null && value !== '')
       .map(([key, value]) => ({
+        path: key,
         label: findLabelForPath(key, detailUiSchema, schema),
         value,
       }));
@@ -473,10 +475,49 @@ function generateSummaryPairs(
     .map((path) => {
       const value = getValue(rowData, path);
       const label = findLabelForPath(path, detailUiSchema, schema);
-      return { label, value };
+      return { path, label, value };
     })
     .filter(({ value }) => value !== undefined && value !== null && value !== '');
 }
+
+type UploadedFile = { urn: string; filename?: string };
+
+const isFileProperty = (schema: JsonSchema | undefined, path: string): boolean => {
+  const property = path
+    .split('.')
+    .reduce<JsonSchema | undefined>((current, key) => current?.properties?.[key] as JsonSchema | undefined, schema);
+  const items = property?.items as JsonSchema | undefined;
+  return property?.format === 'file-urn' || (!Array.isArray(items) && items?.format === 'file-urn');
+};
+
+// A file field holds file references, which mean nothing to the person filling in the form.
+const fileLabel = (value: unknown, fileList?: Record<string, UploadedFile[]>): string => {
+  const files = Object.values(fileList ?? {}).flat();
+  const label = (urn: unknown) => files.find((file) => file?.urn === urn)?.filename ?? 'File uploaded';
+  return Array.isArray(value) ? value.map(label).join(', ') : label(value);
+};
+
+const formatSummaryValue = (value: unknown): string => {
+  if (typeof value === 'boolean') {
+    return value ? 'Yes' : 'No';
+  }
+  if (value === null || typeof value !== 'object') {
+    return String(value);
+  }
+  const v = value as Record<string, unknown>;
+  if (('day' in v || 'date' in v) && 'month' in v && 'year' in v) {
+    return `${v.year}-${v.month}-${'day' in v ? v.day : v.date}`;
+  }
+  return Object.values(v)
+    .filter((x) => x !== undefined && x !== null && x !== '')
+    .join(' ');
+};
+
+const useFileList = (): Record<string, UploadedFile[]> | undefined => {
+  const enumerators = useContext(JsonFormContext);
+  const fileListValue = enumerators?.data.get('file-list');
+  return fileListValue && (fileListValue() as Record<string, UploadedFile[]>);
+};
 
 interface SummaryDisplayProps {
   rowData: Record<string, unknown> | undefined;
@@ -485,6 +526,8 @@ interface SummaryDisplayProps {
 }
 
 const SummaryDisplay = ({ rowData, uischema, schema }: SummaryDisplayProps) => {
+  const fileList = useFileList();
+
   if (!rowData || Object.keys(rowData).length === 0) {
     return <NoDataMessage>No data</NoDataMessage>;
   }
@@ -519,21 +562,7 @@ const SummaryDisplay = ({ rowData, uischema, schema }: SummaryDisplayProps) => {
                 paddingBottom: 'var(--goa-space-xs)',
               }}
             >
-              {typeof pair.value === 'boolean'
-                ? pair.value
-                  ? 'Yes'
-                  : 'No'
-                : pair.value !== null && typeof pair.value === 'object'
-                  ? (() => {
-                      const v = pair.value as Record<string, unknown>;
-                      if (('day' in v || 'date' in v) && 'month' in v && 'year' in v) {
-                        return `${v.year}-${v.month}-${'day' in v ? v.day : v.date}`;
-                      }
-                      return Object.values(v)
-                        .filter((x) => x !== undefined && x !== null && x !== '')
-                        .join(' ');
-                    })()
-                  : String(pair.value)}
+              {isFileProperty(schema, pair.path) ? fileLabel(pair.value, fileList) : formatSummaryValue(pair.value)}
             </td>
           </tr>
         ))}
@@ -555,7 +584,13 @@ const MainItemComponent = ({
   uischema,
   schema,
 }: MainRowProps & WithDeleteDialogSupport) => {
-  const displayName = Object.keys(rowData ?? {}).length === 0 ? 'No data' : Object.values(rowData || {}).join(', ');
+  const fileList = useFileList();
+  const displayName =
+    Object.keys(rowData ?? {}).length === 0
+      ? 'No data'
+      : Object.entries(rowData || {})
+          .map(([key, value]) => (isFileProperty(schema, key) ? fileLabel(value, fileList) : value))
+          .join(', ');
 
   return (
     <SideMenuItem
