@@ -18,12 +18,24 @@ components:
           type: boolean
         isHoliday:
           type: boolean
+          description: >
+            Indicates Government of Alberta offices are closed for a holiday, so it's a day off for GoA staff. This is
+            true for general and staff holidays, and for the optional holidays GoA observes (Easter Monday, Heritage
+            Day, and Boxing Day).
         isBusinessDay:
           type: boolean
         holiday:
           type: string
           nullable: true
           description: Name of the holiday, if the date is a holiday.
+        holidayType:
+          type: string
+          nullable: true
+          enum: [general, optional, staff, null]
+          description: >
+            Type of the holiday, if the date is a holiday. general is an Alberta general (statutory) holiday, optional
+            is an Alberta optional general holiday that employers choose whether to observe, and staff is a GoA staff
+            holiday that isn't a public holiday, such as the Christmas closure.
         isInLieuOfDay:
           type: boolean
           description: Indicates the date is a day off in lieu of a holiday that falls on a weekend.
@@ -35,6 +47,7 @@ components:
         isHoliday: true
         isBusinessDay: false
         holiday: Remembrance Day
+        holidayType: general
         isInLieuOfDay: false
     CalendarDatesPage:
       type: object
@@ -47,21 +60,23 @@ components:
           $ref: '#/components/schemas/CalendarPage'
       example:
         results:
-          - id: 20261111
-            date: '2026-11-11T00:00:00.000Z'
+          - id: 20260930
+            date: '2026-09-30T00:00:00.000Z'
             dayOfWeek: 3
             isWeekend: false
-            isHoliday: true
-            isBusinessDay: false
-            holiday: Remembrance Day
+            isHoliday: false
+            isBusinessDay: true
+            holiday: National Day for Truth and Reconciliation
+            holidayType: optional
             isInLieuOfDay: false
-          - id: 20261225
-            date: '2026-12-25T00:00:00.000Z'
-            dayOfWeek: 5
-            isWeekend: false
+          - id: 20261226
+            date: '2026-12-26T00:00:00.000Z'
+            dayOfWeek: 6
+            isWeekend: true
             isHoliday: true
             isBusinessDay: false
-            holiday: Christmas Day
+            holiday: Boxing Day
+            holidayType: optional
             isInLieuOfDay: false
         page:
           next: Mg==
@@ -99,7 +114,8 @@ components:
       - name: criteria
         description: >
           JSON criteria for the dates to retrieve. Must be valid JSON. min and max are inclusive date IDs in the
-          format yyyyMMdd.
+          format yyyyMMdd. holidayType is one type or an array of types; for example, use ["general", "optional"] for
+          all Alberta public holidays, and isHoliday true for every day off for GoA staff.
         in: query
         required: false
         content:
@@ -121,10 +137,18 @@ components:
                   type: boolean
                 isInLieuOfDay:
                   type: boolean
+                holidayType:
+                  oneOf:
+                    - type: string
+                      enum: [general, optional, staff]
+                    - type: array
+                      items:
+                        type: string
+                        enum: [general, optional, staff]
             example:
               min: 20260101
               max: 20261231
-              isHoliday: true
+              holidayType: optional
     responses:
       200:
         description: Dates successfully retrieved.

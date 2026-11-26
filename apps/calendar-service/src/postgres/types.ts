@@ -1,4 +1,4 @@
-import { Attendee, EventRecurrence } from '../calendar';
+import { Attendee, EventRecurrence, HolidayType } from '../calendar';
 
 export interface DateRecord {
   id: number;
@@ -9,6 +9,7 @@ export interface DateRecord {
   is_business_day: boolean;
   is_in_lieu_day: boolean;
   holiday: string;
+  holiday_type: HolidayType;
 }
 
 export interface EventRecord {
