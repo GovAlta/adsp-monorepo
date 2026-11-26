@@ -1555,3 +1555,190 @@ Then(
     expect(responseObj.body.errorMessage).to.contain(errorMessage);
   }
 );
+
+// Access requests tab, labels match the field labels in the UI
+const accessRequestTabFieldTestIds: Record<string, string> = {
+  'Users must request access to this form': 'access-requests-enabled',
+  'User group': 'access-requests-access-group',
+  'Approver group': 'access-requests-approver-group',
+  'Notification email': 'access-requests-notification-email',
+};
+
+const accessRequestTabFieldRequiredErrors: Record<string, string> = {
+  'User group': 'User group is required.',
+  'Approver group': 'Approver group is required.',
+  'Notification email': 'Notification email is required.',
+};
+
+Given(
+  'the user deletes the access request registration of {string} form definition via API',
+  function (definitionId: string) {
+    cy.request({
+      method: 'DELETE',
+      url: Cypress.env('formServiceApiUrl') + '/form/v1/definitions/' + definitionId + '/access-requests',
+      failOnStatusCode: false,
+      auth: {
+        bearer: Cypress.env('autotest-admin-token'),
+      },
+    }).then(function (response) {
+      expect(response.status).to.eq(204);
+    });
+  }
+);
+
+When('the user {string} the checkbox of {string} in Access requests tab', function (action: string, label: string) {
+  const checked = action === 'checks';
+  formObj.accessRequestsTabField(accessRequestTabFieldTestIds[label]).then(($checkbox) => {
+    if ($checkbox.is('[checked]') !== checked) {
+      cy.wrap($checkbox).shadow().find('input[type="checkbox"]').click({ force: true });
+    }
+  });
+  formObj
+    .accessRequestsTabField(accessRequestTabFieldTestIds[label])
+    .should(checked ? 'have.attr' : 'not.have.attr', 'checked');
+});
+
+Then('the user views the error messages of {string} in Access requests tab', function (labels: string) {
+  labels.split(',').forEach((label) => {
+    formObj.accessRequestsTabErrorItem(accessRequestTabFieldRequiredErrors[label.trim()]).should('exist');
+  });
+});
+
+Then('the user views the error message of {string} in Access requests tab', function (errorMsg: string) {
+  formObj.accessRequestsTabErrorItem(errorMsg).should('exist');
+});
+
+When('the user selects {string} as {string} in Access requests tab', function (value: string, label: string) {
+  formObj.accessRequestsTabField(accessRequestTabFieldTestIds[label]).shadow().find('input').click({ force: true });
+  formObj
+    .accessRequestsTabField(accessRequestTabFieldTestIds[label])
+    .shadow()
+    .find('li')
+    .contains(value)
+    .click({ force: true });
+});
+
+When('the user enters {string} as {string} in Access requests tab', function (value: string, label: string) {
+  formObj
+    .accessRequestsTabField(accessRequestTabFieldTestIds[label])
+    .shadow()
+    .find('input')
+    .clear()
+    .type(value, { force: true, delay: 200 });
+});
+
+Then('the user views {string} checkbox as {string} in Access requests tab', function (label: string, state: string) {
+  formObj
+    .accessRequestsTabField(accessRequestTabFieldTestIds[label])
+    .should(state === 'checked' ? 'have.attr' : 'not.have.attr', 'checked');
+});
+
+Then('the user views {string} as {string} in Access requests tab', function (value: string, label: string) {
+  formObj.accessRequestsTabField(accessRequestTabFieldTestIds[label]).should('have.prop', 'value', value);
+});
+
+Then('the user should not view the settings {string} in Access requests tab', function (labels: string) {
+  labels.split(',').forEach((label) => {
+    formObj.accessRequestsTabField(accessRequestTabFieldTestIds[label.trim()]).should('not.exist');
+  });
+});
+
+When('the user clicks {string} button in Access requests tab', function (buttonName: string) {
+  formObj
+    .accessRequestsTabAddQuestionButton()
+    .should('contain.text', buttonName)
+    .shadow()
+    .find('button')
+    .click({ force: true });
+});
+
+When('the user enters {string} as question name in Add question modal', function (name: string) {
+  formObj
+    .accessRequestFieldModalInput('access-request-field-name')
+    .shadow()
+    .find('input')
+    .clear()
+    .type(name, { force: true, delay: 200 });
+});
+
+When(
+  'the user enters {string} as question name, {string} as label and {string} as type in Add question modal',
+  function (name: string, label: string, type: string) {
+    formObj
+      .accessRequestFieldModalInput('access-request-field-name')
+      .shadow()
+      .find('input')
+      .clear()
+      .type(name, { force: true, delay: 200 });
+    formObj
+      .accessRequestFieldModalInput('access-request-field-label')
+      .shadow()
+      .find('input')
+      .clear()
+      .type(label, { force: true, delay: 200 });
+    formObj.accessRequestFieldModalInput('access-request-field-type').shadow().find('input').click({ force: true });
+    formObj
+      .accessRequestFieldModalInput('access-request-field-type')
+      .shadow()
+      .find('li')
+      .contains(type)
+      .click({ force: true });
+  }
+);
+
+When('the user enters {string} as options and checks Required in Add question modal', function (options: string) {
+  const optionLines = options
+    .split(',')
+    .map((option) => option.trim())
+    .join('{enter}');
+  formObj
+    .accessRequestFieldModalInput('access-request-field-options')
+    .shadow()
+    .find('textarea')
+    .clear()
+    .type(optionLines, { force: true, delay: 200 });
+  formObj
+    .accessRequestFieldModalInput('access-request-field-required')
+    .shadow()
+    .find('input[type="checkbox"]')
+    .click({ force: true });
+});
+
+When('the user clicks Save button in Add question modal', function () {
+  formObj.accessRequestFieldModalButton('access-request-field-save').shadow().find('button').click({ force: true });
+  cy.wait(1000);
+});
+
+When('the user clicks Cancel button in Add question modal', function () {
+  formObj.accessRequestFieldModalButton('access-request-field-cancel').shadow().find('button').click({ force: true });
+});
+
+Then('the user views the error message of {string} in Add question modal', function (errorMsg: string) {
+  formObj.accessRequestFieldModalErrorItem(errorMsg).should('exist');
+});
+
+Then('the user views questions {string} in Access requests tab', function (names: string) {
+  names.split(',').forEach((name) => {
+    formObj.accessRequestsQuestionRow(name.trim()).should('exist');
+  });
+});
+
+Then(
+  'the user views the question of {string} with options {string} and Required {string} in Access requests tab',
+  function (name: string, options: string, required: string) {
+    formObj.accessRequestsQuestionRow(name).find('td').eq(3).should('have.text', required);
+    formObj.accessRequestsQuestionRow(name).find('td').eq(4).should('have.text', options);
+  }
+);
+
+When('the user deletes the question of {string} in Access requests tab', function (name: string) {
+  formObj.accessRequestsQuestionDeleteIcon(name).shadow().find('button').click({ force: true });
+});
+
+Then('the user should not view the question of {string} in Access requests tab', function (name: string) {
+  formObj.accessRequestsQuestionRow(name).should('not.exist');
+});
+
+Then('the user should not view any questions in Access requests tab', function () {
+  formObj.accessRequestsQuestionsTable().should('not.exist');
+});

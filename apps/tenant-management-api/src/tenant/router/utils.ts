@@ -1,6 +1,7 @@
 import { InvalidOperationError, InvalidValueError } from '@core-services/core-common';
 import { Logger } from 'winston';
 import { TenantRepository } from '../repository';
+import { TENANT_NAME_IN_USE_MESSAGE } from '../types';
 
 const LOG_CONTEXT = { context: 'TenantRouter' };
 
@@ -13,6 +14,13 @@ export const validateEmailInDB = async (logger: Logger, repository: TenantReposi
     throw new InvalidOperationError(errorMessage);
   }
 };
+
+/**
+ * Trims a tenant name and collapses repeated spaces, so the name is checked and stored in one form.
+ * Anything that isn't a string is returned as is, for validateName to reject.
+ */
+export const normalizeTenantName = <T>(name: T): T =>
+  (typeof name === 'string' ? name.trim().replace(/\s+/g, ' ') : name) as T;
 
 /**
  * Checks that a tenant name is valid and not used by another tenant (ignoring case).
@@ -61,7 +69,7 @@ export const validateName = async (
     }
   });
 
-  if (name.length === 0) {
+  if (name.trim().length === 0) {
     const errorMessage = `Enter a tenant name.`;
     throw new InvalidValueError('Tenant name', errorMessage);
   }
@@ -69,7 +77,6 @@ export const validateName = async (
   const tenantsWithName = await repository.find({ nameEquals: name });
   const doesTenantWithNameExist = tenantsWithName.some((tenant) => !excludeTenantId || tenant.id !== excludeTenantId);
   if (doesTenantWithNameExist) {
-    const errorMessage = `This tenant name has already been used. Please enter a different tenant name.`;
-    throw new InvalidValueError('Tenant name', errorMessage);
+    throw new InvalidValueError('Tenant name', TENANT_NAME_IN_USE_MESSAGE);
   }
 };

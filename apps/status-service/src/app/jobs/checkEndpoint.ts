@@ -235,7 +235,7 @@ async function saveStatus(
     ENTRY_SAMPLE_SIZE,
   );
 
-  const status = await serviceStatusRepository.get(app.appKey);
+  const status = await serviceStatusRepository.get(app.appKey, tenantId.toString());
 
   // Make sure the status exists
   if (!status) {
@@ -328,7 +328,7 @@ async function checkAndUpdateAutoChangeStatus(props: CreateCheckEndpointProps) {
           return hist.ok;
         }).length >= 5 && dateDiff >= 5;
 
-      const currentServiceStatus = await serviceStatusRepository.get(app.appKey);
+      const currentServiceStatus = await serviceStatusRepository.get(app.appKey, app.tenantId.toString());
 
       //Set the status to opperational if it is in report issues status and
       //the the health check has failed for the last five minutes

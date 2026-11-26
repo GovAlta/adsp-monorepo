@@ -57,6 +57,12 @@ parameters:
     description: Memory limit for the Redis container.
     displayName: Redis Memory Limit
     value: '512Mi'
+  - name: REPLICAS
+    description: >-
+      Number of API replicas. Production runs 2 so a node drain does not take the API down. The job
+      and Redis Deployments stay at 1.
+    displayName: Replicas
+    value: '2'
 objects:
   # Redis Objects
   # NOTE: Secret will generate new values if updated, so this is only for branch deployments.
@@ -235,7 +241,7 @@ objects:
             }
           ]
     spec:
-      replicas: 1
+      replicas: ${{REPLICAS}}
       selector:
         matchLabels:
           app: ${APP_NAME}

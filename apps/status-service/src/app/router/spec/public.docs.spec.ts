@@ -86,6 +86,29 @@ describe('public status router documented behaviour', () => {
       expect(getConfigurationMock).toHaveBeenCalledWith(tenantId);
     });
 
+    it('only reads the statuses of the tenant when another tenant has the same appKey', async () => {
+      const otherTenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/61e9adcc9423490012a9ae47`;
+      const statuses = [
+        { appKey: 'portal', tenantId: tenantId.toString(), status: 'operational', statusTimestamp: 1794326400000 },
+        { appKey: 'portal', tenantId: otherTenantId.toString(), status: 'outage', statusTimestamp: 1794326400000 },
+      ];
+      getConfigurationMock.mockResolvedValueOnce({
+        portal: { appKey: 'portal', name: 'Portal', url: 'https://portal.alberta.ca/health', monitorOnly: false },
+      });
+      serviceStatusRepositoryMock.find.mockImplementationOnce(({ tenantId: filterTenantId }) =>
+        Promise.resolve(statuses.filter((status) => status.tenantId === filterTenantId)),
+      );
+
+      const res = await request(createApp()).get('/public_status/v1/applications/my-tenant');
+
+      expect(res.status).toBe(200);
+      expect(res.body).toEqual([expect.objectContaining({ id: 'portal', status: 'operational' })]);
+      expect(serviceStatusRepositoryMock.find).toHaveBeenCalledWith({
+        appKey: { $in: ['portal'] },
+        tenantId: tenantId.toString(),
+      });
+    });
+
     it('returns 404 when the tenant is not found', async () => {
       const res = await request(createApp()).get('/public_status/v1/applications/other-tenant');
 

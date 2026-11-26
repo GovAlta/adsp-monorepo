@@ -69,9 +69,12 @@ export const createErrorHandler =
       const preset =
         !res.headersSent && res.statusCode !== HttpStatusCodes.OK ? ` (handler had set ${res.statusCode})` : '';
 
-      logger.warn(
-        `Unexpected error encountered in handler for request ${req.path} (status: ${sent})${preset}. ${err}`
-      );
+      const message = `Unexpected error encountered in handler for request ${req.path} (status: ${sent})${preset}. ${err}`;
+      if (sent >= HttpStatusCodes.INTERNAL_SERVER_ERROR) {
+        logger.error(message);
+      } else {
+        logger.warn(message);
+      }
 
       if (!res.headersSent) {
         res.sendStatus(HttpStatusCodes.INTERNAL_SERVER_ERROR);

@@ -52,7 +52,9 @@ Log-based alerts are counts, so they cannot carry the log line itself: put what 
 
 Add `rules/<service>.yaml` as a Template whose objects set `namespace: ${NAMESPACE}`. Only
 `AlertingRule` (Loki), `PrometheusRule` and `AlertmanagerConfig` objects are accepted, and only in
-the environment's namespace.
+the environment's namespace. Loki `AlertingRule` objects must carry the label
+`loki.grafana.com/rules: 'true'`: LokiStack silently ignores rules without it, so
+`render-manifests.sh` rejects them.
 
 Labels and annotations used by routing and notifications. `render-manifests.sh` rejects an alert
 missing any of the required ones, so CI fails on the pull request.
@@ -140,8 +142,9 @@ A successful apply does not prove delivery. After the first deployment to an env
 1. `oc get alertmanagerconfig -n adsp-<env>` lists `alertmanager-adsp-<env>`.
 2. Trigger a rule from a short-lived test pod and confirm the email and Slack message arrive with
    working links, then a `[RESOLVED]` notification once it clears.
-3. If nothing arrives, check that user workload monitoring routes to its Alertmanager and that the
-   alert carries the `namespace` label; alerts without it are not matched.
+3. If nothing arrives, check that the Loki ruler loaded the rule (its `AlertingRule` has the
+   `loki.grafana.com/rules` label), that user workload monitoring routes to its Alertmanager and
+   that the alert carries the `namespace` label; alerts without it are not matched.
 
 Roll back with a reviewed revert merged to `main`. Removing a file does not delete its cluster
 resource; delete that resource explicitly.

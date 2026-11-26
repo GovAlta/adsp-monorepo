@@ -154,11 +154,11 @@ export const createNewApplication =
     auditService: AuditService,
   ): RequestHandler =>
   async (req, res, next) => {
-    const user = req.user as User;
-    const tenant = await tenantService.getTenant(user.tenantId);
-    const { name, description, endpoint, appKey, monitorOnly, status } = req.body;
-
     try {
+      const user = req.user as User;
+      const tenant = await tenantService.getTenant(user.tenantId);
+      const { name, description, endpoint, appKey, monitorOnly, status } = req.body;
+
       const newAppKey = appKey ? appKey : ApplicationRepo.getApplicationKey(name);
       const existing = await applicationRepo.getTenantApps(tenant.id);
       existing.forEach((a) => {
@@ -243,7 +243,7 @@ export const updateApplication =
           toApplicationAuditDetails(appKey, name, { previousUrl: app.url, url: update.url }),
         );
       }
-      const status = await applicationRepo.findStatus(appKey);
+      const status = await applicationRepo.findStatus(appKey, tenantId);
 
       res.json(applicationRepo.mergeApplicationData(tenantId, update, status));
     } catch (err) {
@@ -267,7 +267,7 @@ export const deleteApplication =
       if (!app) {
         throw new NotFoundError('Status application', appKey);
       }
-      const status = await applicationRepo.findStatus(appKey);
+      const status = await applicationRepo.findStatus(appKey, user.tenantId.toString());
 
       // Stop health checks if necessary.  Note, there is a lag
       // between requesting the stop and having the service
@@ -390,12 +390,12 @@ export const getApplicationEntries =
     endpointStatusEntryRepository: EndpointStatusEntryRepository,
   ): RequestHandler =>
   async (req, res, next) => {
-    const { tenantId } = req.user as User;
-    if (!tenantId) {
-      throw new UnauthorizedError('missing tenant id');
-    }
-
     try {
+      const { tenantId } = req.user as User;
+      if (!tenantId) {
+        throw new UnauthorizedError('missing tenant id');
+      }
+
       const { appKey } = req.params;
       const { topValue } = req.query;
       const top = topValue ? parseInt(topValue as string) : 200;
@@ -421,16 +421,16 @@ export const getApplicationEntries =
 export const getAllApplicationEntries =
   (logger: Logger, endpointStatusEntryRepository: EndpointStatusEntryRepository): RequestHandler =>
   async (req, res, next) => {
-    const { tenantId } = req.user as User;
-    if (!tenantId) {
-      throw new UnauthorizedError('missing tenant id');
-    }
-
     try {
+      const { tenantId } = req.user as User;
+      if (!tenantId) {
+        throw new UnauthorizedError('missing tenant id');
+      }
+
       const { ageInMinutes } = req.query;
       const minutes = ageInMinutes ? parseInt(ageInMinutes as string) : 31;
 
-      const entries = await endpointStatusEntryRepository.findRecent(minutes);
+      const entries = await endpointStatusEntryRepository.findRecent(tenantId.toString(), minutes);
       res.send(entries.map(mapEndpointStatusEntry));
     } catch (err) {
       logger.error(`Failed: ${err.message}`);

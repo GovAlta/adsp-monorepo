@@ -96,15 +96,17 @@ describe('createErrorHandler', () => {
     expect(res.status).toHaveBeenCalledWith(HttpStatusCodes.BAD_REQUEST);
   });
 
-  it('logs the status it is actually sending, not the unset default', () => {
+  it('logs an unexpected exception once at error with the status it is actually sending', () => {
     // res.statusCode is still 200 when the handler runs, so logging it directly reported every
     // unhandled error as a success and misled anyone triaging from logs.
     const res = createRes();
 
     createErrorHandler(loggerMock)(new Error('boom'), req as never, res as never, jest.fn());
 
-    expect(loggerMock.warn).toHaveBeenCalledWith(expect.stringContaining('(status: 500)'));
-    expect(loggerMock.warn).not.toHaveBeenCalledWith(expect.stringContaining('(status: 200)'));
+    expect(loggerMock.error).toHaveBeenCalledTimes(1);
+    expect(loggerMock.error).toHaveBeenCalledWith(expect.stringContaining('(status: 500)'));
+    expect(loggerMock.error).not.toHaveBeenCalledWith(expect.stringContaining('(status: 200)'));
+    expect(loggerMock.warn).not.toHaveBeenCalled();
   });
 
   it('keeps a status the handler set before failing', () => {
@@ -115,10 +117,35 @@ describe('createErrorHandler', () => {
 
     createErrorHandler(loggerMock)(new Error('boom'), req as never, res as never, jest.fn());
 
-    expect(loggerMock.warn).toHaveBeenCalledWith(
+    expect(loggerMock.error).toHaveBeenCalledWith(
       expect.stringContaining('(status: 500) (handler had set 409)')
     );
   });
+
+  it('logs an explicit preset HTTP 500 at error', () => {
+    const res = createRes();
+    res.statusCode = HttpStatusCodes.INTERNAL_SERVER_ERROR;
+
+    createErrorHandler(loggerMock)(new Error('boom'), req as never, res as never, jest.fn());
+
+    expect(loggerMock.error).toHaveBeenCalledWith(
+      expect.stringContaining('(status: 500) (handler had set 500)')
+    );
+  });
+
+  it.each([HttpStatusCodes.BAD_GATEWAY, HttpStatusCodes.SERVICE_UNAVAILABLE])(
+    'logs an already-sent HTTP %s failure at error',
+    (statusCode) => {
+      const res = createRes();
+      res.headersSent = true;
+      res.statusCode = statusCode;
+
+      createErrorHandler(loggerMock)(new Error('boom'), req as never, res as never, jest.fn());
+
+      expect(loggerMock.error).toHaveBeenCalledWith(expect.stringContaining(`(status: ${statusCode})`));
+      expect(loggerMock.warn).not.toHaveBeenCalled();
+    }
+  );
 
   it('logs the real status when headers were already sent', () => {
     const res = createRes();
@@ -128,6 +155,7 @@ describe('createErrorHandler', () => {
     createErrorHandler(loggerMock)(new Error('boom'), req as never, res as never, jest.fn());
 
     expect(loggerMock.warn).toHaveBeenCalledWith(expect.stringContaining('(status: 206)'));
+    expect(loggerMock.error).not.toHaveBeenCalled();
     expect(res.end).toHaveBeenCalled();
   });
 
@@ -157,6 +185,8 @@ describe('createErrorHandler', () => {
     createErrorHandler(loggerMock)(new NotFoundError('form definition', 'missing'), req as never, res as never, jest.fn());
 
     expect(res.status).toHaveBeenCalledWith(HttpStatusCodes.NOT_FOUND);
+    expect(loggerMock.error).not.toHaveBeenCalled();
+    expect(loggerMock.warn).not.toHaveBeenCalled();
   });
 
   it('reports an unrecognized error as a server error', () => {

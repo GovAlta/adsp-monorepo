@@ -22,7 +22,9 @@ objects:
     metadata:
       name: event-service-log-alerts
       namespace: ${NAMESPACE}
-      # Add only labels required by the LokiStack rule selector after runtime verification.
+      labels:
+        # LokiStack only loads AlertingRules carrying this label.
+        loki.grafana.com/rules: 'true'
     spec:
       tenantID: application
       groups:
