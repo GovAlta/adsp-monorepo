@@ -1,6 +1,7 @@
 import { InvalidOperationError, InvalidValueError } from '@core-services/core-common';
 import { Logger } from 'winston';
 import { TenantRepository } from '../repository';
+import { TENANT_NAME_IN_USE_MESSAGE } from '../types';
 
 const LOG_CONTEXT = { context: 'TenantRouter' };
 
@@ -76,7 +77,6 @@ export const validateName = async (
   const tenantsWithName = await repository.find({ nameEquals: name });
   const doesTenantWithNameExist = tenantsWithName.some((tenant) => !excludeTenantId || tenant.id !== excludeTenantId);
   if (doesTenantWithNameExist) {
-    const errorMessage = `This tenant name has already been used. Please enter a different tenant name.`;
-    throw new InvalidValueError('Tenant name', errorMessage);
+    throw new InvalidValueError('Tenant name', TENANT_NAME_IN_USE_MESSAGE);
   }
 };
