@@ -23,7 +23,7 @@ _Sites_ can be configured to allow anonymous feedback and in that case the send 
 
 - **Sending feedback.** Authenticated users send feedback to the tenant of their token, and need the `feedback-provider` role in that tenant. Anonymous requests name the tenant in the `tenant` field of the body (tenant name or tenant URN); without it the request is rejected with 400. Anonymous feedback is only accepted for sites configured with `allowAnonymous`, and is rate limited to 5 requests per 5 minutes per client.
 - **Reading feedback.** Tenant users with the `feedback-reader` role read the feedback of their own tenant. Core users with the role set the `tenantId` query parameter to read a tenant's feedback; without it, `GET /feedback/v1/feedback` reads the feedback of all tenants. Core users must set `tenantId` for the feedback summary.
-- **Sites.** Sites are tenant configuration. `GET /feedback/v1/sites` lists or counts sites across tenants, and is intended for core users.
+- **Sites.** Sites are tenant configuration. `GET /feedback/v1/sites` lists or counts sites. Core users with `feedback-reader` list or count across all tenants or one tenant; a tenant user with `feedback-reader` sees only their own tenant's sites.
 
 ## API overview
 
@@ -34,7 +34,7 @@ All endpoints are under `https://feedback-service.adsp.alberta.ca/feedback/v1`. 
 | `POST /feedback/v1/feedback`              | Send feedback for a site.                          | `feedback-provider`, or anonymous for sites that allow it |
 | `GET /feedback/v1/feedback`               | Read submitted feedback, newest first.             | `feedback-reader`                                         |
 | `GET /feedback/v1/feedback/summary`       | Summarize the feedback for a site and time period. | `feedback-reader`                                         |
-| `GET /feedback/v1/sites`                  | List or count configured sites.                    | `feedback-reader` (core)                                  |
+| `GET /feedback/v1/sites`                  | List or count configured sites.                    | `feedback-reader` (own tenant; core for all tenants)      |
 | `GET /feedback/v1/script/adspFeedback.js` | Download the feedback widget script.               | Anonymous                                                 |
 | `GET /feedback/v1/script/integrity`       | Get the script digest for Subresource Integrity.   | Anonymous                                                 |
 

@@ -29,7 +29,8 @@ interface ResultsSummaryProps {
   total?: number | null;
   itemLabel: string;
   loading?: boolean;
-  onClearFilters: () => void;
+  // Omitted where clearing is offered alongside the applied filter chips instead.
+  onClearFilters?: () => void;
 }
 
 export const ResultsSummary: FunctionComponent<ResultsSummaryProps> = ({
@@ -45,8 +46,10 @@ export const ResultsSummary: FunctionComponent<ResultsSummaryProps> = ({
       <SummaryCount>{typeof total === 'number' ? `${visible} of ${total}` : visible}</SummaryCount>{' '}
       {itemLabel} matching your current filters.
     </SummaryText>
-    <GoabButton size="compact" type="secondary" disabled={loading} onClick={onClearFilters}>
-      Clear filters
-    </GoabButton>
+    {onClearFilters && (
+      <GoabButton size="compact" type="secondary" disabled={loading} onClick={onClearFilters}>
+        Clear filters
+      </GoabButton>
+    )}
   </ResultsSummaryContainer>
 );

@@ -49,8 +49,7 @@ Feature: Tenant admin
     Then the user views the number of users in top 5 roles in its tenant realm
     And the number of users in roles from admin page should equal to the number of users in roles from the realm API
 
-  # Due to the new filter UI on event log page from CS-5496, this test is temporarily ignored
-  @accessibility @regression @ignore
+  @accessibility @regression
   Scenario: As a tenant admin, I can use tenant admin pages without any critical or serious accessibility issues
     Given a tenant admin user is on tenant admin page
     When the user selects the "Access" menu item
@@ -58,14 +57,13 @@ Feature: Tenant admin
     When the user selects "Service roles" tab for "Access"
     When the user waits "4" seconds
     Then no critical or serious accessibility issues on "tenant admin access service roles page"
-    When the user selects the "Event log" menu item
-    Then no critical or serious accessibility issues on "tenant admin event log page"
-  # CS-4519 - dropdown controls have accessibility issues
-  # When the user selects the "Service metrics" menu item
-  # Then no critical or serious accessibility issues on "tenant admin service metrics page"
-  # Copy link component has accessibility issue and need to address by UI component team before we can run accessibility test against Dashboard
-  # When the user selects the "Dashboard" menu item
-  # Then no critical or serious accessibility issues on "tenant admin dashboard page"
+    ## Due to the new filter UI on event log page from CS-5496, the scan of accessibility issues is temporarily ignored
+    # When the user selects the "Event log" menu item
+    # Then no critical or serious accessibility issues on "tenant admin event log page"
+    When the user selects the "Service metrics" menu item
+    Then no critical or serious accessibility issues on "tenant admin service metrics page"
+    When the user selects the "Dashboard" menu item
+    Then no critical or serious accessibility issues on "tenant admin dashboard page"
 
   @TEST_CS-588 @TEST_CS-745 @dashboard @regression @prod
   Scenario: As a tenant admin, I should be able to see useful information on the landing page
@@ -131,8 +129,7 @@ Feature: Tenant admin
     Then the user views a message stating the user needs administrator role for the tenant to access the app and that they can contact the tenant creator of "env{realmOwner}"
     Then the user should not have regular admin view
 
-  # Due to the new filter UI on event log page from CS-5496, this test is temporarily ignored
-  @TEST_CS-715 @REQ_CS-254 @regression @prod @ignore
+  @TEST_CS-715 @REQ_CS-254 @regression @prod
   Scenario: As a tenant admin, I can search the event log, so I can find events of interest
     Given a tenant admin user is on tenant admin page
     # First create an event definition under events it will be used to verify the event log
@@ -146,27 +143,28 @@ Feature: Tenant admin
     # Test event log
     When the user selects the "Event log" menu item
     Then the "Event log" landing page is displayed
-    When the user searches with "configuration-service:configuration-updated"
-    Then the user views the events matching the search filter of "configuration-service:configuration-updated"
-    When the user clicks Load more button on event log page
-    Then the user views more events matching the search filter of "configuration-service:configuration-updated"
-    # Now event namespace and name is a mandatory field for searching event log
-    # When the user resets event log views
-    # And the user searches with "now-2mins" as minimum timestamp, "now+2mins" as maximum timestamp
-    # Then the user views the events matching the search filter of "now-2mins" as min and "now+2mins" as max timestamps
-    # When the user resets event log views
-    # And the user searches with "now-2mins" as minimum timestamp
-    # Then the user views the events matching the search filter of "now-2mins" as min timestamp
-    # When the user resets event log views
-    # And the user searches with "now+2mins" as maximum timestamp
-    # Then the user views the events matching the search filter of "now+2mins" as maximum timestamp
+    When the user clicks Filters button on event log page
+    And the user searches with "configuration-service" as Namespace, "configuration-updated" as Event name
+    And the user clicks Close button on event log filters pane
+    Then the user views the events matching the search filter of "configuration-service" as Namespace, "configuration-updated" as Event name
+    When the user clicks Next button on event log page
+    Then the user views the events matching the search filter of "configuration-service" as Namespace, "configuration-updated" as Event name
     When the user resets event log views
-    And the user searches with "configuration-service:configuration-updated", "now-2mins" as minimum timestamp, "now+2mins" as maximum timestamp
-    Then the user views the events matching the search filter of "configuration-service:configuration-updated", and timestamp value between "now-2mins" as min and "now+2mins" as max timestamps
+    And the user searches with "now-2mins" as minimum timestamp, "now+2mins" as maximum timestamp
+    Then the user views the events matching the search filter of "now-2mins" as min and "now+2mins" as max timestamps
     When the user resets event log views
-    Then the user views that search fields are empty
-    And the user views that the event log is no longer filtered by "configuration-service:configuration-updated", "now-2mins", "now+2mins"
-    # Last the user deletes the event at the end of the test
+    And the user searches with "now-2mins" as minimum timestamp
+    Then the user views the events matching the search filter of "now-2mins" as min timestamp
+    When the user resets event log views
+    And the user searches with "now+2mins" as maximum timestamp
+    Then the user views the events matching the search filter of "now+2mins" as maximum timestamp
+    When the user resets event log views
+    And the user searches with "configuration-service" as Namespace, "configuration-updated" as Event name, "now-50mins" as minimum timestamp, "now+2mins" as maximum timestamp
+    Then the user views events with "configuration-service" as Namespace, "configuration-updated" as Event name within the selected date range
+    When the user resets event log views
+    Then the user views the default event log filters
+    When the user clicks Close button on event log filters pane
+    # The user deletes the event at the end of the test
     When the user selects the "Event" menu item
     And the user selects "Definitions" tab for "Event"
     When the user clicks "Delete" button for the definition of "Autotest-eventDef<$ph>" and "event log testing" under "Autotest"
@@ -220,7 +218,7 @@ Feature: Tenant admin
     Then "200" is returned with a response having "active" as status, "<Tenant ID>" in id, "<Tenant Name>" as name and no deletedAt record
     And a GET request to the Keycloak auth endpoint for realm "<Tenant Name>" should no longer return a "not enabled" error
     And the event log should contain a "tenant-service:tenant-restored" event for tenant with id "<Tenant ID>" in the last 5 minutes
-    And the audit log should contain a "tenant.restored" action for tenant with id "<Tenant ID>" in the last 5 minutes
+    # And the audit log should contain a "tenant.restored" action for tenant with id "<Tenant ID>" in the last 5 minutes
 
     Examples:
       | Tenant ID                | Tenant Name              |

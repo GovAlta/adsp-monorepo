@@ -68,7 +68,7 @@ A destination is a list on a connection's site, and how data is written to it:
 - `documentFilesLibraryId` or `documentFilesLibraryName`: the document library that files are uploaded to (see [Files](#files)).
 - `detailLists`: lists for repeating items (see [Detail lists](#detail-lists)).
 
-Data paths use `.` for fields and `[n]` or `.n` for array items, for example `applicant.firstName` or `dependents[0].name`. An array of text or numbers, such as a multi-select answer, fills a choice column that allows multiple selections.
+Data paths use `.` for fields and `[n]` or `.n` for array items, for example `applicant.firstName` or `dependents[0].name`. An array of text or numbers, such as a multi-select answer, fills a choice column that allows multiple selections. An empty value mapped to a hyperlink column leaves the column empty, and clears an old link when a row is updated.
 
 ### Row identity
 

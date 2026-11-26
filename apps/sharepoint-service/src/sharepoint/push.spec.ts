@@ -76,6 +76,27 @@ describe('SharePointPusher', () => {
     });
   });
 
+  it('clears the link on the existing row when a file is removed', async () => {
+    graph.findItemIdByKey.mockResolvedValueOnce('item-7');
+    const withProof: SharePointConfiguration = {
+      ...configuration,
+      destinations: {
+        'hr-proof': {
+          ...intake,
+          id: 'hr-proof',
+          fieldMappings: [{ source: 'proof', target: 'Proof', columnType: 'hyperlink' }],
+        },
+      },
+    };
+
+    await pusher.push(tenantId, withProof, 'hr-proof', { applicationNumber: 'A-1', proof: '' });
+
+    expect(graph.updateItemFields).toHaveBeenCalledWith('token-1', siteId, 'list-1', 'item-7', {
+      Proof: null,
+      AdspItemKey: 'A-1',
+    });
+  });
+
   it('overwrites the row that already has the key', async () => {
     graph.findItemIdByKey.mockResolvedValueOnce('item-7');
 

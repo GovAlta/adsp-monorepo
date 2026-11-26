@@ -35,6 +35,8 @@ Pushes data, such as form submissions, to SharePoint lists owned by tenant teams
 
 Saving a secret, test, verify and setup read the tenant's configuration fresh rather than from the cache, so they see a connection or destination saved a moment before.
 
+An empty value mapped to a Hyperlink column (`columnType: "hyperlink"`, or `linkFormat: "hyperlink"` on a mapping without a column type) is sent as `null`, which leaves the column empty and clears an old link when a row is updated. SharePoint rejects any text in a Hyperlink column, an empty string included, without naming the column. A Hyperlink value is `{ Url, Description }`.
+
 Error codes are `entra:AADSTS<code>`, `graph:<code>`, `file:<code>`, `network` or `unknown`. The `file:` codes are `invalid-reference`, `not-found`, `access-denied`, `not-ready` (File Service has not finished scanning the file, so retry), `unavailable` and `size-mismatch`. Payload values never appear in responses or logs.
 
 ## Retries

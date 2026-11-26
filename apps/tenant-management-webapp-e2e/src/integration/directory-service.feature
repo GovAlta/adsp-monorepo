@@ -107,7 +107,7 @@ Feature: Directory-service
     And the user selects the "Event log" menu item
     Then the "Event log" landing page is displayed
     When the user searches with "directory-service:entry-updated", "now-2mins" as minimum timestamp, "now+2mins" as maximum timestamp
-    Then the user views the events matching the search filter of "directory-service:entry-updated"
+    Then the user views the events matching the search filter of "directory-service" as Namespace, "entry-updated" as Event name
     When the user clicks Show details button for the latest event of "entry-updated" for "directory-service"
     Then the user views the event details of "autotest-test-event", "v1", "https://myServiceEntry-2.ca/v1", "autotest", "Auto Test"
     # Delete the directory entry
@@ -122,7 +122,7 @@ Feature: Directory-service
     And the user selects the "Event log" menu item
     Then the "Event log" landing page is displayed
     When the user searches with "directory-service:entry-deleted", "now-2mins" as minimum timestamp, "now+2mins" as maximum timestamp
-    Then the user views the events matching the search filter of "directory-service:entry-deleted"
+    Then the user views the events matching the search filter of "directory-service" as Namespace, "entry-deleted" as Event name
     When the user clicks Show details button for the latest event of "entry-deleted" for "directory-service"
     Then the user views the event details of "autotest-test-event", "v1", "https://myServiceEntry-2.ca/v1", "autotest", "Auto Test"
 

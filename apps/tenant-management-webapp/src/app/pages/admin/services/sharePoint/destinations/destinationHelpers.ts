@@ -172,8 +172,12 @@ const setAtPath = (data: Record<string, unknown>, path: string, value: unknown) 
   current[segments[segments.length - 1]] = value;
 };
 
-const sampleValue = ({ columnType, choices }: SharepointFieldMapping): unknown => {
-  switch (columnType) {
+// Mappings saved before column types existed mark a Hyperlink column with linkFormat instead.
+const columnTypeOf = ({ columnType, linkFormat }: SharepointFieldMapping) =>
+  columnType ?? (linkFormat === 'hyperlink' ? 'hyperlink' : undefined);
+
+const sampleValue = (mapping: SharepointFieldMapping): unknown => {
+  switch (columnTypeOf(mapping)) {
     case 'number':
       return 0;
     case 'boolean':
@@ -181,7 +185,9 @@ const sampleValue = ({ columnType, choices }: SharepointFieldMapping): unknown =
     case 'dateTime':
       return '2026-01-01';
     case 'multiChoice':
-      return choices?.length ? [choices[0]] : [];
+      return mapping.choices?.length ? [mapping.choices[0]] : [];
+    case 'hyperlink':
+      return { Url: 'https://example.com', Description: 'Sample link' };
     default:
       return '';
   }
