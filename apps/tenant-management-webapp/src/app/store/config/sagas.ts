@@ -80,7 +80,7 @@ export function* fetchConfig(): SagaIterator {
           auditServiceApiUrl: entryMapping['audit-service'],
           tokenHandlerApiUrl: entryMapping['token-handler'],
           clientSecretRotationApiUrl:
-            entryMapping['client-secret-rotation-service'] ?? process.env.NX_PUBLIC_CLIENT_SECRET_ROTATION_API_URL,
+            process.env.NX_PUBLIC_CLIENT_SECRET_ROTATION_API_URL ?? entryMapping['tenant-service'],
           sharepointServiceApiUrl: getSharepointServiceUrl(entryMapping),
         },
         featureFlags: { ...defaultFeaturesVisible, ...data.featureFlags, ...getLocalFeatureFlags() },

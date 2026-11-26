@@ -71,7 +71,7 @@ export class RotationKeycloakClient {
 
   /**
    * Creates or updates the realm's profile and policy for the mode: `selected` limits it to clients with the
-   * opt-in role, `all` covers every confidential client. For `off` it only disables an existing policy.
+   * opt-in role. For `off` it only disables an existing policy.
    * The periods are in seconds, as Keycloak stores them.
    */
   async ensurePolicy(
@@ -104,22 +104,15 @@ export class RotationKeycloakClient {
     };
     const policy = {
       name: ROTATION_POLICY,
-      description:
-        mode === 'all'
-          ? 'ADSP client secret rotation, for all confidential clients'
-          : 'ADSP client secret rotation, for clients with the rotation-enabled role',
+      description: 'ADSP client secret rotation, for clients with the rotation-enabled role',
       enabled: true,
       profiles: [ROTATION_PROFILE],
       conditions: [
         { condition: CONDITION_ACCESS_TYPE, configuration: { 'is-negative-logic': false, type: ['confidential'] } },
-        ...(mode === 'selected'
-          ? [
-              {
-                condition: CONDITION_CLIENT_ROLES,
-                configuration: { 'is-negative-logic': false, roles: [ROTATION_ROLE] },
-              },
-            ]
-          : []),
+        {
+          condition: CONDITION_CLIENT_ROLES,
+          configuration: { 'is-negative-logic': false, roles: [ROTATION_ROLE] },
+        },
       ],
     };
 
@@ -146,16 +139,11 @@ export class RotationKeycloakClient {
   }
 
   /**
-   * The mode the realm's policy is actually in: `off` when it is missing or disabled, `selected` when it only covers
-   * clients with the opt-in role, otherwise `all`. Keycloak is the source of truth for tenant realms.
+   * The mode the realm's policy is actually in: `off` when it is missing or disabled, otherwise `selected`.
+   * Keycloak is the source of truth for tenant realms.
    */
   async getPolicyMode(realm: string): Promise<RotationMode> {
-    const { policies } = await this.client.clientPolicies.listPolicies({ realm });
-    const current = policies?.find(({ name }) => name === ROTATION_POLICY);
-    if (!current?.enabled) {
-      return 'off';
-    }
-    return current.conditions?.some(({ condition }) => condition === CONDITION_CLIENT_ROLES) ? 'selected' : 'all';
+    return (await this.isPolicyEnabled(realm)) ? 'selected' : 'off';
   }
 
   /** The expiration and rotated-secret expiration (seconds) the realm's rotation profile enforces, or undefined if it has none. */

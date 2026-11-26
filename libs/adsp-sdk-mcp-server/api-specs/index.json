@@ -32,14 +32,6 @@
     "file": "calendar-service.json"
   },
   {
-    "app": "client-secret-rotation-api",
-    "urn": "urn:ads:platform:client-secret-rotation-service",
-    "name": "Client secret rotation service",
-    "title": "Client secret rotation service",
-    "operations": 8,
-    "file": "client-secret-rotation-api.json"
-  },
-  {
     "app": "comment-service",
     "urn": "urn:ads:platform:comment-service",
     "name": "Comment service",
@@ -164,7 +156,7 @@
     "urn": "urn:ads:platform:tenant-service",
     "name": "Tenant service",
     "title": "Tenant management service",
-    "operations": 16,
+    "operations": 24,
     "file": "tenant-management-api.json"
   },
   {

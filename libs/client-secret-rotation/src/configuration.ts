@@ -1,6 +1,6 @@
-export type RotationMode = 'off' | 'selected' | 'all';
+export type RotationMode = 'off' | 'selected';
 
-export const ROTATION_MODES: RotationMode[] = ['off', 'selected', 'all'];
+export const ROTATION_MODES: RotationMode[] = ['off', 'selected'];
 
 export interface ClientSecretRotationConfiguration {
   enabled: boolean;

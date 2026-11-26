@@ -4,8 +4,8 @@ export const ClientSecretRotationConfigurationSchema = {
   properties: {
     realmMode: {
       type: 'string',
-      enum: ['off', 'selected', 'all'],
-      description: 'Tenant realm rotation mode: off (default), selected clients (rotation-enabled role) or all.',
+      enum: ['off', 'selected'],
+      description: 'Tenant realm rotation mode: off (default) or selected clients (rotation-enabled role).',
     },
     noticePeriod: {
       type: 'number',
@@ -15,7 +15,7 @@ export const ClientSecretRotationConfigurationSchema = {
     clientSecretRotation: {
       type: 'object',
       properties: {
-        coreRealmMode: { type: 'string', enum: ['off', 'selected', 'all'] },
+        coreRealmMode: { type: 'string', enum: ['off', 'selected'] },
         enabled: { type: 'boolean' },
         dryRun: { type: 'boolean' },
         noticeWindowDays: { type: 'number', minimum: 1 },

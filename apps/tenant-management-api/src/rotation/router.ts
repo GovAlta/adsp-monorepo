@@ -132,16 +132,13 @@ export function createRotationRouter({
   const getSettings = async ({ keycloak, realm, tenantId }: RealmContext) => {
     const config = await getConfiguration();
     const tenantConfig = await settingsStore.get(tenantId);
-    // Keycloak's policy is the source of truth: tenants only choose On (opt-in per client) or Off,
-    // and a stored legacy 'all' is read as On.
+    // Keycloak's policy is the source of truth: tenants only choose On (opt-in per client) or Off.
     const policyEnabled = await keycloak.isPolicyEnabled(realm);
-    const stored = tenantConfig?.realmMode === 'all' ? 'selected' : tenantConfig?.realmMode;
-    const realmMode = policyEnabled ? (toRotationMode(stored) === 'off' ? 'selected' : stored) : 'off';
     // The executor in Keycloak holds the expiration periods; the platform defaults apply until one exists.
     const enforced = await keycloak.getPolicySchedule(realm);
     const noticePeriod = tenantConfig?.noticePeriod > 0 ? tenantConfig.noticePeriod : config.noticeWindowDays * DAY_SECONDS;
     const settings: RealmSettings = {
-      mode: toRotationMode(realmMode),
+      mode: policyEnabled ? 'selected' : 'off',
       expirationPeriod: enforced?.expirationPeriod ?? config.expiryDays * DAY_SECONDS,
       rotatedExpirationPeriod: enforced?.rotatedExpirationPeriod ?? config.rotatedSecretOverlapDays * DAY_SECONDS,
       noticePeriod,
@@ -192,13 +189,13 @@ export function createRotationRouter({
   };
 
   const assertCovered = (mode: RotationMode, client: { optedIn: boolean }) => {
-    if (!(mode === 'all' || (mode === 'selected' && client.optedIn))) {
+    if (!(mode === 'selected' && client.optedIn)) {
       throw new InvalidOperationError('Client is not covered by rotation in this realm.');
     }
   };
 
   const toClientResponse = (client: RotationClient & { optedIn: boolean }, mode: RotationMode, at: Date) => {
-    const covered = mode === 'all' || (mode === 'selected' && client.optedIn);
+    const covered = mode === 'selected' && client.optedIn;
     return {
       id: client.id,
       clientId: client.clientId,

@@ -13,8 +13,8 @@ export interface ClientSecretClient {
   status: ClientSecretStatus;
 }
 
-/** off: nothing rotates. selected: only clients that opt in. all: every confidential client. */
-export type RealmRotationMode = 'off' | 'selected' | 'all';
+/** off: nothing rotates. selected: only clients that opt in. */
+export type RealmRotationMode = 'off' | 'selected';
 
 /** The expiration periods are seconds, as in the Keycloak executor; the notice period is days. */
 export interface RotationSchedule {

@@ -95,16 +95,6 @@ describe('RotationKeycloakClient', () => {
       expect(kc.clientPolicies.updatePolicy).not.toHaveBeenCalled();
     });
 
-    it('omits the role condition for all clients', async () => {
-      kc.clientPolicies.listProfiles.mockResolvedValueOnce({ profiles: [] });
-      kc.clientPolicies.listPolicies.mockResolvedValueOnce({ policies: [] });
-
-      await client.ensurePolicy(realm, 90 * 86400, 7 * 86400, 'all');
-
-      const { policies } = kc.clientPolicies.updatePolicy.mock.calls[0][0];
-      expect(policies[0].conditions.map((c: { condition: string }) => c.condition)).toEqual(['client-access-type']);
-    });
-
     it('only disables an enabled policy when off', async () => {
       kc.clientPolicies.listPolicies.mockResolvedValueOnce({ policies: [{ name: ROTATION_POLICY, enabled: true }] });
 
@@ -134,21 +124,17 @@ describe('RotationKeycloakClient', () => {
       expect(await client.isPolicyDisabled(realm)).toBe(false);
     });
 
-    it('reads the mode from the policy: off when missing or disabled, selected with the role condition', async () => {
+    it('reads the mode from the policy: off when missing or disabled, otherwise selected', async () => {
       kc.clientPolicies.listPolicies
         .mockResolvedValueOnce({ policies: [] })
         .mockResolvedValueOnce({ policies: [{ name: ROTATION_POLICY, enabled: false }] })
         .mockResolvedValueOnce({
           policies: [{ name: ROTATION_POLICY, enabled: true, conditions: [{ condition: 'client-roles' }] }],
-        })
-        .mockResolvedValueOnce({
-          policies: [{ name: ROTATION_POLICY, enabled: true, conditions: [{ condition: 'client-access-type' }] }],
         });
 
       expect(await client.getPolicyMode(realm)).toBe('off');
       expect(await client.getPolicyMode(realm)).toBe('off');
       expect(await client.getPolicyMode(realm)).toBe('selected');
-      expect(await client.getPolicyMode(realm)).toBe('all');
     });
 
     it('reads the expiration and rotated expiration in seconds from the profile executor', async () => {

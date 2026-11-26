@@ -27,7 +27,7 @@ describe('createClientSecretsApi', () => {
     expect(axiosMock.request).toHaveBeenLastCalledWith(
       expect.objectContaining({
         method: 'post',
-        url: 'https://rotation.example.com/rotation/v1/clients/urn%3Aads%3Atest%3Aclient/rotate',
+        url: 'https://rotation.example.com/api/rotation/v1/clients/urn%3Aads%3Atest%3Aclient/rotate',
         headers: { Authorization: 'Bearer token' },
       }),
     );
@@ -45,13 +45,13 @@ describe('createClientSecretsApi', () => {
     await api.saveSchedule(schedule);
 
     expect(axiosMock.request).toHaveBeenCalledWith(
-      expect.objectContaining({ method: 'put', url: 'https://rotation.example.com/rotation/v1/realm', data: schedule }),
+      expect.objectContaining({ method: 'put', url: 'https://rotation.example.com/api/rotation/v1/realm', data: schedule }),
     );
   });
 
   it('surfaces the message from the API', async () => {
     axiosMock.request.mockRejectedValueOnce({ response: { data: { errorMessage: 'expiryDays must be above zero.' } } });
-    await expect(api.setMode('all')).rejects.toThrow('expiryDays must be above zero.');
+    await expect(api.setMode('selected')).rejects.toThrow('expiryDays must be above zero.');
   });
 
   it('fails when the service is not in the directory', async () => {

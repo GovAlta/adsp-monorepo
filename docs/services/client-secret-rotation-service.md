@@ -12,7 +12,7 @@ Rotation depends on the Keycloak client secret rotation policy, which is support
 
 ## Client roles
 
-client `urn:ads:platform:client-secret-rotation-service`
+client `urn:ads:platform:tenant-service`
 
 | name                | description                                                                           |
 | :------------------ | :------------------------------------------------------------------------------------ |
@@ -23,22 +23,22 @@ client `urn:ads:platform:client-secret-rotation-service`
 - **Which realm is used.** The API acts on the realm of the caller's token. There is no way to name another realm.
 - **Core users.** Core (platform) users are refused with 403, and the `master` realm is never reachable.
 - **User token.** The API calls the Keycloak Admin API with the signed-in admin's own token, so Keycloak enforces that admin's realm-management permissions. The service holds no Keycloak credential. A tenant admin needs the Keycloak realm roles `manage-realm` (the client policy), `manage-clients`, `view-clients`, `query-clients`, `view-users`, `query-users` and `view-realm`. Grant them as one composite realm role. `manage-realm` is a broad permission, so give it only to admins who may change realm settings.
-- **Isolation.** The service's own client is hidden from the list and can't be changed through the API.
+- **Isolation.** The API acts only on clients of the caller's own realm.
 
 ## API overview
 
-All endpoints are under `/rotation/v1`. See the [API documentation](https://api.adsp.alberta.ca) for request and response schemas. No endpoint returns a client secret.
+All endpoints are under `/api/rotation/v1`. See the [API documentation](https://api.adsp.alberta.ca) for request and response schemas. No endpoint returns a client secret.
 
 | Endpoint                                                   | Purpose                                                    |
 | :--------------------------------------------------------- | :--------------------------------------------------------- |
-| `GET /rotation/v1/realm`                                   | Read the rotation mode and schedule of the realm.          |
-| `PUT /rotation/v1/realm`                                   | Set the realm mode and the schedule.                       |
-| `GET /rotation/v1/clients`                                 | List clients with their rotation status.                   |
-| `PATCH /rotation/v1/clients/{clientId}`                    | Set the contacts notified for a client.                    |
-| `PUT /rotation/v1/clients/{clientId}/opt-in`               | Opt a client in or out (`selected` mode only).             |
-| `POST /rotation/v1/clients/{clientId}/rotate`              | Rotate the secret now.                                     |
-| `POST /rotation/v1/clients/{clientId}/invalidate-previous` | End the overlap early by invalidating the previous secret. |
-| `POST /rotation/v1/clients/{clientId}/notify`              | Send the expiry notice now.                                |
+| `GET /api/rotation/v1/realm`                                   | Read the rotation mode and schedule of the realm.          |
+| `PUT /api/rotation/v1/realm`                                   | Set the realm mode and the schedule.                       |
+| `GET /api/rotation/v1/clients`                                 | List clients with their rotation status.                   |
+| `PATCH /api/rotation/v1/clients/{clientId}`                    | Set the contacts notified for a client.                    |
+| `PUT /api/rotation/v1/clients/{clientId}/opt-in`               | Opt a client in or out (`selected` mode only).             |
+| `POST /api/rotation/v1/clients/{clientId}/rotate`              | Rotate the secret now.                                     |
+| `POST /api/rotation/v1/clients/{clientId}/invalidate-previous` | End the overlap early by invalidating the previous secret. |
+| `POST /api/rotation/v1/clients/{clientId}/notify`              | Send the expiry notice now.                                |
 
 All endpoints need the `client-secret-admin` role (or the tenant admin role for realms that predate it). `{clientId}` is the URL-encoded Keycloak client ID.
 
@@ -46,7 +46,7 @@ All endpoints need the `client-secret-admin` role (or the tenant admin role for 
 
 ### Realm mode
 
-Each tenant realm is either On or Off, and the realm's Keycloak client policy holds that state. Turning rotation on in the portal creates the `secret-rotation` policy and its `secret-rotation-profile` profile the first time and enables them afterwards; turning it off disables the policy. While On, only opted-in clients rotate (`selected`), or every confidential client does (`all`).
+Each tenant realm is either On or Off, and the realm's Keycloak client policy holds that state. Turning rotation on in the portal creates the `secret-rotation` policy and its `secret-rotation-profile` profile the first time and enables them afterwards; turning it off disables the policy. While On, only opted-in clients rotate.
 
 ### Schedule
 

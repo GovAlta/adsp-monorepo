@@ -67,7 +67,7 @@ describe('rotation router documented behaviour', () => {
       next();
     });
     app.use(
-      '/rotation/v1',
+      '/api/rotation/v1',
       createRotationRouter({
         logger,
         createKeycloak: () => keycloak,
@@ -98,26 +98,26 @@ describe('rotation router documented behaviour', () => {
   });
 
   it('GET /realm returns the settings, or 403 without the role', async () => {
-    await request(createApp()).get('/rotation/v1/realm').expect(200);
+    await request(createApp()).get('/api/rotation/v1/realm').expect(200);
     await request(createApp({ ...admin, roles: [] }))
-      .get('/rotation/v1/realm')
+      .get('/api/rotation/v1/realm')
       .expect(403);
   });
 
   it('PUT /realm saves the mode, or 400 for an invalid mode', async () => {
-    await request(createApp()).put('/rotation/v1/realm').send({ mode: 'selected' }).expect(200);
-    await request(createApp()).put('/rotation/v1/realm').send({ mode: 'bogus' }).expect(400);
+    await request(createApp()).put('/api/rotation/v1/realm').send({ mode: 'selected' }).expect(200);
+    await request(createApp()).put('/api/rotation/v1/realm').send({ mode: 'bogus' }).expect(400);
   });
 
   it('GET /clients lists the clients, or 403 for a core user', async () => {
-    await request(createApp()).get('/rotation/v1/clients').expect(200);
+    await request(createApp()).get('/api/rotation/v1/clients').expect(200);
     await request(createApp({ ...admin, isCore: true }))
-      .get('/rotation/v1/clients')
+      .get('/api/rotation/v1/clients')
       .expect(403);
   });
 
   it('PATCH /clients/{clientId} sets the contacts, or 400 for an invalid email', async () => {
-    const path = '/rotation/v1/clients/urn%3Aads%3Atest%3Aclient';
+    const path = '/api/rotation/v1/clients/urn%3Aads%3Atest%3Aclient';
     await request(createApp())
       .patch(path)
       .send({ contacts: ['b@example.com'] })
@@ -129,21 +129,21 @@ describe('rotation router documented behaviour', () => {
   });
 
   it('PUT /clients/{clientId}/opt-in opts in, or 404 for an unknown client', async () => {
-    const path = '/rotation/v1/clients/urn%3Aads%3Atest%3Aclient/opt-in';
+    const path = '/api/rotation/v1/clients/urn%3Aads%3Atest%3Aclient/opt-in';
     await request(createApp()).put(path).send({ enabled: true }).expect(200);
     keycloak.getClient.mockResolvedValueOnce(null);
     await request(createApp()).put(path).send({ enabled: true }).expect(404);
   });
 
   it('POST /clients/{clientId}/rotate rotates, or 400 when the client is not covered', async () => {
-    const path = '/rotation/v1/clients/urn%3Aads%3Atest%3Aclient/rotate';
+    const path = '/api/rotation/v1/clients/urn%3Aads%3Atest%3Aclient/rotate';
     await request(createApp()).post(path).expect(200);
     keycloak.getClient.mockResolvedValueOnce(client({ optedIn: false }));
     await request(createApp()).post(path).expect(400);
   });
 
   it('POST /clients/{clientId}/invalidate-previous invalidates, or 400 without a previous secret', async () => {
-    const path = '/rotation/v1/clients/urn%3Aads%3Atest%3Aclient/invalidate-previous';
+    const path = '/api/rotation/v1/clients/urn%3Aads%3Atest%3Aclient/invalidate-previous';
     keycloak.getClient.mockResolvedValueOnce(
       client({ state: { expiry: new Date('2026-09-01T00:00:00Z'), rotatedExpiry: new Date('2026-06-08T00:00:00Z') } }),
     );
@@ -152,7 +152,7 @@ describe('rotation router documented behaviour', () => {
   });
 
   it('POST /clients/{clientId}/notify notifies, or 400 without an expiry', async () => {
-    const path = '/rotation/v1/clients/urn%3Aads%3Atest%3Aclient/notify';
+    const path = '/api/rotation/v1/clients/urn%3Aads%3Atest%3Aclient/notify';
     await request(createApp()).post(path).expect(200);
     keycloak.getClient.mockResolvedValueOnce(client({ state: {} }));
     await request(createApp()).post(path).expect(400);

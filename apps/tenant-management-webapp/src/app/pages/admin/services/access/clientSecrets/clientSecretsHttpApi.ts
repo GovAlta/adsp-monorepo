@@ -7,8 +7,8 @@ import type {
   RotationSettings,
 } from './clientSecretsApi';
 
-const REALM_PATH = '/rotation/v1/realm';
-const CLIENTS_PATH = '/rotation/v1/clients';
+const REALM_PATH = '/api/rotation/v1/realm';
+const CLIENTS_PATH = '/api/rotation/v1/clients';
 
 // Surfaces the API's own message, which explains the failure (for example an invalid schedule).
 function toError(err: unknown): Error {

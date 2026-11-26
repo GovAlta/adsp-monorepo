@@ -53,8 +53,7 @@ components:
       type: string
       enum: [off, selected]
       description: >
-        off: nothing rotates. selected: only clients that opt in with the rotation-enabled role. all: every
-        confidential client of the realm.
+        off: nothing rotates. selected: only clients that opt in with the rotation-enabled role.
     RealmRotation:
       type: object
       properties:
@@ -152,7 +151,7 @@ components:
         contacts: [test.user@gov.ab.ca]
         status: ok
 paths:
-  /rotation/v1/realm:
+  /api/rotation/v1/realm:
     get:
       tags: [Realm]
       summary: Get realm rotation settings
@@ -219,7 +218,7 @@ paths:
           $ref: '#/components/responses/RotationForbidden'
         '404':
           $ref: '#/components/responses/RotationNotFound'
-  /rotation/v1/clients:
+  /api/rotation/v1/clients:
     get:
       tags: [Client]
       summary: List clients
@@ -244,7 +243,7 @@ paths:
           $ref: '#/components/responses/RotationForbidden'
         '404':
           $ref: '#/components/responses/RotationNotFound'
-  /rotation/v1/clients/{clientId}:
+  /api/rotation/v1/clients/{clientId}:
     patch:
       tags: [Client]
       summary: Set client contacts
@@ -283,7 +282,7 @@ paths:
           $ref: '#/components/responses/RotationForbidden'
         '404':
           $ref: '#/components/responses/RotationNotFound'
-  /rotation/v1/clients/{clientId}/opt-in:
+  /api/rotation/v1/clients/{clientId}/opt-in:
     put:
       tags: [Client]
       summary: Opt a client in or out
@@ -320,7 +319,7 @@ paths:
           $ref: '#/components/responses/RotationForbidden'
         '404':
           $ref: '#/components/responses/RotationNotFound'
-  /rotation/v1/clients/{clientId}/rotate:
+  /api/rotation/v1/clients/{clientId}/rotate:
     post:
       tags: [Client]
       summary: Rotate a client secret now
@@ -356,7 +355,7 @@ paths:
           $ref: '#/components/responses/RotationForbidden'
         '404':
           $ref: '#/components/responses/RotationNotFound'
-  /rotation/v1/clients/{clientId}/invalidate-previous:
+  /api/rotation/v1/clients/{clientId}/invalidate-previous:
     post:
       tags: [Client]
       summary: Invalidate the previous secret
@@ -386,7 +385,7 @@ paths:
           $ref: '#/components/responses/RotationForbidden'
         '404':
           $ref: '#/components/responses/RotationNotFound'
-  /rotation/v1/clients/{clientId}/notify:
+  /api/rotation/v1/clients/{clientId}/notify:
     post:
       tags: [Client]
       summary: Send the expiry notice now

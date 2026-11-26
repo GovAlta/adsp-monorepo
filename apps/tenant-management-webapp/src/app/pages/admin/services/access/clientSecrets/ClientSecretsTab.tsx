@@ -64,7 +64,6 @@ const PAGE_SIZES = [10, 25, 50, 100];
 const MODE_HINT: Record<RealmRotationMode, string> = {
   off: 'No client secrets are rotated automatically.',
   selected: 'Only clients that are enabled below are rotated automatically.',
-  all: 'Every confidential client in this realm is rotated automatically.',
 };
 
 // The same rules are enforced by the API; this gives immediate feedback.
@@ -430,6 +429,7 @@ const ClientSecretsView: FunctionComponent<{ api: ClientSecretsApi }> = ({ api }
         <GoabInput
           name={key}
           type="number"
+          size="compact"
           min={key === 'rotatedExpirationPeriod' ? 0 : 1}
           value={draft?.[key] ?? ''}
           width="100%"
@@ -619,6 +619,7 @@ const ClientSecretsView: FunctionComponent<{ api: ClientSecretsApi }> = ({ api }
           <GoabInput
             name="client-search"
             type="search"
+            size="compact"
             leadingIcon="search"
             placeholder="Search clients"
             ariaLabel="Search clients"
@@ -647,9 +648,9 @@ const ClientSecretsView: FunctionComponent<{ api: ClientSecretsApi }> = ({ api }
               const days = daysRemaining(client.expiresAt);
               const open = expandedId === client.id;
               // Editable only while rotation is on. Off keeps showing the stored opt-in, locked.
-              const enabled = mode === 'all' || client.optedIn;
+              const enabled = client.optedIn;
               // The API only acts on clients the saved mode covers.
-              const covered = mode === 'all' || (mode === 'selected' && client.optedIn);
+              const covered = mode === 'selected' && client.optedIn;
               const previousValid =
                 !!client.rotatedSecretExpiresAt && new Date(client.rotatedSecretExpiresAt) > new Date();
               return (

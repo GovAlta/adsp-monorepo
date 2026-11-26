@@ -215,7 +215,7 @@ describe('rotation router', () => {
       expect(keycloak.ensurePolicy).toHaveBeenCalledWith('test', 7776000, 0, 'selected');
     });
 
-    it('refuses the retired all mode', async () => {
+    it('refuses an unsupported mode', async () => {
       await request(createApp(admin, tenant)).put('/realm').send({ mode: 'all' }).expect(400);
       expect(settingsStore.update).not.toHaveBeenCalled();
     });
@@ -307,12 +307,6 @@ describe('rotation router', () => {
       keycloak.isPolicyEnabled.mockResolvedValue(false);
       await request(createApp(admin, tenant)).put('/clients/c/opt-in').send({ enabled: true }).expect(400);
       expect(keycloak.setOptIn).not.toHaveBeenCalled();
-    });
-
-    it('treats a stored legacy all mode as on', async () => {
-      settingsStore.get.mockResolvedValue({ realmMode: 'all' });
-      await request(createApp(admin, tenant)).put('/clients/c/opt-in').send({ enabled: true }).expect(200);
-      expect(keycloak.setOptIn).toHaveBeenCalled();
     });
 
     it('needs realm admin contacts to opt in', async () => {
