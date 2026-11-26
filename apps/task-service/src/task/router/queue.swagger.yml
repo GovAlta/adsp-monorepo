@@ -21,6 +21,14 @@ components:
         maxLength: 50
       example: intake-processing
   responses:
+    QueueUsersUnavailable:
+      description: Keycloak failed to return the users of a role of the queue.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/TaskError'
+          example:
+            errorMessage: "Failed to retrieve users of role 'task-worker'."
     QueueNotFound:
       description: Queue not found in the configuration of the tenant.
       content:
@@ -548,7 +556,8 @@ components:
       Retrieves the users of the tenant's Keycloak realm that hold one of the assigner roles of the queue. No task
       service role is required, but the request is made to the Keycloak admin API with the caller's token, so the user
       must hold the realm-management roles to view users (view-users) and, for client roles, clients (view-clients).
-      Responds 403 if Keycloak denies the request. Roles that don't exist in the realm are skipped.
+      Responds 403 if Keycloak denies the request, and 502 if Keycloak fails with any other error. Roles that don't
+      exist in the realm are skipped.
     parameters:
       - $ref: '#/components/parameters/TaskTenantId'
       - $ref: '#/components/parameters/QueueNamespace'
@@ -570,6 +579,8 @@ components:
         $ref: '#/components/responses/TaskForbidden'
       404:
         $ref: '#/components/responses/QueueNotFound'
+      502:
+        $ref: '#/components/responses/QueueUsersUnavailable'
 
 /task/v1/queues/{namespace}/{name}/workers:
   get:
@@ -579,7 +590,8 @@ components:
       Retrieves the users of the tenant's Keycloak realm that hold one of the worker roles of the queue. No task service
       role is required, but the request is made to the Keycloak admin API with the caller's token, so the user must
       hold the realm-management roles to view users (view-users) and, for client roles, clients (view-clients).
-      Responds 403 if Keycloak denies the request. Roles that don't exist in the realm are skipped.
+      Responds 403 if Keycloak denies the request, and 502 if Keycloak fails with any other error. Roles that don't
+      exist in the realm are skipped.
     parameters:
       - $ref: '#/components/parameters/TaskTenantId'
       - $ref: '#/components/parameters/QueueNamespace'
@@ -601,3 +613,5 @@ components:
         $ref: '#/components/responses/TaskForbidden'
       404:
         $ref: '#/components/responses/QueueNotFound'
+      502:
+        $ref: '#/components/responses/QueueUsersUnavailable'

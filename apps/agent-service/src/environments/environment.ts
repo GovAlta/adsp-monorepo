@@ -54,6 +54,10 @@ export const environment = envalid.cleanEnv(
     // Planning is one judgement-heavy call; step building is many mechanical ones and sets the wall clock.
     AGENT_FORM_GENERATION_PLANNER_REASONING_EFFORT: envalid.str({ default: '', choices: reasoningEffortChoices }),
     AGENT_FORM_GENERATION_STEP_REASONING_EFFORT: envalid.str({ default: '', choices: reasoningEffortChoices }),
+    // Messages of history the form generation chat re-sends; the saved form itself is described on every call.
+    AGENT_FORM_GENERATION_LAST_MESSAGES: envalid.num({ default: 10 }),
+    // Output and reasoning tokens of one chat model call; the planner and step builder are not limited by it.
+    AGENT_FORM_GENERATION_MAX_OUTPUT_TOKENS: envalid.num({ default: 4000 }),
     // The Access Service agent keeps a short history without observational memory: its tool results are shown as
     // cards, and observational memory's background summaries cost more tokens than they save for short chats.
     AGENT_ACCESS_LAST_MESSAGES: envalid.num({ default: 8 }),

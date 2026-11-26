@@ -1,7 +1,13 @@
 import { all, takeEvery, takeLatest } from 'redux-saga/effects';
 
 // Sagas
-import { fetchAccess, fetchServiceRoles, fetchKeycloakServiceRoles, createKeycloakClient } from './access/sagas';
+import {
+  fetchAccess,
+  fetchServiceRoles,
+  fetchKeycloakServiceRoles,
+  createKeycloakClient,
+  fetchKeycloakGroups,
+} from './access/sagas';
 import { fetchConfig } from './config/sagas';
 import { watchTenantSagas } from './tenant/sagas';
 import { watchStreamSagas } from './stream/saga';
@@ -38,6 +44,7 @@ import {
   FETCH_SERVICE_ROLES,
   FETCH_KEYCLOAK_SERVICE_ROLES,
   CREATE_KEYCLOAK_ROLE,
+  FETCH_KEYCLOAK_GROUPS,
 } from './access/actions';
 import { FETCH_CONFIG_ACTION } from './config/actions';
 
@@ -72,6 +79,7 @@ export function* watchSagas() {
   yield takeLatest(FETCH_SERVICE_ROLES, fetchServiceRoles);
   yield takeLatest(FETCH_KEYCLOAK_SERVICE_ROLES, fetchKeycloakServiceRoles);
   yield takeEvery(CREATE_KEYCLOAK_ROLE, createKeycloakClient);
+  yield takeLatest(FETCH_KEYCLOAK_GROUPS, fetchKeycloakGroups);
 
   // service status
   yield takeEvery(FETCH_SERVICE_STATUS_APPS_ACTION, fetchServiceStatusApps);

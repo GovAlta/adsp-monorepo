@@ -59,6 +59,7 @@ describe('planner router documented behaviour', () => {
   const admin = tenantUser('admin', [PlannerServiceRoles.Admin]);
   const plain = tenantUser('plain', []);
   const core = { id: 'core', name: 'core', isCore: true, roles: [PlannerServiceRoles.Admin] } as unknown as User;
+  const coreWithoutRole = { id: 'core-plain', name: 'core-plain', isCore: true, roles: [] } as unknown as User;
 
   const hypothesis: Hypothesis = {
     id: 'h-1',
@@ -209,8 +210,8 @@ describe('planner router documented behaviour', () => {
       expect(res.status).toBe(400);
     });
 
-    it('returns 403 for a core user with a tenant', async () => {
-      const res = await send(createApp(core), method, `${path}?tenantId=${tenantId}`);
+    it('returns 403 for a core user without a planner role who sets a tenantId', async () => {
+      const res = await send(createApp(coreWithoutRole), method, `${path}?tenantId=${tenantId}`);
       expect(res.status).toBe(403);
     });
 
@@ -236,6 +237,12 @@ describe('planner router documented behaviour', () => {
   });
 
   describe('patterns', () => {
+    it('GET /planner/v1/patterns returns the catalogue for a core user who sets a tenantId', async () => {
+      const res = await request(createApp(core)).get(`/planner/v1/patterns?tenantId=${tenantId}`);
+      expect(res.status).toBe(200);
+      expect(patternRepository.find).toHaveBeenCalledWith(tenantId);
+    });
+
     it('GET /planner/v1/patterns returns the catalogue', async () => {
       const res = await request(createApp(owner)).get('/planner/v1/patterns');
       expect(res.status).toBe(200);

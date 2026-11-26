@@ -32,6 +32,10 @@ export interface RegistrationConfiguration {
   enabled: boolean;
   // Keycloak group whose roles grant access to the form once a request is approved.
   accessGroup?: string;
+  // Keycloak group whose members can approve or deny the form's access requests.
+  approverGroup?: string;
+  // Address notified when an access request is submitted.
+  notificationEmail?: string;
   dataSchema?: Record<string, unknown>;
   uiSchema?: Record<string, unknown>;
 }

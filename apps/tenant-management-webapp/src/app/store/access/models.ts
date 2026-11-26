@@ -24,6 +24,12 @@ export interface Role {
   userIds: string[];
 }
 
+export interface KeycloakGroup {
+  id: string;
+  name: string;
+  path: string;
+}
+
 export interface AccessState {
   metrics: {
     users: number;
@@ -31,6 +37,9 @@ export interface AccessState {
   };
   users: Record<string, User>;
   roles: Record<string, Role>;
+  // Null until loaded; groupsFailed is set when the signed-in user can't list the realm's groups.
+  groups: KeycloakGroup[] | null;
+  groupsFailed: boolean;
 }
 
 export const ACCESS_INIT: AccessState = {
@@ -40,6 +49,8 @@ export const ACCESS_INIT: AccessState = {
   },
   users: {},
   roles: null,
+  groups: null,
+  groupsFailed: false,
 };
 
 export interface ServiceRoleState {

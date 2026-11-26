@@ -5,21 +5,26 @@ An MCP (Model Context Protocol) server that gives an AI coding assistant grounde
 (`@abgov/adsp-service-sdk`), instead of guessing.
 
 It bundles the ADSP documentation site content, the OpenAPI specs of ADSP services, and a curated reference of every
-`@abgov/adsp-service-sdk` export, and exposes them over stdio via twelve tools:
+`@abgov/adsp-service-sdk` export, and exposes them over stdio via thirteen tools:
 
 - `find_adsp_services` — match a product need, in the user's own words, to the ADSP services that provide it, so an
   agent reuses a platform service instead of building one. See [Matching needs to services](#matching-needs-to-services).
+  Returns `next`.
 - `search_adsp_docs` — keyword search across ADSP platform docs (getting started, architecture, service concepts,
   tutorials). Common words people use that the docs don't, such as `websocket` or `auth`, also search for the
-  docs' own terms (`src/search/aliases.ts`).
+  docs' own terms (`src/search/aliases.ts`). Returns `related` (on the top result) and `next`.
 - `list_adsp_docs` — list the path and title of every bundled doc page, optionally under a path prefix such as
-  `services/`, for browsing when keyword search misses.
-- `read_adsp_doc` — read the full content of a doc page found via search or the list.
+  `services/`, for browsing when keyword search misses. Returns `next` for a prefix that matches five pages or fewer.
+- `read_adsp_doc` — read the full content of a doc page found via search or the list. Returns `related` and `next`
+  in a second block.
 - `search_sdk_reference` — search `@abgov/adsp-service-sdk` by symbol name, module, or keyword; returns full symbol
-  details (kind, description, option/return shape, example, deprecated flag).
+  details (kind, description, option/return shape, example, deprecated flag). Returns `related` and `next`.
 - `get_platform_quickstart` — the canonical `initializeService` usage pattern (the common case for a tenant service
   built on top of ADSP) and a capabilities summary, for the most common question: how to start using ADSP from a
   Node service.
+- `get_app_quickstart` — the same for a browser app (for example React): signing users in through token-handler,
+  real-time updates from push-service, the Tenant Admin set-up both need, and which parts run in the browser. See
+  [Building a browser app](#building-a-browser-app).
 - `list_service_roles` — **live: talks to a real ADSP environment**, not bundled/offline data. Reads every platform
   service's registered RBAC role from tenant-service configuration, so an agent can pick a least-privileged role
   instead of defaulting to an admin role.
@@ -28,12 +33,34 @@ It bundles the ADSP documentation site content, the OpenAPI specs of ADSP servic
 - `get_adsp_mcp_server_info` — this server's version and where its bundled content came from: the docs source
   commit, the `@abgov/adsp-service-sdk` version the SDK reference matches, and the release time. Lets an agent warn
   that an answer may be stale.
-- `list_service_apis` — the ADSP services that publish a REST API, with URN and operation count.
+- `list_service_apis` — the ADSP services that publish a REST API, with URN and operation count, under `results`.
 - `search_service_endpoints` — keyword search over those services' endpoints (path, summary, tags, description),
-  optionally within one service.
+  optionally within one service. Returns `related` and `next`.
 - `read_service_endpoint` — one endpoint as its service's OpenAPI spec defines it: description, parameters, request
   body and responses with schema references inlined. `access` quotes the description's sentences about roles,
-  tenancy and anonymous access; structured role metadata is planned (CS-5731).
+  tenancy and anonymous access; structured role metadata is planned (CS-5731). Returns `related` and `next`.
+
+### Building a browser app
+
+`get_app_quickstart` is for a team building a browser app on ADSP rather than a Node service, so an agent asked "how
+do I sign my app's users in?" gets token-handler instead of the service-to-service client credentials flow. It covers:
+
+- a table of what runs where: the browser, the app's reverse proxy, token-handler, push-service, an optional backend
+  service, and the one-time Tenant Admin set-up;
+- signing in with token-handler: configuring and registering the client, the reverse proxy, the browser's sign-in,
+  session, API and sign-out paths, and CSRF. It names OpenID Connect in the browser as the alternative, for apps that
+  need the user's token in the browser;
+- real-time updates: registering a stream with `eventStreams` first, then subscribing with `socket.io-client`, and who
+  may subscribe. An app that signs in through token-handler holds no token, so it can use public streams only;
+- a checklist of the one-time set-up: the token-handler client, the backend's directory entry, and creating and
+  assigning service roles, apart from what the backend registers at startup;
+- `samples/chat-app` and `samples/chat-service` as the worked example. chat-app signs in with OpenID Connect in the
+  browser, not token-handler, and needs that token because the stream it subscribes to isn't public.
+
+It gives no UI component or design guidance: it points to the GoA design-system MCP server (`goa-design-system`).
+`src/tools/registerAppQuickstartTool.spec.ts` checks the guide against the repo: the doc pages and sample files it
+names exist, its token-handler configuration and stream fields are in the token-handler schema and the SDK `Stream`
+type, and the roles, paths and URNs it lists appear in the docs it cites (`APP_GUIDE_SOURCES` in the tool).
 
 ### Matching needs to services
 
@@ -96,6 +123,256 @@ primary audience for this package — product teams building on top of ADSP) and
 platform services (the ones that live in this monorepo, e.g. `directory-service`, `configuration-service`). Content
 here is weighted toward `initializeService` accordingly.
 
+### Response format
+
+The offline tools point at the next useful call, so an agent follows from one answer to the next instead of
+guessing a tool or an argument. Their JSON carries two extra fields:
+
+| Field     | Meaning                                                                                                                                                                                                                               |
+| --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `related` | Things connected to what the tool returned, each capped at three: `docs` (doc page paths), `sdkSymbols` (SDK symbol names) and `serviceApis` (service names that `search_service_endpoints` takes as `service`). Left out when empty. |
+| `next`    | `suggested_calls`: up to three ready-to-make calls, each with `tool`, `arguments` and `why`. Never repeats the call just made. Left out when nothing useful follows.                                                                  |
+
+Every name in `related` and every call in `next` exists in the bundled content, and `next` never names a tool that
+needs sign-in (`list_service_roles` and `get_service_configuration_schema`), so a signed-out client can follow all of
+it. A suggested `search_service_endpoints` call carries the question asked (or the page title) when that search
+finds endpoints, else the service's name, and is left out when neither finds any. A one-word SDK name such as
+`Tenant` counts as named by a page only inside its code. The tools keep every field they returned before. These tools used to return a bare array and now return
+`{ "results": [...] }`: `search_adsp_docs`, `list_adsp_docs`, `search_sdk_reference`, `list_service_apis` and
+`search_service_endpoints`. Examples below are abridged (long text shortened, later entries left out); the fields shown
+are real.
+
+`search_adsp_docs` adds `related` to its top result and `next` beside `results`:
+
+```json
+{
+  "results": [
+    {
+      "path": "services/event-service.md",
+      "title": "Event service",
+      "snippet": "…",
+      "score": 184,
+      "related": {
+        "docs": [
+          "services/value-service.md",
+          "services/audit-service.md",
+          "services/configuration-service.md"
+        ],
+        "sdkSymbols": ["initializePlatform"],
+        "serviceApis": ["event-service"]
+      }
+    }
+  ],
+  "next": {
+    "suggested_calls": [
+      {
+        "tool": "read_adsp_doc",
+        "arguments": { "path": "services/event-service.md" },
+        "why": "Top match; read the full page."
+      },
+      {
+        "tool": "search_service_endpoints",
+        "arguments": {
+          "query": "send a domain event",
+          "service": "event-service"
+        },
+        "why": "Find this service's REST endpoints for the same question."
+      }
+    ]
+  }
+}
+```
+
+`list_adsp_docs` wraps the list in `results`, one page per line. For a prefix that matches five pages or fewer it
+adds `next` (`list_adsp_docs` with `prefix: "services/event"`):
+
+```json
+{
+  "results": [
+    { "path": "services/event-service.md", "title": "Event service" }
+  ],
+  "next": {
+    "suggested_calls": [
+      {
+        "tool": "read_adsp_doc",
+        "arguments": { "path": "services/event-service.md" },
+        "why": "Only page under this prefix; read it."
+      }
+    ]
+  }
+}
+```
+
+`read_adsp_doc` returns the page markdown as the first block, unchanged, then a JSON block with `path`, `related`
+and `next`:
+
+```json
+{
+  "path": "services/event-service.md",
+  "related": {
+    "docs": [
+      "services/value-service.md",
+      "services/audit-service.md",
+      "services/configuration-service.md"
+    ],
+    "sdkSymbols": ["initializePlatform"],
+    "serviceApis": ["event-service"]
+  },
+  "next": {
+    "suggested_calls": [
+      {
+        "tool": "search_service_endpoints",
+        "arguments": { "query": "Event service", "service": "event-service" },
+        "why": "Find this service's REST endpoints."
+      },
+      {
+        "tool": "search_sdk_reference",
+        "arguments": { "query": "initializePlatform" },
+        "why": "Look up the SDK symbol this page uses."
+      },
+      {
+        "tool": "read_adsp_doc",
+        "arguments": { "path": "services/value-service.md" },
+        "why": "Read a page this one links to."
+      }
+    ]
+  }
+}
+```
+
+`search_sdk_reference` puts `related` (`seeAlso` symbols and the doc pages that name the symbol) on each symbol, and
+`next` beside `results` (`initializeService`, with `summary`, `details` and `example` left out):
+
+```json
+{
+  "results": [
+    {
+      "name": "initializeService",
+      "kind": "function",
+      "module": "initialize",
+      "seeAlso": ["initializePlatform", "ServiceRegistration"],
+      "related": {
+        "sdkSymbols": ["initializePlatform", "ServiceRegistration"],
+        "docs": ["platform/platform-node-sdk.md", "services/audit-service.md"]
+      }
+    }
+  ],
+  "next": {
+    "suggested_calls": [
+      {
+        "tool": "read_adsp_doc",
+        "arguments": { "path": "platform/platform-node-sdk.md" },
+        "why": "Read a page that uses this symbol."
+      },
+      {
+        "tool": "search_sdk_reference",
+        "arguments": { "query": "initializePlatform" },
+        "why": "Look up a related SDK symbol."
+      }
+    ]
+  }
+}
+```
+
+`list_service_apis` returns `{ "results": [...] }` with one entry per service and no `related` or `next`:
+
+```json
+{
+  "results": [
+    {
+      "service": "agent-service",
+      "urn": "urn:ads:platform:agent-service",
+      "name": "Agent service",
+      "operations": 6
+    }
+  ]
+}
+```
+
+`search_service_endpoints` puts a single `related.docs` beside `results` (the doc pages of the services in the results,
+up to three), not on each result, and suggests reading the top endpoint (`query: "upload a file"`):
+
+```json
+{
+  "results": [
+    {
+      "service": "file-service",
+      "method": "POST",
+      "path": "/file/v1/files",
+      "deprecated": false,
+      "access": [
+        "Requires an authenticated user with one of the file type's updateRoles, or the file-service-admin role; otherwise the request responds 401."
+      ]
+    }
+  ],
+  "related": { "docs": ["services/file-service.md"] },
+  "next": {
+    "suggested_calls": [
+      {
+        "tool": "read_service_endpoint",
+        "arguments": {
+          "service": "file-service",
+          "method": "POST",
+          "path": "/file/v1/files"
+        },
+        "why": "Read the top endpoint's parameters and schemas."
+      }
+    ]
+  }
+}
+```
+
+`read_service_endpoint` keeps the endpoint's own fields (`service`, `serviceUrn`, `method`, `path`, `deprecated`,
+`access`, `description`, `tags`, `parameters`, `requestBody`, `responses`, `security`) and adds `related` and `next`
+at the top level (`POST /file/v1/files` on `file-service`):
+
+```json
+{
+  "related": { "docs": ["services/file-service.md"] },
+  "next": {
+    "suggested_calls": [
+      {
+        "tool": "read_adsp_doc",
+        "arguments": { "path": "services/file-service.md" },
+        "why": "Read this service's documentation."
+      }
+    ]
+  }
+}
+```
+
+`find_adsp_services` adds `next` beside `results` (and in its `structuredContent`), when a need has a strong match:
+
+```json
+{
+  "results": [
+    {
+      "need": "…",
+      "ask": false,
+      "fitQuestions": [],
+      "matches": [{ "service": "file-service", "fit": "strong", "reason": "…" }]
+    }
+  ],
+  "next": {
+    "suggested_calls": [
+      {
+        "tool": "read_adsp_doc",
+        "arguments": { "path": "services/file-service.md" },
+        "why": "Read its guide."
+      },
+      {
+        "tool": "search_service_endpoints",
+        "arguments": {
+          "query": "applicants attach supporting documents to an application",
+          "service": "file-service"
+        },
+        "why": "Find its REST endpoints."
+      }
+    ]
+  }
+}
+```
+
 ## Usage
 
 Add it to your MCP client's server config, run via `npx`:
@@ -118,8 +395,8 @@ on two endpoints, with a liveness check at `GET /health` and a readiness check a
 
 | Endpoint | Sign-in | Tools |
 |---|---|---|
-| `POST /mcp` | Never asked for; a token sent here is ignored | The 10 tools that answer from bundled content. `list_service_roles` and `get_service_configuration_schema` aren't listed, and calling them answers with an error saying to sign in at `/mcp/<tenant realm>` |
-| `POST /mcp/<tenant realm>` | Required for that tenant realm (see [Signing in](#signing-in)) | All 12 |
+| `POST /mcp` | Never asked for; a token sent here is ignored | The 11 tools that answer from bundled content. `list_service_roles` and `get_service_configuration_schema` aren't listed, and calling them answers with an error saying to sign in at `/mcp/<tenant realm>` |
+| `POST /mcp/<tenant realm>` | Required for that tenant realm (see [Signing in](#signing-in)) | All 13 |
 
 Without the three sign-in settings below, the server serves only `/mcp`. There is no way to call the live tools
 without signing in: anyone who can't sign in, and needs them, runs the server locally over stdio, as in
@@ -283,7 +560,7 @@ OpenTelemetry SDK isn't loaded. Stdio mode never exports metrics.
 
 Every label takes a value from a fixed set:
 
-- `mcp.tool.name`: one of the twelve tool names, or `unknown` for any name the server doesn't have.
+- `mcp.tool.name`: one of the thirteen tool names, or `unknown` for any name the server doesn't have.
 - `mcp.method.name`: an MCP method such as `initialize`, `tools/list` or `tools/call`; `other` for any other method;
   `batch` for a JSON-RPC batch; `unparsed` when the body wasn't valid JSON-RPC or was too large.
 - `error.type` on `mcp.request.duration`: `aborted` when the client disconnected before the response was written; the

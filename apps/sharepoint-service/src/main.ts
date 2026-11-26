@@ -3,6 +3,7 @@ import * as passport from 'passport';
 import * as compression from 'compression';
 import * as cors from 'cors';
 import * as helmet from 'helmet';
+import { readFile } from 'fs/promises';
 import { AdspId, initializePlatform, instrumentAxios, ServiceMetricsValueDefinition } from '@abgov/adsp-service-sdk';
 import type { User } from '@abgov/adsp-service-sdk';
 import { createLogger, createErrorHandler, createShutdownHandler } from '@core-services/core-common';
@@ -149,6 +150,11 @@ const initializeApp = async () => {
     }),
   );
 
+  const swagger = JSON.parse(await readFile(`${__dirname}/swagger.json`, 'utf8'));
+  app.use('/swagger/docs/v1', (_req, res) => {
+    res.json(swagger);
+  });
+
   app.get('/health', async (_req, res) => {
     const platform = await healthCheck();
     res.json({ ...platform, db: isConnected() });
@@ -163,6 +169,7 @@ const initializeApp = async () => {
         self: { href: new URL(req.originalUrl, rootUrl).href },
         health: { href: new URL('/health', rootUrl).href },
         api: { href: new URL('/sharepoint/v1', rootUrl).href },
+        docs: { href: new URL('/swagger/docs/v1', rootUrl).href },
       },
     });
   });

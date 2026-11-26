@@ -31,3 +31,6 @@ export const rolesSelector = createSelector(
     );
   }
 );
+
+export const keycloakGroupsSelector = (state: RootState) => state.access.groups;
+export const keycloakGroupsFailedSelector = (state: RootState) => state.access.groupsFailed;

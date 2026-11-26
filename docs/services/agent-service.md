@@ -374,6 +374,20 @@ socket.on('stream', ({ chunk }) => {
 curl -H "Authorization: Bearer $TOKEN" "$AGENT_SERVICE_URL/agent/v1/access/guide/token-expiry"
 ```
 
+#### Form Generation agent
+
+`formGenerationAgent` builds and edits a form definition from the form editor's AI tab (with `formDefinitionId` in the message context). To keep each model call small:
+
+- Each call gets core instructions plus only the sections and tools its question needs: common components, data registers, rules, computed fields, documents or layout, picked from the question's words, the user's previous message, an attached document and the tools used in the last few messages. A greeting or thanks gets no tools.
+- The saved form is described in the instructions of every call (pages, fields with labels, types, enum values, required status, UI pointers, rules and conditional requirements), read again before each call, so the agent does not spend a tool call reading it. `formSchemaIndex` remains for detail the description leaves out.
+- Worked examples load on demand with `formExamplesTool`, as single-line JSON; the anti-patterns are a one-line checklist in the instructions. `schemaDefinitionTool` returns only the common definitions asked for.
+- Tool results from turns before the previous one are replaced with a short note in later requests (the thread keeps them), and the agent keeps its own short history without observational memory.
+
+| Variable                                  | Default | Meaning                                                                      |
+| ----------------------------------------- | ------- | ---------------------------------------------------------------------------- |
+| `AGENT_FORM_GENERATION_LAST_MESSAGES`     | `10`    | Messages of the thread the agent reads                                       |
+| `AGENT_FORM_GENERATION_MAX_OUTPUT_TOKENS` | `4000`  | Longest output, including reasoning, of one chat model call; `0` is no limit |
+
 #### Notification email template agent
 
 `notificationEmailTemplateAgent` writes and edits the email template of a notification type event from the template editor in the tenant admin app. The editor sends its state with each message as `context`:

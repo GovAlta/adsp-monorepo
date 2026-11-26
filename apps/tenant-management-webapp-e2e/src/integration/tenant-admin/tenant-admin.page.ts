@@ -89,8 +89,40 @@ class TenantAdminPage {
     return cy.xpath('//goa-callout/p/a');
   }
 
+  eventLogFiltersBtn() {
+    return cy.get('goa-button[testid="event-log-filters-toggle"]');
+  }
+
+  eventLogFiltersPane() {
+    return cy.get('goa-drawer[testid="event-log-filter-panel"]');
+  }
+
+  eventLogFiltersCloseBtn() {
+    return cy.get('goa-button[testid="event-log-filter-close"]');
+  }
+
   eventLogSearchBox() {
     return cy.get('input[name="searchBox"]');
+  }
+
+  eventLogNamespaceFilter() {
+    return cy.get('goa-dropdown[name="event-log-namespace-filter"]').shadow().find('select');
+  }
+
+  eventLogNameFilter() {
+    return cy.get('goa-dropdown[name="event-log-name-filter"]').shadow().find('select');
+  }
+
+  eventLogDateRangeFilter() {
+    return cy.get('goa-dropdown[name="event-log-date-range-filter"]').shadow().find('select');
+  }
+
+  eventLogFromFilter() {
+    return cy.get('goa-input[name="event-log-from-filter"]').shadow().find('input');
+  }
+
+  eventLogToFilter() {
+    return cy.get('goa-input[name="event-log-to-filter"]').shadow().find('input');
   }
 
   eventLogMinTimeStamp() {
@@ -102,11 +134,11 @@ class TenantAdminPage {
   }
 
   eventLogSearchBtn() {
-    return cy.get('goa-button:contains("Search")');
+    return cy.get('goa-button[testid="event-log-filter-search"]');
   }
 
   eventLogResetBtn() {
-    return cy.get('goa-button:contains("Reset")');
+    return cy.get('goa-button[testid="event-log-filter-reset"]');
   }
 
   eventTableBody() {
@@ -119,6 +151,10 @@ class TenantAdminPage {
 
   eventLoadMoreBtn() {
     return cy.get('goa-button:contains("Load more")');
+  }
+
+  eventLogNextBtn() {
+    return cy.get('goa-button[testid="event-log-pagination-next"]');
   }
 
   eventToggleDetailsIcons() {

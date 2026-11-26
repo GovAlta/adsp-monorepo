@@ -30,6 +30,17 @@ export interface FormDefinition {
   customSubmissionEvent?: CustomSubmissionEvent;
   sharepointConfigurationId?: string | null;
   reviewConfiguration?: ReviewConfiguration;
+  registration?: RegistrationConfiguration;
+}
+
+// Access request settings of a restricted form. The questions are stored as a JSON schema and UI schema.
+export interface RegistrationConfiguration {
+  enabled: boolean;
+  accessGroup?: string;
+  approverGroup?: string;
+  notificationEmail?: string;
+  dataSchema?: Record<string, unknown>;
+  uiSchema?: Record<string, unknown>;
 }
 
 export interface CustomSubmissionEvent {

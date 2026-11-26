@@ -100,6 +100,24 @@ describe('configuration', () => {
       ).not.toThrow();
     });
 
+    it('accepts an approver group and notification email', () => {
+      expect(() =>
+        validate({
+          enabled: true,
+          accessGroup: '/tec-medical-intake-access',
+          approverGroup: '/tec-medical-intake-approvers',
+          notificationEmail: 'medical.intake@gov.ab.ca',
+        }),
+      ).not.toThrow();
+    });
+
+    it.each([
+      ['an empty approver group', { approverGroup: '' }],
+      ['a notification email that is not an address', { notificationEmail: 'not an address' }],
+    ])('rejects %s', (_, settings) => {
+      expect(() => validate({ enabled: true, ...settings })).toThrow();
+    });
+
     it('requires enabled', () => {
       expect(() => validate({ accessGroup: '/group' })).toThrow();
     });
