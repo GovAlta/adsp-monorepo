@@ -379,5 +379,49 @@ class FormPage {
   definitionsFilterByTagDropdown() {
     return cy.xpath('//goa-dropdown[@name="TagFilter"]');
   }
+
+  accessRequestsTabField(testId) {
+    return cy.get(`[data-testid="form-editor-access-requests-tab-body"] [testid="${testId}"]`);
+  }
+
+  accessRequestsTabErrorItem(errorMsg) {
+    return cy.get(`[data-testid="form-editor-access-requests-tab-body"] goa-form-item[error="${errorMsg}"]`);
+  }
+
+  accessRequestsTabAddQuestionButton() {
+    return cy.get(
+      '[data-testid="form-editor-access-requests-tab-body"] goa-button[testid="access-requests-add-question"]'
+    );
+  }
+
+  accessRequestsQuestionsTable() {
+    return cy.get('[data-testid="access-requests-questions"]');
+  }
+
+  accessRequestsQuestionRow(name) {
+    return cy.get(`[data-testid="access-request-question-${name}"]`);
+  }
+
+  accessRequestsQuestionDeleteIcon(name) {
+    return cy.get(
+      `[testid="access-request-question-delete-${name}"], [data-testid="access-request-question-delete-${name}"]`
+    );
+  }
+
+  accessRequestFieldModal() {
+    return cy.get('goa-modal[testid="access-request-field-modal"]');
+  }
+
+  accessRequestFieldModalInput(testId) {
+    return cy.get(`goa-modal[testid="access-request-field-modal"] [testid="${testId}"]`);
+  }
+
+  accessRequestFieldModalButton(testId) {
+    return cy.get(`goa-modal[testid="access-request-field-modal"] goa-button[testid="${testId}"]`);
+  }
+
+  accessRequestFieldModalErrorItem(errorMsg) {
+    return cy.get(`goa-modal[testid="access-request-field-modal"] goa-form-item[error="${errorMsg}"]`);
+  }
 }
 export default FormPage;
