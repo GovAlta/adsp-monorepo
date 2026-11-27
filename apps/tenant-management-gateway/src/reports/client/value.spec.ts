@@ -174,8 +174,6 @@ describe('createValueServiceClient', () => {
     );
   });
 
-  // A token value-service refuses for want of the value-reader role was accepted and then refused,
-  // which is a 403. Reporting it as 401 told the caller to authenticate again, which never helps.
   it.each([
     [401, 401],
     [403, 403],
@@ -190,8 +188,6 @@ describe('createValueServiceClient', () => {
     });
   });
 
-  // value-service rejects a core token with 400 'Tenant context is required for operation.'; the raw
-  // axios error used to reach the error handler's catch-all and answer 500 with an empty body.
   it('reports another 4xx from value-service as a bad request carrying the upstream message', async () => {
     mockedAxios.get.mockRejectedValue({
       response: { status: 400, data: { errorMessage: 'Tenant context is required for operation.' } },
@@ -205,8 +201,6 @@ describe('createValueServiceClient', () => {
     });
   });
 
-  // Nothing the caller sends can make value-service not have the endpoint, so a 404 is a wrong base
-  // URL: a server fault, and still a 500.
   it('passes a 404 from value-service through', async () => {
     const rejection = { response: { status: 404 } };
     mockedAxios.get.mockRejectedValue(rejection);

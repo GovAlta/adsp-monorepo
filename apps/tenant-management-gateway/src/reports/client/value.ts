@@ -186,17 +186,9 @@ function isDistinctCountUnavailable(err: unknown): boolean {
 }
 
 /**
- * Value-service answers for the token the gateway forwarded and the request it built from the
- * caller's parameters, so a 4xx from it is about the caller rather than the gateway failing: the
- * upstream message is passed on instead of becoming an opaque 500.
- *
- * A 404 is the exception. Nothing the caller sends can make value-service not have the endpoint, so
- * it means the resolved base URL is wrong -- a server fault, which belongs in the 500 branch. The
- * one legitimate 404, a value-service without the distinct count endpoint, never reaches here:
- * isDistinctCountUnavailable intercepts it first.
- *
- * Other 4xx statuses are reported as 400 rather than passed through verbatim, so the reports API
- * answers only the statuses it documents.
+ * A 404 is excluded from the 4xx branch: nothing the caller sends can make value-service lack the
+ * endpoint, so it means the resolved base URL is wrong -- a server fault, which belongs in the 500
+ * branch.
  */
 function rethrowValueServiceError(err: unknown): never {
   if (axios.isAxiosError(err)) {
@@ -205,9 +197,8 @@ function rethrowValueServiceError(err: unknown): never {
       throw new UnauthorizedError('Not authorized to read report data.');
     }
     if (status === HttpStatusCodes.FORBIDDEN) {
-      // A token without the value-reader role was accepted and then refused, which is a 403, not a
-      // 401. core-common has no ForbiddenError; GoAError carries the status it responds with in
-      // extra, and that is what createErrorHandler reads.
+      // core-common has no ForbiddenError; GoAError carries the responded status in extra, which
+      // is what createErrorHandler reads.
       throw new UnauthorizedError('Not authorized to read report data.', {
         statusCode: HttpStatusCodes.FORBIDDEN,
       });
