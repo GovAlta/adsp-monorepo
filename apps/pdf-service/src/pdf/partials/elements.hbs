@@ -1,6 +1,6 @@
 {{#if (isControlAndHasScope element) }}
     <div class="vertical-flex" >
-        {{#if (isArray element data) }}
+        {{#if (isListOfObjects element data) }}
             {{#withEachDataWithItems data element.scope requiredFields element dataSchema params.dataSchema }}
                 <div class="list-item-basic">
                     {{#forEachItem params.items this params.requiredFields }}
@@ -10,7 +10,7 @@
                     {{/forEachItem}}
                 </div>
             {{/withEachDataWithItems}}
-        {{else if (isObject element data) }}
+        {{else if (isObjectValue element data) }}
             {{#withItemsObject data element.scope requiredFields element dataSchema params.dataSchema }}
             <b>{{ params.title }}</b>
             <div class="list-item-basic">

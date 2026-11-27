@@ -62,6 +62,22 @@ function isObject(value) {
   return typeof value === 'object' && value !== null;
 }
 
+const valueAtScope = (scope: string, data: object): unknown => {
+  const pathArray = scope?.replace('#/properties/', '')?.replace('properties/', '').split('/') ?? [];
+  return pathArray.reduce<unknown>(
+    (current, key) => (isObject(current) ? (current as Record<string, unknown>)[key] : undefined),
+    data,
+  );
+};
+
+// A multiple-choice answer or a multi-file field: a list of plain values rather than of objects.
+const isListOfValues = (value: unknown): value is unknown[] =>
+  Array.isArray(value) && value.length > 0 && value.every((item) => !isObject(item));
+
+const isFileReference = (value: unknown) => typeof value === 'string' && value.startsWith('urn:');
+
+const filesUploaded = (count: number) => `${count} file${count > 1 ? 's' : ''} uploaded`;
+
 const getFormFieldValue = (scope: string, data: object) => {
   if (data !== undefined) {
     const pathArray = scope?.replace('#/properties/', '')?.replace('properties/', '').split('/');
@@ -247,6 +263,17 @@ class HandlebarsTemplateService implements TemplateService {
       } else {
         return false;
       }
+    });
+
+    // Used by the elements partial so a list of plain values is shown as one answer, not item by item.
+    handlebars.registerHelper('isListOfObjects', function (element, data) {
+      const value = valueAtScope(element?.scope, data);
+      return Array.isArray(value) && !isListOfValues(value);
+    });
+
+    handlebars.registerHelper('isObjectValue', function (element, data) {
+      const value = valueAtScope(element?.scope, data);
+      return isObject(value) && !Array.isArray(value);
     });
 
     handlebars.registerHelper('grabDataArray', function (context, element, requiredFields, options) {
@@ -440,6 +467,12 @@ class HandlebarsTemplateService implements TemplateService {
     });
 
     handlebars.registerHelper('value', function (element, data) {
+      const list = valueAtScope(element.scope, data ? data : {});
+      if (isListOfValues(list)) {
+        const fileCount = list.filter(isFileReference).length;
+        return fileCount > 0 ? filesUploaded(fileCount) : list.map((item) => valueMap(item as string)).join(', ');
+      }
+
       let value = getFormFieldValue(element.scope, data ? data : {});
 
       let urnCount = 0;
@@ -454,7 +487,7 @@ class HandlebarsTemplateService implements TemplateService {
       }
 
       if (urnCount > 0) {
-        value = `${urnCount} file${urnCount > 1 ? 's' : ''} uploaded`;
+        value = filesUploaded(urnCount);
       } else {
         value = valueMap(value);
       }
@@ -467,6 +500,10 @@ class HandlebarsTemplateService implements TemplateService {
     });
 
     handlebars.registerHelper('isEmptyValue', function (element, data) {
+      if (isListOfValues(valueAtScope(element.scope, data ? data : {}))) {
+        return false;
+      }
+
       let value = getFormFieldValue(element.scope, data ? data : {});
 
       if (typeof value === 'string') {
