@@ -285,7 +285,7 @@
     "clipboardy": "^2.3.0",
     "core-js": "3.36.1",
     "css-loader": "^6.4.0",
-    "cypress": "15.21.1",
+    "cypress": "15.21.2",
     "cypress-axe": "^1.5.0",
     "eslint": "9.9.1",
     "eslint-config-prettier": "10.1.8",
