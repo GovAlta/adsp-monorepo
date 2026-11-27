@@ -99,7 +99,8 @@ export const createProcessEventJob =
       }
 
       if (emailConfigStillMissing) {
-        logger.error(
+        // Tenant configuration the platform team cannot fix, so it is not logged as an error that raises an alert.
+        logger.warn(
           // clean-code-ignore: 2.9
           `Configuration not ready: email fromEmail is not set for tenant ${tenantId} processing event ${namespace}:${name}. Proceeding without waiting further.`,
           {
