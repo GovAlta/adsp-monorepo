@@ -429,10 +429,11 @@ describe('createProcessEventJob', () => {
 
         expect(capturedErr).toBeFalsy();
         // clean-code-ignore: 2.11
-        expect(logger.error).toHaveBeenCalledWith(
+        expect(logger.warn).toHaveBeenCalledWith(
           expect.stringContaining(`Configuration not ready: email fromEmail is not set for tenant ${tenantId}`),
           expect.anything(),
         );
+        expect(logger.error).not.toHaveBeenCalled();
         expect(queueServiceMock.enqueue).not.toHaveBeenCalled();
         expect(eventServiceMock.send).toHaveBeenCalledWith(
           expect.objectContaining({
