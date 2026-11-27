@@ -52,8 +52,13 @@ const mapValue = (value: Value) => {
 
 export const readValues: RequestHandler = async (req, res, next) => {
   try {
+    const tenant = req.tenant;
     const user = req.user;
     const { namespace } = req.params;
+
+    if (!tenant && !user.isCore) {
+      throw new InvalidOperationError('Tenant context is required for operation.');
+    }
 
     const [namespaces] = await req.getConfiguration<Record<string, NamespaceEntity>>();
     const entity = namespaces?.[namespace];
@@ -67,7 +72,7 @@ export const readValues: RequestHandler = async (req, res, next) => {
 
     let results: { name: string; value: Value }[] = await Promise.all(
       names.map(async (name) => {
-        const result = entity.definitions[name] && (await entity.definitions[name].readValues(user, user.tenantId, 1));
+        const result = entity.definitions[name] && (await entity.definitions[name].readValues(user, tenant?.id, 1));
         if (!result) return null;
         return {
           name,
