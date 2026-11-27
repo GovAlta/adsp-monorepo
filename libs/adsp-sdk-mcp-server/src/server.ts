@@ -12,6 +12,7 @@ import { buildLinkIndex } from './tools/links';
 import { createApiTools, createEndpointQuery } from './tools/registerApiTools';
 import { createAppQuickstartTool } from './tools/registerAppQuickstartTool';
 import { createConfigurationSchemaTools } from './tools/registerConfigurationSchemaTool';
+import { createDiagnoseTool } from './tools/registerDiagnoseTool';
 import { isBusyResult } from './tools/liveToolLimit';
 import { createDocsTools } from './tools/registerDocsTools';
 import { createFindServicesTool } from './tools/registerFindServicesTool';
@@ -82,6 +83,7 @@ export function loadAdspMcpTools(options: CreateAdspMcpServerOptions = {}): Adsp
     ...createSdkTools(links),
     ...createQuickstartTool(),
     ...createAppQuickstartTool(),
+    ...createDiagnoseTool(apis),
     ...createServiceRolesTools(),
     ...createConfigurationSchemaTools(),
     ...createServerInfoTool(docs),

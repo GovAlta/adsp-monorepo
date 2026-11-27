@@ -50,6 +50,13 @@
       }
     },
     {
+      "name": "diagnose_adsp_error",
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false
+      }
+    },
+    {
       "name": "list_service_roles",
       "annotations": {
         "readOnlyHint": true
