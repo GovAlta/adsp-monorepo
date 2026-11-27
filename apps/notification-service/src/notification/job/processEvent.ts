@@ -142,6 +142,13 @@ export const createProcessEventJob =
               },
             );
           } catch (err) {
+            logger.error(
+              `Failed to generate notifications of type (ID: ${type.id}) for event ${namespace}:${name}.`,
+              {
+                ...LOG_CONTEXT,
+                tenant: tenantId?.toString(),
+              },
+            );
             eventService.send(notificationGenerationFailed(generationId, event, type, err.message));
           }
         }
@@ -161,6 +168,7 @@ export const createProcessEventJob =
 
       done();
     } catch (err) {
+      // The work queue logs the terminal dead-letter failure at error level.
       logger.warn(`Error encountered on processing event ${namespace}:${name}. ${err}`, {
         ...LOG_CONTEXT,
         tenant: tenantId?.toString(),

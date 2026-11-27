@@ -146,7 +146,7 @@ class NotificationServiceImpl implements NotificationService {
       }
       return deleted;
     } catch (err) {
-      this.logger.warn(`Error encountered unsubscribing for subscriber ${urn}. ${err}`, {
+      this.logger.error(`Error encountered unsubscribing for subscriber ${urn}. ${err}`, {
         ...LOG_CONTEXT,
         tenant: tenantId?.toString(),
       });
