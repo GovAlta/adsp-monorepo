@@ -150,11 +150,11 @@ export class TimescaleValuesRepository implements ValuesRepository {
       }
 
       if (criteria.value) {
-        query.whereRaw(`value @> ?::jsonb`, [`{"payload": {"targetId": "${criteria.value}"}}`]);
+        query.whereRaw(`value @> ?::jsonb`, [JSON.stringify({ payload: { targetId: criteria.value } })]);
       }
 
       if (criteria.url) {
-        query.whereRaw(`value @> ?::jsonb`, [`{"payload": {"URL": "${criteria.url}"}}`]);
+        query.whereRaw(`value @> ?::jsonb`, [JSON.stringify({ payload: { URL: criteria.url } })]);
       }
 
       if (criteria.payloadPath) {

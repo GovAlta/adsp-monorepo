@@ -28,6 +28,7 @@ import {
 } from '../types';
 import { createServiceMetricRollupJob, getTrailingCompletedDayRange } from '../jobs/serviceMetricRollup';
 import { eventResourceRollupSources } from '../serviceMetricRollupMappings';
+import { parseMetricCriteria } from './metricCriteria';
 import { parsePayloadSearchQuery, validatePayloadSearchQuery } from './payloadSearch';
 
 interface ValueRouterProps {
@@ -201,13 +202,13 @@ export function readMetrics(repository: ValuesRepository): RequestHandler {
       const { namespace, name } = req.params;
       const { interval: intervalValue, criteria: criteriaValue, top: topValue, after } = req.query;
       const interval = (intervalValue as string) || 'daily';
-      const criteriaParam = criteriaValue ? JSON.parse(criteriaValue as string) : {};
+      const { intervalMin, intervalMax, metricLike } = parseMetricCriteria(criteriaValue);
 
       const criteria: MetricCriteria = {
         interval: interval as MetricInterval,
-        intervalMax: criteriaParam.intervalMax ? new Date(criteriaParam.intervalMax) : null,
-        intervalMin: criteriaParam.intervalMin ? new Date(criteriaParam.intervalMin) : null,
-        metricLike: criteriaParam.metricLike,
+        intervalMax,
+        intervalMin,
+        metricLike,
       };
       const top = topValue ? parseInt(topValue as string) : 100;
 
@@ -235,12 +236,12 @@ export function readMetric(repository: ValuesRepository): RequestHandler {
       const { namespace, name, metric } = req.params;
       const { interval: intervalValue, criteria: criteriaValue, top: topValue, after } = req.query;
       const interval = (intervalValue as string) || 'daily';
-      const criteriaParam = criteriaValue ? JSON.parse(criteriaValue as string) : {};
+      const { intervalMin, intervalMax } = parseMetricCriteria(criteriaValue);
 
       const criteria: MetricCriteria = {
         interval: interval as MetricInterval,
-        intervalMax: criteriaParam.intervalMax ? new Date(criteriaParam.intervalMax) : null,
-        intervalMin: criteriaParam.intervalMin ? new Date(criteriaParam.intervalMin) : null,
+        intervalMax,
+        intervalMin,
       };
       const top = topValue ? parseInt(topValue as string) : 100;
 
@@ -267,13 +268,13 @@ export function readPlatformMetrics(repository: ValuesRepository): RequestHandle
       const { namespace, name } = req.params;
       const { interval: intervalValue, criteria: criteriaValue } = req.query;
       const interval = (intervalValue as string) || 'daily';
-      const criteriaParam = criteriaValue ? JSON.parse(criteriaValue as string) : {};
+      const { intervalMin, intervalMax, metricLike } = parseMetricCriteria(criteriaValue);
 
       const criteria: MetricCriteria = {
         interval: interval as MetricInterval,
-        intervalMax: criteriaParam.intervalMax ? new Date(criteriaParam.intervalMax) : null,
-        intervalMin: criteriaParam.intervalMin ? new Date(criteriaParam.intervalMin) : null,
-        metricLike: criteriaParam.metricLike,
+        intervalMax,
+        intervalMin,
+        metricLike,
       };
 
       // Platform metrics reveal data across every tenant, so this is restricted to core users with
@@ -640,7 +641,7 @@ export const createValueRouter = ({
       ...checkSchema(
         {
           top: { optional: true, isInt: { options: { min: 1, max: 5000 } } },
-          after: { optional: true, isString: true },
+          after: { optional: true, isString: true, custom: { options: (value) => !isNaN(decodeAfter(value)) } },
           order: { optional: true, isIn: { options: [['asc', 'desc']] } },
           correlationId: { optional: true, isString: true },
           context: { optional: true, isJSON: true },

@@ -212,6 +212,13 @@ describe('value router documented behaviour', () => {
       expect(res.status).toBe(400);
     });
 
+    // A cursor that does not decode to a number reached the database as an offset of NaN.
+    it('responds 400 for an after cursor that is not an encoded offset', async () => {
+      const res = await request(createApp(reader)).get('/value/v1/test-service/values/test-value?after=not-a-cursor');
+      expect(res.status).toBe(400);
+      expect(repositoryMock.readValues).not.toHaveBeenCalled();
+    });
+
     it('responds 400 for a value name longer than 50 characters', async () => {
       const res = await request(createApp(reader)).get(`/value/v1/test-service/values/${'a'.repeat(51)}`);
       expect(res.status).toBe(400);
@@ -452,6 +459,15 @@ describe('value router documented behaviour', () => {
     });
   });
 
+  // criteria is parsed from a query string, so neither the JSON itself nor the interval bounds inside it
+  // are checked by the route schema.
+  const invalidCriteria: [string, string][] = [
+    ['criteria that is not JSON', 'not-json'],
+    ['criteria that is not a JSON object', '"a string"'],
+    ['an intervalMin that is not a date', '{"intervalMin":"yesterday"}'],
+    ['an intervalMax that is not a date', '{"intervalMax":"yesterday"}'],
+  ];
+
   describe('GET /:namespace/values/:name/metrics', () => {
     it('defaults interval to daily and top to 100', async () => {
       const res = await request(createApp(reader)).get('/value/v1/test-service/values/test-value/metrics');
@@ -479,6 +495,14 @@ describe('value router documented behaviour', () => {
     it('responds 400 without a tenant context', async () => {
       const res = await request(createApp(reader, false)).get('/value/v1/test-service/values/test-value/metrics');
       expect(res.status).toBe(400);
+    });
+
+    it.each(invalidCriteria)('responds 400 for %s', async (_description, criteria) => {
+      const res = await request(createApp(reader)).get(
+        `/value/v1/test-service/values/test-value/metrics?criteria=${encodeURIComponent(criteria)}`,
+      );
+      expect(res.status).toBe(400);
+      expect(repositoryMock.readMetrics).not.toHaveBeenCalled();
     });
   });
 
@@ -512,6 +536,14 @@ describe('value router documented behaviour', () => {
     it('responds 400 without a tenant context', async () => {
       const res = await request(createApp(reader, false)).get('/value/v1/test-service/values/test-value/metrics/count');
       expect(res.status).toBe(400);
+    });
+
+    it.each(invalidCriteria)('responds 400 for %s', async (_description, criteria) => {
+      const res = await request(createApp(reader)).get(
+        `/value/v1/test-service/values/test-value/metrics/count?criteria=${encodeURIComponent(criteria)}`,
+      );
+      expect(res.status).toBe(400);
+      expect(repositoryMock.readMetric).not.toHaveBeenCalled();
     });
   });
 
@@ -547,6 +579,15 @@ describe('value router documented behaviour', () => {
         '/value/v1/test-service/values/test-value/platform-metrics',
       );
       expect(res.status).toBe(403);
+    });
+
+    it.each(invalidCriteria)('responds 400 for %s', async (_description, criteria) => {
+      const coreUser = user([ServiceUserRoles.PlatformMetricsReader], { isCore: true, tenantId: undefined });
+      const res = await request(createApp(coreUser, false)).get(
+        `/value/v1/test-service/values/test-value/platform-metrics?criteria=${encodeURIComponent(criteria)}`,
+      );
+      expect(res.status).toBe(400);
+      expect(repositoryMock.readPlatformMetrics).not.toHaveBeenCalled();
     });
   });
 
@@ -638,6 +679,18 @@ describe('value router documented behaviour', () => {
         .post('/value/v1/test-service/values/test-value')
         .send({ value: 1, context: 'not-an-object' });
       expect(res.status).toBe(400);
+    });
+
+    it.each([
+      ['a number', 123],
+      ['a urn with more segments than a resource', 'urn:ads:platform:tenant-service:v2:/tenants/test:extra'],
+    ])('responds 400 for a tenantId that is %s', async (_description, tenantId) => {
+      const coreWriter = user([ServiceUserRoles.Writer], { isCore: true, tenantId: undefined });
+      const res = await request(createApp(coreWriter, false))
+        .post('/value/v1/test-service/values/test-value')
+        .send({ value: 1, tenantId });
+      expect(res.status).toBe(400);
+      expect(repositoryMock.writeValues).not.toHaveBeenCalled();
     });
   });
 
