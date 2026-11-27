@@ -560,6 +560,11 @@ export class KeycloakRealmServiceImpl implements RealmService {
 
       return true;
     } catch (err) {
+      // A tenant whose provisioning stopped before the realm was created has no realm to delete.
+      if (err?.response?.status === 404) {
+        this.logger.info(`Keycloak realm ${realm} doesn't exist; nothing to delete.`);
+        return true;
+      }
       const errMessage = `Failed deleting the keycloak realm with error: ${err.message}`;
       this.logger.error(errMessage);
       return false;

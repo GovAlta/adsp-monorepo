@@ -10,6 +10,7 @@ import { logger } from '../../middleware/logger';
 import { adspId, AuditService, EventService, UnauthorizedUserError, User } from '@abgov/adsp-service-sdk';
 import { TenantRepository } from '../repository';
 import { TenantEntity } from '../models';
+import { ProvisioningTracker } from '../provisioning';
 import { TenantCriteria } from '../types';
 import { NotFoundError } from '@core-services/core-common';
 import { mapTenant } from './mappers';
@@ -86,6 +87,7 @@ interface TenantRouterProps {
   tenantRepository: TenantRepository;
   realmService: RealmService;
   auditService: AuditService;
+  provisioning?: ProvisioningTracker;
 }
 
 const rateLimitHandler = rateLimit({
@@ -133,6 +135,7 @@ export const createTenantRouter = ({
   eventService,
   realmService,
   auditService,
+  provisioning,
 }: TenantRouterProps): Router => {
   const tenantRouter = Router();
 
@@ -278,7 +281,7 @@ export const createTenantRouter = ({
   tenantRouter.post(
     '/',
     [requireBetaTesterOrAdmin, validationMiddleware(CreateTenantDto)],
-    createTenant(logger, tenantRepository, realmService, eventService, auditService),
+    createTenant(logger, tenantRepository, realmService, eventService, auditService, provisioning),
   );
   tenantRouter.get('/:id', [validationMiddleware(GetTenantDto)], getTenant);
   tenantRouter.delete('/', [requireTenantServiceAdmin, validationMiddleware(DeleteTenantDto)], deleteTenant);

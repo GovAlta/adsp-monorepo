@@ -21,7 +21,7 @@ interface TenantPurgeJobProps {
 }
 
 // The job has no request user, so the tenant service account is the actor of the purge.
-function toSystemUser(serviceId: AdspId): User {
+export function toSystemUser(serviceId: AdspId): User {
   return {
     id: serviceId.toString(),
     name: `service-account-${serviceId.service}`,

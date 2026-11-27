@@ -205,6 +205,23 @@ describe('Mongo: Tenant', () => {
       expect(results.map((result) => result.name)).toContain('Legacy');
     });
 
+    it('can find provisioning tenants created before a date', async () => {
+      const { insertedId } = await connection.collection('tenants').insertOne({
+        name: 'Stuck provisioning',
+        realm: 'realm-s',
+        adminEmail: 's@example.ca',
+        status: 'provisioning',
+        createdAt: new Date('2026-01-01'),
+      });
+
+      const results = await repo.find({ statusEquals: 'provisioning', createdBefore: new Date('2026-06-01') });
+      await repo.delete(`${insertedId}`);
+
+      // The block's own 'Provisioning' tenant was created just now, so only the old one is found.
+      expect(results.map((result) => result.name)).toContain('Stuck provisioning');
+      expect(results.map((result) => result.name)).not.toContain('Provisioning');
+    });
+
     it('can find archived tenants deleted before a date', async () => {
       const results = await repo.find({ statusEquals: 'archived', deletedBefore: new Date('2026-06-01') });
       expect(names(results)).toEqual(['Archived']);

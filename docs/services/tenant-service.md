@@ -79,7 +79,7 @@ These `/api/tenant/v1` endpoints are not deprecated. They are internal endpoints
 
 A tenant represents a team or program area using ADSP. Its ID is a URN, for example `urn:ads:platform:tenant-service:v2:/tenants/61f2e3a8c9b1d2e3f4a5b6c7`; endpoints that take `{id}` use only the last segment. Other platform services store this ID on their records to isolate tenant data. Each tenant has a unique name (compared ignoring case), an administrator email, and a status:
 
-- `provisioning`: the tenant was created and its realm is still being set up. `POST /api/tenant/v2/tenants` responds `202` with this status. If provisioning fails, the tenant is removed.
+- `provisioning`: the tenant was created and its realm is still being set up. `POST /api/tenant/v2/tenants` responds `202` with this status. If provisioning fails, the tenant is removed. If it stops part way, for example because the service restarted, a recovery job removes the tenant and any partly created realm once it has been `provisioning` for 30 minutes, so the name can be used again.
 - `active`: the tenant and its realm are ready.
 - `archived`: the tenant was deleted with `DELETE /api/tenant/v2/tenants/{id}`. Its realm is disabled and it is excluded from searches (unless `status=archived` is requested). The tenant is retained until an archived tenant is purged with `DELETE /api/tenant/v2/tenants/{id}?purge=true`, or it can be restored.
 

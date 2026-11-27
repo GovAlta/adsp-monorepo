@@ -25,6 +25,7 @@ import { Tenant, TenantEntity } from '../models';
 import { TenantRepository } from '../repository';
 import { TenantServiceRoles } from '../roles';
 import { RealmService } from '../services/realm';
+import { ProvisioningTracker } from '../provisioning';
 import { ServiceClient, TenantCriteria } from '../types';
 import { mapTenant } from './mappers';
 import { normalizeTenantName, validateEmailInDB, validateName } from './utils';
@@ -36,6 +37,7 @@ interface TenantRouterProps {
   realmService: RealmService;
   eventService: EventService;
   auditService: AuditService;
+  provisioning?: ProvisioningTracker;
 }
 
 const LOG_CONTEXT = { context: 'TenantRouter' };
@@ -389,6 +391,7 @@ export function createTenant(
   realmService: RealmService,
   eventService: EventService,
   auditService: AuditService,
+  provisioning = new ProvisioningTracker(),
 ): RequestHandler {
   return async (req, res, next) => {
     try {
@@ -446,9 +449,11 @@ export function createTenant(
 
         res.status(202).send(tenant);
 
-        provisionRealm(entity, clients || [], realmService, eventService, auditService, user, logger).catch((err) => {
-          logger.error(`Unhandled error during tenant provisioning: ${err.message}`, LOG_CONTEXT);
-        });
+        provisioning
+          .track(provisionRealm(entity, clients || [], realmService, eventService, auditService, user, logger))
+          .catch((err) => {
+            logger.error(`Unhandled error during tenant provisioning: ${err.message}`, LOG_CONTEXT);
+          });
       }
     } catch (err) {
       logger.error(`Error creating new tenant ${err.message}`, LOG_CONTEXT);
@@ -463,6 +468,7 @@ export const createTenantV2Router = ({
   tenantRepository,
   eventService,
   auditService,
+  provisioning,
 }: TenantRouterProps): Router => {
   const router: Router = Router();
 
@@ -520,7 +526,7 @@ export const createTenantV2Router = ({
         ['body'],
       ),
     ),
-    createTenant(logger, tenantRepository, realmService, eventService, auditService),
+    createTenant(logger, tenantRepository, realmService, eventService, auditService, provisioning),
   );
 
   router.get('/tenants/:id', assertAuthenticatedHandler, getTenant(logger, tenantRepository));

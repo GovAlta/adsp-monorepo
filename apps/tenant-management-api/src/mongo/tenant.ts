@@ -108,6 +108,10 @@ export class MongoTenantRepository implements TenantRepository {
         query.status = { $ne: 'archived' };
       }
 
+      if (criteria.createdBefore) {
+        query.createdAt = { $lt: criteria.createdBefore };
+      }
+
       if (criteria.deletedBefore) {
         query.deletedAt = { $lt: criteria.deletedBefore };
       }

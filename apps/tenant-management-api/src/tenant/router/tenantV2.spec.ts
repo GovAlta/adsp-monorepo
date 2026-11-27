@@ -5,6 +5,7 @@ import { Logger } from 'winston';
 import { Tenant, TenantEntity } from '../models';
 import { TenantServiceRoles } from '../roles';
 import { RealmService } from '../services/realm';
+import { ProvisioningTracker } from '../provisioning';
 import {
   createTenant,
   createTenantV2Router,
@@ -907,6 +908,48 @@ describe('createTenantV2Router', () => {
           status: 'provisioning',
         }),
       );
+    });
+
+    it('can track provisioning until the realm is created, so shutdown can wait for it', async () => {
+      const req = {
+        body: {
+          name: tenant.name,
+        },
+        user: { isCore: true, roles: [TenantServiceRoles.BetaTester], email: 'beta-tester@test.co' },
+        getConfiguration: jest.fn(),
+      };
+      const res = {
+        send: jest.fn(),
+        status: jest.fn().mockReturnThis(),
+      };
+      const next = jest.fn();
+      const provisioning = new ProvisioningTracker();
+      const handler = createTenant(
+        loggerMock,
+        repositoryMock,
+        realmServiceMock,
+        eventServiceMock,
+        auditServiceMock,
+        provisioning,
+      );
+
+      repositoryMock.find.mockResolvedValueOnce([]);
+      repositoryMock.find.mockResolvedValueOnce([]);
+      req.getConfiguration.mockResolvedValueOnce([[], []]);
+      repositoryMock.save.mockResolvedValueOnce(
+        new TenantEntity(repositoryMock, { ...tenant, status: 'provisioning' }),
+      );
+      let finishRealm: () => void;
+      realmServiceMock.createRealm.mockReturnValueOnce(new Promise<void>((resolve) => (finishRealm = resolve)));
+      repositoryMock.save.mockResolvedValueOnce(new TenantEntity(repositoryMock, { ...tenant, status: 'active' }));
+
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(res.status).toHaveBeenCalledWith(202);
+      expect(provisioning.count).toBe(1);
+
+      finishRealm();
+      await expect(provisioning.drain(1000)).resolves.toBe(true);
+      expect(provisioning.count).toBe(0);
     });
 
     it('can provision tenant realm and mark active', async () => {
