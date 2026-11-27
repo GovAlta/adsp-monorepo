@@ -1,6 +1,6 @@
 import { fireEvent, render } from '@testing-library/react';
 import { Provider } from 'react-redux';
-import { MemoryRouter } from 'react-router-dom-v7';
+import { MemoryRouter } from 'react-router-dom';
 import configureStore from 'redux-mock-store';
 import { FormsDefinitions } from './FormDefinitions';
 import { loadDefinitions } from '../state';

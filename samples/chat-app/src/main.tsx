@@ -16,7 +16,7 @@ import {
   UserState,
   USER_FOUND,
 } from 'redux-oidc';
-import { BrowserRouter as Router, Route, Routes, useNavigate } from 'react-router-dom-v7';
+import { BrowserRouter as Router, Route, Routes, useNavigate } from 'react-router-dom';
 
 import { createUserManager } from './access';
 import { ConfigState, CONFIG_FEATURE_KEY, getConfiguration, configReducer } from './app/config.slice';

@@ -1,7 +1,7 @@
 import '@abgov/web-components/index.css';
 import '@abgov/design-tokens/dist/tokens.css';
 import '@abgov/adsp-components-core/adsp-components.css';
-import { Route, Routes } from 'react-router-dom-v7';
+import { Route, Routes } from 'react-router-dom';
 import styles from './app.module.scss';
 import { Landing } from './components/Landing';
 
@@ -13,7 +13,7 @@ import { useInitializeFeedbackScript } from './hooks/useInitializeFeedbackScript
 import Services from './components/Services';
 import { useSelector } from 'react-redux';
 import { environmentSelector } from './state';
-import { AuthCallbackV2 as AuthCallback } from '@core-services/app-common';
+import { AuthCallback } from '@core-services/app-common';
 
 declare global {
   interface Window {
