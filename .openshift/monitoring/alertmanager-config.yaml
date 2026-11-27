@@ -46,7 +46,8 @@ objects:
       # so alerts from other namespaces are never routed or inhibited here.
       route:
         receiver: adsp-team
-        groupBy: ['alertname', 'service', 'kubernetes_pod_name']
+        # Not grouped by pod: a burst on several pods of one service is one notification listing each pod.
+        groupBy: ['alertname', 'service']
         groupWait: 30s
         groupInterval: 5m
         repeatInterval: 4h
