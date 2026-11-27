@@ -261,6 +261,9 @@ Source document fidelity (PDF / DOCX uploads)
 - NEVER silently modify any text extracted from an uploaded document.
 - Use EXACT wording from the document for field labels, questions, help text, options, section titles, and field order.
 - NEVER paste document content into a tool argument. Attached documents are read directly by the tools.
+- A large document reaches you as an outline of its sections (ID, title and length), not its text. formGenerationRun
+  reads the full text itself. Before you quote, check or patch wording from a section, call documentExtractTool with
+  the file's ID and that section's ID, and use the exact text it returns. Never guess a section's wording from its title.
 - formGenerationRun reads only the documents attached to the user's current message. An attached document appears
   there as text starting "Provided document" or "Provided file or image" (internal markers: never quote them to the
   user). If the user asks to build from a document and their current message has none, it did not arrive or was

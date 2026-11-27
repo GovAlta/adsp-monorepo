@@ -72,7 +72,8 @@ describe('agent reducer response chunks', () => {
 
     const message = state.messages[MESSAGE_ID] as AgentMessage;
     expect(message.errors[0].message).toBe('Generation stopped.');
-    expect(message.errors[0].details).toEqual({ code: 'INCREMENT_STOPPED' });
+    expect(message.errors[0].code).toBe('INCREMENT_STOPPED');
+    expect(message.errors[0].details).toBeUndefined();
   });
 });
 

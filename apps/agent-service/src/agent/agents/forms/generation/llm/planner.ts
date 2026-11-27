@@ -44,7 +44,8 @@ export async function planFormGeneration({
 
   const result = await agents.planner.generate(prompt, {
     ...generationCallOptions(abortSignal, 'planner'),
-    structuredOutput: { schema: generationPlanSchema },
+    // As in the step builder: some models stall on a strict JSON schema response format.
+    structuredOutput: { schema: generationPlanSchema, jsonPromptInjection: 'system' },
   });
   recordGenerateUsage(usage, result);
   const { object } = result;

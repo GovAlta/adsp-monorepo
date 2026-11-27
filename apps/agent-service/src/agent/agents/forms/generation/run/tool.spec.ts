@@ -3,8 +3,10 @@ jest.mock('../llm/agents', () => ({ createGenerationAgents: jest.fn(() => ({})) 
 jest.mock('./orchestrator', () => ({ runFormGeneration: jest.fn() }));
 jest.mock('./progress', () => ({ createProgressEmitter: jest.fn(() => jest.fn()) }));
 
+import { APICallError } from '@ai-sdk/provider';
 import type { ServiceDirectory, TokenProvider } from '@abgov/adsp-service-sdk';
 import type { Logger } from 'winston';
+import { MODEL_UNAVAILABLE_MESSAGE } from '../../../../model/streamAbort';
 import { runFormGeneration } from './orchestrator';
 import { createFormGenerationTools } from './tool';
 
@@ -94,5 +96,28 @@ describe('formGenerationRun', () => {
     const summary = await summaryFor(builtRun);
 
     expect(summary).toBe('Saved 2 of 2 planned steps.\n- Every planned step was built and the form validates.');
+  });
+
+  it("gives the chat agent plain words, not the endpoint's message, when a planner call fails", async () => {
+    // Arrange
+    (runFormGeneration as jest.Mock).mockRejectedValue(
+      new APICallError({
+        message: 'Upstream error for customer Jane Doe',
+        url: 'https://maas.test/v1/chat/completions',
+        requestBodyValues: {},
+        statusCode: 502,
+      }),
+    );
+    const { formGenerationRun } = await createFormGenerationTools({
+      directory,
+      tokenProvider: {} as TokenProvider,
+      logger: { warn: jest.fn() } as unknown as Logger,
+    });
+
+    // Act
+    const run = (formGenerationRun as unknown as ExecutableTool).execute({ requirement: 'Build it.' }, context);
+
+    // Assert
+    await expect(run).rejects.toThrow(MODEL_UNAVAILABLE_MESSAGE);
   });
 });

@@ -355,6 +355,34 @@ socket.on('stream', ({ chunk }) => {
 });
 ```
 
+#### Model endpoint
+
+Every agent calls one OpenAI-compatible endpoint, `MODEL_URL`, with the key `MODEL_API_KEY`. `MODEL` is the model for agents that don't set `model.id` in their configuration. On the Government of Alberta network the endpoint is MaaS (`https://maas.int.gov.ab.ca/v1`). MaaS certificates are signed by the GoA Root CA, so the pod trusts it through `NODE_EXTRA_CA_CERTS=/etc/certs/goa-root.pem`, mounted from the optional `agent-service-ca` secret (key `certificate`).
+
+Models differ in what they can do, so each limit is a comma-separated list of model IDs:
+
+| Variable                   | Default | Meaning                                                                                                                                                              |
+| -------------------------- | ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `MODELS_WITHOUT_STREAMING` | `''`    | Models called without streaming. The whole reply is then sent to the client as a stream, in one block, so a model that garbles streamed tool calls can still be used |
+| `MODELS_WITHOUT_IMAGES`    | `''`    | Models that can't read images. Each attached image is replaced with a note, so the model says it couldn't see it instead of guessing                                 |
+| `MODELS_WITHOUT_TOOLS`     | `''`    | Models that can't call tools. An agent with tools, sub-agents or a workspace configured with one uses `MODEL` instead, and a warning is logged                       |
+| `MODEL_CONNECTION_RETRIES` | `2`     | Retries, with a growing delay, of a model call whose connection fails or that gets a 502 or 503 before any reply. A rate limit (429) is not retried                  |
+
+For example, on MaaS:
+
+```bash
+MODEL_URL=https://maas.int.gov.ab.ca/v1
+MODEL=qwen3-coder/Qwen/Qwen3-Coder-Next
+MODELS_WITHOUT_STREAMING=GOA-Default,gemma4/google/gemma-4-31b-it
+MODELS_WITHOUT_IMAGES=qwen3-coder/Qwen/Qwen3-Coder-Next,gpt-oss-120b/openai/gpt-oss-120b
+MODELS_WITHOUT_TOOLS=gpt-oss-120b/openai/gpt-oss-120b
+AGENT_FORM_GENERATION_MODEL=gemma4/google/gemma-4-31b-it
+```
+
+The form generation agent runs on Gemma there: Qwen sends the edit lists of `formSchemaPatch` as text rather than arrays, so the tool rejects its form edits.
+
+The endpoint's own error messages are never sent to the client, because they can name the key's owner. A failed model call ends the reply with an error chunk with code `MODEL_ERROR` and a plain message: the service isn't responding (no answer, a refused key, or a server error), or it couldn't answer this message (400, 413 or 422, such as a conversation too long for the model). A MaaS token limit is sent as `RATE_LIMITED` with the key's window, such as "Please try again within 5 minutes."
+
 #### Access Service agent
 
 `AccessServiceAgent` answers Access Service and Keycloak questions with read-only live tools and documented guidance. To keep each model call small:
@@ -382,6 +410,7 @@ curl -H "Authorization: Bearer $TOKEN" "$AGENT_SERVICE_URL/agent/v1/access/guide
 - The saved form is described in the instructions of every call (pages, fields with labels, types, enum values, required status, UI pointers, rules and conditional requirements), read again before each call, so the agent does not spend a tool call reading it. `formSchemaIndex` remains for detail the description leaves out.
 - Worked examples load on demand with `formExamplesTool`, as single-line JSON; the anti-patterns are a one-line checklist in the instructions. `schemaDefinitionTool` returns only the common definitions asked for.
 - Tool results from turns before the previous one are replaced with a short note in later requests (the thread keeps them), and the agent keeps its own short history without observational memory.
+- A large document (8,000 characters or 4 pages and up) reaches the agent as an outline of its sections: each section's ID, title and length. `formGenerationRun` reads the section text itself, and the agent reads one section with `documentExtractTool` and its `sectionId` when it needs the exact wording. The text stays in the message, so the prompt injection check still reads it once, when it is attached.
 
 | Variable                                  | Default | Meaning                                                                      |
 | ----------------------------------------- | ------- | ---------------------------------------------------------------------------- |

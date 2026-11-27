@@ -65,6 +65,8 @@ export interface Reasoning {
 export interface AgentError {
   type: 'error' | 'tripwire';
   message: string;
+  /** Set by agent-service for errors the user can act on, such as RATE_LIMITED when the AI service is busy. */
+  code?: string;
   details?: unknown;
 }
 

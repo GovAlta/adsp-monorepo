@@ -8,6 +8,7 @@ import { AdspRequestContext } from '../types';
 import { documentCacheKey, getCachedDocumentExtract } from '../utils/documentCache';
 import { extractDocumentText, isExtractableDocument } from '../utils/documentParser';
 import { DOCUMENT_EXTRACT_CHAR_CAP, truncateText } from '../utils/documentSize';
+import { buildDocumentOutline, findOutlineSection } from '../utils/documentOutline';
 
 interface DocumentToolsProps {
   directory: ServiceDirectory;
@@ -32,6 +33,13 @@ export async function createDocumentTools({ directory, tokenProvider, logger }: 
         .describe(
           'UUID of the file. For file URN (urn:ads:platform:file-service:v1:/files/<id>), extract and pass only the UUID.',
         ),
+      sectionId: z
+        .string()
+        .optional()
+        .describe(
+          "ID of one section in a large document's outline, such as category-2. Returns only that section's text, " +
+            'including sections past the point where the whole text is cut off.',
+        ),
     }),
     outputSchema: z.object({
       text: z.string().describe('Extracted text content of the document.'),
@@ -43,7 +51,7 @@ export async function createDocumentTools({ directory, tokenProvider, logger }: 
     execute: async (inputData, context: ToolExecutionContext) => {
       const requestContext = context.requestContext as AdspRequestContext;
       const tenantId = requestContext.get('tenantId');
-      const { fileId } = inputData;
+      const { fileId, sectionId } = inputData;
 
       const { data, metadata } = await fileServiceClient.getFileAndMetadata(
         tenantId,
@@ -72,7 +80,10 @@ export async function createDocumentTools({ directory, tokenProvider, logger }: 
           const extracted = await extractDocumentText(data, metadata.mimeType, metadata.filename, logger);
           return extracted ?? { text: '' };
         });
-        const capped = truncateText(result.text ?? '', DOCUMENT_EXTRACT_CHAR_CAP);
+        const text = sectionId
+          ? readSection(buildDocumentOutline(result, metadata.filename, metadata.urn), sectionId)
+          : (result.text ?? '');
+        const capped = truncateText(text, DOCUMENT_EXTRACT_CHAR_CAP);
         return {
           text: capped.text,
           filename: metadata.filename,
@@ -95,4 +106,13 @@ export async function createDocumentTools({ directory, tokenProvider, logger }: 
   });
 
   return { documentExtractTool };
+}
+
+function readSection(outline: ReturnType<typeof buildDocumentOutline>, sectionId: string): string {
+  const section = findOutlineSection(outline, sectionId);
+  if (section) {
+    return `### ${section.sectionId}: ${section.title}\n${section.text}`;
+  }
+  const known = outline.sections.map((candidate) => candidate.sectionId).join(', ');
+  return `'${outline.filename}' has no section '${sectionId}'. Its sections are: ${known}.`;
 }
