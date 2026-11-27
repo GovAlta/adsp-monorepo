@@ -9,7 +9,7 @@ export const MAX_CONTACTS_LENGTH = 255;
 export const MIN_USER_SEARCH_LENGTH = 3;
 
 export const CLIENT_EXPIRY_NOTE =
-  'Saving any change to a client (including editing contacts) starts the expiry clock for an opted-in client that has no expiry yet. Rotation itself only happens when you rotate or when the secret has expired.';
+  'Saving any change to a client (including editing contacts) starts the expiry clock for a client with secret expiry enabled that has no expiry yet. Secrets are not rotated on a schedule: rotate them yourself, or Keycloak rotates one only when the secret has expired.';
 // Contacts listed on a client row before the rest collapse into a count.
 export const VISIBLE_CONTACTS = 2;
 export const USER_SEARCH_DELAY_MS = 300;

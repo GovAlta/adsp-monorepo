@@ -78,7 +78,7 @@ describe('ClientSecretsTab', () => {
     expect(goaElement('schedule-expirationPeriod').getAttribute('value')).toBe('7776000');
     expect(goaElement('schedule-rotatedExpirationPeriod').getAttribute('value')).toBe('604800');
     expect(goaElement('schedule-noticePeriod').getAttribute('value')).toBe('5184000');
-    expect(goaElement('rotation-state').getAttribute('content')).toBe('Rotation on');
+    expect(goaElement('rotation-state').getAttribute('content')).toBe('Expiry on');
   });
 
   it('changes the realm mode only after saving and confirming', async () => {
@@ -289,7 +289,7 @@ describe('ClientSecretsTab', () => {
 
   it('hides the rotation schedule while rotation is off', async () => {
     render(<ClientSecretsTab api={createApi([client()], { mode: 'off' })} />);
-    await waitFor(() => expect(goaElement('rotation-state').getAttribute('content')).toBe('Rotation off'));
+    await waitFor(() => expect(goaElement('rotation-state').getAttribute('content')).toBe('Expiry off'));
     expect(screen.queryByTestId('rotation-windows')).toBeNull();
   });
 
