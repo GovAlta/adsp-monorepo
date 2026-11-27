@@ -453,10 +453,12 @@ components:
       - Value
     description: >
       Reads the latest record of each value definition in a namespace. Requires the value-reader role. Only values
-      with a tenant or core value definition are returned. Acts on the tenant of the caller's token; core users
-      reading a tenant's values should read each value with GET /value/v1/{namespace}/values/{name} and tenantId.
+      with a tenant or core value definition are returned. Acts on the tenant of the caller's token; core users act
+      on the tenant of the tenantId parameter, or on all tenants when it is not set. Responds 400 for a tenant user
+      without a tenant context.
     parameters:
       - $ref: '#/components/parameters/ValueNamespaceParam'
+      - $ref: '#/components/parameters/ValueTenantId'
       - name: names
         in: query
         description: Comma-separated names of the values to read. Defaults to every value defined in the namespace.

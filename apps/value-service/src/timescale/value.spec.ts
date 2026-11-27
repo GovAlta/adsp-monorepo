@@ -631,8 +631,30 @@ describe('TimescaleValuesRepository readValues', () => {
     } as any);
 
     expect(whereRaws[0]).toEqual(['context @> ?::jsonb', [JSON.stringify({ namespace: 'x' })]]);
-    expect(whereRaws[1]).toEqual(['value @> ?::jsonb', ['{"payload": {"targetId": "target-1"}}']]);
-    expect(whereRaws[2]).toEqual(['value @> ?::jsonb', ['{"payload": {"URL": "https://example.test"}}']]);
+    expect(whereRaws[1][0]).toBe('value @> ?::jsonb');
+    expect(JSON.parse(whereRaws[1][1][0] as string)).toEqual({ payload: { targetId: 'target-1' } });
+    expect(whereRaws[2][0]).toBe('value @> ?::jsonb');
+    expect(JSON.parse(whereRaws[2][1][0] as string)).toEqual({ payload: { URL: 'https://example.test' } });
+  });
+
+  // A quote in the filter closed the JSON string literal early, so the parameter reached the database
+  // as malformed JSON -- or as extra containment conditions the caller never asked for.
+  it('escapes a quote in the value filter', async () => {
+    const { knex, whereRaws } = createKnex({ tableRows: { values: [row] } });
+
+    await new TimescaleValuesRepository(knex).readValues(10, undefined, { value: 'he said "hi"' } as any);
+
+    expect(JSON.parse(whereRaws[0][1][0] as string)).toEqual({ payload: { targetId: 'he said "hi"' } });
+  });
+
+  it('escapes a quote in the url filter', async () => {
+    const { knex, whereRaws } = createKnex({ tableRows: { values: [row] } });
+
+    await new TimescaleValuesRepository(knex).readValues(10, undefined, {
+      url: 'https://example.test/a"b',
+    } as any);
+
+    expect(JSON.parse(whereRaws[0][1][0] as string)).toEqual({ payload: { URL: 'https://example.test/a"b' } });
   });
 
   it('matches a nested payload path and scalar value through jsonb containment', async () => {

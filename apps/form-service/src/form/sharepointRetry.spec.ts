@@ -89,6 +89,7 @@ describe('SharePointPushRetryService', () => {
       const result = await service.push(aForm(), aSubmission());
 
       expect(result).toEqual(failure('graph:serviceNotAvailable', true));
+      expect(logger.error).not.toHaveBeenCalled();
       expect(repository.reschedule).toHaveBeenCalledWith(
         expect.any(String),
         new Date(now.getTime() + 60 * 1000),
@@ -120,6 +121,8 @@ describe('SharePointPushRetryService', () => {
           },
         }),
       );
+      expect(logger.error).toHaveBeenCalledTimes(1);
+      expect(logger.warn).not.toHaveBeenCalled();
     });
 
     it('stores the PDF file ID with a PDF push and passes it on', async () => {
@@ -157,7 +160,8 @@ describe('SharePointPushRetryService', () => {
 
       expect(client.push).toHaveBeenCalledTimes(1);
       expect(repository.reschedule).not.toHaveBeenCalled();
-      expect(logger.warn).toHaveBeenCalled();
+      expect(logger.error).toHaveBeenCalledTimes(1);
+      expect(logger.warn).not.toHaveBeenCalled();
     });
 
     it('does not throw when recording the outcome fails', async () => {
@@ -215,6 +219,8 @@ describe('SharePointPushRetryService', () => {
           payload: expect.objectContaining({ errorCode: 'entra:AADSTS7000222', attempts: 3 }),
         }),
       );
+      expect(logger.error).toHaveBeenCalledTimes(1);
+      expect(logger.warn).not.toHaveBeenCalled();
     });
 
     it('stops retrying and sends the event when a retry fails in a way that cannot pass', async () => {

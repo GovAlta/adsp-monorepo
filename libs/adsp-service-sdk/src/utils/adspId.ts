@@ -26,7 +26,7 @@ export class AdspId {
 
   static parse(urn: string): AdspId {
     // urn:ads:{namespace}:{service}:{apiVersion}:{resource}
-    if (!urn?.startsWith(PREFIX)) {
+    if (typeof urn !== 'string' || !urn.startsWith(PREFIX)) {
       throw new AdspIdFormatError(`ADSP ID (${urn}) must begin with: ${PREFIX}`);
     }
 
@@ -46,7 +46,7 @@ export class AdspId {
     } else if (elements.length === 4) {
       type = 'resource';
     } else {
-      throw new Error(`Value is not a valid ADSP ID: ${urn}`);
+      throw new AdspIdFormatError(`Value is not a valid ADSP ID: ${urn}`);
     }
 
     return new AdspId(type, elements[0], elements[1], elements[2], elements[3]);
