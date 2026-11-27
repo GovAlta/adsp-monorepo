@@ -380,12 +380,24 @@ const AgentReasoning = styled(({ className, reasoning }: AgentReasoningProps) =>
   text-align: left;
 `;
 
+/** Errors about the shared AI service rather than the request: they read as a notice, with no technical details. */
+const SERVICE_ERROR_LABELS: Record<string, string> = {
+  RATE_LIMITED: 'AI service busy',
+  MODEL_ERROR: 'AI service unavailable',
+};
+
 const AgentErrorBase: FunctionComponent<AgentErrorProps> = ({ className, error }) => {
-  const label = error.type === 'tripwire' ? 'Request Blocked' : 'Error';
+  const serviceLabel = error.code ? SERVICE_ERROR_LABELS[error.code] : undefined;
+  const label = serviceLabel ?? (error.type === 'tripwire' ? 'Request Blocked' : 'Error');
   return (
-    <div className={className}>
+    <div
+      className={className}
+      data-kind={serviceLabel ? 'service' : 'error'}
+      data-testid="agent-error"
+      role={serviceLabel ? 'status' : undefined}
+    >
       <strong>{label}:</strong> {error.message}
-      {error.details && <pre>{JSON.stringify(error.details, null, 2)}</pre>}
+      {!serviceLabel && error.details && <pre>{JSON.stringify(error.details, null, 2)}</pre>}
     </div>
   );
 };
@@ -403,6 +415,15 @@ const AgentError = memo(styled(AgentErrorBase)`
 
   & strong {
     color: var(--goa-color-emergency-default);
+  }
+
+  &[data-kind='service'] {
+    background-color: var(--goa-color-warning-light);
+    border-left-color: var(--goa-color-warning-default);
+
+    & strong {
+      color: var(--goa-color-text-default);
+    }
   }
 
   & pre {
