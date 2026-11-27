@@ -16,6 +16,7 @@ import { clearThreadWorkspace, createWorkspaceResolver, type AgentWorkspaceConfi
 import { createFileServiceClient } from '../clients';
 import { scheduleAgentJobs } from '../jobs';
 import { AgentModelConfiguration, getAgentModelConfiguration, getAgentModelId } from '../model/modelConfiguration';
+import { getModelLimits, getToolAgentModelId } from '../model/modelLimits';
 import {
   ACCESS_SERVICE_AGENT_ID,
   FORM_GENERATION_AGENT_ID,
@@ -116,6 +117,16 @@ export interface AgentConfiguration {
 }
 export type AgentConfigurations = Record<string, AgentConfiguration>;
 
+/** Tools include sub-agents, MCP tools and the workspace's file tools, as well as configured tools. */
+function agentUsesTools(configuration: AgentConfiguration, externalTools: Record<string, unknown>): boolean {
+  return Boolean(
+    configuration.tools?.length ||
+      configuration.agents?.length ||
+      configuration.workspace?.enabled ||
+      Object.keys(externalTools).length,
+  );
+}
+
 export class AgentServiceConfiguration {
   private mastra!: Mastra;
   private brokers: Record<string, AgentBroker> = {};
@@ -199,7 +210,12 @@ export class AgentServiceConfiguration {
             (agents, [key, configuration]) => {
               const externalTools = mcpToolsByAgent[key] || {};
               const availableToolMap = availableTools as Record<string, unknown>;
-              const modelId = getAgentModelId(key, configuration.model);
+              const modelId = this.toolCapableModelId(
+                tenantId,
+                key,
+                getAgentModelId(key, configuration.model),
+                agentUsesTools(configuration, externalTools),
+              );
               const supervisorOptions: Partial<AgentExecutionOptions<undefined>> =
                 key === ACCESS_SERVICE_AGENT_ID
                   ? createAccessServiceSupervisorOptions(this.logger, tenantId?.toString())
@@ -495,5 +511,26 @@ export class AgentServiceConfiguration {
           });
         });
     }
+  }
+
+  private toolCapableModelId(tenantId: AdspId, agentId: string, modelId: string, usesTools: boolean): string {
+    const toolModelId = usesTools ? getToolAgentModelId(modelId) : modelId;
+    if (toolModelId === modelId) {
+      return modelId;
+    }
+
+    const logContext = { context: 'AgentServiceConfiguration', tenant: tenantId?.toString() };
+    if (getModelLimits(toolModelId).tools) {
+      this.logger.warn(
+        `Agent '${agentId}' has tools but model '${modelId}' cannot call them, so it uses '${toolModelId}' instead.`,
+        logContext,
+      );
+    } else {
+      this.logger.error(
+        `Agent '${agentId}' has tools, but neither its model '${modelId}' nor MODEL '${toolModelId}' can call them. Remove MODEL from MODELS_WITHOUT_TOOLS.`,
+        logContext,
+      );
+    }
+    return toolModelId;
   }
 }

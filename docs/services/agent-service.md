@@ -355,6 +355,31 @@ socket.on('stream', ({ chunk }) => {
 });
 ```
 
+#### Model endpoint
+
+Every agent calls one OpenAI-compatible endpoint, `MODEL_URL`, with the key `MODEL_API_KEY`. `MODEL` is the model for agents that don't set `model.id` in their configuration. On the Government of Alberta network the endpoint is MaaS (`https://maas.int.gov.ab.ca/v1`). MaaS certificates are signed by the GoA Root CA, so the pod trusts it through `NODE_EXTRA_CA_CERTS=/etc/certs/goa-root.pem`, mounted from the optional `agent-service-ca` secret (key `certificate`).
+
+Models differ in what they can do, so each limit is a comma-separated list of model IDs:
+
+| Variable                   | Default | Meaning                                                                                                                                                              |
+| -------------------------- | ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `MODELS_WITHOUT_STREAMING` | `''`    | Models called without streaming. The whole reply is then sent to the client as a stream, in one block, so a model that garbles streamed tool calls can still be used |
+| `MODELS_WITHOUT_IMAGES`    | `''`    | Models that can't read images. Each attached image is replaced with a note, so the model says it couldn't see it instead of guessing                                 |
+| `MODELS_WITHOUT_TOOLS`     | `''`    | Models that can't call tools. An agent with tools, sub-agents or a workspace configured with one uses `MODEL` instead, and a warning is logged                       |
+| `MODEL_CONNECTION_RETRIES` | `2`     | Retries, with a growing delay, of a model call whose connection fails or that gets a 502 or 503 before any reply. A rate limit (429) is not retried                  |
+
+For example, on MaaS:
+
+```bash
+MODEL_URL=https://maas.int.gov.ab.ca/v1
+MODEL=qwen3-coder/Qwen/Qwen3-Coder-Next
+MODELS_WITHOUT_STREAMING=GOA-Default,gemma4/google/gemma-4-31b-it
+MODELS_WITHOUT_IMAGES=qwen3-coder/Qwen/Qwen3-Coder-Next,gpt-oss-120b/openai/gpt-oss-120b
+MODELS_WITHOUT_TOOLS=gpt-oss-120b/openai/gpt-oss-120b
+```
+
+The endpoint's own error messages are never sent to the client, because they can name the key's owner. A failed model call ends the reply with an error chunk with code `MODEL_ERROR` and a plain message: the service isn't responding (no answer, a refused key, or a server error), or it couldn't answer this message (400, 413 or 422, such as a conversation too long for the model). A MaaS token limit is sent as `RATE_LIMITED` with the key's window, such as "Please try again within 5 minutes."
+
 #### Access Service agent
 
 `AccessServiceAgent` answers Access Service and Keycloak questions with read-only live tools and documented guidance. To keep each model call small:

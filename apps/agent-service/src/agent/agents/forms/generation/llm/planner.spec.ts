@@ -44,6 +44,13 @@ describe('planFormGeneration', () => {
     expect(prompt).toContain('A section marked (untitled) has no title of its own');
   });
 
+  it('describes the plan schema in the prompt, since some models stall on a strict JSON schema', async () => {
+    await plan();
+
+    const [, options] = generate.mock.calls[0];
+    expect(options.structuredOutput).toEqual({ schema: generationPlanSchema, jsonPromptInjection: 'system' });
+  });
+
   it('tells the planner to name every question in exactly one step', async () => {
     await plan();
 

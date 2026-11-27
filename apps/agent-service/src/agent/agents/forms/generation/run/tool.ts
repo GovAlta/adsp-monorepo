@@ -9,6 +9,7 @@ import { createProgressEmitter } from './progress';
 import { readSourceDocuments } from './sourceDocuments';
 import { AdspRequestContext } from '../../../../types';
 import { getUsageRecorder } from '../../../../model/conversationUsage';
+import { describeModelFailure } from '../../../../model/streamAbort';
 
 interface FormGenerationToolsProps {
   directory: ServiceDirectory;
@@ -85,6 +86,20 @@ for a targeted edit to content that already exists.`,
         emit: createProgressEmitter(context.writer),
         abortSignal: context.abortSignal,
         usage: getUsageRecorder(requestContext),
+      }).catch((err) => {
+        // The chat agent passes a tool's error on to the user, so a failed planner call gives it plain words.
+        const message = describeModelFailure(err);
+        if (!message) {
+          throw err;
+        }
+        logger.warn(
+          `Form generation stopped because a model call failed: ${err instanceof Error ? err.message : err}`,
+          {
+            context: 'FormGenerationRun',
+            tenant: tenantId,
+          },
+        );
+        throw new Error(message);
       });
 
       return { ...result, summary: summarize(result) };

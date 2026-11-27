@@ -16,6 +16,14 @@ export const environment = envalid.cleanEnv(
     MODEL: envalid.str({ default: 'github-models/openai/gpt-4.1' }),
     MODEL_URL: envalid.str(),
     MODEL_API_KEY: envalid.str(),
+    // Comma-separated model IDs on MODEL_URL to call without streaming; their whole reply is then sent as a stream.
+    MODELS_WITHOUT_STREAMING: envalid.str({ default: '' }),
+    // Comma-separated model IDs on MODEL_URL that cannot read images; images are replaced with a note saying so.
+    MODELS_WITHOUT_IMAGES: envalid.str({ default: '' }),
+    // Comma-separated model IDs on MODEL_URL that cannot call tools; agents with tools, sub-agents or a workspace use MODEL.
+    MODELS_WITHOUT_TOOLS: envalid.str({ default: '' }),
+    // Retries of a model call whose connection fails or that gets a 502 or 503 before any reply.
+    MODEL_CONNECTION_RETRIES: envalid.num({ default: 2 }),
     DB_HOST: envalid.str({ default: '' }),
     DB_PORT: envalid.num({ default: 5432 }),
     DB_NAME: envalid.str({ default: 'postgres' }),

@@ -27,6 +27,16 @@ describe('createInputProcessors', () => {
     );
   });
 
+  it('describes the detection schema in the prompt, since some models stall on a strict JSON schema', () => {
+    const requestContext = new RequestContext<Record<string, unknown>>();
+
+    createInputProcessors({ logger, requestContext });
+
+    expect(PromptInjectionDetector).toHaveBeenCalledWith(
+      expect.objectContaining({ structuredOutputOptions: { jsonPromptInjection: true } }),
+    );
+  });
+
   it('returns the prompt injection detector', () => {
     const requestContext = new RequestContext<Record<string, unknown>>();
 
