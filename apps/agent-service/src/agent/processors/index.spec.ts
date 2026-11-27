@@ -46,7 +46,7 @@ describe('createInputProcessors', () => {
     expect(processors[0]).toBeInstanceOf(PromptInjectionDetector);
   });
 
-  it('trims earlier tool results for the form generation agent before the injection check', () => {
+  it('trims earlier tool results and large document text for the form generation agent before the injection check', () => {
     // Arrange
     const requestContext = new RequestContext<Record<string, unknown>>();
     requestContext.set('agentId', 'formGenerationAgent');
@@ -55,8 +55,12 @@ describe('createInputProcessors', () => {
     const processors = createInputProcessors({ logger, requestContext });
 
     // Assert
-    expect(processors).toHaveLength(2);
-    expect(processors[0]).toMatchObject({ id: 'form-generation-history' });
+    expect(processors.map((processor) => processor.id)).toEqual([
+      'form-generation-history',
+      'form-document-outline',
+      undefined,
+    ]);
+    expect(processors[2]).toBeInstanceOf(PromptInjectionDetector);
   });
 
   it('shortens earlier template proposals for the notification template agent', () => {

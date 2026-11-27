@@ -407,6 +407,7 @@ curl -H "Authorization: Bearer $TOKEN" "$AGENT_SERVICE_URL/agent/v1/access/guide
 - The saved form is described in the instructions of every call (pages, fields with labels, types, enum values, required status, UI pointers, rules and conditional requirements), read again before each call, so the agent does not spend a tool call reading it. `formSchemaIndex` remains for detail the description leaves out.
 - Worked examples load on demand with `formExamplesTool`, as single-line JSON; the anti-patterns are a one-line checklist in the instructions. `schemaDefinitionTool` returns only the common definitions asked for.
 - Tool results from turns before the previous one are replaced with a short note in later requests (the thread keeps them), and the agent keeps its own short history without observational memory.
+- A large document (8,000 characters or 4 pages and up) reaches the agent as an outline of its sections: each section's ID, title and length. `formGenerationRun` reads the section text itself, and the agent reads one section with `documentExtractTool` and its `sectionId` when it needs the exact wording. The text stays in the message, so the prompt injection check still reads it once, when it is attached.
 
 | Variable                                  | Default | Meaning                                                                      |
 | ----------------------------------------- | ------- | ---------------------------------------------------------------------------- |

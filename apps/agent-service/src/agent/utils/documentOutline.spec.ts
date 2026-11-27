@@ -1,4 +1,9 @@
-import { buildDocumentOutline, formatDocumentOutline } from './documentOutline';
+import {
+  buildDocumentOutline,
+  findOutlineSection,
+  formatDocumentOutline,
+  withoutDocumentSectionText,
+} from './documentOutline';
 
 describe('buildDocumentOutline', () => {
   it('uses page-chunk section ids for PDF pages', () => {
@@ -89,17 +94,52 @@ describe('buildDocumentOutline', () => {
 });
 
 describe('formatDocumentOutline', () => {
-  it('formats large document metadata without tool directives', () => {
-    const text = formatDocumentOutline({
-      filename: 'survey.pdf',
-      urn: 'urn:ads:platform:file-service:v1:/files/abc',
-      pageCount: 6,
-      charCount: 9000,
-      sections: [{ sectionId: 'page-1', title: 'Page 1', text: 'Intro' }],
-    });
+  const outline = {
+    filename: 'survey.pdf',
+    urn: 'urn:ads:platform:file-service:v1:/files/abc',
+    pageCount: 6,
+    charCount: 9000,
+    sections: [
+      { sectionId: 'page-1', title: 'Page 1', text: 'Intro' },
+      { sectionId: 'category-2', title: 'Your team', text: 'Team name (required)' },
+    ],
+  };
 
-    expect(text).toContain('Extracted page/section outline follows');
-    expect(text).not.toContain('documentExtractTool');
+  it('formats large document metadata without tool directives', () => {
+    const text = formatDocumentOutline(outline);
+
+    expect(text).toContain("Provided document 'survey.pdf'");
     expect(text).toContain('pageCount: 6');
+    expect(text).not.toContain('documentExtractTool');
+  });
+
+  it('lists each section ahead of the section text, with any note about the file', () => {
+    const text = formatDocumentOutline(outline, '\nThe file is stored in file type x.');
+
+    const outlinePart = withoutDocumentSectionText(text);
+    expect(outlinePart).toContain('- category-2: Your team (20 characters)');
+    expect(outlinePart).toContain('The file is stored in file type x.');
+    expect(outlinePart).not.toContain('Team name (required)');
+    expect(text).toContain('### category-2: Your team\nTeam name (required)');
+  });
+});
+
+describe('withoutDocumentSectionText', () => {
+  it('keeps text that has no section text as it is', () => {
+    expect(withoutDocumentSectionText('Build a renewal form.')).toBe('Build a renewal form.');
+  });
+});
+
+describe('findOutlineSection', () => {
+  it('finds a section by its ID, ignoring case and spaces', () => {
+    const outline = {
+      filename: 'survey.docx',
+      urn: 'urn:ads:platform:file-service:v1:/files/abc',
+      charCount: 10,
+      sections: [{ sectionId: 'category-1', title: 'About your team', text: 'Team name' }],
+    };
+
+    expect(findOutlineSection(outline, ' Category-1 ')?.title).toBe('About your team');
+    expect(findOutlineSection(outline, 'category-9')).toBeUndefined();
   });
 });

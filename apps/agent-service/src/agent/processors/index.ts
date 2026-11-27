@@ -11,6 +11,7 @@ import {
   PDF_GENERATION_AGENT_ID,
 } from '../model/executionLimits';
 import { createAccessHistoryProcessor, createToolResultHistoryProcessor } from './accessHistory';
+import { createFormDocumentProcessor } from './formDocument';
 import { createNotificationHistoryProcessor } from './notificationHistory';
 import { createPdfHistoryProcessor } from './pdfHistory';
 import { BrokerInputProcessor } from '../types';
@@ -28,7 +29,10 @@ export function createInputProcessors({ requestContext }: InputProcessorProps): 
   if (agentId === ACCESS_SERVICE_AGENT_ID) {
     processors.push(createAccessHistoryProcessor());
   } else if (agentId === FORM_GENERATION_AGENT_ID) {
-    processors.push(createToolResultHistoryProcessor('form-generation-history', 'Form generation history'));
+    processors.push(
+      createToolResultHistoryProcessor('form-generation-history', 'Form generation history'),
+      createFormDocumentProcessor(),
+    );
   } else if (agentId === NOTIFICATION_TEMPLATE_AGENT_ID) {
     processors.push(createNotificationHistoryProcessor());
   } else if (agentId === PDF_GENERATION_AGENT_ID) {
