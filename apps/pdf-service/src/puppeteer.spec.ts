@@ -144,6 +144,8 @@ describe('puppeteer', () => {
           headerTemplate: template.header,
           footerTemplate: template.footer,
           displayHeaderFooter: true,
+          // CS-5913: template @page margins must apply.
+          preferCSSPageSize: true,
         })
       );
       expect(pageMock.close).toHaveBeenCalled();
