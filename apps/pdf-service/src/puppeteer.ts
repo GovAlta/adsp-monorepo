@@ -137,6 +137,10 @@ class PuppeteerPdfService implements PdfService {
       const pdfOptions: puppeteer.PDFOptions = {
         printBackground: true,
         omitBackground: true,
+        // Honour @page rules (margins in particular). Chrome 152, from the puppeteer 25 upgrade
+        // (CS-5344), otherwise ignores template @page margins and applies its default page margin,
+        // which misaligns body content with the header (CS-5913).
+        preferCSSPageSize: true,
       };
 
       if (header || footer) {
