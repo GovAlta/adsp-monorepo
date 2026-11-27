@@ -67,6 +67,7 @@ describe('KeycloakRealmService', () => {
 
   beforeEach(() => {
     axiosMock.get.mockReset();
+    (loggerMock.error as jest.Mock).mockReset();
 
     // Create
     keycloakClientMock.realms.findOne.mockReset();
@@ -122,6 +123,7 @@ describe('KeycloakRealmService', () => {
       expect(keycloakClientMock.clients.del).toHaveBeenCalledWith(
         expect.objectContaining({ realm: 'core', id: 'broker-123' }),
       );
+      expect(loggerMock.error).not.toHaveBeenCalled();
     });
 
     it('can succeed for no realm', async () => {
@@ -140,6 +142,8 @@ describe('KeycloakRealmService', () => {
       expect(keycloakClientMock.clients.del).toHaveBeenCalledWith(
         expect.objectContaining({ realm: 'core', id: 'broker-123' }),
       );
+      expect(loggerMock.error).toHaveBeenCalledWith(expect.stringContaining('Failed deleting the keycloak realm'));
+      expect(loggerMock.error).toHaveBeenCalledTimes(1);
     });
 
     it('can handle broker client delete error', async () => {
@@ -154,6 +158,8 @@ describe('KeycloakRealmService', () => {
       expect(keycloakClientMock.clients.del).toHaveBeenCalledWith(
         expect.objectContaining({ realm: 'core', id: 'broker-123' }),
       );
+      expect(loggerMock.error).toHaveBeenCalledWith(expect.stringContaining('Failed deleting the IdP client'));
+      expect(loggerMock.error).toHaveBeenCalledTimes(1);
     });
 
     it('can handle broker client not found', async () => {
@@ -165,6 +171,7 @@ describe('KeycloakRealmService', () => {
       expect(keycloakClientMock.realms.del).toHaveBeenCalledWith(expect.objectContaining({ realm: tenant.realm }));
       expect(keycloakClientMock.clients.find).toHaveBeenCalledWith(expect.objectContaining({ realm: 'core' }));
       expect(keycloakClientMock.clients.del).not.toHaveBeenCalled();
+      expect(loggerMock.error).not.toHaveBeenCalled();
     });
   });
 

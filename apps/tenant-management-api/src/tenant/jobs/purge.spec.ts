@@ -77,6 +77,8 @@ describe('createTenantPurgeJob', () => {
         payload: expect.objectContaining({ deletedBy: expect.objectContaining({ id: serviceId.toString() }) }),
       }),
     );
+    expect(logger.warn).not.toHaveBeenCalled();
+    expect(logger.error).not.toHaveBeenCalled();
   });
 
   it('can continue purging when a tenant fails', async () => {
@@ -90,6 +92,8 @@ describe('createTenantPurgeJob', () => {
     expect(repository.delete).toHaveBeenCalledWith('b');
     expect(eventService.send).toHaveBeenCalledTimes(1);
     expect(logger.error).toHaveBeenCalledWith(expect.stringContaining('tenant-a'), expect.anything());
+    expect(logger.error).toHaveBeenCalledTimes(1);
+    expect(logger.warn).not.toHaveBeenCalled();
   });
 
   it('does not signal tenant-deleted when the record is not deleted', async () => {
@@ -100,7 +104,8 @@ describe('createTenantPurgeJob', () => {
     await createJob()();
 
     expect(eventService.send).not.toHaveBeenCalled();
-    expect(logger.warn).toHaveBeenCalled();
+    expect(logger.warn).toHaveBeenCalledTimes(1);
+    expect(logger.error).not.toHaveBeenCalled();
   });
 
   it('does not remove any tenant when none have expired', async () => {
@@ -142,6 +147,8 @@ describe('createTenantPurgeJob', () => {
     await createJob()();
 
     expect(logger.info).toHaveBeenCalledWith('Purged 0 of 1 tenant(s).', expect.anything());
+    expect(logger.warn).toHaveBeenCalledTimes(1);
+    expect(logger.error).not.toHaveBeenCalled();
   });
 
   it('can propagate an error when finding expired tenants fails', async () => {
