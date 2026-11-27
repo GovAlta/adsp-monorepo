@@ -22,6 +22,8 @@ export interface UserState {
   user: {
     id: string;
     name: string;
+    firstName?: string;
+    lastName?: string;
     email: string;
     roles: string[];
   };
@@ -124,6 +126,8 @@ export const initializeUser = createAsyncThunk(
       return {
         id: client.tokenParsed.sub,
         name: client.tokenParsed['name'],
+        firstName: client.tokenParsed['given_name'],
+        lastName: client.tokenParsed['family_name'],
         email: client.tokenParsed['email'],
         roles: Object.entries(client.tokenParsed.resource_access || {}).reduce(
           (roles, [client, clientAccess]) => [
