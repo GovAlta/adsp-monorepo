@@ -22,7 +22,7 @@ include = ["pii_service/resources/swagger.yml"]
   include = "pii_service"
 
   [tool.poetry.dependencies]
-  python = ">=3.10,<3.12"
+  python = ">=3.11,<3.12"
   presidio-analyzer = "^2.2.353"
   adsp-service-flask-sdk = {path = "../../libs/adsp-service-flask-sdk"}
   flask = "^3.1.3"
