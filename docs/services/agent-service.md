@@ -376,7 +376,10 @@ MODEL=qwen3-coder/Qwen/Qwen3-Coder-Next
 MODELS_WITHOUT_STREAMING=GOA-Default,gemma4/google/gemma-4-31b-it
 MODELS_WITHOUT_IMAGES=qwen3-coder/Qwen/Qwen3-Coder-Next,gpt-oss-120b/openai/gpt-oss-120b
 MODELS_WITHOUT_TOOLS=gpt-oss-120b/openai/gpt-oss-120b
+AGENT_FORM_GENERATION_MODEL=gemma4/google/gemma-4-31b-it
 ```
+
+The form generation agent runs on Gemma there: Qwen sends the edit lists of `formSchemaPatch` as text rather than arrays, so the tool rejects its form edits.
 
 The endpoint's own error messages are never sent to the client, because they can name the key's owner. A failed model call ends the reply with an error chunk with code `MODEL_ERROR` and a plain message: the service isn't responding (no answer, a refused key, or a server error), or it couldn't answer this message (400, 413 or 422, such as a conversation too long for the model). A MaaS token limit is sent as `RATE_LIMITED` with the key's window, such as "Please try again within 5 minutes."
 
