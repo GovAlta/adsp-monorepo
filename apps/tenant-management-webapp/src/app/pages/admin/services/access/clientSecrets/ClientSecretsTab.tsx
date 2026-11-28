@@ -40,7 +40,13 @@ import {
 } from './clientSecretsApi';
 import { createClientSecretsApi } from './clientSecretsHttpApi';
 import { ContactsModal } from './ContactsModal';
-import { CLIENT_EXPIRY_NOTE, ROTATION_POLICY_NAME, ROTATION_PROFILE_NAME, VISIBLE_CONTACTS } from './constants';
+import {
+  CLIENT_EXPIRY_NOTE,
+  DISPLAY_TIME_ZONE,
+  ROTATION_POLICY_NAME,
+  ROTATION_PROFILE_NAME,
+  VISIBLE_CONTACTS,
+} from './constants';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const DAY_SECONDS = 24 * 60 * 60;
@@ -118,7 +124,8 @@ interface Confirmation {
   success?: string;
   /** Skip reloading when the action changes nothing the page shows, such as sending a notification. */
   skipReload?: boolean;
-  run: () => Promise<void>;
+  /** A client result replaces that client in the list instead of reloading everything. */
+  run: () => Promise<ClientSecretClient | void>;
 }
 
 export function daysRemaining(expiresAt: string | undefined, now = Date.now()): number | undefined {
@@ -138,7 +145,11 @@ export function describeSchedule({
   );
 }
 
-const LONG_DATE = new Intl.DateTimeFormat('en-US', { dateStyle: 'full', timeStyle: 'long' });
+const LONG_DATE = new Intl.DateTimeFormat('en-US', {
+  dateStyle: 'full',
+  timeStyle: 'long',
+  timeZone: DISPLAY_TIME_ZONE,
+});
 
 /** Like Keycloak's credentials tab: "Tuesday, February 23, 2027 at 1:41:01 PM CST". */
 export function formatLongDate(value: string): string {
@@ -255,7 +266,7 @@ const ClientSecretsView: FunctionComponent<{ api: ClientSecretsApi; keycloakClie
   }, [reload]);
 
   const act = async (
-    action: () => Promise<void>,
+    action: () => Promise<ClientSecretClient | void>,
     failure: string,
     successMessage?: string,
     section: Section = 'clients',
@@ -263,10 +274,12 @@ const ClientSecretsView: FunctionComponent<{ api: ClientSecretsApi; keycloakClie
   ) => {
     setWorking(true);
     try {
-      await action();
-      // The save is done. Hide its overlay before the clients reload shows its own loader.
+      const updated = await action();
+      // The save is done. Hide its overlay before any reload shows its own loader.
       setWorking(false);
-      if (!skipReload) {
+      if (updated) {
+        setClients((current) => current?.map((client) => (client.id === updated.id ? updated : client)) ?? current);
+      } else if (!skipReload) {
         await reload();
       }
       if (successMessage) {

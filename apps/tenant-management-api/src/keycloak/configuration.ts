@@ -193,6 +193,22 @@ export const createAdspMcpPublicClientConfig = (id: string): ClientRepresentatio
 
 export const ADSP_CLI_CI_CLIENT_ID = 'adsp-cli-ci';
 
+export const MASTER_REALM = 'master';
+
+/**
+ * Roles on a tenant realm's `<realm>-realm` client in master that the client secret rotation notice job reads with. A
+ * `<prefix><realm>` optional client scope in master holds exactly these, so the job's token for one realm carries
+ * them and nothing else: no user, identity provider or realm-settings access. It reads the realm's policy and clients
+ * and records the "notice sent" markers on them.
+ */
+export const ROTATION_NOTICE_JOB_REALM_ROLES = ['view-realm', 'view-clients', 'query-clients', 'manage-clients'];
+
+export const createRotationNoticeClientScopeConfig = (name: string) => ({
+  name,
+  protocol: 'openid-connect',
+  attributes: { 'include.in.token.scope': 'false', 'display.on.consent.screen': 'false' },
+});
+
 /**
  * Roles granted to the adsp-cli-ci service account. agent-user is intentionally omitted:
  * agent-service is for interactive (human-in-the-loop) use and has no value in a non-interactive

@@ -54,6 +54,15 @@ export const environment = envalid.cleanEnv(
     }),
     TENANT_PURGE_ENABLED: envalid.bool({ default: false }),
     TENANT_PURGE_SCHEDULE: envalid.str({ default: '0 2 * * *' }),
+    // Runs on one replica only. The service account holds only the rotation roles in the tenant realms.
+    CLIENT_SECRET_ROTATION_NOTICE_JOB_ENABLED: envalid.bool({ default: false }),
+    CLIENT_SECRET_ROTATION_NOTICE_JOB_SCHEDULE: envalid.str({ default: '0 15 * * *' }),
+    CLIENT_SECRET_ROTATION_NOTICE_JOB_CLIENT_ID: envalid.str({ default: 'tenant-client-secret-rotation-notifier' }),
+    CLIENT_SECRET_ROTATION_NOTICE_JOB_CLIENT_SECRET: envalid.str({ default: '' }),
+    CLIENT_SECRET_ROTATION_NOTICE_JOB_SCOPE_PREFIX: envalid.str({ default: 'rotation-notice-' }),
+    // Small master client (manage-clients and view-clients on master-realm) that only creates the notice scope of a new realm.
+    CLIENT_SECRET_ROTATION_SCOPE_ADMIN_CLIENT_ID: envalid.str({ default: '' }),
+    CLIENT_SECRET_ROTATION_SCOPE_ADMIN_CLIENT_SECRET: envalid.str({ default: '' }),
   },
   {
     reporter: ({ errors }) => {

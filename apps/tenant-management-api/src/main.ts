@@ -36,6 +36,9 @@ import {
   applyRotationMiddleware,
   ClientSecretRotationRoles,
   createRotationKeycloakFactory,
+  createRealmSettingsStore,
+  createRotationServiceAccountFactory,
+  scheduleClientSecretNotifyJob,
 } from './rotation';
 
 async function initializeApp(): Promise<express.Application> {
@@ -128,7 +131,16 @@ async function initializeApp(): Promise<express.Application> {
   app.use(passport.initialize());
   app.use(traceHandler);
 
-  const realmService = createKeycloakRealmService({ logger, KEYCLOAK_ROOT_URL: environment.KEYCLOAK_ROOT_URL });
+  const realmService = createKeycloakRealmService({
+    logger,
+    KEYCLOAK_ROOT_URL: environment.KEYCLOAK_ROOT_URL,
+    noticeJob: {
+      clientId: environment.CLIENT_SECRET_ROTATION_NOTICE_JOB_CLIENT_ID,
+      scopePrefix: environment.CLIENT_SECRET_ROTATION_NOTICE_JOB_SCOPE_PREFIX,
+      scopeAdminClientId: environment.CLIENT_SECRET_ROTATION_SCOPE_ADMIN_CLIENT_ID,
+      scopeAdminClientSecret: environment.CLIENT_SECRET_ROTATION_SCOPE_ADMIN_CLIENT_SECRET,
+    },
+  });
   applyTenantMiddleware(app, {
     ...repositories,
     logger,
@@ -138,6 +150,11 @@ async function initializeApp(): Promise<express.Application> {
     configurationHandler,
   });
 
+  const rotationLinks = {
+    portalUrl: new URL(ACCESS_PAGE_PATH, environment.TENANT_WEB_APP_HOST).href,
+    runbookUrl: environment.CLIENT_SECRET_ROTATION_RUNBOOK_URL || undefined,
+    keycloakUrl: `${environment.KEYCLOAK_ROOT_URL}/auth`,
+  };
   const createKeycloak = await createRotationKeycloakFactory(environment.KEYCLOAK_ROOT_URL);
   applyRotationMiddleware(app, {
     logger,
@@ -149,12 +166,26 @@ async function initializeApp(): Promise<express.Application> {
     createKeycloak,
     // Rotation windows use the platform defaults; tenants set their own schedule per realm.
     getConfiguration: async () => resolveConfiguration(undefined),
-    links: {
-      portalUrl: new URL(ACCESS_PAGE_PATH, environment.TENANT_WEB_APP_HOST).href,
-      runbookUrl: environment.CLIENT_SECRET_ROTATION_RUNBOOK_URL || undefined,
-      keycloakUrl: `${environment.KEYCLOAK_ROOT_URL}/auth`,
-    },
+    links: rotationLinks,
   });
+
+  if (environment.CLIENT_SECRET_ROTATION_NOTICE_JOB_ENABLED) {
+    scheduleClientSecretNotifyJob({
+      logger,
+      tenantRepository: repositories.tenantRepository,
+      createKeycloak: await createRotationServiceAccountFactory(
+        environment.KEYCLOAK_ROOT_URL,
+        environment.CLIENT_SECRET_ROTATION_NOTICE_JOB_CLIENT_ID,
+        environment.CLIENT_SECRET_ROTATION_NOTICE_JOB_CLIENT_SECRET,
+        environment.CLIENT_SECRET_ROTATION_NOTICE_JOB_SCOPE_PREFIX,
+      ),
+      settingsStore: createRealmSettingsStore(directory, tokenProvider, serviceId),
+      eventService,
+      getConfiguration: async () => resolveConfiguration(undefined),
+      links: rotationLinks,
+      cron: environment.CLIENT_SECRET_ROTATION_NOTICE_JOB_SCHEDULE,
+    });
+  }
 
   if (environment.TENANT_PURGE_ENABLED) {
     scheduleTenantPurgeJob({

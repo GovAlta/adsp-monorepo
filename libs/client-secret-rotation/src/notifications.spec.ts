@@ -13,13 +13,16 @@ describe('ClientSecretRotationNotificationType', () => {
       'client-secret-revoked',
       'client-secret-rotation-enabled',
       'client-secret-rotation-disabled',
+      'client-secret-rotation-digest',
     ]);
     const defined = ClientSecretRotationEvents.map((event) => event.name);
     names.forEach((name) => expect(defined).toContain(name));
-    ClientSecretRotationNotificationType.events.forEach((event) => {
-      expect(event.templates.email.subject).toBeTruthy();
-      expect(event.templates.email.body).toContain('event.payload.keycloakUrl');
-    });
+    ClientSecretRotationNotificationType.events
+      .filter((event) => event.name !== 'client-secret-rotation-digest')
+      .forEach((event) => {
+        expect(event.templates.email.subject).toBeTruthy();
+        expect(event.templates.email.body).toContain('event.payload.keycloakUrl');
+      });
   });
 
   describe('rendering', () => {
@@ -48,7 +51,7 @@ describe('ClientSecretRotationNotificationType', () => {
       const timestamp = 'February 24, 2027 \\d{1,2}:25 [ap]\\.?m\\.? M[DS]T';
       const due = render('client-secret-rotation-due');
       expect(due.subject).toMatch(new RegExp(timestamp));
-      expect(due.body).toContain('in 90 days');
+      expect(due.body).toContain('in 90 day(s)');
       expect(due.body).toContain('href="https://kc.test/clients/1/credentials"');
 
       expect(render('client-secret-rotated').body).toContain('December 3, 2026');
@@ -57,6 +60,33 @@ describe('ClientSecretRotationNotificationType', () => {
         new RegExp(`expires on <b>${timestamp}</b>`),
       );
       expect(due.body).not.toContain('Client secrets page');
+    });
+
+    it('lists due and revoked clients in the realm digest', () => {
+      const { subject, body } = render('client-secret-rotation-digest', {
+        realm: 'tenant-a',
+        runbookUrl: 'https://runbook.test',
+        due: [
+          { clientId: 'client-1', expiry: payload.expiry, daysRemaining: 30, keycloakUrl: 'https://kc.test/1' },
+          { clientId: 'client-2', expiry: payload.expiry, daysRemaining: 0 },
+        ],
+        revoked: [{ clientId: 'client-3', revokedAt: payload.overlapEndsAt }],
+      });
+      expect(subject).toContain('tenant-a');
+      expect(body).toContain('<a href="https://kc.test/1">client-1</a>');
+      expect(body).toContain('client-2');
+      expect(body).toContain('(in 30 day(s))');
+      expect(body).not.toContain('(today)');
+      expect(body).not.toMatch(/client-2<\/a>|client-2: expires on <b>[^<]*<\/b> \(in/);
+      expect(body).toContain('client-3');
+      expect(body).toContain('December 3, 2026');
+      expect(body).toContain('href="https://runbook.test"');
+    });
+
+    it('omits empty digest sections', () => {
+      const { body } = render('client-secret-rotation-digest', { realm: 'tenant-a', due: [], revoked: [] });
+      expect(body).not.toContain('Secrets expiring soon');
+      expect(body).not.toContain('stopped working');
     });
 
     it('separates the Keycloak and runbook links', () => {

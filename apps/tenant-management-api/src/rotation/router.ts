@@ -2,6 +2,7 @@ import { AdspId, DomainEvent, hasRequiredRole, UnauthorizedUserError, User } fro
 import {
   ATTRIBUTES,
   ClientSecretRotationConfiguration,
+  ClientSecretRotationEventNames as EventNames,
   deriveStatus,
   revokePreviousSecret,
   rotateClient,
@@ -14,6 +15,7 @@ import {
 import { InvalidOperationError, NotFoundError } from '@core-services/core-common';
 import { NextFunction, Request, RequestHandler, Response, Router } from 'express';
 import type { Logger } from 'winston';
+import { getClientCredentialsUrl } from './links';
 import { ClientSecretRotationRoles } from './roles';
 import type { SubscriptionSync } from './subscriptions';
 
@@ -59,6 +61,8 @@ interface RealmContext {
   realm: string;
   tenantId: AdspId;
   bearer: string;
+  /** The signed-in admin, recorded on every event as the audit trail of who made the change. */
+  actor: { id: string; name: string };
   keycloak: RotationKeycloakClient;
 }
 
@@ -72,6 +76,11 @@ interface RealmSettings {
   noticePeriod: number;
   minNoticeGapDays: number;
 }
+
+const hasScheduleChanged = (before: RealmSettings, after: RealmSettings) =>
+  before.expirationPeriod !== after.expirationPeriod ||
+  before.rotatedExpirationPeriod !== after.rotatedExpirationPeriod ||
+  before.noticePeriod !== after.noticePeriod;
 
 const rotationContext = Symbol('rotationContext');
 type RotationRequest = Request & { [rotationContext]?: RealmContext };
@@ -119,6 +128,7 @@ export function createRotationRouter({
         realm: tenant.realm,
         tenantId: tenant.id,
         bearer: user.token.bearer,
+        actor: { id: user.id, name: user.name },
         keycloak: createKeycloak(tenant.realm, user.token.bearer),
       };
       next();
@@ -172,7 +182,7 @@ export function createRotationRouter({
   };
 
   const raise = async (
-    { realm, tenantId }: RealmContext,
+    { realm, tenantId, actor }: RealmContext,
     name: string,
     { id, clientId }: { id: string; clientId: string },
     payload: Record<string, unknown> = {},
@@ -186,11 +196,9 @@ export function createRotationRouter({
       payload: {
         realm,
         clientId,
+        updatedBy: actor,
         ...otherLinks,
-        // Opens the client's Credentials tab, where the new secret is read.
-        ...(keycloakUrl
-          ? { keycloakUrl: `${keycloakUrl}/admin/${realm}/console/#/${realm}/clients/${id}/credentials` }
-          : {}),
+        ...(keycloakUrl ? { keycloakUrl: getClientCredentialsUrl(keycloakUrl, realm, id) } : {}),
         ...payload,
       },
     });
@@ -202,6 +210,25 @@ export function createRotationRouter({
       await raise(...args);
     } catch (err) {
       logger.warn(`Failed to send ${args[1]} event for ${args[0].realm}/${args[2].clientId}: ${err}`);
+    }
+  };
+
+  // Realm-level audit events carry only the realm in their context, so they never reach per-client subscribers.
+  const raiseRealmAfterChange = async (
+    { realm, tenantId, actor }: RealmContext,
+    name: string,
+    payload: Record<string, unknown> = {},
+  ) => {
+    try {
+      await eventService.send({
+        tenantId,
+        name,
+        timestamp: now(),
+        context: { realm },
+        payload: { realm, updatedBy: actor, ...payload },
+      });
+    } catch (err) {
+      logger.warn(`Failed to send ${name} event for realm ${realm}: ${err}`);
     }
   };
 
@@ -344,6 +371,19 @@ export function createRotationRouter({
         clearExpiries(context).catch((err) => logger.warn(`Failed to clear expiries in realm ${realm}: ${err}`));
       }
       logger.info(`Rotation settings changed for realm ${realm} (mode ${settings.mode}).`);
+      if (settings.mode !== current.mode) {
+        await raiseRealmAfterChange(
+          context,
+          settings.mode === 'off' ? EventNames.realmDisabled : EventNames.realmEnabled,
+        );
+      }
+      if (hasScheduleChanged(current, settings)) {
+        await raiseRealmAfterChange(context, EventNames.scheduleUpdated, {
+          expirationPeriod: settings.expirationPeriod,
+          rotatedExpirationPeriod: settings.rotatedExpirationPeriod,
+          noticePeriod: settings.noticePeriod,
+        });
+      }
       if (settings.mode === 'selected') {
         syncSubscriptions(context);
       }
@@ -393,7 +433,7 @@ export function createRotationRouter({
         await keycloak.setAttributes(context.realm, client.id, clearAttributes);
       }
       logger.info(`Rotation ${enabled ? 'enabled' : 'disabled'} for ${context.realm}/${client.clientId}.`);
-      await raiseAfterChange(context, `client-secret-rotation-${enabled ? 'enabled' : 'disabled'}`, client);
+      await raiseAfterChange(context, enabled ? EventNames.enabled : EventNames.disabled, client);
       syncSubscriptions(context);
       res.json(toClientResponse(await getClient(context, client.clientId), settings.mode, now()));
     }),
@@ -415,6 +455,10 @@ export function createRotationRouter({
       }
       const client = await getClient(context, req.params.clientId);
       await context.keycloak.setAttributes(context.realm, client.id, { [ATTRIBUTES.contact]: value || null });
+      await raiseRealmAfterChange(context, EventNames.contactsUpdated, {
+        clientId: client.clientId,
+        contactCount: contacts.length,
+      });
       const { settings } = await getSettings(context);
       syncSubscriptions(context);
       res.json(toClientResponse(await getClient(context, client.clientId), settings.mode, now()));
@@ -429,14 +473,13 @@ export function createRotationRouter({
       assertCovered(settings.mode, client);
 
       const { expiry, overlapEndsAt } = await rotateClient(context.keycloak, context.realm, client, now());
-      await raiseAfterChange(context, 'client-secret-rotated', client, {
+      await raiseAfterChange(context, EventNames.rotated, client, {
         newExpiry: expiry?.toISOString(),
         overlapEndsAt: overlapEndsAt?.toISOString(),
-        emergency: false,
       });
       logger.info(`Secret rotated for ${context.realm}/${client.clientId} by ${(req.user as User)?.name}.`);
       // The new secret is never returned; the client's owner reads it in Keycloak.
-      res.json({ expiresAt: expiry?.toISOString(), rotatedSecretExpiresAt: overlapEndsAt?.toISOString() });
+      res.json(toClientResponse(await getClient(context, client.clientId), settings.mode, now()));
     }),
   );
 
@@ -449,11 +492,12 @@ export function createRotationRouter({
         throw new InvalidOperationError('Client has no previous secret to invalidate.');
       }
       await revokePreviousSecret(context.keycloak, context.realm, client, at);
-      await raiseAfterChange(context, 'client-secret-revoked', client, { revokedAt: at.toISOString() });
+      await raiseAfterChange(context, EventNames.revoked, client, { revokedAt: at.toISOString() });
       logger.info(
         `Previous secret invalidated for ${context.realm}/${client.clientId} by ${(req.user as User)?.name}.`,
       );
-      res.json({ expiresAt: client.state.expiry?.toISOString() });
+      const { settings } = await getSettings(context);
+      res.json(toClientResponse(await getClient(context, client.clientId), settings.mode, now()));
     }),
   );
 
@@ -468,9 +512,9 @@ export function createRotationRouter({
         throw new InvalidOperationError('Client secret has no expiry to notify about.');
       }
       const at = now();
-      await raise(context, 'client-secret-rotation-due', client, {
+      await raise(context, EventNames.due, client, {
         expiry: expiry.toISOString(),
-        daysRemaining: Math.max(0, Math.ceil((expiry.getTime() - at.getTime()) / DAY_MS)),
+        daysRemaining: Math.max(0, Math.floor((expiry.getTime() - at.getTime()) / DAY_MS)),
       });
       await context.keycloak.setAttributes(context.realm, client.id, {
         [ATTRIBUTES.noticeSentFor]: expiry.toISOString(),

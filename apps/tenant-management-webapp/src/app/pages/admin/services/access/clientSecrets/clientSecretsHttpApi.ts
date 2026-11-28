@@ -73,20 +73,20 @@ export function createClientSecretsApi(
       clients.forEach(({ id, clientId }) => clientIds.set(id, clientId));
       return clients;
     },
-    async setOptIn(id, optedIn) {
-      await request('put', clientPath(id, '/opt-in'), { enabled: optedIn });
+    setOptIn(id, optedIn) {
+      return request<ClientSecretClient>('put', clientPath(id, '/opt-in'), { enabled: optedIn });
     },
-    async rotate(id) {
-      await request('post', clientPath(id, '/rotate'));
+    rotate(id) {
+      return request<ClientSecretClient>('post', clientPath(id, '/rotate'));
     },
-    async invalidateRotated(id) {
-      await request('post', clientPath(id, '/invalidate-previous'));
+    invalidateRotated(id) {
+      return request<ClientSecretClient>('post', clientPath(id, '/invalidate-previous'));
     },
     async notify(id) {
       await request('post', clientPath(id, '/notify'));
     },
-    async setContacts(id, contacts) {
-      await request('patch', clientPath(id), { contacts });
+    setContacts(id, contacts) {
+      return request<ClientSecretClient>('patch', clientPath(id), { contacts });
     },
     searchUsers(search) {
       return request<RealmUser[]>('get', `${USERS_PATH}?search=${encodeURIComponent(search)}`);

@@ -23,6 +23,9 @@ import {
   createPlatformServiceConfig,
   createSubscriberAppPublicClientConfig,
   createWebappClientConfig,
+  createRotationNoticeClientScopeConfig,
+  MASTER_REALM,
+  ROTATION_NOTICE_JOB_REALM_ROLES,
 } from './configuration';
 import { IdentityProviderResponse } from './type';
 
@@ -34,6 +37,13 @@ export class KeycloakRealmServiceImpl implements RealmService {
     private keycloakRootUrl: string,
     private managementRealm: string,
     private createAdminClient: () => Promise<KeycloakAdminClient>,
+    // The notice job's service account in master. Scopes are created with their own small admin client, because the
+    // tenant realm admin has no rights on master clients. Without both, no notice scope is created for new realms.
+    private noticeJob?: {
+      clientId: string;
+      scopePrefix: string;
+      createAdminClient?: () => Promise<KeycloakAdminClient>;
+    },
   ) {}
 
   private brokerClientName(realm: string): string {
@@ -268,6 +278,53 @@ export class KeycloakRealmServiceImpl implements RealmService {
     }
 
     this.logger.info(`Granted service account roles to '${ADSP_CLI_CI_CLIENT_ID}' in realm '${realm}'.`, LOG_CONTEXT);
+  }
+
+  /**
+   * Creates the optional client scope `<prefix><realm>` in master, holding the rotation notice roles of the new
+   * realm's `<realm>-realm` client, and attaches it to the notice job's client. The job asks for one realm's scope per
+   * token, so its tokens stay small however many realms exist. Best effort: the notices are not worth failing a realm
+   * creation, and tools/keycloak/setup-rotation-notice-scopes.mjs repairs a missed scope.
+   */
+  private async createRotationNoticeScope(realm: string): Promise<void> {
+    if (!this.noticeJob?.createAdminClient) {
+      return;
+    }
+
+    const { clientId, scopePrefix, createAdminClient } = this.noticeJob;
+    try {
+      const client = await createAdminClient();
+      const [noticeJobClient] = await client.clients.find({ realm: MASTER_REALM, clientId });
+      if (!noticeJobClient) {
+        this.logger.debug(`Rotation notice job client '${clientId}' not found; skipping.`, LOG_CONTEXT);
+        return;
+      }
+
+      const [realmClient] = await client.clients.find({ realm: MASTER_REALM, clientId: `${realm}-realm` });
+      const roles = (
+        await Promise.all(
+          ROTATION_NOTICE_JOB_REALM_ROLES.map((roleName) =>
+            client.clients.findRole({ realm: MASTER_REALM, id: realmClient.id, roleName }),
+          ),
+        )
+      ).filter((role) => !!role);
+
+      const name = `${scopePrefix}${realm}`;
+      await client.clientScopes.create({ realm: MASTER_REALM, ...createRotationNoticeClientScopeConfig(name) });
+      const scope = await client.clientScopes.findOneByName({ realm: MASTER_REALM, name });
+      await client.clientScopes.addClientScopeMappings(
+        { realm: MASTER_REALM, id: scope.id, client: realmClient.id },
+        roles.map(({ id, name }) => ({ id, name })),
+      );
+      await client.clients.addOptionalClientScope({
+        realm: MASTER_REALM,
+        id: noticeJobClient.id,
+        clientScopeId: scope.id,
+      });
+      this.logger.info(`Created rotation notice scope '${name}'.`, LOG_CONTEXT);
+    } catch (err) {
+      this.logger.warn(`Failed to create rotation notice scope for realm '${realm}': ${err}`, LOG_CONTEXT);
+    }
   }
 
   /**
@@ -546,6 +603,7 @@ export class KeycloakRealmServiceImpl implements RealmService {
     await this.createCoreIdentityProvider(client, brokerClientSecret, brokerClient, flowAlias, realm);
     await this.createAdminUser(client, realm, adminEmail, tenantServiceClient.id, tenantAdminRole);
     await this.grantCiClientServiceAccountRoles(client, realm);
+    await this.createRotationNoticeScope(realm);
 
     await this.validateRealmCreation(client, realm);
   }

@@ -428,8 +428,9 @@ describe('ClientSecretsTab', () => {
     expect(screen.getByTestId('days-c1').querySelector('goa-badge')?.getAttribute('content')).toBe('90 days left');
   });
 
-  it('updates opt-in after confirmation and reloads', async () => {
+  it('updates opt-in after confirmation and replaces only that client', async () => {
     const api = createApi();
+    api.setOptIn.mockResolvedValue(client({ optedIn: false }));
     render(<ClientSecretsTab api={api} />);
     await openRow();
 
@@ -439,7 +440,8 @@ describe('ClientSecretsTab', () => {
     click('confirm-ok');
     await waitFor(() => expect(api.setOptIn).toHaveBeenCalledWith('c1', false));
     await expectNotified('disabled for urn:ads:test:one');
-    await waitFor(() => expect(api.list).toHaveBeenCalledTimes(2));
+    expect(api.list).toHaveBeenCalledTimes(1);
+    expect(api.settings).toHaveBeenCalledTimes(1);
   });
 
   it('disables every action for a client that is not opted in', async () => {

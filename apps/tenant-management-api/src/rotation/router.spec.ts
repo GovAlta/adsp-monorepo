@@ -228,6 +228,41 @@ describe('rotation router', () => {
       expect(keycloak.ensurePolicy).toHaveBeenCalledWith('test', 7776000, 0, 'selected');
     });
 
+    it('records who turned rotation on or off', async () => {
+      keycloak.isPolicyEnabled.mockResolvedValue(false);
+      await request(createApp(admin, tenant)).put('/realm').send({ mode: 'selected' }).expect(200);
+      expect(eventService.send).toHaveBeenCalledWith(
+        expect.objectContaining({
+          name: 'client-secret-rotation-realm-enabled',
+          context: { realm: 'test' },
+          payload: expect.objectContaining({ updatedBy: { id: 'u', name: 'admin' } }),
+        }),
+      );
+
+      keycloak.isPolicyEnabled.mockResolvedValue(true);
+      await request(createApp(admin, tenant)).put('/realm').send({ mode: 'off' }).expect(200);
+      expect(eventService.send).toHaveBeenCalledWith(
+        expect.objectContaining({ name: 'client-secret-rotation-realm-disabled' }),
+      );
+    });
+
+    it('records a schedule change only when a period changed', async () => {
+      await request(createApp(admin, tenant)).put('/realm').send({ expirationPeriod: 10000000 }).expect(200);
+      expect(eventService.send).toHaveBeenCalledWith(
+        expect.objectContaining({
+          name: 'client-secret-rotation-schedule-updated',
+          payload: expect.objectContaining({
+            expirationPeriod: 10000000,
+            updatedBy: { id: 'u', name: 'admin' },
+          }),
+        }),
+      );
+
+      eventService.send.mockClear();
+      await request(createApp(admin, tenant)).put('/realm').send({ expirationPeriod: 7776000 }).expect(200);
+      expect(eventService.send).not.toHaveBeenCalled();
+    });
+
     it('refuses an unsupported mode', async () => {
       await request(createApp(admin, tenant)).put('/realm').send({ mode: 'all' }).expect(400);
       expect(settingsStore.update).not.toHaveBeenCalled();
@@ -316,6 +351,7 @@ describe('rotation router', () => {
         expect.objectContaining({
           name: 'client-secret-rotation-enabled',
           context: { realm: 'test', clientId: 'urn:ads:test:client' },
+          payload: expect.objectContaining({ updatedBy: { id: 'u', name: 'admin' } }),
         }),
       );
     });
@@ -388,6 +424,26 @@ describe('rotation router', () => {
       });
     });
 
+    it('records who changed the contacts without the addresses', async () => {
+      await request(createApp(admin, tenant))
+        .patch('/clients/c')
+        .send({ contacts: ['a@example.com', 'b@example.com'] })
+        .expect(200);
+      const event = eventService.send.mock.calls
+        .map(([e]) => e)
+        .find((e) => e.name === 'client-secret-rotation-contacts-updated');
+      expect(event).toMatchObject({
+        context: { realm: 'test' },
+        payload: {
+          realm: 'test',
+          clientId: 'urn:ads:test:client',
+          contactCount: 2,
+          updatedBy: { id: 'u', name: 'admin' },
+        },
+      });
+      expect(JSON.stringify(event)).not.toContain('a@example.com');
+    });
+
     it('syncs notification subscriptions with the admin token', async () => {
       keycloak.listClients.mockResolvedValue([
         client({ clientId: 'c', contacts: ['a@example.com'] }),
@@ -437,19 +493,21 @@ describe('rotation router', () => {
     it('rotates a covered client and raises the event without a secret', async () => {
       keycloak.getClient
         .mockResolvedValueOnce(client())
+        .mockResolvedValueOnce(client({ state: { expiry: future, rotatedExpiry: overlap } }))
         .mockResolvedValueOnce(client({ state: { expiry: future, rotatedExpiry: overlap } }));
 
       const res = await request(createApp(admin, tenant)).post('/clients/c/rotate').expect(200);
 
       expect(keycloak.regenerateSecret).toHaveBeenCalledWith('test', 'kc-1');
-      expect(res.body).toEqual({ expiresAt: future.toISOString(), rotatedSecretExpiresAt: overlap.toISOString() });
+      expect(res.body).toEqual(
+        expect.objectContaining({ expiresAt: future.toISOString(), rotatedSecretExpiresAt: overlap.toISOString() }),
+      );
       expect(eventService.send).toHaveBeenCalledWith(
         expect.objectContaining({
           tenantId,
           name: 'client-secret-rotated',
           payload: expect.objectContaining({
             clientId: 'urn:ads:test:client',
-            emergency: false,
             portalUrl: 'https://portal.test/admin/access',
             runbookUrl: 'https://runbook.test',
             keycloakUrl: 'https://kc.test/auth/admin/test/console/#/test/clients/kc-1/credentials',

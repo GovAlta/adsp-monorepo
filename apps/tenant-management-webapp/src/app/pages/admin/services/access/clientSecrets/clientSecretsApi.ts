@@ -34,13 +34,14 @@ export interface ClientSecretsApi {
   setMode(mode: RealmRotationMode): Promise<void>;
   saveSchedule(schedule: RotationSchedule): Promise<void>;
   list(): Promise<ClientSecretClient[]>;
-  setOptIn(id: string, optedIn: boolean): Promise<void>;
-  rotate(id: string): Promise<void>;
+  /** The per-client calls return the updated client, so the page does not reload the whole list. */
+  setOptIn(id: string, optedIn: boolean): Promise<ClientSecretClient>;
+  rotate(id: string): Promise<ClientSecretClient>;
   /** Removes the previous secret before its grace period ends, for example if it may have been exposed. */
-  invalidateRotated(id: string): Promise<void>;
+  invalidateRotated(id: string): Promise<ClientSecretClient>;
   notify(id: string): Promise<void>;
   /** Replaces the email addresses notified about this client's secret; an empty list clears them. */
-  setContacts(id: string, contacts: string[]): Promise<void>;
+  setContacts(id: string, contacts: string[]): Promise<ClientSecretClient>;
   /** Enabled users of the realm with an email address whose name, username or email matches the text. */
   searchUsers(search: string): Promise<RealmUser[]>;
 }
