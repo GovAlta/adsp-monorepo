@@ -48,16 +48,17 @@ describe('ClientSecretRotationNotificationType', () => {
     };
 
     it('formats dates and links the client in Keycloak', () => {
-      const timestamp = 'February 24, 2027 \\d{1,2}:25 [ap]\\.?m\\.? M[DS]T';
+      // The AM/PM casing and the space before it vary by ICU version.
+      const timestamp = 'February 24, 2027 \\d{1,2}:25\\s[ap]\\.?m\\.?\\sM[DS]T';
       const due = render('client-secret-rotation-due');
-      expect(due.subject).toMatch(new RegExp(timestamp));
+      expect(due.subject).toMatch(new RegExp(timestamp, 'i'));
       expect(due.body).toContain('in 90 day(s)');
       expect(due.body).toContain('href="https://kc.test/clients/1/credentials"');
 
       expect(render('client-secret-rotated').body).toContain('December 3, 2026');
-      expect(due.body).toMatch(new RegExp(timestamp));
+      expect(due.body).toMatch(new RegExp(timestamp, 'i'));
       expect(render('client-secret-rotated', { ...payload, newExpiry: payload.expiry }).body).toMatch(
-        new RegExp(`expires on <b>${timestamp}</b>`),
+        new RegExp(`expires on <b>${timestamp}</b>`, 'i'),
       );
       expect(due.body).not.toContain('Client secrets page');
     });
