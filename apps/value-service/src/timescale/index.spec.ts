@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { knex as initKnex } from 'knex';
+import { retry } from '@abgov/adsp-service-sdk';
 import { Logger } from 'winston';
 import { createRepositories } from './index';
 
@@ -43,10 +44,13 @@ const createKnexStub = () => {
 
 describe('createRepositories', () => {
   const config = () => (initKnex as unknown as jest.Mock).mock.calls[0][0];
+  const retryExecute = retry.execute as jest.Mock;
 
   beforeEach(() => {
+    jest.clearAllMocks();
     (initKnex as unknown as jest.Mock).mockReset();
     (initKnex as unknown as jest.Mock).mockReturnValue(createKnexStub().knex);
+    retryExecute.mockImplementation((work: (context: { attempt: number }) => Promise<void>) => work({ attempt: 1 }));
   });
 
   // The ceiling is multiplied by the replica count against one server, and knex's implicit default
@@ -78,6 +82,49 @@ describe('createRepositories', () => {
 
     expect(knex.migrate.latest).toHaveBeenCalled();
     expect(repositories.metricIntervalRollupRepository).toBeDefined();
+  });
+
+  it('does not log an error when a migration retry recovers', async () => {
+    const connectionError = new Error('connection unavailable');
+    const { knex } = createKnexStub();
+    knex.migrate.latest.mockRejectedValueOnce(connectionError).mockResolvedValueOnce(undefined);
+    (initKnex as unknown as jest.Mock).mockReturnValue(knex);
+    retryExecute.mockImplementation(async (work: (context: { attempt: number }) => Promise<void>) => {
+      await expect(work({ attempt: 1 })).rejects.toBe(connectionError);
+      return work({ attempt: 2 });
+    });
+
+    await createRepositories(props);
+
+    expect(logger.error).not.toHaveBeenCalled();
+    expect(logger.debug).toHaveBeenCalledWith(`Try 1 failed with error. ${connectionError}`, {
+      context: 'createRepositories',
+    });
+    expect(knex.migrate.latest).toHaveBeenCalledTimes(2);
+  });
+
+  it('logs one contextual error and preserves the exhausted retry error', async () => {
+    const terminalError = new Error('database unavailable');
+    const { knex } = createKnexStub();
+    knex.migrate.latest.mockRejectedValue(terminalError);
+    (initKnex as unknown as jest.Mock).mockReturnValue(knex);
+    retryExecute.mockImplementation(async (work: (context: { attempt: number }) => Promise<void>) => {
+      await expect(work({ attempt: 1 })).rejects.toBe(terminalError);
+      await expect(work({ attempt: 2 })).rejects.toBe(terminalError);
+      throw terminalError;
+    });
+
+    await expect(createRepositories(props)).rejects.toBe(terminalError);
+
+    expect(logger.debug).toHaveBeenCalledWith(`Try 2 failed with error. ${terminalError}`, {
+      context: 'createRepositories',
+    });
+    expect(logger.error).toHaveBeenCalledTimes(1);
+    expect(logger.error).toHaveBeenCalledWith(
+      `Failed to connect to timescale and run migrations after retries. ${terminalError}`,
+      { context: 'createRepositories' },
+    );
+    expect(retryExecute).toHaveBeenCalledTimes(1);
   });
 
   // A refresh that runs away would otherwise hold its connection for as long as it takes, and the

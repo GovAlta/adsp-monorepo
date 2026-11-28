@@ -28,8 +28,7 @@ describe('resolve', () => {
   };
 
   beforeEach(() => {
-    configurationServiceMock.getServiceConfiguration.mockClear();
-    eventServiceMock.send.mockClear();
+    jest.clearAllMocks();
   });
 
   it('can create job', () => {
@@ -89,7 +88,7 @@ describe('resolve', () => {
     expect(done).toHaveBeenCalledWith();
   });
 
-  it('can handle job error', async () => {
+  it('returns a first-attempt error for retry without logging an error', async () => {
     const resourceId = adspId`urn:ads:platform:test-service:v1:/tests/123`;
     const done = jest.fn();
 
@@ -99,7 +98,8 @@ describe('resolve', () => {
       resolve: jest.fn(),
     };
     getResourceType.mockReturnValueOnce(type);
-    type.resolve.mockRejectedValueOnce(new Error('oh noes!'));
+    const resolveError = new Error('oh noes!');
+    type.resolve.mockRejectedValueOnce(resolveError);
     configurationServiceMock.getServiceConfiguration.mockResolvedValueOnce({ getResourceType });
 
     const job = createResolveJob({
@@ -110,10 +110,13 @@ describe('resolve', () => {
       eventService: eventServiceMock,
     });
     await job(tenantId, resourceId, true, done);
-    expect(done).toHaveBeenCalledWith(expect.any(Error));
+    expect(done).toHaveBeenCalledWith(resolveError);
+    expect(logger.warn).not.toHaveBeenCalled();
+    expect(logger.error).not.toHaveBeenCalled();
+    expect(eventServiceMock.send).not.toHaveBeenCalled();
   });
 
-  it('can send event on job error with no retry', async () => {
+  it('logs a contextual warning and sends the failure event on a redelivered error', async () => {
     const resourceId = adspId`urn:ads:platform:test-service:v1:/tests/123`;
     const done = jest.fn();
 
@@ -123,7 +126,8 @@ describe('resolve', () => {
       resolve: jest.fn(),
     };
     getResourceType.mockReturnValueOnce(type);
-    type.resolve.mockRejectedValueOnce(new Error('oh noes!'));
+    const resolveError = new Error('oh noes!');
+    type.resolve.mockRejectedValueOnce(resolveError);
     configurationServiceMock.getServiceConfiguration.mockResolvedValueOnce({ getResourceType });
 
     const job = createResolveJob({
@@ -137,6 +141,12 @@ describe('resolve', () => {
     expect(eventServiceMock.send).toHaveBeenCalledWith(
       expect.objectContaining({ tenantId, name: 'resource-resolution-failed' }),
     );
-    expect(done).toHaveBeenCalledWith(expect.any(Error));
+    expect(done).toHaveBeenCalledWith(resolveError);
+    expect(logger.warn).toHaveBeenCalledTimes(1);
+    expect(logger.warn).toHaveBeenCalledWith(`Error encountered resolving resource ${resourceId}: ${resolveError}`, {
+      context: 'ResolveJob',
+      tenant: tenantId.toString(),
+    });
+    expect(logger.error).not.toHaveBeenCalled();
   });
 });

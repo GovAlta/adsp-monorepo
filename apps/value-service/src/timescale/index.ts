@@ -73,16 +73,23 @@ export const createRepositories = async ({
     },
   });
 
-  await retry.execute(async ({ attempt }) => {
-    logger.debug(`Try ${attempt}: connecting to timescale and running migration...`);
-    try {
-      await knex.migrate.latest();
-      logger.info('Completed running knex migrations on timescale.');
-    } catch (err) {
-      logger.debug(`Try ${attempt} failed with error. ${err}`, { context: 'createRepositories' });
-      throw err;
-    }
-  });
+  try {
+    await retry.execute(async ({ attempt }) => {
+      logger.debug(`Try ${attempt}: connecting to timescale and running migration...`);
+      try {
+        await knex.migrate.latest();
+        logger.info('Completed running knex migrations on timescale.');
+      } catch (err) {
+        logger.debug(`Try ${attempt} failed with error. ${err}`, { context: 'createRepositories' });
+        throw err;
+      }
+    });
+  } catch (err) {
+    logger.error(`Failed to connect to timescale and run migrations after retries. ${err}`, {
+      context: 'createRepositories',
+    });
+    throw err;
+  }
 
   return {
     isConnected: async () => {

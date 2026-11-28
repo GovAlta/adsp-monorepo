@@ -26,7 +26,7 @@ describe('createLogEventJob', () => {
   };
 
   beforeEach(() => {
-    configurationService.getConfiguration.mockClear();
+    jest.clearAllMocks();
     axiosMock.get.mockReset();
     axiosMock.post.mockReset();
   });
@@ -72,7 +72,7 @@ describe('createLogEventJob', () => {
       });
     });
 
-    it('can handle error on post event', (done) => {
+    it('preserves retry signaling when the primary event write fails', (done) => {
       const job = createLogEventJob({
         serviceId,
         logger,
@@ -81,9 +81,13 @@ describe('createLogEventJob', () => {
         valueServiceUrl: new URL('http://totally-real-value-service'),
       });
 
-      axiosMock.post.mockRejectedValueOnce(new Error('something has gone wrong'));
+      const writeError = new Error('something has gone wrong');
+      axiosMock.post.mockRejectedValueOnce(writeError);
       job(event, (err) => {
-        expect(err).toBeTruthy();
+        expect(err).toBe(writeError);
+        expect(axiosMock.post).toHaveBeenCalledTimes(1);
+        expect(logger.warn).toHaveBeenCalledTimes(1);
+        expect(logger.error).not.toHaveBeenCalled();
         done();
       });
     });
@@ -299,7 +303,7 @@ describe('createLogEventJob', () => {
       });
     });
 
-    it('can handle interval error and log event', (done) => {
+    it('logs one error for an interval read failure and still writes and acknowledges the event', (done) => {
       const job = createLogEventJob({
         serviceId,
         logger,
@@ -308,11 +312,76 @@ describe('createLogEventJob', () => {
         valueServiceUrl: new URL('http://totally-real-value-service'),
       });
 
-      axiosMock.get.mockRejectedValueOnce(new Error('Something went terribly wrong.'));
+      configurationService.getConfiguration.mockResolvedValueOnce({
+        test: {
+          definitions: {
+            'test-started': {
+              interval: {
+                metric: 'test',
+                namespace: 'test',
+                name: 'test-prepared',
+              },
+            },
+          },
+        },
+      });
+
+      const intervalError = new Error('Something went terribly wrong.');
+      axiosMock.get.mockRejectedValueOnce(intervalError);
       axiosMock.post.mockResolvedValueOnce({});
       job(event, (err) => {
+        expect(err).toBeUndefined();
         expect(axiosMock.post).toHaveBeenCalledTimes(1);
-        done(err);
+        expect(axiosMock.post).toHaveBeenCalledWith(
+          expect.any(String),
+          expect.objectContaining({
+            metrics: {
+              'total:count': 1,
+              'test:test-started:count': 1,
+            },
+          }),
+          expect.any(Object),
+        );
+        expect(logger.error).toHaveBeenCalledTimes(1);
+        expect(logger.error).toHaveBeenCalledWith(
+          `Error encountered computing duration for event test:test-started ` +
+            `(correlation ID: ${event.correlationId}) interval. ${intervalError}`,
+          { context: 'EventLog', tenantId: event.tenantId.toString() },
+        );
+        done();
+      });
+    });
+
+    it('does not log an error when no historical interval event exists', (done) => {
+      const job = createLogEventJob({
+        serviceId,
+        logger,
+        tokenProvider,
+        configurationService: configurationService as unknown as ConfigurationService,
+        valueServiceUrl: new URL('http://totally-real-value-service'),
+      });
+
+      configurationService.getConfiguration.mockResolvedValueOnce({
+        test: {
+          definitions: {
+            'test-started': {
+              interval: {
+                metric: 'test',
+                namespace: 'test',
+                name: 'test-prepared',
+              },
+            },
+          },
+        },
+      });
+      axiosMock.get.mockResolvedValueOnce({ data: {} });
+      axiosMock.post.mockResolvedValueOnce({});
+
+      job(event, (err) => {
+        expect(err).toBeUndefined();
+        expect(axiosMock.post).toHaveBeenCalledTimes(1);
+        expect(logger.error).not.toHaveBeenCalled();
+        done();
       });
     });
   });
