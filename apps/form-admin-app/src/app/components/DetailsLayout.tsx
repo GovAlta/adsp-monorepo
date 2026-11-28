@@ -1,6 +1,6 @@
 import { GoabButton, GoabButtonGroup } from '@abgov/react-components';
 import { FunctionComponent, ReactNode } from 'react';
-import { useNavigate } from 'react-router-dom-v7';
+import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import { LoadingIndicator } from './LoadingIndicator';
 

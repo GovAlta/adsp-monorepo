@@ -101,6 +101,44 @@ describe('createDocumentTools', () => {
       expect(result.truncated).toBe(true);
     });
 
+    describe('reading one section of a large document', () => {
+      const readSection = async (sectionId: string) => {
+        const { extractDocumentText } = jest.requireMock('../utils/documentParser');
+        extractDocumentText.mockResolvedValueOnce({
+          text: 'Intro\nSecond page text',
+          pageCount: 2,
+          pages: [
+            { num: 1, text: 'Intro' },
+            { num: 2, text: 'Second page text' },
+          ],
+        });
+        mockGetFileAndMetadata.mockResolvedValueOnce({
+          data: new Uint8Array([0x25, 0x50, 0x44, 0x46]),
+          metadata: {
+            filename: 'survey.pdf',
+            mimeType: 'application/pdf',
+            urn: 'urn:ads:platform:file-service:v1:/files/survey-uuid',
+          },
+        });
+
+        return tools.documentExtractTool.execute({ fileId: 'survey-uuid', sectionId }, {
+          requestContext: mockRequestContext,
+        } as never);
+      };
+
+      it("returns only that section's text", async () => {
+        const result = await readSection('page-2');
+
+        expect(result.text).toBe('### page-2: Page 2\nSecond page text');
+      });
+
+      it('names the sections it has when the section is not one of them', async () => {
+        const result = await readSection('page-9');
+
+        expect(result.text).toBe("'survey.pdf' has no section 'page-9'. Its sections are: page-1, page-2.");
+      });
+    });
+
     it('falls back to UTF-8 for non-document files', async () => {
       mockGetFileAndMetadata.mockResolvedValueOnce({
         data: new TextEncoder().encode('plain text content'),

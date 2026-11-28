@@ -98,16 +98,6 @@ const defaultState: AgentState = {
   },
 };
 
-function streamErrorDetails(payload: { code?: string; message: string; details?: unknown }): unknown {
-  if (payload.details !== undefined) {
-    return payload.details;
-  }
-  if (payload.code) {
-    return { code: payload.code };
-  }
-  return undefined;
-}
-
 const DEFAULT_STREAM_ERROR_MESSAGE = 'The agent stopped unexpectedly. Anything already saved is in the editor.';
 
 function outputToText(output: unknown): string {
@@ -331,7 +321,8 @@ function processResponseChunk(
           {
             type: action.chunk.type,
             message: action.chunk.payload.message || DEFAULT_STREAM_ERROR_MESSAGE,
-            details: streamErrorDetails(action.chunk.payload),
+            ...(action.chunk.payload.code ? { code: action.chunk.payload.code } : {}),
+            details: action.chunk.payload.details,
           },
         ],
       };

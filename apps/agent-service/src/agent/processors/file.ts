@@ -187,7 +187,7 @@ export class FileServiceDownloadProcessor implements BrokerInputProcessor {
         recordSourceDocument(requestContext, outline);
 
         if (isLargeFormDocument(extracted.text?.length ?? 0, extracted.pageCount)) {
-          return [{ type: 'text', text: `${formatDocumentOutline(outline)}${storageNote}` }];
+          return [{ type: 'text', text: formatDocumentOutline(outline, storageNote) }];
         }
       }
 

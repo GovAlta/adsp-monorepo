@@ -51,6 +51,8 @@ describe('notification', () => {
     axiosMock.delete.mockReset();
     axiosMock.isAxiosError.mockReset();
     cacheMock.get.mockReset();
+    (loggerMock.warn as jest.Mock).mockReset();
+    (loggerMock.error as jest.Mock).mockReset();
   });
 
   it('can create service', () => {
@@ -212,6 +214,8 @@ describe('notification', () => {
 
         const deleted = await service.unsubscribe(tenantId, subscriberId, 'test');
         expect(deleted).toBeFalsy();
+        expect(loggerMock.error).toHaveBeenCalledTimes(1);
+        expect(loggerMock.warn).not.toHaveBeenCalled();
       });
     });
 

@@ -1185,6 +1185,8 @@ export function createFormRouter({
     '/forms/:formId/submissions/:submissionId',
     assertAuthenticatedHandler,
     createValidationHandler(
+      param('formId').isUUID(),
+      param('submissionId').isUUID(),
       body('dispositionStatus').isString().isLength({ min: 1 }),
       body('dispositionReason').isString().isLength({ min: 1 }),
     ),

@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import { MemoryRouter } from 'react-router-dom-v7';
+import { MemoryRouter } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { TaskHeader } from './TaskHeader';
 import { Task } from '../state';

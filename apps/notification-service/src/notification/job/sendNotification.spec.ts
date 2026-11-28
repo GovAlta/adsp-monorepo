@@ -27,6 +27,8 @@ describe('createSendNotificationJob', () => {
       providerMock.send.mockReset();
       eventService.send.mockReset();
       auditor.mockReset();
+      (logger.warn as jest.Mock).mockReset();
+      (logger.error as jest.Mock).mockReset();
     });
 
     it('can send notification', (done) => {
@@ -133,6 +135,8 @@ describe('createSendNotificationJob', () => {
           expect(providerMock.send).toHaveBeenCalledTimes(1);
           expect(eventService.send).toHaveBeenCalledTimes(0);
           expect(auditor).not.toHaveBeenCalled();
+          expect(logger.warn).toHaveBeenCalledTimes(1);
+          expect(logger.error).not.toHaveBeenCalled();
           done();
         }
       );
@@ -170,6 +174,8 @@ describe('createSendNotificationJob', () => {
         })
       );
       expect(auditor).not.toHaveBeenCalledWith(expect.objectContaining({ name: 'notification.sent' }), expect.anything());
+      expect(logger.warn).toHaveBeenCalledTimes(1);
+      expect(logger.error).not.toHaveBeenCalled();
     });
   });
 });

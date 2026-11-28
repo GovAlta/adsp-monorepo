@@ -28,17 +28,40 @@ export function buildDocumentOutline(extracted: DocumentExtractResult, filename:
   };
 }
 
-export function formatDocumentOutline(outline: DocumentOutline): string {
+/**
+ * Starts the section text of a large document in the message that carries it. Everything before it is the outline,
+ * which is all a model is sent; the text after it stays in the message for the prompt injection check and memory.
+ */
+export const DOCUMENT_SECTION_TEXT_MARKER = '[[Section text follows. It is read by the tools, not sent to the agent.]]';
+
+/** A large document's message: its outline, then any note about the file, then its section text. */
+export function formatDocumentOutline(outline: DocumentOutline, note = ''): string {
   const header =
     `Provided document '${outline.filename}' (file service URN: ${outline.urn}) is large ` +
     `(charCount: ${outline.charCount}${outline.pageCount ? `, pageCount: ${outline.pageCount}` : ''}). ` +
-    `Extracted page/section outline follows.`;
+    `Its sections follow.`;
 
-  const body = outline.sections
+  const sectionList = outline.sections
+    .map((section) => `- ${section.sectionId}: ${section.title} (${section.text.length} characters)`)
+    .join('\n');
+
+  const text = outline.sections
     .map((section) => `### ${section.sectionId}: ${section.title}\n${section.text}`)
     .join('\n\n');
 
-  return `${header}\n\n## Outline\n\n${body}`;
+  return `${header}\n\n## Outline\n\n${sectionList}${note}\n\n${DOCUMENT_SECTION_TEXT_MARKER}\n\n${text}`;
+}
+
+/** The outline of a large document's message, without its section text; any other text is returned as it is. */
+export function withoutDocumentSectionText(text: string): string {
+  const marker = text.indexOf(DOCUMENT_SECTION_TEXT_MARKER);
+  return marker < 0 ? text : text.slice(0, marker).trimEnd();
+}
+
+/** The section of an outline with the given ID, ignoring case. */
+export function findOutlineSection(outline: DocumentOutline, sectionId: string): DocumentOutlineSection | undefined {
+  const wanted = sectionId.trim().toLowerCase();
+  return outline.sections.find((section) => section.sectionId.toLowerCase() === wanted);
 }
 
 function outlineSections(extracted: DocumentExtractResult): DocumentOutlineSection[] {

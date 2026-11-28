@@ -15,14 +15,18 @@ import {
 } from '@abgov/react-components';
 import { FileClient, type FileMetadata } from '@abgov/adsp-components-core';
 import { ADSPFileUpload } from '@abgov/adsp-components-react';
-import { directorySelector, getAccessToken } from '../../../state';
+import { authenticatedUserSelector, directorySelector, getAccessToken } from '../../../state';
 import { ServiceContainer } from '../../styled-components';
 import { AdspFileUploadSideBySide } from './AdspFileUploadSideBySide';
+import { UploadDenied, UploadPermission, useFileTypeCapabilities } from './useFileTypeCapabilities';
 
 const FILE_SERVICE_ID = 'urn:ads:platform:file-service';
 
 // No File Type has this ID, so File service answers 404.
 export const MISSING_FILE_TYPE_ID = 'adsp-sandbox-missing-file-type';
+
+// Kept stable so the capability provider doesn't recompute on every render.
+const NO_ROLES: string[] = [];
 
 interface ListedFileType {
   id: string;
@@ -57,6 +61,18 @@ const RECORD_USAGE = (fileTypeId: string) => `<ADSPFileUpload
 />`;
 
 const MISSING_USAGE = `<ADSPFileUpload client={client} fileTypeId="${MISSING_FILE_TYPE_ID}" />`;
+
+const PERMISSION_SETUP = `import { AdspCapabilityProvider } from '@abgov/adsp-components-react';
+
+// roles: the user's roles, as your app read them from its token
+// fileType: the File Type from File service (GET /file/v1/types/my-file-type)
+<AdspCapabilityProvider roles={roles} capabilities={{ 'file.upload': fileType.updateRoles }}>
+  <ADSPFileUpload
+    client={client}
+    fileTypeId="my-file-type"
+    fallback={<GoabCallout type="important" heading="You can't upload files here" />}
+  />
+</AdspCapabilityProvider>`;
 
 const NO_PERMISSION_USAGE = `// The application decides the user can't upload; nothing renders and nothing is requested.
 <ADSPFileUpload client={client} fileTypeId="my-file-type" canUpload={false} />`;
@@ -129,6 +145,8 @@ export const AdspFileUploadExample = () => {
   }, [fileServiceUrl]);
 
   const exampleTypeId = enteredTypeId.trim() || selectedTypeId;
+  const roles = useSelector(authenticatedUserSelector)?.roles ?? NO_ROLES;
+  const capabilities = useFileTypeCapabilities(fileServiceUrl, exampleTypeId);
 
   return (
     <ServiceContainer>
@@ -195,13 +213,18 @@ export const AdspFileUploadExample = () => {
             <GoabTabs initialTab={1} navigation="none" testId="adsp-file-upload-tabs">
               <GoabTab heading="Showcase">
                 {exampleTypeId && (
-                  <>
+                  <UploadPermission capabilities={capabilities} roles={roles}>
                     <Example
                       heading="Default"
-                      description="Only the client and the File Type: drop a file or choose one to upload it."
+                      description="Only the client and the File Type: drop a file or choose one to upload it. Without one of the File Type's update roles you see a message instead, before choosing a file."
                       code={usage(exampleTypeId)}
                     >
-                      <ADSPFileUpload client={client} fileTypeId={exampleTypeId} testId="example-default" />
+                      <ADSPFileUpload
+                        client={client}
+                        fileTypeId={exampleTypeId}
+                        fallback={<UploadDenied testId="example-default-denied" />}
+                        testId="example-default"
+                      />
                     </Example>
 
                     <Example
@@ -214,6 +237,7 @@ export const AdspFileUploadExample = () => {
                         fileTypeId={exampleTypeId}
                         recordId="adsp-sandbox-upload-example"
                         onUpload={(file) => setUploadedFiles((files) => [...files, file])}
+                        fallback={<UploadDenied testId="example-record-denied" />}
                         testId="example-record"
                       />
                       {uploadedFiles.length > 0 && (
@@ -235,7 +259,7 @@ export const AdspFileUploadExample = () => {
                         </GoabTable>
                       )}
                     </Example>
-                  </>
+                  </UploadPermission>
                 )}
 
                 <Example
@@ -262,9 +286,17 @@ export const AdspFileUploadExample = () => {
                 <GoabDetails heading="Application setup" mt="xl">
                   <pre>{APPLICATION_SETUP}</pre>
                 </GoabDetails>
+                <GoabDetails heading="Permission from the File Type's roles" mt="m">
+                  <pre>{PERMISSION_SETUP}</pre>
+                </GoabDetails>
               </GoabTab>
               <GoabTab heading="Examples with code">
-                <AdspFileUploadSideBySide client={client} fileTypeId={exampleTypeId} />
+                <AdspFileUploadSideBySide
+                  client={client}
+                  fileTypeId={exampleTypeId}
+                  capabilities={capabilities}
+                  roles={roles}
+                />
               </GoabTab>
             </GoabTabs>
           </>

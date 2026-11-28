@@ -4,6 +4,9 @@ ARG SERVICE
 
 USER 0
 
+# Base image can lag behind security errata (e.g. CVE-2026-114406 in ca-certificates).
+RUN dnf -y update ca-certificates && dnf clean all
+
 COPY ./dist/apps/${SERVICE}/*.whl .
 RUN chown -R 1001:0 ./
 

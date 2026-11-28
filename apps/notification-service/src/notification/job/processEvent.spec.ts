@@ -67,6 +67,8 @@ describe('createProcessEventJob', () => {
     tokenProviderMock.getAccessToken.mockReset();
     repositoryMock.getSubscriptions.mockReset();
     eventServiceMock.send.mockReset();
+    (logger.warn as jest.Mock).mockReset();
+    (logger.error as jest.Mock).mockReset();
   });
 
   it('can create job', () => {
@@ -427,10 +429,11 @@ describe('createProcessEventJob', () => {
 
         expect(capturedErr).toBeFalsy();
         // clean-code-ignore: 2.11
-        expect(logger.error).toHaveBeenCalledWith(
+        expect(logger.warn).toHaveBeenCalledWith(
           expect.stringContaining(`Configuration not ready: email fromEmail is not set for tenant ${tenantId}`),
           expect.anything(),
         );
+        expect(logger.error).not.toHaveBeenCalled();
         expect(queueServiceMock.enqueue).not.toHaveBeenCalled();
         expect(eventServiceMock.send).toHaveBeenCalledWith(
           expect.objectContaining({
@@ -618,9 +621,101 @@ describe('createProcessEventJob', () => {
         true,
         (err) => {
           expect(err).toBeTruthy();
+          expect(logger.warn).toHaveBeenCalledTimes(1);
+          expect(logger.error).not.toHaveBeenCalled();
           done();
         },
       );
+    });
+
+    it('leaves terminal error logging to the work queue when event processing exhausts its retries', (done) => {
+      const job = createProcessEventJob({
+        logger,
+        serviceId: adspId`urn:ads:platform:notification-service`,
+        tokenProvider: tokenProviderMock,
+        configurationService: configurationServiceMock,
+        eventService: eventServiceMock,
+        tenantService: tenantServiceMock,
+        directory: directoryMock,
+        subscriptionRepository: repositoryMock as unknown as SubscriptionRepository,
+        queueService: queueServiceMock as unknown as WorkQueueService<NotificationWorkItem>,
+      });
+      tokenProviderMock.getAccessToken.mockRejectedValueOnce(new Error('Token service unavailable'));
+
+      job(
+        {
+          tenantId,
+          namespace: 'forms',
+          name: 'form-submitted',
+          timestamp: new Date(),
+          payload: {},
+          traceparent: '123',
+        },
+        false,
+        (err) => {
+          expect(err).toBeTruthy();
+          expect(logger.warn).toHaveBeenCalledTimes(1);
+          expect(logger.error).not.toHaveBeenCalled();
+          done();
+        },
+      );
+    });
+
+    it('logs an error, continues other types, and acknowledges a per-type generation failure', async () => {
+      const generateNotifications = jest.fn().mockRejectedValue(new Error('Template rendering failed'));
+      const successfulGenerate = jest.fn().mockResolvedValue([]);
+      const type = {
+        id: 'submission-receipt',
+        name: 'Submission receipt',
+        channels: [Channel.sms],
+        generateNotifications,
+      };
+      const successfulType = {
+        id: 'submission-copy',
+        name: 'Submission copy',
+        channels: [Channel.sms],
+        generateNotifications: successfulGenerate,
+      };
+      const configuration = {
+        getEventNotificationTypes: jest.fn(() => [type, successfulType]),
+      } as unknown as NotificationConfiguration;
+      const done = jest.fn();
+      const job = createProcessEventJob({
+        logger,
+        serviceId: adspId`urn:ads:platform:notification-service`,
+        tokenProvider: tokenProviderMock,
+        configurationService: configurationServiceMock,
+        eventService: eventServiceMock,
+        tenantService: tenantServiceMock,
+        directory: directoryMock,
+        subscriptionRepository: repositoryMock as unknown as SubscriptionRepository,
+        queueService: queueServiceMock as unknown as WorkQueueService<NotificationWorkItem>,
+      });
+      tokenProviderMock.getAccessToken.mockResolvedValueOnce('token');
+      configurationServiceMock.getConfiguration.mockResolvedValueOnce(configuration);
+
+      await job(
+        {
+          tenantId,
+          namespace: 'forms',
+          name: 'form-submitted',
+          timestamp: new Date(),
+          payload: { formId: 'form-1' },
+          traceparent: '123',
+        },
+        true,
+        done,
+      );
+
+      expect(logger.error).toHaveBeenCalledWith(
+        'Failed to generate notifications of type (ID: submission-receipt) for event forms:form-submitted.',
+        expect.objectContaining({ context: 'ProcessEventJob', tenant: tenantId.toString() }),
+      );
+      expect(eventServiceMock.send).toHaveBeenCalledWith(
+        expect.objectContaining({ name: 'notification-generation-failed' }),
+      );
+      expect(successfulGenerate).toHaveBeenCalledTimes(1);
+      expect(done).toHaveBeenCalledWith();
     });
 
     it('skips events from notification-service namespace', (done) => {

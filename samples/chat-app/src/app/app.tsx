@@ -5,7 +5,7 @@ import { UserState } from 'redux-oidc';
 import { GoabButton, GoabAppHeader, GoabMicrositeHeader } from '@abgov/react-components';
 
 import styles from './app.module.scss';
-import { Route, Routes } from 'react-router-dom-v7';
+import { Route, Routes } from 'react-router-dom';
 import { Landing } from './landing';
 import { Chat } from './chat';
 

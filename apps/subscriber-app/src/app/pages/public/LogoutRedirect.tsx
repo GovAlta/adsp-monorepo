@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom-v7';
+import { useNavigate } from 'react-router-dom';
 
 const LogoutRedirect = (): JSX.Element => {
   const navigate = useNavigate();

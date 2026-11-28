@@ -99,7 +99,8 @@ export const createProcessEventJob =
       }
 
       if (emailConfigStillMissing) {
-        logger.error(
+        // Tenant configuration the platform team cannot fix, so it is not logged as an error that raises an alert.
+        logger.warn(
           // clean-code-ignore: 2.9
           `Configuration not ready: email fromEmail is not set for tenant ${tenantId} processing event ${namespace}:${name}. Proceeding without waiting further.`,
           {
@@ -142,6 +143,13 @@ export const createProcessEventJob =
               },
             );
           } catch (err) {
+            logger.error(
+              `Failed to generate notifications of type (ID: ${type.id}) for event ${namespace}:${name}.`,
+              {
+                ...LOG_CONTEXT,
+                tenant: tenantId?.toString(),
+              },
+            );
             eventService.send(notificationGenerationFailed(generationId, event, type, err.message));
           }
         }
@@ -161,6 +169,7 @@ export const createProcessEventJob =
 
       done();
     } catch (err) {
+      // The work queue logs the terminal dead-letter failure at error level.
       logger.warn(`Error encountered on processing event ${namespace}:${name}. ${err}`, {
         ...LOG_CONTEXT,
         tenant: tenantId?.toString(),

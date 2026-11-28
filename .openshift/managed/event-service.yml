@@ -212,12 +212,15 @@ objects:
         component: queue
         apply-init: 'true'
       annotations:
+        # The Alpine variant steps down from root with su-exec; the Ubuntu variant ships gosu, a Go binary
+        # that ACS flags for Go standard library CVEs. adsp-build/rabbitmq:4.1-management-alpine is imported
+        # from docker.io/library/rabbitmq:4.1-management-alpine.
         image.openshift.io/triggers: |-
           [
             {
               "from": {
                 "kind": "ImageStreamTag",
-                "name": "rabbitmq:4.1-management",
+                "name": "rabbitmq:4.1-management-alpine",
                 "namespace": "adsp-build"
               },
               "fieldPath": "spec.template.spec.containers[0].image",

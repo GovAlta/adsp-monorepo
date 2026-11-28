@@ -1,4 +1,5 @@
-// react-router-dom-v7 references TextEncoder/TextDecoder at module load time, which jsdom's
+// clean-code-ignore: RULE-19 Jest setupFiles polyfill, not application code
+// react-router-dom references TextEncoder/TextDecoder at module load time, which jsdom's
 // test environment does not provide as globals (unlike Node's own global scope).
 const { TextEncoder, TextDecoder } = require('util');
 

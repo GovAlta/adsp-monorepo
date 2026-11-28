@@ -36,7 +36,7 @@ src/
 ## Tech Stack
 
 - React 18 + TypeScript
-- React Router v6
+- React Router v7
 - Alberta Design System (`@abgov/react-components`)
 - ADSP JSON Forms (`@abgov/jsonforms-components`, `@jsonforms/react`)
 - Webpack 5 (`webpack-dev-server` for local development)
@@ -415,7 +415,7 @@ Display:
 
 ### Detail view
 
-Fetch record on mount; re-fetch when the route `id` param changes (React Router v6 re-uses the component).
+Fetch record on mount; re-fetch when the route `id` param changes (React Router re-uses the component).
 
 ```tsx
 const { id } = useParams();

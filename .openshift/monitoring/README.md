@@ -27,7 +27,8 @@ the same params files. Param files treat `#` as a comment: values must not conta
 | other or missing | after 30s          | 4h                  |
 | `info`           | not notified       | -                   |
 
-- Alerts are grouped by `alertname`, `service` and `kubernetes_pod_name`.
+- Alerts are grouped by `alertname` and `service`, so pods of one service firing together arrive as
+  one notification that lists each pod.
 - A firing `critical` alert suppresses `warning` alerts for the same service and pod.
 - Resolved alerts are notified with `[RESOLVED]` in the title.
 - The operator restricts the configuration to its own namespace; other namespaces are unaffected.

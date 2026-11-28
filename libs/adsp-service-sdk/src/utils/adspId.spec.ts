@@ -1,4 +1,4 @@
-import { adspId, assertAdspId } from './adspId';
+import { AdspId, adspId, assertAdspId } from './adspId';
 
 describe('adspId', () => {
   it('can parse namespace', () => {
@@ -57,6 +57,20 @@ describe('adspId', () => {
 
   it('fails for whitespace element', () => {
     expect(() => adspId`urn:ads:  :test-service:v1`).toThrow(/^ADSP ID cannot include empty element./);
+  });
+
+  // A caller that parses request input relies on the failure carrying a 400; a plain Error is reported
+  // as an unhandled server fault instead.
+  it('fails with a bad request for more segments than a resource', () => {
+    expect(() => adspId`urn:ads:test-sandbox:test-service:v1:/resource:extra`).toThrow(
+      expect.objectContaining({ extra: expect.objectContaining({ statusCode: 400 }) })
+    );
+  });
+
+  it('fails with a bad request for a urn that is not a string', () => {
+    expect(() => AdspId.parse(123 as never)).toThrow(
+      expect.objectContaining({ extra: expect.objectContaining({ statusCode: 400 }) })
+    );
   });
 
   it('can convert to string', () => {

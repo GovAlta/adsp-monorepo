@@ -250,7 +250,7 @@ objects:
                 - name: TENANT_PURGE_ENABLED
                   value: 'true'
                 - name: TENANT_RETENTION_DAYS
-                  value: '30'
+                  value: '365'
                 - name: MONGO_USER
                   valueFrom:
                     secretKeyRef:

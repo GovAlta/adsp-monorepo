@@ -2,6 +2,10 @@ const mockEnvironment = {
   MODEL: 'gpt-5.1',
   MODEL_URL: 'https://models.test/openai/v1',
   MODEL_API_KEY: 'model-key',
+  MODELS_WITHOUT_STREAMING: 'GOA-Default',
+  MODELS_WITHOUT_IMAGES: '',
+  MODELS_WITHOUT_TOOLS: '',
+  MODEL_CONNECTION_RETRIES: 0,
   AGENT_ACCESS_MAX_OUTPUT_TOKENS: 1000,
   AGENT_FORM_GENERATION_MAX_OUTPUT_TOKENS: 4000,
   AGENT_FORM_GENERATION_REASONING_EFFORT: '',
@@ -94,6 +98,38 @@ describe('getAgentModelConfiguration', () => {
 
     // Assert
     expect(model).toBe('github-models/openai/gpt-4.1');
+  });
+
+  it('calls a model listed in MODELS_WITHOUT_STREAMING without streaming, even for a stream call', async () => {
+    // Arrange
+    fetchMock.mockResolvedValue(
+      Response.json({
+        id: 'reply-1',
+        model: 'GOA-Default',
+        choices: [{ index: 0, message: { role: 'assistant', content: 'Hello.' }, finish_reason: 'stop' }],
+        usage: { prompt_tokens: 12, completion_tokens: 2, total_tokens: 14 },
+      }),
+    );
+    const model = getAgentModelConfiguration('GOA-Default') as LanguageModelV3;
+
+    // Act
+    const { stream } = await model.doStream({ prompt: PROMPT });
+    const parts: { type: string }[] = [];
+    for await (const part of stream as unknown as AsyncIterable<{ type: string }>) {
+      parts.push(part);
+    }
+
+    // Assert
+    const body = JSON.parse(fetchMock.mock.calls[0][1].body);
+    expect(body.stream).toBeFalsy();
+    expect(parts.map((part) => part.type)).toEqual([
+      'stream-start',
+      'response-metadata',
+      'text-start',
+      'text-delta',
+      'text-end',
+      'finish',
+    ]);
   });
 
   it("sends the Access Service agent's reply limit as max_completion_tokens, which reasoning models accept", async () => {

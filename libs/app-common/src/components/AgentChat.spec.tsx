@@ -397,3 +397,62 @@ describe('AgentChat', () => {
     expect(screen.getByTestId('chat-status')).toHaveTextContent('Context 14%');
   });
 });
+
+describe('AgentChat errors', () => {
+  beforeAll(() => {
+    Element.prototype.scrollIntoView = jest.fn();
+  });
+
+  const replyWith = (error: AgentMessage['errors'][number]): AgentMessage => ({
+    id: 'reply-1',
+    threadId: 'thread-1',
+    from: 'agent',
+    streaming: false,
+    content: '',
+    toolCalls: [],
+    errors: [error],
+  });
+
+  it('shows a busy AI service as a notice, without technical details', () => {
+    // Act
+    renderChat(
+      replyWith({
+        type: 'error',
+        code: 'RATE_LIMITED',
+        message: 'The AI service is busy right now. Please try again within 5 minutes.',
+        details: { code: 'RATE_LIMITED' },
+      }),
+    );
+
+    // Assert
+    const notice = screen.getByTestId('agent-error');
+    expect(notice).toHaveAttribute('data-kind', 'service');
+    expect(notice).toHaveTextContent(
+      'AI service busy: The AI service is busy right now. Please try again within 5 minutes.',
+    );
+    expect(notice.querySelector('pre')).toBeNull();
+  });
+
+  it('shows an unavailable AI service as a notice', () => {
+    // Act
+    renderChat(
+      replyWith({ type: 'error', code: 'MODEL_ERROR', message: "The AI service isn't responding right now." }),
+    );
+
+    // Assert
+    expect(screen.getByTestId('agent-error')).toHaveTextContent('AI service unavailable:');
+  });
+
+  it('keeps other errors as errors, with their details', () => {
+    // Act
+    renderChat(
+      replyWith({ type: 'tripwire', message: 'Prompt injection detected.', details: { processorId: 'guard' } }),
+    );
+
+    // Assert
+    const error = screen.getByTestId('agent-error');
+    expect(error).toHaveAttribute('data-kind', 'error');
+    expect(error).toHaveTextContent('Request Blocked: Prompt injection detected.');
+    expect(error.querySelector('pre')).toHaveTextContent('"processorId": "guard"');
+  });
+});

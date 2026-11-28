@@ -49,7 +49,7 @@ export const AddEditCommentTopicType: FunctionComponent<AddEditCommentTopicTypeP
   useEffect(() => {
     if (spinner && Object.keys(topicTypes).length > 0 && !isEdit) {
       onClose();
-      navigate(`edit/${topicType.id}`, { relative: 'path' });
+      navigate(`/admin/services/comment/edit/${topicType.id}`);
       setSpinner(false);
     }
   }, [topicTypes, topicType.id, spinner, navigate, isEdit, onClose]);

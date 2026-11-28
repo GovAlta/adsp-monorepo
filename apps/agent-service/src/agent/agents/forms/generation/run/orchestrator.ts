@@ -13,6 +13,7 @@ import type { DocumentOutline } from '../../../../utils/documentOutline';
 import { createGenerationLog, modelOutputOf, type GenerationLog } from './log';
 import type { GenerationAgents } from '../llm/agents';
 import type { UsageRecorder } from '../../../../model/conversationUsage';
+import { mapAgentStreamError } from '../../../../model/streamAbort';
 import { planFormGeneration } from '../llm/planner';
 import { FORM_GENERATION_PROGRESS, type GenerationPass, type ProgressEmitter } from './progress';
 import { generateStepPayload } from '../llm/stepBuilder';
@@ -361,7 +362,7 @@ async function runStep(
               usage,
             });
     } catch (err) {
-      errors = [`The increment could not be generated: ${describeError(err)}`];
+      errors = [`The increment could not be generated: ${describeGenerationError(err)}`];
       generationFailed = true;
       log.record('step-rejected', {
         index: step.index,
@@ -562,4 +563,9 @@ function describeStepContext(latest: FormDefinitionLatest, plan: GenerationPlan)
 
 function describeError(err: unknown): string {
   return err instanceof Error ? err.message : String(err);
+}
+
+/** A model call's failure, in the plain words the user sees rather than the endpoint's own message. */
+function describeGenerationError(err: unknown): string {
+  return mapAgentStreamError(err)?.message ?? describeError(err);
 }

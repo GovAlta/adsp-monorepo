@@ -2,7 +2,7 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { useParams } from 'react-router-dom-v7';
+import { useParams } from 'react-router-dom';
 import { TaskDetailsHost } from './TaskDetailsHost';
 import { getRegisteredDetailsComponents } from './register';
 import {
@@ -20,7 +20,7 @@ jest.mock('react-redux', () => ({
   useSelector: jest.fn(),
 }));
 
-jest.mock('react-router-dom-v7', () => ({
+jest.mock('react-router-dom', () => ({
   useParams: jest.fn(),
 }));
 

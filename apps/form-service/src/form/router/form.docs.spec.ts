@@ -463,6 +463,11 @@ describe('form routers documented behaviour', () => {
       const res = await request(createApp(admin)).get('/form/v1/definitions?createDateAfter=yesterday');
       expect(res.status).toBe(400);
     });
+
+    it('responds 400 for a top that is not an integer', async () => {
+      const res = await request(createApp(admin)).get('/form/v1/definitions?top=abc');
+      expect(res.status).toBe(400);
+    });
   });
 
   describe('GET /definitions/:definitionId', () => {
@@ -573,9 +578,9 @@ describe('form routers documented behaviour', () => {
       expect(res.status).toBe(401);
     });
 
-    it('responds 400 for a definition that does not exist', async () => {
+    it('responds 404 for a definition that does not exist', async () => {
       const res = await request(createApp(admin)).put('/form/v1/definitions/unknown/schedule').send(schedule);
-      expect(res.status).toBe(400);
+      expect(res.status).toBe(404);
     });
   });
 
@@ -788,6 +793,16 @@ describe('form routers documented behaviour', () => {
         .post(`/form/v1/forms/${formId}/submissions/${unknownId}`)
         .send({ dispositionStatus: 'approved', dispositionReason: 'Meets criteria.' });
       expect(res.status).toBe(404);
+    });
+
+    it.each([
+      ['formId', `/form/v1/forms/not-a-uuid/submissions/${submissionId}`],
+      ['submissionId', `/form/v1/forms/${formId}/submissions/not-a-uuid`],
+    ])('responds 400 when %s is not a UUID', async (_param, path) => {
+      const res = await request(createApp(admin))
+        .post(path)
+        .send({ dispositionStatus: 'approved', dispositionReason: 'Meets criteria.' });
+      expect(res.status).toBe(400);
     });
   });
 

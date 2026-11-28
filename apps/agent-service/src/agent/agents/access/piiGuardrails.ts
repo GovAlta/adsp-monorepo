@@ -12,5 +12,7 @@ export function createAccessServicePiiDetector(): PIIDetector {
     includeDetections: false,
     instructions:
       'Redact personal identifiers. Preserve technical identifiers used for troubleshooting, including ADSP URNs, Keycloak realm and client IDs, role names, JWT claim names, URLs, and hostnames unless they contain a detected personal identifier.',
+    // Some models stall on a strict JSON schema response format; describing the schema in the prompt works on all.
+    structuredOutputOptions: { jsonPromptInjection: true },
   });
 }

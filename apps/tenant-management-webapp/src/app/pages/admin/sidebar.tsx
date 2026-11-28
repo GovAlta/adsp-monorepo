@@ -80,7 +80,7 @@ const Sidebar = ({ type }: SidebarProps) => {
               {hasAdminRole && (
                 <>
                   <NavLink
-                    to="event-log"
+                    to="/admin/event-log"
                     onClick={scrollAppToTop}
                     className={({ isActive }) => (isActive ? 'current' : '')}
                     title="Event log"
@@ -89,7 +89,7 @@ const Sidebar = ({ type }: SidebarProps) => {
                     <span>Event log</span>
                   </NavLink>
                   <NavLink
-                    to="service-metrics"
+                    to="/admin/service-metrics"
                     onClick={scrollAppToTop}
                     className={({ isActive }) => (isActive ? 'current' : '')}
                     title="Service metrics"
@@ -139,7 +139,7 @@ const Sidebar = ({ type }: SidebarProps) => {
                   ) : (
                     <NavLink
                       key={index}
-                      to={service.link}
+                      to={`/admin/${service.link}`}
                       onClick={scrollAppToTop}
                       className={({ isActive }) => (isActive ? 'current' : '')}
                       title={service.name}

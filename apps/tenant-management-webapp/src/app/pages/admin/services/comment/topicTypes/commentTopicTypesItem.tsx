@@ -24,7 +24,7 @@ export const CommentTopicTypesItem = ({ commentTopicType, onDelete }: PdfTemplat
             testId="comment-topic-types-edit"
             title="Edit"
             type="create"
-            onClick={() => navigate(`edit/${commentTopicType.id}`)}
+            onClick={() => navigate(`/admin/services/comment/edit/${commentTopicType.id}`)}
           />
           <GoAContextMenuIcon
             testId={`comment-topic-types-delete`}

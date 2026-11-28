@@ -7,6 +7,8 @@ import {
   NOTIFICATION_TEMPLATE_AGENT_ID,
   PDF_GENERATION_AGENT_ID,
 } from './executionLimits';
+import { createRetryingFetch } from './modelFetch';
+import { getModelLimits, withModelLimits } from './modelLimits';
 
 export interface AgentModelConfiguration {
   id?: string;
@@ -26,18 +28,23 @@ export function getAgentModelId(agentId?: string, modelConfig?: AgentModelConfig
 /**
  * The model for an agent. An OpenAI-compatible endpoint is built here rather than by Mastra's model router, because
  * the router leaves out stream_options.include_usage, so the endpoint reports no token usage on streamed replies.
+ * Brief connection failures are retried, and the model is held to the limits configured for it.
  */
 export function getAgentModelConfiguration(modelId = environment.MODEL, modelConfig?: AgentModelConfiguration) {
-  return environment.MODEL_URL
-    ? createOpenAICompatible({
-        name: 'openai',
-        baseURL: environment.MODEL_URL,
-        apiKey: environment.MODEL_API_KEY,
-        headers: modelConfig?.headers,
-        includeUsage: true,
-        supportsStructuredOutputs: true,
-      }).chatModel(modelId)
-    : modelId;
+  if (!environment.MODEL_URL) {
+    return modelId;
+  }
+
+  const model = createOpenAICompatible({
+    name: 'openai',
+    baseURL: environment.MODEL_URL,
+    apiKey: environment.MODEL_API_KEY,
+    headers: modelConfig?.headers,
+    includeUsage: true,
+    supportsStructuredOutputs: true,
+    fetch: createRetryingFetch(environment.MODEL_CONNECTION_RETRIES),
+  }).chatModel(modelId);
+  return withModelLimits(model, getModelLimits(modelId));
 }
 
 /** The longest reply an agent's model may write in one call, for agents that set one. */

@@ -7,7 +7,7 @@ import React, { useState } from 'react';
 import { isObjectArrayEmpty, renderCellColumn } from './ObjectListControlUtils';
 import { RenderCellColumnProps } from './ObjectListControlTypes';
 import { findControlLabel, humanizeAjvError, combineRequiredErrors } from './ListWithDetailControl'; // adjust path
-import { ControlElement, Layout, UISchemaElement, JsonSchema } from '@jsonforms/core';
+import { ControlElement, Layout, UISchemaElement, JsonSchema, JsonSchema7 } from '@jsonforms/core';
 import { ContextProviderFactory } from '../../Context';
 
 // Mock ResizeObserver in the scope of this test file
@@ -187,11 +187,15 @@ const fileUploadUiSchema = {
 
 const ContextProvider = ContextProviderFactory();
 
-const FileUploadListWithDetailHarness = () => {
+type UploadedFiles = Record<string, { urn: string; filename: string }[]>;
+
+const FileUploadListWithDetailHarness = ({
+  initialFileList = { 'photos.0.file': [{ urn: 'urn:file-1', filename: 'photo.jpg' }] },
+}: {
+  initialFileList?: UploadedFiles;
+}) => {
   const [data, setData] = useState({ photos: [{ file: 'urn:file-1' }] });
-  const [fileList, setFileList] = useState<Record<string, { urn: string; filename: string }[]>>({
-    'photos.0.file': [{ urn: 'urn:file-1', filename: 'photo.jpg' }],
-  });
+  const [fileList, setFileList] = useState<UploadedFiles>(initialFileList);
 
   const deleteFile = jest.fn((file: { urn: string }, propertyId: string) => {
     setFileList((previous) => {
@@ -222,6 +226,33 @@ const FileUploadListWithDetailHarness = () => {
     </ContextProvider>
   );
 };
+
+const renderPhotoWithFiles = (
+  itemProperties: Record<string, JsonSchema7>,
+  detailScope: string,
+  photo: Record<string, unknown>,
+  fileList: UploadedFiles,
+) =>
+  render(
+    <ContextProvider
+      fileManagement={{ fileList, uploadFile: jest.fn(), downloadFile: jest.fn(), deleteFile: jest.fn() }}
+    >
+      <JsonForms
+        data={{ photos: [photo] }}
+        schema={{
+          type: 'object',
+          properties: { photos: { type: 'array', items: { type: 'object', properties: itemProperties } } },
+        }}
+        uischema={{
+          ...fileUploadUiSchema,
+          options: { detail: { type: 'VerticalLayout', elements: [{ type: 'Control', scope: detailScope }] } },
+        }}
+        ajv={new Ajv({ allErrors: true, verbose: true, strict: false })}
+        renderers={GoARenderers}
+        cells={GoACells}
+      />
+    </ContextProvider>,
+  );
 
 describe('Object Array Renderer', () => {
   it('can add a new item', () => {
@@ -480,6 +511,78 @@ describe('Object Array Renderer', () => {
     });
 
     expect(queryByText('photo.jpg')).not.toBeInTheDocument();
+  });
+
+  it("shows a file's name in an item's summary, not its file reference", () => {
+    const { baseElement } = render(<FileUploadListWithDetailHarness />);
+
+    const summary = baseElement.querySelector('goa-table');
+    expect(summary).toHaveTextContent('photo.jpg');
+    expect(summary).not.toHaveTextContent('urn:file-1');
+  });
+
+  it('says a file was uploaded when its name is not loaded yet', () => {
+    const { baseElement } = render(<FileUploadListWithDetailHarness initialFileList={{}} />);
+
+    const summary = baseElement.querySelector('goa-table');
+    expect(summary).toHaveTextContent('File uploaded');
+    expect(summary).not.toHaveTextContent('urn:file-1');
+  });
+
+  it("names the item to delete without showing a file's reference", () => {
+    const { baseElement } = render(<FileUploadListWithDetailHarness />);
+
+    fireEvent(baseElement.querySelector("goa-icon-button[icon='trash']")!, new CustomEvent('_click'));
+
+    const dialog = baseElement.querySelector('goa-modal');
+    expect(dialog).toHaveTextContent('photo.jpg');
+    expect(dialog).not.toHaveTextContent('urn:file-1');
+  });
+
+  describe('with a multi-file field', () => {
+    const renderPhotoWithTwoFiles = () =>
+      renderPhotoWithFiles(
+        { files: { type: 'array', items: { type: 'string', format: 'file-urn' } } },
+        '#/properties/files',
+        { files: ['urn:file-1', 'urn:file-2'] },
+        {
+          'photos.0.files': [
+            { urn: 'urn:file-1', filename: 'front.jpg' },
+            { urn: 'urn:file-2', filename: 'back.jpg' },
+          ],
+        },
+      );
+
+    it("shows each file's name in an item's summary", () => {
+      const { baseElement } = renderPhotoWithTwoFiles();
+
+      const summary = baseElement.querySelector('goa-table');
+      expect(summary).toHaveTextContent('front.jpg, back.jpg');
+      expect(summary).not.toHaveTextContent('urn:file');
+    });
+
+    it("names the item to delete with each file's name", () => {
+      const { baseElement } = renderPhotoWithTwoFiles();
+
+      fireEvent(baseElement.querySelector("goa-icon-button[icon='trash']")!, new CustomEvent('_click'));
+
+      const dialog = baseElement.querySelector('goa-modal');
+      expect(dialog).toHaveTextContent('front.jpg, back.jpg');
+      expect(dialog).not.toHaveTextContent('urn:file');
+    });
+  });
+
+  it("shows the name of a file nested in an item's object", () => {
+    const { baseElement } = renderPhotoWithFiles(
+      { details: { type: 'object', properties: { file: { type: 'string', format: 'file-urn' } } } },
+      '#/properties/details/properties/file',
+      { details: { file: 'urn:file-1' } },
+      { 'photos.0.details.file': [{ urn: 'urn:file-1', filename: 'photo.jpg' }] },
+    );
+
+    const summary = baseElement.querySelector('goa-table');
+    expect(summary).toHaveTextContent('photo.jpg');
+    expect(summary).not.toHaveTextContent('urn:file-1');
   });
 });
 

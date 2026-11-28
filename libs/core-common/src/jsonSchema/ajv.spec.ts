@@ -134,6 +134,46 @@ describe('ValidationService', () => {
     service.setSchema('test', schema);
   });
 
+  it('can validate with a schema key that is not a valid URI scheme', () => {
+    const service = new AjvValidationService(logger);
+    const schema = { type: 'object', properties: { valueA: { type: 'number' } }, additionalProperties: false };
+
+    service.setSchema('my_namespace:test', schema);
+    service.setSchema('123-namespace:test', schema);
+
+    expect(() => service.validate('test', 'my_namespace:test', { valueA: 123 })).not.toThrow();
+    expect(() => service.validate('test', '123-namespace:test', { valueB: 'value' })).toThrow(/Value not valid for/);
+  });
+
+  it('can validate with draft 2020-12 json schema', () => {
+    const service = new AjvValidationService(logger);
+    service.setSchema('test', {
+      $schema: 'https://json-schema.org/draft/2020-12/schema',
+      type: 'object',
+      properties: { valueA: { type: 'string', format: 'phone' } },
+      required: ['valueA'],
+    });
+
+    expect(() => service.validate('test', 'test', { valueA: '7801234567' })).not.toThrow();
+    expect(() => service.validate('test', 'test', {})).toThrow(/Value not valid for/);
+  });
+
+  it('can replace a draft 2020-12 schema with a draft-07 schema for the same key', () => {
+    const service = new AjvValidationService(logger);
+    service.setSchema('test', { $schema: 'https://json-schema.org/draft/2020-12/schema', type: 'string' });
+    service.setSchema('test', { type: 'number' });
+
+    expect(() => service.validate('test', 'test', 123)).not.toThrow();
+    expect(() => service.validate('test', 'test', 'value')).toThrow(/Value not valid for/);
+  });
+
+  it('can log the reason for an invalid schema', () => {
+    const service = new AjvValidationService(logger);
+
+    expect(() => service.setSchema('test', { type: 'invalid-type' })).toThrow();
+    expect(logger.error).toHaveBeenCalledWith(expect.stringMatching(/^Schema for key 'test' is invalid: .+/));
+  });
+
   it('validates phone format', () => {
     const service = new AjvValidationService(logger);
     const schema = { type: 'object', properties: { phone: { type: 'string', format: 'phone' } } };

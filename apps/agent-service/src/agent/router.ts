@@ -30,6 +30,7 @@ import {
   StreamErrorCode,
   toStreamErrorPayload,
   toStreamTripwirePayload,
+  toToolErrorPayload,
 } from './model/streamAbort';
 const TOKEN_EXPIRY_THRESHOLD_MS = environment.AGENT_TOKEN_EXPIRY_THRESHOLD_MS;
 
@@ -499,7 +500,9 @@ export function onIoConnection(logger: Logger, budget: TokenBudget = createToken
                           ? toStreamErrorPayload(payload)
                           : type === 'tripwire'
                             ? toStreamTripwirePayload(payload)
-                            : payload,
+                            : type === 'tool-error'
+                              ? toToolErrorPayload(payload)
+                              : payload,
                     },
                   });
 

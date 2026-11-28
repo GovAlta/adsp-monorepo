@@ -8,7 +8,7 @@ export const AgentRouter = () => {
     <Routes>
       <Route path="/edit/:id" element={<AgentEditor />} />
       <Route path="/:tab" element={<Agent />} />
-      <Route path="*" element={<Navigate to="overview" />} />
+      <Route path="*" element={<Navigate to="/admin/services/agent/overview" replace />} />
     </Routes>
   );
 };

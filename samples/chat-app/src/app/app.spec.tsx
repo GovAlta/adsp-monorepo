@@ -2,7 +2,7 @@ import React from 'react';
 import { Provider } from 'react-redux';
 import { getDefaultMiddleware } from '@reduxjs/toolkit';
 import { render } from '@testing-library/react';
-import { BrowserRouter } from 'react-router-dom-v7';
+import { BrowserRouter } from 'react-router-dom';
 import configureStore from 'redux-mock-store';
 
 import App from './app';
