@@ -1,5 +1,5 @@
 import { adspId, ServiceDirectory } from '@abgov/adsp-service-sdk';
-import { UnauthorizedError } from '@core-services/core-common';
+import { InvalidOperationError, UnauthorizedError } from '@core-services/core-common';
 import axios from 'axios';
 import * as HttpStatusCodes from 'http-status-codes';
 import { EventMetrics, MetricResult } from '../types';
@@ -185,11 +185,32 @@ function isDistinctCountUnavailable(err: unknown): boolean {
   return status === HttpStatusCodes.BAD_REQUEST && typeof message === 'string' && message.includes(NOT_ROLLED_UP_MESSAGE);
 }
 
+/**
+ * A 404 is excluded from the 4xx branch: nothing the caller sends can make value-service lack the
+ * endpoint, so it means the resolved base URL is wrong -- a server fault, which belongs in the 500
+ * branch.
+ */
 function rethrowValueServiceError(err: unknown): never {
   if (axios.isAxiosError(err)) {
     const status = err.response?.status;
-    if (status === HttpStatusCodes.UNAUTHORIZED || status === HttpStatusCodes.FORBIDDEN) {
+    if (status === HttpStatusCodes.UNAUTHORIZED) {
       throw new UnauthorizedError('Not authorized to read report data.');
+    }
+    if (status === HttpStatusCodes.FORBIDDEN) {
+      // core-common has no ForbiddenError; GoAError carries the responded status in extra, which
+      // is what createErrorHandler reads.
+      throw new UnauthorizedError('Not authorized to read report data.', {
+        statusCode: HttpStatusCodes.FORBIDDEN,
+      });
+    }
+    if (
+      status &&
+      status >= HttpStatusCodes.BAD_REQUEST &&
+      status < HttpStatusCodes.INTERNAL_SERVER_ERROR &&
+      status !== HttpStatusCodes.NOT_FOUND
+    ) {
+      const { errorMessage } = (err.response?.data as { errorMessage?: unknown } | undefined) || {};
+      throw new InvalidOperationError(typeof errorMessage === 'string' ? errorMessage : err.message);
     }
   }
   throw err;

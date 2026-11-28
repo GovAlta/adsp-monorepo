@@ -1,4 +1,4 @@
-import { createErrorHandler, UnauthorizedError } from '@core-services/core-common';
+import { createErrorHandler, InvalidOperationError, UnauthorizedError } from '@core-services/core-common';
 import { createDocumentedResponseRecorder } from '@core-services/core-common/testing';
 import * as express from 'express';
 import { Express } from 'express';
@@ -160,7 +160,7 @@ describe('reports router documented behaviour', () => {
       expect(res.body.errorMessage).toBe('Bearer token is required.');
     });
 
-    it('returns 401 when value-service rejects the token', async () => {
+    it('returns 401 when value-service does not accept the token', async () => {
       valueClientMock.readEventMetrics.mockRejectedValueOnce(
         new UnauthorizedError('Not authorized to read report data.'),
       );
@@ -172,6 +172,34 @@ describe('reports router documented behaviour', () => {
 
       expect(res.status).toBe(401);
       expect(res.body.errorMessage).toBe('Not authorized to read report data.');
+    });
+
+    it('returns 403 when the token lacks the value-reader role', async () => {
+      valueClientMock.readEventMetrics.mockRejectedValueOnce(
+        new UnauthorizedError('Not authorized to read report data.', { statusCode: 403 }),
+      );
+
+      const res = await request(createApp())
+        .get(`${path}/pdf/summary`)
+        .query({ from: '2025-01-01', to: '2025-01-31' })
+        .set('Authorization', token);
+
+      expect(res.status).toBe(403);
+      expect(res.body.errorMessage).toBe('Not authorized to read report data.');
+    });
+
+    it('returns 400 with the message when value-service rejects the request', async () => {
+      valueClientMock.readEventMetrics.mockRejectedValueOnce(
+        new InvalidOperationError('Tenant context is required for operation.'),
+      );
+
+      const res = await request(createApp())
+        .get(`${path}/pdf/summary`)
+        .query({ from: '2025-01-01', to: '2025-01-31' })
+        .set('Authorization', token);
+
+      expect(res.status).toBe(400);
+      expect(res.body.errorMessage).toBe('Tenant context is required for operation.');
     });
 
     it('returns 404 for a section the service does not offer', async () => {
