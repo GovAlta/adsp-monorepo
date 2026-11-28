@@ -9,6 +9,7 @@ import {
   GoabContainer,
   GoabDropdown,
   GoabDropdownItem,
+  GoabFormItem,
   GoabIcon,
   GoabInput,
   GoabModal,
@@ -38,7 +39,14 @@ import {
   RotationSettings,
 } from './clientSecretsApi';
 import { createClientSecretsApi } from './clientSecretsHttpApi';
-import { ROTATION_POLICY_NAME, ROTATION_PROFILE_NAME } from './constants';
+import { ContactsModal } from './ContactsModal';
+import {
+  CLIENT_EXPIRY_NOTE,
+  DISPLAY_TIME_ZONE,
+  ROTATION_POLICY_NAME,
+  ROTATION_PROFILE_NAME,
+  VISIBLE_CONTACTS,
+} from './constants';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const DAY_SECONDS = 24 * 60 * 60;
@@ -62,8 +70,8 @@ export function formatSeconds(seconds: number): string {
 const PAGE_SIZES = [10, 25, 50, 100];
 
 const MODE_HINT: Record<RealmRotationMode, string> = {
-  off: 'No client secrets are rotated automatically.',
-  selected: 'Only clients that are enabled below are rotated automatically.',
+  off: 'Client secrets do not expire and no expiry notices are sent.',
+  selected: 'Only the clients enabled below have expiring secrets and expiry notices.',
 };
 
 // The same rules are enforced by the API; this gives immediate feedback.
@@ -96,6 +104,10 @@ export function validateSchedule(schedule: RotationSchedule): string | undefined
 
 type Section = 'mode' | 'schedule' | 'clients';
 
+interface ContactsEdit {
+  client: ClientSecretClient;
+}
+
 interface SectionError {
   section: Section;
   message: string;
@@ -110,7 +122,10 @@ interface Confirmation {
   destructive?: boolean;
   failure: string;
   success?: string;
-  run: () => Promise<void>;
+  /** Skip reloading when the action changes nothing the page shows, such as sending a notification. */
+  skipReload?: boolean;
+  /** A client result replaces that client in the list instead of reloading everything. */
+  run: () => Promise<ClientSecretClient | void>;
 }
 
 export function daysRemaining(expiresAt: string | undefined, now = Date.now()): number | undefined {
@@ -126,11 +141,15 @@ export function describeSchedule({
 }: RotationSchedule): string {
   return (
     `Secrets expire after ${formatSeconds(expirationPeriod)}. Contacts are notified ${formatSeconds(noticePeriod)} before ` +
-    `expiry. After a rotation, the previous secret keeps working for ${formatSeconds(rotatedExpirationPeriod)}.`
+    `expiry. After you rotate a secret, the previous secret keeps working for ${formatSeconds(rotatedExpirationPeriod)}.`
   );
 }
 
-const LONG_DATE = new Intl.DateTimeFormat('en-US', { dateStyle: 'full', timeStyle: 'long' });
+const LONG_DATE = new Intl.DateTimeFormat('en-US', {
+  dateStyle: 'full',
+  timeStyle: 'long',
+  timeZone: DISPLAY_TIME_ZONE,
+});
 
 /** Like Keycloak's credentials tab: "Tuesday, February 23, 2027 at 1:41:01 PM CST". */
 export function formatLongDate(value: string): string {
@@ -195,6 +214,7 @@ const ClientSecretsView: FunctionComponent<{ api: ClientSecretsApi; keycloakClie
   const [loading, setLoading] = useState(true);
   const [working, setWorking] = useState(false);
   const [confirmation, setConfirmation] = useState<Confirmation | null>(null);
+  const [contactsEdit, setContactsEdit] = useState<ContactsEdit | null>(null);
   const [checkboxEpoch, setCheckboxEpoch] = useState(0);
 
   const refresh = useCallback(async () => {
@@ -246,17 +266,22 @@ const ClientSecretsView: FunctionComponent<{ api: ClientSecretsApi; keycloakClie
   }, [reload]);
 
   const act = async (
-    action: () => Promise<void>,
+    action: () => Promise<ClientSecretClient | void>,
     failure: string,
     successMessage?: string,
     section: Section = 'clients',
+    skipReload = false,
   ) => {
     setWorking(true);
     try {
-      await action();
-      // The save is done. Hide its overlay before the clients reload shows its own loader.
+      const updated = await action();
+      // The save is done. Hide its overlay before any reload shows its own loader.
       setWorking(false);
-      await reload();
+      if (updated) {
+        setClients((current) => current?.map((client) => (client.id === updated.id ? updated : client)) ?? current);
+      } else if (!skipReload) {
+        await reload();
+      }
       if (successMessage) {
         TemporaryNotification.show(successMessage, { type: 'success', duration: 'long' });
       }
@@ -280,7 +305,7 @@ const ClientSecretsView: FunctionComponent<{ api: ClientSecretsApi; keycloakClie
     const pending = confirmation;
     setConfirmation(null);
     if (pending) {
-      await act(pending.run, pending.failure, pending.success, pending.section);
+      await act(pending.run, pending.failure, pending.success, pending.section, pending.skipReload);
     }
   };
 
@@ -313,32 +338,34 @@ const ClientSecretsView: FunctionComponent<{ api: ClientSecretsApi; keycloakClie
       return;
     }
     setConfirmation({
-      heading: `Turn automatic rotation ${next === 'off' ? 'off' : 'on'}?`,
+      heading: `Turn secret expiry ${next === 'off' ? 'off' : 'on'}?`,
       message: <p>{MODE_HINT[next]}</p>,
       confirmLabel: next === 'off' ? 'Turn off' : 'Turn on',
       section: 'mode',
-      failure: 'Failed to change the rotation setting.',
+      failure: 'Failed to change the secret expiry setting.',
       success:
         next === 'off'
-          ? 'Automatic rotation was turned off. No client secrets are rotated and their expiry dates were removed.'
-          : 'Automatic rotation was turned on. Enable the clients to rotate in the table below.',
+          ? 'Secret expiry was turned off. Client secrets no longer expire and their expiry dates were removed.'
+          : 'Secret expiry was turned on. Enable the clients that should have expiring secrets in the table below.',
       run: () => api.setMode(next),
     });
   };
 
   const askOptIn = (client: ClientSecretClient, enable: boolean) =>
     setConfirmation({
-      heading: `${enable ? 'Enable' : 'Disable'} automatic rotation?`,
+      heading: `${enable ? 'Enable' : 'Disable'} secret expiry?`,
       message: (
         <p>
-          {enable ? 'Enable' : 'Disable'} automatic rotation for <strong>{clientLabel(client)}</strong>.
-          {!enable && ' It will no longer be rotated and its secret expiry date will be removed.'}
+          {enable ? 'Enable' : 'Disable'} secret expiry for <strong>{clientLabel(client)}</strong>.
+          {enable
+            ? ' Its contacts are notified before the secret expires. Rotate the secret before then.'
+            : ' Its secret will no longer expire and its expiry date will be removed.'}
         </p>
       ),
       confirmLabel: enable ? 'Enable' : 'Disable',
       destructive: !enable,
       failure: `Failed to update ${clientLabel(client)}.`,
-      success: `Automatic rotation was ${enable ? 'enabled' : 'disabled'} for ${clientLabel(client)}.`,
+      success: `Secret expiry was ${enable ? 'enabled' : 'disabled'} for ${clientLabel(client)}.`,
       run: () => api.setOptIn(client.id, enable),
     });
 
@@ -348,12 +375,13 @@ const ClientSecretsView: FunctionComponent<{ api: ClientSecretsApi; keycloakClie
       message: (
         <p>
           Rotate the secret for <strong>{clientLabel(client)}</strong>? A new secret is generated, and the previous
-          secret keeps working for {graceDays} so you can update your application.
+          secret keeps working for {graceDays} so you can update your application. The client's contacts and the realm
+          admins are notified by email.
         </p>
       ),
       confirmLabel: 'Rotate',
       failure: `Failed to rotate ${clientLabel(client)}.`,
-      success: `The secret of ${clientLabel(client)} was rotated. The previous secret keeps working for ${graceDays}.`,
+      success: `The secret of ${clientLabel(client)} was rotated and subscribers were notified. The previous secret keeps working for ${graceDays}.`,
       run: () => api.rotate(client.id),
     });
 
@@ -364,13 +392,13 @@ const ClientSecretsView: FunctionComponent<{ api: ClientSecretsApi; keycloakClie
         <p>
           The previous secret for <strong>{clientLabel(client)}</strong> is removed immediately instead of at the end of
           the grace period. Applications still using it will stop working until they are updated with the current
-          secret.
+          secret. The client's contacts and the realm admins are notified by email.
         </p>
       ),
       confirmLabel: 'Invalidate',
       destructive: true,
       failure: `Failed to invalidate the previous secret of ${clientLabel(client)}.`,
-      success: `The previous secret of ${clientLabel(client)} was invalidated.`,
+      success: `The previous secret of ${clientLabel(client)} was invalidated and subscribers were notified.`,
       run: () => api.invalidateRotated(client.id),
     });
 
@@ -387,7 +415,21 @@ const ClientSecretsView: FunctionComponent<{ api: ClientSecretsApi; keycloakClie
       failure: `Failed to notify ${clientLabel(client)}.`,
       success: `The expiry notification for ${clientLabel(client)} was sent to ${client.contacts.join(', ')}.`,
       run: () => api.notify(client.id),
+      skipReload: true,
     });
+
+  const saveContacts = async (contacts: string[]) => {
+    if (!contactsEdit) {
+      return;
+    }
+    const { client } = contactsEdit;
+    setContactsEdit(null);
+    await act(
+      () => api.setContacts(client.id, contacts),
+      `Failed to save the contacts of ${clientLabel(client)}.`,
+      `The contacts of ${clientLabel(client)} were saved.`,
+    );
+  };
 
   const schedule: RotationSchedule | null = draft && {
     expirationPeriod: Number(draft.expirationPeriod),
@@ -408,19 +450,19 @@ const ClientSecretsView: FunctionComponent<{ api: ClientSecretsApi; keycloakClie
       return;
     }
     setConfirmation({
-      heading: 'Save rotation schedule?',
+      heading: 'Save expiry schedule?',
       message: (
         <p>
           Secrets expire after {formatSeconds(schedule.expirationPeriod)}, contacts are notified{' '}
           {formatSeconds(schedule.noticePeriod)} before expiry, and the previous secret keeps working for{' '}
-          {formatSeconds(schedule.rotatedExpirationPeriod)} after rotation. This applies to every client that has
-          automatic rotation enabled.
+          {formatSeconds(schedule.rotatedExpirationPeriod)} after you rotate. This applies to every client that has
+          secret expiry enabled.
         </p>
       ),
       confirmLabel: 'Save',
       section: 'schedule',
-      failure: 'Failed to save the rotation schedule.',
-      success: 'The rotation schedule was saved.',
+      failure: 'Failed to save the expiry schedule.',
+      success: 'The expiry schedule was saved.',
       run: () => api.saveSchedule(schedule),
     });
   };
@@ -474,16 +516,17 @@ const ClientSecretsView: FunctionComponent<{ api: ClientSecretsApi; keycloakClie
 
       <Description data-testid="client-secrets-description">
         <p>
-          Client secrets expire and are rotated automatically for clients that opt in. Opted-in clients get a notice
-          before the secret expires, and the previous secret keeps working for a grace period after rotation so that you
-          can update your application.
+          Client secrets can expire on a schedule. For clients that have secret expiry enabled, the contacts get a
+          notice before the secret expires. Secrets are not rotated automatically: rotate the secret here or in Keycloak
+          before it expires. After a rotation the previous secret keeps working for a grace period, so that you can
+          update your application.
         </p>
       </Description>
 
       {mode === 'off' && settings && (
         <CalloutSpacing>
-          <GoabCallout type="information" heading="Automatic rotation is off" size="medium" testId="off-callout">
-            Secrets are not rotated automatically and do not expire. Turn rotation on to start automatic rotation. The
+          <GoabCallout type="information" heading="Secret expiry is off" size="medium" testId="off-callout">
+            Secrets do not expire and no expiry notices are sent. Turn secret expiry on to set an expiry schedule. The
             first time, this creates the <code>{ROTATION_POLICY_NAME}</code> client policy and its{' '}
             <code>{ROTATION_PROFILE_NAME}</code> profile in your realm.
           </GoabCallout>
@@ -493,10 +536,10 @@ const ClientSecretsView: FunctionComponent<{ api: ClientSecretsApi; keycloakClie
       <GoabContainer type="non-interactive" accent="filled" padding="relaxed">
         <section aria-labelledby="rotation-mode-heading" data-testid="rotation-mode">
           <CardHeader>
-            <h2 id="rotation-mode-heading">Automatic rotation</h2>
+            <h2 id="rotation-mode-heading">Secret expiry</h2>
             <GoabBadge
               type={mode === 'off' ? 'archived' : 'success'}
-              content={mode === 'off' ? 'Rotation off' : 'Rotation on'}
+              content={mode === 'off' ? 'Expiry off' : 'Expiry on'}
               icon={false}
               testId="rotation-state"
             />
@@ -522,7 +565,7 @@ const ClientSecretsView: FunctionComponent<{ api: ClientSecretsApi; keycloakClie
               name="rotation-switch"
               value="on"
               label="On"
-              description="Secrets expire and are rotated automatically."
+              description="Secrets of the enabled clients expire, and their contacts are notified before they do."
             />
           </GoabRadioGroup>
           <FormActions>
@@ -550,7 +593,7 @@ const ClientSecretsView: FunctionComponent<{ api: ClientSecretsApi; keycloakClie
           <GoabContainer type="non-interactive" accent="filled" padding="relaxed">
             <section aria-labelledby="rotation-windows-heading" data-testid="rotation-windows">
               <CardHeader>
-                <h2 id="rotation-windows-heading">Rotation schedule</h2>
+                <h2 id="rotation-windows-heading">Expiry schedule</h2>
               </CardHeader>
               {error?.section === 'schedule' && (
                 <BannerSpacing>
@@ -563,13 +606,13 @@ const ClientSecretsView: FunctionComponent<{ api: ClientSecretsApi; keycloakClie
                 {scheduleField(
                   'expirationPeriod',
                   'Secret expiration',
-                  'When the secret is rotated. The time frequency for generating a new secret. (In seconds)',
+                  'How long a secret is valid before it expires. Rotate the secret before then. (In seconds)',
                   'seconds',
                 )}
                 {scheduleField(
                   'rotatedExpirationPeriod',
                   'Rotated Secret expiration',
-                  'When secret is rotated, this is the remaining expiration time for the old secret. This value should be always smaller than Secret expiration. When this is set to 0, the old secret will be immediately removed during client rotation (In seconds)',
+                  'After you rotate a secret, this is how long the old secret keeps working. This value should always be smaller than Secret expiration. When this is set to 0, the old secret is removed immediately when you rotate the client. (In seconds)',
                   'seconds',
                 )}
                 {scheduleField(
@@ -583,7 +626,7 @@ const ClientSecretsView: FunctionComponent<{ api: ClientSecretsApi; keycloakClie
                 <Summary data-testid="schedule-summary">{describeSchedule(schedule)}</Summary>
               )}
               <Note>
-                Applies to every client that has automatic rotation enabled. Notices are sent at least{' '}
+                Applies to every client that has secret expiry enabled. Notices are sent at least{' '}
                 {settings.minNoticeGapDays} days apart, which is set by platform administrators.
               </Note>
               <FormActions>
@@ -618,6 +661,12 @@ const ClientSecretsView: FunctionComponent<{ api: ClientSecretsApi; keycloakClie
         <SectionHeader>
           <h2>Clients</h2>
         </SectionHeader>
+      )}
+
+      {!clientsHidden && (
+        <GoabCallout type="information" size="medium" testId="client-expiry-note">
+          {CLIENT_EXPIRY_NOTE}
+        </GoabCallout>
       )}
 
       {error?.section === 'clients' && (
@@ -692,7 +741,7 @@ const ClientSecretsView: FunctionComponent<{ api: ClientSecretsApi; keycloakClie
                       </span>
                       <GoabBadge
                         type={enabled ? 'success' : 'important'}
-                        content={enabled ? 'Rotation on' : 'Rotation off'}
+                        content={enabled ? 'Expiry on' : 'Expiry off'}
                         icon={true}
                       />
                       <GoabIcon type={open ? 'chevron-down' : 'chevron-forward'} />
@@ -719,16 +768,33 @@ const ClientSecretsView: FunctionComponent<{ api: ClientSecretsApi; keycloakClie
                         </Fact>
                         <Fact>
                           <FactLabel>Contact</FactLabel>
-                          <span>{client.contacts.join(', ') || <Unsaved>Add contact</Unsaved>}</span>
+                          <span data-testid={`contacts-${client.id}`}>
+                            {client.contacts.length === 0 ? (
+                              <Unsaved>None</Unsaved>
+                            ) : (
+                              <>
+                                {client.contacts.slice(0, VISIBLE_CONTACTS).join(', ')}
+                                {client.contacts.length > VISIBLE_CONTACTS &&
+                                  ` +${client.contacts.length - VISIBLE_CONTACTS} more`}
+                              </>
+                            )}
+                          </span>
+                          <ActionButton
+                            type="button"
+                            onClick={() => setContactsEdit({ client })}
+                            data-testid={`edit-contacts-${client.id}`}
+                          >
+                            {client.contacts.length > 0 ? 'Edit contacts' : 'Add contacts'}
+                          </ActionButton>
                         </Fact>
                         <Fact>
-                          <FactLabel>Automatic rotation</FactLabel>
+                          <FactLabel>Secret expiry</FactLabel>
                           <GoabCheckbox
                             key={`${client.id}-${checkboxEpoch}`}
                             name={`opt-in-${client.id}`}
                             checked={enabled}
                             disabled={mode !== 'selected'}
-                            ariaLabel={`Rotate ${client.clientId} automatically`}
+                            ariaLabel={`Enable secret expiry for ${client.clientId}`}
                             onChange={(detail: GoabCheckboxOnChangeDetail) => askOptIn(client, detail.checked)}
                             testId={`opt-in-${client.id}`}
                           >
@@ -737,7 +803,10 @@ const ClientSecretsView: FunctionComponent<{ api: ClientSecretsApi; keycloakClie
                         </Fact>
                       </Facts>
                       <PanelActions>
-                        <GoabTooltip content={covered ? 'Rotate secret now' : 'Requires opt-in'} position="top">
+                        <GoabTooltip
+                          content={covered ? 'Rotate secret now' : 'Requires secret expiry to be enabled'}
+                          position="top"
+                        >
                           <ActionButton
                             type="button"
                             disabled={!covered}
@@ -769,7 +838,7 @@ const ClientSecretsView: FunctionComponent<{ api: ClientSecretsApi; keycloakClie
                           content={
                             client.optedIn && client.contacts.length > 0
                               ? 'Send expiry notification to contacts'
-                              : 'Requires opt-in and a contact'
+                              : 'Requires secret expiry to be enabled and a contact'
                           }
                           position="top"
                         >
@@ -863,6 +932,15 @@ const ClientSecretsView: FunctionComponent<{ api: ClientSecretsApi; keycloakClie
         >
           {confirmation.message}
         </GoabModal>
+      )}
+      {contactsEdit && (
+        <ContactsModal
+          heading={`Contacts for ${clientLabel(contactsEdit.client)}`}
+          contacts={contactsEdit.client.contacts}
+          searchUsers={api.searchUsers}
+          onSave={saveContacts}
+          onClose={() => setContactsEdit(null)}
+        />
       )}
     </Layout>
   );

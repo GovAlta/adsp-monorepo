@@ -517,6 +517,60 @@ describe('KeycloakRealmService', () => {
       );
     });
   });
+
+  describe('createRotationNoticeScope', () => {
+    type Creator = { createRotationNoticeScope: (realm: string) => Promise<void> };
+    const create = (clientId?: string) =>
+      new KeycloakRealmServiceImpl(
+        loggerMock,
+        'https://access-service',
+        'core',
+        () => Promise.resolve(keycloakClientMock as unknown as KeycloakAdminClient),
+        clientId
+          ? {
+              clientId,
+              scopePrefix: 'rotation-notice-',
+              createAdminClient: () => Promise.resolve(keycloakClientMock as unknown as KeycloakAdminClient),
+            }
+          : undefined,
+      ) as unknown as Creator;
+
+    it('creates the realm scope with the notice roles and attaches it to the notice job client', async () => {
+      keycloakClientMock.clients.find
+        .mockResolvedValueOnce([{ id: 'notifier-123' }])
+        .mockResolvedValueOnce([{ id: 'my-realm-client-123' }]);
+      keycloakClientMock.clients.findRole.mockImplementation(({ roleName }) =>
+        Promise.resolve({ id: `${roleName}-id`, name: roleName }),
+      );
+      keycloakClientMock.clientScopes.create.mockResolvedValueOnce({});
+      keycloakClientMock.clientScopes.findOneByName.mockResolvedValueOnce({ id: 'scope-123' });
+
+      await create('notifier').createRotationNoticeScope('my-realm');
+
+      expect(keycloakClientMock.clientScopes.create).toHaveBeenCalledWith(
+        expect.objectContaining({ realm: 'master', name: 'rotation-notice-my-realm' }),
+      );
+      expect(keycloakClientMock.clientScopes.addClientScopeMappings).toHaveBeenCalledWith(
+        { realm: 'master', id: 'scope-123', client: 'my-realm-client-123' },
+        expect.arrayContaining([{ id: 'manage-clients-id', name: 'manage-clients' }]),
+      );
+      expect(keycloakClientMock.clients.addOptionalClientScope).toHaveBeenCalledWith({
+        realm: 'master',
+        id: 'notifier-123',
+        clientScopeId: 'scope-123',
+      });
+    });
+
+    it('does nothing without a notice job, and does not throw on failure', async () => {
+      keycloakClientMock.clientScopes.create.mockClear();
+      await create().createRotationNoticeScope('my-realm');
+      expect(keycloakClientMock.clientScopes.create).not.toHaveBeenCalled();
+
+      keycloakClientMock.clients.find.mockRejectedValueOnce(new Error('forbidden'));
+      await expect(create('notifier').createRotationNoticeScope('my-realm')).resolves.toBeUndefined();
+      expect(loggerMock.warn).toHaveBeenCalledWith(expect.stringContaining('forbidden'), expect.anything());
+    });
+  });
   describe('manage user Idp', () => {
     const service = new KeycloakRealmServiceImpl(loggerMock, 'https://access-service', 'core', () =>
       Promise.resolve(keycloakClientMock as unknown as KeycloakAdminClient),

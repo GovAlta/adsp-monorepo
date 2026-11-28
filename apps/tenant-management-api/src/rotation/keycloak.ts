@@ -18,3 +18,23 @@ export async function createRotationKeycloakFactory(
     return new RotationKeycloakClient(client);
   };
 }
+
+/**
+ * Creates a Keycloak client for the scheduled notifier. It signs in as a dedicated service account in the master
+ * realm. The account holds the master admin role but has "Full scope allowed" off, so each token carries only the
+ * roles of the realm's optional client scope (`<scopePrefix><realm>`). That keeps the token small however many realms
+ * exist. It signs in again on every call so a long interval between runs never leaves it with an expired token.
+ */
+export async function createRotationServiceAccountFactory(
+  keycloakRootUrl: string,
+  clientId: string,
+  clientSecret: string,
+  scopePrefix: string,
+): Promise<(realm: string) => Promise<RotationKeycloakClient>> {
+  const Client: typeof KcAdminClient = (await dynamicImport('@keycloak/keycloak-admin-client')).default;
+  return async (realm) => {
+    const client = new Client({ baseUrl: `${keycloakRootUrl}/auth`, realmName: 'master' });
+    await client.auth({ grantType: 'client_credentials', clientId, clientSecret, scopes: [`${scopePrefix}${realm}`] });
+    return new RotationKeycloakClient(client);
+  };
+}
