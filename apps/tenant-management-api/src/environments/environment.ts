@@ -49,6 +49,12 @@ export const environment = envalid.cleanEnv(
     TENANT_RETENTION_DAYS: envalid.num({ default: 30 }),
     TENANT_PURGE_ENABLED: envalid.bool({ default: false }),
     TENANT_PURGE_SCHEDULE: envalid.str({ default: '0 2 * * *' }),
+    TENANT_PROVISIONING_RECOVERY_ENABLED: envalid.bool({ default: false }),
+    TENANT_PROVISIONING_RECOVERY_SCHEDULE: envalid.str({ default: '*/5 * * * *' }),
+    // Longer than any provisioning takes, so the recovery job never removes a tenant that is still being set up.
+    TENANT_PROVISIONING_STALE_MINUTES: envalid.num({ default: 30 }),
+    // Under the pod's 30 s termination grace period, so shutdown finishes before the pod is killed.
+    TENANT_PROVISIONING_SHUTDOWN_TIMEOUT_MS: envalid.num({ default: 20000 }),
   },
   {
     reporter: ({ errors }) => {

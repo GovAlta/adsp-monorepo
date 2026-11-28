@@ -18,4 +18,5 @@ export interface TenantCriteria {
   excludeArchived?: boolean;
   statusEquals?: TenantStatus;
   deletedBefore?: Date;
+  createdBefore?: Date;
 }

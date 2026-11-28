@@ -2,6 +2,7 @@ import { AuditService, EventService } from '@abgov/adsp-service-sdk';
 import { Application, RequestHandler } from 'express';
 import * as passport from 'passport';
 import { Logger } from 'winston';
+import { ProvisioningTracker } from './provisioning';
 import { TenantRepository } from './repository';
 import { createTenantRouter, createTenantV2Router } from './router';
 import { RealmService } from './services';
@@ -10,6 +11,7 @@ export * from './configuration';
 export * from './events';
 export * from './jobs';
 export * from './models';
+export * from './provisioning';
 export * from './repository';
 export * from './roles';
 export * from './services';
@@ -22,14 +24,30 @@ interface TenantMiddlewareProps {
   auditService: AuditService;
   configurationHandler: RequestHandler;
   realmService: RealmService;
+  provisioning: ProvisioningTracker;
 }
 
 export function applyTenantMiddleware(
   app: Application,
-  { logger, tenantRepository, configurationHandler, eventService, auditService, realmService }: TenantMiddlewareProps,
+  {
+    logger,
+    tenantRepository,
+    configurationHandler,
+    eventService,
+    auditService,
+    realmService,
+    provisioning,
+  }: TenantMiddlewareProps,
 ): Application {
-  const tenantRouter = createTenantRouter({ tenantRepository, eventService, realmService, auditService });
-  const tenantV2Router = createTenantV2Router({ logger, tenantRepository, realmService, eventService, auditService });
+  const tenantRouter = createTenantRouter({ tenantRepository, eventService, realmService, auditService, provisioning });
+  const tenantV2Router = createTenantV2Router({
+    logger,
+    tenantRepository,
+    realmService,
+    eventService,
+    auditService,
+    provisioning,
+  });
 
   app.use(
     '/api/tenant/v1',

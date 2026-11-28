@@ -126,6 +126,9 @@ objects:
                 # Overrides envFrom so a ConfigMap value cannot start the purge on serving pods.
                 - name: TENANT_PURGE_ENABLED
                   value: 'false'
+                # Recovery runs only in the single job pod, so serving pods never remove a tenant another pod is provisioning.
+                - name: TENANT_PROVISIONING_RECOVERY_ENABLED
+                  value: 'false'
                 - name: MONGO_USER
                   valueFrom:
                     secretKeyRef:
@@ -251,6 +254,8 @@ objects:
                   value: 'true'
                 - name: TENANT_RETENTION_DAYS
                   value: '365'
+                - name: TENANT_PROVISIONING_RECOVERY_ENABLED
+                  value: 'true'
                 - name: MONGO_USER
                   valueFrom:
                     secretKeyRef:

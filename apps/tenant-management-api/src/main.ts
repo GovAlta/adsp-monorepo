@@ -25,9 +25,15 @@ import {
   TenantServiceImpl,
   TenantServiceRoles,
   scheduleTenantPurgeJob,
+  scheduleTenantProvisioningRecoveryJob,
+  ProvisioningTracker,
 } from './tenant';
 import { createKeycloakRealmService } from './keycloak';
 import { applyRotationMiddleware, ClientSecretRotationRoles, createRotationKeycloakFactory } from './rotation';
+import { createShutdownHandler } from './shutdown';
+
+// Shared by tenant creation and shutdown, so shutdown can wait for realms still being provisioned.
+const provisioning = new ProvisioningTracker();
 
 async function initializeApp(): Promise<express.Application> {
   const repositories = await createRepositories({ ...environment, logger });
@@ -126,6 +132,7 @@ async function initializeApp(): Promise<express.Application> {
     auditService,
     realmService,
     configurationHandler,
+    provisioning,
   });
 
   const createKeycloak = await createRotationKeycloakFactory(environment.KEYCLOAK_ROOT_URL);
@@ -151,6 +158,18 @@ async function initializeApp(): Promise<express.Application> {
       auditService,
       retentionDays: environment.TENANT_RETENTION_DAYS,
       cron: environment.TENANT_PURGE_SCHEDULE,
+    });
+  }
+
+  if (environment.TENANT_PROVISIONING_RECOVERY_ENABLED) {
+    scheduleTenantProvisioningRecoveryJob({
+      serviceId,
+      logger,
+      tenantRepository: repositories.tenantRepository,
+      realmService,
+      auditService,
+      staleAfterMinutes: environment.TENANT_PROVISIONING_STALE_MINUTES,
+      cron: environment.TENANT_PROVISIONING_RECOVERY_SCHEDULE,
     });
   }
 
@@ -188,12 +207,14 @@ initializeApp()
       logger.info(`Listening at http://localhost:${port}/api`);
     });
 
-    const handleExit = async (message: string, code: number, err: Error) => {
-      await disconnect(logger);
-      server.close();
-      err === null ? logger.info(message) : logger.error(message, err);
-      process.exit(code);
-    };
+    const handleExit = createShutdownHandler({
+      logger,
+      server,
+      provisioning,
+      timeoutMs: environment.TENANT_PROVISIONING_SHUTDOWN_TIMEOUT_MS,
+      disconnect,
+      exit: (code) => process.exit(code),
+    });
 
     process.on('SIGINT', async () => {
       handleExit('Tenant management api exit, Byte', 1, null);

@@ -142,6 +142,26 @@ describe('KeycloakRealmService', () => {
       );
     });
 
+    it('can treat a realm that does not exist as deleted', async () => {
+      keycloakClientMock.clients.find.mockResolvedValueOnce([]);
+      keycloakClientMock.realms.del.mockRejectedValueOnce(
+        Object.assign(new Error('Realm not found.'), { response: { status: 404 } }),
+      );
+
+      const deleted = await service.deleteRealm(tenant);
+      expect(deleted).toBe(true);
+    });
+
+    it('can still return false for a realm delete that fails for another reason', async () => {
+      keycloakClientMock.clients.find.mockResolvedValueOnce([]);
+      keycloakClientMock.realms.del.mockRejectedValueOnce(
+        Object.assign(new Error('Server error.'), { response: { status: 500 } }),
+      );
+
+      const deleted = await service.deleteRealm(tenant);
+      expect(deleted).toBe(false);
+    });
+
     it('can handle broker client delete error', async () => {
       keycloakClientMock.clients.find.mockResolvedValueOnce([{ id: 'broker-123', clientId: brokerClientId }]);
       keycloakClientMock.clients.del.mockRejectedValueOnce(new Error('oh noes!'));
