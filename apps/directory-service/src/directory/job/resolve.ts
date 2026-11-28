@@ -72,7 +72,7 @@ export function createResolveJob({
 
       // If this is the last attempt, then signal a failure event.
       if (!retryOnError) {
-        logger.error(`Error encountered resolving resource ${urn}: ${err}`, {
+        logger.warn(`Error encountered resolving resource ${urn}: ${err}`, {
           context: 'ResolveJob',
           tenant: tenantId.toString(),
         });

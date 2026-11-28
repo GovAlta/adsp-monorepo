@@ -45,17 +45,24 @@ export const createRepositories = async ({
     },
   });
 
-  await retry.execute(async ({ attempt }) => {
-    logger.debug(`Try ${attempt}: connecting to postgres and running migration...`);
-    try {
-      await knex.migrate.latest();
+  try {
+    await retry.execute(async ({ attempt }) => {
+      logger.debug(`Try ${attempt}: connecting to postgres and running migration...`);
+      try {
+        await knex.migrate.latest();
 
-      logger.info('Database migrations upped to latest.');
-    } catch (err) {
-      logger.debug(`Try ${attempt} failed with error. ${err}`, { context: 'createRepositories' });
-      throw err;
-    }
-  });
+        logger.info('Database migrations upped to latest.');
+      } catch (err) {
+        logger.debug(`Try ${attempt} failed with error. ${err}`, { context: 'createRepositories' });
+        throw err;
+      }
+    });
+  } catch (err) {
+    logger.error(`Failed to connect to postgres and run migrations after retries. ${err}`, {
+      context: 'createRepositories',
+    });
+    throw err;
+  }
 
   return {
     isConnected: async () => {

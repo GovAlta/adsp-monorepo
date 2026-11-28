@@ -368,11 +368,16 @@ describe('AmqpWorkQueueService<string>', () => {
     });
 
     it('can nack and dead letter redelivered failed item', (done) => {
+      (logger.error as jest.Mock).mockClear();
       const workItem = {
         value: 'test',
       };
 
-      const msg = { properties: { headers: {} }, fields: { redelivered: true }, content: JSON.stringify(workItem) };
+      const msg = {
+        properties: { headers: {} },
+        fields: { redelivered: true, routingKey: 'test.route' },
+        content: JSON.stringify(workItem),
+      };
       const subChannel = {
         assertExchange: jest.fn(() => Promise.resolve()),
         assertQueue: jest.fn(() => Promise.resolve()),
@@ -403,6 +408,10 @@ describe('AmqpWorkQueueService<string>', () => {
           workDone(new Error('Something went terribly wrong.'));
           expect(subChannel.nack).toHaveBeenCalledTimes(1);
           expect(subChannel.nack).toBeCalledWith(msg, false, false);
+          expect(logger.error).toHaveBeenCalledTimes(1);
+          expect(logger.error).toHaveBeenCalledWith(
+            'Redelivered message test.route processing failed and will be dead lettered.',
+          );
           done();
         });
       });

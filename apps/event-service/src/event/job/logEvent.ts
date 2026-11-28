@@ -72,7 +72,7 @@ async function calculateIntervalMetric(
       }
     }
   } catch (err) {
-    logger.warn(
+    logger.error(
       `Error encountered computing duration for event ${namespace}:${name} (correlation ID: ${correlationId}) interval. ${err}`,
       {
         context: 'EventLog',
